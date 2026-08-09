@@ -88,7 +88,7 @@ export function HeroPanel({ slides }: { slides: ShopifyProduct[] }) {
             type="button"
             aria-label="Previous slide"
             onClick={() => setIndex((prev) => (prev - 1 + slides.length) % slides.length)}
-            className="absolute left-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 place-items-center rounded-full border bg-background/80 text-muted-foreground md:grid"
+            className="absolute bottom-3 left-4 grid h-9 w-9 place-items-center rounded-full border bg-background/80 text-muted-foreground hover:text-primary"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -96,10 +96,11 @@ export function HeroPanel({ slides }: { slides: ShopifyProduct[] }) {
             type="button"
             aria-label="Next slide"
             onClick={() => setIndex((prev) => (prev + 1) % slides.length)}
-            className="absolute right-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 place-items-center rounded-full border bg-background/80 text-muted-foreground md:grid"
+            className="absolute bottom-3 right-4 grid h-9 w-9 place-items-center rounded-full border bg-background/80 text-muted-foreground hover:text-primary"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
+
         </>
       )}
     </div>
