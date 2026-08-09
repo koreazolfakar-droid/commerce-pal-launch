@@ -110,7 +110,7 @@ function Index() {
             <div className="scroll-rail flex gap-4 pb-2 lg:grid lg:grid-cols-4 lg:overflow-visible">
               {all.map((product, index) => (
                 <div key={product.node.id} className="w-56 shrink-0 sm:w-64 lg:w-auto">
-                  <ProductCard product={product} badge={BADGES[index % BADGES.length]} />
+                  <ProductCard product={product} badge={BADGES[index % BADGES.length] ?? "New"} />
                 </div>
               ))}
             </div>
