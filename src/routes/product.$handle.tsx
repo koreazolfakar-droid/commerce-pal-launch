@@ -70,77 +70,112 @@ function ProductPage() {
     toast.success(`${node.title} added to your bag`, { position: "top-center" });
   };
 
+  const compareAt =
+    selectedVariant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount;
+  const discount = discountPercent(selectedVariant?.price.amount, compareAt);
+  const currency = selectedVariant?.price.currencyCode ?? "USD";
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <ArrowLeft className="h-4 w-4" />
-            Back to store
-          </Link>
-          <CartDrawer />
-        </div>
-      </header>
+      <SiteHeader />
 
-      <main className="mx-auto grid max-w-6xl gap-10 px-4 py-10 md:grid-cols-2">
-        <div className="overflow-hidden rounded-2xl border bg-muted">
-          {image ? (
-            <img
-              src={image.url}
-              alt={image.altText ?? node.title}
-              className="aspect-square w-full object-cover"
-            />
-          ) : (
-            <div className="flex aspect-square items-center justify-center text-muted-foreground">
-              No image
-            </div>
-          )}
-        </div>
+      <main className="mx-auto max-w-7xl px-4 py-8">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to store
+        </Link>
 
-        <div className="flex flex-col gap-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{node.title}</h1>
-            <p className="mt-3 text-2xl font-semibold text-primary">
-              {selectedVariant &&
-                formatPrice(selectedVariant.price.amount, selectedVariant.price.currencyCode)}
-            </p>
+        <div className="mt-6 grid gap-10 md:grid-cols-2">
+          <div className="overflow-hidden rounded-xl border bg-surface">
+            {image ? (
+              <img
+                src={image.url}
+                alt={image.altText ?? node.title}
+                width={800}
+                height={800}
+                className="aspect-square w-full object-contain p-8"
+              />
+            ) : (
+              <div className="flex aspect-square items-center justify-center text-muted-foreground">
+                No image
+              </div>
+            )}
           </div>
 
-          {node.description && (
-            <p className="leading-relaxed text-muted-foreground">{node.description}</p>
-          )}
-
-          {variants.length > 1 && (
-            <div className="flex flex-wrap gap-2">
-              {variants.map((variant) => (
-                <Button
-                  key={variant.id}
-                  variant={variant.id === selectedVariant?.id ? "default" : "outline"}
-                  size="sm"
-                  disabled={!variant.availableForSale}
-                  onClick={() => setVariantId(variant.id)}
-                >
-                  {variant.title}
-                </Button>
-              ))}
+          <div className="flex flex-col gap-6">
+            <div>
+              {node.vendor && (
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {node.vendor}
+                </p>
+              )}
+              <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">{node.title}</h1>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <span className="text-2xl font-bold">
+                  {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
+                </span>
+                {discount !== null && compareAt && (
+                  <>
+                    <span className="text-sm text-muted-foreground line-through">
+                      {formatPrice(compareAt, currency)}
+                    </span>
+                    <span className="rounded bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground">
+                      -{discount}%
+                    </span>
+                  </>
+                )}
+              </div>
+              <p
+                className={`mt-2 text-sm font-medium ${
+                  selectedVariant?.availableForSale ? "text-success" : "text-muted-foreground"
+                }`}
+              >
+                {selectedVariant?.availableForSale ? "In stock" : "Out of stock"}
+              </p>
             </div>
-          )}
 
-          <Button
-            size="lg"
-            onClick={handleAddToCart}
-            disabled={isLoading || !selectedVariant?.availableForSale}
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : selectedVariant?.availableForSale ? (
-              "Add to Cart"
-            ) : (
-              "Sold out"
+            {node.description && (
+              <p className="leading-relaxed text-muted-foreground">{node.description}</p>
             )}
-          </Button>
+
+            {variants.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                {variants.map((variant) => (
+                  <Button
+                    key={variant.id}
+                    variant={variant.id === selectedVariant?.id ? "default" : "outline"}
+                    size="sm"
+                    disabled={!variant.availableForSale}
+                    onClick={() => setVariantId(variant.id)}
+                  >
+                    {variant.title}
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            <Button
+              size="lg"
+              onClick={handleAddToCart}
+              disabled={isLoading || !selectedVariant?.availableForSale}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : selectedVariant?.availableForSale ? (
+                "Add to cart"
+              ) : (
+                "Sold out"
+              )}
+            </Button>
+          </div>
         </div>
       </main>
+
+      <SiteFooter />
     </div>
   );
 }
+
