@@ -3,9 +3,15 @@ import { useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { CartDrawer } from "@/components/CartDrawer";
+import { SiteFooter } from "@/components/SiteFooter";
+import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
-import { fetchProductByHandle, formatPrice, type ShopifyProduct } from "@/lib/shopify";
+import {
+  discountPercent,
+  fetchProductByHandle,
+  formatPrice,
+  type ShopifyProduct,
+} from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 
 export const Route = createFileRoute("/product/$handle")({
