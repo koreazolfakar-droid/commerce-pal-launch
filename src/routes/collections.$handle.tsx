@@ -72,7 +72,7 @@ function CollectionPage() {
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {products.map((product) => (
+              {products.map((product: ShopifyProduct) => (
                 <ProductCard key={product.node.id} product={product} />
               ))}
             </div>
