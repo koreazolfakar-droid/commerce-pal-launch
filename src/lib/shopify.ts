@@ -11,7 +11,12 @@ export interface ShopifyProduct {
     title: string;
     description: string;
     handle: string;
+    vendor?: string;
+    productType?: string;
+    availableForSale?: boolean;
+    tags?: string[];
     priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
+    compareAtPriceRange?: { minVariantPrice: { amount: string; currencyCode: string } };
     images: { edges: Array<{ node: { url: string; altText: string | null } }> };
     variants: {
       edges: Array<{
@@ -19,6 +24,7 @@ export interface ShopifyProduct {
           id: string;
           title: string;
           price: { amount: string; currencyCode: string };
+          compareAtPrice?: { amount: string; currencyCode: string } | null;
           availableForSale: boolean;
           selectedOptions: Array<{ name: string; value: string }>;
         };
@@ -28,12 +34,25 @@ export interface ShopifyProduct {
   };
 }
 
+export interface ShopifyCollection {
+  id: string;
+  handle: string;
+  title: string;
+  description: string;
+  image: { url: string; altText: string | null } | null;
+}
+
 const PRODUCT_FIELDS = `
   id
   title
   description
   handle
+  vendor
+  productType
+  availableForSale
+  tags
   priceRange { minVariantPrice { amount currencyCode } }
+  compareAtPriceRange { minVariantPrice { amount currencyCode } }
   images(first: 5) { edges { node { url altText } } }
   variants(first: 10) {
     edges {
@@ -41,12 +60,21 @@ const PRODUCT_FIELDS = `
         id
         title
         price { amount currencyCode }
+        compareAtPrice { amount currencyCode }
         availableForSale
         selectedOptions { name value }
       }
     }
   }
   options { name values }
+`;
+
+const COLLECTION_FIELDS = `
+  id
+  handle
+  title
+  description
+  image { url altText }
 `;
 
 export const STOREFRONT_QUERY = `
@@ -60,6 +88,25 @@ export const STOREFRONT_QUERY = `
 export const PRODUCT_BY_HANDLE_QUERY = `
   query GetProduct($handle: String!) {
     product(handle: $handle) { ${PRODUCT_FIELDS} }
+  }
+`;
+
+export const COLLECTIONS_QUERY = `
+  query GetCollections($first: Int!) {
+    collections(first: $first) {
+      edges { node { ${COLLECTION_FIELDS} } }
+    }
+  }
+`;
+
+export const COLLECTION_BY_HANDLE_QUERY = `
+  query GetCollection($handle: String!, $first: Int!) {
+    collection(handle: $handle) {
+      ${COLLECTION_FIELDS}
+      products(first: $first) {
+        edges { node { ${PRODUCT_FIELDS} } }
+      }
+    }
   }
 `;
 
@@ -102,8 +149,8 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
   return data;
 }
 
-export async function fetchProducts(first = 30): Promise<ShopifyProduct[]> {
-  const data = await storefrontApiRequest(STOREFRONT_QUERY, { first });
+export async function fetchProducts(first = 30, query?: string): Promise<ShopifyProduct[]> {
+  const data = await storefrontApiRequest(STOREFRONT_QUERY, { first, query });
   return data?.data?.products?.edges ?? [];
 }
 
@@ -111,6 +158,40 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
   const data = await storefrontApiRequest(PRODUCT_BY_HANDLE_QUERY, { handle });
   const node = data?.data?.product;
   return node ? { node } : null;
+}
+
+export async function fetchCollections(first = 50): Promise<ShopifyCollection[]> {
+  const data = await storefrontApiRequest(COLLECTIONS_QUERY, { first });
+  return (
+    data?.data?.collections?.edges?.map((edge: { node: ShopifyCollection }) => edge.node) ?? []
+  );
+}
+
+export async function fetchCollectionByHandle(
+  handle: string,
+  first = 40,
+): Promise<{ collection: ShopifyCollection; products: ShopifyProduct[] } | null> {
+  const data = await storefrontApiRequest(COLLECTION_BY_HANDLE_QUERY, { handle, first });
+  const node = data?.data?.collection;
+  if (!node) return null;
+  const { products, ...collection } = node;
+  return { collection: collection as ShopifyCollection, products: products?.edges ?? [] };
+}
+
+export async function searchStorefront(term: string) {
+  const trimmed = term.trim();
+  if (!trimmed) return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
+  const [products, collections] = await Promise.all([
+    fetchProducts(8, trimmed),
+    fetchCollections(50),
+  ]);
+  const lowered = trimmed.toLowerCase();
+  return {
+    products,
+    collections: collections.filter((collection) =>
+      collection.title.toLowerCase().includes(lowered),
+    ),
+  };
 }
 
 export function formatPrice(amount: string | number, currencyCode: string) {
@@ -124,4 +205,21 @@ export function formatPrice(amount: string | number, currencyCode: string) {
   } catch {
     return `${currencyCode} ${value.toFixed(2)}`;
   }
+}
+
+/** Discount percentage from a price / compare-at pair, or null when there is no saving. */
+export function discountPercent(price?: string | null, compareAt?: string | null) {
+  const current = price ? parseFloat(price) : NaN;
+  const was = compareAt ? parseFloat(compareAt) : NaN;
+  if (!isFinite(current) || !isFinite(was) || was <= current || was <= 0) return null;
+  return Math.round(((was - current) / was) * 100);
+}
+
+/** Short "256GB • Titanium" style summary from a variant's selected options. */
+export function variantSummary(options?: Array<{ name: string; value: string }>) {
+  if (!options?.length) return "";
+  return options
+    .filter((option) => option.value && option.value !== "Default Title")
+    .map((option) => option.value)
+    .join(" • ");
 }
