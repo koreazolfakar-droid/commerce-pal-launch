@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { CartDrawer } from "@/components/CartDrawer";
 import { Button } from "@/components/ui/button";
-import { fetchProductByHandle, formatPrice } from "@/lib/shopify";
+import { fetchProductByHandle, formatPrice, type ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 
 export const Route = createFileRoute("/product/$handle")({
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/product/$handle")({
 });
 
 function ProductPage() {
-  const { product } = Route.useLoaderData();
+  const { product } = Route.useLoaderData() as { product: ShopifyProduct };
   const node = product.node;
   const variants = node.variants.edges.map((e) => e.node);
   const [variantId, setVariantId] = useState(variants[0]?.id);
