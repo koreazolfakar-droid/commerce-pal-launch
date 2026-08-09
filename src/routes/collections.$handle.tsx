@@ -3,7 +3,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ProductCard } from "@/components/ProductCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { fetchCollectionByHandle } from "@/lib/shopify";
+import { fetchCollectionByHandle, type ShopifyProduct } from "@/lib/shopify";
 
 export const Route = createFileRoute("/collections/$handle")({
   loader: async ({ params }) => {
