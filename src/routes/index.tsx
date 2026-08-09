@@ -1,24 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 
-import { CartDrawer } from "@/components/CartDrawer";
+import { HeroPanel, HeroSideCard } from "@/components/Hero";
+import {
+  BenefitsBar,
+  BrandRail,
+  CategoryChips,
+  CategorySidebar,
+  PromoCards,
+  ServicesStrip,
+} from "@/components/HomeSections";
 import { ProductCard } from "@/components/ProductCard";
-import { fetchProducts } from "@/lib/shopify";
+import { SiteFooter } from "@/components/SiteFooter";
+import { SiteHeader } from "@/components/SiteHeader";
+import { fetchCollections, fetchProducts } from "@/lib/shopify";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Space Cell — Phones, Tablets & Accessories" },
+      { title: "Space Cell — Premium Phones, Tablets & Audio" },
       {
         name: "description",
         content:
-          "Space Cell stocks the latest phones, tablets and accessories with fast, secure Shopify checkout.",
+          "Space Cell stocks premium smartphones, tablets, smartwatches, audio and accessories with official warranty and secure Shopify checkout.",
       },
-      { property: "og:title", content: "Space Cell — Phones, Tablets & Accessories" },
+      { property: "og:title", content: "Space Cell — Premium Phones, Tablets & Audio" },
       {
         property: "og:description",
-        content: "The latest phones, tablets and accessories with secure Shopify checkout.",
+        content:
+          "Premium smartphones, tablets, audio and accessories with official warranty and secure checkout.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -27,70 +37,92 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+const BADGES = ["Best seller", "Popular", "New", "Editor's choice"];
+
 function Index() {
   const { data: products, isLoading, isError } = useQuery({
     queryKey: ["shopify-products"],
     queryFn: () => fetchProducts(30),
   });
+  const { data: collections } = useQuery({
+    queryKey: ["shopify-collections"],
+    queryFn: () => fetchCollections(50),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handles = new Set((collections ?? []).map((collection) => collection.handle));
+  const all = products ?? [];
+  const slides = all.slice(0, 3);
+  const sideProducts = all.slice(0, 3);
+  const promoImages = Object.fromEntries(
+    (collections ?? []).map((collection) => [collection.handle, collection.image?.url]),
+  );
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <a href="/" className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary font-bold text-primary-foreground">
-              S
-            </span>
-            <span className="text-lg font-semibold tracking-tight">Space Cell</span>
-          </a>
-          <CartDrawer />
-        </div>
-      </header>
+      <SiteHeader />
 
       <main>
-        <section className="border-b bg-gradient-to-b from-card to-background">
-          <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">
-              Space Cell
-            </p>
-            <h1 className="mt-4 max-w-2xl text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-              Tech that keeps up with you.
-            </h1>
-            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-              Phones, tablets and accessories — handpicked, in stock, and checked out securely
-              through Shopify.
-            </p>
+        <section className="mx-auto max-w-7xl px-4 py-6">
+          <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)_280px]">
+            <div className="hidden lg:block">
+              <CategorySidebar handles={handles} />
+            </div>
+            <div className="space-y-4">
+              <CategoryChips handles={handles} />
+              {isLoading ? (
+                <div className="h-80 animate-pulse rounded-xl bg-surface" />
+              ) : (
+                <HeroPanel slides={slides} />
+              )}
+            </div>
+            <div className="scroll-rail flex gap-3 lg:flex-col lg:overflow-visible">
+              {isLoading
+                ? [0, 1, 2].map((key) => (
+                    <div key={key} className="h-28 w-64 shrink-0 animate-pulse rounded-xl bg-surface lg:w-auto" />
+                  ))
+                : sideProducts.map((product) => (
+                    <HeroSideCard key={product.node.id} product={product} />
+                  ))}
+            </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 py-12">
-          <h2 className="mb-8 text-2xl font-semibold tracking-tight">Shop all</h2>
+        <BrandRail handles={handles} />
 
+        <BenefitsBar />
+
+        <section className="mx-auto max-w-7xl px-4 py-10">
+          <h2 className="mb-4 text-xl font-semibold tracking-tight">Best sellers</h2>
           {isLoading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : isError ? (
-            <p className="py-20 text-center text-muted-foreground">
-              We couldn't load products right now. Please try again.
-            </p>
-          ) : products && products.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <ProductCard key={product.node.id} product={product} />
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {[0, 1, 2, 3].map((key) => (
+                <div key={key} className="h-80 animate-pulse rounded-lg bg-surface" />
               ))}
             </div>
+          ) : isError ? (
+            <p className="py-16 text-center text-muted-foreground">
+              We couldn't load products right now. Please try again.
+            </p>
+          ) : all.length === 0 ? (
+            <p className="py-16 text-center text-muted-foreground">No products found</p>
           ) : (
-            <p className="py-20 text-center text-muted-foreground">No products found</p>
+            <div className="scroll-rail flex gap-4 pb-2 lg:grid lg:grid-cols-4 lg:overflow-visible">
+              {all.map((product, index) => (
+                <div key={product.node.id} className="w-56 shrink-0 sm:w-64 lg:w-auto">
+                  <ProductCard product={product} badge={BADGES[index % BADGES.length] ?? "New"} />
+                </div>
+              ))}
+            </div>
           )}
         </section>
+
+        <PromoCards handles={handles} images={promoImages} />
+
+        <ServicesStrip />
       </main>
 
-      <footer className="border-t py-10">
-        <div className="mx-auto max-w-6xl px-4 text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Space Cell. Secure checkout powered by Shopify.
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
