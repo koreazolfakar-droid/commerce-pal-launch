@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { BottomNav } from "@/components/BottomNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,7 @@ function ProductPage() {
   const currency = selectedVariant?.price.currencyCode ?? "USD";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 lg:pb-0">
       <SiteHeader />
 
       <main className="mx-auto max-w-7xl px-4 py-8">
@@ -175,6 +176,7 @@ function ProductPage() {
       </main>
 
       <SiteFooter />
+      <BottomNav />
     </div>
   );
 }
