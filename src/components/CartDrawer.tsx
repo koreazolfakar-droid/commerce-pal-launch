@@ -47,7 +47,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
+      <SheetTrigger asChild className={hideTrigger ? "hidden" : undefined}>
         <Button variant="outline" size="icon" className="relative">
           <ShoppingBag className="h-5 w-5" />
           {totalItems > 0 && (
