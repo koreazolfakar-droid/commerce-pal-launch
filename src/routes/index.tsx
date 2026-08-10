@@ -1,16 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 
-import { HeroPanel, HeroSideCard } from "@/components/Hero";
-import {
-  BenefitsBar,
-  BrandRail,
-  CategoryChips,
-  CategorySidebar,
-  PromoCards,
-  ServicesStrip,
-} from "@/components/HomeSections";
+import { BottomNav } from "@/components/BottomNav";
+import { CollectionSections } from "@/components/CollectionSections";
+import { CompactProductCard } from "@/components/CompactProductCard";
+import { BenefitsBar } from "@/components/HomeSections";
+import { MobileTopBar } from "@/components/MobileTopBar";
 import { ProductCard } from "@/components/ProductCard";
+import { PromoBanner } from "@/components/PromoBanner";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchCollections, fetchProducts } from "@/lib/shopify";
@@ -37,10 +35,12 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const BADGES = ["Best seller", "Popular", "New", "Editor's choice"];
-
 function Index() {
-  const { data: products, isLoading, isError } = useQuery({
+  const {
+    data: products,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["shopify-products"],
     queryFn: () => fetchProducts(30),
   });
@@ -50,79 +50,74 @@ function Index() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const handles = new Set((collections ?? []).map((collection) => collection.handle));
   const all = products ?? [];
-  const slides = all.slice(0, 3);
-  const sideProducts = all.slice(0, 3);
-  const promoImages = Object.fromEntries(
-    (collections ?? []).map((collection) => [collection.handle, collection.image?.url]),
-  );
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div className="min-h-screen bg-background pb-20 lg:pb-0">
+      <div className="hidden lg:block">
+        <SiteHeader />
+      </div>
+      <MobileTopBar />
 
-      <main>
-        <section className="mx-auto max-w-7xl px-4 py-6">
-          <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)_280px]">
-            <div className="hidden lg:block">
-              <CategorySidebar handles={handles} />
-            </div>
-            <div className="space-y-4">
-              <CategoryChips handles={handles} />
-              {isLoading ? (
-                <div className="h-80 animate-pulse rounded-xl bg-surface" />
-              ) : (
-                <HeroPanel slides={slides} />
-              )}
-            </div>
-            <div className="scroll-rail flex gap-3 lg:flex-col lg:overflow-visible">
-              {isLoading
-                ? [0, 1, 2].map((key) => (
-                    <div key={key} className="h-28 w-64 shrink-0 animate-pulse rounded-xl bg-surface lg:w-auto" />
-                  ))
-                : sideProducts.map((product) => (
-                    <HeroSideCard key={product.node.id} product={product} />
-                  ))}
-            </div>
+      <main className="mx-auto max-w-5xl space-y-8 py-4">
+        {isLoading ? (
+          <div className="px-4">
+            <div className="h-44 animate-pulse rounded-2xl bg-surface" />
           </div>
-        </section>
+        ) : (
+          <PromoBanner products={all.slice(0, 4)} />
+        )}
 
-        <BrandRail handles={handles} />
+        {all.length > 0 && (
+          <section>
+            <div className="mb-3 flex items-center justify-between px-4">
+              <h2 className="text-base font-semibold tracking-tight">Popular right now</h2>
+              <Link to="/collections" className="text-xs font-medium text-primary">
+                View all
+              </Link>
+            </div>
+            <div className="scroll-rail flex gap-4 px-4">
+              {all.slice(0, 10).map((product) => (
+                <div key={product.node.id} className="w-32 shrink-0 sm:w-36">
+                  <CompactProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <BenefitsBar />
+        <CollectionSections collections={collections ?? []} />
 
-        <section className="mx-auto max-w-7xl px-4 py-10">
-          <h2 className="mb-4 text-xl font-semibold tracking-tight">Best sellers</h2>
+        <section>
+          <h2 className="mb-3 px-4 text-base font-semibold tracking-tight">All products</h2>
           {isLoading ? (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 px-4 md:grid-cols-4">
               {[0, 1, 2, 3].map((key) => (
-                <div key={key} className="h-80 animate-pulse rounded-lg bg-surface" />
+                <div key={key} className="h-72 animate-pulse rounded-lg bg-surface" />
               ))}
             </div>
           ) : isError ? (
-            <p className="py-16 text-center text-muted-foreground">
-              We couldn't load products right now. Please try again.
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              We couldn&apos;t load products right now. Please try again.
             </p>
           ) : all.length === 0 ? (
-            <p className="py-16 text-center text-muted-foreground">No products found</p>
+            <p className="py-12 text-center text-sm text-muted-foreground">No products found</p>
           ) : (
-            <div className="scroll-rail flex gap-4 pb-2 lg:grid lg:grid-cols-4 lg:overflow-visible">
-              {all.map((product, index) => (
-                <div key={product.node.id} className="w-56 shrink-0 sm:w-64 lg:w-auto">
-                  <ProductCard product={product} badge={BADGES[index % BADGES.length] ?? "New"} />
-                </div>
+            <div className="grid grid-cols-2 gap-4 px-4 md:grid-cols-4">
+              {all.map((product) => (
+                <ProductCard key={product.node.id} product={product} />
               ))}
             </div>
           )}
         </section>
 
-        <PromoCards handles={handles} images={promoImages} />
-
-        <ServicesStrip />
+        <BenefitsBar />
       </main>
 
-      <SiteFooter />
+      <div className="hidden lg:block">
+        <SiteFooter />
+      </div>
+      <BottomNav active="home" />
     </div>
   );
 }

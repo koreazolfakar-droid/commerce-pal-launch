@@ -14,7 +14,7 @@ import {
 import { formatPrice } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 
-export const CartDrawer = () => {
+export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, syncCart } =
     useCartStore();
@@ -30,6 +30,13 @@ export const CartDrawer = () => {
     if (isOpen) syncCart();
   }, [isOpen, syncCart]);
 
+  // Lets the mobile top bar / bottom nav open the same drawer instance.
+  useEffect(() => {
+    const open = () => setIsOpen(true);
+    document.addEventListener("space-cell:open-cart", open);
+    return () => document.removeEventListener("space-cell:open-cart", open);
+  }, []);
+
   const handleCheckout = () => {
     const checkoutUrl = getCheckoutUrl();
     if (checkoutUrl) {
@@ -40,7 +47,7 @@ export const CartDrawer = () => {
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
+      <SheetTrigger asChild className={hideTrigger ? "hidden" : undefined}>
         <Button variant="outline" size="icon" className="relative">
           <ShoppingBag className="h-5 w-5" />
           {totalItems > 0 && (

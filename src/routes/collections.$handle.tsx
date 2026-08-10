@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 
 import { ProductCard } from "@/components/ProductCard";
+import { BottomNav } from "@/components/BottomNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchCollectionByHandle, type ShopifyProduct } from "@/lib/shopify";
@@ -48,7 +49,7 @@ function CollectionPage() {
   const { collection, products } = Route.useLoaderData();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 lg:pb-0">
       <SiteHeader />
       <main>
         <section className="border-b bg-promo">
@@ -80,6 +81,7 @@ function CollectionPage() {
         </section>
       </main>
       <SiteFooter />
+      <BottomNav />
     </div>
   );
 }
@@ -87,7 +89,7 @@ function CollectionPage() {
 function CollectionNotFound() {
   const { handle } = Route.useParams();
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 lg:pb-0">
       <SiteHeader />
       <div className="mx-auto max-w-3xl px-4 py-24 text-center">
         <h1 className="text-2xl font-semibold">Collection not found</h1>
@@ -104,7 +106,7 @@ function CollectionNotFound() {
 
 function CollectionError() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 lg:pb-0">
       <SiteHeader />
       <div className="mx-auto max-w-3xl px-4 py-24 text-center">
         <h1 className="text-2xl font-semibold">We couldn't load this collection</h1>
