@@ -42,7 +42,7 @@ function ShopPage() {
   const products = applyFilters(catalog.products, catalog, filters);
 
   const update = (patch: Partial<ProductFilters>) =>
-    navigate({ search: (prev) => ({ ...prev, ...patch }) });
+    navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) });
 
   return (
     <StoreLayout>
