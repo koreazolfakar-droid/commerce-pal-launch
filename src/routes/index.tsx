@@ -117,7 +117,7 @@ function Index() {
       <div className="hidden lg:block">
         <SiteFooter />
       </div>
-      <BottomNav active="home" />
+      <BottomNav />
     </div>
   );
 }
