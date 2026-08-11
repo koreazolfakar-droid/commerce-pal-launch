@@ -42,9 +42,7 @@ function BrandPage() {
 
   const categories = catalog.categories.filter((category) =>
     inBrand.some((product) =>
-      (catalog.categoriesOf.get(product.node.handle) ?? []).some(
-        (entry) => entry.slug === category.slug,
-      ),
+      (catalog.categoryOf.get(product.node.handle) ?? []).includes(category.slug),
     ),
   );
 
