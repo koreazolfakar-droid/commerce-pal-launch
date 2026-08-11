@@ -5,33 +5,39 @@ export const SHOPIFY_STORE_PERMANENT_DOMAIN = "dj6qeq-j9.myshopify.com";
 export const SHOPIFY_STOREFRONT_URL = `https://${SHOPIFY_STORE_PERMANENT_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`;
 export const SHOPIFY_STOREFRONT_TOKEN = "79c817c6ce2ee3bae9a8bbd151ee5de1";
 
-export interface ShopifyProduct {
-  node: {
-    id: string;
-    title: string;
-    description: string;
-    handle: string;
-    vendor?: string;
-    productType?: string;
-    availableForSale?: boolean;
-    tags?: string[];
-    priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
-    compareAtPriceRange?: { minVariantPrice: { amount: string; currencyCode: string } };
-    images: { edges: Array<{ node: { url: string; altText: string | null } }> };
-    variants: {
-      edges: Array<{
-        node: {
-          id: string;
-          title: string;
-          price: { amount: string; currencyCode: string };
-          compareAtPrice?: { amount: string; currencyCode: string } | null;
-          availableForSale: boolean;
-          selectedOptions: Array<{ name: string; value: string }>;
-        };
-      }>;
-    };
-    options: Array<{ name: string; values: string[] }>;
+export interface ShopifyProductNode {
+  id: string;
+  title: string;
+  description: string;
+  handle: string;
+  vendor?: string;
+  productType?: string;
+  availableForSale?: boolean;
+  createdAt?: string;
+  tags?: string[];
+  priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
+  compareAtPriceRange?: { minVariantPrice: { amount: string; currencyCode: string } };
+  images: { edges: Array<{ node: { url: string; altText: string | null } }> };
+  collections?: { edges: Array<{ node: { handle: string; title: string } }> };
+  variants: {
+    edges: Array<{
+      node: {
+        id: string;
+        title: string;
+        price: { amount: string; currencyCode: string };
+        compareAtPrice?: { amount: string; currencyCode: string } | null;
+        availableForSale: boolean;
+        quantityAvailable?: number | null;
+        image?: { url: string; altText: string | null } | null;
+        selectedOptions: Array<{ name: string; value: string }>;
+      };
+    }>;
   };
+  options: Array<{ name: string; values: string[] }>;
+}
+
+export interface ShopifyProduct {
+  node: ShopifyProductNode;
 }
 
 export interface ShopifyCollection {
@@ -50,11 +56,13 @@ const PRODUCT_FIELDS = `
   vendor
   productType
   availableForSale
+  createdAt
   tags
   priceRange { minVariantPrice { amount currencyCode } }
   compareAtPriceRange { minVariantPrice { amount currencyCode } }
-  images(first: 5) { edges { node { url altText } } }
-  variants(first: 10) {
+  images(first: 8) { edges { node { url altText } } }
+  collections(first: 15) { edges { node { handle title } } }
+  variants(first: 50) {
     edges {
       node {
         id
@@ -62,6 +70,8 @@ const PRODUCT_FIELDS = `
         price { amount currencyCode }
         compareAtPrice { amount currencyCode }
         availableForSale
+        quantityAvailable
+        image { url altText }
         selectedOptions { name value }
       }
     }
@@ -78,8 +88,9 @@ const COLLECTION_FIELDS = `
 `;
 
 export const STOREFRONT_QUERY = `
-  query GetProducts($first: Int!, $query: String) {
-    products(first: $first, query: $query) {
+  query GetProducts($first: Int!, $after: String, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
+    products(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {
+      pageInfo { hasNextPage endCursor }
       edges { node { ${PRODUCT_FIELDS} } }
     }
   }
@@ -154,13 +165,35 @@ export async function fetchProducts(first = 30, query?: string): Promise<Shopify
   return data?.data?.products?.edges ?? [];
 }
 
+/**
+ * Fetches the full catalog by following Shopify's cursor pagination.
+ * The whole catalog powers the dynamic taxonomy, facets and sections, so it is
+ * cached once per session by TanStack Query instead of refetched per page.
+ */
+export async function fetchAllProducts(pageSize = 250, maxPages = 20): Promise<ShopifyProduct[]> {
+  const all: ShopifyProduct[] = [];
+  let after: string | null = null;
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const data = await storefrontApiRequest(STOREFRONT_QUERY, { first: pageSize, after });
+    const connection = data?.data?.products;
+    if (!connection) break;
+    all.push(...(connection.edges ?? []));
+    if (!connection.pageInfo?.hasNextPage) break;
+    after = connection.pageInfo.endCursor ?? null;
+    if (!after) break;
+  }
+
+  return all;
+}
+
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
   const data = await storefrontApiRequest(PRODUCT_BY_HANDLE_QUERY, { handle });
   const node = data?.data?.product;
   return node ? { node } : null;
 }
 
-export async function fetchCollections(first = 50): Promise<ShopifyCollection[]> {
+export async function fetchCollections(first = 100): Promise<ShopifyCollection[]> {
   const data = await storefrontApiRequest(COLLECTIONS_QUERY, { first });
   return (
     data?.data?.collections?.edges?.map((edge: { node: ShopifyCollection }) => edge.node) ?? []
@@ -169,7 +202,7 @@ export async function fetchCollections(first = 50): Promise<ShopifyCollection[]>
 
 export async function fetchCollectionByHandle(
   handle: string,
-  first = 40,
+  first = 100,
 ): Promise<{ collection: ShopifyCollection; products: ShopifyProduct[] } | null> {
   const data = await storefrontApiRequest(COLLECTION_BY_HANDLE_QUERY, { handle, first });
   const node = data?.data?.collection;
@@ -182,8 +215,8 @@ export async function searchStorefront(term: string) {
   const trimmed = term.trim();
   if (!trimmed) return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
   const [products, collections] = await Promise.all([
-    fetchProducts(8, trimmed),
-    fetchCollections(50),
+    fetchProducts(20, trimmed),
+    fetchCollections(100),
   ]);
   const lowered = trimmed.toLowerCase();
   return {
@@ -222,4 +255,38 @@ export function variantSummary(options?: Array<{ name: string; value: string }>)
     .filter((option) => option.value && option.value !== "Default Title")
     .map((option) => option.value)
     .join(" • ");
+}
+
+/** Lowest variant price of a product, used for price facets and sorting. */
+export function productPrice(product: ShopifyProduct) {
+  const node = product.node;
+  const variantPrices = node.variants.edges
+    .map((edge) => parseFloat(edge.node.price.amount))
+    .filter((value) => isFinite(value));
+  if (variantPrices.length > 0) return Math.min(...variantPrices);
+  return parseFloat(node.priceRange.minVariantPrice.amount) || 0;
+}
+
+export function productCurrency(product: ShopifyProduct) {
+  return (
+    product.node.variants.edges[0]?.node.price.currencyCode ??
+    product.node.priceRange.minVariantPrice.currencyCode ??
+    "USD"
+  );
+}
+
+export function productCompareAt(product: ShopifyProduct) {
+  const node = product.node;
+  const variant = node.variants.edges[0]?.node;
+  return variant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount ?? null;
+}
+
+export function productInStock(product: ShopifyProduct) {
+  const node = product.node;
+  if (typeof node.availableForSale === "boolean") return node.availableForSale;
+  return node.variants.edges.some((edge) => edge.node.availableForSale);
+}
+
+export function productCollectionHandles(product: ShopifyProduct) {
+  return (product.node.collections?.edges ?? []).map((edge) => edge.node.handle);
 }

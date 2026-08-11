@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Heart, Home, LayoutGrid, Search, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 
@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
-/** Mobile app style bottom navigation. Every item performs a real action. */
-export function BottomNav({ active }: { active?: "home" | "collections" }) {
+/** Mobile bottom navigation. Every item performs a real action. */
+export function BottomNav() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const wishlistCount = useWishlistStore((state) => state.handles.length);
   const cartCount = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
@@ -17,7 +18,7 @@ export function BottomNav({ active }: { active?: "home" | "collections" }) {
 
   const itemClass = (isActive?: boolean) =>
     cn(
-      "relative flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium",
+      "relative flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors",
       isActive ? "text-primary" : "text-muted-foreground",
     );
 
@@ -25,7 +26,7 @@ export function BottomNav({ active }: { active?: "home" | "collections" }) {
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-md items-stretch px-2 pb-[env(safe-area-inset-bottom)]">
-          <Link to="/" className={itemClass(active === "home")}>
+          <Link to="/" className={itemClass(pathname === "/")}>
             <Home className="h-5 w-5" />
             Home
           </Link>
@@ -33,11 +34,11 @@ export function BottomNav({ active }: { active?: "home" | "collections" }) {
             <Search className="h-5 w-5" />
             Search
           </button>
-          <Link to="/collections" className={itemClass(active === "collections")}>
+          <Link to="/shop" className={itemClass(pathname.startsWith("/shop"))}>
             <LayoutGrid className="h-5 w-5" />
-            Categories
+            Shop
           </Link>
-          <Link to="/collections" className={itemClass()}>
+          <Link to="/wishlist" className={itemClass(pathname.startsWith("/wishlist"))}>
             <span className="relative">
               <Heart className="h-5 w-5" />
               {wishlistCount > 0 && (
@@ -48,11 +49,7 @@ export function BottomNav({ active }: { active?: "home" | "collections" }) {
             </span>
             Saved
           </Link>
-          <button
-            type="button"
-            onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
-            className={itemClass()}
-          >
+          <Link to="/cart" className={itemClass(pathname.startsWith("/cart"))}>
             <span className="relative">
               <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
@@ -62,7 +59,7 @@ export function BottomNav({ active }: { active?: "home" | "collections" }) {
               )}
             </span>
             Bag
-          </button>
+          </Link>
         </div>
       </nav>
 
