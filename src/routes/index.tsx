@@ -1,19 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { ArrowRight, Sparkles } from "lucide-react";
 
-import { BottomNav } from "@/components/BottomNav";
 import { CollectionSections } from "@/components/CollectionSections";
 import { CompactProductCard } from "@/components/CompactProductCard";
 import { BenefitsBar } from "@/components/HomeSections";
-import { MobileTopBar } from "@/components/MobileTopBar";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductGrid, ProductGridSkeleton } from "@/components/ProductGrid";
 import { PromoBanner } from "@/components/PromoBanner";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
-import { fetchCollections, fetchProducts } from "@/lib/shopify";
+import { StoreLayout } from "@/components/StoreLayout";
+import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { discountPercent, productInStock, type ShopifyProduct } from "@/lib/shopify";
+import { displayCollections } from "@/lib/taxonomy";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(catalogQueryOptions());
+    context.queryClient.prefetchQuery(collectionsQueryOptions());
+  },
   head: () => ({
     meta: [
       { title: "Space Cell — Premium Phones, Tablets & Audio" },
@@ -35,89 +38,191 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-function Index() {
-  const {
-    data: products,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["shopify-products"],
-    queryFn: () => fetchProducts(30),
-  });
-  const { data: collections } = useQuery({
-    queryKey: ["shopify-collections"],
-    queryFn: () => fetchCollections(50),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const all = products ?? [];
-
+function onSale(product: ShopifyProduct) {
+  const variant = product.node.variants.edges[0]?.node;
   return (
-    <div className="min-h-screen bg-background pb-20 lg:pb-0">
-      <div className="hidden lg:block">
-        <SiteHeader />
+    discountPercent(
+      variant?.price.amount ?? product.node.priceRange.minVariantPrice.amount,
+      variant?.compareAtPrice?.amount ??
+        product.node.compareAtPriceRange?.minVariantPrice.amount,
+    ) !== null
+  );
+}
+
+function SectionHeader({
+  title,
+  subtitle,
+  href,
+}: {
+  title: string;
+  subtitle?: string;
+  href?: string;
+}) {
+  return (
+    <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 px-4 sm:px-0">
+      <div className="min-w-0">
+        <h2 className="truncate text-lg font-semibold tracking-tight sm:text-xl">{title}</h2>
+        {subtitle && <p className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</p>}
       </div>
-      <MobileTopBar />
-
-      <main className="mx-auto max-w-5xl space-y-8 py-4">
-        {isLoading ? (
-          <div className="px-4">
-            <div className="h-44 animate-pulse rounded-2xl bg-surface" />
-          </div>
-        ) : (
-          <PromoBanner products={all.slice(0, 4)} />
-        )}
-
-        {all.length > 0 && (
-          <section>
-            <div className="mb-3 flex items-center justify-between px-4">
-              <h2 className="text-base font-semibold tracking-tight">Popular right now</h2>
-              <Link to="/collections" className="text-xs font-medium text-primary">
-                View all
-              </Link>
-            </div>
-            <div className="scroll-rail flex gap-4 px-4">
-              {all.slice(0, 10).map((product) => (
-                <div key={product.node.id} className="w-32 shrink-0 sm:w-36">
-                  <CompactProductCard product={product} />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <CollectionSections collections={collections ?? []} />
-
-        <section>
-          <h2 className="mb-3 px-4 text-base font-semibold tracking-tight">All products</h2>
-          {isLoading ? (
-            <div className="grid grid-cols-2 gap-4 px-4 md:grid-cols-4">
-              {[0, 1, 2, 3].map((key) => (
-                <div key={key} className="h-72 animate-pulse rounded-lg bg-surface" />
-              ))}
-            </div>
-          ) : isError ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">
-              We couldn&apos;t load products right now. Please try again.
-            </p>
-          ) : all.length === 0 ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">No products found</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 px-4 md:grid-cols-4">
-              {all.map((product) => (
-                <ProductCard key={product.node.id} product={product} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        <BenefitsBar />
-      </main>
-
-      <div className="hidden lg:block">
-        <SiteFooter />
-      </div>
-      <BottomNav />
+      {href && (
+        <Link
+          to={href}
+          className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary hover:underline sm:text-sm"
+        >
+          View all <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      )}
     </div>
   );
 }
+
+function Rail({ products }: { products: ShopifyProduct[] }) {
+  return (
+    <div className="scroll-rail flex gap-4 px-4 sm:px-0">
+      {products.map((product) => (
+        <div key={product.node.id} className="w-36 shrink-0 sm:w-44">
+          <CompactProductCard product={product} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Index() {
+  const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
+  const { data: collections, isLoading: collectionsLoading } = useQuery(collectionsQueryOptions());
+
+  const products = catalog.products;
+  const inStock = products.filter(productInStock);
+  const deals = products.filter(onSale);
+  const newest = [...products].sort((a, b) =>
+    (b.node.createdAt ?? "").localeCompare(a.node.createdAt ?? ""),
+  );
+  const banner = (deals.length > 0 ? deals : inStock.length > 0 ? inStock : products).slice(0, 5);
+  const collectionList = displayCollections(collections ?? []);
+
+  return (
+    <StoreLayout>
+      <div className="mx-auto max-w-7xl space-y-10 py-4 sm:px-4 sm:py-8">
+        {products.length === 0 ? (
+          <div className="px-4">
+            <ProductGrid
+              products={[]}
+              emptyTitle="No products found"
+              emptyHint="Add a product in Shopify and it will appear here automatically — tell me the product name and price and I can create it for you."
+            />
+          </div>
+        ) : (
+          <>
+            <PromoBanner products={banner} />
+
+            {catalog.categories.length > 0 && (
+              <section>
+                <SectionHeader
+                  title="Shop by category"
+                  subtitle="Categories are generated from your live Shopify catalogue"
+                  href="/shop"
+                />
+                <div className="scroll-rail flex gap-3 px-4 sm:grid sm:grid-cols-3 sm:px-0 lg:grid-cols-6">
+                  {catalog.categories.map((category) => (
+                    <Link
+                      key={category.slug}
+                      to="/category/$slug"
+                      params={{ slug: category.slug }}
+                      className="flex w-28 shrink-0 flex-col items-center gap-2 rounded-xl border bg-card p-4 text-center shadow-card transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-card-hover sm:w-auto"
+                    >
+                      <span className="grid h-11 w-11 place-items-center rounded-full bg-accent text-primary">
+                        {category.icon ? <category.icon className="h-5 w-5" /> : null}
+                      </span>
+                      <span className="line-clamp-2 text-xs font-medium leading-snug">
+                        {category.label}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {category.count} item{category.count === 1 ? "" : "s"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {deals.length > 0 && (
+              <section>
+                <SectionHeader
+                  title="Today's deals"
+                  subtitle="Live compare-at pricing from Shopify"
+                  href="/shop"
+                />
+                <Rail products={deals.slice(0, 12)} />
+              </section>
+            )}
+
+            <section>
+              <SectionHeader
+                title="New arrivals"
+                subtitle="Newest products published in your store"
+                href="/shop"
+              />
+              <Rail products={newest.slice(0, 12)} />
+            </section>
+
+            {catalog.brands.length > 0 && (
+              <section>
+                <SectionHeader title="Top brands" href="/shop" />
+                <div className="scroll-rail flex gap-3 px-4 sm:grid sm:grid-cols-4 sm:px-0 lg:grid-cols-6">
+                  {catalog.brands.map((brand) => (
+                    <Link
+                      key={brand.slug}
+                      to="/brand/$slug"
+                      params={{ slug: brand.slug }}
+                      className="grid h-20 w-32 shrink-0 place-items-center rounded-xl border bg-card text-sm font-semibold shadow-card transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-card-hover sm:w-auto"
+                    >
+                      <span className="truncate px-2">{brand.label}</span>
+                      <span className="text-[11px] font-normal text-muted-foreground">
+                        {brand.count} product{brand.count === 1 ? "" : "s"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {collectionsLoading ? (
+              <div className="px-4 sm:px-0">
+                <div className="h-40 animate-pulse rounded-2xl bg-surface" />
+              </div>
+            ) : (
+              collectionList.length > 0 && <CollectionSections collections={collectionList} />
+            )}
+
+            <section>
+              <SectionHeader
+                title="All products"
+                subtitle={`${products.length} product${products.length === 1 ? "" : "s"} live from Shopify`}
+                href="/shop"
+              />
+              <div className="px-4 sm:px-0">
+                <ProductGrid products={products.slice(0, 12)} />
+                {products.length > 12 && (
+                  <div className="mt-6 flex justify-center">
+                    <Link
+                      to="/shop"
+                      className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Browse the full catalogue
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </section>
+          </>
+        )}
+
+        <BenefitsBar />
+      </div>
+    </StoreLayout>
+  );
+}
+
+export { ProductGridSkeleton };
