@@ -5,7 +5,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { CollectionSections } from "@/components/CollectionSections";
 import { CompactProductCard } from "@/components/CompactProductCard";
 import { BenefitsBar } from "@/components/HomeSections";
-import { ProductGrid, ProductGridSkeleton } from "@/components/ProductGrid";
+import { ProductGrid } from "@/components/ProductGrid";
 import { PromoBanner } from "@/components/PromoBanner";
 import { StoreLayout } from "@/components/StoreLayout";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
@@ -66,7 +66,7 @@ function SectionHeader({
       </div>
       {href && (
         <Link
-          to={href}
+          to={href as "/shop"}
           className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary hover:underline sm:text-sm"
         >
           View all <ArrowRight className="h-3.5 w-3.5" />
@@ -224,5 +224,3 @@ function Index() {
     </StoreLayout>
   );
 }
-
-export { ProductGridSkeleton };
