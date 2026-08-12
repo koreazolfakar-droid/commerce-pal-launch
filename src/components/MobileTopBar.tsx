@@ -1,34 +1,24 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, Search, ShoppingBag } from "lucide-react";
+import { Heart, LayoutGrid, Search, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 
 import { SearchOverlay } from "@/components/SearchOverlay";
-import { fetchCollections, type ShopifyCollection } from "@/lib/shopify";
-import { CATEGORIES } from "@/lib/catalog";
+import { catalogQueryOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
-function iconFor(handle: string) {
-  return CATEGORIES.find((category) => handle.includes(category.handle))?.icon;
-}
-
 /** Mobile app style top bar: brand, quick actions, search field and category strip. */
-export function MobileTopBar({ activeHandle }: { activeHandle?: string }) {
+export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const wishlistCount = useWishlistStore((state) => state.handles.length);
   const cartCount = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
 
-  const { data: collections } = useQuery({
-    queryKey: ["shopify-collections"],
-    queryFn: () => fetchCollections(50),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const list: ShopifyCollection[] = collections ?? [];
+  const { data: catalog } = useQuery(catalogQueryOptions());
+  const list = catalog?.categories ?? [];
 
   return (
     <>
@@ -42,7 +32,7 @@ export function MobileTopBar({ activeHandle }: { activeHandle?: string }) {
           </Link>
           <div className="flex items-center gap-1">
             <Link
-              to="/collections"
+              to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
               className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-surface"
             >
@@ -81,32 +71,32 @@ export function MobileTopBar({ activeHandle }: { activeHandle?: string }) {
         </div>
 
         {list.length > 0 && (
-          <nav className="scroll-rail flex gap-4 px-4 pb-2">
+          <nav aria-label="Product categories" className="scroll-rail flex gap-4 px-4 pb-2">
             <Link
-              to="/collections"
+              to="/shop"
               className={cn(
                 "flex w-16 shrink-0 flex-col items-center gap-1.5 pb-2 text-[11px] font-medium",
-                !activeHandle ? "text-primary" : "text-muted-foreground",
+                !activeSlug ? "text-primary" : "text-muted-foreground",
               )}
             >
               <span
                 className={cn(
                   "grid h-14 w-14 place-items-center rounded-xl border bg-card",
-                  !activeHandle && "border-primary",
+                  !activeSlug && "border-primary bg-accent",
                 )}
               >
-                <Search className="h-5 w-5" />
+                <LayoutGrid className="h-5 w-5" />
               </span>
               <span className="truncate">All</span>
             </Link>
-            {list.map((collection) => {
-              const Icon = iconFor(collection.handle);
-              const active = activeHandle === collection.handle;
+            {list.map((category) => {
+              const Icon = category.icon;
+              const active = activeSlug === category.slug;
               return (
                 <Link
-                  key={collection.id}
-                  to="/collections/$handle"
-                  params={{ handle: collection.handle }}
+                  key={category.slug}
+                  to="/category/$slug"
+                  params={{ slug: category.slug }}
                   className={cn(
                     "flex w-16 shrink-0 flex-col items-center gap-1.5 pb-2 text-[11px] font-medium",
                     active ? "text-primary" : "text-muted-foreground",
@@ -114,33 +104,19 @@ export function MobileTopBar({ activeHandle }: { activeHandle?: string }) {
                 >
                   <span
                     className={cn(
-                      "grid h-14 w-14 place-items-center overflow-hidden rounded-xl border bg-card",
-                      active && "border-primary",
+                      "grid h-14 w-14 place-items-center rounded-xl border bg-card transition-colors",
+                      active ? "border-primary bg-accent" : "hover:border-primary",
                     )}
                   >
-                    {collection.image ? (
-                      <img
-                        src={collection.image.url}
-                        alt={collection.image.altText ?? collection.title}
-                        loading="lazy"
-                        width={112}
-                        height={112}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : Icon ? (
-                      <Icon className="h-5 w-5" />
-                    ) : (
-                      <span className="text-sm font-semibold">
-                        {collection.title.charAt(0).toUpperCase()}
-                      </span>
-                    )}
+                    {Icon ? <Icon className="h-5 w-5" /> : null}
                   </span>
-                  <span className="w-full truncate text-center">{collection.title}</span>
+                  <span className="w-full truncate text-center">{category.label}</span>
                 </Link>
               );
             })}
           </nav>
         )}
+
       </header>
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />

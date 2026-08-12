@@ -84,8 +84,13 @@ export function CompactProductCard({
         </button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-baseline gap-1.5">
-        <span className="text-sm font-semibold text-primary">
+      <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-3 block">
+        <h3 className="line-clamp-2 text-xs font-medium leading-snug hover:text-primary">
+          {node.title}
+        </h3>
+      </Link>
+      <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+        <span className="text-sm font-semibold">
           {formatPrice(price.amount, price.currencyCode)}
         </span>
         {discount !== null && compareAt && (
@@ -94,11 +99,14 @@ export function CompactProductCard({
           </span>
         )}
       </div>
-      <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-0.5">
-        <h3 className="line-clamp-2 text-xs font-medium leading-snug">{node.title}</h3>
-      </Link>
-      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-        {summary || (inStock ? "In stock" : "Out of stock")}
+      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{summary}</p>
+      <p
+        className={cn(
+          "mt-0.5 text-[11px] font-medium",
+          inStock ? "text-success" : "text-destructive",
+        )}
+      >
+        {inStock ? "In stock" : "Out of stock"}
       </p>
     </article>
   );
