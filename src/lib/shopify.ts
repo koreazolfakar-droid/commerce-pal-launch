@@ -70,7 +70,6 @@ const PRODUCT_FIELDS = `
         price { amount currencyCode }
         compareAtPrice { amount currencyCode }
         availableForSale
-        quantityAvailable
         image { url altText }
         selectedOptions { name value }
       }
