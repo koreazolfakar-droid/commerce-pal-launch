@@ -38,7 +38,7 @@ export function PromoBanner({ products }: { products: ShopifyProduct[] }) {
             <h2 className="mt-1 line-clamp-2 text-lg font-bold leading-tight text-accent-foreground lg:text-3xl">
               {node.title}
             </h2>
-            <p className="mt-2 flex items-baseline gap-2">
+            <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <span className="text-base font-bold text-primary lg:text-2xl">
                 {formatPrice(price.amount, price.currencyCode)}
               </span>
@@ -48,6 +48,7 @@ export function PromoBanner({ products }: { products: ShopifyProduct[] }) {
                 </span>
               )}
             </p>
+
             <Link
               to="/product/$handle"
               params={{ handle: node.handle }}
