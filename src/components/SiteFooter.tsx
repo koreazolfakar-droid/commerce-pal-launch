@@ -51,21 +51,22 @@ export function SiteFooter() {
           </div>
 
           <FooterColumn title="Shop">
-            {shopLinks.length === 0 ? (
-              <li className="text-sm text-muted-foreground">Collections coming soon</li>
-            ) : (
-              shopLinks.map((entry) => (
-                <li key={entry.handle}>
-                  <Link
-                    to="/collections/$handle"
-                    params={{ handle: entry.handle }}
-                    className="text-sm text-muted-foreground hover:text-primary"
-                  >
-                    {entry.label}
-                  </Link>
-                </li>
-              ))
-            )}
+            {shopLinks.map((entry) => (
+              <li key={entry.slug}>
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: entry.slug }}
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  {entry.label}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link to="/shop" className="text-sm text-muted-foreground hover:text-primary">
+                Shop all products
+              </Link>
+            </li>
             <li>
               <Link to="/collections" className="text-sm text-muted-foreground hover:text-primary">
                 All collections
@@ -75,13 +76,13 @@ export function SiteFooter() {
 
           <FooterColumn title="Brands">
             {brandLinks.length === 0 ? (
-              <li className="text-sm text-muted-foreground">Brand pages coming soon</li>
+              <li className="text-sm text-muted-foreground">No brands yet</li>
             ) : (
               brandLinks.map((entry) => (
-                <li key={entry.handle}>
+                <li key={entry.slug}>
                   <Link
-                    to="/collections/$handle"
-                    params={{ handle: entry.handle }}
+                    to="/brand/$slug"
+                    params={{ slug: entry.slug }}
                     className="text-sm text-muted-foreground hover:text-primary"
                   >
                     {entry.label}
@@ -90,6 +91,7 @@ export function SiteFooter() {
               ))
             )}
           </FooterColumn>
+
 
           <div className="grid gap-10 sm:grid-cols-2 lg:contents">
             <FooterColumn title="Support">
