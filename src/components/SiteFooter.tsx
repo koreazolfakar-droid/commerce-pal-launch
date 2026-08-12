@@ -4,22 +4,17 @@ import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { availableEntries, BRANDS, CATEGORIES } from "@/lib/catalog";
-import { fetchCollections } from "@/lib/shopify";
+import { catalogQueryOptions } from "@/lib/queries";
 
 const SUPPORT = ["Contact", "Shipping", "Returns", "Warranty", "FAQ"];
 const COMPANY = ["About", "Privacy", "Terms"];
 const PAYMENTS = ["Visa", "Mastercard", "Amex", "Apple Pay", "Shop Pay"];
 
 export function SiteFooter() {
-  const { data: collections } = useQuery({
-    queryKey: ["shopify-collections"],
-    queryFn: () => fetchCollections(50),
-    staleTime: 5 * 60 * 1000,
-  });
-  const handles = new Set((collections ?? []).map((collection) => collection.handle));
-  const shopLinks = availableEntries(CATEGORIES, handles).slice(0, 6);
-  const brandLinks = availableEntries(BRANDS, handles).slice(0, 5);
+  const { data: catalog } = useQuery(catalogQueryOptions());
+  const shopLinks = (catalog?.categories ?? []).slice(0, 6);
+  const brandLinks = (catalog?.brands ?? []).slice(0, 5);
+
 
   return (
     <footer className="mt-16 border-t bg-surface">
@@ -56,21 +51,22 @@ export function SiteFooter() {
           </div>
 
           <FooterColumn title="Shop">
-            {shopLinks.length === 0 ? (
-              <li className="text-sm text-muted-foreground">Collections coming soon</li>
-            ) : (
-              shopLinks.map((entry) => (
-                <li key={entry.handle}>
-                  <Link
-                    to="/collections/$handle"
-                    params={{ handle: entry.handle }}
-                    className="text-sm text-muted-foreground hover:text-primary"
-                  >
-                    {entry.label}
-                  </Link>
-                </li>
-              ))
-            )}
+            {shopLinks.map((entry) => (
+              <li key={entry.slug}>
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: entry.slug }}
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  {entry.label}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link to="/shop" className="text-sm text-muted-foreground hover:text-primary">
+                Shop all products
+              </Link>
+            </li>
             <li>
               <Link to="/collections" className="text-sm text-muted-foreground hover:text-primary">
                 All collections
@@ -80,13 +76,13 @@ export function SiteFooter() {
 
           <FooterColumn title="Brands">
             {brandLinks.length === 0 ? (
-              <li className="text-sm text-muted-foreground">Brand pages coming soon</li>
+              <li className="text-sm text-muted-foreground">No brands yet</li>
             ) : (
               brandLinks.map((entry) => (
-                <li key={entry.handle}>
+                <li key={entry.slug}>
                   <Link
-                    to="/collections/$handle"
-                    params={{ handle: entry.handle }}
+                    to="/brand/$slug"
+                    params={{ slug: entry.slug }}
                     className="text-sm text-muted-foreground hover:text-primary"
                   >
                     {entry.label}
@@ -95,6 +91,7 @@ export function SiteFooter() {
               ))
             )}
           </FooterColumn>
+
 
           <div className="grid gap-10 sm:grid-cols-2 lg:contents">
             <FooterColumn title="Support">
