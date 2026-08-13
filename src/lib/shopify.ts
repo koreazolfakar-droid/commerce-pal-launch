@@ -27,7 +27,7 @@ export interface ShopifyProductNode {
         price: { amount: string; currencyCode: string };
         compareAtPrice?: { amount: string; currencyCode: string } | null;
         availableForSale: boolean;
-        quantityAvailable?: number | null;
+        
         image?: { url: string; altText: string | null } | null;
         selectedOptions: Array<{ name: string; value: string }>;
       };
@@ -150,10 +150,14 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
 
   const data = await response.json();
 
-  if (data.errors) {
-    throw new Error(
-      `Error calling Shopify: ${data.errors.map((e: { message: string }) => e.message).join(", ")}`,
-    );
+  if (data.errors?.length) {
+    const messages = data.errors.map((e: { message: string }) => e.message);
+    // Field-level scope errors (e.g. inventory) still return usable data —
+    // don't blank the page for them.
+    if (!data.data) {
+      throw new Error(`Error calling Shopify: ${messages.join(", ")}`);
+    }
+    console.warn(`Shopify partial response: ${messages.join(", ")}`);
   }
 
   return data;
