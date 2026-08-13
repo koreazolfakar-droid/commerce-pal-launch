@@ -27,7 +27,7 @@ export interface ShopifyProductNode {
         price: { amount: string; currencyCode: string };
         compareAtPrice?: { amount: string; currencyCode: string } | null;
         availableForSale: boolean;
-        quantityAvailable?: number | null;
+        
         image?: { url: string; altText: string | null } | null;
         selectedOptions: Array<{ name: string; value: string }>;
       };
