@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { cdnImage } from "@/lib/image";
 import { formatPrice } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 
@@ -48,7 +49,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild className={hideTrigger ? "hidden" : undefined}>
-        <Button variant="outline" size="icon" className="relative">
+        <Button variant="outline" size="icon" className="press relative rounded-full">
           <ShoppingBag className="h-5 w-5" />
           {totalItems > 0 && (
             <Badge className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs">
@@ -79,11 +80,11 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
               <div className="min-h-0 flex-1 overflow-y-auto pr-2">
                 <div className="space-y-4">
                   {items.map((item) => (
-                    <div key={item.variantId} className="flex gap-4 rounded-lg bg-card p-3">
-                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                    <div key={item.variantId} className="flex gap-4 rounded-2xl border bg-card p-3">
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-surface">
                         {item.product.node.images?.edges?.[0]?.node && (
                           <img
-                            src={item.product.node.images.edges[0].node.url}
+                            src={cdnImage(item.product.node.images.edges[0].node.url, 128)}
                             alt={item.product.node.title}
                             className="h-full w-full object-cover"
                             loading="lazy"

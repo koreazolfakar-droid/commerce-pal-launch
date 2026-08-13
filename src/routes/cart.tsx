@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ExternalLink, Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 import { StoreLayout } from "@/components/StoreLayout";
+import { cdnImage } from "@/lib/image";
 import { formatPrice, variantSummary } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 
@@ -39,7 +40,7 @@ function CartPage() {
   return (
     <StoreLayout>
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-2xl font-semibold tracking-tight">Your bag</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight lg:text-3xl">Your bag</h1>
 
         {items.length === 0 ? (
           <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border bg-surface px-6 py-16 text-center">
@@ -47,14 +48,14 @@ function CartPage() {
             <p className="text-sm text-muted-foreground">Your bag is empty.</p>
             <Link
               to="/shop"
-              className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground"
+              className="press rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
             >
               Start shopping
             </Link>
           </div>
         ) : (
           <>
-            <ul className="mt-6 divide-y rounded-2xl border">
+            <ul className="mt-6 divide-y rounded-2xl border bg-card shadow-card">
               {items.map((item) => {
                 const image = item.product.node.images?.edges?.[0]?.node;
                 return (
@@ -66,10 +67,13 @@ function CartPage() {
                     >
                       {image && (
                         <img
-                          src={image.url}
+                          src={cdnImage(image.url, 160)}
                           alt={image.altText ?? item.product.node.title}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-contain p-1.5"
                           loading="lazy"
+                          decoding="async"
+                          width={80}
+                          height={80}
                         />
                       )}
                     </Link>
@@ -122,10 +126,10 @@ function CartPage() {
               })}
             </ul>
 
-            <div className="mt-6 rounded-2xl border p-4">
+            <div className="mt-6 rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:bottom-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Subtotal</span>
-                <span className="text-lg font-semibold">{formatPrice(total, currency)}</span>
+                <span className="text-xl font-extrabold tracking-tight">{formatPrice(total, currency)}</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Taxes and shipping are calculated at Shopify checkout.
@@ -134,7 +138,7 @@ function CartPage() {
                 type="button"
                 onClick={checkout}
                 disabled={isLoading || isSyncing}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {isLoading || isSyncing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
