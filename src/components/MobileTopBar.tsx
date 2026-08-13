@@ -9,6 +9,15 @@ import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
+function Badge({ value }: { value: number }) {
+  if (value <= 0) return null;
+  return (
+    <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-2 ring-background">
+      {value > 99 ? "99+" : value}
+    </span>
+  );
+}
+
 /** Mobile app style top bar: brand, quick actions, search field and category strip. */
 export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -17,44 +26,36 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
 
-  const { data: catalog } = useQuery(catalogQueryOptions());
+  const { data: catalog, isLoading } = useQuery(catalogQueryOptions());
   const list = catalog?.categories ?? [];
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-xl lg:hidden">
         <div className="flex items-center justify-between gap-3 px-4 pt-3">
-          <Link to="/" className="flex min-w-0 items-center gap-2">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground shadow-card">
               S
             </span>
-            <span className="truncate text-base font-semibold tracking-tight">Space Cell</span>
+            <span className="truncate text-[17px] font-extrabold tracking-tight">Space Cell</span>
           </Link>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
-              className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-surface"
+              className="press relative grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-surface"
             >
-              <Heart className="h-5 w-5" />
-              {wishlistCount > 0 && (
-                <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                  {wishlistCount}
-                </span>
-              )}
+              <Heart className="h-[21px] w-[21px]" strokeWidth={1.9} />
+              <Badge value={wishlistCount} />
             </Link>
             <button
               type="button"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
               aria-label={`Cart, ${cartCount} items`}
-              className="relative grid h-9 w-9 place-items-center rounded-full hover:bg-surface"
+              className="press relative grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-surface"
             >
-              <ShoppingBag className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                  {cartCount}
-                </span>
-              )}
+              <ShoppingBag className="h-[21px] w-[21px]" strokeWidth={1.9} />
+              <Badge value={cartCount} />
             </button>
           </div>
         </div>
@@ -63,32 +64,42 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="flex h-11 w-full items-center gap-3 rounded-xl border bg-card px-4 text-left text-sm text-muted-foreground"
+            className="press flex h-11 w-full items-center gap-2.5 rounded-2xl bg-surface px-4 text-left text-[13px] text-muted-foreground transition-colors hover:bg-accent"
           >
-            <Search className="h-4 w-4" />
-            Search phones, audio, accessories…
+            <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
+            <span className="truncate">Search phones, audio, accessories…</span>
           </button>
         </div>
 
-        {list.length > 0 && (
-          <nav aria-label="Product categories" className="scroll-rail flex gap-4 px-4 pb-2">
-            <Link
-              to="/shop"
-              className={cn(
-                "flex w-16 shrink-0 flex-col items-center gap-1.5 pb-2 text-[11px] font-medium",
-                !activeSlug ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <span
+        {(list.length > 0 || isLoading) && (
+          <nav aria-label="Product categories" className="scroll-rail flex gap-3 px-4 pb-3">
+            {isLoading && list.length === 0
+              ? Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="w-16 shrink-0" aria-hidden>
+                    <div className="shimmer h-14 w-14 rounded-2xl bg-surface" />
+                    <div className="mx-auto mt-1.5 h-2 w-10 rounded-full bg-surface" />
+                  </div>
+                ))
+              : null}
+            {list.length > 0 && (
+              <Link
+                to="/shop"
                 className={cn(
-                  "grid h-14 w-14 place-items-center rounded-xl border bg-card",
-                  !activeSlug && "border-primary bg-accent",
+                  "press flex w-16 shrink-0 flex-col items-center gap-1.5 text-[10px] font-semibold",
+                  !activeSlug ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                <LayoutGrid className="h-5 w-5" />
-              </span>
-              <span className="truncate">All</span>
-            </Link>
+                <span
+                  className={cn(
+                    "grid h-14 w-14 place-items-center rounded-2xl bg-surface transition-colors",
+                    !activeSlug && "bg-accent text-primary",
+                  )}
+                >
+                  <LayoutGrid className="h-[21px] w-[21px]" strokeWidth={1.9} />
+                </span>
+                <span className="truncate">All</span>
+              </Link>
+            )}
             {list.map((category) => {
               const Icon = category.icon;
               const active = activeSlug === category.slug;
@@ -98,17 +109,17 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
                   to="/category/$slug"
                   params={{ slug: category.slug }}
                   className={cn(
-                    "flex w-16 shrink-0 flex-col items-center gap-1.5 pb-2 text-[11px] font-medium",
+                    "press flex w-16 shrink-0 flex-col items-center gap-1.5 text-[10px] font-semibold",
                     active ? "text-primary" : "text-muted-foreground",
                   )}
                 >
                   <span
                     className={cn(
-                      "grid h-14 w-14 place-items-center rounded-xl border bg-card transition-colors",
-                      active ? "border-primary bg-accent" : "hover:border-primary",
+                      "grid h-14 w-14 place-items-center rounded-2xl bg-surface transition-colors",
+                      active ? "bg-accent text-primary" : "hover:bg-accent",
                     )}
                   >
-                    {Icon ? <Icon className="h-5 w-5" /> : null}
+                    {Icon ? <Icon className="h-[21px] w-[21px]" strokeWidth={1.9} /> : null}
                   </span>
                   <span className="w-full truncate text-center">{category.label}</span>
                 </Link>
@@ -116,7 +127,6 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
             })}
           </nav>
         )}
-
       </header>
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />

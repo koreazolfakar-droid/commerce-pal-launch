@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart, Loader2, ShoppingBag } from "lucide-react";
+import { memo } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { cn } from "@/lib/utils";
 import {
   discountPercent,
@@ -13,7 +15,8 @@ import {
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
-export function ProductCard({
+/** Full product card used across grids (shop, category, brand, search, wishlist). */
+export const ProductCard = memo(function ProductCard({
   product,
   badge,
   className,
@@ -61,38 +64,28 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        "group flex flex-col overflow-hidden rounded-lg border bg-card shadow-card transition-shadow hover:shadow-card-hover",
+        "card-lift group flex flex-col overflow-hidden rounded-2xl border bg-card shadow-card",
         className,
       )}
     >
-      <div className="relative">
-        {badge && (
-          <span className="absolute left-3 top-3 z-10 rounded-md bg-accent px-2 py-1 text-[11px] font-semibold text-accent-foreground">
-            {badge}
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={handleWishlist}
-          aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
-          aria-pressed={wishlisted}
-          className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full border bg-background/90 text-muted-foreground transition-colors hover:text-primary"
-        >
-          <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
-        </button>
+      <div className="media-frame aspect-square border-b">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
-          className="block aspect-square overflow-hidden bg-surface"
+          aria-label={node.title}
+          className="block h-full w-full"
         >
           {image ? (
             <img
-              src={image.url}
+              src={cdnImage(image.url, 480)}
+              srcSet={cdnSrcSet(image.url, 480)}
+              sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
               alt={image.altText ?? node.title}
               loading="lazy"
+              decoding="async"
               width={480}
               height={480}
-              className="h-full w-full object-contain p-6 transition-transform duration-300 group-hover:scale-[1.04]"
+              className="h-full w-full object-contain p-6 group-hover:scale-[1.05]"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -100,50 +93,92 @@ export function ProductCard({
             </div>
           )}
         </Link>
+
+        <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5">
+          {badge && (
+            <span className="rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-accent-foreground">
+              {badge}
+            </span>
+          )}
+          {discount !== null && (
+            <span className="rounded-full bg-destructive px-2.5 py-1 text-[10px] font-bold text-destructive-foreground">
+              -{discount}%
+            </span>
+          )}
+          {!inStock && (
+            <span className="rounded-full bg-foreground/80 px-2.5 py-1 text-[10px] font-semibold text-background">
+              Sold out
+            </span>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleWishlist}
+          aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+          aria-pressed={wishlisted}
+          className="press absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-background/85 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
+        >
+          <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-4">
         {brand && (
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
             {brand}
           </p>
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-          <h3 className="truncate text-sm font-semibold leading-snug">{node.title}</h3>
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors group-hover:text-primary">
+            {node.title}
+          </h3>
         </Link>
-        <p className="min-h-4 truncate text-xs text-muted-foreground">{summary}</p>
+        {summary && <p className="truncate text-xs text-muted-foreground">{summary}</p>}
 
-        {/* Rating slot — intentionally empty until a real review integration supplies data. */}
-
-        <div className="mt-1 flex flex-wrap items-center gap-2">
-          <span className="text-base font-bold">
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-base font-bold tracking-tight">
             {formatPrice(price.amount, price.currencyCode)}
           </span>
           {discount !== null && compareAt && (
-            <>
-              <span className="text-xs text-muted-foreground line-through">
-                {formatPrice(compareAt, price.currencyCode)}
-              </span>
-              <span className="rounded bg-accent px-1.5 py-0.5 text-[11px] font-semibold text-accent-foreground">
-                -{discount}%
-              </span>
-            </>
+            <span className="text-xs text-muted-foreground line-through">
+              {formatPrice(compareAt, price.currencyCode)}
+            </span>
           )}
         </div>
 
-        <p className={cn("text-xs font-medium", inStock ? "text-success" : "text-muted-foreground")}>
+        <p
+          className={cn(
+            "mt-0.5 inline-flex items-center gap-1.5 text-xs font-medium",
+            inStock ? "text-success" : "text-muted-foreground",
+          )}
+        >
+          <span
+            aria-hidden
+            className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              inStock ? "bg-success" : "bg-muted-foreground",
+            )}
+          />
           {inStock ? "In stock" : "Out of stock"}
         </p>
 
         <Button
           onClick={handleAddToCart}
           disabled={isLoading || !selectedVariant || !inStock}
-          className="mt-3 w-full"
+          className="press mt-3 w-full rounded-xl"
           size="sm"
         >
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add to cart"}
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <ShoppingBag className="h-4 w-4" />
+              Add to cart
+            </>
+          )}
         </Button>
       </div>
     </article>
   );
-}
+});

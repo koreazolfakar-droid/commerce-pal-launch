@@ -48,20 +48,20 @@ export function SiteHeader() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-3">
-          <Link to="/" className="flex min-w-0 items-center gap-2">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground shadow-card">
               S
             </span>
-            <span className="truncate text-lg font-semibold tracking-tight">Space Cell</span>
+            <span className="truncate text-lg font-extrabold tracking-tight">Space Cell</span>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-0.5" aria-label="Primary">
             <Link
               to="/shop"
-              activeProps={{ className: "text-primary" }}
-              className="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary"
+              activeProps={{ className: "bg-accent text-primary" }}
+              className="rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface hover:text-primary"
             >
               Shop all
             </Link>
@@ -70,19 +70,19 @@ export function SiteHeader() {
               <div className="group relative">
                 <button
                   type="button"
-                  className="flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary"
+                  className="flex items-center gap-1 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface hover:text-primary"
                 >
                   Categories
                   <ChevronDown className="h-3.5 w-3.5" />
                 </button>
-                <div className="invisible absolute left-0 top-full z-40 w-[34rem] translate-y-1 rounded-xl border bg-popover p-4 opacity-0 shadow-card-hover transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                <div className="invisible absolute left-0 top-full z-40 w-[34rem] translate-y-1 rounded-2xl border bg-popover p-3 opacity-0 shadow-float transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                   <div className="grid grid-cols-2 gap-1">
                     {categories.map((category) => (
                       <Link
                         key={category.slug}
                         to="/category/$slug"
                         params={{ slug: category.slug }}
-                        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-surface hover:text-primary"
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors hover:bg-surface hover:text-primary"
                       >
                         {category.icon && <category.icon className="h-4 w-4 text-primary" />}
                         <span className="flex-1 truncate">{category.label}</span>
@@ -98,18 +98,18 @@ export function SiteHeader() {
               <div className="group relative">
                 <button
                   type="button"
-                  className="flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary"
+                  className="flex items-center gap-1 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface hover:text-primary"
                 >
                   Brands
                   <ChevronDown className="h-3.5 w-3.5" />
                 </button>
-                <div className="invisible absolute left-0 top-full z-40 w-64 translate-y-1 rounded-xl border bg-popover p-2 opacity-0 shadow-card-hover transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                <div className="invisible absolute left-0 top-full z-40 w-64 translate-y-1 rounded-2xl border bg-popover p-2 opacity-0 shadow-float transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                   {brands.map((brand) => (
                     <Link
                       key={brand.slug}
                       to="/brand/$slug"
                       params={{ slug: brand.slug }}
-                      className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-surface hover:text-primary"
+                      className="flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors hover:bg-surface hover:text-primary"
                     >
                       <span className="truncate">{brand.label}</span>
                       <span className="text-xs text-muted-foreground">{brand.count}</span>
@@ -122,8 +122,8 @@ export function SiteHeader() {
             {collectionList.length > 0 && (
               <Link
                 to="/collections"
-                activeProps={{ className: "text-primary" }}
-                className="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary"
+                activeProps={{ className: "bg-accent text-primary" }}
+                className="rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface hover:text-primary"
               >
                 Collections
               </Link>
@@ -134,8 +134,8 @@ export function SiteHeader() {
                 key={category.slug}
                 to="/category/$slug"
                 params={{ slug: category.slug }}
-                activeProps={{ className: "text-primary" }}
-                className="hidden rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary xl:block"
+                activeProps={{ className: "bg-accent text-primary" }}
+                className="hidden rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface hover:text-primary xl:block"
               >
                 {category.label}
               </Link>
@@ -147,7 +147,7 @@ export function SiteHeader() {
               type="button"
               onClick={() => setSearchOpen(true)}
               aria-label="Search products"
-              className="flex h-10 w-56 items-center gap-2 rounded-full border px-4 text-sm text-muted-foreground transition-colors hover:border-primary"
+              className="flex h-10 w-56 items-center gap-2 rounded-full bg-surface px-4 text-[13px] text-muted-foreground transition-colors hover:bg-accent"
             >
               <Search className="h-4 w-4" />
               Search products…
@@ -155,7 +155,7 @@ export function SiteHeader() {
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} items`}
-              className="relative grid h-10 w-10 place-items-center rounded-md text-foreground transition-colors hover:bg-surface"
+              className="press relative grid h-10 w-10 place-items-center rounded-full text-foreground transition-colors hover:bg-surface"
             >
               <Heart className="h-5 w-5" />
               {wishlistCount > 0 && (

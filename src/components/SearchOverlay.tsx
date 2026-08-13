@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { cdnImage } from "@/lib/image";
 import { formatPrice, searchStorefront } from "@/lib/shopify";
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -38,9 +39,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-foreground/25" onClick={onClose}>
+    <div className="animate-fade fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="mx-auto mt-0 w-full max-w-3xl bg-background p-4 shadow-card-hover sm:mt-16 sm:rounded-xl"
+        className="animate-rise mx-auto mt-0 w-full max-w-3xl bg-background p-4 shadow-float sm:mt-16 sm:rounded-3xl sm:border"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center gap-2">
@@ -58,7 +59,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             type="button"
             onClick={onClose}
             aria-label="Close search"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-surface"
+            className="press grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-surface"
           >
             <X className="h-4 w-4" />
           </button>
@@ -72,7 +73,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                   key={suggestion}
                   type="button"
                   onClick={() => setTerm(suggestion)}
-                  className="rounded-full border px-3 py-1.5 text-sm text-muted-foreground hover:border-primary hover:text-primary"
+                  className="press rounded-full bg-surface px-3.5 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
                 >
                   {suggestion}
                 </button>
@@ -96,7 +97,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                         to="/collections/$handle"
                         params={{ handle: collection.handle }}
                         onClick={onClose}
-                        className="rounded-md border px-3 py-1.5 text-sm hover:border-primary hover:text-primary"
+                        className="rounded-full bg-surface px-3.5 py-1.5 text-[13px] font-medium transition-colors hover:bg-accent hover:text-primary"
                       >
                         {collection.title}
                       </Link>
@@ -120,14 +121,17 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                             to="/product/$handle"
                             params={{ handle: node.handle }}
                             onClick={onClose}
-                            className="flex items-center gap-3 py-3 hover:bg-surface"
+                            className="flex items-center gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-surface"
                           >
-                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-surface">
+                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-surface">
                               {image && (
                                 <img
-                                  src={image.url}
+                                  src={cdnImage(image.url, 96)}
                                   alt={image.altText ?? node.title}
                                   loading="lazy"
+                                  decoding="async"
+                                  width={48}
+                                  height={48}
                                   className="h-full w-full object-contain p-1"
                                 />
                               )}
