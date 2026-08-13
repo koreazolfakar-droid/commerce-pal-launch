@@ -41,7 +41,7 @@ function FacetList({
   if (items.length === 0) return null;
   return (
     <div className="border-b pb-5 last:border-0">
-      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
+      <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">{title}</h3>
       <ul className="space-y-2">
         {items.map((item) => {
           const checked = (selected ?? []).includes(item.slug);
@@ -121,7 +121,7 @@ function FilterControls({
       />
 
       <div className="border-b pb-5">
-        <h3 className="mb-3 text-sm font-semibold">Availability</h3>
+        <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">Availability</h3>
         <div className="flex flex-wrap gap-2">
           {[
             { value: undefined, label: "All" },
@@ -133,10 +133,10 @@ function FilterControls({
               type="button"
               onClick={() => onChange({ availability: option.value })}
               className={cn(
-                "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                "press rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
                 filters.availability === option.value
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:border-primary hover:text-primary",
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-surface text-muted-foreground hover:bg-accent hover:text-primary",
               )}
             >
               {option.label}
@@ -146,7 +146,7 @@ function FilterControls({
       </div>
 
       <div>
-        <h3 className="mb-1 text-sm font-semibold">Price</h3>
+        <h3 className="mb-1 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">Price</h3>
         <p className="mb-3 text-xs text-muted-foreground">
           {formatPrice(priceMin, currency)} – {formatPrice(priceMax, currency)}
         </p>
@@ -214,7 +214,7 @@ export function CatalogView({
     <div className="mx-auto max-w-7xl px-4 py-6 lg:py-10">
       {header}
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight lg:text-[2rem]">{title}</h1>
         {description && (
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             {description}
@@ -249,7 +249,7 @@ export function CatalogView({
         </aside>
 
         <div>
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="mb-5 flex items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{products.length}</span> of {total}{" "}
               products
@@ -258,7 +258,7 @@ export function CatalogView({
             <div className="flex items-center gap-2">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="lg:hidden">
+                  <Button variant="outline" size="sm" className="press rounded-full lg:hidden">
                     <SlidersHorizontal className="mr-1.5 h-4 w-4" />
                     Filters
                     {activeCount > 0 && (
@@ -297,7 +297,7 @@ export function CatalogView({
                   onChange={(event) =>
                     onChange({ sort: event.target.value as ProductFilters["sort"] })
                   }
-                  className="h-9 rounded-md border bg-background px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-9 rounded-full border bg-background px-3 text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Sort products"
                 >
                   {SORT_OPTIONS.map((option) => (
