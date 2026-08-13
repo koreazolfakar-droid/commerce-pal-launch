@@ -150,10 +150,14 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
 
   const data = await response.json();
 
-  if (data.errors) {
-    throw new Error(
-      `Error calling Shopify: ${data.errors.map((e: { message: string }) => e.message).join(", ")}`,
-    );
+  if (data.errors?.length) {
+    const messages = data.errors.map((e: { message: string }) => e.message);
+    // Field-level scope errors (e.g. inventory) still return usable data —
+    // don't blank the page for them.
+    if (!data.data) {
+      throw new Error(`Error calling Shopify: ${messages.join(", ")}`);
+    }
+    console.warn(`Shopify partial response: ${messages.join(", ")}`);
   }
 
   return data;
