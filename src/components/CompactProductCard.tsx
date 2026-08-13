@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Loader2, Plus } from "lucide-react";
+import { Heart, Loader2, Plus } from "lucide-react";
+import { memo } from "react";
 import { toast } from "sonner";
 
+import { cdnImage, cdnSrcSet } from "@/lib/image";
 import {
   discountPercent,
   formatPrice,
@@ -10,9 +12,10 @@ import {
 } from "@/lib/shopify";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
+import { useWishlistStore } from "@/stores/wishlistStore";
 
-/** Compact app-style product tile: image, discount badge, quick add, price, name, variant. */
-export function CompactProductCard({
+/** Compact rail/grid tile: optimized image, discount badge, quick add, price, stock. */
+export const CompactProductCard = memo(function CompactProductCard({
   product,
   className,
 }: {
@@ -21,6 +24,8 @@ export function CompactProductCard({
 }) {
   const addItem = useCartStore((state) => state.addItem);
   const isLoading = useCartStore((state) => state.isLoading);
+  const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
+  const toggleWishlist = useWishlistStore((state) => state.toggle);
 
   const node = product.node;
   const variant = node.variants.edges[0]?.node;
@@ -46,26 +51,25 @@ export function CompactProductCard({
   };
 
   return (
-    <article className={cn("relative flex w-full flex-col", className)}>
-      <div className="relative">
-        {discount !== null && (
-          <span className="absolute left-0 top-0 z-10 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-            {discount}% OFF
-          </span>
-        )}
+    <article className={cn("group relative flex w-full flex-col", className)}>
+      <div className="media-frame card-lift aspect-square rounded-2xl border">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
-          className="block aspect-square overflow-hidden rounded-lg bg-surface"
+          aria-label={node.title}
+          className="block h-full w-full"
         >
           {image ? (
             <img
-              src={image.url}
+              src={cdnImage(image.url, 320)}
+              srcSet={cdnSrcSet(image.url, 320)}
+              sizes="(min-width: 1024px) 220px, 45vw"
               alt={image.altText ?? node.title}
               loading="lazy"
+              decoding="async"
               width={320}
               height={320}
-              className="h-full w-full object-contain p-3"
+              className="h-full w-full object-contain p-4 group-hover:scale-[1.06]"
             />
           ) : (
             <span className="grid h-full place-items-center text-xs text-muted-foreground">
@@ -73,41 +77,69 @@ export function CompactProductCard({
             </span>
           )}
         </Link>
+
+        {discount !== null && (
+          <span className="absolute left-2 top-2 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold tracking-wide text-destructive-foreground">
+            -{discount}%
+          </span>
+        )}
+        {!inStock && (
+          <span className="absolute left-2 bottom-2 rounded-full bg-foreground/80 px-2 py-0.5 text-[10px] font-semibold text-background">
+            Sold out
+          </span>
+        )}
+
+        <button
+          type="button"
+          onClick={() => {
+            toggleWishlist(node.handle);
+            toast.success(wishlisted ? "Removed from wishlist" : "Saved to wishlist", {
+              position: "top-center",
+            });
+          }}
+          aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
+          aria-pressed={wishlisted}
+          className="press absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
+        >
+          <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
+        </button>
+
         <button
           type="button"
           onClick={handleAdd}
           disabled={isLoading || !variant || !inStock}
           aria-label={`Add ${node.title} to bag`}
-          className="absolute -bottom-2 right-0 grid h-8 w-8 place-items-center rounded-full border bg-card text-primary shadow-card transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+          className="press absolute bottom-2 right-2 grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-card-hover transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
         </button>
       </div>
 
-      <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-3 block">
-        <h3 className="line-clamp-2 text-xs font-medium leading-snug hover:text-primary">
-          {node.title}
-        </h3>
-      </Link>
-      <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
-        <span className="text-sm font-semibold">
-          {formatPrice(price.amount, price.currencyCode)}
-        </span>
-        {discount !== null && compareAt && (
-          <span className="text-[11px] text-muted-foreground line-through">
-            {formatPrice(compareAt, price.currencyCode)}
+      <div className="mt-3 flex min-w-0 flex-col gap-1">
+        {node.vendor && (
+          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            {node.vendor}
+          </p>
+        )}
+        <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
+          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug transition-colors group-hover:text-primary">
+            {node.title}
+          </h3>
+        </Link>
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-sm font-bold tracking-tight">
+            {formatPrice(price.amount, price.currencyCode)}
           </span>
+          {discount !== null && compareAt && (
+            <span className="text-[11px] text-muted-foreground line-through">
+              {formatPrice(compareAt, price.currencyCode)}
+            </span>
+          )}
+        </div>
+        {summary && (
+          <p className="truncate text-[11px] text-muted-foreground">{summary}</p>
         )}
       </div>
-      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{summary}</p>
-      <p
-        className={cn(
-          "mt-0.5 text-[11px] font-medium",
-          inStock ? "text-success" : "text-destructive",
-        )}
-      >
-        {inStock ? "In stock" : "Out of stock"}
-      </p>
     </article>
   );
-}
+});
