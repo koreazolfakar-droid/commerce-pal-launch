@@ -48,20 +48,20 @@ export function SiteHeader() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-3">
-          <Link to="/" className="flex min-w-0 items-center gap-2">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground shadow-card">
               S
             </span>
-            <span className="truncate text-lg font-semibold tracking-tight">Space Cell</span>
+            <span className="truncate text-lg font-extrabold tracking-tight">Space Cell</span>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-0.5" aria-label="Primary">
             <Link
               to="/shop"
-              activeProps={{ className: "text-primary" }}
-              className="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary"
+              activeProps={{ className: "bg-accent text-primary" }}
+              className="rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface hover:text-primary"
             >
               Shop all
             </Link>
