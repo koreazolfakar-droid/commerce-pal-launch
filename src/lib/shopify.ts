@@ -163,7 +163,7 @@ export function sanitizeQuery(query: string, fields = fieldsToStrip()) {
   return query
     .split("\n")
     .filter((line) => {
-      const name = line.trim().split(/[\s({]/)[0];
+      const name = line.trim().split(/[\s({]/)[0] ?? "";
       return !fields.includes(name);
     })
     .join("\n");
