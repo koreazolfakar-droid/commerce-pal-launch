@@ -93,6 +93,7 @@
   --muted-foreground: oklch(0.53 0.014 235);
   --accent: oklch(0.962 0.028 182);
   --accent-foreground: oklch(0.34 0.075 185);
+  --placeholder: oklch(0.6 0.014 235);
   --destructive: oklch(0.57 0.2 24);
   --destructive-foreground: oklch(1 0 0);
   --success: oklch(0.56 0.135 155);
@@ -179,7 +180,30 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    /* Smooth, cheap cross-fade when the theme class flips. */
+    transition:
+      background-color 0.24s var(--ease-out-soft),
+      border-color 0.24s var(--ease-out-soft),
+      color 0.24s var(--ease-out-soft);
   }
+
+  ::placeholder {
+    color: var(--placeholder);
+    opacity: 1;
+  }
+
+  :disabled,
+  [aria-disabled="true"],
+  [data-disabled] {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-primary) 32%, transparent);
+    color: var(--color-foreground);
+  }
+
 
   html {
     scroll-behavior: smooth;
