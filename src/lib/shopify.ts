@@ -48,6 +48,26 @@ export interface ShopifyCollection {
   image: { url: string; altText: string | null } | null;
 }
 
+/**
+ * Fields that require Storefront access scopes this public token does NOT have.
+ * Anything listed here is stripped from queries before they are sent, so adding
+ * a field to a fragment can never take the storefront down with ACCESS_DENIED.
+ */
+export const RESTRICTED_STOREFRONT_FIELDS = [
+  "quantityAvailable",
+  "currentlyNotInStock",
+  "requiresShipping",
+  "inventoryPolicy",
+  "quantityPriceBreaks",
+  "sellingPlanAllocations",
+  "storeAvailability",
+  "unitPrice",
+  "unitPriceMeasurement",
+  "publishedAt",
+  "trackingParameters",
+] as const;
+
+/** Product fields allowed by the unauthenticated_read_product_listings scope. */
 const PRODUCT_FIELDS = `
   id
   title
@@ -77,6 +97,7 @@ const PRODUCT_FIELDS = `
   }
   options { name values }
 `;
+
 
 const COLLECTION_FIELDS = `
   id
@@ -126,7 +147,39 @@ export const SHOP_QUERY = `
   }
 `;
 
-export async function storefrontApiRequest(query: string, variables: Record<string, unknown> = {}) {
+/** Fields discovered at runtime to be denied by the current token's scopes. */
+const deniedFields = new Set<string>();
+
+function fieldsToStrip() {
+  return [...RESTRICTED_STOREFRONT_FIELDS, ...deniedFields];
+}
+
+/**
+ * Removes fields the token can't read from a GraphQL document. Keeps the query
+ * valid by dropping the whole selection line (including any inline sub-selection).
+ */
+export function sanitizeQuery(query: string, fields = fieldsToStrip()) {
+  if (fields.length === 0) return query;
+  return query
+    .split("\n")
+    .filter((line) => {
+      const name = line.trim().split(/[\s({]/)[0] ?? "";
+      return !fields.includes(name);
+    })
+    .join("\n");
+}
+
+/** Field names Shopify reported as access-denied, parsed from its error messages. */
+function extractDeniedFields(errors: Array<{ message: string }>) {
+  const found: string[] = [];
+  for (const error of errors) {
+    const match = /Access denied for (\w+) field/i.exec(error.message ?? "");
+    if (match?.[1]) found.push(match[1]);
+  }
+  return found;
+}
+
+async function postStorefront(query: string, variables: Record<string, unknown>) {
   const response = await fetch(SHOPIFY_STOREFRONT_URL, {
     method: "POST",
     headers: {
@@ -141,19 +194,35 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
       description:
         "Shopify API access requires an active Shopify billing plan. Visit https://admin.shopify.com to upgrade.",
     });
-    return;
+    return null;
   }
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  const data = await response.json();
+  return response.json();
+}
 
-  if (data.errors?.length) {
-    const messages = data.errors.map((e: { message: string }) => e.message);
-    // Field-level scope errors (e.g. inventory) still return usable data —
-    // don't blank the page for them.
+export async function storefrontApiRequest(query: string, variables: Record<string, unknown> = {}) {
+  const data = await postStorefront(sanitizeQuery(query), variables);
+  if (!data) return;
+
+  const errors: Array<{ message: string }> = data.errors ?? [];
+  if (errors.length) {
+    const messages = errors.map((e) => e.message);
+
+    // Guard: a newly added field that needs a scope we don't have is remembered
+    // and stripped, then the request is retried once so the UI never breaks.
+    const denied = extractDeniedFields(errors).filter((f) => !deniedFields.has(f));
+    if (denied.length) {
+      denied.forEach((field) => deniedFields.add(field));
+      console.warn(`Shopify: dropping unauthorized field(s) ${denied.join(", ")} and retrying.`);
+      const retry = await postStorefront(sanitizeQuery(query), variables);
+      if (retry?.data) return retry;
+    }
+
+    // Field-level errors that still return usable data shouldn't blank the page.
     if (!data.data) {
       throw new Error(`Error calling Shopify: ${messages.join(", ")}`);
     }
@@ -162,6 +231,7 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
 
   return data;
 }
+
 
 export async function fetchProducts(first = 30, query?: string): Promise<ShopifyProduct[]> {
   const data = await storefrontApiRequest(STOREFRONT_QUERY, { first, query });
