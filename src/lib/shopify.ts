@@ -48,6 +48,26 @@ export interface ShopifyCollection {
   image: { url: string; altText: string | null } | null;
 }
 
+/**
+ * Fields that require Storefront access scopes this public token does NOT have.
+ * Anything listed here is stripped from queries before they are sent, so adding
+ * a field to a fragment can never take the storefront down with ACCESS_DENIED.
+ */
+export const RESTRICTED_STOREFRONT_FIELDS = [
+  "quantityAvailable",
+  "currentlyNotInStock",
+  "requiresShipping",
+  "inventoryPolicy",
+  "quantityPriceBreaks",
+  "sellingPlanAllocations",
+  "storeAvailability",
+  "unitPrice",
+  "unitPriceMeasurement",
+  "publishedAt",
+  "trackingParameters",
+] as const;
+
+/** Product fields allowed by the unauthenticated_read_product_listings scope. */
 const PRODUCT_FIELDS = `
   id
   title
@@ -77,6 +97,7 @@ const PRODUCT_FIELDS = `
   }
   options { name values }
 `;
+
 
 const COLLECTION_FIELDS = `
   id
