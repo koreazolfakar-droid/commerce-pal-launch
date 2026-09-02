@@ -5,6 +5,8 @@ import { useState } from "react";
 
 import { CartDrawer } from "@/components/CartDrawer";
 import { SearchOverlay } from "@/components/SearchOverlay";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useHydrated } from "@/hooks/useHydrated";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { displayCollections } from "@/lib/taxonomy";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -18,14 +20,16 @@ const TRUST = [
 /** Desktop header. Navigation is generated from the live Shopify catalog. */
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const hydrated = useHydrated();
   const wishlistCount = useWishlistStore((state) => state.handles.length);
 
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
 
-  const categories = catalog?.categories ?? [];
-  const brands = catalog?.brands ?? [];
-  const collectionList = displayCollections(collections ?? []);
+  // Dynamic navigation waits one client frame so SSR and the first client render match.
+  const categories = hydrated ? catalog?.categories ?? [] : [];
+  const brands = hydrated ? catalog?.brands ?? [] : [];
+  const collectionList = hydrated ? displayCollections(collections ?? []) : [];
   const primaryLinks = categories.slice(0, 4);
 
   return (
@@ -152,6 +156,7 @@ export function SiteHeader() {
               <Search className="h-4 w-4" />
               Search products…
             </button>
+            <ThemeToggle />
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} items`}

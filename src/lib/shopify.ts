@@ -27,7 +27,10 @@ export interface ShopifyProductNode {
         price: { amount: string; currencyCode: string };
         compareAtPrice?: { amount: string; currencyCode: string } | null;
         availableForSale: boolean;
-        
+        sku?: string | null;
+        barcode?: string | null;
+        weight?: number | null;
+        weightUnit?: string | null;
         image?: { url: string; altText: string | null } | null;
         selectedOptions: Array<{ name: string; value: string }>;
       };
@@ -90,6 +93,10 @@ const PRODUCT_FIELDS = `
         price { amount currencyCode }
         compareAtPrice { amount currencyCode }
         availableForSale
+        sku
+        barcode
+        weight
+        weightUnit
         image { url altText }
         selectedOptions { name value }
       }
@@ -233,9 +240,24 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
 }
 
 
-export async function fetchProducts(first = 30, query?: string): Promise<ShopifyProduct[]> {
-  const data = await storefrontApiRequest(STOREFRONT_QUERY, { first, query });
+export async function fetchProducts(
+  first = 30,
+  query?: string,
+  sortKey?: "BEST_SELLING" | "CREATED_AT" | "PRICE" | "TITLE",
+  reverse?: boolean,
+): Promise<ShopifyProduct[]> {
+  const data = await storefrontApiRequest(STOREFRONT_QUERY, {
+    first,
+    query,
+    sortKey,
+    reverse,
+  });
   return data?.data?.products?.edges ?? [];
+}
+
+/** Shopify's native merchandising order; never a fabricated popularity list. */
+export async function fetchBestSellingProducts(first = 12): Promise<ShopifyProduct[]> {
+  return fetchProducts(first, undefined, "BEST_SELLING");
 }
 
 /**
