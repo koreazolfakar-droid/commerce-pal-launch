@@ -1,6 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { fetchAllProducts, fetchCollectionByHandle, fetchCollections, fetchProductByHandle } from "@/lib/shopify";
+import {
+  fetchAllProducts,
+  fetchBestSellingProducts,
+  fetchCollectionByHandle,
+  fetchCollections,
+  fetchProductByHandle,
+} from "@/lib/shopify";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 2 * 60 * 1000;
@@ -17,6 +23,13 @@ export const collectionsQueryOptions = () =>
   queryOptions({
     queryKey: ["shopify", "collections"],
     queryFn: () => fetchCollections(100),
+    staleTime: CATALOG_STALE_TIME,
+  });
+
+export const bestSellingQueryOptions = () =>
+  queryOptions({
+    queryKey: ["shopify", "best-selling"],
+    queryFn: () => fetchBestSellingProducts(12),
     staleTime: CATALOG_STALE_TIME,
   });
 

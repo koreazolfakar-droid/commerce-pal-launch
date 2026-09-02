@@ -240,9 +240,24 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
 }
 
 
-export async function fetchProducts(first = 30, query?: string): Promise<ShopifyProduct[]> {
-  const data = await storefrontApiRequest(STOREFRONT_QUERY, { first, query });
+export async function fetchProducts(
+  first = 30,
+  query?: string,
+  sortKey?: "BEST_SELLING" | "CREATED_AT" | "PRICE" | "TITLE",
+  reverse?: boolean,
+): Promise<ShopifyProduct[]> {
+  const data = await storefrontApiRequest(STOREFRONT_QUERY, {
+    first,
+    query,
+    sortKey,
+    reverse,
+  });
   return data?.data?.products?.edges ?? [];
+}
+
+/** Shopify's native merchandising order; never a fabricated popularity list. */
+export async function fetchBestSellingProducts(first = 12): Promise<ShopifyProduct[]> {
+  return fetchProducts(first, undefined, "BEST_SELLING");
 }
 
 /**
