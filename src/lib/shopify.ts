@@ -27,7 +27,10 @@ export interface ShopifyProductNode {
         price: { amount: string; currencyCode: string };
         compareAtPrice?: { amount: string; currencyCode: string } | null;
         availableForSale: boolean;
-        
+        sku?: string | null;
+        barcode?: string | null;
+        weight?: number | null;
+        weightUnit?: string | null;
         image?: { url: string; altText: string | null } | null;
         selectedOptions: Array<{ name: string; value: string }>;
       };
