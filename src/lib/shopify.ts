@@ -93,6 +93,10 @@ const PRODUCT_FIELDS = `
         price { amount currencyCode }
         compareAtPrice { amount currencyCode }
         availableForSale
+        sku
+        barcode
+        weight
+        weightUnit
         image { url altText }
         selectedOptions { name value }
       }
