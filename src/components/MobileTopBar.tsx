@@ -4,6 +4,8 @@ import { Heart, LayoutGrid, Search, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 
 import { SearchOverlay } from "@/components/SearchOverlay";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useHydrated } from "@/hooks/useHydrated";
 import { catalogQueryOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
@@ -21,13 +23,14 @@ function Badge({ value }: { value: number }) {
 /** Mobile app style top bar: brand, quick actions, search field and category strip. */
 export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const hydrated = useHydrated();
   const wishlistCount = useWishlistStore((state) => state.handles.length);
   const cartCount = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
 
   const { data: catalog, isLoading } = useQuery(catalogQueryOptions());
-  const list = catalog?.categories ?? [];
+  const list = hydrated ? catalog?.categories ?? [] : [];
 
   return (
     <>
@@ -40,6 +43,7 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
             <span className="truncate text-[17px] font-extrabold tracking-tight">Space Cell</span>
           </Link>
           <div className="flex items-center gap-0.5">
+            <ThemeToggle />
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
