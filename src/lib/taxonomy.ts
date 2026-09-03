@@ -47,8 +47,7 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     keywords: [
       "smartphone",
       "smart phone",
-      "phone",
-      "mobile",
+      "mobile phone",
       "iphone",
       "galaxy s",
       "galaxy z",
@@ -65,7 +64,7 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     slug: "tablets",
     label: "Tablets",
     icon: Tablet,
-    keywords: ["tablet", "ipad", "galaxy tab", "pad ", "matepad", "tab s"],
+    keywords: ["tablet", "ipad", "galaxy tab", "pad", "matepad", "tab s"],
   },
   {
     slug: "laptops",
@@ -83,8 +82,10 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
       "watch",
       "apple watch",
       "galaxy watch",
-      "band",
+      "smart band",
+      "mi band",
       "fitness tracker",
+      "fitness band",
     ],
   },
   {
@@ -117,13 +118,16 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     icon: Plug,
     keywords: [
       "charger",
-      "charging",
+      "wall charger",
+      "car charger",
+      "power adapter",
       "adapter",
       "wall plug",
       "gan",
       "magsafe",
       "wireless charger",
       "charging pad",
+      "charging dock",
       "dock",
     ],
   },
@@ -131,13 +135,13 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     slug: "cables",
     label: "Cables",
     icon: Cable,
-    keywords: ["cable", "cord", "usb-c", "usb c", "lightning cable", "hdmi", "aux", "adaptor cable"],
+    keywords: ["cable", "cord", "charging cable", "usb-c", "usb c", "lightning cable", "hdmi", "aux"],
   },
   {
     slug: "power-banks",
     label: "Power Banks",
     icon: Battery,
-    keywords: ["power bank", "powerbank", "portable charger", "mah", "battery pack"],
+    keywords: ["power bank", "powerbank", "portable charger", "battery pack"],
   },
   {
     slug: "cases",
@@ -216,7 +220,9 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
 const BRAND_KEYWORDS: Array<{ slug: string; label: string; keywords: string[] }> = [
   { slug: "apple", label: "Apple", keywords: ["apple", "iphone", "ipad", "airpods", "macbook", "magsafe", "imac"] },
   { slug: "samsung", label: "Samsung", keywords: ["samsung", "galaxy"] },
-  { slug: "xiaomi", label: "Xiaomi", keywords: ["xiaomi", "redmi", "poco", "mi "] },
+  { slug: "redmi", label: "Redmi", keywords: ["redmi"] },
+  { slug: "poco", label: "POCO", keywords: ["poco"] },
+  { slug: "xiaomi", label: "Xiaomi", keywords: ["xiaomi", "mi"] },
   { slug: "google", label: "Google", keywords: ["google", "pixel"] },
   { slug: "oneplus", label: "OnePlus", keywords: ["oneplus", "one plus", "nord"] },
   { slug: "huawei", label: "Huawei", keywords: ["huawei", "matepad", "matebook"] },
@@ -236,12 +242,12 @@ const BRAND_KEYWORDS: Array<{ slug: string; label: string; keywords: string[] }>
   { slug: "jvc", label: "JVC", keywords: ["jvc"] },
   { slug: "lenovo", label: "Lenovo", keywords: ["lenovo", "thinkpad"] },
   { slug: "asus", label: "Asus", keywords: ["asus", "rog", "zenbook"] },
-  { slug: "hp", label: "HP", keywords: ["hp ", "hewlett"] },
+  { slug: "hp", label: "HP", keywords: ["hp", "hewlett"] },
   { slug: "dell", label: "Dell", keywords: ["dell", "alienware"] },
   { slug: "logitech", label: "Logitech", keywords: ["logitech"] },
   { slug: "spigen", label: "Spigen", keywords: ["spigen"] },
   { slug: "nokia", label: "Nokia", keywords: ["nokia"] },
-  { slug: "motorola", label: "Motorola", keywords: ["motorola", "moto "] },
+  { slug: "motorola", label: "Motorola", keywords: ["motorola", "moto"] },
   { slug: "tecno", label: "Tecno", keywords: ["tecno"] },
   { slug: "infinix", label: "Infinix", keywords: ["infinix"] },
 ];
@@ -255,63 +261,100 @@ export function slugify(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function haystack(product: ShopifyProduct) {
-  const node = product.node;
-  return [
-    node.title,
-    node.productType ?? "",
-    node.vendor ?? "",
-    (node.tags ?? []).join(" "),
-    (node.collections?.edges ?? []).map((edge) => `${edge.node.title} ${edge.node.handle}`).join(" "),
-    node.options.map((option) => `${option.name} ${option.values.join(" ")}`).join(" "),
-  ]
-    .join(" ")
-    .toLowerCase();
+const KEYWORD_REGEX_CACHE = new Map<string, RegExp>();
+
+/**
+ * Whole-word keyword matching with plural tolerance ("laptop" ⇢ "laptops").
+ * Substring matching is intentionally banned here: it made "phone" match
+ * "headphones" and a "Laptop" tag put power banks inside the Laptops category.
+ */
+function matchesKeyword(text: string, keyword: string) {
+  let regex = KEYWORD_REGEX_CACHE.get(keyword);
+  if (!regex) {
+    const escaped = keyword.trim().toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    regex = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:e?s)?(?:[^a-z0-9]|$)`);
+    KEYWORD_REGEX_CACHE.set(keyword, regex);
+  }
+  return regex.test(text);
 }
 
-function matchesKeyword(text: string, keyword: string) {
-  return text.includes(keyword.toLowerCase());
+function matchesAny(text: string, definition: CategoryDefinition) {
+  return definition.keywords.some((keyword) => matchesKeyword(text, keyword));
+}
+
+const CATEGORY_ORDER = new Map(CATEGORY_DEFINITIONS.map((definition, index) => [definition.slug, index]));
+
+function sortByHierarchy(categories: Iterable<CategoryDefinition>) {
+  return [...categories].sort(
+    (a, b) => (CATEGORY_ORDER.get(a.slug) ?? 99) - (CATEGORY_ORDER.get(b.slug) ?? 99),
+  );
 }
 
 /**
- * Resolves every category a product belongs to, in signal priority order:
- * explicit `category:` tags → product type → collections → keywords.
+ * Resolves the categories a product belongs to using *tiered* signals — the
+ * first tier that produces a match wins, so a weak signal (a stray word in the
+ * tags) can never override a strong one (the Shopify product type):
+ *   1. explicit `category:` tags   (the merchant said so)
+ *   2. product type               (authoritative Shopify field)
+ *   3. collection titles/handles
+ *   4. product title
+ *   5. tags + option names
  */
 export function resolveCategories(product: ShopifyProduct): CategoryDefinition[] {
   const node = product.node;
-  const explicit = new Set<string>();
+  const bySlug = new Map(CATEGORY_DEFINITIONS.map((definition) => [definition.slug, definition]));
+  const resolved = new Map<string, CategoryDefinition>();
 
   for (const tag of node.tags ?? []) {
     const [key, value] = tag.split(":");
     if (key && value && ["category", "cat", "section"].includes(key.trim().toLowerCase())) {
-      explicit.add(slugify(value));
+      const definition = bySlug.get(slugify(value));
+      if (definition) resolved.set(definition.slug, definition);
     }
   }
-
-  const bySlug = new Map(CATEGORY_DEFINITIONS.map((definition) => [definition.slug, definition]));
-  const resolved = new Map<string, CategoryDefinition>();
-
-  for (const slug of explicit) {
-    const definition = bySlug.get(slug);
-    if (definition) resolved.set(slug, definition);
-  }
+  if (resolved.size > 0) return sortByHierarchy(resolved.values());
 
   const type = (node.productType ?? "").toLowerCase();
-  const collectionText = productCollectionHandles(product).join(" ").toLowerCase();
-  const text = haystack(product);
-
-  for (const definition of CATEGORY_DEFINITIONS) {
-    if (resolved.has(definition.slug)) continue;
-    const typeMatch = type && definition.keywords.some((keyword) => matchesKeyword(type, keyword));
-    const collectionMatch =
-      collectionText &&
-      (collectionText.includes(definition.slug) ||
-        definition.keywords.some((keyword) => matchesKeyword(collectionText, keyword)));
-    const keywordMatch = definition.keywords.some((keyword) => matchesKeyword(text, keyword));
-    if (typeMatch || collectionMatch || keywordMatch) resolved.set(definition.slug, definition);
+  if (type) {
+    for (const definition of CATEGORY_DEFINITIONS) {
+      if (matchesAny(type, definition)) resolved.set(definition.slug, definition);
+    }
+    if (resolved.size > 0) return sortByHierarchy(resolved.values());
   }
 
-  return [...resolved.values()];
+  const collectionText = (node.collections?.edges ?? [])
+    .map((edge) => `${edge.node.title} ${edge.node.handle}`)
+    .join(" ")
+    .toLowerCase();
+  if (collectionText) {
+    for (const definition of CATEGORY_DEFINITIONS) {
+      if (
+        collectionText.includes(definition.slug) ||
+        matchesKeyword(collectionText, definition.slug.replace(/-/g, " ")) ||
+        matchesAny(collectionText, definition)
+      ) {
+        resolved.set(definition.slug, definition);
+      }
+    }
+    if (resolved.size > 0) return sortByHierarchy(resolved.values());
+  }
+
+  const title = node.title.toLowerCase();
+  for (const definition of CATEGORY_DEFINITIONS) {
+    if (matchesAny(title, definition)) resolved.set(definition.slug, definition);
+  }
+  if (resolved.size > 0) return sortByHierarchy(resolved.values());
+
+  const rest = [
+    (node.tags ?? []).join(" "),
+    node.options.map((option) => `${option.name} ${option.values.join(" ")}`).join(" "),
+  ]
+    .join(" ")
+    .toLowerCase();
+  for (const definition of CATEGORY_DEFINITIONS) {
+    if (matchesAny(rest, definition)) resolved.set(definition.slug, definition);
+  }
+  return sortByHierarchy(resolved.values());
 }
 
 /** Primary (most specific) category, used for related products and breadcrumbs. */
@@ -456,7 +499,11 @@ export function buildCatalogIndex(products: ShopifyProduct[]): CatalogIndex {
       icon: definition.icon,
       count,
     }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+    .sort(
+      (a, b) =>
+        (CATEGORY_ORDER.get(a.slug) ?? 99) - (CATEGORY_ORDER.get(b.slug) ?? 99) ||
+        b.count - a.count,
+    );
 
   const brands = [...brandCounts.values()]
     .map(({ brand, count }) => ({ slug: brand.slug, label: brand.label, count }))
