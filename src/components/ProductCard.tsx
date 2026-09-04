@@ -163,12 +163,14 @@ export const ProductCard = memo(function ProductCard({
           {inStock ? "In stock" : "Out of stock"}
         </p>
 
-        <Button
-          onClick={handleAddToCart}
-          disabled={isLoading || !selectedVariant || !inStock}
-          className="press mt-auto w-full rounded-xl pt-0"
-          size="sm"
-        >
+        <div className="mt-auto pt-3">
+          <Button
+            onClick={handleAddToCart}
+            disabled={isLoading || !selectedVariant || !inStock}
+            className="press w-full rounded-xl"
+            size="sm"
+          >
+
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
