@@ -130,7 +130,7 @@ export const ProductCard = memo(function ProductCard({
           </p>
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors group-hover:text-primary">
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug transition-colors group-hover:text-primary">
             {node.title}
           </h3>
         </Link>
@@ -163,22 +163,25 @@ export const ProductCard = memo(function ProductCard({
           {inStock ? "In stock" : "Out of stock"}
         </p>
 
-        <Button
-          onClick={handleAddToCart}
-          disabled={isLoading || !selectedVariant || !inStock}
-          className="press mt-3 w-full rounded-xl"
-          size="sm"
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <ShoppingBag className="h-4 w-4" />
-              Add to cart
-            </>
-          )}
-        </Button>
+        <div className="mt-auto pt-3">
+          <Button
+            onClick={handleAddToCart}
+            disabled={isLoading || !selectedVariant || !inStock}
+            className="press w-full rounded-xl"
+            size="sm"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <ShoppingBag className="h-4 w-4" />
+                {inStock ? "Add to cart" : "Out of stock"}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
     </article>
   );
 });

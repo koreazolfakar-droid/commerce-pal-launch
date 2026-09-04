@@ -122,10 +122,11 @@ export const CompactProductCard = memo(function CompactProductCard({
           </p>
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug transition-colors group-hover:text-primary">
+          <h3 className="line-clamp-2 min-h-[2.25rem] text-[13px] font-semibold leading-snug transition-colors group-hover:text-primary">
             {node.title}
           </h3>
         </Link>
+
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-sm font-bold tracking-tight">
             {formatPrice(price.amount, price.currencyCode)}
