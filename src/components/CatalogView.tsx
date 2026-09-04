@@ -249,13 +249,14 @@ export function CatalogView({
         </aside>
 
         <div>
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
+          <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+            <p className="min-w-0 truncate text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{products.length}</span> of {total}{" "}
               products
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
+
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="press rounded-full lg:hidden">
