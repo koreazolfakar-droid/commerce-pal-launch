@@ -170,18 +170,18 @@ export const ProductCard = memo(function ProductCard({
             className="press w-full rounded-xl"
             size="sm"
           >
-
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <ShoppingBag className="h-4 w-4" />
-              {inStock ? "Add to cart" : "Out of stock"}
-            </>
-          )}
-        </Button>
-
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <ShoppingBag className="h-4 w-4" />
+                {inStock ? "Add to cart" : "Out of stock"}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
     </article>
   );
 });
