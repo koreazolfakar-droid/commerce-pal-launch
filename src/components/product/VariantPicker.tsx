@@ -78,7 +78,7 @@ const COLOR_WORDS: Record<string, string> = {
   light: "#cfe3f2",
   cobalt: "#5b4bd0",
   shadow: "#3a3550",
-  violet: "#7c3aed",
+  };
 };
 
 function swatchColor(value: string) {
