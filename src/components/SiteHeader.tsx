@@ -4,6 +4,7 @@ import { ChevronDown, Heart, Search, ShieldCheck, Truck, RotateCcw } from "lucid
 import { useState } from "react";
 
 import { CartDrawer } from "@/components/CartDrawer";
+import { BrandLogo } from "@/components/BrandLogo";
 import { SearchOverlay } from "@/components/SearchOverlay";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -113,9 +114,10 @@ export function SiteHeader() {
                       key={brand.slug}
                       to="/brand/$slug"
                       params={{ slug: brand.slug }}
-                      className="flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors hover:bg-surface hover:text-primary"
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-colors hover:bg-surface hover:text-primary"
                     >
-                      <span className="truncate">{brand.label}</span>
+                      <BrandLogo slug={brand.slug} label={brand.label} size={24} className="rounded-md" />
+                      <span className="min-w-0 flex-1 truncate">{brand.label}</span>
                       <span className="text-xs text-muted-foreground">{brand.count}</span>
                     </Link>
                   ))}

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Gift, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, Gift } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
@@ -34,7 +34,8 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
 
   if (products.length === 0) return null;
 
-  const active = products[Math.min(index, products.length - 1)]!;
+  const active = products[Math.min(index, products.length - 1)];
+  if (!active) return null;
   const node = active.node;
   const image = node.images.edges[0]?.node;
   const variant = node.variants.edges[0]?.node;
@@ -48,10 +49,10 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
 
   return (
     <section className="px-4 sm:px-0" aria-label="Featured product">
-      <div className="relative overflow-hidden rounded-3xl border bg-linear-to-br from-accent/80 via-surface to-background shadow-card">
+      <div className="relative overflow-hidden rounded-3xl border bg-linear-to-br from-accent via-surface to-background shadow-card-hover">
         <div
           key={node.id}
-          className="animate-fade grid items-center gap-5 p-5 sm:p-8 md:grid-cols-2 lg:gap-10 lg:p-12"
+          className="animate-fade grid min-h-[30rem] items-center gap-6 p-5 sm:p-8 md:min-h-[32rem] md:grid-cols-[0.92fr_1.08fr] lg:gap-12 lg:p-12"
         >
           <div className="order-2 min-w-0 md:order-1">
             <div className="flex items-center gap-2">
@@ -61,7 +62,7 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
               </span>
             </div>
 
-            <h1 className="mt-3 line-clamp-3 text-2xl font-extrabold leading-[1.08] tracking-tight sm:text-4xl lg:text-[2.75rem]">
+            <h1 className="mt-4 max-w-xl text-3xl font-extrabold leading-[1.08] tracking-tight sm:text-4xl lg:text-5xl">
               {node.title}
             </h1>
 
@@ -104,10 +105,9 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
                 Shop now
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                Official warranty
-              </span>
+              {node.productType && (
+                <span className="text-xs font-medium text-muted-foreground">{node.productType}</span>
+              )}
             </div>
           </div>
 
@@ -115,7 +115,7 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
             to="/product/$handle"
             params={{ handle: node.handle }}
             aria-label={node.title}
-            className="media-frame order-1 block aspect-4/3 rounded-2xl bg-transparent md:order-2 md:aspect-square"
+            className="order-1 block aspect-[4/3] overflow-hidden rounded-2xl bg-transparent md:order-2 md:aspect-square"
           >
             {image && (
               <img
@@ -127,14 +127,14 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
                 decoding="async"
                 width={720}
                 height={720}
-                className="h-full w-full object-contain drop-shadow-2xl"
+                className="h-full w-full object-contain p-3 drop-shadow-2xl sm:p-6"
               />
             )}
           </Link>
         </div>
 
         {gift && (
-          <span className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground shadow-card">
+          <span className="absolute right-4 top-4 grid h-20 w-20 place-content-center gap-1 rounded-full border bg-background/90 p-2 text-center text-[10px] font-bold leading-tight text-primary shadow-float backdrop-blur sm:right-7 sm:top-7 sm:h-24 sm:w-24 sm:text-xs">
             <Gift className="h-3.5 w-3.5" />
             <span className="capitalize">{gift}</span>
           </span>
