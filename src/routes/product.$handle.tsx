@@ -161,7 +161,7 @@ function ProductPage() {
   const isPhone = category?.slug === "smartphones";
   const whatsappOrderUrl = productWhatsAppUrl({
     title: node.title,
-    url: typeof window === "undefined" ? `https://spacecallapp.store/product/${node.handle}` : window.location.href,
+    url: `https://spacecallapp.store/product/${node.handle}`,
     quantity,
     options: selectedVariant?.selectedOptions ?? [],
   });
