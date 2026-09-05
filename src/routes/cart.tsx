@@ -21,6 +21,8 @@ export const Route = createFileRoute("/cart")({
       { property: "og:url", content: absoluteUrl("/cart") },
       { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Your bag — Space Cell" },
+      { name: "twitter:description", content: "Review your bag and check out securely." },
     ],
     links: [canonicalLink("/cart")],
   }),

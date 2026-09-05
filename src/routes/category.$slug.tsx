@@ -18,6 +18,14 @@ export const Route = createFileRoute("/category/$slug")({
     return { label: definition.label, products: productsInCategory(catalog, params.slug) };
   },
   head: ({ params, loaderData }) => {
+    if (!loaderData) {
+      return {
+        meta: [
+          { title: "Category unavailable — Space Cell" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    }
     const label = loaderData?.label ?? categoryDefinition(params.slug)?.label ?? "Category";
     const description = `Shop ${label.toLowerCase()} at Space Cell with live pricing, stock and secure checkout.`;
     const path = `/category/${params.slug}`;
@@ -30,6 +38,8 @@ export const Route = createFileRoute("/category/$slug")({
         { property: "og:type", content: "website" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${label} — Space Cell` },
+        { name: "twitter:description", content: description },
       ],
       links: [canonicalLink(path)],
       scripts: loaderData

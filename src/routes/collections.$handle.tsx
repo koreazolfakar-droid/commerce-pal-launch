@@ -34,6 +34,8 @@ export const Route = createFileRoute("/collections/$handle")({
         { property: "og:type", content: "website" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
         ...(image
           ? [
               { property: "og:image", content: image },

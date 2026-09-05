@@ -21,6 +21,14 @@ export const Route = createFileRoute("/brand/$slug")({
     };
   },
   head: ({ params, loaderData }) => {
+    if (!loaderData) {
+      return {
+        meta: [
+          { title: "Brand unavailable — Space Cell" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    }
     const label = loaderData?.label ?? params.slug.replace(/-/g, " ");
     const description = `Shop ${label} devices and accessories at Space Cell with live Shopify pricing and stock.`;
     const path = `/brand/${params.slug}`;
@@ -33,6 +41,8 @@ export const Route = createFileRoute("/brand/$slug")({
         { property: "og:type", content: "website" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${label} products — Space Cell` },
+        { name: "twitter:description", content: description },
       ],
       links: [canonicalLink(path)],
       scripts: loaderData

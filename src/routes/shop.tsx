@@ -31,6 +31,8 @@ export const Route = createFileRoute("/shop")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/shop") },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Shop All Tech — Space Cell" },
+      { name: "twitter:description", content: "Filter and sort the full Space Cell technology catalogue." },
     ],
     links: [canonicalLink("/shop")],
     scripts: loaderData ? [jsonLd(itemListJsonLd("Shop all products", loaderData.products))] : [],

@@ -47,6 +47,14 @@ export const Route = createFileRoute("/product/$handle")({
     return { product };
   },
   head: ({ params, loaderData }) => {
+    if (!loaderData) {
+      return {
+        meta: [
+          { title: "Product unavailable — Space Cell" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    }
     const title = loaderData?.product.node.title ?? "Product";
     const description =
       loaderData?.product.node.description?.slice(0, 150) ||
@@ -63,6 +71,8 @@ export const Route = createFileRoute("/product/$handle")({
         { property: "og:type", content: "product" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${title} — Space Cell` },
+        { name: "twitter:description", content: description },
         ...(image
           ? [
               { property: "og:image", content: image },
@@ -230,7 +240,7 @@ function ProductPage() {
 
   return (
     <StoreLayout>
-      <main className="mx-auto max-w-7xl px-4 py-6 pb-32 lg:py-10 lg:pb-14">
+      <div className="mx-auto max-w-7xl px-4 py-6 pb-32 lg:py-10 lg:pb-14">
         <nav
           aria-label="Breadcrumb"
           className="flex items-center gap-1 text-xs text-muted-foreground"
@@ -489,7 +499,7 @@ function ProductPage() {
             <ProductGrid products={similar} />
           </section>
         )}
-      </main>
+      </div>
 
       {/* Mobile sticky buy bar — sits above the bottom navigation. */}
       <div className="fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] left-0 right-0 z-30 border-t bg-background/90 px-4 py-2.5 backdrop-blur-xl sm:hidden">

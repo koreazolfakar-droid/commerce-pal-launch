@@ -5,11 +5,11 @@ import { BottomNav } from "@/components/BottomNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { collectionsQueryOptions } from "@/lib/queries";
-import { absoluteUrl, canonicalLink } from "@/lib/seo";
+import { absoluteUrl, canonicalLink, jsonLd } from "@/lib/seo";
 
 export const Route = createFileRoute("/collections/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(collectionsQueryOptions()),
-  head: () => ({
+  head: ({ loaderData }) => ({
     meta: [
       { title: "All Collections — Space Cell" },
       {
@@ -25,8 +25,24 @@ export const Route = createFileRoute("/collections/")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/collections") },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "All Collections — Space Cell" },
+      { name: "twitter:description", content: "Browse every Space Cell collection across phones, tablets, audio and accessories." },
     ],
     links: [canonicalLink("/collections")],
+    scripts: loaderData
+      ? [jsonLd({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Space Cell collections",
+          numberOfItems: loaderData.length,
+          itemListElement: loaderData.map((collection, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: collection.title,
+            url: absoluteUrl(`/collections/${collection.handle}`),
+          })),
+        })]
+      : [],
   }),
   component: CollectionsIndex,
 });

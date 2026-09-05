@@ -50,6 +50,8 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/") },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Space Cell — Premium Phones, Tablets & Audio" },
+      { name: "twitter:description", content: "Premium smartphones, tablets, audio and accessories with live availability and secure checkout." },
     ],
     links: [canonicalLink("/")],
     scripts: [

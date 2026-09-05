@@ -25,6 +25,8 @@ export const Route = createFileRoute("/wishlist")({
       { property: "og:url", content: absoluteUrl("/wishlist") },
       { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Your wishlist — Space Cell" },
+      { name: "twitter:description", content: "Saved products with live prices and stock." },
     ],
     links: [canonicalLink("/wishlist")],
   }),

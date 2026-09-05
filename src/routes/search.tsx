@@ -26,6 +26,8 @@ export const Route = createFileRoute("/search")({
       { property: "og:url", content: absoluteUrl("/search") },
       { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Search products — Space Cell" },
+      { name: "twitter:description", content: "Search the live Space Cell technology catalogue." },
     ],
     links: [canonicalLink("/search")],
   }),

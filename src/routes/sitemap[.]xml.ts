@@ -3,7 +3,7 @@ import type {} from "@tanstack/react-start";
 
 import { fetchAllProducts, fetchCollections } from "@/lib/shopify";
 import { absoluteUrl } from "@/lib/seo";
-import { buildCatalogIndex } from "@/lib/taxonomy";
+import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";
 
 interface SitemapEntry {
   path: string;
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           ...catalog.brands
             .filter((brand) => brand.count > 0)
             .map((brand) => ({ path: `/brand/${encodeURIComponent(brand.slug)}`, changefreq: "daily" as const, priority: "0.8" })),
-          ...collections.map((collection) => ({ path: `/collections/${encodeURIComponent(collection.handle)}`, changefreq: "daily" as const, priority: "0.8" })),
+          ...displayCollections(collections).map((collection) => ({ path: `/collections/${encodeURIComponent(collection.handle)}`, changefreq: "daily" as const, priority: "0.8" })),
           ...products.map((product) => ({ path: `/product/${encodeURIComponent(product.node.handle)}`, changefreq: "weekly" as const, priority: "0.9" })),
         ];
 
