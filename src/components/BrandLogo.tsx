@@ -15,15 +15,21 @@ export function BrandLogo({
   label,
   size = 40,
   className,
+  imageUrl,
 }: {
   slug: string;
   label: string;
   size?: number;
   className?: string;
+  /** Logo served by Shopify (collection/brand image); always preferred. */
+  imageUrl?: string;
 }) {
   const sources = useMemo(
-    () => brandLogoSources(slug, label, size * 2).filter((source) => !failed.has(source)),
-    [slug, label, size],
+    () =>
+      [...(imageUrl ? [imageUrl] : []), ...brandLogoSources(slug, label, size * 2)].filter(
+        (source) => !failed.has(source),
+      ),
+    [imageUrl, slug, label, size],
   );
   const [attempt, setAttempt] = useState(0);
   const source = sources[attempt];
