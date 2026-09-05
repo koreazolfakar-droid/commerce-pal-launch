@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 
 import { BrandBanners } from "@/components/BrandBanners";
@@ -17,9 +17,11 @@ import {
 import { discountPercent, productInStock, type ShopifyProduct } from "@/lib/shopify";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(catalogQueryOptions());
-    context.queryClient.prefetchQuery(bestSellingQueryOptions());
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(catalogQueryOptions()),
+      context.queryClient.ensureQueryData(bestSellingQueryOptions()),
+    ]);
   },
 
   head: () => ({
@@ -28,13 +30,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Space Cell stocks premium smartphones, tablets, smartwatches, audio and accessories with official warranty and secure Shopify checkout.",
+          "Shop Space Cell smartphones, tablets, smartwatches, audio and accessories with live availability and secure Shopify checkout.",
       },
       { property: "og:title", content: "Space Cell — Premium Phones, Tablets & Audio" },
       {
         property: "og:description",
         content:
-          "Premium smartphones, tablets, audio and accessories with official warranty and secure checkout.",
+          "Premium smartphones, tablets, audio and accessories with live availability and secure checkout.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -95,7 +97,7 @@ function Rail({ products }: { products: ShopifyProduct[] }) {
 
 function Index() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
-  const { data: bestSellers } = useQuery(bestSellingQueryOptions());
+  const { data: bestSellers } = useSuspenseQuery(bestSellingQueryOptions());
 
   const products = catalog.products;
   const inStock = products.filter(productInStock);
