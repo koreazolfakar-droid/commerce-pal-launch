@@ -49,7 +49,7 @@ export function ProductGallery({
   }, [zoomed, index, images.length]);
 
   return (
-    <div className="lg:sticky lg:top-24 lg:self-start">
+    <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
       <div className="group relative aspect-square overflow-hidden rounded-3xl border bg-white shadow-card">
         {image ? (
           <img
@@ -105,7 +105,7 @@ export function ProductGallery({
       </div>
 
       {images.length > 1 && (
-        <div className="scroll-rail mt-3 flex gap-2.5" role="tablist" aria-label="Product images">
+        <div className="scroll-rail mt-3 flex gap-2.5 overflow-x-auto" role="tablist" aria-label="Product images">
           {images.map((thumb, thumbIndex) => (
             <button
               key={`${thumb.url}-${thumbIndex}`}
