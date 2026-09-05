@@ -10,9 +10,11 @@ import { Newsletter } from "@/components/Newsletter";
 import { StoreLayout } from "@/components/StoreLayout";
 import { TopBrands } from "@/components/TopBrands";
 import { WhyShop } from "@/components/WhyShop";
+import { buildShopifyBrands } from "@/lib/brandDirectory";
 import {
   bestSellingQueryOptions,
   catalogQueryOptions,
+  collectionsQueryOptions,
 } from "@/lib/queries";
 import { discountPercent, productInStock, type ShopifyProduct } from "@/lib/shopify";
 
@@ -21,6 +23,7 @@ export const Route = createFileRoute("/")({
     await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(bestSellingQueryOptions()),
+      context.queryClient.ensureQueryData(collectionsQueryOptions()),
     ]);
   },
 
