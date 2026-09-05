@@ -48,11 +48,11 @@
   provides them.
 - Keep Shopify layer (`src/lib/shopify.ts` sanitizeQuery/deniedFields) intact.
 
-## Planned: Shopify merchandising, WhatsApp, and comparison
+## Completed: Shopify merchandising, WhatsApp, and comparison
 
-1. [ ] Shopify-managed multi-product hero with controls, swipe, pause, and real product data.
-2. [ ] Premium category cards using Shopify collection/product imagery and live counts.
-3. [ ] Central WhatsApp ordering configuration and product-aware messages.
-4. [ ] Phone comparison store, controls, and responsive `/compare` page for 2–4 products.
-5. [ ] Product-page and global polish without changing cart, filters, or Shopify ownership.
-6. [ ] Desktop/mobile interaction QA plus TypeScript checks.
+1. [x] Shopify-managed multi-product hero with controls, swipe, pause, and real product data.
+2. [x] Premium category cards using Shopify collection/product imagery and live counts.
+3. [x] Central WhatsApp ordering configuration and product-aware messages.
+4. [x] Phone comparison store, controls, and responsive `/compare` page for 2–4 products.
+5. [x] Product-page and global polish without changing cart, filters, or Shopify ownership.
+6. [x] Desktop/mobile interaction QA plus TypeScript checks.
