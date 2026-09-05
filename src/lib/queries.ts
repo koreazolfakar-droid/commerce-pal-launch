@@ -41,6 +41,9 @@ export const collectionQueryOptions = (handle: string) =>
     staleTime: CATALOG_STALE_TIME,
   });
 
+/** Merchant-curated homepage hero. Missing collections resolve to null safely. */
+export const homepageHeroQueryOptions = () => collectionQueryOptions("homepage-hero");
+
 export const productQueryOptions = (handle: string) =>
   queryOptions({
     queryKey: ["shopify", "product", handle],

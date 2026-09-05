@@ -4,6 +4,7 @@ import { memo } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
+import { CompareButton } from "@/components/CompareButton";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,7 @@ import {
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
-import { resolveBrand } from "@/lib/taxonomy";
+import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 
 /** Full product card used across grids (shop, category, brand, search, wishlist). */
 export const ProductCard = memo(function ProductCard({
@@ -42,6 +43,7 @@ export const ProductCard = memo(function ProductCard({
   const summary = variantSummary(selectedVariant?.selectedOptions);
   const inStock = selectedVariant?.availableForSale ?? node.availableForSale ?? true;
   const brand = resolveBrand(product);
+  const isPhone = primaryCategory(product)?.slug === "smartphones";
 
   const handleAddToCart = async () => {
     if (!selectedVariant) return;
@@ -113,6 +115,7 @@ export const ProductCard = memo(function ProductCard({
         >
           <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
         </button>
+        {isPhone && <CompareButton handle={node.handle} compact className="absolute right-3 top-14" />}
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-4">
