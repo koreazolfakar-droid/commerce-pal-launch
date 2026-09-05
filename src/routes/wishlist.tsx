@@ -53,7 +53,7 @@ function WishlistPage() {
           </div>
         ) : (
           <div className="mt-6">
-            <ProductGrid products={saved} />
+            <ProductGrid products={saved} eagerCount={4} />
           </div>
         )}
       </div>
