@@ -72,6 +72,11 @@ function iconSlug(slug: string, label: string) {
 /**
  * Ordered list of logo candidates. The component walks it and falls back to a
  * monogram when every candidate fails, so a broken image is never shown.
+ *
+ * Favicon services were deliberately dropped: they return tiny, low-quality
+ * icons and leak every page view to third parties. Shopify's own collection
+ * image (passed in by the caller) always wins; Simple Icons covers the common
+ * vector marks; everything else gets the monogram tile.
  */
 export function brandLogoSources(slug: string, label: string, size = 128): string[] {
   const sources: string[] = [];
@@ -82,14 +87,6 @@ export function brandLogoSources(slug: string, label: string, size = 128): strin
   if (LOGO_DEV_KEY && domain) {
     sources.push(`https://img.logo.dev/${domain}?token=${LOGO_DEV_KEY}&size=${size}&format=png`);
   }
-  // Dynamic, map-free fallbacks: the brand's own site icon.
-  if (domain) {
-    sources.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
-    sources.push(
-      `https://www.google.com/s2/favicons?domain=${domain}&sz=${Math.min(256, Math.max(64, size))}`,
-    );
-  }
-
   return sources;
 }
 
