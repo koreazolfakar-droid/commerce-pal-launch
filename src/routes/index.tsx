@@ -101,6 +101,7 @@ function Rail({ products }: { products: ShopifyProduct[] }) {
 function Index() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: collections, isLoading: collectionsLoading } = useQuery(collectionsQueryOptions());
+  const { data: bestSellers } = useQuery(bestSellingQueryOptions());
 
   const products = catalog.products;
   const inStock = products.filter(productInStock);
@@ -108,12 +109,15 @@ function Index() {
   const newest = [...products].sort((a, b) =>
     (b.node.createdAt ?? "").localeCompare(a.node.createdAt ?? ""),
   );
-  const banner = (deals.length > 0 ? deals : inStock.length > 0 ? inStock : products).slice(0, 5);
+  const hero = (deals.length > 0 ? deals : inStock.length > 0 ? inStock : products).slice(0, 5);
   const collectionList = displayCollections(collections ?? []);
+  const best = (bestSellers ?? []).length > 0 ? bestSellers! : inStock;
+  const productOfBrand = (slug: string) =>
+    products.find((product) => catalog.brandOf.get(product.node.handle)?.slug === slug);
 
   return (
     <StoreLayout>
-      <div className="mx-auto max-w-7xl space-y-10 py-4 sm:px-4 sm:py-8">
+      <div className="mx-auto max-w-7xl space-y-12 py-4 sm:px-4 sm:py-8">
         {products.length === 0 ? (
           <div className="px-4">
             <ProductGrid
@@ -124,7 +128,9 @@ function Index() {
           </div>
         ) : (
           <>
-            <PromoBanner products={banner} />
+            <HeroBanner products={hero} />
+
+            <BenefitsBar />
 
             {catalog.categories.length > 0 && (
               <section>
@@ -139,12 +145,14 @@ function Index() {
                       key={category.slug}
                       to="/category/$slug"
                       params={{ slug: category.slug }}
-                      className="flex w-28 shrink-0 flex-col items-center gap-2 rounded-xl border bg-card p-4 text-center shadow-card transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-card-hover sm:w-auto"
+                      className="card-lift flex w-28 shrink-0 flex-col items-center gap-2 rounded-2xl border bg-card p-4 text-center shadow-card transition-all hover:border-primary sm:w-auto"
                     >
-                      <span className="grid h-11 w-11 place-items-center rounded-full bg-accent text-primary">
-                        {category.icon ? <category.icon className="h-5 w-5" /> : null}
+                      <span className="grid h-12 w-12 place-items-center rounded-full bg-accent text-primary">
+                        {category.icon ? (
+                          <category.icon className="h-[22px] w-[22px]" strokeWidth={1.7} />
+                        ) : null}
                       </span>
-                      <span className="line-clamp-2 text-xs font-medium leading-snug">
+                      <span className="line-clamp-2 text-xs font-semibold leading-snug">
                         {category.label}
                       </span>
                       <span className="text-[11px] text-muted-foreground">
@@ -155,6 +163,21 @@ function Index() {
                 </div>
               </section>
             )}
+
+            <TopBrands brands={catalog.brands} />
+
+            {best.length > 0 && (
+              <section>
+                <SectionHeader
+                  title="Best sellers"
+                  subtitle="Your top selling products, straight from Shopify"
+                  href="/shop"
+                />
+                <Rail products={best.slice(0, 12)} />
+              </section>
+            )}
+
+            <BrandBanners brands={catalog.brands} productOf={productOfBrand} />
 
             {deals.length > 0 && (
               <section>
@@ -176,27 +199,6 @@ function Index() {
               <Rail products={newest.slice(0, 12)} />
             </section>
 
-            {catalog.brands.length > 0 && (
-              <section>
-                <SectionHeader title="Top brands" href="/shop" />
-                <div className="scroll-rail flex gap-3 px-4 sm:grid sm:grid-cols-4 sm:px-0 lg:grid-cols-6">
-                  {catalog.brands.map((brand) => (
-                    <Link
-                      key={brand.slug}
-                      to="/brand/$slug"
-                      params={{ slug: brand.slug }}
-                      className="grid h-20 w-32 shrink-0 place-items-center rounded-xl border bg-card text-sm font-semibold shadow-card transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-card-hover sm:w-auto"
-                    >
-                      <span className="truncate px-2">{brand.label}</span>
-                      <span className="text-[11px] font-normal text-muted-foreground">
-                        {brand.count} product{brand.count === 1 ? "" : "s"}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
-
             {collectionsLoading ? (
               <div className="px-4 sm:px-0">
                 <div className="h-40 animate-pulse rounded-2xl bg-surface" />
@@ -217,7 +219,7 @@ function Index() {
                   <div className="mt-6 flex justify-center">
                     <Link
                       to="/shop"
-                      className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                      className="press inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                     >
                       <Sparkles className="h-4 w-4" />
                       Browse the full catalogue
@@ -226,11 +228,15 @@ function Index() {
                 )}
               </div>
             </section>
+
+            <WhyShop />
+            <Newsletter />
           </>
         )}
-
-        <BenefitsBar />
       </div>
+    </StoreLayout>
+  );
+
     </StoreLayout>
   );
 }
