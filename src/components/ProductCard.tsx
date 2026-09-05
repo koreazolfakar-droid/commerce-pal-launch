@@ -68,30 +68,20 @@ export const ProductCard = memo(function ProductCard({
         className,
       )}
     >
-      <div className="media-frame aspect-square border-b">
+      <div className="relative border-b">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
           aria-label={node.title}
-          className="block h-full w-full"
+          className="block"
         >
-          {image ? (
-            <img
-              src={cdnImage(image.url, 480)}
-              srcSet={cdnSrcSet(image.url, 480)}
-              sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
-              alt={image.altText ?? node.title}
-              loading="lazy"
-              decoding="async"
-              width={480}
-              height={480}
-              className="h-full w-full object-contain p-6 group-hover:scale-[1.05]"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              No image
-            </div>
-          )}
+          <ProductImage
+            url={image?.url}
+            alt={image?.altText ?? node.title}
+            size={480}
+            sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
+            imageClassName="group-hover:scale-[1.05]"
+          />
         </Link>
 
         <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5">
