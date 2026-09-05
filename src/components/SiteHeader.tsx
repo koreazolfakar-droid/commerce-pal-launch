@@ -13,9 +13,9 @@ import { displayCollections } from "@/lib/taxonomy";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
 const TRUST = [
-  { icon: Truck, text: "Fast delivery on every order" },
-  { icon: ShieldCheck, text: "100% authentic products with official warranty" },
-  { icon: RotateCcw, text: "Easy returns and responsive support" },
+  { icon: Truck, text: "Live product availability" },
+  { icon: ShieldCheck, text: "Secure Shopify checkout" },
+  { icon: RotateCcw, text: "Clear order summary before payment" },
 ];
 
 /** Desktop header. Navigation is generated from the live Shopify catalog. */
