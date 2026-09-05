@@ -4,6 +4,7 @@ import { memo } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
+import { CompareButton } from "@/components/CompareButton";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
   discountPercent,
@@ -14,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
-import { resolveBrand } from "@/lib/taxonomy";
+import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 
 /** Compact rail/grid tile: optimized image, discount badge, quick add, price, stock. */
 export const CompactProductCard = memo(function CompactProductCard({
@@ -39,6 +40,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   const summary = variantSummary(variant?.selectedOptions);
   const inStock = variant?.availableForSale ?? node.availableForSale ?? true;
   const brand = resolveBrand(product);
+  const isPhone = primaryCategory(product)?.slug === "smartphones";
 
   const handleAdd = async () => {
     if (!variant) return;
@@ -96,6 +98,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         >
           <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
         </button>
+        {isPhone && <CompareButton handle={node.handle} compact className="absolute right-2 top-12 h-8 w-8" />}
 
         <button
           type="button"

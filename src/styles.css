@@ -66,6 +66,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-info: var(--info);
+  --color-image-stage: var(--image-stage);
   --color-success-foreground: var(--success-foreground);
   --color-warning-foreground: var(--warning-foreground);
   --color-info-foreground: var(--info-foreground);
@@ -90,6 +91,7 @@
   --hero-border: oklch(0.32 0.014 255);
   --foreground: oklch(0.17 0.012 240);
   --card: oklch(1 0 0);
+  --image-stage: oklch(1 0 0);
   --card-foreground: oklch(0.17 0.012 240);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.17 0.012 240);
@@ -147,6 +149,7 @@
   --hero-border: oklch(0.34 0.014 255);
   --foreground: oklch(0.965 0.004 250);
   --card: oklch(0.235 0.015 250);
+  --image-stage: oklch(0.255 0.012 250);
   --card-foreground: oklch(0.965 0.004 250);
   --popover: oklch(0.255 0.016 250);
   --popover-foreground: oklch(0.965 0.004 250);

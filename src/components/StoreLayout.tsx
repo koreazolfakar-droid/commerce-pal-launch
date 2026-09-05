@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
 export function StoreLayout({ children }: { children: ReactNode }) {
@@ -15,6 +16,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       <MobileTopBar />
       <main className="flex-1">{children}</main>
       <SiteFooter />
+      <WhatsAppCTA />
       <BottomNav />
     </div>
   );
