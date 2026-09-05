@@ -9,6 +9,7 @@ export interface ShopifyProductNode {
   id: string;
   title: string;
   description: string;
+  descriptionHtml?: string;
   handle: string;
   vendor?: string;
   productType?: string;
@@ -75,6 +76,7 @@ const PRODUCT_FIELDS = `
   id
   title
   description
+  descriptionHtml
   handle
   vendor
   productType
@@ -145,6 +147,12 @@ export const COLLECTION_BY_HANDLE_QUERY = `
         edges { node { ${PRODUCT_FIELDS} } }
       }
     }
+  }
+`;
+
+export const PRODUCT_RECOMMENDATIONS_QUERY = `
+  query GetRecommendations($handle: String!) {
+    productRecommendations(productHandle: $handle) { ${PRODUCT_FIELDS} }
   }
 `;
 
@@ -286,6 +294,21 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
   const data = await storefrontApiRequest(PRODUCT_BY_HANDLE_QUERY, { handle });
   const node = data?.data?.product;
   return node ? { node } : null;
+}
+
+/**
+ * Shopify's own "You may also like" recommendations for a product. Returns an
+ * empty list (never throws) so the product page degrades gracefully.
+ */
+export async function fetchProductRecommendations(handle: string): Promise<ShopifyProduct[]> {
+  try {
+    const data = await storefrontApiRequest(PRODUCT_RECOMMENDATIONS_QUERY, { handle });
+    const nodes = data?.data?.productRecommendations;
+    if (!Array.isArray(nodes)) return [];
+    return nodes.map((node: ShopifyProductNode) => ({ node }));
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchCollections(first = 100): Promise<ShopifyCollection[]> {
