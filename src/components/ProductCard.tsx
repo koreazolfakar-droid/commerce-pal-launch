@@ -4,6 +4,7 @@ import { memo } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import { resolveBrand } from "@/lib/taxonomy";
 
 /** Full product card used across grids (shop, category, brand, search, wishlist). */
 export const ProductCard = memo(function ProductCard({
@@ -39,7 +41,7 @@ export const ProductCard = memo(function ProductCard({
   const discount = discountPercent(price.amount, compareAt);
   const summary = variantSummary(selectedVariant?.selectedOptions);
   const inStock = selectedVariant?.availableForSale ?? node.availableForSale ?? true;
-  const brand = node.vendor;
+  const brand = resolveBrand(product);
 
   const handleAddToCart = async () => {
     if (!selectedVariant) return;
@@ -115,9 +117,12 @@ export const ProductCard = memo(function ProductCard({
 
       <div className="flex flex-1 flex-col gap-1.5 p-4">
         {brand && (
-          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
-            {brand}
-          </p>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <BrandLogo slug={brand.slug} label={brand.label} size={20} className="rounded-md" />
+            <p className="truncate text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
+              {brand.label}
+            </p>
+          </div>
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
           <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug transition-colors group-hover:text-primary">

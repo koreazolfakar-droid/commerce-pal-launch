@@ -1,5 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Grid2x2, Headphones, ShieldCheck, Truck, Watch, Cable } from "lucide-react";
+import {
+  ArrowRight,
+  Boxes,
+  Cable,
+  CreditCard,
+  Grid2x2,
+  PackageCheck,
+  ShieldCheck,
+  SlidersHorizontal,
+  Truck,
+} from "lucide-react";
 
 import { availableEntries, BRANDS, CATEGORIES, type CatalogEntry } from "@/lib/catalog";
 
@@ -92,20 +102,20 @@ export function BrandRail({ handles }: { handles: Set<string> }) {
 }
 
 const BENEFITS = [
-  { icon: Truck, title: "Free shipping", detail: "Orders over $500" },
-  { icon: ShieldCheck, title: "Secure payment", detail: "100% secure checkout" },
-  { icon: Watch, title: "Official warranty", detail: "Manufacturer warranty" },
-  { icon: Headphones, title: "24/7 support", detail: "Dedicated support" },
+  { icon: PackageCheck, title: "Live availability", detail: "Stock synced with Shopify" },
+  { icon: CreditCard, title: "Secure checkout", detail: "Checkout powered by Shopify" },
+  { icon: SlidersHorizontal, title: "Product options", detail: "Choose available variants" },
+  { icon: Boxes, title: "Live catalogue", detail: "Products update automatically" },
 ];
 
 export function BenefitsBar() {
   return (
     <section className="mx-auto max-w-7xl px-4">
-      <div className="grid gap-4 rounded-xl bg-promo p-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 rounded-2xl border bg-card p-5 shadow-card sm:grid-cols-2 lg:grid-cols-4 lg:p-6">
         {BENEFITS.map((benefit) => (
           <div key={benefit.title} className="flex min-w-0 items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-background text-primary">
-              <benefit.icon className="h-4 w-4" />
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent text-primary">
+              <benefit.icon className="h-4 w-4" strokeWidth={1.8} />
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{benefit.title}</p>

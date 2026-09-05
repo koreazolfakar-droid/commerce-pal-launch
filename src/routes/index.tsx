@@ -1,30 +1,27 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { ArrowRight } from "lucide-react";
 
 import { BrandBanners } from "@/components/BrandBanners";
-import { CollectionSections } from "@/components/CollectionSections";
 import { CompactProductCard } from "@/components/CompactProductCard";
 import { HeroBanner } from "@/components/HeroBanner";
 import { BenefitsBar } from "@/components/HomeSections";
 import { Newsletter } from "@/components/Newsletter";
-import { ProductGrid } from "@/components/ProductGrid";
 import { StoreLayout } from "@/components/StoreLayout";
 import { TopBrands } from "@/components/TopBrands";
 import { WhyShop } from "@/components/WhyShop";
 import {
   bestSellingQueryOptions,
   catalogQueryOptions,
-  collectionsQueryOptions,
 } from "@/lib/queries";
 import { discountPercent, productInStock, type ShopifyProduct } from "@/lib/shopify";
-import { displayCollections } from "@/lib/taxonomy";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(catalogQueryOptions());
-    context.queryClient.prefetchQuery(collectionsQueryOptions());
-    context.queryClient.prefetchQuery(bestSellingQueryOptions());
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(catalogQueryOptions()),
+      context.queryClient.ensureQueryData(bestSellingQueryOptions()),
+    ]);
   },
 
   head: () => ({
@@ -33,13 +30,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Space Cell stocks premium smartphones, tablets, smartwatches, audio and accessories with official warranty and secure Shopify checkout.",
+          "Shop Space Cell smartphones, tablets, smartwatches, audio and accessories with live availability and secure Shopify checkout.",
       },
       { property: "og:title", content: "Space Cell — Premium Phones, Tablets & Audio" },
       {
         property: "og:description",
         content:
-          "Premium smartphones, tablets, audio and accessories with official warranty and secure checkout.",
+          "Premium smartphones, tablets, audio and accessories with live availability and secure checkout.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -100,31 +97,25 @@ function Rail({ products }: { products: ShopifyProduct[] }) {
 
 function Index() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
-  const { data: collections, isLoading: collectionsLoading } = useQuery(collectionsQueryOptions());
-  const { data: bestSellers } = useQuery(bestSellingQueryOptions());
+  const { data: bestSellers } = useSuspenseQuery(bestSellingQueryOptions());
 
   const products = catalog.products;
   const inStock = products.filter(productInStock);
   const deals = products.filter(onSale);
-  const newest = [...products].sort((a, b) =>
-    (b.node.createdAt ?? "").localeCompare(a.node.createdAt ?? ""),
-  );
   const hero = (deals.length > 0 ? deals : inStock.length > 0 ? inStock : products).slice(0, 5);
-  const collectionList = displayCollections(collections ?? []);
   const best = (bestSellers ?? []).length > 0 ? bestSellers! : inStock;
   const productOfBrand = (slug: string) =>
     products.find((product) => catalog.brandOf.get(product.node.handle)?.slug === slug);
 
   return (
     <StoreLayout>
-      <div className="mx-auto max-w-7xl space-y-12 py-4 sm:px-4 sm:py-8">
+      <div className="mx-auto max-w-7xl space-y-14 py-4 sm:px-4 sm:py-10 lg:space-y-16">
         {products.length === 0 ? (
           <div className="px-4">
-            <ProductGrid
-              products={[]}
-              emptyTitle="No products found"
-              emptyHint="Add a product in Shopify and it will appear here automatically — tell me the product name and price and I can create it for you."
-            />
+            <div className="rounded-2xl border border-dashed bg-card px-6 py-16 text-center">
+              <p className="font-semibold">No products found</p>
+              <p className="mt-2 text-sm text-muted-foreground">Add a product in Shopify and it will appear here automatically.</p>
+            </div>
           </div>
         ) : (
           <>
@@ -133,7 +124,7 @@ function Index() {
             <BenefitsBar />
 
             {catalog.categories.length > 0 && (
-              <section>
+              <section className="rounded-3xl bg-surface py-6 sm:px-6 sm:py-8">
                 <SectionHeader
                   title="Shop by category"
                   subtitle="Categories are generated from your live Shopify catalogue"
@@ -189,45 +180,6 @@ function Index() {
                 <Rail products={deals.slice(0, 12)} />
               </section>
             )}
-
-            <section>
-              <SectionHeader
-                title="New arrivals"
-                subtitle="Newest products published in your store"
-                href="/shop"
-              />
-              <Rail products={newest.slice(0, 12)} />
-            </section>
-
-            {collectionsLoading ? (
-              <div className="px-4 sm:px-0">
-                <div className="h-40 animate-pulse rounded-2xl bg-surface" />
-              </div>
-            ) : (
-              collectionList.length > 0 && <CollectionSections collections={collectionList} />
-            )}
-
-            <section>
-              <SectionHeader
-                title="All products"
-                subtitle={`${products.length} product${products.length === 1 ? "" : "s"} live from Shopify`}
-                href="/shop"
-              />
-              <div className="px-4 sm:px-0">
-                <ProductGrid products={products.slice(0, 12)} />
-                {products.length > 12 && (
-                  <div className="mt-6 flex justify-center">
-                    <Link
-                      to="/shop"
-                      className="press inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      Browse the full catalogue
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </section>
 
             <WhyShop />
             <Newsletter />

@@ -4,6 +4,7 @@ import { memo } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
+import { BrandLogo } from "@/components/BrandLogo";
 import {
   discountPercent,
   formatPrice,
@@ -13,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import { resolveBrand } from "@/lib/taxonomy";
 
 /** Compact rail/grid tile: optimized image, discount badge, quick add, price, stock. */
 export const CompactProductCard = memo(function CompactProductCard({
@@ -36,6 +38,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   const discount = discountPercent(price.amount, compareAt);
   const summary = variantSummary(variant?.selectedOptions);
   const inStock = variant?.availableForSale ?? node.availableForSale ?? true;
+  const brand = resolveBrand(product);
 
   const handleAdd = async () => {
     if (!variant) return;
@@ -106,10 +109,13 @@ export const CompactProductCard = memo(function CompactProductCard({
       </div>
 
       <div className="mt-3 flex min-w-0 flex-col gap-1">
-        {node.vendor && (
-          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            {node.vendor}
-          </p>
+        {brand && (
+          <div className="flex min-w-0 items-center gap-1.5">
+            <BrandLogo slug={brand.slug} label={brand.label} size={18} className="rounded-md" />
+            <p className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              {brand.label}
+            </p>
+          </div>
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
           <h3 className="line-clamp-2 min-h-[2.25rem] text-[13px] font-semibold leading-snug transition-colors group-hover:text-primary">

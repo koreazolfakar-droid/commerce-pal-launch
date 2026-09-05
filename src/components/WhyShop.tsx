@@ -1,35 +1,35 @@
-import { BadgeCheck, CreditCard, Headset, RotateCcw, Truck, Wrench } from "lucide-react";
+import { Boxes, CreditCard, PackageCheck, SearchCheck, SlidersHorizontal, Tags } from "lucide-react";
 
 const REASONS = [
   {
-    icon: BadgeCheck,
-    title: "100% authentic",
-    detail: "Every device is genuine and covered by its official warranty.",
+    icon: Boxes,
+    title: "Live catalogue",
+    detail: "Products and availability are synchronized with Shopify.",
   },
   {
-    icon: Truck,
-    title: "Fast delivery",
-    detail: "Orders are packed and dispatched the same working day.",
+    icon: SlidersHorizontal,
+    title: "Clear options",
+    detail: "Choose from the variants currently available for each product.",
   },
   {
     icon: CreditCard,
     title: "Secure payment",
-    detail: "Checkout is handled by Shopify's encrypted payment gateway.",
+    detail: "Checkout is completed securely through Shopify.",
   },
   {
-    icon: RotateCcw,
-    title: "Easy returns",
-    detail: "Changed your mind? Return it within the return window.",
+    icon: Tags,
+    title: "Accurate pricing",
+    detail: "Prices and genuine markdowns come directly from the store catalogue.",
   },
   {
-    icon: Wrench,
-    title: "Expert setup help",
-    detail: "We help you transfer data and set up your new device.",
+    icon: SearchCheck,
+    title: "Focused discovery",
+    detail: "Search, category and brand pages keep products correctly grouped.",
   },
   {
-    icon: Headset,
-    title: "Real support",
-    detail: "Talk to people who actually know the products.",
+    icon: PackageCheck,
+    title: "Order clarity",
+    detail: "Review products, options and totals before completing payment.",
   },
 ] as const;
 
