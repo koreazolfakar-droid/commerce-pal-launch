@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ProductImage } from "@/components/ProductImage";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
+import { useHydrated } from "@/hooks/useHydrated";
 import { groupSpecs, parseDescription, splitSections } from "@/lib/productContent";
 import { catalogQueryOptions } from "@/lib/queries";
 import { formatPrice, productInStock, type ShopifyProduct } from "@/lib/shopify";
@@ -20,7 +21,9 @@ export const Route = createFileRoute("/compare")({
   validateSearch: (search: Record<string, unknown>): CompareSearch => ({
     products: typeof search["products"] === "string" ? search["products"] : undefined,
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(catalogQueryOptions()),
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(catalogQueryOptions());
+  },
   head: () => ({
     meta: [
       { title: "Compare Smartphones — Space Cell" },
@@ -47,6 +50,7 @@ function productSpecs(product: ShopifyProduct) {
 
 function ComparePage() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
+  const hydrated = useHydrated();
   const { products: sharedProducts } = Route.useSearch();
   const handles = useCompareStore((state) => state.handles);
   const remove = useCompareStore((state) => state.remove);
@@ -61,7 +65,7 @@ function ComparePage() {
     if (valid.length > 0) replace(valid);
   }, [sharedProducts, catalog.products, replace]);
 
-  const products = handles
+  const products = (hydrated ? handles : [])
     .map((handle) => catalog.products.find((product) => product.node.handle === handle))
     .filter((product): product is ShopifyProduct => Boolean(product));
 
