@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchCollectionByHandle, type ShopifyProduct } from "@/lib/shopify";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd } from "@/lib/seo";
 
 export const Route = createFileRoute("/collections/$handle")({
   loader: async ({ params }) => {
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/collections/$handle")({
     if (!result) throw notFound();
     return result;
   },
-  head: ({ loaderData }) => {
+  head: ({ params, loaderData }) => {
     if (!loaderData) {
       return {
         meta: [{ title: "Collection unavailable — Space Cell" }, { name: "robots", content: "noindex" }],
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/collections/$handle")({
       loaderData.collection.description?.slice(0, 155) ||
       `Shop ${loaderData.collection.title} at Space Cell with secure checkout.`;
     const image = loaderData.collection.image?.url;
+    const path = `/collections/${params.handle}`;
     return {
       meta: [
         { title },
@@ -30,13 +32,21 @@ export const Route = createFileRoute("/collections/$handle")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
+        { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
         ...(image
           ? [
               { property: "og:image", content: image },
               { name: "twitter:image", content: image },
             ]
           : []),
+      ],
+      links: [canonicalLink(path)],
+      scripts: [
+        jsonLd(breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Collections", path: "/collections" }, { name: loaderData.collection.title, path }])),
+        jsonLd(itemListJsonLd(loaderData.collection.title, loaderData.products)),
       ],
     };
   },

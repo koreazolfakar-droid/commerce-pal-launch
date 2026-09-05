@@ -12,6 +12,7 @@ import { groupSpecs, parseDescription, splitSections } from "@/lib/productConten
 import { catalogQueryOptions } from "@/lib/queries";
 import { formatPrice, productInStock, type ShopifyProduct } from "@/lib/shopify";
 import { useCompareStore } from "@/stores/compareStore";
+import { absoluteUrl, canonicalLink } from "@/lib/seo";
 
 interface CompareSearch {
   products: string | undefined;
@@ -31,8 +32,13 @@ export const Route = createFileRoute("/compare")({
       { property: "og:title", content: "Compare Smartphones — Space Cell" },
       { property: "og:description", content: "Compare Space Cell smartphones side by side using live Shopify product data." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/compare") },
+      { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Compare Smartphones — Space Cell" },
+      { name: "twitter:description", content: "Compare Space Cell smartphones side by side using live Shopify product data." },
     ],
+    links: [canonicalLink("/compare")],
   }),
   component: ComparePage,
 });
@@ -91,7 +97,7 @@ function ComparePage() {
 
   return (
     <StoreLayout>
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 lg:py-12">
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 lg:py-12">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">Phone comparison</p>
@@ -159,7 +165,7 @@ function ComparePage() {
             </table>
           </div>
         )}
-      </main>
+      </div>
     </StoreLayout>
   );
 }

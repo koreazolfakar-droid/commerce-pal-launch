@@ -87,7 +87,11 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
                       {brand && <BrandLogo slug={brand.slug} label={brand.label} size={28} />}
                       <span className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-primary">{brand?.label ?? node.productType ?? "Featured"}</span>
                     </div>
-                    <h1 className="mt-4 line-clamp-3 max-w-xl text-2xl font-extrabold leading-[1.1] sm:text-4xl lg:text-[2.75rem]">{node.title}</h1>
+                    {slideIndex === 0 ? (
+                      <h1 className="mt-4 line-clamp-3 max-w-xl text-2xl font-extrabold leading-[1.1] sm:text-4xl lg:text-[2.75rem]">{node.title}</h1>
+                    ) : (
+                      <h2 className="mt-4 line-clamp-3 max-w-xl text-2xl font-extrabold leading-[1.1] sm:text-4xl lg:text-[2.75rem]">{node.title}</h2>
+                    )}
                     {bullets.length > 0 && <ul className="mt-4 grid gap-1.5">{bullets.map((bullet) => <li key={bullet} className="flex min-w-0 items-center gap-2 text-[13px] text-hero-muted"><Check className="h-3.5 w-3.5 shrink-0 text-primary" /><span className="truncate capitalize">{bullet}</span></li>)}</ul>}
                     <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                       <span className="text-2xl font-extrabold text-primary sm:text-3xl">{formatPrice(price.amount, price.currencyCode)}</span>

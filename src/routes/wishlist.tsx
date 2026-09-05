@@ -6,6 +6,7 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { StoreLayout } from "@/components/StoreLayout";
 import { catalogQueryOptions } from "@/lib/queries";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import { absoluteUrl, canonicalLink } from "@/lib/seo";
 
 export const Route = createFileRoute("/wishlist")({
   loader: ({ context }) => {
@@ -21,8 +22,13 @@ export const Route = createFileRoute("/wishlist")({
       { property: "og:title", content: "Your wishlist — Space Cell" },
       { property: "og:description", content: "Saved products with live prices and stock." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/wishlist") },
+      { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Your wishlist — Space Cell" },
+      { name: "twitter:description", content: "Saved products with live prices and stock." },
     ],
+    links: [canonicalLink("/wishlist")],
   }),
   component: WishlistPage,
 });
@@ -53,7 +59,7 @@ function WishlistPage() {
           </div>
         ) : (
           <div className="mt-6">
-            <ProductGrid products={saved} />
+            <ProductGrid products={saved} eagerCount={4} />
           </div>
         )}
       </div>

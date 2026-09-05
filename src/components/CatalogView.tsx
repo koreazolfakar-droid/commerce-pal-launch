@@ -364,7 +364,7 @@ export function CatalogView({
             </div>
           )}
 
-          <ProductGrid
+          <ProductGrid eagerCount={4}
             products={products}
             action={
               activeCount > 0 ? (

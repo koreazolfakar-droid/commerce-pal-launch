@@ -23,10 +23,12 @@ export const ProductCard = memo(function ProductCard({
   product,
   badge,
   className,
+  eager = false,
 }: {
   product: ShopifyProduct;
   badge?: string;
   className?: string;
+  eager?: boolean;
 }) {
   const addItem = useCartStore((state) => state.addItem);
   const isLoading = useCartStore((state) => state.isLoading);
@@ -84,6 +86,7 @@ export const ProductCard = memo(function ProductCard({
             alt={image?.altText ?? node.title}
             size={480}
             sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
+            eager={eager}
             imageClassName="group-hover:scale-[1.05]"
           />
         </Link>

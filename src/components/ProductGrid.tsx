@@ -31,12 +31,14 @@ export function ProductGrid({
   emptyTitle = "No products found",
   emptyHint = "Try removing a filter or browsing another category.",
   action,
+  eagerCount = 0,
 }: {
   products: ShopifyProduct[];
   className?: string;
   emptyTitle?: string;
   emptyHint?: string;
   action?: React.ReactNode;
+  eagerCount?: number;
 }) {
   if (products.length === 0) {
     return (
@@ -53,8 +55,8 @@ export function ProductGrid({
 
   return (
     <div className={cn(GRID, className)}>
-      {products.map((product) => (
-        <ProductCard key={product.node.id} product={product} />
+      {products.map((product, index) => (
+        <ProductCard key={product.node.id} product={product} eager={index < eagerCount} />
       ))}
     </div>
   );

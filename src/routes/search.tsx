@@ -5,6 +5,7 @@ import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions } from "@/lib/queries";
+import { absoluteUrl, canonicalLink } from "@/lib/seo";
 
 export const Route = createFileRoute("/search")({
   validateSearch: parseProductSearch,
@@ -22,8 +23,13 @@ export const Route = createFileRoute("/search")({
       { property: "og:title", content: "Search products — Space Cell" },
       { property: "og:description", content: "Search the live Space Cell technology catalogue." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/search") },
+      { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Search products — Space Cell" },
+      { name: "twitter:description", content: "Search the live Space Cell technology catalogue." },
     ],
+    links: [canonicalLink("/search")],
   }),
   component: SearchPage,
 });

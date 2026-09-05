@@ -35,6 +35,7 @@ import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
 import { productWhatsAppUrl } from "@/lib/whatsapp";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, productJsonLd } from "@/lib/seo";
 import { useCartStore } from "@/stores/cartStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -45,12 +46,22 @@ export const Route = createFileRoute("/product/$handle")({
     if (!product) throw notFound();
     return { product };
   },
-  head: ({ loaderData }) => {
+  head: ({ params, loaderData }) => {
+    if (!loaderData) {
+      return {
+        meta: [
+          { title: "Product unavailable — Space Cell" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    }
     const title = loaderData?.product.node.title ?? "Product";
     const description =
       loaderData?.product.node.description?.slice(0, 150) ||
       "Shop phones, tablets and accessories at Space Cell.";
     const image = loaderData?.product.node.images.edges[0]?.node.url;
+    const path = `/product/${params.handle}`;
+    const product = loaderData?.product;
     return {
       meta: [
         { title: `${title} — Space Cell` },
@@ -58,7 +69,10 @@ export const Route = createFileRoute("/product/$handle")({
         { property: "og:title", content: `${title} — Space Cell` },
         { property: "og:description", content: description },
         { property: "og:type", content: "product" },
+        { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${title} — Space Cell` },
+        { name: "twitter:description", content: description },
         ...(image
           ? [
               { property: "og:image", content: image },
@@ -66,6 +80,19 @@ export const Route = createFileRoute("/product/$handle")({
             ]
           : []),
       ],
+      links: [canonicalLink(path)],
+      scripts: product
+        ? [
+            jsonLd(productJsonLd(product)),
+            jsonLd(
+              breadcrumbJsonLd([
+                { name: "Home", path: "/" },
+                { name: "Shop", path: "/shop" },
+                { name: title, path },
+              ]),
+            ),
+          ]
+        : [],
     };
   },
   component: ProductPage,
@@ -213,7 +240,7 @@ function ProductPage() {
 
   return (
     <StoreLayout>
-      <main className="mx-auto max-w-7xl px-4 py-6 pb-32 lg:py-10 lg:pb-14">
+      <div className="mx-auto max-w-7xl px-4 py-6 pb-32 lg:py-10 lg:pb-14">
         <nav
           aria-label="Breadcrumb"
           className="flex items-center gap-1 text-xs text-muted-foreground"
@@ -472,7 +499,7 @@ function ProductPage() {
             <ProductGrid products={similar} />
           </section>
         )}
-      </main>
+      </div>
 
       {/* Mobile sticky buy bar — sits above the bottom navigation. */}
       <div className="fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] left-0 right-0 z-30 border-t bg-background/90 px-4 py-2.5 backdrop-blur-xl sm:hidden">

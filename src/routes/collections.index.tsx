@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { BottomNav } from "@/components/BottomNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { fetchCollections } from "@/lib/shopify";
+import { collectionsQueryOptions } from "@/lib/queries";
+import { absoluteUrl, canonicalLink, jsonLd } from "@/lib/seo";
 
 export const Route = createFileRoute("/collections/")({
-  head: () => ({
+  loader: ({ context }) => context.queryClient.ensureQueryData(collectionsQueryOptions()),
+  head: ({ loaderData }) => ({
     meta: [
       { title: "All Collections — Space Cell" },
       {
@@ -21,18 +23,32 @@ export const Route = createFileRoute("/collections/")({
         content: "Browse every Space Cell collection across phones, tablets, audio and accessories.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/collections") },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "All Collections — Space Cell" },
+      { name: "twitter:description", content: "Browse every Space Cell collection across phones, tablets, audio and accessories." },
     ],
+    links: [canonicalLink("/collections")],
+    scripts: loaderData
+      ? [jsonLd({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Space Cell collections",
+          numberOfItems: loaderData.length,
+          itemListElement: loaderData.map((collection, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: collection.title,
+            url: absoluteUrl(`/collections/${collection.handle}`),
+          })),
+        })]
+      : [],
   }),
   component: CollectionsIndex,
 });
 
 function CollectionsIndex() {
-  const { data: collections, isLoading } = useQuery({
-    queryKey: ["shopify-collections"],
-    queryFn: () => fetchCollections(50),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
 
   return (
     <div className="min-h-screen bg-background pb-20 lg:pb-0">
@@ -43,13 +59,7 @@ function CollectionsIndex() {
           Every collection published in the store, straight from Shopify.
         </p>
 
-        {isLoading ? (
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[0, 1, 2, 3].map((key) => (
-              <div key={key} className="h-40 animate-pulse rounded-lg bg-surface" />
-            ))}
-          </div>
-        ) : !collections || collections.length === 0 ? (
+        {!collections || collections.length === 0 ? (
           <p className="py-16 text-muted-foreground">No collections published yet.</p>
         ) : (
           <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -66,6 +76,9 @@ function CollectionsIndex() {
                       src={collection.image.url}
                       alt={collection.image.altText ?? collection.title}
                       loading="lazy"
+                      decoding="async"
+                      width={480}
+                      height={360}
                       className="h-full w-full object-cover"
                     />
                   )}

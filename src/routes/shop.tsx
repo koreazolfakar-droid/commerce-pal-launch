@@ -6,14 +6,16 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { displayCollections } from "@/lib/taxonomy";
+import { absoluteUrl, canonicalLink, itemListJsonLd, jsonLd } from "@/lib/seo";
 
 export const Route = createFileRoute("/shop")({
   validateSearch: parseProductSearch,
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(catalogQueryOptions());
+  loader: async ({ context }) => {
+    const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
     context.queryClient.prefetchQuery(collectionsQueryOptions());
+    return { products: catalog.products };
   },
-  head: () => ({
+  head: ({ loaderData }) => ({
     meta: [
       { title: "Shop All Tech — Space Cell" },
       {
@@ -27,8 +29,13 @@ export const Route = createFileRoute("/shop")({
         content: "Filter and sort the full Space Cell technology catalogue.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/shop") },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Shop All Tech — Space Cell" },
+      { name: "twitter:description", content: "Filter and sort the full Space Cell technology catalogue." },
     ],
+    links: [canonicalLink("/shop")],
+    scripts: loaderData ? [jsonLd(itemListJsonLd("Shop all products", loaderData.products))] : [],
   }),
   component: ShopPage,
 });

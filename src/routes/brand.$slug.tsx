@@ -1,19 +1,37 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions } from "@/lib/queries";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd } from "@/lib/seo";
 
 export const Route = createFileRoute("/brand/$slug")({
   validateSearch: parseProductSearch,
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(catalogQueryOptions());
+  loader: async ({ context, params }) => {
+    const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
+    const brand = catalog.brands.find((entry) => entry.slug === params.slug);
+    if (!brand) throw notFound();
+    return {
+      label: brand.label,
+      products: catalog.products.filter(
+        (product) => catalog.brandOf.get(product.node.handle)?.slug === params.slug,
+      ),
+    };
   },
-  head: ({ params }) => {
-    const label = params.slug.replace(/-/g, " ");
+  head: ({ params, loaderData }) => {
+    if (!loaderData) {
+      return {
+        meta: [
+          { title: "Brand unavailable — Space Cell" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    }
+    const label = loaderData?.label ?? params.slug.replace(/-/g, " ");
     const description = `Shop ${label} devices and accessories at Space Cell with live Shopify pricing and stock.`;
+    const path = `/brand/${params.slug}`;
     return {
       meta: [
         { title: `${label} products — Space Cell` },
@@ -21,8 +39,18 @@ export const Route = createFileRoute("/brand/$slug")({
         { property: "og:title", content: `${label} products — Space Cell` },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
+        { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${label} products — Space Cell` },
+        { name: "twitter:description", content: description },
       ],
+      links: [canonicalLink(path)],
+      scripts: loaderData
+        ? [
+            jsonLd(breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: label, path }])),
+            jsonLd(itemListJsonLd(`${label} products`, loaderData.products)),
+          ]
+        : [],
     };
   },
   component: BrandPage,

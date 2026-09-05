@@ -20,6 +20,7 @@ import {
   homepageHeroQueryOptions,
 } from "@/lib/queries";
 import { discountPercent, productInStock, type ShopifyProduct } from "@/lib/shopify";
+import { absoluteUrl, canonicalLink, jsonLd, SITE_NAME, SITE_URL } from "@/lib/seo";
 import type { CatalogFacet, CatalogIndex } from "@/lib/taxonomy";
 
 export const Route = createFileRoute("/")({
@@ -47,7 +48,30 @@ export const Route = createFileRoute("/")({
           "Premium smartphones, tablets, audio and accessories with live availability and secure checkout.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/") },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Space Cell — Premium Phones, Tablets & Audio" },
+      { name: "twitter:description", content: "Premium smartphones, tablets, audio and accessories with live availability and secure checkout." },
+    ],
+    links: [canonicalLink("/")],
+    scripts: [
+      jsonLd({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: SITE_NAME,
+        url: SITE_URL,
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${SITE_URL}/search?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
+      }),
+      jsonLd({
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: SITE_NAME,
+        url: SITE_URL,
+      }),
     ],
   }),
   component: Index,
