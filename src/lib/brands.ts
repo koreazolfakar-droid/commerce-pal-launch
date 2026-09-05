@@ -82,12 +82,14 @@ export function brandLogoSources(slug: string, label: string, size = 128): strin
   if (LOGO_DEV_KEY && domain) {
     sources.push(`https://img.logo.dev/${domain}?token=${LOGO_DEV_KEY}&size=${size}&format=png`);
   }
-  // Dynamic, map-free fallback: the brand's own site icon.
+  // Dynamic, map-free fallbacks: the brand's own site icon.
   if (domain) {
+    sources.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
     sources.push(
       `https://www.google.com/s2/favicons?domain=${domain}&sz=${Math.min(256, Math.max(64, size))}`,
     );
   }
+
   return sources;
 }
 
