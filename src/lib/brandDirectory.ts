@@ -29,19 +29,35 @@ export interface ShopifyBrand extends CatalogFacet {
  * matching collection stay in the list and fall back to the resolved logo /
  * monogram, so the section never breaks and never shows invented data.
  */
+/** Collapses a handle/title to bare letters+digits, dropping generic words. */
+function normalizeKey(value: string) {
+  return slugify(value)
+    .replace(/-(official|store|brand|collection|products|shop)$/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
 export function buildShopifyBrands(
   brands: CatalogFacet[],
   collections: ShopifyCollection[] | undefined,
 ): ShopifyBrand[] {
-  const bySlug = new Map<string, ShopifyCollection>();
+  const withImage: Array<{ key: string; collection: ShopifyCollection }> = [];
+  const byKey = new Map<string, ShopifyCollection>();
   for (const collection of collections ?? []) {
-    bySlug.set(collection.handle.toLowerCase(), collection);
-    const titleSlug = slugify(collection.title);
-    if (titleSlug && !bySlug.has(titleSlug)) bySlug.set(titleSlug, collection);
+    for (const key of [normalizeKey(collection.handle), normalizeKey(collection.title)]) {
+      if (!key) continue;
+      if (!byKey.has(key)) byKey.set(key, collection);
+      if (collection.image?.url) withImage.push({ key, collection });
+    }
   }
 
   return brands.map((brand) => {
-    const collection = bySlug.get(brand.slug);
+    const key = normalizeKey(brand.slug);
+    // Prefer any collection that actually carries an image (exact key, then a
+    // handle/title that contains the brand name, e.g. "anker-official").
+    const collection =
+      withImage.find((entry) => entry.key === key)?.collection ??
+      withImage.find((entry) => entry.key.includes(key) || key.includes(entry.key))?.collection ??
+      byKey.get(key);
     const entry: ShopifyBrand = {
       ...brand,
       label: collection?.title?.trim() || brand.label,
