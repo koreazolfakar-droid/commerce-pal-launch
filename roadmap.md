@@ -1,58 +1,74 @@
-# Space Cell — Redesign Roadmap
+# Space Cell — Roadmap
 
-## Completed: premium reference redesign
+## In progress: full storefront audit & upgrade (Shopify-managed content, UX, security)
 
-1. [x] **BrandLogo system** — reusable `BrandLogo` component; normalized vendor/alias
-   resolution (Xiaomi/MI, Redmi, POCO, Samsung, Apple, Lenovo, Anker, UGREEN,
-   Baseus, Honor, Huawei, OPPO, vivo, OnePlus, Google, Sony, JBL, Bose,
-   Logitech, ASUS, Acer, Dell, HP, Nokia, Motorola, Tecno, Infinix); crisp
-   SVG/vector, premium rounded tiles, polished monogram fallback for unknown
-   brands; used in Top Brands, product cards, filters, product page, search,
-   nav. Lightweight assets only.
-2. [x] **Category + option icons** — consistent thin line icons for All /
-   Smartphones / Tablets / Laptops / Headphones / Chargers / Cables / Power
-   Banks / Cases / Smartwatches / Audio / Deals; desktop horizontal category
-   nav + category cards; mobile circular icon shortcuts in horizontal scroll.
-3. [x] **Button/action icon audit** — Search, Add to cart, Shop now, View all,
-   Wishlist, Bag, Account, Back, Filter, Sort, Close, Menu, Share, Compare,
-   Checkout, Continue shopping; consistent sizing + accessible labels.
-4. [x] **Hero redesign** — large rounded banner: uppercase brand label, big product
-   title, feature bullets, price + compare-at + discount badge, premium CTA,
-   large product image right, carousel dots; data-driven from real Shopify
-   products; responsive + lazy imagery.
-5. [x] **Homepage order** — utility bar → header + search → category nav → hero →
-   trust strip → Shop by Category → Top Brands → Best Sellers → promo brand
-   banners → Today's Deals → Why Shop With Space Cell → newsletter/footer;
-   hide empty sections automatically.
-6. [x] **Product cards** — reference-quality: clean image area, wishlist, brand
-   logo, title, price/old price/discount/stock only when real, compact
-   add-to-cart icon; data stays tied to the same Shopify product.
-7. [x] **Filtering guard** — preserve strict category filtering; brand pages only
-   that brand; search/filters must not leak unrelated products.
-8. [x] **Mobile polish** — compact header, search, circular category shortcuts,
-   hero, trust strip, sections, fixed bottom nav (Home/Search/Shop/Saved/Bag)
-   with real actions.
-9. [x] **Performance pass** — responsive images via `cdnImage`, lazy below fold,
-   correct object-fit, reuse lucide icons (no new icon deps).
-10. [x] **QA** — Playwright desktop + mobile: homepage and product-page rendering,
-    product open, wishlist, add-to-cart, cart, nav, hero CTA, shortcuts,
-    responsive layouts, Shopify-driven links, and console/runtime errors.
+### Audit findings (verified against the live store, 88 products, 4 collections)
+- Brand logos invisible after SSR: `BrandLogo` only revealed the image on `onLoad`,
+  which never fires for images already complete at hydration → monograms shown
+  everywhere. Fixed with a post-mount `complete/naturalWidth` check.
+- Third-party favicon fallbacks (duckduckgo/google) produced 404 noise and
+  low-quality logos → removed; Shopify collection image → Simple Icons → monogram.
+- `buildShopifyBrands` renamed "Apple" to "Apple iPhone" on fuzzy collection
+  matches → label now overrides only on exact key match.
+- Checkout `window.open` without `noopener` (CartDrawer, /cart) → fixed.
+- Dead/misleading links: Account → /wishlist, Track order → /cart, Help/Support →
+  /collections. Shopify customer accounts are live at
+  `https://dj6qeq-j9.myshopify.com/account` (orders + tracking) → wired.
+- Newsletter forms (homepage + footer) show success but store nothing;
+  `customerCreate` is ACCESS_DENIED for this token and the online store's
+  /contact form is password/captcha protected → must be replaced (see item 6).
+- Footer payment badges are invented; Shopify `shop.paymentSettings` returns no
+  card brands yet → render only what Shopify returns.
+- Footer Support/Company items are plain text, social icons are non-links.
+- `homepage-hero` collection does not exist yet (hero uses deal/in-stock fallback).
+- Store data available via Storefront API: shop name/description/brand, policies
+  (privacy only so far), paymentSettings, collection metafields
+  (`custom.sort_order` readable). NOT available: pages, blogs, menus, metaobjects.
+- Dead code: `Hero.tsx`, `BrandBanners.tsx`, `CollectionSections.tsx`,
+  `PromoBanner.tsx`, most of `HomeSections.tsx`, `lib/catalog.ts`.
+- Mobile: sticky header + category rail eats ~210px on every page.
+- "Today's deals" renders a single lonely card in a 4-col grid when 1 deal exists.
+- Duplicate `BenefitsBar` (top and bottom of homepage).
 
-## Notes
+### Ready items (in order)
+1. [x] BrandLogo hydration fix + drop favicon fallbacks; exact-match brand labels.
+2. [x] Security quick wins: `noopener` on checkout windows; header links point to
+   real destinations (Shopify accounts, WhatsApp help).
+3. [ ] `src/lib/merchandising.ts` — Shopify-managed content layer:
+   showcases from `showcase-*` collections (image, title, description, CTA,
+   `custom.sort_order` metafield, product count; unpublished = hidden) with
+   automatic fallback showcases from top brands; `shop` info (name, brand logo,
+   policies, paymentSettings) query + `shopQueryOptions`.
+4. [ ] Brand Showcase section replacing `PromoBanners`: hero image stage, brand
+   logo, title, description, product rail, count, CTA; alternating layout.
+5. [ ] Hero redesign: light image stage inside dark panel, arrows/dots/progress,
+   tagline from `homepage-hero` collection description.
+6. [ ] Newsletter → honest "Deal alerts on WhatsApp" CTA (single instance);
+   remove footer email form; document how to enable email capture
+   (Storefront API `unauthenticated_write_customers`).
+7. [ ] Footer: policy links from Shopify (`/policies/$handle` route rendering
+   `shop.*Policy.body`), Help/Contact page (`/help`: WhatsApp, account/orders,
+   policies), payment badges only from `paymentSettings`, remove fake socials,
+   fix column layout.
+8. [ ] Header: keyboard-accessible dropdowns (focus-within), mobile hamburger
+   menu (Sheet: categories, brands, collections, help, account), category rail
+   non-sticky on mobile.
+9. [ ] Product cards: Quick View dialog (gallery, VariantPicker, qty, add to
+   cart), second-image hover when real, brand link.
+10. [ ] Product page: "More from {brand}" rail, share button (Web Share/copy),
+    keep WhatsApp + compare.
+11. [ ] Homepage: adaptive Deals layout (spotlight for 1–2 deals), remove
+    duplicate BenefitsBar, customer-facing WhyShop copy sourced from
+    `storeAssurances.ts`.
+12. [ ] Delete dead components/`lib/catalog.ts`; tidy `HomeSections.tsx` to
+    `BenefitsBar` only.
+13. [ ] Security headers middleware (nosniff, referrer-policy,
+    permissions-policy; no frame-ancestors to keep the preview iframe working);
+    validate checkout URL host is Shopify before opening; dependency scan.
+14. [ ] Sitemap/robots: add `/help` and `/policies/*`; verify head() on new routes.
+15. [ ] QA: Playwright desktop/mobile/dark mode for home, product, shop, cart,
+    help, policies; `bunx tsgo --noEmit`; `bun run build`.
 
-- Taxonomy engine (`src/lib/taxonomy.ts`) already has strict tiered category
-  matching + brand resolution — build BrandLogo on top of `resolveBrand` /
-  `CatalogIndex.brands`; do not duplicate alias lists, extend `BRAND_KEYWORDS`
-  (add Acer; verify Baseus/Infinix already present).
-- No fake data anywhere: ratings/reviews/discounts/stock only when Shopify
-  provides them.
-- Keep Shopify layer (`src/lib/shopify.ts` sanitizeQuery/deniedFields) intact.
-
-## Completed: Shopify merchandising, WhatsApp, and comparison
-
-1. [x] Shopify-managed multi-product hero with controls, swipe, pause, and real product data.
-2. [x] Premium category cards using Shopify collection/product imagery and live counts.
-3. [x] Central WhatsApp ordering configuration and product-aware messages.
-4. [x] Phone comparison store, controls, and responsive `/compare` page for 2–4 products.
-5. [x] Product-page and global polish without changing cart, filters, or Shopify ownership.
-6. [x] Desktop/mobile interaction QA plus TypeScript checks.
+## Completed earlier
+- Premium reference redesign, dynamic taxonomy, brand logos from collections,
+  WhatsApp ordering, compare, technical SEO (canonicals, JSON-LD, sitemap, noindex).

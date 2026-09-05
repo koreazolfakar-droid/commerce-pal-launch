@@ -41,7 +41,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
   const handleCheckout = () => {
     const checkoutUrl = getCheckoutUrl();
     if (checkoutUrl) {
-      window.open(checkoutUrl, "_blank");
+      window.open(checkoutUrl, "_blank", "noopener,noreferrer");
       setIsOpen(false);
     }
   };

@@ -54,13 +54,15 @@ export function buildShopifyBrands(
     const key = normalizeKey(brand.slug);
     // Prefer any collection that actually carries an image (exact key, then a
     // handle/title that contains the brand name, e.g. "anker-official").
+    const exact = withImage.find((entry) => entry.key === key)?.collection ?? byKey.get(key);
     const collection =
-      withImage.find((entry) => entry.key === key)?.collection ??
-      withImage.find((entry) => entry.key.includes(key) || key.includes(entry.key))?.collection ??
-      byKey.get(key);
+      exact ??
+      withImage.find((entry) => entry.key.includes(key) || key.includes(entry.key))?.collection;
     const entry: ShopifyBrand = {
       ...brand,
-      label: collection?.title?.trim() || brand.label,
+      // Only an exact match may rename the brand ("apple-iphone" must not
+      // relabel the Apple brand tile as "Apple iPhone").
+      label: exact?.title?.trim() || brand.label,
     };
     if (collection?.image?.url) entry.image = collection.image.url;
     if (collection?.image?.altText) entry.imageAlt = collection.image.altText;

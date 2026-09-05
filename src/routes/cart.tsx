@@ -40,7 +40,7 @@ function CartPage() {
 
   const checkout = () => {
     const url = getCheckoutUrl();
-    if (url) window.open(url, "_blank");
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (

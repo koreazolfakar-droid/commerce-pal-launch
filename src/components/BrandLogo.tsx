@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { brandLogoSources, brandMonogram } from "@/lib/brands";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,22 @@ export function BrandLogo({
   );
   const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const source = sources[attempt];
+
+  // After SSR hydration the browser may already have finished loading (or
+  // failing) the image before React attaches onLoad/onError, so those events
+  // never fire. Reconcile against the element's real state once mounted.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img || !source || !img.complete) return;
+    if (img.naturalWidth > 0) {
+      setLoaded(true);
+    } else {
+      failed.add(source);
+      setAttempt((value) => value + 1);
+    }
+  }, [source]);
 
   // The monogram is always the base layer, so a logo that is still loading (or
   // that 404s while we walk the candidate list) never flashes a broken image.
@@ -53,6 +68,7 @@ export function BrandLogo({
       )}
       {source && (
         <img
+          ref={imgRef}
           key={source}
           src={source}
           alt={`${label} logo`}
@@ -64,6 +80,7 @@ export function BrandLogo({
           onLoad={() => setLoaded(true)}
           onError={() => {
             failed.add(source);
+            setLoaded(false);
             setAttempt((value) => value + 1);
           }}
           className="relative object-contain transition-opacity"
@@ -72,4 +89,3 @@ export function BrandLogo({
     </span>
   );
 }
-
