@@ -42,12 +42,13 @@ export function buildShopifyBrands(
 
   return brands.map((brand) => {
     const collection = bySlug.get(brand.slug);
-    return {
+    const entry: ShopifyBrand = {
       ...brand,
       label: collection?.title?.trim() || brand.label,
-      image: collection?.image?.url,
-      imageAlt: collection?.image?.altText ?? undefined,
-      collectionHandle: collection?.handle,
     };
+    if (collection?.image?.url) entry.image = collection.image.url;
+    if (collection?.image?.altText) entry.imageAlt = collection.image.altText;
+    if (collection?.handle) entry.collectionHandle = collection.handle;
+    return entry;
   });
 }
