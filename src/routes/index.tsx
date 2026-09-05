@@ -236,7 +236,4 @@ function Index() {
       </div>
     </StoreLayout>
   );
-
-    </StoreLayout>
-  );
 }
