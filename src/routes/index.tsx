@@ -10,9 +10,11 @@ import { Newsletter } from "@/components/Newsletter";
 import { StoreLayout } from "@/components/StoreLayout";
 import { TopBrands } from "@/components/TopBrands";
 import { WhyShop } from "@/components/WhyShop";
+import { buildShopifyBrands } from "@/lib/brandDirectory";
 import {
   bestSellingQueryOptions,
   catalogQueryOptions,
+  collectionsQueryOptions,
 } from "@/lib/queries";
 import { discountPercent, productInStock, type ShopifyProduct } from "@/lib/shopify";
 
@@ -21,6 +23,7 @@ export const Route = createFileRoute("/")({
     await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(bestSellingQueryOptions()),
+      context.queryClient.ensureQueryData(collectionsQueryOptions()),
     ]);
   },
 
@@ -98,8 +101,10 @@ function Rail({ products }: { products: ShopifyProduct[] }) {
 function Index() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: bestSellers } = useSuspenseQuery(bestSellingQueryOptions());
+  const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
 
   const products = catalog.products;
+  const brands = buildShopifyBrands(catalog.brands, collections);
   const inStock = products.filter(productInStock);
   const deals = products.filter(onSale);
   const hero = (deals.length > 0 ? deals : inStock.length > 0 ? inStock : products).slice(0, 5);
@@ -155,7 +160,7 @@ function Index() {
               </section>
             )}
 
-            <TopBrands brands={catalog.brands} />
+            <TopBrands brands={brands} />
 
             {best.length > 0 && (
               <section>
