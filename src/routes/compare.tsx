@@ -13,12 +13,12 @@ import { formatPrice, productInStock, type ShopifyProduct } from "@/lib/shopify"
 import { useCompareStore } from "@/stores/compareStore";
 
 interface CompareSearch {
-  products?: string;
+  products: string | undefined;
 }
 
 export const Route = createFileRoute("/compare")({
   validateSearch: (search: Record<string, unknown>): CompareSearch => ({
-    products: typeof search.products === "string" ? search.products : undefined,
+    products: typeof search["products"] === "string" ? search["products"] : undefined,
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(catalogQueryOptions()),
   head: () => ({

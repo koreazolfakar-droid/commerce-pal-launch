@@ -17,6 +17,7 @@ import {
   bestSellingQueryOptions,
   catalogQueryOptions,
   collectionsQueryOptions,
+  homepageHeroQueryOptions,
 } from "@/lib/queries";
 import { discountPercent, productInStock, type ShopifyProduct } from "@/lib/shopify";
 import type { CatalogFacet, CatalogIndex } from "@/lib/taxonomy";
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/")({
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(bestSellingQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
+      context.queryClient.ensureQueryData(homepageHeroQueryOptions()),
     ]);
   },
 
@@ -177,12 +179,13 @@ function Index() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: bestSellers } = useSuspenseQuery(bestSellingQueryOptions());
   const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
+  const { data: heroCollection } = useSuspenseQuery(homepageHeroQueryOptions());
 
   const products = catalog.products;
   const brands = buildShopifyBrands(catalog.brands, collections);
   const inStock = products.filter(productInStock);
   const deals = products.filter(onSale);
-  const hero = (deals.length > 0 ? deals : inStock.length > 0 ? inStock : products).slice(0, 5);
+  const hero = (heroCollection?.products.length ? heroCollection.products : deals.length > 0 ? deals : inStock.length > 0 ? inStock : products).slice(0, 5);
   const best = (bestSellers ?? []).length > 0 ? bestSellers! : inStock;
 
   const firstOf = (facet: CatalogFacet, kind: "brand" | "category") =>
@@ -194,6 +197,16 @@ function Index() {
 
 
   const slots = promoSlots(catalog, firstOf);
+  const normalized = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "").replace(/collection|official/g, "");
+  const categoryImage = (category: CatalogFacet) => {
+    const key = normalized(category.slug);
+    const collection = collections.find((item) => {
+      const title = normalized(item.title);
+      const handle = normalized(item.handle);
+      return title === key || handle === key || title.includes(key) || key.includes(title);
+    });
+    return collection?.image ?? firstOf(category, "category")?.node.images.edges[0]?.node;
+  };
 
   return (
     <StoreLayout>
@@ -221,15 +234,17 @@ function Index() {
                   href="/shop"
                 />
                 <div className="scroll-rail flex gap-3 px-4 sm:grid sm:grid-cols-4 sm:px-0 lg:grid-cols-8">
-                  {catalog.categories.slice(0, 8).map((category) => (
+                  {catalog.categories.slice(0, 8).map((category) => {
+                    const image = categoryImage(category);
+                    return (
                     <Link
                       key={category.slug}
                       to="/category/$slug"
                       params={{ slug: category.slug }}
-                      className="card-lift flex w-28 shrink-0 flex-col items-center gap-2.5 rounded-2xl border bg-card px-3 py-5 text-center shadow-card transition-all hover:border-primary sm:w-auto"
+                      className="card-lift flex w-32 shrink-0 flex-col items-center gap-2.5 rounded-2xl border bg-card px-3 py-4 text-center shadow-card transition-all hover:border-primary sm:w-auto"
                     >
-                      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-accent text-accent-foreground">
-                        {category.icon ? (
+                      <span className="grid h-20 w-20 place-items-center overflow-hidden rounded-full bg-surface text-accent-foreground">
+                        {image ? <img src={image.url} alt={image.altText ?? category.label} loading="lazy" decoding="async" width={96} height={96} className="h-full w-full object-contain p-2" /> : category.icon ? (
                           <category.icon className="h-6 w-6" strokeWidth={1.6} />
                         ) : null}
                       </span>
@@ -240,7 +255,8 @@ function Index() {
                         {category.count} item{category.count === 1 ? "" : "s"}
                       </span>
                     </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}

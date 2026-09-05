@@ -1,8 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Gift } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight, Check, Gift } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { Button } from "@/components/ui/button";
 import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { discountPercent, formatPrice, type ShopifyProduct } from "@/lib/shopify";
 import { resolveBrand } from "@/lib/taxonomy";
@@ -23,128 +30,82 @@ function featureBullets(product: ShopifyProduct) {
 
 /** Premium hero card: brand label, headline, bullets, pricing, CTA, carousel dots. */
 export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
+  const [api, setApi] = useState<CarouselApi>();
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (products.length < 2) return;
+    if (!api) return;
+    const update = () => setIndex(api.selectedScrollSnap());
+    update();
+    api.on("select", update);
+    api.on("reInit", update);
+    return () => {
+      api.off("select", update);
+      api.off("reInit", update);
+    };
+  }, [api]);
+
+  useEffect(() => {
+    if (!api || products.length < 2 || paused) return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = setInterval(() => setIndex((value) => (value + 1) % products.length), 6500);
+    const timer = setInterval(() => api.scrollNext(), 6500);
     return () => clearInterval(timer);
-  }, [products.length]);
+  }, [api, paused, products.length]);
+
+  const scrollTo = useCallback((slide: number) => api?.scrollTo(slide), [api]);
 
   if (products.length === 0) return null;
 
-  const active = products[Math.min(index, products.length - 1)];
-  if (!active) return null;
-  const node = active.node;
-  const image = node.images.edges[0]?.node;
-  const variant = node.variants.edges[0]?.node;
-  const price = variant?.price ?? node.priceRange.minVariantPrice;
-  const compareAt =
-    variant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount;
-  const discount = discountPercent(price.amount, compareAt);
-  const brand = resolveBrand(active);
-  const bullets = featureBullets(active);
-  const gift = (node.tags ?? []).find((tag) => /free\s|gift|bundle/i.test(tag));
-
   return (
-    <section className="px-4 sm:px-0" aria-label="Featured product">
-      <div className="relative overflow-hidden rounded-3xl border border-hero-border bg-hero text-hero-foreground shadow-float">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -right-24 top-1/2 hidden h-[34rem] w-[34rem] -translate-y-1/2 rounded-full bg-primary/15 blur-3xl md:block"
-        />
-        <div
-          key={node.id}
-          className="animate-fade relative grid min-h-[26rem] items-center gap-6 p-6 sm:p-9 md:min-h-[32rem] md:grid-cols-[1fr_1fr] lg:gap-12 lg:p-14"
-        >
-          <div className="order-2 min-w-0 md:order-1">
-            <div className="flex items-center gap-2">
-              {brand && <BrandLogo slug={brand.slug} label={brand.label} size={28} />}
-              <span className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-                {brand?.label ?? node.productType ?? "Featured"}
-              </span>
-            </div>
-
-            <h1 className="mt-4 line-clamp-3 max-w-xl text-2xl font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-[2.75rem]">
-              {node.title}
-            </h1>
-
-
-            {bullets.length > 0 && (
-              <ul className="mt-4 grid gap-1.5">
-                {bullets.map((bullet) => (
-                  <li
-                    key={bullet}
-                    className="flex min-w-0 items-center gap-2 text-[13px] text-hero-muted"
-                  >
-                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-                    <span className="truncate capitalize">{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-2xl font-extrabold tracking-tight text-primary sm:text-3xl">
-                {formatPrice(price.amount, price.currencyCode)}
-              </span>
-              {discount !== null && compareAt && (
-                <>
-                  <span className="text-sm text-hero-muted line-through">
-                    {formatPrice(compareAt, price.currencyCode)}
-                  </span>
-                  <span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">
-                    -{discount}%
-                  </span>
-                </>
-              )}
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Link
-                to="/product/$handle"
-                params={{ handle: node.handle }}
-                className="press inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-card-hover transition-opacity hover:opacity-90"
-              >
-                Shop now
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              {node.productType && (
-                <span className="text-xs font-medium text-hero-muted">{node.productType}</span>
-              )}
-            </div>
-          </div>
-
-          <Link
-            to="/product/$handle"
-            params={{ handle: node.handle }}
-            aria-label={node.title}
-            className="order-1 block aspect-[4/3] overflow-hidden rounded-2xl bg-transparent md:order-2 md:aspect-square"
-          >
-            {image && (
-              <img
-                src={cdnImage(image.url, 720)}
-                srcSet={cdnSrcSet(image.url, 720)}
-                sizes="(min-width: 1024px) 520px, 90vw"
-                alt={image.altText ?? node.title}
-                fetchPriority="high"
-                decoding="async"
-                width={720}
-                height={720}
-                className="h-full w-full object-contain p-3 drop-shadow-2xl sm:p-6"
-              />
-            )}
-          </Link>
-        </div>
-
-        {gift && (
-          <span className="absolute right-4 top-4 z-10 grid h-20 w-20 place-content-center gap-1 rounded-full border bg-background/90 p-2 text-center text-[10px] font-bold leading-tight text-primary shadow-float backdrop-blur sm:right-7 sm:top-7 sm:h-24 sm:w-24 sm:text-xs">
-            <Gift className="h-3.5 w-3.5" />
-            <span className="capitalize">{gift}</span>
-          </span>
-        )}
-      </div>
+    <section className="px-4 sm:px-0" aria-label="Featured products">
+      <Carousel
+        setApi={setApi}
+        opts={{ loop: products.length > 1 }}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocusCapture={() => setPaused(true)}
+        onBlurCapture={() => setPaused(false)}
+        className="overflow-hidden rounded-3xl border border-hero-border bg-hero text-hero-foreground shadow-float"
+      >
+        <CarouselContent className="ml-0">
+          {products.map((product, slideIndex) => {
+            const node = product.node;
+            const image = node.images.edges[0]?.node;
+            const variant = node.variants.edges[0]?.node;
+            const price = variant?.price ?? node.priceRange.minVariantPrice;
+            const compareAt = variant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount;
+            const discount = discountPercent(price.amount, compareAt);
+            const brand = resolveBrand(product);
+            const bullets = featureBullets(product);
+            const gift = (node.tags ?? []).find((tag) => /free\s|gift|bundle/i.test(tag));
+            return (
+              <CarouselItem key={node.id} className="pl-0">
+                <div className="relative grid min-h-[31rem] items-center gap-5 p-6 sm:p-9 md:min-h-[32rem] md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-12 lg:p-14">
+                  <div className="order-2 min-w-0 md:order-1">
+                    <div className="flex items-center gap-2">
+                      {brand && <BrandLogo slug={brand.slug} label={brand.label} size={28} />}
+                      <span className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-primary">{brand?.label ?? node.productType ?? "Featured"}</span>
+                    </div>
+                    <h1 className="mt-4 line-clamp-3 max-w-xl text-2xl font-extrabold leading-[1.1] sm:text-4xl lg:text-[2.75rem]">{node.title}</h1>
+                    {bullets.length > 0 && <ul className="mt-4 grid gap-1.5">{bullets.map((bullet) => <li key={bullet} className="flex min-w-0 items-center gap-2 text-[13px] text-hero-muted"><Check className="h-3.5 w-3.5 shrink-0 text-primary" /><span className="truncate capitalize">{bullet}</span></li>)}</ul>}
+                    <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="text-2xl font-extrabold text-primary sm:text-3xl">{formatPrice(price.amount, price.currencyCode)}</span>
+                      {discount !== null && compareAt && <><span className="text-sm text-hero-muted line-through">{formatPrice(compareAt, price.currencyCode)}</span><span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">-{discount}%</span></>}
+                    </div>
+                    <Link to="/product/$handle" params={{ handle: node.handle }} className="press mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-card-hover hover:opacity-90">Shop now <ArrowRight className="h-4 w-4" /></Link>
+                  </div>
+                  <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title} className="order-1 block h-52 overflow-hidden md:order-2 md:h-[27rem]">
+                    {image && <img src={cdnImage(image.url, 720)} srcSet={cdnSrcSet(image.url, 720)} sizes="(min-width: 1024px) 560px, 90vw" alt={image.altText ?? node.title} fetchPriority={slideIndex === 0 ? "high" : "auto"} loading={slideIndex === 0 ? "eager" : "lazy"} decoding="async" width={720} height={720} className="h-full w-full object-contain p-2 drop-shadow-2xl sm:p-5" />}
+                  </Link>
+                  {gift && <span className="absolute right-4 top-4 z-10 grid h-20 w-20 place-content-center gap-1 rounded-full border bg-background/90 p-2 text-center text-[10px] font-bold leading-tight text-primary shadow-float backdrop-blur sm:right-7 sm:top-7 sm:h-24 sm:w-24 sm:text-xs"><Gift className="mx-auto h-3.5 w-3.5" /><span className="capitalize">{gift}</span></span>}
+                </div>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+        {products.length > 1 && <><Button variant="outline" size="icon" onClick={() => api?.scrollPrev()} aria-label="Previous featured product" className="absolute left-4 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border-hero-border bg-hero/80 text-hero-foreground backdrop-blur hover:bg-hero md:inline-flex"><ArrowLeft /></Button><Button variant="outline" size="icon" onClick={() => api?.scrollNext()} aria-label="Next featured product" className="absolute right-4 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border-hero-border bg-hero/80 text-hero-foreground backdrop-blur hover:bg-hero md:inline-flex"><ArrowRight /></Button></>}
+      </Carousel>
 
       {products.length > 1 && (
         <div className="mt-3 flex justify-center gap-1.5">
@@ -152,7 +113,7 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
             <button
               key={product.node.id}
               type="button"
-              onClick={() => setIndex(dot)}
+              onClick={() => scrollTo(dot)}
               aria-label={`Show ${product.node.title}`}
               aria-current={dot === index}
               className={cn(
