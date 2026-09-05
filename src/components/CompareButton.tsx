@@ -49,7 +49,7 @@ export function CompareButton({
       </Button>
       {handles.length >= 2 && (
         <Button asChild variant="ghost" className="rounded-full">
-          <Link to="/compare">View comparison ({handles.length})</Link>
+          <Link to="/compare" search={{ products: undefined }}>View comparison ({handles.length})</Link>
         </Button>
       )}
     </div>

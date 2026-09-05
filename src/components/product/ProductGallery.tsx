@@ -50,7 +50,7 @@ export function ProductGallery({
 
   return (
     <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-      <div className="group relative aspect-square overflow-hidden rounded-3xl border bg-white shadow-card">
+      <div className="group relative aspect-square overflow-hidden rounded-3xl border bg-image-stage shadow-card">
         {image ? (
           <img
             src={cdnImage(image.url, 900)}
@@ -115,7 +115,7 @@ export function ProductGallery({
               aria-label={`View image ${thumbIndex + 1} of ${images.length}`}
               onClick={() => onSelect(thumbIndex)}
               className={cn(
-                "press h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-2 bg-white transition-colors sm:h-20 sm:w-20",
+                "press h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-2 bg-image-stage transition-colors sm:h-20 sm:w-20",
                 thumbIndex === index ? "border-primary" : "border-border hover:border-primary/50",
               )}
             >
@@ -142,7 +142,7 @@ export function ProductGallery({
           onClick={() => setZoomed(false)}
         >
           <div
-            className="relative max-h-full w-full max-w-3xl overflow-hidden rounded-3xl border bg-white"
+            className="relative max-h-full w-full max-w-3xl overflow-hidden rounded-3xl border bg-image-stage"
             onClick={(event) => event.stopPropagation()}
           >
             <img

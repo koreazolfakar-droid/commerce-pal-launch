@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronDown,
+  Columns2,
   Headphones,
   Heart,
   LifeBuoy,
@@ -115,6 +116,14 @@ export function SiteHeader() {
 
           <div className="flex items-center justify-end gap-1">
             <ThemeToggle />
+            <Link
+              to="/compare"
+              search={{ products: undefined }}
+              aria-label="Compare smartphones"
+              className="press grid h-10 w-10 place-items-center rounded-full text-foreground transition-colors hover:bg-surface"
+            >
+              <Columns2 className="h-5 w-5" strokeWidth={1.8} />
+            </Link>
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} items`}

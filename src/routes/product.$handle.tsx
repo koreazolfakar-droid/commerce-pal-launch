@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Heart,
   Loader2,
+  MessageCircle,
   Minus,
   Plus,
   ShoppingBag,
@@ -13,6 +14,7 @@ import {
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProseSections } from "@/components/product/ProseSection";
 import { SpecSheet } from "@/components/product/SpecSheet";
@@ -32,6 +34,7 @@ import {
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
+import { productWhatsAppUrl } from "@/lib/whatsapp";
 import { useCartStore } from "@/stores/cartStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -155,6 +158,13 @@ function ProductPage() {
   const brand = resolveBrand(product);
   const category = primaryCategory(product);
   const busy = pending !== null || cartLoading;
+  const isPhone = category?.slug === "smartphones";
+  const whatsappOrderUrl = productWhatsAppUrl({
+    title: node.title,
+    url: typeof window === "undefined" ? `https://spacecallapp.store/product/${node.handle}` : window.location.href,
+    quantity,
+    options: selectedVariant?.selectedOptions ?? [],
+  });
 
   const content = useMemo(
     () => splitSections(parseDescription(node.descriptionHtml, node.description)),
@@ -377,6 +387,15 @@ function ProductPage() {
               </div>
             </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+              <Button asChild variant="outline" className="rounded-full border-success/40 text-success hover:bg-success/10 hover:text-success">
+                <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="h-4 w-4" /> Order via WhatsApp
+                </a>
+              </Button>
+              {isPhone && <CompareButton handle={node.handle} />}
+            </div>
+
             <ul className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
               {PURCHASE_ASSURANCES.map((item) => (
                 <li
@@ -488,6 +507,11 @@ function ProductPage() {
             ) : (
               "Sold out"
             )}
+          </Button>
+          <Button asChild variant="outline" size="icon" className="h-11 w-11 shrink-0 rounded-full border-success/40 text-success">
+            <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer" aria-label="Order via WhatsApp">
+              <MessageCircle className="h-5 w-5" />
+            </a>
           </Button>
         </div>
       </div>
