@@ -123,7 +123,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                             onClick={onClose}
                             className="flex items-center gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-surface"
                           >
-                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-surface">
+                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white">
                               {image && (
                                 <img
                                   src={cdnImage(image.url, 96)}

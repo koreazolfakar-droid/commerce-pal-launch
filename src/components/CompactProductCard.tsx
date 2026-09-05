@@ -3,7 +3,7 @@ import { Heart, Loader2, Plus } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
 
-import { cdnImage, cdnSrcSet } from "@/lib/image";
+import { ProductImage } from "@/components/ProductImage";
 import {
   discountPercent,
   formatPrice,
@@ -52,30 +52,20 @@ export const CompactProductCard = memo(function CompactProductCard({
 
   return (
     <article className={cn("group relative flex w-full flex-col", className)}>
-      <div className="media-frame card-lift aspect-square rounded-2xl border">
+      <div className="card-lift relative overflow-hidden rounded-2xl border">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
           aria-label={node.title}
-          className="block h-full w-full"
+          className="block"
         >
-          {image ? (
-            <img
-              src={cdnImage(image.url, 320)}
-              srcSet={cdnSrcSet(image.url, 320)}
-              sizes="(min-width: 1024px) 220px, 45vw"
-              alt={image.altText ?? node.title}
-              loading="lazy"
-              decoding="async"
-              width={320}
-              height={320}
-              className="h-full w-full object-contain p-4 group-hover:scale-[1.06]"
-            />
-          ) : (
-            <span className="grid h-full place-items-center text-xs text-muted-foreground">
-              No image
-            </span>
-          )}
+          <ProductImage
+            url={image?.url}
+            alt={image?.altText ?? node.title}
+            size={320}
+            sizes="(min-width: 1024px) 220px, 45vw"
+            imageClassName="group-hover:scale-[1.06]"
+          />
         </Link>
 
         {discount !== null && (
