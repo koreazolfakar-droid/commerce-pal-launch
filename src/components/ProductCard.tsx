@@ -3,8 +3,8 @@ import { Heart, Loader2, ShoppingBag } from "lucide-react";
 import { memo } from "react";
 import { toast } from "sonner";
 
+import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
-import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { cn } from "@/lib/utils";
 import {
   discountPercent,
