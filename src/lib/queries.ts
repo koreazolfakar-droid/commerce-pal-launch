@@ -6,6 +6,7 @@ import {
   fetchCollectionByHandle,
   fetchCollections,
   fetchProductByHandle,
+  fetchProductRecommendations,
 } from "@/lib/shopify";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
@@ -44,5 +45,13 @@ export const productQueryOptions = (handle: string) =>
   queryOptions({
     queryKey: ["shopify", "product", handle],
     queryFn: () => fetchProductByHandle(handle),
+    staleTime: CATALOG_STALE_TIME,
+  });
+
+/** Shopify-native recommendations for the product detail page. */
+export const recommendationsQueryOptions = (handle: string) =>
+  queryOptions({
+    queryKey: ["shopify", "recommendations", handle],
+    queryFn: () => fetchProductRecommendations(handle),
     staleTime: CATALOG_STALE_TIME,
   });
