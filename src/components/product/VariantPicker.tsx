@@ -78,8 +78,8 @@ const COLOR_WORDS: Record<string, string> = {
   light: "#cfe3f2",
   cobalt: "#5b4bd0",
   shadow: "#3a3550",
-  };
 };
+
 
 function swatchColor(value: string) {
   const words = value.toLowerCase().split(/[^a-z]+/).filter(Boolean);
