@@ -1,9 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
   ChevronRight,
   Heart,
   Loader2,
+  Minus,
+  Plus,
   RotateCcw,
   ShieldCheck,
   ShoppingBag,
@@ -11,15 +14,20 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { BrandLogo } from "@/components/BrandLogo";
+import { ProductGrid } from "@/components/ProductGrid";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cdnImage, cdnSrcSet } from "@/lib/image";
+import { catalogQueryOptions } from "@/lib/queries";
 import {
   discountPercent,
   fetchProductByHandle,
   formatPrice,
   type ShopifyProduct,
 } from "@/lib/shopify";
+import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
@@ -58,9 +66,9 @@ export const Route = createFileRoute("/product/$handle")({
 });
 
 const TRUST = [
-  { icon: ShieldCheck, label: "Authentic with official warranty" },
-  { icon: Truck, label: "Fast delivery on every order" },
-  { icon: RotateCcw, label: "Easy returns and real support" },
+  { icon: Truck, label: "Availability shown for the selected option" },
+  { icon: ShieldCheck, label: "Secure checkout powered by Shopify" },
+  { icon: RotateCcw, label: "Review your order before payment" },
 ];
 
 function ProductPage() {
@@ -70,6 +78,7 @@ function ProductPage() {
   const images = node.images.edges.map((edge) => edge.node);
   const [variantId, setVariantId] = useState(variants[0]?.id);
   const [activeImage, setActiveImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const selectedVariant = variants.find((variant) => variant.id === variantId) ?? variants[0];
   const image = images[Math.min(activeImage, Math.max(images.length - 1, 0))];
 
@@ -78,6 +87,7 @@ function ProductPage() {
   const wishlisted = useWishlistStore((state) => state.handles.includes(node.handle));
   const toggleWishlist = useWishlistStore((state) => state.toggle);
   const addRecentlyViewed = useRecentlyViewedStore((state) => state.add);
+  const { data: catalog } = useQuery(catalogQueryOptions());
 
   useEffect(() => {
     addRecentlyViewed(node.handle);
@@ -86,17 +96,21 @@ function ProductPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node.handle]);
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (checkout = false) => {
     if (!selectedVariant) return;
     await addItem({
       product,
       variantId: selectedVariant.id,
       variantTitle: selectedVariant.title,
       price: selectedVariant.price,
-      quantity: 1,
+      quantity,
       selectedOptions: selectedVariant.selectedOptions ?? [],
     });
     toast.success(`${node.title} added to your bag`, { position: "top-center" });
+    if (checkout) {
+      const checkoutUrl = useCartStore.getState().getCheckoutUrl();
+      if (checkoutUrl) window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
   const compareAt =
@@ -104,6 +118,28 @@ function ProductPage() {
   const discount = discountPercent(selectedVariant?.price.amount, compareAt);
   const currency = selectedVariant?.price.currencyCode ?? "USD";
   const inStock = Boolean(selectedVariant?.availableForSale);
+  const brand = resolveBrand(product);
+  const category = primaryCategory(product);
+  const related = catalog
+    ? catalog.products
+        .filter(
+          (candidate) =>
+            candidate.node.handle !== node.handle &&
+            (category
+              ? (catalog.categoryOf.get(candidate.node.handle) ?? []).includes(category.slug)
+              : brand && catalog.brandOf.get(candidate.node.handle)?.slug === brand.slug),
+        )
+        .slice(0, 4)
+    : [];
+  const specifications = [
+    ...(selectedVariant?.selectedOptions.filter((option) => option.value !== "Default Title") ?? []),
+    ...(selectedVariant?.sku ? [{ name: "SKU", value: selectedVariant.sku }] : []),
+    ...(selectedVariant?.barcode ? [{ name: "Barcode", value: selectedVariant.barcode }] : []),
+    ...(selectedVariant?.weight != null && selectedVariant.weightUnit
+      ? [{ name: "Weight", value: `${selectedVariant.weight} ${selectedVariant.weightUnit}` }]
+      : []),
+    ...(node.productType ? [{ name: "Product type", value: node.productType }] : []),
+  ];
 
   return (
     <StoreLayout>
@@ -122,7 +158,7 @@ function ProductPage() {
 
         <div className="mt-5 grid gap-8 lg:grid-cols-2 lg:gap-14">
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <div className="media-frame aspect-square rounded-3xl border">
+            <div className="relative aspect-square overflow-hidden rounded-3xl border bg-white shadow-card">
               {image ? (
                 <img
                   src={cdnImage(image.url, 900)}
@@ -157,7 +193,7 @@ function ProductPage() {
                     aria-label={`View image ${index + 1}`}
                     aria-current={index === activeImage}
                     className={cn(
-                      "press media-frame h-16 w-16 shrink-0 rounded-2xl border-2 transition-colors",
+                      "press h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-2 bg-white transition-colors",
                       index === activeImage ? "border-primary" : "border-transparent",
                     )}
                   >
@@ -178,10 +214,15 @@ function ProductPage() {
 
           <div className="flex flex-col gap-6">
             <div>
-              {node.vendor && (
-                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                  {node.vendor}
-                </p>
+              {brand && (
+                <Link
+                  to="/brand/$slug"
+                  params={{ slug: brand.slug }}
+                  className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground hover:text-primary"
+                >
+                  <BrandLogo slug={brand.slug} label={brand.label} size={28} className="rounded-lg" />
+                  {brand.label}
+                </Link>
               )}
               <h1 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-[2.5rem] lg:leading-[1.08]">
                 {node.title}
@@ -246,10 +287,15 @@ function ProductPage() {
               </div>
             )}
 
-            <div className="hidden gap-3 lg:flex">
+            <div className="hidden items-center gap-3 lg:flex">
+              <div className="flex h-12 items-center rounded-full border bg-card p-1" aria-label="Quantity">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" onClick={() => setQuantity((value) => Math.max(1, value - 1))} aria-label="Decrease quantity"><Minus className="h-4 w-4" /></Button>
+                <span className="w-8 text-center text-sm font-semibold">{quantity}</span>
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" onClick={() => setQuantity((value) => value + 1)} aria-label="Increase quantity"><Plus className="h-4 w-4" /></Button>
+              </div>
               <Button
                 size="lg"
-                onClick={handleAddToCart}
+                onClick={() => handleAddToCart()}
                 disabled={isLoading || !inStock}
                 className="press flex-1 rounded-full"
               >
@@ -263,6 +309,9 @@ function ProductPage() {
                 ) : (
                   "Sold out"
                 )}
+              </Button>
+              <Button size="lg" variant="secondary" onClick={() => handleAddToCart(true)} disabled={isLoading || !inStock} className="press rounded-full">
+                Buy now <ChevronRight className="h-4 w-4" />
               </Button>
               <Button
                 size="lg"
