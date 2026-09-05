@@ -16,7 +16,7 @@ export function ProductImage({
   className,
   imageClassName,
 }: {
-  url?: string;
+  url?: string | undefined;
   alt: string;
   size?: number;
   sizes?: string;
