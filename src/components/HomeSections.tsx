@@ -1,13 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
-  Boxes,
   Cable,
   CreditCard,
   Grid2x2,
-  PackageCheck,
+  RotateCcw,
   ShieldCheck,
-  SlidersHorizontal,
   Truck,
 } from "lucide-react";
 
@@ -102,23 +100,27 @@ export function BrandRail({ handles }: { handles: Set<string> }) {
 }
 
 const BENEFITS = [
-  { icon: PackageCheck, title: "Live availability", detail: "Stock synced with Shopify" },
-  { icon: CreditCard, title: "Secure checkout", detail: "Checkout powered by Shopify" },
-  { icon: SlidersHorizontal, title: "Product options", detail: "Choose available variants" },
-  { icon: Boxes, title: "Live catalogue", detail: "Products update automatically" },
+  { icon: Truck, title: "Free delivery", detail: "On eligible orders" },
+  { icon: ShieldCheck, title: "Official warranty", detail: "Authentic, sourced products" },
+  { icon: RotateCcw, title: "Easy returns", detail: "Per our published policy" },
+  { icon: CreditCard, title: "Secure payment", detail: "Encrypted Shopify checkout" },
 ];
 
-export function BenefitsBar() {
+export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
   return (
     <section className="mx-auto max-w-7xl px-4">
-      <div className="grid gap-4 rounded-2xl border bg-card p-5 shadow-card sm:grid-cols-2 lg:grid-cols-4 lg:p-6">
+      <div
+        className={`grid gap-4 rounded-3xl border bg-card p-5 shadow-card sm:grid-cols-2 lg:grid-cols-4 ${
+          compact ? "" : "lg:p-7"
+        }`}
+      >
         {BENEFITS.map((benefit) => (
           <div key={benefit.title} className="flex min-w-0 items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent text-primary">
-              <benefit.icon className="h-4 w-4" strokeWidth={1.8} />
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-accent text-accent-foreground">
+              <benefit.icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{benefit.title}</p>
+              <p className="truncate text-sm font-bold">{benefit.title}</p>
               <p className="truncate text-xs text-muted-foreground">{benefit.detail}</p>
             </div>
           </div>

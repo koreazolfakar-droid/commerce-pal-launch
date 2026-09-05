@@ -49,29 +49,34 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
 
   return (
     <section className="px-4 sm:px-0" aria-label="Featured product">
-      <div className="relative overflow-hidden rounded-3xl border bg-linear-to-br from-accent via-surface to-background shadow-card-hover">
+      <div className="relative overflow-hidden rounded-3xl border border-hero-border bg-hero text-hero-foreground shadow-float">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-24 top-1/2 hidden h-[34rem] w-[34rem] -translate-y-1/2 rounded-full bg-primary/15 blur-3xl md:block"
+        />
         <div
           key={node.id}
-          className="animate-fade grid min-h-[30rem] items-center gap-6 p-5 sm:p-8 md:min-h-[32rem] md:grid-cols-[0.92fr_1.08fr] lg:gap-12 lg:p-12"
+          className="animate-fade relative grid min-h-[26rem] items-center gap-6 p-6 sm:p-9 md:min-h-[32rem] md:grid-cols-[1fr_1fr] lg:gap-12 lg:p-14"
         >
           <div className="order-2 min-w-0 md:order-1">
             <div className="flex items-center gap-2">
               {brand && <BrandLogo slug={brand.slug} label={brand.label} size={28} />}
-              <span className="truncate text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              <span className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
                 {brand?.label ?? node.productType ?? "Featured"}
               </span>
             </div>
 
-            <h1 className="mt-4 max-w-xl text-3xl font-extrabold leading-[1.08] tracking-tight sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 line-clamp-3 max-w-xl text-2xl font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-[2.75rem]">
               {node.title}
             </h1>
+
 
             {bullets.length > 0 && (
               <ul className="mt-4 grid gap-1.5">
                 {bullets.map((bullet) => (
                   <li
                     key={bullet}
-                    className="flex min-w-0 items-center gap-2 text-[13px] text-muted-foreground"
+                    className="flex min-w-0 items-center gap-2 text-[13px] text-hero-muted"
                   >
                     <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
                     <span className="truncate capitalize">{bullet}</span>
@@ -86,7 +91,7 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
               </span>
               {discount !== null && compareAt && (
                 <>
-                  <span className="text-sm text-muted-foreground line-through">
+                  <span className="text-sm text-hero-muted line-through">
                     {formatPrice(compareAt, price.currencyCode)}
                   </span>
                   <span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">
@@ -100,13 +105,13 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
               <Link
                 to="/product/$handle"
                 params={{ handle: node.handle }}
-                className="press inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-card-hover transition-opacity hover:opacity-90"
+                className="press inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-card-hover transition-opacity hover:opacity-90"
               >
                 Shop now
                 <ArrowRight className="h-4 w-4" />
               </Link>
               {node.productType && (
-                <span className="text-xs font-medium text-muted-foreground">{node.productType}</span>
+                <span className="text-xs font-medium text-hero-muted">{node.productType}</span>
               )}
             </div>
           </div>
@@ -134,7 +139,7 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
         </div>
 
         {gift && (
-          <span className="absolute right-4 top-4 grid h-20 w-20 place-content-center gap-1 rounded-full border bg-background/90 p-2 text-center text-[10px] font-bold leading-tight text-primary shadow-float backdrop-blur sm:right-7 sm:top-7 sm:h-24 sm:w-24 sm:text-xs">
+          <span className="absolute right-4 top-4 z-10 grid h-20 w-20 place-content-center gap-1 rounded-full border bg-background/90 p-2 text-center text-[10px] font-bold leading-tight text-primary shadow-float backdrop-blur sm:right-7 sm:top-7 sm:h-24 sm:w-24 sm:text-xs">
             <Gift className="h-3.5 w-3.5" />
             <span className="capitalize">{gift}</span>
           </span>

@@ -32,37 +32,44 @@ export function BrandLogo({
     [imageUrl, slug, label, size],
   );
   const [attempt, setAttempt] = useState(0);
+  const [loaded, setLoaded] = useState(false);
   const source = sources[attempt];
 
-  if (!source) {
-    return (
-      <span
-        aria-hidden="true"
-        style={{ width: size, height: size, fontSize: Math.max(11, size * 0.34) }}
-        className={cn(
-          "grid shrink-0 place-items-center rounded-xl bg-accent font-extrabold tracking-tight text-accent-foreground",
-          className,
-        )}
-      >
-        {brandMonogram(label)}
-      </span>
-    );
-  }
-
+  // The monogram is always the base layer, so a logo that is still loading (or
+  // that 404s while we walk the candidate list) never flashes a broken image.
   return (
-    <img
-      src={source}
-      alt={`${label} logo`}
-      width={size}
-      height={size}
-      loading="lazy"
-      decoding="async"
+    <span
       style={{ width: size, height: size }}
-      onError={() => {
-        failed.add(source);
-        setAttempt((value) => value + 1);
-      }}
-      className={cn("shrink-0 object-contain", className)}
-    />
+      className={cn("relative grid shrink-0 place-items-center", className)}
+    >
+      {!loaded && (
+        <span
+          aria-hidden="true"
+          style={{ fontSize: Math.max(10, size * 0.34) }}
+          className="absolute inset-0 grid place-items-center rounded-xl bg-accent font-extrabold tracking-tight text-accent-foreground"
+        >
+          {brandMonogram(label)}
+        </span>
+      )}
+      {source && (
+        <img
+          key={source}
+          src={source}
+          alt={`${label} logo`}
+          width={size}
+          height={size}
+          loading="lazy"
+          decoding="async"
+          style={{ width: size, height: size, opacity: loaded ? 1 : 0 }}
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            failed.add(source);
+            setAttempt((value) => value + 1);
+          }}
+          className="relative object-contain transition-opacity"
+        />
+      )}
+    </span>
   );
 }
+
