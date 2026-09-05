@@ -5,6 +5,7 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { cdnImage } from "@/lib/image";
 import { formatPrice, variantSummary } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
+import { absoluteUrl, canonicalLink } from "@/lib/seo";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -17,8 +18,11 @@ export const Route = createFileRoute("/cart")({
       { property: "og:title", content: "Your bag — Space Cell" },
       { property: "og:description", content: "Review your bag and check out securely." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/cart") },
+      { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [canonicalLink("/cart")],
   }),
   component: CartPage,
 });

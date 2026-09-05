@@ -12,6 +12,7 @@ import { groupSpecs, parseDescription, splitSections } from "@/lib/productConten
 import { catalogQueryOptions } from "@/lib/queries";
 import { formatPrice, productInStock, type ShopifyProduct } from "@/lib/shopify";
 import { useCompareStore } from "@/stores/compareStore";
+import { absoluteUrl, canonicalLink } from "@/lib/seo";
 
 interface CompareSearch {
   products: string | undefined;
@@ -31,8 +32,11 @@ export const Route = createFileRoute("/compare")({
       { property: "og:title", content: "Compare Smartphones — Space Cell" },
       { property: "og:description", content: "Compare Space Cell smartphones side by side using live Shopify product data." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/compare") },
+      { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [canonicalLink("/compare")],
   }),
   component: ComparePage,
 });

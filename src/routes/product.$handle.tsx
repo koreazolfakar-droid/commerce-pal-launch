@@ -35,6 +35,7 @@ import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
 import { productWhatsAppUrl } from "@/lib/whatsapp";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, productJsonLd } from "@/lib/seo";
 import { useCartStore } from "@/stores/cartStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -45,12 +46,14 @@ export const Route = createFileRoute("/product/$handle")({
     if (!product) throw notFound();
     return { product };
   },
-  head: ({ loaderData }) => {
+  head: ({ params, loaderData }) => {
     const title = loaderData?.product.node.title ?? "Product";
     const description =
       loaderData?.product.node.description?.slice(0, 150) ||
       "Shop phones, tablets and accessories at Space Cell.";
     const image = loaderData?.product.node.images.edges[0]?.node.url;
+    const path = `/product/${params.handle}`;
+    const product = loaderData?.product;
     return {
       meta: [
         { title: `${title} — Space Cell` },
@@ -58,6 +61,7 @@ export const Route = createFileRoute("/product/$handle")({
         { property: "og:title", content: `${title} — Space Cell` },
         { property: "og:description", content: description },
         { property: "og:type", content: "product" },
+        { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
         ...(image
           ? [
@@ -66,6 +70,19 @@ export const Route = createFileRoute("/product/$handle")({
             ]
           : []),
       ],
+      links: [canonicalLink(path)],
+      scripts: product
+        ? [
+            jsonLd(productJsonLd(product)),
+            jsonLd(
+              breadcrumbJsonLd([
+                { name: "Home", path: "/" },
+                { name: "Shop", path: "/shop" },
+                { name: title, path },
+              ]),
+            ),
+          ]
+        : [],
     };
   },
   component: ProductPage,
