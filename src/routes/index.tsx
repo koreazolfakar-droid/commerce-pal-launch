@@ -2,13 +2,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Sparkles } from "lucide-react";
 
+import { BrandBanners } from "@/components/BrandBanners";
 import { CollectionSections } from "@/components/CollectionSections";
 import { CompactProductCard } from "@/components/CompactProductCard";
+import { HeroBanner } from "@/components/HeroBanner";
 import { BenefitsBar } from "@/components/HomeSections";
+import { Newsletter } from "@/components/Newsletter";
 import { ProductGrid } from "@/components/ProductGrid";
-import { PromoBanner } from "@/components/PromoBanner";
 import { StoreLayout } from "@/components/StoreLayout";
-import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { TopBrands } from "@/components/TopBrands";
+import { WhyShop } from "@/components/WhyShop";
+import {
+  bestSellingQueryOptions,
+  catalogQueryOptions,
+  collectionsQueryOptions,
+} from "@/lib/queries";
 import { discountPercent, productInStock, type ShopifyProduct } from "@/lib/shopify";
 import { displayCollections } from "@/lib/taxonomy";
 
@@ -16,7 +24,9 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(catalogQueryOptions());
     context.queryClient.prefetchQuery(collectionsQueryOptions());
+    context.queryClient.prefetchQuery(bestSellingQueryOptions());
   },
+
   head: () => ({
     meta: [
       { title: "Space Cell — Premium Phones, Tablets & Audio" },
