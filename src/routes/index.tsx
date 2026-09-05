@@ -160,7 +160,7 @@ function Index() {
               </section>
             )}
 
-            <TopBrands brands={catalog.brands} />
+            <TopBrands brands={brands} />
 
             {best.length > 0 && (
               <section>
