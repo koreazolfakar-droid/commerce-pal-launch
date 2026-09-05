@@ -2,10 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
 import { BrandLogo } from "@/components/BrandLogo";
-import type { CatalogFacet } from "@/lib/taxonomy";
+import type { ShopifyBrand } from "@/lib/brandDirectory";
 
-/** Elegant brand pills: centered logo, product count, horizontal scroll on mobile. */
-export function TopBrands({ brands }: { brands: CatalogFacet[] }) {
+/** Elegant brand pills: Shopify-served logo, product count, scroll rail on mobile. */
+export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   if (brands.length === 0) return null;
 
   return (
@@ -35,7 +35,15 @@ export function TopBrands({ brands }: { brands: CatalogFacet[] }) {
             params={{ slug: brand.slug }}
             className="card-lift flex w-36 shrink-0 flex-col items-center gap-2 rounded-2xl border bg-card px-4 py-5 text-center shadow-card transition-all hover:border-primary sm:w-auto"
           >
-            <BrandLogo slug={brand.slug} label={brand.label} size={40} />
+            <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-xl bg-white p-1.5">
+              <BrandLogo
+                slug={brand.slug}
+                label={brand.label}
+                size={36}
+                {...(brand.image ? { imageUrl: brand.image } : {})}
+                className="max-h-9 max-w-9 object-contain"
+              />
+            </span>
             <span className="mt-1 truncate text-[13px] font-semibold tracking-tight">
               {brand.label}
             </span>
