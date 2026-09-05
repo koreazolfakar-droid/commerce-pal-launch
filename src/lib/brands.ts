@@ -77,9 +77,16 @@ export function brandLogoSources(slug: string, label: string, size = 128): strin
   const sources: string[] = [];
   const icon = iconSlug(slug, label);
   if (icon) sources.push(`https://cdn.simpleicons.org/${icon}`);
-  const domain = BRAND_META[slug]?.domain;
+  const guessed = label.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const domain = BRAND_META[slug]?.domain ?? (guessed.length >= 2 ? `${guessed}.com` : undefined);
   if (LOGO_DEV_KEY && domain) {
     sources.push(`https://img.logo.dev/${domain}?token=${LOGO_DEV_KEY}&size=${size}&format=png`);
+  }
+  // Dynamic, map-free fallback: the brand's own site icon.
+  if (domain) {
+    sources.push(
+      `https://www.google.com/s2/favicons?domain=${domain}&sz=${Math.min(256, Math.max(64, size))}`,
+    );
   }
   return sources;
 }
