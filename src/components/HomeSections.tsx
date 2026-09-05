@@ -1,5 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Boxes, CreditCard, Grid2x2, PackageCheck, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowRight,
+  Boxes,
+  Cable,
+  CreditCard,
+  Grid2x2,
+  PackageCheck,
+  ShieldCheck,
+  SlidersHorizontal,
+  Truck,
+} from "lucide-react";
 
 import { availableEntries, BRANDS, CATEGORIES, type CatalogEntry } from "@/lib/catalog";
 
