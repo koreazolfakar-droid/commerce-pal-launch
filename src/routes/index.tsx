@@ -234,7 +234,7 @@ function Index() {
 
   return (
     <StoreLayout>
-      <div className="mx-auto max-w-7xl space-y-14 py-4 sm:px-4 sm:py-8 lg:space-y-20">
+      <div className="mx-auto max-w-7xl space-y-14 pb-4 pt-2 sm:px-4 sm:pb-8 sm:pt-5 lg:space-y-20">
         {products.length === 0 ? (
           <div className="px-4">
             <div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center">
