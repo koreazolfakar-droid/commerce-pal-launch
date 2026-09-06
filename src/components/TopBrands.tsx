@@ -10,9 +10,9 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
   return (
     <section aria-labelledby="top-brands">
-      <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 px-4 sm:px-0">
+      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 px-4 sm:mb-4 sm:px-0">
         <div className="min-w-0">
-          <h2 id="top-brands" className="truncate text-lg font-semibold tracking-tight sm:text-xl">
+          <h2 id="top-brands" className="truncate text-base font-semibold tracking-tight sm:text-lg lg:text-xl">
             Top brands
           </h2>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -27,27 +27,27 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
         </Link>
       </div>
 
-      <div className="scroll-rail flex gap-3 px-4 sm:grid sm:grid-cols-3 sm:px-0 lg:grid-cols-6">
+      <div className="scroll-rail flex gap-2 px-4 sm:grid sm:grid-cols-3 sm:gap-3 sm:px-0 lg:grid-cols-6">
         {brands.map((brand) => (
           <Link
             key={brand.slug}
             to="/brand/$slug"
             params={{ slug: brand.slug }}
-            className="card-lift flex w-36 shrink-0 flex-col items-center gap-2 rounded-2xl border bg-card px-4 py-5 text-center shadow-card transition-all hover:border-primary sm:w-auto"
+            className="card-lift flex w-24 shrink-0 flex-col items-center gap-1.5 rounded-xl border bg-card px-2 py-3 text-center shadow-card transition-all hover:border-primary sm:w-auto sm:gap-2 sm:rounded-2xl sm:px-4 sm:py-5"
           >
-            <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-xl bg-white p-1.5">
+            <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-lg bg-white p-1 sm:h-12 sm:w-12 sm:rounded-xl sm:p-1.5">
               <BrandLogo
                 slug={brand.slug}
                 label={brand.label}
-                size={36}
+                size={32}
                 {...(brand.image ? { imageUrl: brand.image } : {})}
-                className="max-h-9 max-w-9 object-contain"
+                className="max-h-8 max-w-8 object-contain sm:max-h-9 sm:max-w-9"
               />
             </span>
-            <span className="mt-1 truncate text-[13px] font-semibold tracking-tight">
+            <span className="mt-0.5 truncate text-[11px] font-semibold tracking-tight sm:mt-1 sm:text-[13px]">
               {brand.label}
             </span>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-[10px] text-muted-foreground sm:text-[11px]">
               {brand.count} product{brand.count === 1 ? "" : "s"}
             </span>
           </Link>
