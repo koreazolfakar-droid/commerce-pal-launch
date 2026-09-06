@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Check, Gift } from "lucide-react";
+import { ArrowLeft, ArrowRight, Gift } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
@@ -14,19 +14,6 @@ import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { discountPercent, formatPrice, type ShopifyProduct } from "@/lib/shopify";
 import { resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
-
-/** Real feature bullets only: Shopify tags first, then option names. */
-function featureBullets(product: ShopifyProduct) {
-  const node = product.node;
-  const tags = (node.tags ?? [])
-    .filter((tag) => !tag.includes(":") && tag.length <= 28)
-    .slice(0, 3);
-  if (tags.length > 0) return tags;
-  return node.options
-    .filter((option) => option.name.toLowerCase() !== "title")
-    .slice(0, 3)
-    .map((option) => `${option.name}: ${option.values.slice(0, 3).join(" / ")}`);
-}
 
 /** Premium hero card: brand label, headline, bullets, pricing, CTA, carousel dots. */
 export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
@@ -104,11 +91,11 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
                       <Link to="/product/$handle" params={{ handle: node.handle }} className="press inline-flex items-center gap-1.5 rounded-full border border-hero-border px-4 py-3 text-[13px] font-semibold text-hero-muted transition-colors hover:text-hero-foreground">View details</Link>
                     </div>
                   </div>
-                  <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title} className="group relative order-1 block md:order-2">
+                  <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title} className="group relative order-1 block overflow-hidden rounded-[2rem] bg-linear-to-b from-white to-white/85 p-3 shadow-float ring-1 ring-white/20 md:order-2 md:p-5">
                     {/* Subtle lighting behind the product, no heavy effects. */}
                     <span
                       aria-hidden
-                      className="pointer-events-none absolute left-1/2 top-1/2 h-[85%] w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/25 blur-3xl"
+                      className="pointer-events-none absolute left-1/2 top-1/2 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-3xl"
                     />
                     {image && (
                       <img
@@ -122,7 +109,6 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
                         width={720}
                         height={720}
                         className="relative mx-auto h-44 w-full object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-[1.03] sm:h-64 md:h-[19rem] lg:h-[21rem]"
-                        style={{ mixBlendMode: "screen" }}
                       />
                     )}
                   </Link>
