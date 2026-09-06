@@ -91,13 +91,14 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
                       <Link to="/product/$handle" params={{ handle: node.handle }} className="press inline-flex items-center gap-1.5 rounded-full border border-hero-border px-4 py-3 text-[13px] font-semibold text-hero-muted transition-colors hover:text-hero-foreground">View details</Link>
                     </div>
                   </div>
-                  <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title} className="group relative order-1 block overflow-hidden rounded-[2rem] bg-white p-3 shadow-float ring-1 ring-white/20 md:order-2 md:p-5">
+                  <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title} className="group relative order-1 block md:order-2">
                     {/* Subtle lighting behind the product, no heavy effects. */}
                     <span
                       aria-hidden
                       className="pointer-events-none absolute left-1/2 top-1/2 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-3xl"
                     />
                     {image && (
+                      <div className="relative overflow-hidden rounded-[2rem] bg-white p-3 shadow-float ring-1 ring-white/15 md:p-5">
                       <img
                         src={cdnImage(image.url, 720)}
                         srcSet={cdnSrcSet(image.url, 720)}
@@ -110,6 +111,7 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
                         height={720}
                         className="relative mx-auto h-44 w-full object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-[1.03] sm:h-64 md:h-[19rem] lg:h-[21rem]"
                       />
+                      </div>
                     )}
                   </Link>
                   {gift && <span className="absolute right-4 top-4 z-10 grid h-16 w-16 place-content-center gap-1 rounded-full border bg-background/90 p-2 text-center text-[9px] font-bold leading-tight text-primary shadow-float backdrop-blur sm:right-6 sm:top-6 sm:h-20 sm:w-20 sm:text-[10px]"><Gift className="mx-auto h-3.5 w-3.5" /><span className="capitalize">{gift}</span></span>}
