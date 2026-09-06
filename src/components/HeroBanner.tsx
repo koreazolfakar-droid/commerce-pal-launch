@@ -91,7 +91,7 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
                       <Link to="/product/$handle" params={{ handle: node.handle }} className="press inline-flex items-center gap-1.5 rounded-full border border-hero-border px-4 py-3 text-[13px] font-semibold text-hero-muted transition-colors hover:text-hero-foreground">View details</Link>
                     </div>
                   </div>
-                  <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title} className="group relative order-1 block overflow-hidden rounded-[2rem] bg-linear-to-b from-white to-white/85 p-3 shadow-float ring-1 ring-white/20 md:order-2 md:p-5">
+                  <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title} className="group relative order-1 block overflow-hidden rounded-[2rem] bg-white p-3 shadow-float ring-1 ring-white/20 md:order-2 md:p-5">
                     {/* Subtle lighting behind the product, no heavy effects. */}
                     <span
                       aria-hidden
