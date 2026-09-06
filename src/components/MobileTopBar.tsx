@@ -34,8 +34,9 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-xl lg:hidden">
-        <div className="flex items-center justify-between gap-3 px-4 pt-3">
+      {/* Only the main header row stays sticky. */}
+      <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-xl lg:hidden">
+        <div className="flex items-center justify-between gap-3 px-4 py-2">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground shadow-card">
               S
@@ -71,12 +72,15 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
             </button>
           </div>
         </div>
+      </header>
 
-        <div className="px-4 py-3">
+      {/* Search + compact category rail scroll away with the page. */}
+      <div className="border-b bg-background lg:hidden">
+        <div className="px-4 py-2">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="press flex h-11 w-full items-center gap-2.5 rounded-2xl bg-surface px-4 text-left text-[13px] text-muted-foreground transition-colors hover:bg-accent"
+            className="press flex h-10 w-full items-center gap-2.5 rounded-2xl bg-surface px-4 text-left text-[13px] text-muted-foreground transition-colors hover:bg-accent"
           >
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="truncate">Search phones, audio, accessories…</span>
@@ -84,32 +88,28 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
         </div>
 
         {(list.length > 0 || isLoading) && (
-          <nav aria-label="Product categories" className="scroll-rail flex gap-3 px-4 pb-3">
+          <nav aria-label="Product categories" className="scroll-rail flex gap-2 px-4 pb-2">
             {isLoading && list.length === 0
-              ? Array.from({ length: 5 }).map((_, index) => (
-                  <div key={index} className="w-16 shrink-0" aria-hidden>
-                    <div className="shimmer h-14 w-14 rounded-2xl bg-surface" />
-                    <div className="mx-auto mt-1.5 h-2 w-10 rounded-full bg-surface" />
-                  </div>
+              ? Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="shimmer h-8 w-20 shrink-0 rounded-full bg-surface"
+                    aria-hidden
+                  />
                 ))
               : null}
             {list.length > 0 && (
               <Link
                 to="/shop"
                 className={cn(
-                  "press flex w-16 shrink-0 flex-col items-center gap-1.5 text-[10px] font-semibold",
-                  !activeSlug ? "text-primary" : "text-muted-foreground",
+                  "press flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
+                  !activeSlug
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "bg-surface text-muted-foreground hover:bg-accent",
                 )}
               >
-                <span
-                  className={cn(
-                    "grid h-14 w-14 place-items-center rounded-2xl bg-surface transition-colors",
-                    !activeSlug && "bg-accent text-primary",
-                  )}
-                >
-                  <LayoutGrid className="h-[21px] w-[21px]" strokeWidth={1.9} />
-                </span>
-                <span className="truncate">All</span>
+                <LayoutGrid className="h-4 w-4 shrink-0" strokeWidth={1.9} />
+                All
               </Link>
             )}
             {list.map((category) => {
@@ -121,25 +121,21 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
                   to="/category/$slug"
                   params={{ slug: category.slug }}
                   className={cn(
-                    "press flex w-16 shrink-0 flex-col items-center gap-1.5 text-[10px] font-semibold",
-                    active ? "text-primary" : "text-muted-foreground",
+                    "press flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "bg-surface text-muted-foreground hover:bg-accent",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "grid h-14 w-14 place-items-center rounded-2xl bg-surface transition-colors",
-                      active ? "bg-accent text-primary" : "hover:bg-accent",
-                    )}
-                  >
-                    {Icon ? <Icon className="h-[21px] w-[21px]" strokeWidth={1.9} /> : null}
-                  </span>
-                  <span className="w-full truncate text-center">{category.label}</span>
+                  {Icon ? <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} /> : null}
+                  <span className="max-w-28 truncate">{category.label}</span>
                 </Link>
               );
             })}
           </nav>
         )}
-      </header>
+      </div>
+
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
