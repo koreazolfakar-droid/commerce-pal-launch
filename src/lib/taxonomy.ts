@@ -1,5 +1,6 @@
 import {
   Battery,
+  BriefcaseBusiness,
   Cable,
   Cpu,
   Gamepad2,
@@ -195,6 +196,22 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     keywords: ["keyboard", "mouse", "trackpad", "hub", "ssd", "flash drive", "memory card"],
   },
   {
+    slug: "bags",
+    label: "Bags",
+    icon: BriefcaseBusiness,
+    keywords: [
+      "bag",
+      "bags",
+      "backpack",
+      "laptop bag",
+      "sling bag",
+      "messenger bag",
+      "briefcase",
+      "travel bag",
+      "pouch",
+    ],
+  },
+  {
     slug: "accessories",
     label: "Accessories",
     icon: Package,
@@ -208,7 +225,6 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
       "stylus",
       "pen",
       "strap",
-      "bag",
       "tripod",
       "car mount",
       "ring light",

@@ -221,17 +221,6 @@ function Index() {
 
 
   const slots = promoSlots(catalog, firstOf);
-  const normalized = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "").replace(/collection|official/g, "");
-  const categoryImage = (category: CatalogFacet) => {
-    const key = normalized(category.slug);
-    const collection = collections.find((item) => {
-      const title = normalized(item.title);
-      const handle = normalized(item.handle);
-      return title === key || handle === key || title.includes(key) || key.includes(title);
-    });
-    return collection?.image ?? firstOf(category, "category")?.node.images.edges[0]?.node;
-  };
-
   return (
     <StoreLayout>
       <div className="mx-auto max-w-7xl space-y-14 pb-4 pt-2 sm:px-4 sm:pb-8 sm:pt-5 lg:space-y-20">
@@ -258,18 +247,16 @@ function Index() {
                   href="/shop"
                 />
                 <div className="scroll-rail flex gap-3 px-4 sm:grid sm:grid-cols-4 sm:px-0 lg:grid-cols-8">
-                  {catalog.categories.slice(0, 8).map((category) => {
-                    const image = categoryImage(category);
-                    return (
+                  {catalog.categories.slice(0, 8).map((category) => (
                     <Link
                       key={category.slug}
                       to="/category/$slug"
                       params={{ slug: category.slug }}
                       className="card-lift flex w-32 shrink-0 flex-col items-center gap-2.5 rounded-2xl border bg-card px-3 py-4 text-center shadow-card transition-all hover:border-primary sm:w-auto"
                     >
-                      <span className="grid h-20 w-20 place-items-center overflow-hidden rounded-full bg-surface text-accent-foreground">
-                        {image ? <img src={image.url} alt={image.altText ?? category.label} loading="lazy" decoding="async" width={96} height={96} className="h-full w-full object-contain p-2" /> : category.icon ? (
-                          <category.icon className="h-6 w-6" strokeWidth={1.6} />
+                      <span className="grid h-16 w-16 place-items-center rounded-2xl border border-primary/20 bg-accent text-primary transition-transform duration-200 group-hover:scale-105 sm:h-20 sm:w-20">
+                        {category.icon ? (
+                          <category.icon className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={1.65} />
                         ) : null}
                       </span>
                       <span className="line-clamp-2 text-xs font-bold leading-snug">
@@ -279,8 +266,7 @@ function Index() {
                         {category.count} item{category.count === 1 ? "" : "s"}
                       </span>
                     </Link>
-                    );
-                  })}
+                  ))}
                 </div>
               </section>
             )}

@@ -1,4 +1,5 @@
 import {
+  BriefcaseBusiness,
   Cable,
   Headphones,
   Laptop,
@@ -31,6 +32,7 @@ export const CATEGORIES: CatalogEntry[] = [
   { handle: "chargers", label: "Cables & Chargers", icon: Cable },
   { handle: "audio", label: "Audio Speakers", icon: Speaker },
   { handle: "wireless-chargers", label: "Wireless Chargers", icon: Plug },
+  { handle: "bags", label: "Bags", icon: BriefcaseBusiness },
 ];
 
 /** Brand navigation, mapped to Shopify collection handles. */
@@ -53,7 +55,7 @@ export const NAV_GROUPS: Array<{ label: string; handle?: string; children?: Cata
     label: "Accessories",
     handle: "accessories",
     children: CATEGORIES.filter((category) =>
-      ["cases", "chargers", "power-banks", "wireless-chargers"].includes(category.handle),
+      ["cases", "chargers", "power-banks", "wireless-chargers", "bags"].includes(category.handle),
     ),
   },
   {
