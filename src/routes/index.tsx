@@ -252,7 +252,7 @@ function Index() {
                       key={category.slug}
                       to="/category/$slug"
                       params={{ slug: category.slug }}
-                      className="card-lift flex w-32 shrink-0 flex-col items-center gap-2.5 rounded-2xl border bg-card px-3 py-4 text-center shadow-card transition-all hover:border-primary sm:w-auto"
+                      className="group card-lift flex w-32 shrink-0 flex-col items-center gap-2.5 rounded-2xl border bg-card px-3 py-4 text-center shadow-card transition-all hover:border-primary sm:w-auto"
                     >
                       <span className="grid h-16 w-16 place-items-center rounded-2xl border border-primary/20 bg-accent text-primary transition-transform duration-200 group-hover:scale-105 sm:h-20 sm:w-20">
                         {category.icon ? (
