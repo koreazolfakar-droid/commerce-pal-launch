@@ -240,29 +240,29 @@ function Index() {
             <BenefitsBar />
 
             {catalog.categories.length > 0 && (
-              <section className="rounded-3xl bg-surface py-7 sm:px-7">
+              <section className="rounded-3xl bg-surface py-5 sm:px-7 sm:py-7">
                 <SectionHeader
                   title="Shop by category"
                   subtitle="Categories are generated from your live Shopify catalogue"
                   href="/shop"
                 />
-                <div className="scroll-rail flex gap-3 px-4 sm:grid sm:grid-cols-4 sm:px-0 lg:grid-cols-8">
+                <div className="scroll-rail flex gap-2.5 px-4 sm:grid sm:grid-cols-4 sm:gap-3 sm:px-0 lg:grid-cols-8">
                   {catalog.categories.slice(0, 8).map((category) => (
                     <Link
                       key={category.slug}
                       to="/category/$slug"
                       params={{ slug: category.slug }}
-                      className="group card-lift flex w-32 shrink-0 flex-col items-center gap-2.5 rounded-2xl border bg-card px-3 py-4 text-center shadow-card transition-all hover:border-primary sm:w-auto"
+                      className="group card-lift flex w-24 shrink-0 flex-col items-center gap-2 rounded-xl border bg-card px-2 py-3 text-center shadow-card transition-all hover:border-primary sm:w-auto sm:rounded-2xl sm:px-3 sm:py-4"
                     >
-                      <span className="grid h-16 w-16 place-items-center rounded-2xl border border-primary/20 bg-accent text-primary transition-transform duration-200 group-hover:scale-105 sm:h-20 sm:w-20">
+                      <span className="grid h-12 w-12 place-items-center rounded-full border border-primary/20 bg-accent text-primary shadow-card transition-all duration-200 group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground sm:h-16 sm:w-16 sm:rounded-2xl">
                         {category.icon ? (
-                          <category.icon className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={1.65} />
+                          <category.icon className="h-5 w-5 sm:h-7 sm:w-7" strokeWidth={1.8} />
                         ) : null}
                       </span>
-                      <span className="line-clamp-2 text-xs font-bold leading-snug">
+                      <span className="line-clamp-2 text-[11px] font-bold leading-snug sm:text-xs">
                         {category.label}
                       </span>
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="text-[10px] text-muted-foreground sm:text-[11px]">
                         {category.count} item{category.count === 1 ? "" : "s"}
                       </span>
                     </Link>

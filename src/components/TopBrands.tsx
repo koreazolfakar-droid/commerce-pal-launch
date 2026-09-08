@@ -10,12 +10,12 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
   return (
     <section aria-labelledby="top-brands">
-      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 px-4 sm:mb-4 sm:px-0">
+      <div className="mb-2.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 sm:mb-4 sm:px-0">
         <div className="min-w-0">
           <h2 id="top-brands" className="truncate text-base font-semibold tracking-tight sm:text-lg lg:text-xl">
             Top brands
           </h2>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <p className="mt-0.5 hidden truncate text-xs text-muted-foreground sm:block">
             Official brands available in your store right now
           </p>
         </div>
@@ -27,27 +27,27 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
         </Link>
       </div>
 
-      <div className="scroll-rail flex gap-2 px-4 sm:grid sm:grid-cols-3 sm:gap-3 sm:px-0 lg:grid-cols-6">
+      <div className="scroll-rail flex snap-x snap-mandatory gap-3 px-4 pb-1 sm:grid sm:grid-cols-3 sm:gap-3 sm:px-0 lg:grid-cols-6">
         {brands.map((brand) => (
           <Link
             key={brand.slug}
             to="/brand/$slug"
             params={{ slug: brand.slug }}
-            className="card-lift flex w-24 shrink-0 flex-col items-center gap-1.5 rounded-xl border bg-card px-2 py-3 text-center shadow-card transition-all hover:border-primary sm:w-auto sm:gap-2 sm:rounded-2xl sm:px-4 sm:py-5"
+            className="group flex w-20 shrink-0 snap-start flex-col items-center gap-1.5 text-center transition-transform active:scale-95 sm:w-auto sm:gap-2 sm:rounded-2xl sm:border sm:bg-card sm:px-4 sm:py-5 sm:shadow-card sm:hover:border-primary"
           >
-            <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-lg bg-white p-1 sm:h-12 sm:w-12 sm:rounded-xl sm:p-1.5">
+            <span className="grid h-14 w-14 place-items-center overflow-hidden rounded-full border bg-logo-surface p-2 shadow-card transition-colors group-hover:border-primary sm:h-12 sm:w-12 sm:rounded-xl sm:p-1.5">
               <BrandLogo
                 slug={brand.slug}
                 label={brand.label}
                 size={32}
                 {...(brand.image ? { imageUrl: brand.image } : {})}
-                className="max-h-8 max-w-8 object-contain sm:max-h-9 sm:max-w-9"
+                className="max-h-10 max-w-10 object-contain sm:max-h-9 sm:max-w-9"
               />
             </span>
-            <span className="mt-0.5 truncate text-[11px] font-semibold tracking-tight sm:mt-1 sm:text-[13px]">
+            <span className="w-full truncate text-[11px] font-bold sm:mt-1 sm:text-[13px]">
               {brand.label}
             </span>
-            <span className="text-[10px] text-muted-foreground sm:text-[11px]">
+            <span className="whitespace-nowrap text-[9px] font-medium text-muted-foreground sm:text-[11px]">
               {brand.count} product{brand.count === 1 ? "" : "s"}
             </span>
           </Link>
