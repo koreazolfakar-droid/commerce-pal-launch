@@ -35,7 +35,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
             params={{ slug: brand.slug }}
             className="group flex w-20 shrink-0 snap-start flex-col items-center gap-1.5 text-center transition-transform active:scale-95 sm:w-auto sm:gap-2 sm:rounded-2xl sm:border sm:bg-card sm:px-4 sm:py-5 sm:shadow-card sm:hover:border-primary"
           >
-            <span className="grid h-14 w-14 place-items-center overflow-hidden rounded-full border bg-logo-surface p-2 shadow-card transition-colors group-hover:border-primary sm:h-12 sm:w-12 sm:rounded-xl sm:p-1.5">
+            <span className="grid h-14 w-14 place-items-center overflow-hidden rounded-full border bg-background p-2 shadow-card transition-colors group-hover:border-primary sm:h-12 sm:w-12 sm:rounded-xl sm:p-1.5">
               <BrandLogo
                 slug={brand.slug}
                 label={brand.label}
