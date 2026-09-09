@@ -56,10 +56,13 @@ export function ProductGallery({
     <div
       className={cn(
         "min-w-0",
+        !compact && "lg:sticky lg:top-24 lg:self-start",
         !compact &&
-          "lg:sticky lg:top-24 lg:grid lg:grid-cols-[5.25rem_minmax(0,1fr)] lg:gap-3 lg:self-start",
+          images.length > 1 &&
+          "lg:grid lg:grid-cols-[5.25rem_minmax(0,1fr)] lg:gap-3",
       )}
     >
+
       <div className="group relative aspect-square overflow-hidden rounded-[1.6rem] border bg-image-stage shadow-card lg:order-2">
         {image ? (
           <img
