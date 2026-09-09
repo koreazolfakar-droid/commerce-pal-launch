@@ -6,10 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { activeFilterCount, SORT_OPTIONS, type ProductFilters } from "@/lib/filters";
+import {
+  activeFilterCount,
+  parseProductSearch,
+  SORT_OPTIONS,
+  type ProductFilters,
+} from "@/lib/filters";
 import { formatPrice, type ShopifyCollection, type ShopifyProduct } from "@/lib/shopify";
 import type { CatalogFacet } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
+import { categoryLabel, useLanguage } from "@/lib/i18n";
 
 export interface FacetGroups {
   categories?: CatalogFacet[];
@@ -41,7 +47,9 @@ function FacetList({
   if (items.length === 0) return null;
   return (
     <div className="border-b pb-5 last:border-0">
-      <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">{title}</h3>
+      <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h3>
       <ul className="space-y-2">
         {items.map((item) => {
           const checked = (selected ?? []).includes(item.slug);
@@ -53,7 +61,9 @@ function FacetList({
                   {item.label}
                 </span>
                 {item.count !== undefined && (
-                  <span className="text-xs tabular-nums text-muted-foreground/70">{item.count}</span>
+                  <span className="text-xs tabular-nums text-muted-foreground/70">
+                    {item.count}
+                  </span>
                 )}
               </label>
             </li>
@@ -81,6 +91,7 @@ function FilterControls({
 }) {
   const [min, setMin] = useState(filters.min?.toString() ?? "");
   const [max, setMax] = useState(filters.max?.toString() ?? "");
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     setMin(filters.min?.toString() ?? "");
@@ -88,30 +99,32 @@ function FilterControls({
   }, [filters.min, filters.max]);
 
   const applyPrice = () => {
-    const parsedMin = parseFloat(min);
-    const parsedMax = parseFloat(max);
+    const parsed = parseProductSearch({ min, max });
     onChange({
-      min: isFinite(parsedMin) ? parsedMin : undefined,
-      max: isFinite(parsedMax) ? parsedMax : undefined,
+      min: parsed.min,
+      max: parsed.max,
     });
   };
 
   return (
     <div className="space-y-5">
       <FacetList
-        title="Category"
-        items={facets.categories ?? []}
+        title={t("allCategories")}
+        items={(facets.categories ?? []).map((category) => ({
+          ...category,
+          label: categoryLabel(category, language),
+        }))}
         selected={filters.category}
         onToggle={(slug) => onChange({ category: toggleValue(filters.category, slug) })}
       />
       <FacetList
-        title="Brand"
+        title={t("brands")}
         items={facets.brands ?? []}
         selected={filters.brand}
         onToggle={(slug) => onChange({ brand: toggleValue(filters.brand, slug) })}
       />
       <FacetList
-        title="Collection"
+        title={t("collections")}
         items={(facets.collections ?? []).map((collection) => ({
           slug: collection.handle,
           label: collection.title,
@@ -121,12 +134,14 @@ function FilterControls({
       />
 
       <div className="border-b pb-5">
-        <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">Availability</h3>
+        <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">
+          {t("availability")}
+        </h3>
         <div className="flex flex-wrap gap-2">
           {[
-            { value: undefined, label: "All" },
-            { value: "in-stock" as const, label: "In stock" },
-            { value: "on-sale" as const, label: "On sale" },
+            { value: undefined, label: t("all") },
+            { value: "in-stock" as const, label: t("inStock") },
+            { value: "on-sale" as const, label: t("onSale") },
           ].map((option) => (
             <button
               key={option.label}
@@ -146,7 +161,9 @@ function FilterControls({
       </div>
 
       <div>
-        <h3 className="mb-1 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">Price</h3>
+        <h3 className="mb-1 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">
+          {t("price")}
+        </h3>
         <p className="mb-3 text-xs text-muted-foreground">
           {formatPrice(priceMin, currency)} – {formatPrice(priceMax, currency)}
         </p>
@@ -156,7 +173,7 @@ function FilterControls({
             value={min}
             onChange={(event) => setMin(event.target.value)}
             placeholder={String(priceMin)}
-            aria-label="Minimum price"
+            aria-label={t("minimumPrice")}
             className="h-9"
           />
           <span className="text-muted-foreground">–</span>
@@ -165,11 +182,11 @@ function FilterControls({
             value={max}
             onChange={(event) => setMax(event.target.value)}
             placeholder={String(priceMax)}
-            aria-label="Maximum price"
+            aria-label={t("maximumPrice")}
             className="h-9"
           />
           <Button type="button" size="sm" variant="secondary" onClick={applyPrice}>
-            Go
+            {t("go")}
           </Button>
         </div>
       </div>
@@ -208,32 +225,34 @@ export function CatalogView({
   onReset: () => void;
   header?: React.ReactNode;
 }) {
+  const { t, direction, language } = useLanguage();
   const activeCount = activeFilterCount(filters);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 lg:py-10">
-      {header}
-      <header className="mb-6">
-        <h1 className="text-2xl font-extrabold tracking-tight lg:text-[2rem]">{title}</h1>
-        {description && (
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            {description}
-          </p>
-        )}
-      </header>
+      {header ?? (
+        <header className="mb-6">
+          <h1 className="text-2xl font-extrabold tracking-tight lg:text-[2rem]">{title}</h1>
+          {description && (
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          )}
+        </header>
+      )}
 
       <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Filters</h2>
+              <h2 className="text-sm font-semibold">{t("filters")}</h2>
               {activeCount > 0 && (
                 <button
                   type="button"
                   onClick={onReset}
                   className="text-xs font-medium text-primary hover:underline"
                 >
-                  Clear all
+                  {t("clearAll")}
                 </button>
               )}
             </div>
@@ -251,27 +270,30 @@ export function CatalogView({
         <div>
           <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <p className="min-w-0 truncate text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{products.length}</span> of {total}{" "}
-              products
+              <span className="font-medium text-foreground">{products.length}</span> {t("ofLabel")}{" "}
+              {total} {products.length === 1 ? t("product") : t("products")}
             </p>
 
             <div className="flex shrink-0 items-center gap-2">
-
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="press rounded-full lg:hidden">
-                    <SlidersHorizontal className="mr-1.5 h-4 w-4" />
-                    Filters
+                    <SlidersHorizontal className="me-1.5 h-4 w-4" />
+                    {t("filters")}
                     {activeCount > 0 && (
-                      <span className="ml-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground">
+                      <span className="ms-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground">
                         {activeCount}
                       </span>
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto">
+                <SheetContent
+                  side={direction === "rtl" ? "right" : "left"}
+                  dir={direction}
+                  className="w-[88vw] max-w-sm overflow-y-auto"
+                >
                   <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
+                    <SheetTitle>{t("filters")}</SheetTitle>
                   </SheetHeader>
                   <div className="mt-6 pb-10">
                     <FilterControls
@@ -284,7 +306,7 @@ export function CatalogView({
                     />
                     {activeCount > 0 && (
                       <Button variant="ghost" className="mt-5 w-full" onClick={onReset}>
-                        Clear all filters
+                        {t("clearAll")}
                       </Button>
                     )}
                   </div>
@@ -292,18 +314,27 @@ export function CatalogView({
               </Sheet>
 
               <label className="flex items-center gap-2 text-sm">
-                <span className="hidden text-muted-foreground sm:inline">Sort</span>
+                <span className="hidden text-muted-foreground sm:inline">{t("sort")}</span>
                 <select
                   value={filters.sort ?? "featured"}
                   onChange={(event) =>
                     onChange({ sort: event.target.value as ProductFilters["sort"] })
                   }
                   className="h-9 rounded-full border bg-background px-3 text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="Sort products"
+                  aria-label={t("sort")}
                 >
                   {SORT_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {(
+                        {
+                          featured: t("featured"),
+                          newest: t("newest"),
+                          "price-asc": t("priceLowHigh"),
+                          "price-desc": t("priceHighLow"),
+                          discount: t("biggestDiscount"),
+                          "title-asc": t("nameAZ"),
+                        } as Record<string, string>
+                      )[option.value] ?? option.label}
                     </option>
                   ))}
                 </select>
@@ -316,8 +347,13 @@ export function CatalogView({
               {[
                 ...(filters.category ?? []).map((slug) => ({
                   key: `category-${slug}`,
-                  label:
-                    facets.categories?.find((facet) => facet.slug === slug)?.label ?? slug,
+                  label: categoryLabel(
+                    facets.categories?.find((facet) => facet.slug === slug) ?? {
+                      slug,
+                      label: slug,
+                    },
+                    language,
+                  ),
                   clear: () => onChange({ category: toggleValue(filters.category, slug) }),
                 })),
                 ...(filters.brand ?? []).map((slug) => ({
@@ -336,7 +372,7 @@ export function CatalogView({
                   ? [
                       {
                         key: "availability",
-                        label: filters.availability === "in-stock" ? "In stock" : "On sale",
+                        label: filters.availability === "in-stock" ? t("inStock") : t("onSale"),
                         clear: () => onChange({ availability: undefined }),
                       },
                     ]
@@ -364,12 +400,13 @@ export function CatalogView({
             </div>
           )}
 
-          <ProductGrid eagerCount={4}
+          <ProductGrid
+            eagerCount={4}
             products={products}
             action={
               activeCount > 0 ? (
                 <Button variant="outline" onClick={onReset}>
-                  Clear filters
+                  {t("clearAll")}
                 </Button>
               ) : undefined
             }

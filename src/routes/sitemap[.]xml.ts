@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-import { fetchAllProducts, fetchCollections } from "@/lib/shopify";
+import { fetchCatalogProducts, fetchCollections } from "@/lib/shopify";
 import { absoluteUrl } from "@/lib/seo";
 import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";
 
@@ -9,6 +9,7 @@ interface SitemapEntry {
   path: string;
   changefreq?: "daily" | "weekly" | "monthly";
   priority?: string;
+  lastmod?: string;
 }
 
 function escapeXml(value: string) {
@@ -24,35 +25,75 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
+        const today = new Date().toISOString().slice(0, 10);
         const [products, collections] = await Promise.all([
-          fetchAllProducts(),
+          fetchCatalogProducts(100),
           fetchCollections(100),
         ]);
         const catalog = buildCatalogIndex(products);
         const entries: SitemapEntry[] = [
-          { path: "/", changefreq: "daily", priority: "1.0" },
-          { path: "/shop", changefreq: "daily", priority: "0.9" },
-          { path: "/collections", changefreq: "weekly", priority: "0.8" },
+          { path: "/", changefreq: "daily", priority: "1.0", lastmod: today },
+          { path: "/shop", changefreq: "daily", priority: "0.9", lastmod: today },
+          { path: "/used-phones", changefreq: "daily", priority: "0.8", lastmod: today },
+          { path: "/collections", changefreq: "weekly", priority: "0.8", lastmod: today },
+          ...[
+            "help",
+            "contact",
+            "shipping",
+            "returns",
+            "warranty",
+            "faq",
+            "about",
+            "privacy",
+            "terms",
+          ].map((path) => ({
+            path: `/${path}`,
+            changefreq: "monthly" as const,
+            priority: "0.4",
+            lastmod: today,
+          })),
           ...catalog.categories
             .filter((category) => category.count > 0)
-            .map((category) => ({ path: `/category/${encodeURIComponent(category.slug)}`, changefreq: "daily" as const, priority: "0.8" })),
+            .map((category) => ({
+              path: `/category/${encodeURIComponent(category.slug)}`,
+              changefreq: "daily" as const,
+              priority: "0.8",
+            })),
           ...catalog.brands
             .filter((brand) => brand.count > 0)
-            .map((brand) => ({ path: `/brand/${encodeURIComponent(brand.slug)}`, changefreq: "daily" as const, priority: "0.8" })),
-          ...displayCollections(collections).map((collection) => ({ path: `/collections/${encodeURIComponent(collection.handle)}`, changefreq: "daily" as const, priority: "0.8" })),
-          ...products.map((product) => ({ path: `/product/${encodeURIComponent(product.node.handle)}`, changefreq: "weekly" as const, priority: "0.9" })),
+            .map((brand) => ({
+              path: `/brand/${encodeURIComponent(brand.slug)}`,
+              changefreq: "daily" as const,
+              priority: "0.8",
+            })),
+          ...displayCollections(collections).map((collection) => ({
+            path: `/collections/${encodeURIComponent(collection.handle)}`,
+            changefreq: "daily" as const,
+            priority: "0.8",
+          })),
+          ...products.map((product) => ({
+            path: `/product/${encodeURIComponent(product.node.handle)}`,
+            changefreq: "weekly" as const,
+            priority: "0.9",
+            lastmod: product.node.createdAt ? product.node.createdAt.slice(0, 10) : today,
+          })),
         ];
 
         const seen = new Set<string>();
         const urls = entries
           .filter((entry) => !seen.has(entry.path) && seen.add(entry.path))
-          .map((entry) => [
-            "  <url>",
-            `    <loc>${escapeXml(absoluteUrl(entry.path))}</loc>`,
-            entry.changefreq ? `    <changefreq>${entry.changefreq}</changefreq>` : null,
-            entry.priority ? `    <priority>${entry.priority}</priority>` : null,
-            "  </url>",
-          ].filter(Boolean).join("\n"));
+          .map((entry) =>
+            [
+              "  <url>",
+              `    <loc>${escapeXml(absoluteUrl(entry.path))}</loc>`,
+              entry.lastmod ? `    <lastmod>${escapeXml(entry.lastmod)}</lastmod>` : null,
+              entry.changefreq ? `    <changefreq>${entry.changefreq}</changefreq>` : null,
+              entry.priority ? `    <priority>${entry.priority}</priority>` : null,
+              "  </url>",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          );
 
         const xml = [
           '<?xml version="1.0" encoding="UTF-8"?>',

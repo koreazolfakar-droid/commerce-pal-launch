@@ -92,7 +92,10 @@ const KNOWN_HEADINGS = [
 ];
 
 function isHeading(line: string) {
-  const normalized = line.toLowerCase().replace(/[:：]\s*$/, "").trim();
+  const normalized = line
+    .toLowerCase()
+    .replace(/[:：]\s*$/, "")
+    .trim();
   if (KNOWN_HEADINGS.includes(normalized)) return true;
   // Short, colon-terminated, verb-less label lines act as headings too.
   return line.length <= 34 && /[:：]$/.test(line) && !SPEC_LINE.test(line.replace(/[:：]$/, ""));
@@ -140,16 +143,43 @@ export function parseDescription(html?: string, plain?: string): ContentSection[
 }
 
 const GROUP_RULES: Array<{ title: string; test: RegExp }> = [
-  { title: "Display", test: /display|screen|resolution|refresh|nits|brightness|panel|amoled|lcd|oled|ppi/i },
-  { title: "Performance", test: /processor|chipset|chip|cpu|gpu|soc|snapdragon|bionic|dimensity|exynos|cores?|speed|ghz/i },
-  { title: "Memory & Storage", test: /\bram\b|memory|storage|capacity|\bssd\b|microsd|expandable/i },
-  { title: "Camera", test: /camera|lens|zoom|selfie|video record|megapixel|\bmp\b|aperture|stabilis|stabiliz|ultra-?wide|telephoto|macro|flash/i },
-  { title: "Battery & Charging", test: /batter|mah|charg|watt|\bw\b$|wireless power|playback|talk ?time/i },
-  { title: "Connectivity", test: /5g|4g|lte|wi-?fi|bluetooth|\bnfc\b|\bsim\b|usb|port|network|band|gps|uwb|jack|carrier|unlocked/i },
+  {
+    title: "Display",
+    test: /display|screen|resolution|refresh|nits|brightness|panel|amoled|lcd|oled|ppi/i,
+  },
+  {
+    title: "Performance",
+    test: /processor|chipset|chip|cpu|gpu|soc|snapdragon|bionic|dimensity|exynos|cores?|speed|ghz/i,
+  },
+  {
+    title: "Memory & Storage",
+    test: /\bram\b|memory|storage|capacity|\bssd\b|microsd|expandable/i,
+  },
+  {
+    title: "Camera",
+    test: /camera|lens|zoom|selfie|video record|megapixel|\bmp\b|aperture|stabilis|stabiliz|ultra-?wide|telephoto|macro|flash/i,
+  },
+  {
+    title: "Battery & Charging",
+    test: /batter|mah|charg|watt|\bw\b$|wireless power|playback|talk ?time/i,
+  },
+  {
+    title: "Connectivity",
+    test: /5g|4g|lte|wi-?fi|bluetooth|\bnfc\b|\bsim\b|usb|port|network|band|gps|uwb|jack|carrier|unlocked/i,
+  },
   { title: "Audio", test: /audio|speaker|sound|noise cancel|codec|driver|microphone|\banc\b/i },
-  { title: "Design & Build", test: /dimension|weight|size|material|build|colou?r|finish|water|\bip[0-9]{2}\b|thickness|frame/i },
-  { title: "Software & Features", test: /os|operating system|android|ios|hyperos|one ?ui|update|security|fingerprint|face|pen|assistant|ai\b/i },
-  { title: "Power & Compatibility", test: /compatib|input|output|voltage|cable|adapter|protocol|warranty|certif/i },
+  {
+    title: "Design & Build",
+    test: /dimension|weight|size|material|build|colou?r|finish|water|\bip[0-9]{2}\b|thickness|frame/i,
+  },
+  {
+    title: "Software & Features",
+    test: /os|operating system|android|ios|hyperos|one ?ui|update|security|fingerprint|face|pen|assistant|ai\b/i,
+  },
+  {
+    title: "Power & Compatibility",
+    test: /compatib|input|output|voltage|cable|adapter|protocol|warranty|certif/i,
+  },
 ];
 
 /**

@@ -1,56 +1,90 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { catalogQueryOptions } from "@/lib/queries";
+import { catalogQueryOptions, shopPoliciesQueryOptions } from "@/lib/queries";
+import { generalWhatsAppUrl } from "@/lib/whatsapp";
+import { useLanguage } from "@/lib/i18n";
+import { STORE_CONFIG, STORE_NAME } from "@/lib/storeConfig";
 
-const SUPPORT = ["Contact", "Shipping", "Returns", "Warranty", "FAQ"];
-const COMPANY = ["About", "Privacy", "Terms"];
-const PAYMENTS = ["Visa", "Mastercard", "Amex", "Apple Pay", "Shop Pay"];
+const SOCIALS = [
+  { label: "Instagram", Icon: Instagram, href: STORE_CONFIG.socialInstagram },
+  { label: "Facebook", Icon: Facebook, href: STORE_CONFIG.socialFacebook },
+  { label: "X", Icon: Twitter, href: STORE_CONFIG.socialX },
+  { label: "YouTube", Icon: Youtube, href: STORE_CONFIG.socialYoutube },
+];
 
 export function SiteFooter() {
   const { data: catalog } = useQuery(catalogQueryOptions());
+  const { language, t } = useLanguage();
+  const { data: policies } = useQuery(shopPoliciesQueryOptions());
   const shopLinks = (catalog?.categories ?? []).slice(0, 6);
   const brandLinks = (catalog?.brands ?? []).slice(0, 5);
+  const isAr = language === "ar";
 
+  const support = [
+    ["Help", "/help"],
+    ["Contact", "/contact"],
+    ["Shipping", "/shipping"],
+    ["Returns", "/returns"],
+    ["Warranty", "/warranty"],
+    ["FAQ", "/faq"],
+  ] as const;
+  const supportPolicy = {
+    "/shipping": policies?.shippingPolicy,
+    "/returns": policies?.refundPolicy,
+  };
+  const company = [
+    ["About", "/about"],
+    ["Privacy", "/privacy"],
+    ["Terms", "/terms"],
+  ] as const;
 
   return (
     <footer className="mt-16 border-t bg-surface">
       <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
-          <div className="lg:col-span-2">
+        <div className="grid min-w-0 gap-10 md:grid-cols-2 lg:grid-cols-6">
+          <div className="min-w-0 lg:col-span-2">
             <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-                S
-              </span>
-              <span className="text-lg font-semibold tracking-tight">Space Cell</span>
+              <img
+                src="/logo.png"
+                alt={STORE_NAME}
+                width={32}
+                height={32}
+                className="h-8 w-auto shrink-0 object-contain"
+              />
+              <span className="text-lg font-semibold tracking-tight">{STORE_NAME}</span>
             </div>
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-              Premium phones, tablets and audio — authentic stock, official warranty, secure
-              checkout.
+              {isAr
+                ? "هواتف وأجهزة تقنية أصلية مع تجربة شراء آمنة ودعم مباشر."
+                : `Phones and technology from the connected ${STORE_NAME} catalogue, with secure checkout and direct support.`}
             </p>
-            <form
-              className="mt-5 flex max-w-sm gap-2"
-              onSubmit={(event) => event.preventDefault()}
+            <a
+              href={generalWhatsAppUrl()}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
-              <Input type="email" placeholder="Your email" aria-label="Email address" required />
-              <Button type="submit">Subscribe</Button>
-            </form>
+              {isAr ? "تواصل معنا عبر واتساب" : "Contact us on WhatsApp"}
+            </a>
             <div className="mt-5 flex gap-3 text-muted-foreground">
-              {[Instagram, Facebook, Twitter, Youtube].map((Icon, index) => (
-                <span
-                  key={index}
-                  className="grid h-9 w-9 place-items-center rounded-md border bg-background"
+              {SOCIALS.filter((social) => social.href).map(({ Icon, label, href }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={label}
+                  className="grid h-9 w-9 place-items-center rounded-md border bg-background hover:text-primary"
                 >
                   <Icon className="h-4 w-4" />
-                </span>
+                </a>
               ))}
             </div>
           </div>
 
-          <FooterColumn title="Shop">
+          <FooterColumn title={isAr ? "المتجر" : "Shop"}>
             {shopLinks.map((entry) => (
               <li key={entry.slug}>
                 <Link
@@ -64,20 +98,18 @@ export function SiteFooter() {
             ))}
             <li>
               <Link to="/shop" className="text-sm text-muted-foreground hover:text-primary">
-                Shop all products
+                {isAr ? "كل المنتجات" : "Shop all products"}
               </Link>
             </li>
             <li>
               <Link to="/collections" className="text-sm text-muted-foreground hover:text-primary">
-                All collections
+                {isAr ? "كل المجموعات" : "All collections"}
               </Link>
             </li>
           </FooterColumn>
 
-          <FooterColumn title="Brands">
-            {brandLinks.length === 0 ? (
-              <li className="text-sm text-muted-foreground">No brands yet</li>
-            ) : (
+          <FooterColumn title={isAr ? "العلامات التجارية" : "Brands"}>
+            {brandLinks.length ? (
               brandLinks.map((entry) => (
                 <li key={entry.slug}>
                   <Link
@@ -89,40 +121,85 @@ export function SiteFooter() {
                   </Link>
                 </li>
               ))
+            ) : (
+              <li className="text-sm text-muted-foreground">
+                {isAr ? "لا توجد علامات بعد" : "No brands yet"}
+              </li>
             )}
           </FooterColumn>
 
-
           <div className="grid gap-10 sm:grid-cols-2 lg:contents">
-            <FooterColumn title="Support">
-              {SUPPORT.map((item) => (
-                <li key={item} className="text-sm text-muted-foreground">
-                  {item}
+            <FooterColumn title={isAr ? "الدعم" : "Support"}>
+              {support.map(([label, href]) => (
+                <li key={href}>
+                  {href in supportPolicy &&
+                  supportPolicy[href as keyof typeof supportPolicy]?.url ? (
+                    <a
+                      href={supportPolicy[href as keyof typeof supportPolicy]!.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-muted-foreground hover:text-primary"
+                    >
+                      {t(href === "/shipping" ? "shippingTitle" : "returnsTitle")}
+                    </a>
+                  ) : (
+                    <Link to={href} className="text-sm text-muted-foreground hover:text-primary">
+                      {label === "Help"
+                        ? t("helpTitle")
+                        : isAr
+                          ? (
+                              {
+                                Contact: "اتصل بنا",
+                                Shipping: "الشحن",
+                                Returns: "الإرجاع",
+                                Warranty: "الضمان",
+                                FAQ: "الأسئلة الشائعة",
+                              } as const
+                            )[label]
+                          : label}
+                    </Link>
+                  )}
                 </li>
               ))}
+              {(
+                [
+                  [policies?.privacyPolicy, "privacyTitle"],
+                  [policies?.termsOfService, "termsTitle"],
+                ] as const
+              ).map(([policy, key]) =>
+                policy?.url ? (
+                  <li key={key}>
+                    <a
+                      href={policy.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-muted-foreground hover:text-primary"
+                    >
+                      {t(key)}
+                    </a>
+                  </li>
+                ) : null,
+              )}
             </FooterColumn>
-            <FooterColumn title="Company">
-              {COMPANY.map((item) => (
-                <li key={item} className="text-sm text-muted-foreground">
-                  {item}
+            <FooterColumn title={isAr ? "الشركة" : "Company"}>
+              {company.map(([label, href]) => (
+                <li key={href}>
+                  <Link to={href} className="text-sm text-muted-foreground hover:text-primary">
+                    {isAr
+                      ? ({ About: "من نحن", Privacy: "الخصوصية", Terms: "الشروط" } as const)[label]
+                      : label}
+                  </Link>
                 </li>
               ))}
             </FooterColumn>
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-4 border-t pt-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Space Cell. Secure checkout powered by Shopify.</p>
-          <ul className="flex flex-wrap gap-2">
-            {PAYMENTS.map((payment) => (
-              <li
-                key={payment}
-                className="rounded border bg-background px-2 py-1 text-[11px] font-medium"
-              >
-                {payment}
-              </li>
-            ))}
-          </ul>
+        <div className="mt-10 border-t pt-6 text-center text-sm text-muted-foreground">
+          <p>
+            © {new Date().getFullYear()} {STORE_NAME}.{" "}
+            {isAr ? "الدفع الآمن عبر Shopify." : "Secure checkout powered by Shopify."}
+          </p>
         </div>
       </div>
     </footer>
@@ -131,9 +208,14 @@ export function SiteFooter() {
 
 function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <ul className="mt-3 space-y-2">{children}</ul>
-    </div>
+    <details className="footer-column group min-w-0 break-words lg:block" open>
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold [&::-webkit-details-marker]:hidden lg:pointer-events-none">
+        {title}
+        <span className="text-lg font-normal text-muted-foreground transition-transform group-open:rotate-45 lg:hidden">
+          +
+        </span>
+      </summary>
+      <ul className="mt-2 space-y-2 pb-2 lg:mt-3 lg:pb-0">{children}</ul>
+    </details>
   );
 }

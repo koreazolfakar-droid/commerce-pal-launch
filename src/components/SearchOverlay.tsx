@@ -39,7 +39,10 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   if (!open) return null;
 
   return (
-    <div className="animate-fade fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="animate-fade fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <div
         className="animate-rise mx-auto mt-0 w-full max-w-3xl bg-background p-4 shadow-float sm:mt-16 sm:rounded-3xl sm:border"
         onClick={(event) => event.stopPropagation()}
@@ -123,7 +126,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                             onClick={onClose}
                             className="flex items-center gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-surface"
                           >
-                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white">
+                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-image-stage">
                               {image && (
                                 <img
                                   src={cdnImage(image.url, 96)}

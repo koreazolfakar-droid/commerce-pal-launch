@@ -9,6 +9,36 @@
  * Anything unresolved renders a polished monogram instead of a broken image.
  */
 
+import anker from "@/assets/brands/anker.svg";
+import apple from "@/assets/brands/apple.svg";
+import samsung from "@/assets/brands/samsung.png";
+import xiaomi from "@/assets/brands/xiaomi.svg";
+import blackshark from "@/assets/brands/blackshark.svg";
+import poco from "@/assets/brands/poco.png";
+import realme from "@/assets/brands/realme.svg";
+import redmagic from "@/assets/brands/redmagic.png";
+import redmi from "@/assets/brands/redmi.svg";
+import tecno from "@/assets/brands/tecno.svg";
+import ugreen from "@/assets/brands/ugreen.png";
+import vention from "@/assets/brands/vention.png";
+
+const LOCAL_LOGOS: Record<string, string> = {
+  apple,
+  samsung,
+  xiaomi,
+  anker,
+  blackshark,
+  "black-shark": blackshark,
+  poco,
+  realme,
+  redmagic,
+  "red-magic": redmagic,
+  redmi,
+  tecno,
+  ugreen,
+  vention,
+};
+
 export interface BrandMeta {
   /** simple-icons slug (https://cdn.simpleicons.org/<slug>) */
   icon?: string;
@@ -53,40 +83,36 @@ const BRAND_META: Record<string, BrandMeta> = {
   infinix: { domain: "infinixmobility.com" },
 };
 
-const LOGO_DEV_KEY = import.meta.env["VITE_LOVABLE_CONNECTOR_LOGO_DEV_API_KEY"] as
-  | string
-  | undefined;
-
 export function brandMeta(slug: string): BrandMeta {
-  return BRAND_META[slug] ?? {};
+  const key = (slug || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return BRAND_META[key] ?? {};
 }
 
-/** Normalizes a brand label into a probable simple-icons slug. */
-function iconSlug(slug: string, label: string) {
-  const explicit = BRAND_META[slug]?.icon;
-  if (explicit) return explicit;
-  const guess = label.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return guess.length >= 2 && guess.length <= 24 ? guess : undefined;
+function brandKey(slug: string, label: string) {
+  const key = (slug || label)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return key;
 }
 
 /**
- * Ordered list of logo candidates. The component walks it and falls back to a
- * monogram when every candidate fails, so a broken image is never shown.
- *
- * Favicon services were deliberately dropped: they return tiny, low-quality
- * icons and leak every page view to third parties. Shopify's own collection
- * image (passed in by the caller) always wins; Simple Icons covers the common
- * vector marks; everything else gets the monogram tile.
+ * Logo sources are deliberately limited to Shopify-hosted brand images and
+ * Simple Icons. Shopify wins because merchants can upload the exact official
+ * brand asset they are licensed to use in the matching collection image.
  */
-export function brandLogoSources(slug: string, label: string, size = 128): string[] {
+export function brandLogoSources(slug: string, label: string, _size = 128): string[] {
   const sources: string[] = [];
-  const icon = iconSlug(slug, label);
+  const key = brandKey(slug, label);
+  const local = LOCAL_LOGOS[key];
+  if (local) return [local];
+  const icon = BRAND_META[key]?.icon;
   if (icon) sources.push(`https://cdn.simpleicons.org/${icon}`);
-  const guessed = label.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const domain = BRAND_META[slug]?.domain ?? (guessed.length >= 2 ? `${guessed}.com` : undefined);
-  if (LOGO_DEV_KEY && domain) {
-    sources.push(`https://img.logo.dev/${domain}?token=${LOGO_DEV_KEY}&size=${size}&format=png`);
-  }
   return sources;
 }
 
@@ -96,4 +122,31 @@ export function brandMonogram(label: string) {
   if (words.length === 0) return "?";
   if (words.length === 1) return words[0]!.slice(0, 2).toUpperCase();
   return `${words[0]![0]}${words[1]![0]}`.toUpperCase();
+}
+
+/**
+ * Curated, accessible colour pairs for the fallback monogram badge. Chosen so
+ * every pair reads clearly as bold dark text on a soft tint — a deliberate,
+ * premium look rather than the single flat theme colour used everywhere.
+ */
+const MONOGRAM_PALETTE: readonly { bg: string; fg: string }[] = [
+  { bg: "#E0E7FF", fg: "#3730A3" }, // indigo
+  { bg: "#CFFAFE", fg: "#155E75" }, // cyan
+  { bg: "#FFEDD5", fg: "#9A3412" }, // orange
+  { bg: "#DCFCE7", fg: "#166534" }, // green
+  { bg: "#FCE7F3", fg: "#9D174D" }, // pink
+  { bg: "#FEF3C7", fg: "#92400E" }, // amber
+  { bg: "#EDE9FE", fg: "#5B21B6" }, // violet
+  { bg: "#DBEAFE", fg: "#1E40AF" }, // blue
+  { bg: "#FEE2E2", fg: "#991B1B" }, // red
+  { bg: "#D1FAE5", fg: "#065F46" }, // emerald
+];
+
+/** Deterministic palette pick so a given brand always renders the same colour. */
+export function brandMonogramColors(slug: string) {
+  let hash = 0;
+  for (let i = 0; i < slug.length; i++) {
+    hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
+  }
+  return MONOGRAM_PALETTE[hash % MONOGRAM_PALETTE.length]!;
 }

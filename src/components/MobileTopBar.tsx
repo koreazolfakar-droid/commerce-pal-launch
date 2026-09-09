@@ -4,12 +4,14 @@ import { Columns2, Heart, LayoutGrid, Search, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 
 import { SearchOverlay } from "@/components/SearchOverlay";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { MobileMenu } from "@/components/MobileMenu";
+import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { useHydrated } from "@/hooks/useHydrated";
 import { catalogQueryOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 function Badge({ value }: { value: number }) {
   if (value <= 0) return null;
@@ -21,8 +23,15 @@ function Badge({ value }: { value: number }) {
 }
 
 /** Mobile app style top bar: brand, quick actions, search field and category strip. */
-export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
+export function MobileTopBar({
+  activeSlug,
+  showCategoryRail = true,
+}: {
+  activeSlug?: string;
+  showCategoryRail?: boolean;
+}) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const { t, language } = useLanguage();
   const hydrated = useHydrated();
   const wishlistCount = useWishlistStore((state) => state.handles.length);
   const cartCount = useCartStore((state) =>
@@ -30,33 +39,33 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
   );
 
   const { data: catalog, isLoading } = useQuery(catalogQueryOptions());
-  const list = hydrated ? catalog?.categories ?? [] : [];
+  const list = hydrated ? (catalog?.categories ?? []) : [];
 
   return (
     <>
       {/* Only the main header row stays sticky. */}
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-xl lg:hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-2">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-sm font-extrabold text-primary-foreground shadow-card">
-              S
-            </span>
-            <span className="truncate text-[17px] font-extrabold tracking-tight">Space Cell</span>
+          <MobileMenu />
+          <Link
+            to="/"
+            aria-label={`${STORE_NAME} home`}
+            className="flex min-w-0 flex-1 items-center gap-2"
+          >
+            <img
+              src="/logo.png"
+              alt={STORE_NAME}
+              width={32}
+              height={32}
+              className="h-8 w-auto shrink-0 object-contain"
+            />
+            <span className="truncate text-[17px] font-extrabold tracking-tight">{STORE_NAME}</span>
           </Link>
-          <div className="flex items-center gap-0.5">
-            <ThemeToggle />
-            <Link
-              to="/compare"
-              search={{ products: undefined }}
-              aria-label="Compare smartphones"
-              className="press relative grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-surface"
-            >
-              <Columns2 className="h-[21px] w-[21px]" strokeWidth={1.9} />
-            </Link>
+          <div className="flex shrink-0 items-center gap-0.5">
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
-              className="press relative grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-surface"
+              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-full transition-colors hover:bg-surface sm:grid"
             >
               <Heart className="h-[21px] w-[21px]" strokeWidth={1.9} />
               <Badge value={wishlistCount} />
@@ -76,18 +85,26 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
 
       {/* Search + compact category rail scroll away with the page. */}
       <div className="border-b bg-background lg:hidden">
-        <div className="px-4 py-2">
+        <div className="flex min-w-0 items-center gap-2 px-4 py-2">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="press flex h-10 w-full items-center gap-2.5 rounded-2xl bg-surface px-4 text-left text-[13px] text-muted-foreground transition-colors hover:bg-accent"
+            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-2xl bg-surface px-4 text-start text-sm text-muted-foreground transition-colors hover:bg-accent"
           >
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span className="truncate">Search phones, audio, accessories…</span>
+            <span className="truncate">{t("search")}</span>
           </button>
+          <Link
+            to="/compare"
+            search={{ products: undefined }}
+            aria-label="Compare smartphones"
+            className="press grid h-11 w-11 shrink-0 place-items-center rounded-2xl border bg-surface hover:bg-accent"
+          >
+            <Columns2 className="h-5 w-5" strokeWidth={1.9} />
+          </Link>
         </div>
 
-        {(list.length > 0 || isLoading) && (
+        {showCategoryRail && (list.length > 0 || isLoading) && (
           <nav aria-label="Product categories" className="scroll-rail flex gap-2 px-4 pb-2">
             {isLoading && list.length === 0
               ? Array.from({ length: 6 }).map((_, index) => (
@@ -109,9 +126,15 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
                 )}
               >
                 <LayoutGrid className="h-4 w-4 shrink-0" strokeWidth={1.9} />
-                All
+                {t("all")}
               </Link>
             )}
+            <Link
+              to="/used-phones"
+              className="press flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-accent px-3 text-[12px] font-semibold text-accent-foreground"
+            >
+              {t("usedPhones")}
+            </Link>
             {list.map((category) => {
               const Icon = category.icon;
               const active = activeSlug === category.slug;
@@ -128,14 +151,13 @@ export function MobileTopBar({ activeSlug }: { activeSlug?: string }) {
                   )}
                 >
                   {Icon ? <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} /> : null}
-                  <span className="max-w-28 truncate">{category.label}</span>
+                  <span className="max-w-28 truncate">{categoryLabel(category, language)}</span>
                 </Link>
               );
             })}
           </nav>
         )}
       </div>
-
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>

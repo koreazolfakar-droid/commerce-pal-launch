@@ -1,4 +1,5 @@
-import { productCompareAt, productInStock, productPrice, type ShopifyProduct } from "@/lib/shopify";
+import { productDiscountPercent, productInStock, productPrice } from "@/lib/productPricing";
+import type { ShopifyProduct } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
 
 export const SORT_OPTIONS = [
@@ -27,32 +28,49 @@ const SORT_VALUES = SORT_OPTIONS.map((option) => option.value) as readonly strin
 
 function toStringArray(value: unknown): string[] | undefined {
   if (Array.isArray(value)) {
-    const list = value.map(String).filter(Boolean);
+    const list = [
+      ...new Set(
+        value
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean),
+      ),
+    ];
     return list.length > 0 ? list : undefined;
   }
   if (typeof value === "string" && value.length > 0) {
-    const list = value.split(",").filter(Boolean);
+    const list = [
+      ...new Set(
+        value
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+      ),
+    ];
     return list.length > 0 ? list : undefined;
   }
   return undefined;
 }
 
 function toNumber(value: unknown): number | undefined {
-  const parsed = typeof value === "number" ? value : parseFloat(String(value ?? ""));
-  return isFinite(parsed) ? parsed : undefined;
+  if (typeof value !== "number" && (typeof value !== "string" || !value.trim())) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 /** Validates the filter/sort search params so they can live in the URL. */
 export function parseProductSearch(search: Record<string, unknown>): ProductFilters {
   const availability = String(search["availability"] ?? "");
   const sort = String(search["sort"] ?? "");
+  const min = toNumber(search["min"]);
+  const max = toNumber(search["max"]);
   return {
     q: typeof search["q"] === "string" && search["q"].trim() ? String(search["q"]) : undefined,
     category: toStringArray(search["category"]),
     brand: toStringArray(search["brand"]),
     collection: toStringArray(search["collection"]),
-    min: toNumber(search["min"]),
-    max: toNumber(search["max"]),
+    min: min !== undefined && max !== undefined ? Math.min(min, max) : min,
+    max: min !== undefined && max !== undefined ? Math.max(min, max) : max,
     availability: ["in-stock", "on-sale"].includes(availability)
       ? (availability as "in-stock" | "on-sale")
       : undefined,
@@ -62,14 +80,20 @@ export function parseProductSearch(search: Record<string, unknown>): ProductFilt
 
 function matchesText(product: ShopifyProduct, term: string) {
   const node = product.node;
-  const text = [node.title, node.vendor ?? "", node.productType ?? "", (node.tags ?? []).join(" ")]
-    .join(" ")
-    .toLowerCase();
+  const text = [
+    node.title,
+    node.vendor ?? "",
+    node.productType ?? "",
+    (node.tags ?? []).join(" "),
+  ].join(" ");
   return term
-    .toLowerCase()
+    .trim()
     .split(/\s+/)
     .filter(Boolean)
-    .every((word) => text.includes(word));
+    .every((word) => {
+      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?:$|[^\\p{L}\\p{N}])`, "iu").test(text);
+    });
 }
 
 /** Applies the active facets and sort order to a product list. */
@@ -103,14 +127,15 @@ export function applyFilters(
     });
   }
 
-  if (filters.min !== undefined) result = result.filter((product) => productPrice(product) >= filters.min!);
-  if (filters.max !== undefined) result = result.filter((product) => productPrice(product) <= filters.max!);
+  if (filters.min !== undefined)
+    result = result.filter((product) => productPrice(product) >= filters.min!);
+  if (filters.max !== undefined)
+    result = result.filter((product) => productPrice(product) <= filters.max!);
 
   if (filters.availability === "in-stock") result = result.filter(productInStock);
   if (filters.availability === "on-sale") {
     result = result.filter((product) => {
-      const compareAt = productCompareAt(product);
-      return compareAt ? parseFloat(compareAt) > productPrice(product) : false;
+      return productDiscountPercent(product) !== null;
     });
   }
 
@@ -142,11 +167,8 @@ export function applyFilters(
 }
 
 function savingRatio(product: ShopifyProduct) {
-  const price = productPrice(product);
-  const compareAt = productCompareAt(product);
-  const was = compareAt ? parseFloat(compareAt) : NaN;
-  if (!isFinite(was) || was <= price || was <= 0) return 0;
-  return (was - price) / was;
+  const discount = productDiscountPercent(product);
+  return discount === null ? 0 : discount / 100;
 }
 
 export function activeFilterCount(filters: ProductFilters) {

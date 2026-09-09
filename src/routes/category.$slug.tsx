@@ -3,48 +3,59 @@ import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 
 import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
+import { FacetHero } from "@/components/FacetHero";
+import { findFacetHero } from "@/lib/homeMerchandising";
+import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { categoryDefinition, displayCollections, productsInCategory } from "@/lib/taxonomy";
 import { absoluteUrl, breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd } from "@/lib/seo";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/category/$slug")({
   validateSearch: parseProductSearch,
   loader: async ({ context, params }) => {
-    const definition = categoryDefinition(params.slug);
-    if (!definition) throw notFound();
     const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
-    context.queryClient.prefetchQuery(collectionsQueryOptions());
+    const definition =
+      catalog.categories.find((item) => item.slug === params.slug) ??
+      categoryDefinition(params.slug);
+    if (!definition) throw notFound();
+    await context.queryClient.ensureQueryData(collectionsQueryOptions());
     return { label: definition.label, products: productsInCategory(catalog, params.slug) };
   },
   head: ({ params, loaderData }) => {
     if (!loaderData) {
       return {
         meta: [
-          { title: "Category unavailable — Space Cell" },
+          { title: `Category unavailable — ${STORE_NAME}` },
           { name: "robots", content: "noindex, follow" },
         ],
       };
     }
     const label = loaderData?.label ?? categoryDefinition(params.slug)?.label ?? "Category";
-    const description = `Shop ${label.toLowerCase()} at Space Cell with live pricing, stock and secure checkout.`;
+    const description = `Shop ${label.toLowerCase()} at ${STORE_NAME} with live pricing, stock and secure checkout.`;
     const path = `/category/${params.slug}`;
     return {
       meta: [
-        { title: `${label} — Space Cell` },
+        { title: `${label} — ${STORE_NAME}` },
         { name: "description", content: description },
-        { property: "og:title", content: `${label} — Space Cell` },
+        { property: "og:title", content: `${label} — ${STORE_NAME}` },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: `${label} — Space Cell` },
+        { name: "twitter:title", content: `${label} — ${STORE_NAME}` },
         { name: "twitter:description", content: description },
       ],
       links: [canonicalLink(path)],
       scripts: loaderData
         ? [
-            jsonLd(breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: label, path }])),
+            jsonLd(
+              breadcrumbJsonLd([
+                { name: "Home", path: "/" },
+                { name: label, path },
+              ]),
+            ),
             jsonLd(itemListJsonLd(label, loaderData.products)),
           ]
         : [],
@@ -54,13 +65,17 @@ export const Route = createFileRoute("/category/$slug")({
 });
 
 function CategoryPage() {
+  const { t, language } = useLanguage();
   const { slug } = Route.useParams();
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
-  const definition = categoryDefinition(slug);
+  const definition =
+    catalog.categories.find((item) => item.slug === slug) ?? categoryDefinition(slug);
+  const label = definition ? categoryLabel(definition, language) : slug;
+  const hero = findFacetHero(collections ?? [], "category", slug);
   const inCategory = productsInCategory(catalog, slug);
   const products = applyFilters(inCategory, catalog, filters);
 
@@ -74,8 +89,24 @@ function CategoryPage() {
   return (
     <StoreLayout>
       <CatalogView
-        title={definition?.label ?? slug}
-        description={`${inCategory.length} product${inCategory.length === 1 ? "" : "s"} in this category, matched automatically from Shopify product data.`}
+        title={label}
+        header={
+          hero ? (
+            <section className="mb-7 overflow-hidden rounded-3xl border">
+              <FacetHero
+                id="category-page-title"
+                title={hero.title || label}
+                description={hero.description}
+                image={hero.image}
+                href={`/category/${slug}`}
+                headingLevel={1}
+                showAction={false}
+                eager
+              />
+            </section>
+          ) : undefined
+        }
+        description={`${inCategory.length} ${t(inCategory.length === 1 ? "product" : "products")}`}
         products={products}
         total={inCategory.length}
         filters={filters}

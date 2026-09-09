@@ -6,42 +6,47 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { collectionsQueryOptions } from "@/lib/queries";
 import { absoluteUrl, canonicalLink, jsonLd } from "@/lib/seo";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/collections/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(collectionsQueryOptions()),
   head: ({ loaderData }) => ({
     meta: [
-      { title: "All Collections — Space Cell" },
+      { title: `All Collections — ${STORE_NAME}` },
       {
         name: "description",
-        content:
-          "Browse every Space Cell collection: smartphones, tablets, audio, chargers, cases and more.",
+        content: `Browse every ${STORE_NAME} collection: smartphones, tablets, audio, chargers, cases and more.`,
       },
-      { property: "og:title", content: "All Collections — Space Cell" },
+      { property: "og:title", content: `All Collections — ${STORE_NAME}` },
       {
         property: "og:description",
-        content: "Browse every Space Cell collection across phones, tablets, audio and accessories.",
+        content: `Browse every ${STORE_NAME} collection across phones, tablets, audio and accessories.`,
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/collections") },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "All Collections — Space Cell" },
-      { name: "twitter:description", content: "Browse every Space Cell collection across phones, tablets, audio and accessories." },
+      { name: "twitter:title", content: `All Collections — ${STORE_NAME}` },
+      {
+        name: "twitter:description",
+        content: `Browse every ${STORE_NAME} collection across phones, tablets, audio and accessories.`,
+      },
     ],
     links: [canonicalLink("/collections")],
     scripts: loaderData
-      ? [jsonLd({
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          name: "Space Cell collections",
-          numberOfItems: loaderData.length,
-          itemListElement: loaderData.map((collection, index) => ({
-            "@type": "ListItem",
-            position: index + 1,
-            name: collection.title,
-            url: absoluteUrl(`/collections/${collection.handle}`),
-          })),
-        })]
+      ? [
+          jsonLd({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: `${STORE_NAME} collections`,
+            numberOfItems: loaderData.length,
+            itemListElement: loaderData.map((collection, index) => ({
+              "@type": "ListItem",
+              position: index + 1,
+              name: collection.title,
+              url: absoluteUrl(`/collections/${collection.handle}`),
+            })),
+          }),
+        ]
       : [],
   }),
   component: CollectionsIndex,

@@ -1,4 +1,12 @@
-import { Boxes, CreditCard, PackageCheck, SearchCheck, SlidersHorizontal, Tags } from "lucide-react";
+import {
+  Boxes,
+  CreditCard,
+  PackageCheck,
+  SearchCheck,
+  SlidersHorizontal,
+  Tags,
+} from "lucide-react";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 const REASONS = [
   {
@@ -35,9 +43,9 @@ const REASONS = [
 
 export function WhyShop() {
   return (
-    <section className="px-4 sm:px-0" aria-labelledby="why-shop">
+    <section className="" aria-labelledby="why-shop">
       <h2 id="why-shop" className="text-lg font-semibold tracking-tight sm:text-xl">
-        Why shop with Space Cell
+        Why shop with {STORE_NAME}
       </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {REASONS.map((reason) => (

@@ -1,9 +1,24 @@
-import { toast } from "sonner";
+import { SHOWCASE_COLLECTIONS_QUERY, SHOP_POLICIES_QUERY } from "@/lib/storefrontDocuments";
+import {
+  CART_CREATE_MUTATION,
+  CART_LINES_ADD_MUTATION,
+  CART_LINES_REMOVE_MUTATION,
+  CART_LINES_UPDATE_MUTATION,
+  CART_QUERY,
+  COLLECTION_BY_HANDLE_QUERY,
+  COLLECTIONS_QUERY,
+  PRODUCT_BY_HANDLE_QUERY,
+  PRODUCT_RECOMMENDATIONS_QUERY,
+  PRODUCTS_QUERY,
+  SHOP_QUERY,
+} from "@/lib/shopifyDocuments";
+import { STORE_CONFIG } from "@/lib/storeConfig";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 
-export const SHOPIFY_API_VERSION = "2025-07";
-export const SHOPIFY_STORE_PERMANENT_DOMAIN = "dj6qeq-j9.myshopify.com";
+export const SHOPIFY_API_VERSION = STORE_CONFIG.shopifyApiVersion;
+export const SHOPIFY_STORE_PERMANENT_DOMAIN = STORE_CONFIG.shopifyDomain;
 export const SHOPIFY_STOREFRONT_URL = `https://${SHOPIFY_STORE_PERMANENT_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`;
-export const SHOPIFY_STOREFRONT_TOKEN = "79c817c6ce2ee3bae9a8bbd151ee5de1";
 
 export interface ShopifyProductNode {
   id: string;
@@ -71,99 +86,11 @@ export const RESTRICTED_STOREFRONT_FIELDS = [
   "trackingParameters",
 ] as const;
 
-/** Product fields allowed by the unauthenticated_read_product_listings scope. */
-const PRODUCT_FIELDS = `
-  id
-  title
-  description
-  descriptionHtml
-  handle
-  vendor
-  productType
-  availableForSale
-  createdAt
-  tags
-  priceRange { minVariantPrice { amount currencyCode } }
-  compareAtPriceRange { minVariantPrice { amount currencyCode } }
-  images(first: 8) { edges { node { url altText } } }
-  collections(first: 15) { edges { node { handle title } } }
-  variants(first: 50) {
-    edges {
-      node {
-        id
-        title
-        price { amount currencyCode }
-        compareAtPrice { amount currencyCode }
-        availableForSale
-        sku
-        barcode
-        weight
-        weightUnit
-        image { url altText }
-        selectedOptions { name value }
-      }
-    }
-  }
-  options { name values }
-`;
-
-
-const COLLECTION_FIELDS = `
-  id
-  handle
-  title
-  description
-  image { url altText }
-`;
-
-export const STOREFRONT_QUERY = `
-  query GetProducts($first: Int!, $after: String, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
-    products(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {
-      pageInfo { hasNextPage endCursor }
-      edges { node { ${PRODUCT_FIELDS} } }
-    }
-  }
-`;
-
-export const PRODUCT_BY_HANDLE_QUERY = `
-  query GetProduct($handle: String!) {
-    product(handle: $handle) { ${PRODUCT_FIELDS} }
-  }
-`;
-
-export const COLLECTIONS_QUERY = `
-  query GetCollections($first: Int!) {
-    collections(first: $first) {
-      edges { node { ${COLLECTION_FIELDS} } }
-    }
-  }
-`;
-
-export const COLLECTION_BY_HANDLE_QUERY = `
-  query GetCollection($handle: String!, $first: Int!) {
-    collection(handle: $handle) {
-      ${COLLECTION_FIELDS}
-      products(first: $first) {
-        edges { node { ${PRODUCT_FIELDS} } }
-      }
-    }
-  }
-`;
-
-export const PRODUCT_RECOMMENDATIONS_QUERY = `
-  query GetRecommendations($handle: String!) {
-    productRecommendations(productHandle: $handle) { ${PRODUCT_FIELDS} }
-  }
-`;
-
-export const SHOP_QUERY = `
-  query Shop {
-    shop { name description }
-  }
-`;
+export { PRODUCTS_QUERY as STOREFRONT_QUERY } from "@/lib/shopifyDocuments";
 
 /** Fields discovered at runtime to be denied by the current token's scopes. */
 const deniedFields = new Set<string>();
+const responseCache = new Map<string, { expiresAt: number; value: unknown }>();
 
 function fieldsToStrip() {
   return [...RESTRICTED_STOREFRONT_FIELDS, ...deniedFields];
@@ -194,59 +121,79 @@ function extractDeniedFields(errors: Array<{ message: string }>) {
   return found;
 }
 
-async function postStorefront(query: string, variables: Record<string, unknown>) {
-  const response = await fetch(SHOPIFY_STOREFRONT_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Storefront-Access-Token": SHOPIFY_STOREFRONT_TOKEN,
-    },
-    body: JSON.stringify({ query, variables }),
+const STOREFRONT_QUERY_NAMES = new Set([
+  SHOWCASE_COLLECTIONS_QUERY,
+  SHOP_POLICIES_QUERY,
+  PRODUCTS_QUERY,
+  PRODUCT_BY_HANDLE_QUERY,
+  COLLECTIONS_QUERY,
+  COLLECTION_BY_HANDLE_QUERY,
+  PRODUCT_RECOMMENDATIONS_QUERY,
+  SHOP_QUERY,
+  CART_QUERY,
+  CART_CREATE_MUTATION,
+  CART_LINES_ADD_MUTATION,
+  CART_LINES_UPDATE_MUTATION,
+  CART_LINES_REMOVE_MUTATION,
+]);
+
+const storefrontApiRequestFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      query: z
+        .string()
+        .refine((value) => STOREFRONT_QUERY_NAMES.has(value), "Unsupported Shopify operation"),
+      variables: z.record(z.unknown()).default({}),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const token = process.env["SHOPIFY_STOREFRONT_TOKEN"];
+    if (!token) throw new Error("Shopify Storefront token is not configured on the server");
+
+    const postStorefront = async (query: string, variables: Record<string, unknown>) => {
+      const response = await fetch(SHOPIFY_STOREFRONT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Storefront-Access-Token": token,
+        },
+        body: JSON.stringify({ query, variables }),
+      });
+      if (response.status === 402) {
+        throw new Error("Shopify billing is required");
+      }
+      if (!response.ok) throw new Error(`Shopify request failed (${response.status})`);
+      return response.json();
+    };
+
+    const sanitized = sanitizeQuery(data.query);
+    const cacheable = /^\s*query\b/.test(sanitized) && !/\bcart\s*\(/i.test(sanitized);
+    const cacheKey = cacheable ? JSON.stringify([sanitized, data.variables]) : "";
+    const cached = cacheKey ? responseCache.get(cacheKey) : undefined;
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+    const result = await postStorefront(sanitized, data.variables);
+    const errors: Array<{ message: string }> = result.errors ?? [];
+    if (errors.length) {
+      const denied = extractDeniedFields(errors).filter((field) => !deniedFields.has(field));
+      if (denied.length) {
+        denied.forEach((field) => deniedFields.add(field));
+        const retry = await postStorefront(sanitizeQuery(data.query), data.variables);
+        if (retry?.data) return retry;
+      }
+      if (!result.data)
+        throw new Error(`Error calling Shopify: ${errors.map((e) => e.message).join(", ")}`);
+      console.warn(`Shopify partial response: ${errors.map((e) => e.message).join(", ")}`);
+    }
+    if (cacheKey && result?.data) {
+      if (responseCache.size >= 200) responseCache.delete(responseCache.keys().next().value ?? "");
+      responseCache.set(cacheKey, { expiresAt: Date.now() + 120_000, value: result });
+    }
+    return result;
   });
 
-  if (response.status === 402) {
-    toast.error("Shopify: Payment required", {
-      description:
-        "Shopify API access requires an active Shopify billing plan. Visit https://admin.shopify.com to upgrade.",
-    });
-    return null;
-  }
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return response.json();
-}
-
 export async function storefrontApiRequest(query: string, variables: Record<string, unknown> = {}) {
-  const data = await postStorefront(sanitizeQuery(query), variables);
-  if (!data) return;
-
-  const errors: Array<{ message: string }> = data.errors ?? [];
-  if (errors.length) {
-    const messages = errors.map((e) => e.message);
-
-    // Guard: a newly added field that needs a scope we don't have is remembered
-    // and stripped, then the request is retried once so the UI never breaks.
-    const denied = extractDeniedFields(errors).filter((f) => !deniedFields.has(f));
-    if (denied.length) {
-      denied.forEach((field) => deniedFields.add(field));
-      console.warn(`Shopify: dropping unauthorized field(s) ${denied.join(", ")} and retrying.`);
-      const retry = await postStorefront(sanitizeQuery(query), variables);
-      if (retry?.data) return retry;
-    }
-
-    // Field-level errors that still return usable data shouldn't blank the page.
-    if (!data.data) {
-      throw new Error(`Error calling Shopify: ${messages.join(", ")}`);
-    }
-    console.warn(`Shopify partial response: ${messages.join(", ")}`);
-  }
-
-  return data;
+  return storefrontApiRequestFn({ data: { query, variables } });
 }
-
 
 export async function fetchProducts(
   first = 30,
@@ -254,7 +201,7 @@ export async function fetchProducts(
   sortKey?: "BEST_SELLING" | "CREATED_AT" | "PRICE" | "TITLE",
   reverse?: boolean,
 ): Promise<ShopifyProduct[]> {
-  const data = await storefrontApiRequest(STOREFRONT_QUERY, {
+  const data = await storefrontApiRequest(PRODUCTS_QUERY, {
     first,
     query,
     sortKey,
@@ -269,25 +216,11 @@ export async function fetchBestSellingProducts(first = 12): Promise<ShopifyProdu
 }
 
 /**
- * Fetches the full catalog by following Shopify's cursor pagination.
- * The whole catalog powers the dynamic taxonomy, facets and sections, so it is
- * cached once per session by TanStack Query instead of refetched per page.
+ * Bounded discovery page used for navigation and homepage taxonomy. Product
+ * detail, search, collection and recommendation routes have dedicated queries.
  */
-export async function fetchAllProducts(pageSize = 250, maxPages = 20): Promise<ShopifyProduct[]> {
-  const all: ShopifyProduct[] = [];
-  let after: string | null = null;
-
-  for (let page = 0; page < maxPages; page += 1) {
-    const data = await storefrontApiRequest(STOREFRONT_QUERY, { first: pageSize, after });
-    const connection = data?.data?.products;
-    if (!connection) break;
-    all.push(...(connection.edges ?? []));
-    if (!connection.pageInfo?.hasNextPage) break;
-    after = connection.pageInfo.endCursor ?? null;
-    if (!after) break;
-  }
-
-  return all;
+export async function fetchCatalogProducts(first = 60): Promise<ShopifyProduct[]> {
+  return fetchProducts(Math.min(Math.max(first, 1), 100));
 }
 
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
@@ -311,8 +244,10 @@ export async function fetchProductRecommendations(handle: string): Promise<Shopi
   }
 }
 
-export async function fetchCollections(first = 100): Promise<ShopifyCollection[]> {
-  const data = await storefrontApiRequest(COLLECTIONS_QUERY, { first });
+export async function fetchCollections(first = 50): Promise<ShopifyCollection[]> {
+  const data = await storefrontApiRequest(COLLECTIONS_QUERY, {
+    first: Math.min(Math.max(first, 1), 100),
+  });
   return (
     data?.data?.collections?.edges?.map((edge: { node: ShopifyCollection }) => edge.node) ?? []
   );
@@ -320,13 +255,19 @@ export async function fetchCollections(first = 100): Promise<ShopifyCollection[]
 
 export async function fetchCollectionByHandle(
   handle: string,
-  first = 100,
+  pageSize = 48,
 ): Promise<{ collection: ShopifyCollection; products: ShopifyProduct[] } | null> {
-  const data = await storefrontApiRequest(COLLECTION_BY_HANDLE_QUERY, { handle, first });
+  const data = await storefrontApiRequest(COLLECTION_BY_HANDLE_QUERY, {
+    handle,
+    first: Math.min(Math.max(pageSize, 1), 100),
+  });
   const node = data?.data?.collection;
   if (!node) return null;
   const { products, ...collection } = node;
-  return { collection: collection as ShopifyCollection, products: products?.edges ?? [] };
+  return {
+    collection: collection as ShopifyCollection,
+    products: products?.edges ?? [],
+  };
 }
 
 export async function searchStorefront(term: string) {
@@ -334,7 +275,7 @@ export async function searchStorefront(term: string) {
   if (!trimmed) return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
   const [products, collections] = await Promise.all([
     fetchProducts(20, trimmed),
-    fetchCollections(100),
+    fetchCollections(30),
   ]);
   const lowered = trimmed.toLowerCase();
   return {
@@ -345,66 +286,30 @@ export async function searchStorefront(term: string) {
   };
 }
 
-export function formatPrice(amount: string | number, currencyCode: string) {
-  const value = typeof amount === "string" ? parseFloat(amount) : amount;
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currencyCode,
-      maximumFractionDigits: 2,
-    }).format(value);
-  } catch {
-    return `${currencyCode} ${value.toFixed(2)}`;
-  }
+function quoteSearchValue(value: string) {
+  return `"${value.replace(/["\\]/g, " ").trim()}"`;
 }
 
-/** Discount percentage from a price / compare-at pair, or null when there is no saving. */
-export function discountPercent(price?: string | null, compareAt?: string | null) {
-  const current = price ? parseFloat(price) : NaN;
-  const was = compareAt ? parseFloat(compareAt) : NaN;
-  if (!isFinite(current) || !isFinite(was) || was <= current || was <= 0) return null;
-  return Math.round(((was - current) / was) * 100);
+export function fetchProductsByVendor(vendor: string, first = 8) {
+  return fetchProducts(Math.min(first, 20), `vendor:${quoteSearchValue(vendor)}`);
 }
 
-/** Short "256GB • Titanium" style summary from a variant's selected options. */
-export function variantSummary(options?: Array<{ name: string; value: string }>) {
-  if (!options?.length) return "";
-  return options
-    .filter((option) => option.value && option.value !== "Default Title")
-    .map((option) => option.value)
-    .join(" • ");
+export function fetchProductsByHandles(handles: string[], first = 20) {
+  const unique = [...new Set(handles.map((handle) => handle.trim()).filter(Boolean))].slice(0, 20);
+  if (!unique.length) return Promise.resolve([]);
+  const query = unique.map((handle) => `handle:${quoteSearchValue(handle)}`).join(" OR ");
+  return fetchProducts(Math.min(first, unique.length), query);
 }
 
-/** Lowest variant price of a product, used for price facets and sorting. */
-export function productPrice(product: ShopifyProduct) {
-  const node = product.node;
-  const variantPrices = node.variants.edges
-    .map((edge) => parseFloat(edge.node.price.amount))
-    .filter((value) => isFinite(value));
-  if (variantPrices.length > 0) return Math.min(...variantPrices);
-  return parseFloat(node.priceRange.minVariantPrice.amount) || 0;
-}
-
-export function productCurrency(product: ShopifyProduct) {
-  return (
-    product.node.variants.edges[0]?.node.price.currencyCode ??
-    product.node.priceRange.minVariantPrice.currencyCode ??
-    "USD"
-  );
-}
-
-export function productCompareAt(product: ShopifyProduct) {
-  const node = product.node;
-  const variant = node.variants.edges[0]?.node;
-  return variant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount ?? null;
-}
-
-export function productInStock(product: ShopifyProduct) {
-  const node = product.node;
-  if (typeof node.availableForSale === "boolean") return node.availableForSale;
-  return node.variants.edges.some((edge) => edge.node.availableForSale);
-}
-
-export function productCollectionHandles(product: ShopifyProduct) {
-  return (product.node.collections?.edges ?? []).map((edge) => edge.node.handle);
-}
+export {
+  formatPrice,
+  discountPercent,
+  variantSummary,
+  productPrimaryVariant,
+  productPrice,
+  productCurrency,
+  productCompareAt,
+  productDiscountPercent,
+  productInStock,
+  productCollectionHandles,
+} from "@/lib/productPricing";

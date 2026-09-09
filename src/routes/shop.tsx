@@ -7,6 +7,7 @@ import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/fil
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { displayCollections } from "@/lib/taxonomy";
 import { absoluteUrl, canonicalLink, itemListJsonLd, jsonLd } from "@/lib/seo";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/shop")({
   validateSearch: parseProductSearch,
@@ -17,22 +18,24 @@ export const Route = createFileRoute("/shop")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: "Shop All Tech — Space Cell" },
+      { title: `Shop All Tech — ${STORE_NAME}` },
       {
         name: "description",
-        content:
-          "Browse the full Space Cell catalogue: smartphones, tablets, audio, wearables, chargers and accessories with filters, sorting and live stock.",
+        content: `Browse the ${STORE_NAME} catalogue: smartphones, tablets, audio, wearables, chargers and accessories with filters, sorting and live stock.`,
       },
-      { property: "og:title", content: "Shop All Tech — Space Cell" },
+      { property: "og:title", content: `Shop All Tech — ${STORE_NAME}` },
       {
         property: "og:description",
-        content: "Filter and sort the full Space Cell technology catalogue.",
+        content: `Filter and sort the ${STORE_NAME} technology catalogue.`,
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/shop") },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Shop All Tech — Space Cell" },
-      { name: "twitter:description", content: "Filter and sort the full Space Cell technology catalogue." },
+      { name: "twitter:title", content: `Shop All Tech — ${STORE_NAME}` },
+      {
+        name: "twitter:description",
+        content: `Filter and sort the ${STORE_NAME} technology catalogue.`,
+      },
     ],
     links: [canonicalLink("/shop")],
     scripts: loaderData ? [jsonLd(itemListJsonLd("Shop all products", loaderData.products))] : [],

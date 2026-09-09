@@ -80,9 +80,11 @@ const COLOR_WORDS: Record<string, string> = {
   shadow: "#3a3550",
 };
 
-
 function swatchColor(value: string) {
-  const words = value.toLowerCase().split(/[^a-z]+/).filter(Boolean);
+  const words = value
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .filter(Boolean);
   for (const word of [...words].reverse()) {
     if (COLOR_WORDS[word]) return COLOR_WORDS[word];
   }
@@ -124,7 +126,9 @@ export function VariantPicker({
       (variant) =>
         variant.availableForSale &&
         variant.selectedOptions.every((option) =>
-          option.name === name ? option.value === value : (selected[option.name] ?? option.value) === option.value,
+          option.name === name
+            ? option.value === value
+            : (selected[option.name] ?? option.value) === option.value,
         ),
     );
 
@@ -139,7 +143,9 @@ export function VariantPicker({
                 {option.name}
               </h2>
               {selected[option.name] && (
-                <span className="text-[13px] font-semibold text-foreground">{selected[option.name]}</span>
+                <span className="text-[13px] font-semibold text-foreground">
+                  {selected[option.name]}
+                </span>
               )}
             </div>
             <div className={cn("flex flex-wrap", color ? "gap-2.5" : "gap-2")}>
@@ -170,7 +176,9 @@ export function VariantPicker({
                           style={{ backgroundColor: hex }}
                         />
                       ) : (
-                        <span className="px-1 text-[10px] font-bold uppercase">{value.slice(0, 3)}</span>
+                        <span className="px-1 text-[10px] font-bold uppercase">
+                          {value.slice(0, 3)}
+                        </span>
                       )}
                       {active && (
                         <Check
