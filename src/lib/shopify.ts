@@ -147,7 +147,8 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const token = process.env["SHOPIFY_STOREFRONT_TOKEN"];
+    const token =
+      process.env["SHOPIFY_STOREFRONT_TOKEN"] ?? process.env["SHOPIFY_STOREFRONT_ACCESS_TOKEN"];
     if (!token) throw new Error("Shopify Storefront token is not configured on the server");
 
     const postStorefront = async (query: string, variables: Record<string, unknown>) => {
