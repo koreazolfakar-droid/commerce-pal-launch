@@ -1,3 +1,6 @@
+import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
+import { QuickViewButton } from "@/components/product/QuickViewButton";
+import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, ShoppingBag } from "lucide-react";
 import { memo } from "react";
@@ -8,15 +11,11 @@ import { CompareButton } from "@/components/CompareButton";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  discountPercent,
-  formatPrice,
-  variantSummary,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { discountPercent, formatPrice, variantSummary, type ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
+import { useLanguage } from "@/lib/i18n";
 
 /** Full product card used across grids (shop, category, brand, search, wishlist). */
 export const ProductCard = memo(function ProductCard({
@@ -30,17 +29,17 @@ export const ProductCard = memo(function ProductCard({
   className?: string;
   eager?: boolean;
 }) {
+  const { t } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
   const isLoading = useCartStore((state) => state.isLoading);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
-  const toggleWishlist = useWishlistStore((state) => state.toggle);
+  const toggleWishlist = useWishlistToggle();
 
   const node = product.node;
-  const selectedVariant = node.variants.edges[0]?.node;
+  const selectedVariant = productPrimaryVariant(product);
   const image = node.images.edges[0]?.node;
   const price = selectedVariant?.price ?? node.priceRange.minVariantPrice;
-  const compareAt =
-    selectedVariant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount;
+  const compareAt = productCompareAt(product);
   const discount = discountPercent(price.amount, compareAt);
   const summary = variantSummary(selectedVariant?.selectedOptions);
   const inStock = selectedVariant?.availableForSale ?? node.availableForSale ?? true;
@@ -49,7 +48,7 @@ export const ProductCard = memo(function ProductCard({
 
   const handleAddToCart = async () => {
     if (!selectedVariant) return;
-    await addItem({
+    const success = await addItem({
       product,
       variantId: selectedVariant.id,
       variantTitle: selectedVariant.title,
@@ -57,14 +56,12 @@ export const ProductCard = memo(function ProductCard({
       quantity: 1,
       selectedOptions: selectedVariant.selectedOptions ?? [],
     });
-    toast.success(`${node.title} added to your bag`, { position: "top-center" });
+    if (success) toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
+    else toast.error(t("addToCartFailed"), { position: "top-center" });
   };
 
   const handleWishlist = () => {
     toggleWishlist(node.handle);
-    toast.success(wishlisted ? "Removed from wishlist" : "Saved to wishlist", {
-      position: "top-center",
-    });
   };
 
   return (
@@ -90,8 +87,9 @@ export const ProductCard = memo(function ProductCard({
             imageClassName="group-hover:scale-[1.05]"
           />
         </Link>
+        <QuickViewButton product={product} />
 
-        <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5">
+        <div className="pointer-events-none absolute start-3 top-3 flex flex-col gap-1.5">
           {badge && (
             <span className="rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-accent-foreground">
               {badge}
@@ -104,7 +102,7 @@ export const ProductCard = memo(function ProductCard({
           )}
           {!inStock && (
             <span className="rounded-full bg-foreground/80 px-2.5 py-1 text-[10px] font-semibold text-background">
-              Sold out
+              {t("soldOut")}
             </span>
           )}
         </div>
@@ -112,16 +110,18 @@ export const ProductCard = memo(function ProductCard({
         <button
           type="button"
           onClick={handleWishlist}
-          aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+          aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
           aria-pressed={wishlisted}
-          className="press absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-background/85 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
+          className="press absolute end-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-background/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:text-primary"
         >
           <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
         </button>
-        {isPhone && <CompareButton handle={node.handle} compact className="absolute right-3 top-14" />}
+        {isPhone && (
+          <CompareButton handle={node.handle} compact className="absolute end-3 top-14" />
+        )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5 p-4">
+      <div className="flex flex-1 min-w-0 flex-col gap-1.5 p-4">
         {brand && (
           <div className="flex min-w-0 items-center gap-1.5">
             <BrandLogo slug={brand.slug} label={brand.label} size={20} className="rounded-md" />
@@ -161,7 +161,7 @@ export const ProductCard = memo(function ProductCard({
               inStock ? "bg-success" : "bg-muted-foreground",
             )}
           />
-          {inStock ? "In stock" : "Out of stock"}
+          {t(inStock ? "inStock" : "outOfStock")}
         </p>
 
         <div className="mt-auto pt-3">
@@ -176,13 +176,12 @@ export const ProductCard = memo(function ProductCard({
             ) : (
               <>
                 <ShoppingBag className="h-4 w-4" />
-                {inStock ? "Add to cart" : "Out of stock"}
+                {t(inStock ? "addToCart" : "outOfStock")}
               </>
             )}
           </Button>
         </div>
       </div>
-
     </article>
   );
 });

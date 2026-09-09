@@ -14,18 +14,25 @@ import {
 import { cdnImage } from "@/lib/image";
 import { formatPrice } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
+import { useLanguage } from "@/lib/i18n";
 
 export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const { items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl, syncCart } =
-    useCartStore();
+  const {
+    items,
+    total,
+    isLoading,
+    isSyncing,
+    updateQuantity,
+    removeItem,
+    getCheckoutUrl,
+    syncCart,
+  } = useCartStore();
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce(
-    (sum, item) => sum + parseFloat(item.price.amount) * item.quantity,
-    0,
-  );
-  const currency = items[0]?.price.currencyCode ?? "USD";
+  const totalPrice = Number(total?.amount ?? 0);
+  const currency = total?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
 
   useEffect(() => {
     if (isOpen) syncCart();
@@ -49,7 +56,12 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild className={hideTrigger ? "hidden" : undefined}>
-        <Button variant="outline" size="icon" className="press relative rounded-full">
+        <Button
+          variant="outline"
+          size="icon"
+          className="press relative rounded-full"
+          aria-label={`${t("openBag")}, ${totalItems}`}
+        >
           <ShoppingBag className="h-5 w-5" />
           {totalItems > 0 && (
             <Badge className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs">
@@ -60,11 +72,11 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
       </SheetTrigger>
       <SheetContent className="flex h-full w-full flex-col sm:max-w-lg">
         <SheetHeader className="flex-shrink-0">
-          <SheetTitle>Your bag</SheetTitle>
+          <SheetTitle>{t("yourBag")}</SheetTitle>
           <SheetDescription>
             {totalItems === 0
-              ? "Your bag is empty"
-              : `${totalItems} item${totalItems !== 1 ? "s" : ""} in your bag`}
+              ? t("bagEmpty")
+              : `${totalItems} ${t(totalItems === 1 ? "product" : "products")}`}
           </SheetDescription>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col pt-6">
@@ -72,7 +84,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
                 <ShoppingBag className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">Nothing here yet</p>
+                <p className="text-muted-foreground">{t("nothingHere")}</p>
               </div>
             </div>
           ) : (
@@ -106,7 +118,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
                           size="icon"
                           className="h-6 w-6"
                           onClick={() => removeItem(item.variantId)}
-                          aria-label="Remove item"
+                          aria-label={t("removeItem")}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -116,7 +128,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
                             size="icon"
                             className="h-6 w-6"
                             onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                            aria-label="Decrease quantity"
+                            aria-label={t("decreaseQuantity")}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -126,7 +138,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
                             size="icon"
                             className="h-6 w-6"
                             onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                            aria-label="Increase quantity"
+                            aria-label={t("increaseQuantity")}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -138,7 +150,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
               </div>
               <div className="flex-shrink-0 space-y-4 border-t bg-background pt-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold">Total</span>
+                  <span className="text-lg font-semibold">{t("total")}</span>
                   <span className="text-xl font-bold">{formatPrice(totalPrice, currency)}</span>
                 </div>
                 <Button
@@ -152,7 +164,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
                   ) : (
                     <>
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      Checkout with Shopify
+                      {t("checkoutShopify")}
                     </>
                   )}
                 </Button>

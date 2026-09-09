@@ -2,15 +2,21 @@ import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { CatalogView } from "@/components/CatalogView";
+import { FacetHero } from "@/components/FacetHero";
+import { findFacetHero } from "@/lib/homeMerchandising";
+import { buildShopifyBrands } from "@/lib/brandDirectory";
+import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
-import { catalogQueryOptions } from "@/lib/queries";
+import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { absoluteUrl, breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd } from "@/lib/seo";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/brand/$slug")({
   validateSearch: parseProductSearch,
   loader: async ({ context, params }) => {
     const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
+    await context.queryClient.ensureQueryData(collectionsQueryOptions());
     const brand = catalog.brands.find((entry) => entry.slug === params.slug);
     if (!brand) throw notFound();
     return {
@@ -24,30 +30,35 @@ export const Route = createFileRoute("/brand/$slug")({
     if (!loaderData) {
       return {
         meta: [
-          { title: "Brand unavailable — Space Cell" },
+          { title: `Brand unavailable — ${STORE_NAME}` },
           { name: "robots", content: "noindex, follow" },
         ],
       };
     }
     const label = loaderData?.label ?? params.slug.replace(/-/g, " ");
-    const description = `Shop ${label} devices and accessories at Space Cell with live Shopify pricing and stock.`;
+    const description = `Shop ${label} devices and accessories at ${STORE_NAME} with live Shopify pricing and stock.`;
     const path = `/brand/${params.slug}`;
     return {
       meta: [
-        { title: `${label} products — Space Cell` },
+        { title: `${label} products — ${STORE_NAME}` },
         { name: "description", content: description },
-        { property: "og:title", content: `${label} products — Space Cell` },
+        { property: "og:title", content: `${label} products — ${STORE_NAME}` },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: `${label} products — Space Cell` },
+        { name: "twitter:title", content: `${label} products — ${STORE_NAME}` },
         { name: "twitter:description", content: description },
       ],
       links: [canonicalLink(path)],
       scripts: loaderData
         ? [
-            jsonLd(breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: label, path }])),
+            jsonLd(
+              breadcrumbJsonLd([
+                { name: "Home", path: "/" },
+                { name: label, path },
+              ]),
+            ),
             jsonLd(itemListJsonLd(`${label} products`, loaderData.products)),
           ]
         : [],
@@ -57,12 +68,16 @@ export const Route = createFileRoute("/brand/$slug")({
 });
 
 function BrandPage() {
+  const { t, language } = useLanguage();
+  const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
   const { slug } = Route.useParams();
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
-  const brand = catalog.brands.find((entry) => entry.slug === slug);
+  const brand = buildShopifyBrands(catalog.brands, collections).find(
+    (entry) => entry.slug === slug,
+  );
   const inBrand = catalog.products.filter(
     (product) => catalog.brandOf.get(product.node.handle)?.slug === slug,
   );
@@ -73,11 +88,46 @@ function BrandPage() {
       (catalog.categoryOf.get(product.node.handle) ?? []).includes(category.slug),
     ),
   );
+  const hero = findFacetHero(collections, "brand", slug);
+  const lead = hero?.image ?? inBrand[0]?.node.images.edges[0]?.node ?? null;
+
+  const header = brand ? (
+    <section className="mb-7 overflow-hidden rounded-3xl border bg-card">
+      <FacetHero
+        id="brand-page-title"
+        title={hero?.title || brand.label}
+        description={hero?.description || t("brandSelection")}
+        image={lead}
+        href={`/brand/${slug}`}
+        brand={brand}
+        headingLevel={1}
+        showAction={false}
+        eager
+      />
+      <div className="flex flex-wrap gap-2 p-4">
+        {categories.map((category) => (
+          <button
+            key={category.slug}
+            type="button"
+            onClick={() =>
+              navigate({
+                search: (prev: ProductFilters) => ({ ...prev, category: [category.slug] }),
+              })
+            }
+            aria-pressed={filters.category?.includes(category.slug) ?? false}
+            className="min-h-10 rounded-full border bg-surface px-4 py-2 text-xs font-semibold text-foreground hover:border-primary aria-pressed:border-primary aria-pressed:bg-accent"
+          >
+            {categoryLabel(category, language)}
+          </button>
+        ))}
+      </div>
+    </section>
+  ) : null;
 
   return (
     <StoreLayout>
       <CatalogView
-        title={brand?.label ?? slug}
+        title={`${brand?.label ?? slug} products`}
         description={`${inBrand.length} product${inBrand.length === 1 ? "" : "s"} from this brand, resolved automatically from Shopify vendor and product data.`}
         products={products}
         total={inBrand.length}
@@ -86,6 +136,7 @@ function BrandPage() {
         priceMin={catalog.priceMin}
         priceMax={catalog.priceMax}
         currency={catalog.currency}
+        header={header}
         onChange={(patch: Partial<ProductFilters>) =>
           navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) })
         }

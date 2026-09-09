@@ -6,22 +6,24 @@ import { cdnImage } from "@/lib/image";
 import { formatPrice, variantSummary } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
+import { STORE_NAME } from "@/lib/storeConfig";
+import { useLanguage } from "@/lib/i18n";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
     meta: [
-      { title: "Your bag — Space Cell" },
+      { title: `Your bag — ${STORE_NAME}` },
       {
         name: "description",
-        content: "Review your Space Cell bag and continue to secure Shopify checkout.",
+        content: `Review your ${STORE_NAME} bag and continue to secure Shopify checkout.`,
       },
-      { property: "og:title", content: "Your bag — Space Cell" },
+      { property: "og:title", content: `Your bag — ${STORE_NAME}` },
       { property: "og:description", content: "Review your bag and check out securely." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/cart") },
       { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Your bag — Space Cell" },
+      { name: "twitter:title", content: `Your bag — ${STORE_NAME}` },
       { name: "twitter:description", content: "Review your bag and check out securely." },
     ],
     links: [canonicalLink("/cart")],
@@ -30,13 +32,18 @@ export const Route = createFileRoute("/cart")({
 });
 
 function CartPage() {
-  const { items, isLoading, isSyncing, updateQuantity, removeItem, getCheckoutUrl } =
-    useCartStore();
-  const currency = items[0]?.price.currencyCode ?? "USD";
-  const total = items.reduce(
-    (sum, item) => sum + parseFloat(item.price.amount) * item.quantity,
-    0,
-  );
+  const { t } = useLanguage();
+  const {
+    items,
+    total: shopifyTotal,
+    isLoading,
+    isSyncing,
+    updateQuantity,
+    removeItem,
+    getCheckoutUrl,
+  } = useCartStore();
+  const currency = shopifyTotal?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
+  const total = Number(shopifyTotal?.amount ?? 0);
 
   const checkout = () => {
     const url = getCheckoutUrl();
@@ -46,17 +53,17 @@ function CartPage() {
   return (
     <StoreLayout>
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-2xl font-extrabold tracking-tight lg:text-3xl">Your bag</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight lg:text-3xl">{t("yourBag")}</h1>
 
         {items.length === 0 ? (
           <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border bg-surface px-6 py-16 text-center">
             <ShoppingBag className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Your bag is empty.</p>
+            <p className="text-sm text-muted-foreground">{t("bagEmpty")}</p>
             <Link
               to="/shop"
               className="press rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
             >
-              Start shopping
+              {t("startShopping")}
             </Link>
           </div>
         ) : (
@@ -102,7 +109,7 @@ function CartPage() {
                       <button
                         type="button"
                         onClick={() => removeItem(item.variantId)}
-                        aria-label="Remove item"
+                        aria-label={t("removeItem")}
                         className="text-muted-foreground transition-colors hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -110,7 +117,7 @@ function CartPage() {
                       <div className="flex items-center gap-1 rounded-full border px-1">
                         <button
                           type="button"
-                          aria-label="Decrease quantity"
+                          aria-label={t("decreaseQuantity")}
                           onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
                           className="grid h-7 w-7 place-items-center rounded-full hover:bg-surface"
                         >
@@ -119,7 +126,7 @@ function CartPage() {
                         <span className="w-6 text-center text-sm">{item.quantity}</span>
                         <button
                           type="button"
-                          aria-label="Increase quantity"
+                          aria-label={t("increaseQuantity")}
                           onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
                           className="grid h-7 w-7 place-items-center rounded-full hover:bg-surface"
                         >
@@ -134,12 +141,12 @@ function CartPage() {
 
             <div className="mt-6 rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:bottom-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Subtotal</span>
-                <span className="text-xl font-extrabold tracking-tight">{formatPrice(total, currency)}</span>
+                <span className="text-sm text-muted-foreground">{t("subtotal")}</span>
+                <span className="text-xl font-extrabold tracking-tight">
+                  {formatPrice(total, currency)}
+                </span>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Taxes and shipping are calculated at Shopify checkout.
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("taxesShippingCheckout")}</p>
               <button
                 type="button"
                 onClick={checkout}
@@ -151,7 +158,7 @@ function CartPage() {
                 ) : (
                   <>
                     <ExternalLink className="h-4 w-4" />
-                    Checkout with Shopify
+                    {t("checkoutShopify")}
                   </>
                 )}
               </button>

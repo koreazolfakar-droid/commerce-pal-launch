@@ -1,12 +1,12 @@
 import { cdnImage } from "@/lib/image";
 import { productInStock, type ShopifyProduct } from "@/lib/shopify";
+import { SITE_URL as CONFIG_SITE_URL, STORE_NAME, storeUrl } from "@/lib/storeConfig";
 
-export const SITE_URL = "https://spacecallapp.store";
-export const SITE_NAME = "Space Cell";
+export const SITE_URL = CONFIG_SITE_URL;
+export const SITE_NAME = STORE_NAME;
 
 export function absoluteUrl(path = "/") {
-  const normalized = path === "/" ? "/" : `/${path.replace(/^\/+|\/+$/g, "")}`;
-  return `${SITE_URL}${normalized}`;
+  return storeUrl(path);
 }
 
 export function canonicalLink(path: string) {
@@ -36,7 +36,8 @@ export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
 export function itemListJsonLd(
   name: string,
   products: ShopifyProduct[],
-  pathForProduct: (product: ShopifyProduct) => string = (product) => `/product/${product.node.handle}`,
+  pathForProduct: (product: ShopifyProduct) => string = (product) =>
+    `/product/${product.node.handle}`,
 ) {
   return {
     "@context": "https://schema.org",
@@ -78,6 +79,12 @@ export function productJsonLd(product: ShopifyProduct) {
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
+      seller: {
+        "@type": "Organization",
+        name: STORE_NAME,
+        url: CONFIG_SITE_URL,
+      },
+      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     },
   };
 }

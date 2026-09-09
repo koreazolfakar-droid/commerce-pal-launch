@@ -1,9 +1,11 @@
 import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
+import { useState } from "react";
 
 /**
  * Shared product image area for every normal product card.
- * Guarantees a fixed square container, pure white backdrop, centred product,
+ * Guarantees a fixed square container, theme-aware image-stage backdrop, centred product,
  * preserved aspect ratio (object-contain) and a normalized visual scale so
  * source images with different canvas sizes still look the same size.
  */
@@ -24,31 +26,30 @@ export function ProductImage({
   className?: string;
   imageClassName?: string;
 }) {
+  const { t } = useLanguage();
+  const [failedUrl, setFailedUrl] = useState<string>();
   return (
-    <div
-      className={cn(
-        "relative aspect-square w-full overflow-hidden bg-white",
-        className,
-      )}
-    >
-      {url ? (
+    <div className={cn("relative aspect-square w-full overflow-hidden bg-image-stage", className)}>
+      {url && failedUrl !== url ? (
         <img
           src={cdnImage(url, size)}
           srcSet={cdnSrcSet(url, size)}
           sizes={sizes}
           alt={alt}
           loading={eager ? "eager" : "lazy"}
+          fetchPriority={eager ? "high" : "auto"}
           decoding="async"
           width={size}
           height={size}
+          onError={() => setFailedUrl(url)}
           className={cn(
-            "absolute inset-0 m-auto max-h-[82%] max-w-[82%] object-contain transition-transform duration-500",
+            "absolute inset-0 h-full w-full object-contain p-[12%] transition-transform duration-500",
             imageClassName,
           )}
         />
       ) : (
         <span className="absolute inset-0 grid place-items-center text-xs text-neutral-400">
-          No image
+          {t("galleryEmpty")}
         </span>
       )}
     </div>

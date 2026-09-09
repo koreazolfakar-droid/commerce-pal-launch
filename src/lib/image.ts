@@ -15,6 +15,11 @@ export function cdnImage(url: string | undefined, width: number): string | undef
   try {
     const parsed = new URL(url);
     parsed.searchParams.set("width", String(Math.round(width)));
+    // Keep the rendered pixel dimensions while asking Shopify CDN for a modern
+    // compressed representation. WebP is broadly supported and substantially
+    // smaller than JPEG/PNG for product photography.
+    parsed.searchParams.set("format", "webp");
+    parsed.searchParams.set("quality", "76");
     return parsed.toString();
   } catch {
     return url;

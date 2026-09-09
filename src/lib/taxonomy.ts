@@ -1,6 +1,5 @@
 import {
   Battery,
-  BriefcaseBusiness,
   Cable,
   Cpu,
   Gamepad2,
@@ -20,13 +19,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { isMerchandisingCollection } from "@/lib/homeMerchandising";
+
 import {
   productCollectionHandles,
   productPrice,
   productInStock,
-  type ShopifyCollection,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+  productDiscountPercent,
+} from "@/lib/productPricing";
+import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 export interface CategoryDefinition {
   slug: string;
@@ -46,7 +48,12 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     label: "Smartphones",
     icon: Smartphone,
     keywords: [
+      "هاتف",
+      "هواتف",
+      "هاتف ذكي",
+      "هواتف ذكية",
       "smartphone",
+      "phone",
       "smart phone",
       "mobile phone",
       "iphone",
@@ -65,28 +72,32 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     slug: "tablets",
     label: "Tablets",
     icon: Tablet,
-    keywords: ["tablet", "ipad", "galaxy tab", "pad", "matepad", "tab s"],
+    keywords: [
+      "تابلت",
+      "جهاز لوحي",
+      "أجهزة لوحية",
+      "tablet",
+      "ipad",
+      "galaxy tab",
+      "pad",
+      "matepad",
+      "tab s",
+    ],
   },
   {
     slug: "laptops",
     label: "Laptops",
     icon: Laptop,
-    keywords: ["laptop", "macbook", "notebook", "chromebook", "ultrabook", "gaming laptop"],
-  },
-  {
-    slug: "bags",
-    label: "Bags",
-    icon: BriefcaseBusiness,
     keywords: [
-      "bag",
-      "bags",
-      "backpack",
-      "laptop bag",
-      "sling bag",
-      "messenger bag",
-      "briefcase",
-      "travel bag",
-      "pouch",
+      "لابتوب",
+      "حاسوب محمول",
+      "كمبيوتر محمول",
+      "laptop",
+      "macbook",
+      "notebook",
+      "chromebook",
+      "ultrabook",
+      "gaming laptop",
     ],
   },
   {
@@ -94,6 +105,8 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     label: "Smartwatches",
     icon: Watch,
     keywords: [
+      "ساعة ذكية",
+      "ساعات ذكية",
       "smartwatch",
       "smart watch",
       "watch",
@@ -110,6 +123,9 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     label: "Headphones & Earbuds",
     icon: Headphones,
     keywords: [
+      "سماعة",
+      "سماعات",
+      "سماعات أذن",
       "headphone",
       "headphones",
       "earbud",
@@ -127,13 +143,26 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     slug: "audio",
     label: "Audio & Speakers",
     icon: Speaker,
-    keywords: ["speaker", "soundbar", "audio", "boombox", "microphone", "hi-fi", "subwoofer"],
+    keywords: [
+      "سبيكر",
+      "مكبر صوت",
+      "مكبرات صوت",
+      "speaker",
+      "soundbar",
+      "audio",
+      "boombox",
+      "microphone",
+      "hi-fi",
+      "subwoofer",
+    ],
   },
   {
     slug: "chargers",
     label: "Chargers",
     icon: Plug,
     keywords: [
+      "شاحن",
+      "شواحن",
       "charger",
       "wall charger",
       "car charger",
@@ -152,19 +181,29 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     slug: "cables",
     label: "Cables",
     icon: Cable,
-    keywords: ["cable", "cord", "charging cable", "usb-c", "usb c", "lightning cable", "hdmi", "aux"],
+    keywords: ["كابل", "كيبل", "كابلات", "cable", "cord", "charging cable", "lightning cable"],
   },
   {
     slug: "power-banks",
     label: "Power Banks",
     icon: Battery,
-    keywords: ["power bank", "powerbank", "portable charger", "battery pack"],
+    keywords: [
+      "باور بانك",
+      "بطارية متنقلة",
+      "power bank",
+      "powerbank",
+      "portable charger",
+      "battery pack",
+    ],
   },
   {
     slug: "cases",
     label: "Cases & Protection",
     icon: Shield,
     keywords: [
+      "كفر",
+      "غطاء",
+      "حماية",
       "case",
       "cases",
       "cover",
@@ -225,6 +264,7 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
       "stylus",
       "pen",
       "strap",
+      "bag",
       "tripod",
       "car mount",
       "ring light",
@@ -234,7 +274,11 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
 
 /** Known brand keywords. Vendor data wins when it is meaningful. */
 const BRAND_KEYWORDS: Array<{ slug: string; label: string; keywords: string[] }> = [
-  { slug: "apple", label: "Apple", keywords: ["apple", "iphone", "ipad", "airpods", "macbook", "magsafe", "imac"] },
+  {
+    slug: "apple",
+    label: "Apple",
+    keywords: ["apple", "iphone", "ipad", "airpods", "macbook", "magsafe", "imac"],
+  },
   { slug: "samsung", label: "Samsung", keywords: ["samsung", "galaxy"] },
   { slug: "redmi", label: "Redmi", keywords: ["redmi"] },
   { slug: "poco", label: "POCO", keywords: ["poco"] },
@@ -270,10 +314,11 @@ const BRAND_KEYWORDS: Array<{ slug: string; label: string; keywords: string[] }>
 
 export function slugify(value: string) {
   return value
+    .normalize("NFKC")
     .toLowerCase()
     .trim()
     .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "");
 }
 
@@ -287,8 +332,11 @@ const KEYWORD_REGEX_CACHE = new Map<string, RegExp>();
 function matchesKeyword(text: string, keyword: string) {
   let regex = KEYWORD_REGEX_CACHE.get(keyword);
   if (!regex) {
-    const escaped = keyword.trim().toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    regex = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:e?s)?(?:[^a-z0-9]|$)`);
+    const escaped = keyword
+      .trim()
+      .toLowerCase()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    regex = new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?:e?s)?(?:[^\\p{L}\\p{N}]|$)`, "u");
     KEYWORD_REGEX_CACHE.set(keyword, regex);
   }
   return regex.test(text);
@@ -298,7 +346,9 @@ function matchesAny(text: string, definition: CategoryDefinition) {
   return definition.keywords.some((keyword) => matchesKeyword(text, keyword));
 }
 
-const CATEGORY_ORDER = new Map(CATEGORY_DEFINITIONS.map((definition, index) => [definition.slug, index]));
+const CATEGORY_ORDER = new Map(
+  CATEGORY_DEFINITIONS.map((definition, index) => [definition.slug, index]),
+);
 
 function sortByHierarchy(categories: Iterable<CategoryDefinition>) {
   return [...categories].sort(
@@ -306,71 +356,85 @@ function sortByHierarchy(categories: Iterable<CategoryDefinition>) {
   );
 }
 
+/** Known names are stable; new explicit Shopify types/tags also get real category routes. */
+function explicitCategory(value: string): CategoryDefinition {
+  const slug = slugify(value);
+  return (
+    CATEGORY_DEFINITIONS.find(
+      (item) =>
+        item.slug === slug ||
+        slugify(item.label) === slug ||
+        item.keywords.some((keyword) => slugify(keyword) === slug),
+    ) ?? { slug, label: value.trim(), icon: Package, keywords: [] }
+  );
+}
+
+/** Specific accessories win over device compatibility words in an otherwise untyped title. */
+function inferredCategory(text: string): CategoryDefinition | undefined {
+  const matches = CATEGORY_DEFINITIONS.filter((item) => matchesAny(text.toLowerCase(), item));
+  const priority = [
+    "cases",
+    "power-banks",
+    "computer-accessories",
+    "headphones",
+    "audio",
+    "cables",
+    "chargers",
+    "accessories",
+    "smartwatches",
+    "wearables",
+    "laptops",
+    "tablets",
+    "monitors",
+    "tv-displays",
+    "cameras",
+    "smartphones",
+    "gaming",
+  ];
+  return priority.map((slug) => matches.find((item) => item.slug === slug)).find(Boolean);
+}
+
 /**
- * Resolves the categories a product belongs to using *tiered* signals — the
- * first tier that produces a match wins, so a weak signal (a stray word in the
- * tags) can never override a strong one (the Shopify product type):
- *   1. explicit `category:` tags   (the merchant said so)
- *   2. product type               (authoritative Shopify field)
- *   3. collection titles/handles
- *   4. product title
- *   5. tags + option names
+ * Explicit category tags > product type > exact category collection > title.
+ * Brand campaigns, compatibility tags and variant option names are not categories.
  */
 export function resolveCategories(product: ShopifyProduct): CategoryDefinition[] {
   const node = product.node;
-  const bySlug = new Map(CATEGORY_DEFINITIONS.map((definition) => [definition.slug, definition]));
-  const resolved = new Map<string, CategoryDefinition>();
-
+  const explicit = new Map<string, CategoryDefinition>();
   for (const tag of node.tags ?? []) {
-    const [key, value] = tag.split(":");
-    if (key && value && ["category", "cat", "section"].includes(key.trim().toLowerCase())) {
-      const definition = bySlug.get(slugify(value));
-      if (definition) resolved.set(definition.slug, definition);
+    const match = /^(?:category|cat|section):\s*(.+)$/i.exec(tag.trim());
+    if (match?.[1]) {
+      const category = explicitCategory(match[1]);
+      if (category.slug) explicit.set(category.slug, category);
     }
   }
-  if (resolved.size > 0) return sortByHierarchy(resolved.values());
+  if (explicit.size) return sortByHierarchy(explicit.values());
 
-  const type = (node.productType ?? "").toLowerCase();
-  if (type) {
-    for (const definition of CATEGORY_DEFINITIONS) {
-      if (matchesAny(type, definition)) resolved.set(definition.slug, definition);
-    }
-    if (resolved.size > 0) return sortByHierarchy(resolved.values());
+  const type = node.productType?.trim();
+  if (
+    type &&
+    !["accessories", "accessory", "electronics", "إكسسوارات", "اكسسوارات"].includes(
+      type.toLowerCase(),
+    )
+  ) {
+    const exact = explicitCategory(type);
+    const category = exact.keywords.length ? exact : (inferredCategory(type) ?? exact);
+    return category.slug ? [category] : [];
   }
 
-  const collectionText = (node.collections?.edges ?? [])
-    .map((edge) => `${edge.node.title} ${edge.node.handle}`)
-    .join(" ")
-    .toLowerCase();
-  if (collectionText) {
-    for (const definition of CATEGORY_DEFINITIONS) {
-      if (
-        collectionText.includes(definition.slug) ||
-        matchesKeyword(collectionText, definition.slug.replace(/-/g, " ")) ||
-        matchesAny(collectionText, definition)
-      ) {
-        resolved.set(definition.slug, definition);
-      }
-    }
-    if (resolved.size > 0) return sortByHierarchy(resolved.values());
+  const collectionCategories = new Map<string, CategoryDefinition>();
+  for (const { node: collection } of node.collections?.edges ?? []) {
+    const definition = collection.handle.startsWith("category-")
+      ? explicitCategory(collection.handle.slice("category-".length))
+      : CATEGORY_DEFINITIONS.find((item) => item.slug === collection.handle);
+    if (definition?.slug) collectionCategories.set(definition.slug, definition);
   }
+  if (collectionCategories.size) return sortByHierarchy(collectionCategories.values());
 
-  const title = node.title.toLowerCase();
-  for (const definition of CATEGORY_DEFINITIONS) {
-    if (matchesAny(title, definition)) resolved.set(definition.slug, definition);
-  }
-  if (resolved.size > 0) return sortByHierarchy(resolved.values());
-
-  const rest = [
-    (node.tags ?? []).join(" "),
-    node.options.map((option) => `${option.name} ${option.values.join(" ")}`).join(" "),
-  ]
-    .join(" ")
-    .toLowerCase();
-  for (const definition of CATEGORY_DEFINITIONS) {
-    if (matchesAny(rest, definition)) resolved.set(definition.slug, definition);
-  }
-  return sortByHierarchy(resolved.values());
+  const inferred = inferredCategory(node.title);
+  if (inferred) return [inferred];
+  if (type) return [explicitCategory(type)];
+  return [];
 }
 
 /** Primary (most specific) category, used for related products and breadcrumbs. */
@@ -386,39 +450,56 @@ export interface BrandRef {
   label: string;
 }
 
-/**
- * Resolves a brand from `brand:` tags → known brand keywords → vendor.
- * `genericVendors` are vendor names that carry no brand meaning (e.g. the shop
- * name applied to every product), detected from catalog statistics.
- */
+const GENERIC_VENDORS = new Set([
+  STORE_NAME.toLowerCase(),
+  STORE_NAME.toLowerCase().replace(/\s+/g, ""),
+  "default",
+  "generic",
+  "unknown",
+]);
+
+/** Merchant brand tags and exact vendor identities win; compatibility mentions never override them. */
 export function resolveBrand(
   product: ShopifyProduct,
   genericVendors: Set<string> = new Set(),
 ): BrandRef | null {
-  const node = product.node;
-
-  for (const tag of node.tags ?? []) {
-    const [key, value] = tag.split(":");
-    if (key && value && ["brand", "vendor", "make"].includes(key.trim().toLowerCase())) {
-      const known = BRAND_KEYWORDS.find((brand) => brand.slug === slugify(value));
-      return known ? { slug: known.slug, label: known.label } : { slug: slugify(value), label: value.trim() };
-    }
-  }
-
-  const vendor = (node.vendor ?? "").trim();
-  const vendorLower = vendor.toLowerCase();
-  const vendorIsGeneric = !vendor || genericVendors.has(vendorLower);
-
-  if (!vendorIsGeneric) {
-    const known = BRAND_KEYWORDS.find((brand) =>
-      brand.keywords.some((keyword) => matchesKeyword(vendorLower, keyword)),
+  const identity = (value: string): BrandRef | null => {
+    const slug = slugify(value);
+    if (!slug) return null;
+    const known = BRAND_KEYWORDS.find(
+      (brand) => brand.slug === slug || slugify(brand.label) === slug,
     );
-    return known ? { slug: known.slug, label: known.label } : { slug: slugify(vendor), label: vendor };
+    return known ? { slug: known.slug, label: known.label } : { slug, label: value.trim() };
+  };
+  for (const tag of product.node.tags ?? []) {
+    const match = /^(?:brand|vendor|make):\s*(.+)$/i.exec(tag.trim());
+    if (match?.[1] && identity(match[1])) return identity(match[1]);
   }
+  const vendor = product.node.vendor?.trim() ?? "";
+  if (
+    vendor &&
+    !GENERIC_VENDORS.has(vendor.toLowerCase()) &&
+    !genericVendors.has(vendor.toLowerCase())
+  )
+    return identity(vendor);
 
-  const text = `${node.title} ${(node.tags ?? []).join(" ")}`.toLowerCase();
+  // Only a leading brand/product family is evidence; "Case for iPhone" is not Apple.
+  const title = product.node.title.trim().toLowerCase();
+  const category = primaryCategory(product)?.slug;
+  // Device-family inference is unsafe for compatibility accessories (e.g. "iPhone case").
+  const allowFamily = [
+    "smartphones",
+    "tablets",
+    "laptops",
+    "headphones",
+    "smartwatches",
+    "audio",
+  ].includes(category ?? "");
   const known = BRAND_KEYWORDS.find((brand) =>
-    brand.keywords.some((keyword) => matchesKeyword(text, keyword)),
+    [brand.label.toLowerCase(), ...(allowFamily ? brand.keywords : [])].some(
+      (keyword) =>
+        title.startsWith(keyword) && matchesKeyword(title.slice(0, keyword.length + 1), keyword),
+    ),
   );
   return known ? { slug: known.slug, label: known.label } : null;
 }
@@ -451,24 +532,6 @@ export interface CatalogIndex {
  * resolve into them, so new Shopify products appear without code changes.
  */
 export function buildCatalogIndex(products: ShopifyProduct[]): CatalogIndex {
-  const vendorCounts = new Map<string, number>();
-  for (const product of products) {
-    const vendor = (product.node.vendor ?? "").trim().toLowerCase();
-    if (!vendor) continue;
-    vendorCounts.set(vendor, (vendorCounts.get(vendor) ?? 0) + 1);
-  }
-
-  // A vendor applied to (almost) the entire catalog is the shop name, not a brand.
-  const genericVendors = new Set<string>();
-  if (products.length >= 3) {
-    for (const [vendor, count] of vendorCounts) {
-      const known = BRAND_KEYWORDS.some((brand) =>
-        brand.keywords.some((keyword) => matchesKeyword(vendor, keyword)),
-      );
-      if (!known && count / products.length >= 0.8) genericVendors.add(vendor);
-    }
-  }
-
   const categoryCounts = new Map<string, { definition: CategoryDefinition; count: number }>();
   const brandCounts = new Map<string, { brand: BrandRef; count: number }>();
   const categoryOf = new Map<string, string[]>();
@@ -479,17 +542,21 @@ export function buildCatalogIndex(products: ShopifyProduct[]): CatalogIndex {
   let inStockCount = 0;
   let onSaleCount = 0;
   let currency = "USD";
+  let currencyInitialized = false;
 
   for (const product of products) {
     const categories = resolveCategories(product);
-    categoryOf.set(product.node.handle, categories.map((category) => category.slug));
+    categoryOf.set(
+      product.node.handle,
+      categories.map((category) => category.slug),
+    );
     for (const category of categories) {
       const entry = categoryCounts.get(category.slug);
       if (entry) entry.count += 1;
       else categoryCounts.set(category.slug, { definition: category, count: 1 });
     }
 
-    const brand = resolveBrand(product, genericVendors);
+    const brand = resolveBrand(product);
     brandOf.set(product.node.handle, brand);
     if (brand) {
       const entry = brandCounts.get(brand.slug);
@@ -503,9 +570,12 @@ export function buildCatalogIndex(products: ShopifyProduct[]): CatalogIndex {
       priceMax = Math.max(priceMax, price);
     }
     if (productInStock(product)) inStockCount += 1;
-    const compareAt = product.node.variants.edges[0]?.node.compareAtPrice?.amount;
-    if (compareAt && parseFloat(compareAt) > price) onSaleCount += 1;
-    currency = product.node.priceRange.minVariantPrice.currencyCode || currency;
+    if (productDiscountPercent(product) !== null) onSaleCount += 1;
+    const productCurrency = product.node.priceRange.minVariantPrice.currencyCode;
+    if (!currencyInitialized && productCurrency) {
+      currency = productCurrency;
+      currencyInitialized = true;
+    }
   }
 
   const categories = [...categoryCounts.values()]
@@ -556,6 +626,8 @@ export function productsOfBrand(index: CatalogIndex, slug: string) {
 /** Collections worth surfacing: real collections that currently hold products. */
 export function displayCollections(collections: ShopifyCollection[]) {
   return collections.filter(
-    (collection) => !/^(frontpage|all)$/i.test(collection.handle),
+    (collection) =>
+      !/^(frontpage|all)$/i.test(collection.handle) &&
+      !isMerchandisingCollection(collection.handle),
   );
 }

@@ -1,7 +1,9 @@
+import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Gift } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 
+import { FacetHero } from "@/components/FacetHero";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
   Carousel,
@@ -9,17 +11,47 @@ import {
   CarouselItem,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n";
 import { cdnImage, cdnSrcSet } from "@/lib/image";
-import { discountPercent, formatPrice, type ShopifyProduct } from "@/lib/shopify";
+import {
+  discountPercent,
+  formatPrice,
+  type ShopifyCollection,
+  type ShopifyProduct,
+} from "@/lib/shopify";
 import { resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
 
-/** Premium hero card: brand label, headline, bullets, pricing, CTA, carousel dots. */
-export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
+/** Product photography and copy occupy separate tracks; long titles can grow safely. */
+export function HeroBanner({
+  products,
+  campaign,
+}: {
+  products: ShopifyProduct[];
+  campaign?: ShopifyCollection | null | undefined;
+}) {
+  const { direction, t } = useLanguage();
+  const campaignSlide = campaign?.image ? campaign : null;
+  const offset = campaignSlide ? 1 : 0;
+  const slideCount = products.length + offset;
+  const dots = [
+    ...(campaignSlide ? [{ id: campaignSlide.id, title: campaignSlide.title }] : []),
+    ...products.map((product) => product.node),
+  ];
   const [api, setApi] = useState<CarouselApi>();
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [manualPause, setManualPause] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (!api) return;
@@ -34,113 +66,230 @@ export function HeroBanner({ products }: { products: ShopifyProduct[] }) {
   }, [api]);
 
   useEffect(() => {
-    if (!api || products.length < 2 || paused) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = setInterval(() => api.scrollNext(), 6500);
-    return () => clearInterval(timer);
-  }, [api, paused, products.length]);
+    if (!api || slideCount < 2 || hovered || focused || manualPause || reducedMotion) return;
+    const timer = window.setInterval(() => {
+      if (!document.hidden) api.scrollNext();
+    }, 6500);
+    return () => window.clearInterval(timer);
+  }, [api, hovered, focused, manualPause, reducedMotion, slideCount]);
 
-  const scrollTo = useCallback((slide: number) => api?.scrollTo(slide), [api]);
-
-  if (products.length === 0) return null;
+  if (!slideCount) return null;
 
   return (
-    <section className="px-4 sm:px-0" aria-label="Featured products">
+    <section aria-label={t("featuredCarousel")} data-testid="hero-banner" className="hero-campaign">
       <Carousel
         setApi={setApi}
-        opts={{ loop: products.length > 1 }}
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onFocusCapture={() => setPaused(true)}
-        onBlurCapture={() => setPaused(false)}
-        className="overflow-hidden rounded-3xl border border-hero-border bg-hero text-hero-foreground shadow-float"
+        opts={{ loop: slideCount > 1, direction }}
+        aria-label={t("featuredCarousel")}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocusCapture={() => setFocused(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
+        }}
+        className="overflow-hidden rounded-3xl bg-hero text-hero-foreground"
       >
-        <CarouselContent className="ml-0">
-          {products.map((product, slideIndex) => {
+        <CarouselContent className="ml-0 items-stretch">
+          {campaignSlide && (
+            <CarouselItem
+              className="pl-0"
+              aria-label={`1 ${t("ofLabel")} ${slideCount}`}
+              aria-hidden={index !== 0}
+              inert={index !== 0}
+            >
+              <FacetHero
+                id="homepage-campaign-title"
+                title={campaignSlide.title}
+                description={campaignSlide.description}
+                image={campaignSlide.image}
+                href={`/collections/${campaignSlide.handle}`}
+                eager
+              />
+            </CarouselItem>
+          )}
+          {products.map((product, productIndex) => {
+            const slideIndex = productIndex + offset;
             const node = product.node;
             const image = node.images.edges[0]?.node;
-            const variant = node.variants.edges[0]?.node;
+            const variant = productPrimaryVariant(product);
             const price = variant?.price ?? node.priceRange.minVariantPrice;
-            const compareAt = variant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount;
+            const compareAt = productCompareAt(product);
             const discount = discountPercent(price.amount, compareAt);
             const brand = resolveBrand(product);
-            const summary = (node.description ?? "").trim().split(/(?<=\.)\s/)[0];
-            const gift = (node.tags ?? []).find((tag) => /free\s|gift|bundle/i.test(tag));
+            const tag = (prefix: string) =>
+              (node.tags ?? [])
+                .find((value) => value.toLowerCase().startsWith(prefix))
+                ?.slice(prefix.length)
+                .trim();
+            const eyebrow =
+              tag("hero_eyebrow:") || brand?.label || node.productType || t("featuredTechnology");
+            const subtitle =
+              tag("hero_subtitle:") ||
+              (node.description ?? "").trim().split(/(?<=\.)\s/)[0] ||
+              t("heroIntroduction");
+            const normalize = (value: string) =>
+              value
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9\u0600-\u06ff]+/g, "");
+            const showSubtitle = Boolean(subtitle) && normalize(subtitle) !== normalize(node.title);
+            const cta = tag("hero_cta:") || t("shopNow");
+            const badge = tag("hero_badge:");
+
             return (
-              <CarouselItem key={node.id} className="pl-0">
-                <div className="relative grid items-center gap-4 p-5 sm:p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-10 lg:p-12">
-                  <div className="order-2 min-w-0 md:order-1">
-                    <div className="flex items-center gap-2">
-                      {brand && <BrandLogo slug={brand.slug} label={brand.label} size={24} />}
-                      <span className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-primary">{brand?.label ?? node.productType ?? "Featured"}</span>
+              <CarouselItem
+                key={node.id}
+                className="pl-0"
+                aria-label={`${slideIndex + 1} ${t("ofLabel")} ${slideCount}`}
+                aria-hidden={slideIndex !== index}
+                inert={slideIndex !== index}
+              >
+                <div className="hero-campaign-slide h-full">
+                  <div className="order-2 md:order-1">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      {brand && (
+                        <BrandLogo
+                          slug={brand.slug}
+                          label={brand.label}
+                          size={32}
+                          className="rounded-lg p-1"
+                        />
+                      )}
+                      <span className="min-w-0 break-words text-xs font-bold uppercase tracking-wider text-hero-muted">
+                        {eyebrow}
+                      </span>
                     </div>
-                    {slideIndex === 0 ? (
-                      <h1 className="mt-2.5 line-clamp-2 max-w-xl text-xl font-extrabold leading-[1.15] sm:text-3xl lg:text-4xl">{node.title}</h1>
-                    ) : (
-                      <h2 className="mt-2.5 line-clamp-2 max-w-xl text-xl font-extrabold leading-[1.15] sm:text-3xl lg:text-4xl">{node.title}</h2>
+                    {badge && (
+                      <div className="mt-3 inline-flex max-w-full items-center gap-1.5 rounded-full border border-hero-border px-3 py-1 text-xs font-bold">
+                        <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span className="min-w-0 break-words">{badge}</span>
+                      </div>
                     )}
-                    {summary && (
-                      <p className="mt-2 line-clamp-2 max-w-md text-[13px] text-hero-muted">{summary}</p>
+                    <h2 className="mt-4 break-words text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+                      {node.title}
+                    </h2>
+                    {showSubtitle && (
+                      <p className="mt-3 line-clamp-3 break-words text-base leading-relaxed text-hero-muted">
+                        {subtitle}
+                      </p>
                     )}
-                    <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <span className="text-xl font-extrabold text-primary sm:text-2xl">{formatPrice(price.amount, price.currencyCode)}</span>
-                      {discount !== null && compareAt && <><span className="text-sm text-hero-muted line-through">{formatPrice(compareAt, price.currencyCode)}</span><span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">-{discount}%</span></>}
+                    <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-2">
+                      <bdi className="text-2xl font-extrabold sm:text-3xl">
+                        {formatPrice(price.amount, price.currencyCode)}
+                      </bdi>
+                      {discount !== null && compareAt && (
+                        <>
+                          <bdi className="text-sm text-hero-muted line-through">
+                            {formatPrice(compareAt, price.currencyCode)}
+                          </bdi>
+                          <span className="rounded-full bg-destructive px-2 py-1 text-xs font-bold text-destructive-foreground">
+                            -{discount}%
+                          </span>
+                        </>
+                      )}
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center gap-2.5">
-                      <Link to="/product/$handle" params={{ handle: node.handle }} className="press inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-card-hover hover:opacity-90">Shop now <ArrowRight className="h-4 w-4" /></Link>
-                      <Link to="/product/$handle" params={{ handle: node.handle }} className="press inline-flex items-center gap-1.5 rounded-full border border-hero-border px-4 py-3 text-[13px] font-semibold text-hero-muted transition-colors hover:text-hero-foreground">View details</Link>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <Link
+                        to="/product/$handle"
+                        params={{ handle: node.handle }}
+                        className="press inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:brightness-110"
+                      >
+                        <span className="min-w-0 break-words">{cta}</span>
+                        <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+                      </Link>
+                      <Link
+                        to="/product/$handle"
+                        params={{ handle: node.handle }}
+                        className="press inline-flex min-h-11 items-center justify-center rounded-full border border-hero-border px-5 py-3 text-sm font-bold hover:bg-white/10"
+                      >
+                        {t("fullDetails")}
+                      </Link>
                     </div>
                   </div>
-                  <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title} className="group relative order-1 block md:order-2">
-                    {/* Subtle lighting behind the product, no heavy effects. */}
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute left-1/2 top-1/2 h-[80%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-3xl"
-                    />
-                    {image && (
-                      <div className="relative overflow-hidden rounded-[2rem] bg-white p-3 shadow-float ring-1 ring-white/15 md:p-5">
+                  <div className="order-1 flex min-w-0 items-center justify-center md:order-2">
+                    {image ? (
                       <img
-                        src={cdnImage(image.url, 720)}
-                        srcSet={cdnSrcSet(image.url, 720)}
-                        sizes="(min-width: 1024px) 520px, 80vw"
+                        src={cdnImage(image.url, 1000)}
+                        srcSet={cdnSrcSet(image.url, 1000)}
+                        sizes="(min-width: 1280px) 540px, (min-width: 768px) 45vw, 85vw"
                         alt={image.altText ?? node.title}
                         fetchPriority={slideIndex === 0 ? "high" : "auto"}
                         loading={slideIndex === 0 ? "eager" : "lazy"}
-                        decoding="async"
-                        width={720}
-                        height={720}
-                        className="relative mx-auto h-44 w-full object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-[1.03] sm:h-64 md:h-[19rem] lg:h-[21rem]"
+                        decoding={slideIndex === 0 ? "sync" : "async"}
+                        width={1000}
+                        height={1000}
+                        className="h-52 w-full object-contain sm:h-64 md:h-80 lg:h-96"
                       />
+                    ) : (
+                      <div
+                        className="grid h-52 w-full place-items-center rounded-2xl bg-white/5 text-sm text-hero-muted"
+                        role="img"
+                        aria-label={t("galleryEmpty")}
+                      >
+                        {t("galleryEmpty")}
                       </div>
                     )}
-                  </Link>
-                  {gift && <span className="absolute right-4 top-4 z-10 grid h-16 w-16 place-content-center gap-1 rounded-full border bg-background/90 p-2 text-center text-[9px] font-bold leading-tight text-primary shadow-float backdrop-blur sm:right-6 sm:top-6 sm:h-20 sm:w-20 sm:text-[10px]"><Gift className="mx-auto h-3.5 w-3.5" /><span className="capitalize">{gift}</span></span>}
+                  </div>
                 </div>
-
               </CarouselItem>
             );
           })}
         </CarouselContent>
-        {products.length > 1 && <><Button variant="outline" size="icon" onClick={() => api?.scrollPrev()} aria-label="Previous featured product" className="absolute left-4 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border-hero-border bg-hero/80 text-hero-foreground backdrop-blur hover:bg-hero md:inline-flex"><ArrowLeft /></Button><Button variant="outline" size="icon" onClick={() => api?.scrollNext()} aria-label="Next featured product" className="absolute right-4 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border-hero-border bg-hero/80 text-hero-foreground backdrop-blur hover:bg-hero md:inline-flex"><ArrowRight /></Button></>}
-      </Carousel>
-
-      {products.length > 1 && (
-        <div className="mt-3 flex justify-center gap-1.5">
-          {products.map((product, dot) => (
+        {slideCount > 1 && (
+          <div className="flex flex-wrap items-center justify-center gap-2 border-t border-hero-border px-3 py-2">
             <button
-              key={product.node.id}
               type="button"
-              onClick={() => scrollTo(dot)}
-              aria-label={`Show ${product.node.title}`}
-              aria-current={dot === index}
-              className={cn(
-                "h-1.5 rounded-full transition-all duration-300",
-                dot === index ? "w-6 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground",
+              onClick={() => api?.scrollPrev()}
+              aria-label={t("previousSlide")}
+              className="grid h-11 w-11 place-items-center rounded-full hover:bg-white/10"
+            >
+              <ChevronLeft className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
+            </button>
+            <div className="flex flex-wrap items-center justify-center">
+              {dots.map((slide, dot) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => api?.scrollTo(dot)}
+                  aria-label={`${t("showSlide")} ${slide.title}`}
+                  aria-current={dot === index ? "true" : undefined}
+                  className="grid h-11 w-8 place-items-center rounded-full"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "h-2 rounded-full transition-all",
+                      dot === index ? "w-6 bg-white" : "w-2 bg-hero-muted",
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => api?.scrollNext()}
+              aria-label={t("nextSlide")}
+              className="grid h-11 w-11 place-items-center rounded-full hover:bg-white/10"
+            >
+              <ChevronRight className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setManualPause((value) => !value)}
+              aria-label={manualPause ? t("resumeHero") : t("pauseHero")}
+              aria-pressed={manualPause}
+              disabled={reducedMotion}
+              className="grid h-11 w-11 place-items-center rounded-full hover:bg-white/10"
+            >
+              {manualPause ? (
+                <Play className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Pause className="h-4 w-4" aria-hidden="true" />
               )}
-            />
-          ))}
-        </div>
-      )}
+            </button>
+          </div>
+        )}
+      </Carousel>
     </section>
   );
 }

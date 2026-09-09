@@ -73,13 +73,15 @@ const Carousel = React.forwardRef<
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        scrollPrev();
+        if (opts?.direction === "rtl") scrollNext();
+        else scrollPrev();
       } else if (event.key === "ArrowRight") {
         event.preventDefault();
-        scrollNext();
+        if (opts?.direction === "rtl") scrollPrev();
+        else scrollNext();
       }
     },
-    [scrollPrev, scrollNext],
+    [scrollPrev, scrollNext, opts?.direction],
   );
 
   React.useEffect(() => {
@@ -100,6 +102,7 @@ const Carousel = React.forwardRef<
     api.on("select", onSelect);
 
     return () => {
+      api?.off("reInit", onSelect);
       api?.off("select", onSelect);
     };
   }, [api, onSelect]);

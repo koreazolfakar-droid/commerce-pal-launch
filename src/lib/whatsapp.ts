@@ -1,4 +1,6 @@
-export const WHATSAPP_NUMBER = "96181813805";
+import { STORE_CONFIG, STORE_NAME } from "@/lib/storeConfig";
+
+export const WHATSAPP_NUMBER = STORE_CONFIG.whatsappNumber;
 
 interface WhatsAppOrder {
   title: string;
@@ -17,7 +19,7 @@ export function productWhatsAppUrl({ title, url, quantity = 1, options = [] }: W
     .map((option) => `${option.name}: ${option.value}`)
     .join(", ");
   const lines = [
-    "Hello Space Cell, I would like to order:",
+    `Hello ${STORE_NAME}, I would like to order:`,
     title,
     variant ? `Selected options: ${variant}` : "",
     `Quantity: ${quantity}`,
@@ -27,4 +29,4 @@ export function productWhatsAppUrl({ title, url, quantity = 1, options = [] }: W
 }
 
 export const generalWhatsAppUrl = () =>
-  whatsappUrl("Hello Space Cell, I would like help choosing a product.");
+  whatsappUrl(`Hello ${STORE_NAME}, I would like help choosing a product.`);

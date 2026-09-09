@@ -1,12 +1,16 @@
 import { PackageSearch } from "lucide-react";
 
 import { ProductCard } from "@/components/ProductCard";
+import { ProductListCard } from "@/components/ProductListCard";
+import { ProductViewToggle } from "@/components/ProductViewToggle";
+import { useProductViewMode } from "@/hooks/useProductViewMode";
 import type { ShopifyProduct } from "@/lib/shopify";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 
 const GRID = "grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4";
+const LIST = "grid gap-3 sm:gap-4";
 
-/** Layout-stable skeleton that mirrors the real card geometry (no CLS on swap). */
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
     <div className={GRID} aria-hidden>
@@ -28,10 +32,11 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
 export function ProductGrid({
   products,
   className,
-  emptyTitle = "No products found",
-  emptyHint = "Try removing a filter or browsing another category.",
+  emptyTitle,
+  emptyHint,
   action,
   eagerCount = 0,
+  showViewToggle = true,
 }: {
   products: ShopifyProduct[];
   className?: string;
@@ -39,25 +44,43 @@ export function ProductGrid({
   emptyHint?: string;
   action?: React.ReactNode;
   eagerCount?: number;
+  showViewToggle?: boolean;
 }) {
+  const [viewMode, setViewMode] = useProductViewMode();
+  const { t } = useLanguage();
+
+  const resolvedEmptyTitle = emptyTitle ?? t("noProducts");
+  const resolvedEmptyHint = emptyHint ?? t("tryAnother");
+
   if (products.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed bg-card px-6 py-16 text-center">
         <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-surface text-muted-foreground">
           <PackageSearch className="h-5 w-5" />
         </span>
-        <p className="mt-4 text-base font-semibold">{emptyTitle}</p>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">{emptyHint}</p>
+        <p className="mt-4 text-base font-semibold">{resolvedEmptyTitle}</p>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">{resolvedEmptyHint}</p>
         {action && <div className="mt-5 flex justify-center">{action}</div>}
       </div>
     );
   }
 
   return (
-    <div className={cn(GRID, className)}>
-      {products.map((product, index) => (
-        <ProductCard key={product.node.id} product={product} eager={index < eagerCount} />
-      ))}
+    <div className="min-w-0">
+      {showViewToggle && (
+        <div className="mb-3 flex items-center justify-end">
+          <ProductViewToggle mode={viewMode} onChange={setViewMode} />
+        </div>
+      )}
+      <div className={cn(viewMode === "list" ? LIST : GRID, className)}>
+        {products.map((product, index) =>
+          viewMode === "list" ? (
+            <ProductListCard key={product.node.id} product={product} eager={index < eagerCount} />
+          ) : (
+            <ProductCard key={product.node.id} product={product} eager={index < eagerCount} />
+          ),
+        )}
+      </div>
     </div>
   );
 }

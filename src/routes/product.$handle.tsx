@@ -1,3 +1,6 @@
+import { ProductRail } from "@/components/ProductRail";
+import { useLanguage } from "@/lib/i18n";
+import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -9,6 +12,7 @@ import {
   Minus,
   Plus,
   ShoppingBag,
+  Share2,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +20,8 @@ import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
+import { OfficialProductResearch } from "@/components/product/OfficialProductResearch";
+import { GeminiShoppingAdvisor } from "@/components/GeminiShoppingAdvisor";
 import { ProseSections } from "@/components/product/ProseSection";
 import { SpecSheet } from "@/components/product/SpecSheet";
 import { VariantPicker } from "@/components/product/VariantPicker";
@@ -24,7 +30,7 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
-import { catalogQueryOptions, recommendationsQueryOptions } from "@/lib/queries";
+import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import {
   discountPercent,
   fetchProductByHandle,
@@ -36,6 +42,7 @@ import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
 import { productWhatsAppUrl } from "@/lib/whatsapp";
 import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, productJsonLd } from "@/lib/seo";
+import { STORE_NAME } from "@/lib/storeConfig";
 import { useCartStore } from "@/stores/cartStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -50,7 +57,7 @@ export const Route = createFileRoute("/product/$handle")({
     if (!loaderData) {
       return {
         meta: [
-          { title: "Product unavailable — Space Cell" },
+          { title: `Product unavailable — ${STORE_NAME}` },
           { name: "robots", content: "noindex, follow" },
         ],
       };
@@ -58,20 +65,20 @@ export const Route = createFileRoute("/product/$handle")({
     const title = loaderData?.product.node.title ?? "Product";
     const description =
       loaderData?.product.node.description?.slice(0, 150) ||
-      "Shop phones, tablets and accessories at Space Cell.";
+      `Shop phones, tablets and accessories at ${STORE_NAME}.`;
     const image = loaderData?.product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
     const product = loaderData?.product;
     return {
       meta: [
-        { title: `${title} — Space Cell` },
+        { title: `${title} — ${STORE_NAME}` },
         { name: "description", content: description },
-        { property: "og:title", content: `${title} — Space Cell` },
+        { property: "og:title", content: `${title} — ${STORE_NAME}` },
         { property: "og:description", content: description },
         { property: "og:type", content: "product" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: `${title} — Space Cell` },
+        { name: "twitter:title", content: `${title} — ${STORE_NAME}` },
         { name: "twitter:description", content: description },
         ...(image
           ? [
@@ -99,6 +106,7 @@ export const Route = createFileRoute("/product/$handle")({
 });
 
 function ProductPage() {
+  const { t } = useLanguage();
   const { product } = Route.useLoaderData() as { product: ShopifyProduct };
   const node = product.node;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
@@ -123,10 +131,10 @@ function ProductPage() {
   const addItem = useCartStore((state) => state.addItem);
   const cartLoading = useCartStore((state) => state.isLoading);
   const wishlisted = useWishlistStore((state) => state.handles.includes(node.handle));
-  const toggleWishlist = useWishlistStore((state) => state.toggle);
+  const toggleWishlist = useWishlistToggle();
   const addRecentlyViewed = useRecentlyViewedStore((state) => state.add);
-  const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: recommended } = useQuery(recommendationsQueryOptions(node.handle));
+  const { data: vendorProducts } = useQuery(vendorProductsQueryOptions(node.vendor ?? ""));
 
   useEffect(() => {
     addRecentlyViewed(node.handle);
@@ -152,11 +160,25 @@ function ProductPage() {
     setSelectedOptions((current) => ({ ...current, [name]: value }));
   };
 
+  const handleShare = async () => {
+    try {
+      const url = window.location.href;
+      if (navigator.share) await navigator.share({ title: node.title, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        toast.success(t("linkCopied"));
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+      toast.error(t("shareFailed"));
+    }
+  };
+
   const handleAddToCart = async (checkout = false) => {
     if (!selectedVariant) return;
     setPending(checkout ? "buy" : "cart");
     try {
-      await addItem({
+      const success = await addItem({
         product,
         variantId: selectedVariant.id,
         variantTitle: selectedVariant.title,
@@ -164,14 +186,18 @@ function ProductPage() {
         quantity,
         selectedOptions: selectedVariant.selectedOptions ?? [],
       });
-      toast.success(`${node.title} added to your bag`, { position: "top-center" });
+      if (!success) {
+        toast.error(t("addToCartFailed"), { position: "top-center" });
+        return;
+      }
+      toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
       if (checkout) {
         const checkoutUrl = useCartStore.getState().getCheckoutUrl();
         if (checkoutUrl) window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-        else toast.error("Checkout is unavailable right now. Please try again.");
+        else toast.error(t("addToCartFailed"));
       }
     } catch {
-      toast.error("We couldn't add this to your bag. Please try again.");
+      toast.error(t("addToCartFailed"));
     } finally {
       setPending(null);
     }
@@ -183,12 +209,15 @@ function ProductPage() {
   const currency = selectedVariant?.price.currencyCode ?? "USD";
   const inStock = Boolean(selectedVariant?.availableForSale);
   const brand = resolveBrand(product);
+  const sameVendorProducts = (vendorProducts ?? [])
+    .filter((item) => item.node.handle !== node.handle && item.node.vendor === node.vendor)
+    .slice(0, 8);
   const category = primaryCategory(product);
   const busy = pending !== null || cartLoading;
   const isPhone = category?.slug === "smartphones";
   const whatsappOrderUrl = productWhatsAppUrl({
     title: node.title,
-    url: `https://spacecallapp.store/product/${node.handle}`,
+    url: absoluteUrl(`/product/${node.handle}`),
     quantity,
     options: selectedVariant?.selectedOptions ?? [],
   });
@@ -208,38 +237,42 @@ function ProductPage() {
       ...(node.vendor ? [{ label: "Brand", value: node.vendor }] : []),
       ...(selectedVariant?.sku ? [{ label: "SKU", value: selectedVariant.sku }] : []),
       ...(selectedVariant?.barcode ? [{ label: "Barcode", value: selectedVariant.barcode }] : []),
-      ...(selectedVariant?.weight != null && selectedVariant.weight > 0 && selectedVariant.weightUnit
+      ...(selectedVariant?.weight != null &&
+      selectedVariant.weight > 0 &&
+      selectedVariant.weightUnit
         ? [{ label: "Weight", value: `${selectedVariant.weight} ${selectedVariant.weightUnit}` }]
         : []),
     ];
     return groupSpecs(rows);
   }, [content.specs, selectedVariant, node.productType, node.vendor]);
 
-  // Shopify's own recommendations first, then same-category products as backup.
+  // Shopify's own recommendations first, then the bounded same-vendor query.
   const similar = useMemo(() => {
     const fromShopify = (recommended ?? []).filter(
       (candidate) => candidate.node.handle !== node.handle,
     );
     if (fromShopify.length >= 4) return fromShopify.slice(0, 8);
     const seen = new Set([node.handle, ...fromShopify.map((item) => item.node.handle)]);
-    const fallback = (catalog?.products ?? []).filter((candidate) => {
-      if (seen.has(candidate.node.handle)) return false;
-      if (category) {
-        return (catalog?.categoryOf.get(candidate.node.handle) ?? []).includes(category.slug);
-      }
-      return brand ? catalog?.brandOf.get(candidate.node.handle)?.slug === brand.slug : false;
-    });
+    const fallback = (vendorProducts ?? []).filter((candidate) => !seen.has(candidate.node.handle));
     return [...fromShopify, ...fallback].slice(0, 8);
-  }, [recommended, catalog, category, brand, node.handle]);
+  }, [recommended, vendorProducts, node.handle]);
 
   const hasOverview = content.overview.length > 0;
   const hasBox = content.box.length > 0;
   const hasShipping = content.shipping.length > 0;
   const hasSpecs = specGroups.length > 0;
-  const defaultTab = hasOverview ? "overview" : hasSpecs ? "specifications" : hasBox ? "box" : "shipping";
+  const defaultTab = hasOverview
+    ? "overview"
+    : hasSpecs
+      ? "specifications"
+      : hasBox
+        ? "box"
+        : "shipping";
 
   return (
-    <StoreLayout>
+    <StoreLayout
+      aiContext={`Product: ${node.title}. Brand: ${node.vendor ?? ""}. Type: ${node.productType ?? ""}. Price: ${selectedVariant ? formatPrice(selectedVariant.price.amount, currency) : ""}. Availability: ${inStock ? "in stock" : "out of stock"}. Description: ${(node.description ?? "").slice(0, 2800)}`}
+    >
       <div className="mx-auto max-w-7xl px-4 py-6 pb-32 lg:py-10 lg:pb-14">
         <nav
           aria-label="Breadcrumb"
@@ -268,7 +301,7 @@ function ProductPage() {
           <span className="truncate text-foreground">{node.title}</span>
         </nav>
 
-        <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14">
+        <div className="mt-5 grid gap-7 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,.92fr)] lg:gap-10">
           <ProductGallery
             images={images}
             title={node.title}
@@ -283,7 +316,7 @@ function ProductPage() {
             }
           />
 
-          <div className="flex min-w-0 flex-col gap-7">
+          <div className="flex min-w-0 flex-col gap-6 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7">
             <div className="min-w-0">
               {brand && (
                 <Link
@@ -291,7 +324,12 @@ function ProductPage() {
                   params={{ slug: brand.slug }}
                   className="inline-flex items-center gap-2 rounded-full border bg-card py-1 pl-1 pr-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
                 >
-                  <BrandLogo slug={brand.slug} label={brand.label} size={26} className="rounded-full" />
+                  <BrandLogo
+                    slug={brand.slug}
+                    label={brand.label}
+                    size={26}
+                    className="rounded-full"
+                  />
                   {brand.label}
                 </Link>
               )}
@@ -328,7 +366,7 @@ function ProductPage() {
                     inStock ? "bg-success" : "bg-muted-foreground",
                   )}
                 />
-                {inStock ? "In stock" : "Out of stock"}
+                {t(inStock ? "inStock" : "outOfStock")}
               </p>
             </div>
 
@@ -350,7 +388,7 @@ function ProductPage() {
                   className="h-10 w-10 rounded-full"
                   onClick={() => setQuantity((value) => Math.max(1, value - 1))}
                   disabled={quantity <= 1}
-                  aria-label="Decrease quantity"
+                  aria-label={t("decreaseQuantity")}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
@@ -362,12 +400,12 @@ function ProductPage() {
                   size="icon"
                   className="h-10 w-10 rounded-full"
                   onClick={() => setQuantity((value) => Math.min(99, value + 1))}
-                  aria-label="Increase quantity"
+                  aria-label={t("increaseQuantity")}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="hidden gap-3 sm:flex">
+              <div className="hidden flex-wrap gap-3 sm:flex">
                 <Button
                   size="lg"
                   onClick={() => handleAddToCart()}
@@ -379,7 +417,7 @@ function ProductPage() {
                   ) : (
                     <ShoppingBag className="h-4 w-4" />
                   )}
-                  {inStock ? "Add to cart" : "Sold out"}
+                  {t(inStock ? "addToCart" : "soldOut")}
                 </Button>
                 <Button
                   size="lg"
@@ -400,22 +438,43 @@ function ProductPage() {
                   variant="outline"
                   onClick={() => {
                     toggleWishlist(node.handle);
-                    toast.success(wishlisted ? "Removed from wishlist" : "Saved to wishlist", {
-                      position: "top-center",
-                    });
                   }}
                   aria-pressed={wishlisted}
-                  aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+                  aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
                   className="press rounded-full"
                 >
                   <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
-                  <span className="sr-only sm:not-sr-only">{wishlisted ? "Saved" : "Save"}</span>
+                  <span className="sr-only sm:not-sr-only">
+                    {t(wishlisted ? "saved" : "saveWishlist")}
+                  </span>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleShare}
+                  aria-label={t("shareProduct")}
+                  className="press shrink-0 rounded-full"
+                >
+                  <Share2 aria-hidden className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button asChild variant="outline" className="rounded-full border-success/40 text-success hover:bg-success/10 hover:text-success">
+              <Button
+                variant="outline"
+                onClick={handleShare}
+                aria-label={t("shareProduct")}
+                className="rounded-full sm:hidden"
+              >
+                <Share2 aria-hidden className="h-4 w-4" />
+                {t("shareProduct")}
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-full border-success/40 text-success hover:bg-success/10 hover:text-success"
+              >
                 <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="h-4 w-4" /> Order via WhatsApp
                 </a>
@@ -442,8 +501,18 @@ function ProductPage() {
           </div>
         </div>
 
+        <section className="mt-6" aria-label="Smart accessory recommendations">
+          <GeminiShoppingAdvisor
+            product={product}
+            catalog={{ products: [...(recommended ?? []), ...(vendorProducts ?? [])] }}
+          />
+        </section>
+
         {(hasOverview || hasSpecs || hasBox || hasShipping) && (
-          <section className="mt-14 border-t pt-8" aria-label="Product details">
+          <section
+            className="mt-8 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7"
+            aria-label="Product details"
+          >
             <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="scroll-rail h-auto w-full justify-start gap-1 rounded-2xl bg-surface p-1.5">
                 {hasOverview && <TabsTrigger value="overview">Description</TabsTrigger>}
@@ -475,6 +544,13 @@ function ProductPage() {
           </section>
         )}
 
+        <section className="mt-8" aria-label="Official manufacturer information">
+          <OfficialProductResearch
+            title={node.title}
+            {...(node.vendor ? { vendor: node.vendor } : {})}
+          />
+        </section>
+
         {similar.length > 0 && (
           <section className="mt-16 border-t pt-10" aria-labelledby="similar-products">
             <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
@@ -483,7 +559,7 @@ function ProductPage() {
                   You may also like
                 </h2>
                 <p className="mt-1 truncate text-sm text-muted-foreground">
-                  Recommended from the live Space Cell catalogue
+                  Recommended from the live {STORE_NAME} catalogue
                 </p>
               </div>
               {category && (
@@ -499,20 +575,36 @@ function ProductPage() {
             <ProductGrid products={similar} />
           </section>
         )}
+        {sameVendorProducts.length > 0 && (
+          <section className="mt-12 border-t pt-8" aria-labelledby="more-from-brand">
+            <div className="home-section-header">
+              <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-bold">
+                {t("moreFromBrand")} {brand?.label}
+              </h2>
+              {brand && (
+                <Link
+                  to="/brand/$slug"
+                  params={{ slug: brand.slug }}
+                  className="shrink-0 text-sm font-semibold text-primary hover:underline"
+                >
+                  {t("viewAll")}
+                </Link>
+              )}
+            </div>
+            <ProductRail products={sameVendorProducts} storageKey={`more-from-${node.vendor}`} />
+          </section>
+        )}
       </div>
 
       {/* Mobile sticky buy bar — sits above the bottom navigation. */}
-      <div className="fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] left-0 right-0 z-30 border-t bg-background/90 px-4 py-2.5 backdrop-blur-xl sm:hidden">
+      <div className="fixed bottom-[var(--mobile-nav-height)] left-0 right-0 z-30 border-t bg-background/90 px-4 py-2.5 backdrop-blur-xl sm:hidden">
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => {
               toggleWishlist(node.handle);
-              toast.success(wishlisted ? "Removed from wishlist" : "Saved to wishlist", {
-                position: "top-center",
-              });
             }}
-            aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+            aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
             aria-pressed={wishlisted}
             className="press grid h-11 w-11 shrink-0 place-items-center rounded-full border bg-card"
           >
@@ -532,11 +624,21 @@ function ProductPage() {
                 {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
               </>
             ) : (
-              "Sold out"
+              t("soldOut")
             )}
           </Button>
-          <Button asChild variant="outline" size="icon" className="h-11 w-11 shrink-0 rounded-full border-success/40 text-success">
-            <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer" aria-label="Order via WhatsApp">
+          <Button
+            asChild
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 shrink-0 rounded-full border-success/40 text-success"
+          >
+            <a
+              href={whatsappOrderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Order via WhatsApp"
+            >
               <MessageCircle className="h-5 w-5" />
             </a>
           </Button>

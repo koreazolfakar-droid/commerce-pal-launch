@@ -23,7 +23,8 @@ export const useCompareStore = create<CompareState>()(
         set({ handles: [...current, handle] });
         return "added";
       },
-      remove: (handle) => set((state) => ({ handles: state.handles.filter((item) => item !== handle) })),
+      remove: (handle) =>
+        set((state) => ({ handles: state.handles.filter((item) => item !== handle) })),
       toggle: (handle) => {
         const current = get().handles;
         if (current.includes(handle)) {

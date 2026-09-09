@@ -1,13 +1,18 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 
-import { ProductCard } from "@/components/ProductCard";
-import { BottomNav } from "@/components/BottomNav";
-import { SiteFooter } from "@/components/SiteFooter";
+import { CatalogView } from "@/components/CatalogView";
+import { StoreLayout } from "@/components/StoreLayout";
+import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
+import { buildCatalogIndex } from "@/lib/taxonomy";
+import { ProductImage } from "@/components/ProductImage";
+import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
-import { fetchCollectionByHandle, type ShopifyProduct } from "@/lib/shopify";
+import { fetchCollectionByHandle } from "@/lib/shopify";
 import { absoluteUrl, breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd } from "@/lib/seo";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/collections/$handle")({
+  validateSearch: parseProductSearch,
   loader: async ({ params }) => {
     const result = await fetchCollectionByHandle(params.handle);
     if (!result) throw notFound();
@@ -16,13 +21,16 @@ export const Route = createFileRoute("/collections/$handle")({
   head: ({ params, loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Collection unavailable — Space Cell" }, { name: "robots", content: "noindex" }],
+        meta: [
+          { title: `Collection unavailable — ${STORE_NAME}` },
+          { name: "robots", content: "noindex" },
+        ],
       };
     }
-    const title = `${loaderData.collection.title} — Space Cell`;
+    const title = `${loaderData.collection.title} — ${STORE_NAME}`;
     const description =
       loaderData.collection.description?.slice(0, 155) ||
-      `Shop ${loaderData.collection.title} at Space Cell with secure checkout.`;
+      `Shop ${loaderData.collection.title} at ${STORE_NAME} with secure checkout.`;
     const image = loaderData.collection.image?.url;
     const path = `/collections/${params.handle}`;
     return {
@@ -45,7 +53,13 @@ export const Route = createFileRoute("/collections/$handle")({
       ],
       links: [canonicalLink(path)],
       scripts: [
-        jsonLd(breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Collections", path: "/collections" }, { name: loaderData.collection.title, path }])),
+        jsonLd(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Collections", path: "/collections" },
+            { name: loaderData.collection.title, path },
+          ]),
+        ),
         jsonLd(itemListJsonLd(loaderData.collection.title, loaderData.products)),
       ],
     };
@@ -56,43 +70,53 @@ export const Route = createFileRoute("/collections/$handle")({
 });
 
 function CollectionPage() {
-  const { collection, products } = Route.useLoaderData();
-
+  const { collection, products: allProducts } = Route.useLoaderData();
+  const catalog = useMemo(() => buildCatalogIndex(allProducts), [allProducts]);
+  const filters = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const products = applyFilters(allProducts, catalog, filters);
   return (
-    <div className="min-h-screen bg-background pb-20 lg:pb-0">
-      <SiteHeader />
-      <main>
-        <section className="border-b bg-promo">
-          <div className="mx-auto max-w-7xl px-4 py-10 md:py-14">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              Collection
-            </p>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
-              {collection.title}
-            </h1>
-            {collection.description && (
-              <p className="mt-3 max-w-2xl text-muted-foreground">{collection.description}</p>
-            )}
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-4 py-10">
-          {products.length === 0 ? (
-            <p className="py-16 text-center text-muted-foreground">
-              No products in this collection yet.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {products.map((product: ShopifyProduct) => (
-                <ProductCard key={product.node.id} product={product} />
-              ))}
+    <StoreLayout>
+      <CatalogView
+        title={collection.title}
+        description={collection.description}
+        products={products}
+        total={allProducts.length}
+        filters={filters}
+        facets={{ categories: catalog.categories, brands: catalog.brands }}
+        priceMin={catalog.priceMin}
+        priceMax={catalog.priceMax}
+        currency={catalog.currency}
+        header={
+          <section className="mb-7 grid items-center gap-6 overflow-hidden rounded-3xl border bg-surface p-5 sm:p-8 md:grid-cols-2">
+            <div className="min-w-0">
+              <h1 className="break-words text-3xl font-extrabold leading-tight">
+                {collection.title}
+              </h1>
+              {collection.description && (
+                <p className="mt-3 break-words leading-relaxed text-muted-foreground">
+                  {collection.description}
+                </p>
+              )}
             </div>
-          )}
-        </section>
-      </main>
-      <SiteFooter />
-      <BottomNav />
-    </div>
+            {collection.image && (
+              <ProductImage
+                url={collection.image.url}
+                alt={collection.image.altText ?? collection.title}
+                eager
+                className="max-h-64 rounded-2xl"
+                size={900}
+                imageClassName="p-3"
+              />
+            )}
+          </section>
+        }
+        onChange={(patch: Partial<ProductFilters>) =>
+          navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) })
+        }
+        onReset={() => navigate({ search: {} })}
+      />
+    </StoreLayout>
   );
 }
 
