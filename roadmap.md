@@ -2,6 +2,9 @@
 
 ## In progress: full storefront audit & upgrade (Shopify-managed content, UX, security)
 
+- [x] Mobile high-density CSS polish: tightened header, hero, category/brand rails,
+      product spacing and bottom navigation without changing store behavior.
+
 ### Audit findings (verified against the live store, 88 products, 4 collections)
 
 - Brand logos invisible after SSR: `BrandLogo` only revealed the image on `onLoad`,
