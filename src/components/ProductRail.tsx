@@ -17,11 +17,11 @@ export function ProductRail({
 
   return (
     <div className="product-rail">
-      <div className="mb-3 flex justify-end">
+      <div className="mb-2 flex justify-end">
         <ProductViewToggle mode={viewMode} onChange={setViewMode} />
       </div>
       {viewMode === "list" ? (
-        <div className="grid min-w-0 gap-3">
+        <div className="grid min-w-0 gap-2">
           {visible.map((product) => (
             <ProductListCard key={product.node.id} product={product} />
           ))}

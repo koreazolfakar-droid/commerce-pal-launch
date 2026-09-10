@@ -44,13 +44,13 @@ export function BottomNav() {
 
   const itemClass = (isActive?: boolean) =>
     cn(
-      "press relative flex min-w-0 flex-1 flex-col items-center gap-1 px-0.5 pb-2 pt-2.5 text-center text-xs font-semibold leading-snug transition-colors",
+      "press relative flex min-w-0 flex-1 flex-col items-center gap-0.5 px-0.5 py-1.5 text-center text-[10px] font-semibold leading-tight transition-colors",
       isActive ? "text-primary" : "text-muted-foreground",
     );
 
   const iconClass = (isActive?: boolean) =>
     cn(
-      "grid h-8 w-14 max-w-full place-items-center rounded-full transition-colors",
+      "grid h-7 w-12 max-w-full place-items-center rounded-full transition-colors",
       isActive && "bg-accent",
     );
 
@@ -62,7 +62,7 @@ export function BottomNav() {
         aria-label="Primary"
         className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/90 backdrop-blur-xl lg:hidden"
       >
-        <div className="mx-auto flex min-h-20 max-w-md items-stretch px-1 pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex min-h-14 max-w-md items-stretch px-1 pb-[env(safe-area-inset-bottom)]">
           <Link
             to="/"
             className={itemClass(pathname === "/")}

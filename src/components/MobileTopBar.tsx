@@ -45,7 +45,7 @@ export function MobileTopBar({
     <>
       {/* Only the main header row stays sticky. */}
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-xl lg:hidden">
-        <div className="flex items-center justify-between gap-3 px-4 py-2">
+        <div className="flex h-12 items-center justify-between gap-2 px-3">
           <MobileMenu />
           <Link
             to="/"
@@ -57,9 +57,9 @@ export function MobileTopBar({
               alt={STORE_NAME}
               width={32}
               height={32}
-              className="h-8 w-auto shrink-0 object-contain"
+              className="h-7 w-auto shrink-0 object-contain"
             />
-            <span className="truncate text-[17px] font-extrabold tracking-tight">{STORE_NAME}</span>
+            <span className="truncate text-base font-extrabold tracking-tight">{STORE_NAME}</span>
           </Link>
           <div className="flex shrink-0 items-center gap-0.5">
             <Link
@@ -85,11 +85,11 @@ export function MobileTopBar({
 
       {/* Search + compact category rail scroll away with the page. */}
       <div className="border-b bg-background lg:hidden">
-        <div className="flex min-w-0 items-center gap-2 px-4 py-2">
+          <div className="flex min-w-0 items-center gap-2 px-3 py-1.5">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-2xl bg-surface px-4 text-start text-sm text-muted-foreground transition-colors hover:bg-accent"
+            className="press flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl bg-surface px-3 text-start text-xs text-muted-foreground transition-colors hover:bg-accent"
           >
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="truncate">{t("search")}</span>
@@ -98,19 +98,19 @@ export function MobileTopBar({
             to="/compare"
             search={{ products: undefined }}
             aria-label="Compare smartphones"
-            className="press grid h-11 w-11 shrink-0 place-items-center rounded-2xl border bg-surface hover:bg-accent"
+            className="press grid h-10 w-10 shrink-0 place-items-center rounded-xl border bg-surface hover:bg-accent"
           >
             <Columns2 className="h-5 w-5" strokeWidth={1.9} />
           </Link>
         </div>
 
         {showCategoryRail && (list.length > 0 || isLoading) && (
-          <nav aria-label="Product categories" className="scroll-rail flex gap-2 px-4 pb-2">
+          <nav aria-label="Product categories" className="scroll-rail flex gap-1.5 px-3 pb-1.5">
             {isLoading && list.length === 0
               ? Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={index}
-                    className="shimmer h-8 w-20 shrink-0 rounded-full bg-surface"
+                    className="shimmer h-7 w-16 shrink-0 rounded-full bg-surface"
                     aria-hidden
                   />
                 ))
@@ -119,7 +119,7 @@ export function MobileTopBar({
               <Link
                 to="/shop"
                 className={cn(
-                  "press flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
+                  "press flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[11px] font-semibold transition-colors",
                   !activeSlug
                     ? "border-primary bg-primary text-primary-foreground"
                     : "bg-surface text-muted-foreground hover:bg-accent",
@@ -131,7 +131,7 @@ export function MobileTopBar({
             )}
             <Link
               to="/used-phones"
-              className="press flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-accent px-3 text-[12px] font-semibold text-accent-foreground"
+              className="press flex h-7 shrink-0 items-center gap-1 rounded-full border border-primary/30 bg-accent px-2.5 text-[11px] font-semibold text-accent-foreground"
             >
               {t("usedPhones")}
             </Link>
@@ -144,7 +144,7 @@ export function MobileTopBar({
                   to="/category/$slug"
                   params={{ slug: category.slug }}
                   className={cn(
-                    "press flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
+                    "press flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[11px] font-semibold transition-colors",
                     active
                       ? "border-primary bg-primary text-primary-foreground"
                       : "bg-surface text-muted-foreground hover:bg-accent",

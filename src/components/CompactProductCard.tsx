@@ -57,7 +57,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
   return (
     <article className={cn("group relative flex min-w-0 w-full flex-col", className)}>
-      <div className="card-lift relative overflow-hidden rounded-2xl border">
+      <div className="card-lift relative overflow-hidden rounded-xl border">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
@@ -111,17 +111,17 @@ export const CompactProductCard = memo(function CompactProductCard({
         </button>
       </div>
 
-      <div className="mt-3 flex min-w-0 flex-col gap-1.5">
+      <div className="mt-2 flex min-w-0 flex-col gap-1">
         {brand && (
           <div className="flex min-w-0 items-center gap-1.5">
             <BrandLogo slug={brand.slug} label={brand.label} size={18} className="rounded-md" />
-            <p className="truncate text-xs font-semibold uppercase tracking-[0.04em] text-muted-foreground">
+            <p className="truncate text-[10px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">
               {brand.label}
             </p>
           </div>
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-          <h3 className="line-clamp-2 min-h-[2.75rem] break-words text-sm font-semibold leading-relaxed transition-colors group-hover:text-primary">
+          <h3 className="line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[1.35] transition-colors group-hover:text-primary">
             {node.title}
           </h3>
         </Link>
@@ -136,7 +136,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             </bdi>
           )}
         </div>
-        {summary && <p className="truncate text-xs text-muted-foreground">{summary}</p>}
+        {summary && <p className="truncate text-[11px] text-muted-foreground">{summary}</p>}
       </div>
     </article>
   );
