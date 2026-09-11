@@ -43,8 +43,9 @@
        policies, paymentSettings) query + `shopQueryOptions`.
 4. [ ] Brand Showcase section replacing `PromoBanners`: hero image stage, brand
        logo, title, description, product rail, count, CTA; alternating layout.
-5. [ ] Hero redesign: light image stage inside dark panel, arrows/dots/progress,
-       tagline from `homepage-hero` collection description.
+5. [x] Hero rebuilt from scratch in editorial "featured drop" style (dark stage,
+       oversized watermark, product cut-out, single primary CTA, dots + arrows).
+
 6. [x] Newsletter → honest "Deal alerts on WhatsApp" CTA (single instance);
        remove footer email form; document how to enable email capture
        (Storefront API `unauthenticated_write_customers`).
