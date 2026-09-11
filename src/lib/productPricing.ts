@@ -3,7 +3,7 @@ import type { ShopifyProduct } from "@/lib/shopify";
 export function formatPrice(amount: string | number, currencyCode: string) {
   const value = typeof amount === "string" ? parseFloat(amount) : amount;
   try {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: currencyCode,
       maximumFractionDigits: 2,
