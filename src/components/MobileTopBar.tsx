@@ -53,9 +53,9 @@ export function MobileTopBar({
             className="flex min-w-0 flex-1 items-center gap-2"
           >
             <img
-              src="/favicon.ico"
+              src="/logo.svg"
               alt={STORE_NAME}
-              width={32}
+              width={48}
               height={32}
               className="h-8 w-auto shrink-0 object-contain"
             />
