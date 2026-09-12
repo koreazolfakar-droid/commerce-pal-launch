@@ -3,11 +3,10 @@ import { DealSpotlight } from "@/components/DealSpotlight";
 import { useEffect, useState } from "react";
 import { ProductRail } from "@/components/ProductRail";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
 import { BenefitsBar, RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
-import { useHydrated } from "@/hooks/useHydrated";
 import { Newsletter } from "@/components/Newsletter";
 import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
 import { StoreLayout } from "@/components/StoreLayout";
@@ -25,17 +24,10 @@ import { productDiscountPercent } from "@/lib/shopify";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    const criticalData = Promise.all([
+    await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
-    ])
-      .then(() => true)
-      .catch(() => false);
-    const loaded = await Promise.race([
-      criticalData,
-      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 650)),
     ]);
-    return { loaded };
   },
   head: () => ({
     meta: [
@@ -133,11 +125,9 @@ function DealsCountdown() {
 
 function Index() {
   const { t, language } = useLanguage();
-  const { loaded: serverDataReady } = Route.useLoaderData();
-  const hydrated = useHydrated();
   const [showProductSections, setShowProductSections] = useState(false);
-  const { data: catalog } = useQuery(catalogQueryOptions());
-  const { data: collections = [] } = useQuery(collectionsQueryOptions());
+  const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
+  const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
     enabled: showProductSections,
@@ -151,22 +141,6 @@ function Index() {
     const timer = window.setTimeout(() => setShowProductSections(true), 350);
     return () => window.clearTimeout(timer);
   }, []);
-
-  if ((!serverDataReady && !hydrated) || !catalog) {
-    return (
-      <StoreLayout>
-        <div className="home-page" aria-busy="true" aria-label={t("catalogUpdating")}>
-          <div className="aspect-video w-full animate-pulse rounded-3xl bg-surface" />
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6" aria-hidden="true">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="aspect-square animate-pulse rounded-2xl bg-surface" />
-            ))}
-          </div>
-          <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
-        </div>
-      </StoreLayout>
-    );
-  }
 
   const products = catalog.products;
   const brands = buildShopifyBrands(catalog.brands, collections);
