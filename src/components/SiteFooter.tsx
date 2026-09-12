@@ -6,6 +6,7 @@ import { catalogQueryOptions, shopPoliciesQueryOptions } from "@/lib/queries";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { useLanguage } from "@/lib/i18n";
 import { STORE_CONFIG, STORE_NAME } from "@/lib/storeConfig";
+import { useHydrated } from "@/hooks/useHydrated";
 
 const SOCIALS = [
   { label: "Instagram", Icon: Instagram, href: STORE_CONFIG.socialInstagram },
@@ -18,6 +19,7 @@ export function SiteFooter() {
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { language, t } = useLanguage();
   const { data: policies } = useQuery(shopPoliciesQueryOptions());
+  const hydrated = useHydrated();
   const shopLinks = (catalog?.categories ?? []).slice(0, 6);
   const brandLinks = (catalog?.brands ?? []).slice(0, 5);
   const isAr = language === "ar";
@@ -167,7 +169,7 @@ export function SiteFooter() {
                   [policies?.termsOfService, "termsTitle"],
                 ] as const
               ).map(([policy, key]) =>
-                policy?.url ? (
+                hydrated && policy?.url ? (
                   <li key={key}>
                     <a
                       href={policy.url}
