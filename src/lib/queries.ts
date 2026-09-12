@@ -88,14 +88,18 @@ export const productsByHandlesQueryOptions = (handles: string[]) => {
   });
 };
 
+function normalizeSearchTerm(term: string) {
+  return term.trim().replace(/\s+/g, " ");
+}
+
 /**
  * Product-only search. Collections are query-independent and should come from
  * collectionsQueryOptions() so typing several terms does not refetch them.
  */
 export const productSearchQueryOptions = (term: string) => {
-  const normalized = term.trim();
+  const normalized = normalizeSearchTerm(term);
   return queryOptions({
-    queryKey: ["shopify", "product-search", normalized],
+    queryKey: ["shopify", "product-search", normalized.toLowerCase()],
     queryFn: () => fetchProducts(20, normalized),
     enabled: Boolean(normalized),
     staleTime: 60 * 1000,
@@ -103,13 +107,15 @@ export const productSearchQueryOptions = (term: string) => {
 };
 
 /** Legacy combined search kept for compatibility with any remaining consumers. */
-export const storefrontSearchQueryOptions = (term: string) =>
-  queryOptions({
-    queryKey: ["shopify", "search", term.trim()],
-    queryFn: () => searchStorefront(term),
-    enabled: Boolean(term.trim()),
+export const storefrontSearchQueryOptions = (term: string) => {
+  const normalized = normalizeSearchTerm(term);
+  return queryOptions({
+    queryKey: ["shopify", "search", normalized.toLowerCase()],
+    queryFn: () => searchStorefront(normalized),
+    enabled: Boolean(normalized),
     staleTime: 60 * 1000,
   });
+};
 
 export const shopPoliciesQueryOptions = () =>
   queryOptions({
