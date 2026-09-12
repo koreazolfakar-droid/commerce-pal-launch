@@ -1,0 +1,1 @@
+Space Call category icon assets are rendered as a compressed WebP sprite. Do not replace with SVG line icons.
