@@ -31,18 +31,19 @@ export const Route = createFileRoute("/category/$slug")({
       };
     }
     const label = loaderData?.label ?? categoryDefinition(params.slug)?.label ?? "Category";
-    const description = `Shop ${label.toLowerCase()} at ${STORE_NAME} with live pricing, stock and secure checkout.`;
+    const title = `${label} in Lebanon | ${STORE_NAME}`;
+    const description = `Shop ${label.toLowerCase()} in Lebanon from ${STORE_NAME} with live pricing, stock and secure Shopify checkout.`;
     const path = `/category/${params.slug}`;
     return {
       meta: [
-        { title: `${label} — ${STORE_NAME}` },
+        { title },
         { name: "description", content: description },
-        { property: "og:title", content: `${label} — ${STORE_NAME}` },
+        { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: `${label} — ${STORE_NAME}` },
+        { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
       ],
       links: [canonicalLink(path)],
