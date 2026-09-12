@@ -4,6 +4,7 @@ import { Check, Copy, Scale, Trash2, X, Sparkles } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
+import { OPEN_STORE_AI_EVENT } from "@/components/AIAssistant";
 import { ProductImage } from "@/components/ProductImage";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
@@ -132,6 +133,8 @@ function ComparePage() {
     }
   };
 
+  const openAiComparison = () => window.dispatchEvent(new Event(OPEN_STORE_AI_EVENT));
+
   return (
     <StoreLayout>
       <div className="mx-auto w-full max-w-7xl px-4 py-8 lg:py-12">
@@ -151,6 +154,9 @@ function ComparePage() {
               <span className="inline-flex items-center gap-1.5 rounded-full border bg-surface px-3 py-2 text-xs font-semibold text-muted-foreground">
                 <Sparkles className="h-3.5 w-3.5 text-primary" /> {winningRows} differing specs
               </span>
+              <Button className="rounded-full" onClick={openAiComparison}>
+                <Sparkles className="h-4 w-4" /> Ask AI to compare
+              </Button>
               <Button variant="outline" className="rounded-full" onClick={copyShareLink}>
                 <Copy className="h-4 w-4" /> Share
               </Button>
