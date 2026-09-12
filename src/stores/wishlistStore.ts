@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+import { trackHandleEvent } from "@/lib/analytics";
+
 interface WishlistState {
   handles: string[];
   toggle: (handle: string) => void;
@@ -12,11 +14,15 @@ export const useWishlistStore = create<WishlistState>()(
     (set, get) => ({
       handles: [],
       toggle: (handle) =>
-        set((state) => ({
-          handles: state.handles.includes(handle)
-            ? state.handles.filter((item) => item !== handle)
-            : [...state.handles, handle],
-        })),
+        set((state) => {
+          const adding = !state.handles.includes(handle);
+          if (adding) trackHandleEvent("add_to_wishlist", handle);
+          return {
+            handles: adding
+              ? [...state.handles, handle]
+              : state.handles.filter((item) => item !== handle),
+          };
+        }),
       has: (handle) => get().handles.includes(handle),
     }),
     {
