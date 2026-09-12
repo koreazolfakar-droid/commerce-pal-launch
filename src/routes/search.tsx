@@ -1,12 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
+import { trackEvent } from "@/lib/analytics";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
+import { productPriceBounds } from "@/lib/productPricing";
 import { catalogQueryOptions, storefrontSearchQueryOptions } from "@/lib/queries";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { buildCatalogIndex } from "@/lib/taxonomy";
 
 export const Route = createFileRoute("/search")({
   validateSearch: parseProductSearch,
@@ -46,7 +50,14 @@ function SearchPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { data: nativeSearch } = useQuery(storefrontSearchQueryOptions(filters.q ?? ""));
   const sourceProducts = filters.q?.trim() ? (nativeSearch?.products ?? []) : catalog.products;
-  const products = applyFilters(sourceProducts, catalog, { ...filters, q: undefined });
+  const sourceIndex = filters.q?.trim() ? buildCatalogIndex(sourceProducts) : catalog;
+  const products = applyFilters(sourceProducts, sourceIndex, { ...filters, q: undefined });
+  const price = productPriceBounds(sourceProducts);
+
+  useEffect(() => {
+    const term = filters.q?.trim();
+    if (term) trackEvent("search", { search_term: term });
+  }, [filters.q]);
 
   return (
     <StoreLayout>
@@ -54,12 +65,12 @@ function SearchPage() {
         title={filters.q ? `Results for “${filters.q}”` : "Search products"}
         description={`${products.length} matching product${products.length === 1 ? "" : "s"} from the live Shopify catalogue.`}
         products={products}
-        total={catalog.products.length}
+        total={sourceProducts.length}
         filters={filters}
-        facets={{ categories: catalog.categories, brands: catalog.brands }}
-        priceMin={catalog.priceMin}
-        priceMax={catalog.priceMax}
-        currency={catalog.currency}
+        facets={{ categories: sourceIndex.categories, brands: sourceIndex.brands }}
+        priceMin={price.min}
+        priceMax={price.max}
+        currency={price.currency}
         onChange={(patch: Partial<ProductFilters>) =>
           navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) })
         }
