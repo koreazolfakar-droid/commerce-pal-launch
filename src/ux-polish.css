@@ -207,29 +207,108 @@
 
 /* ---------- Categories ---------- */
 .category-icon-rail {
-  gap: 0.65rem;
-  grid-auto-columns: minmax(6.25rem, 1fr);
-  padding-block: 0.25rem 0.75rem;
+  grid-auto-columns: 5.75rem;
+  gap: 0.625rem;
+  margin-inline: -0.25rem;
+  padding: 0.25rem 0.25rem 0.75rem;
+  scroll-padding-inline: 0.25rem;
 }
 
-.category-icon-rail > a {
-  min-height: 6.5rem;
-  justify-content: center;
+.category-icon-card {
+  display: flex;
+  min-height: 7.25rem;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.625rem;
+  padding: 0.625rem 0.35rem 0.5rem;
   border: 1px solid transparent;
-  border-radius: 1rem;
-  padding: 0.75rem 0.4rem;
+  border-radius: 1.25rem;
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.category-icon-rail > a:hover {
-  border-color: color-mix(in oklab, var(--color-primary) 20%, var(--color-border));
-  background: var(--color-card);
-  box-shadow: var(--shadow-card);
+.category-icon-badge {
+  display: grid;
+  width: 3.75rem;
+  height: 3.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--color-primary);
+  border: 1px solid color-mix(in oklab, var(--color-primary) 16%, var(--color-border));
+  border-radius: 1.2rem;
+  background:
+    linear-gradient(145deg, color-mix(in oklab, var(--color-primary) 13%, var(--color-card)), var(--color-card));
+  box-shadow:
+    0 10px 24px -18px color-mix(in oklab, var(--color-primary) 65%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 72%, transparent);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.category-icon-rail > a > span:first-child {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 1rem;
+.category-icon-label {
+  display: -webkit-box;
+  min-height: 2.25rem;
+  overflow: hidden;
+  color: var(--color-foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.category-icon-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--color-primary) 18%, var(--color-border));
+  background: color-mix(in oklab, var(--color-card) 94%, var(--color-primary));
+  box-shadow: 0 14px 30px -24px color-mix(in oklab, var(--color-foreground) 38%, transparent);
+}
+
+.category-icon-card:hover .category-icon-badge {
+  transform: scale(1.04);
+  color: var(--color-primary-foreground);
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  box-shadow: 0 14px 28px -16px color-mix(in oklab, var(--color-primary) 78%, transparent);
+}
+
+@media (min-width: 640px) {
+  .category-icon-rail {
+    grid-auto-columns: minmax(6.5rem, 1fr);
+    gap: 0.75rem;
+  }
+
+  .category-icon-card {
+    min-height: 7.75rem;
+    padding-top: 0.75rem;
+  }
+
+  .category-icon-badge {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .category-icon-label {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .category-icon-card,
+  .category-icon-badge {
+    transition: none;
+  }
 }
 
 /* ---------- Brand rail ---------- */
