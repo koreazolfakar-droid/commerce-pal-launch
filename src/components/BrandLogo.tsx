@@ -12,6 +12,13 @@ type BrandLogoProps = {
   wordmark?: boolean;
 };
 
+function isValidImageSource(value: string | undefined): value is string {
+  if (!value) return false;
+  const source = value.trim();
+  if (!source || source.startsWith("<") || source.includes("<svg")) return false;
+  return /^(?:https?:\/\/|\/|data:image\/)/i.test(source);
+}
+
 export function BrandLogo({ size = 40, ...props }: BrandLogoProps) {
   // Reset loading/error state when a card is reused for a different brand or source.
   return (
@@ -31,12 +38,16 @@ function LogoImage({
   imageUrl,
   wordmark = false,
 }: BrandLogoProps) {
-  const sources = useMemo(
-    () => [
-      ...new Set([...(imageUrl ? [imageUrl] : []), ...brandLogoSources(slug, label, size * 2)]),
-    ],
-    [imageUrl, slug, label, size],
-  );
+  const sources = useMemo(() => {
+    // Known brands always prefer bundled assets. Shopify collection imagery is only a
+    // fallback, which prevents stale/broken collection images or raw SVG strings from
+    // replacing the verified local logo.
+    const candidates = [
+      ...brandLogoSources(slug, label, size * 2),
+      ...(isValidImageSource(imageUrl) ? [imageUrl] : []),
+    ];
+    return [...new Set(candidates.filter(isValidImageSource))];
+  }, [imageUrl, slug, label, size]);
   const [attempt, setAttempt] = useState(0);
   const [loadedSource, setLoadedSource] = useState<string>();
   const imgRef = useRef<HTMLImageElement>(null);
