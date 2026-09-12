@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Check, Copy, Loader2, Scale, Sparkles, Trash2, X } from "lucide-react";
-import { Fragment, useEffect, useMemo } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { OPEN_STORE_AI_EVENT } from "@/components/AIAssistant";
+import { AIPhoneComparison } from "@/components/AIPhoneComparison";
 import { ProductImage } from "@/components/ProductImage";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,8 @@ function ComparePage() {
   const remove = useCompareStore((state) => state.remove);
   const clear = useCompareStore((state) => state.clear);
   const replace = useCompareStore((state) => state.replace);
+  const [aiRequested, setAiRequested] = useState(false);
+  const aiSectionRef = useRef<HTMLDivElement>(null);
 
   const sharedHandles = useMemo(() => normalizedHandles(sharedProducts), [sharedProducts]);
   const requestedHandles = useMemo(
@@ -180,7 +182,18 @@ function ComparePage() {
     }
   };
 
-  const openAiComparison = () => window.dispatchEvent(new Event(OPEN_STORE_AI_EVENT));
+  const openAiComparison = () => {
+    setAiRequested(true);
+    window.setTimeout(
+      () => aiSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      0,
+    );
+  };
+
+  const clearComparison = () => {
+    setAiRequested(false);
+    clear();
+  };
 
   const loading = hydrated && requestedHandles.length > 0 && isPending;
 
@@ -213,7 +226,7 @@ function ComparePage() {
               <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
                 {products.length >= 2 && (
                   <Button className="col-span-2 rounded-xl sm:col-span-1" onClick={openAiComparison}>
-                    <Sparkles className="h-4 w-4" /> Ask AI to compare
+                    <Sparkles className="h-4 w-4" /> AI expert research
                   </Button>
                 )}
                 <Button variant="outline" className="rounded-xl" onClick={copyShareLink}>
@@ -222,7 +235,7 @@ function ComparePage() {
                 <Button
                   variant="ghost"
                   className="rounded-xl text-muted-foreground"
-                  onClick={clear}
+                  onClick={clearComparison}
                 >
                   <Trash2 className="h-4 w-4" /> Clear
                 </Button>
@@ -234,8 +247,7 @@ function ComparePage() {
             <div className="flex flex-wrap items-center gap-2 border-t bg-surface/60 px-5 py-3 text-xs font-medium text-muted-foreground sm:px-6 lg:px-8">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
               <span>
-                {differingRows} specification{differingRows === 1 ? "" : "s"} differ across the
-                selected phones.
+                {differingRows} specification{differingRows === 1 ? "" : "s"} differ in the store data. AI Expert Research can verify deeper specifications, advantages and drawbacks from live web sources.
               </span>
             </div>
           )}
@@ -343,6 +355,10 @@ function ComparePage() {
               </div>
             </section>
 
+            <div ref={aiSectionRef}>
+              <AIPhoneComparison products={products} active={aiRequested} />
+            </div>
+
             {rows.length === 0 ? (
               <div className="mt-6 rounded-2xl border bg-card p-6 text-center text-sm text-muted-foreground sm:mt-8">
                 No comparable specifications were found for the selected product data.
@@ -352,10 +368,10 @@ function ComparePage() {
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
                   <div>
                     <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">
-                      Specifications
+                      Store specifications
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Differences are highlighted automatically.
+                      Product data supplied by the store is kept separate from the AI-researched table above.
                     </p>
                   </div>
                   {products.length === 1 && (
