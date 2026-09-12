@@ -4,6 +4,7 @@ import {
   Copy,
   CreditCard,
   Download,
+  ExternalLink,
   FileText,
   LoaderCircle,
   MapPin,
@@ -42,6 +43,18 @@ type SharedLocation = {
   longitude: number;
   accuracy: number;
 };
+
+type LocationErrorReason =
+  | "unsupported"
+  | "insecure"
+  | "permission_denied"
+  | "unavailable"
+  | "timeout"
+  | "unknown";
+
+type LocationResult =
+  | { location: SharedLocation; error: null }
+  | { location: null; error: LocationErrorReason };
 
 const EMPTY_DETAILS: CustomerDetails = {
   name: "",
@@ -83,27 +96,63 @@ function googleMapsUrl(location: SharedLocation) {
   return `https://www.google.com/maps?q=${latitude},${longitude}`;
 }
 
-function getCurrentLocation(): Promise<SharedLocation | null> {
-  if (typeof navigator === "undefined" || !navigator.geolocation) {
-    return Promise.resolve(null);
-  }
+function googleMapsEmbedUrl(location: SharedLocation) {
+  const latitude = location.latitude.toFixed(6);
+  const longitude = location.longitude.toFixed(6);
+  return `https://maps.google.com/maps?q=${latitude},${longitude}&z=17&output=embed`;
+}
 
+function geolocationErrorReason(error: GeolocationPositionError): LocationErrorReason {
+  if (error.code === error.PERMISSION_DENIED) return "permission_denied";
+  if (error.code === error.POSITION_UNAVAILABLE) return "unavailable";
+  if (error.code === error.TIMEOUT) return "timeout";
+  return "unknown";
+}
+
+function requestCurrentPosition(options: PositionOptions): Promise<LocationResult> {
   return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
+          location: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          },
+          error: null,
         });
       },
-      () => resolve(null),
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000,
-      },
+      (error) => resolve({ location: null, error: geolocationErrorReason(error) }),
+      options,
     );
+  });
+}
+
+async function getCurrentLocation(): Promise<LocationResult> {
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
+    return { location: null, error: "unsupported" };
+  }
+
+  if (typeof window !== "undefined" && !window.isSecureContext) {
+    return { location: null, error: "insecure" };
+  }
+
+  const precise = await requestCurrentPosition({
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 30000,
+  });
+
+  if (precise.location || precise.error === "permission_denied") {
+    return precise;
+  }
+
+  // Android browsers/WebViews can time out while waiting for a high-accuracy GPS fix.
+  // Retry with a cached/network-assisted fix before declaring location unavailable.
+  return requestCurrentPosition({
+    enableHighAccuracy: false,
+    timeout: 8000,
+    maximumAge: 300000,
   });
 }
 
@@ -122,7 +171,7 @@ export function WhatsAppCheckoutForm({
   const [shareLocation, setShareLocation] = useState(true);
   const [location, setLocation] = useState<SharedLocation | null>(null);
   const [locating, setLocating] = useState(false);
-  const [locationFailed, setLocationFailed] = useState(false);
+  const [locationError, setLocationError] = useState<LocationErrorReason | null>(null);
   const [reference, setReference] = useState<string | null>(null);
   const [referenceCreatedAt, setReferenceCreatedAt] = useState<Date | null>(null);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
@@ -145,13 +194,23 @@ export function WhatsAppCheckoutForm({
         landmarkPlaceholder: "مثال: قرب الساحة الرئيسية",
         locationTitle: "الموقع الحالي",
         locationDescription:
-          "سنرفق رابط موقعك الحالي تلقائيًا مع رسالة واتساب عند الإرسال. سيطلب المتصفح إذنك أولًا.",
+          "اضغط تحديد موقعي وسنطلب إذن الموقع من جهازك، ثم نعرضه على خريطة حية ونرفق رابطه مع طلب واتساب.",
         attachLocation: "إرفاق موقعي تلقائيًا",
         detectLocation: "تحديد موقعي الآن",
         locating: "جارٍ تحديد الموقع...",
         locationReady: "تم تحديد الموقع وسيُرفق مع الطلب.",
-        locationUnavailable: "تعذر تحديد الموقع. يمكنك متابعة إرسال الطلب بدون الموقع.",
+        locationPermissionDenied:
+          "صلاحية الموقع مرفوضة. فعّل Location لهذا الموقع من إعدادات المتصفح ثم اضغط تحديد موقعي من جديد.",
+        locationUnavailable:
+          "تعذر الحصول على إشارة الموقع. تأكد أن خدمة Location/GPS مفعّلة ثم أعد المحاولة.",
+        locationTimeout: "استغرق تحديد الموقع وقتًا طويلًا. اقترب من نافذة أو فعّل GPS ثم أعد المحاولة.",
+        locationUnsupported: "هذا المتصفح لا يدعم تحديد الموقع. جرّب Chrome أو متصفحًا حديثًا.",
+        locationInsecure: "تحديد الموقع يحتاج اتصال HTTPS آمنًا. افتح النسخة الآمنة من الموقع ثم أعد المحاولة.",
+        locationUnknown: "تعذر تحديد الموقع الآن. أعد المحاولة أو أرسل الطلب بدون الموقع.",
         locationLabel: "الموقع على الخريطة",
+        mapPreview: "معاينة الموقع الحية",
+        openMap: "فتح في Google Maps",
+        accuracy: "دقة الموقع",
         notes: "ملاحظات الطلب (اختياري)",
         notesPlaceholder: "لون مفضل، وقت مناسب للتوصيل، أو أي ملاحظة",
         paymentTitle: "طريقة الدفع",
@@ -190,13 +249,22 @@ export function WhatsAppCheckoutForm({
         landmarkPlaceholder: "e.g. Near the main square",
         locationTitle: "Current location",
         locationDescription:
-          "We’ll automatically attach your current location to the WhatsApp order when you send it. Your browser will ask for permission first.",
+          "Tap detect location, approve the browser permission, and we’ll show your position on a live map and attach it to WhatsApp.",
         attachLocation: "Attach my location automatically",
         detectLocation: "Detect my location now",
         locating: "Detecting location...",
         locationReady: "Location detected and will be attached to the order.",
-        locationUnavailable: "We couldn't detect your location. You can still send the order without it.",
+        locationPermissionDenied:
+          "Location permission is blocked. Allow Location for this site in your browser settings, then try again.",
+        locationUnavailable: "We couldn't get a location signal. Turn on Location/GPS and try again.",
+        locationTimeout: "Location detection timed out. Turn on GPS or move to a clearer area, then try again.",
+        locationUnsupported: "This browser doesn't support location. Please try Chrome or another modern browser.",
+        locationInsecure: "Location requires a secure HTTPS connection. Open the secure site and try again.",
+        locationUnknown: "We couldn't detect your location right now. Try again or send the order without it.",
         locationLabel: "Map location",
+        mapPreview: "Live location preview",
+        openMap: "Open in Google Maps",
+        accuracy: "Location accuracy",
         notes: "Order notes (optional)",
         notesPlaceholder: "Preferred colour, delivery time, or any request",
         paymentTitle: "Payment method",
@@ -251,19 +319,38 @@ export function WhatsAppCheckoutForm({
 
   const locateCustomer = async () => {
     setLocating(true);
-    setLocationFailed(false);
+    setLocationError(null);
     const result = await getCurrentLocation();
     setLocating(false);
 
-    if (result) {
-      setLocation(result);
+    if (result.location) {
+      setLocation(result.location);
       setSubmitted(false);
-      return result;
+      return result.location;
     }
 
     setLocation(null);
-    setLocationFailed(true);
+    setLocationError(result.error);
     return null;
+  };
+
+  const locationErrorMessage = () => {
+    switch (locationError) {
+      case "permission_denied":
+        return copy.locationPermissionDenied;
+      case "unavailable":
+        return copy.locationUnavailable;
+      case "timeout":
+        return copy.locationTimeout;
+      case "unsupported":
+        return copy.locationUnsupported;
+      case "insecure":
+        return copy.locationInsecure;
+      case "unknown":
+        return copy.locationUnknown;
+      default:
+        return "";
+    }
   };
 
   const validateDetails = () => {
@@ -537,7 +624,7 @@ export function WhatsAppCheckoutForm({
               checked={shareLocation}
               onChange={(event) => {
                 setShareLocation(event.target.checked);
-                setLocationFailed(false);
+                setLocationError(null);
                 setSubmitted(false);
               }}
               className="mt-1 h-4 w-4 accent-primary"
@@ -554,28 +641,61 @@ export function WhatsAppCheckoutForm({
           </label>
 
           {shareLocation ? (
-            <div className="mt-3 flex flex-wrap items-center gap-3 ps-7">
-              <button
-                type="button"
-                onClick={locateCustomer}
-                disabled={locating}
-                className="inline-flex items-center gap-2 rounded-full border bg-background px-3.5 py-2 text-xs font-bold transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
-              >
-                <MapPin className="h-3.5 w-3.5" />
-                {locating ? copy.locating : copy.detectLocation}
-              </button>
+            <div className="mt-3 space-y-3 ps-7">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={locateCustomer}
+                  disabled={locating}
+                  className="inline-flex items-center gap-2 rounded-full border bg-background px-3.5 py-2 text-xs font-bold transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
+                >
+                  {locating ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+                  {locating ? copy.locating : copy.detectLocation}
+                </button>
 
-              {location ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {copy.locationReady}
-                </span>
+                {location ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {copy.locationReady}
+                  </span>
+                ) : null}
+              </div>
+
+              {locationError ? (
+                <p role="alert" className="text-xs font-medium leading-5 text-amber-700 dark:text-amber-300">
+                  {locationErrorMessage()}
+                </p>
               ) : null}
 
-              {locationFailed ? (
-                <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                  {copy.locationUnavailable}
-                </span>
+              {location ? (
+                <div className="overflow-hidden rounded-2xl border bg-background shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3.5 py-3">
+                    <div>
+                      <p className="text-xs font-extrabold text-foreground">{copy.mapPreview}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        {copy.accuracy}: ±{Math.max(1, Math.round(location.accuracy))} m
+                      </p>
+                    </div>
+                    <a
+                      href={googleMapsUrl(location)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition hover:bg-muted"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      {copy.openMap}
+                    </a>
+                  </div>
+                  <iframe
+                    key={`${location.latitude.toFixed(6)}-${location.longitude.toFixed(6)}`}
+                    src={googleMapsEmbedUrl(location)}
+                    title={copy.mapPreview}
+                    className="h-64 w-full border-0 sm:h-72"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allowFullScreen
+                  />
+                </div>
               ) : null}
             </div>
           ) : null}
