@@ -1,6 +1,7 @@
 import { Bot, MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { askGeminiShoppingAdvisor } from "@/lib/ai.functions";
@@ -9,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/ProductCard";
 import { productsByHandlesQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { useCompareStore } from "@/stores/compareStore";
 
 type Message = { role: "user" | "assistant"; text: string };
 
@@ -18,6 +20,40 @@ export function AIAssistant({ context = "" }: { context?: string }) {
   const [busy, setBusy] = useState(false);
   const [recommendationHandles, setRecommendationHandles] = useState<string[]>([]);
   const [sources, setSources] = useState<Array<{ title: string; url: string }>>([]);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const compareHandles = useCompareStore((state) => state.handles);
+  const isComparePage = pathname === "/compare";
+  const { data: comparedProducts = [] } = useQuery(
+    productsByHandlesQueryOptions(isComparePage ? compareHandles : []),
+  );
+  const comparisonContext = useMemo(() => {
+    if (!isComparePage || comparedProducts.length === 0) return "";
+    return comparedProducts
+      .map((product) => {
+        const node = product.node;
+        const price = node.variants.edges[0]?.node.price ?? node.priceRange.minVariantPrice;
+        const options = node.variants.edges[0]?.node.selectedOptions
+          ?.filter((option) => option.value !== "Default Title")
+          .map((option) => `${option.name}: ${option.value}`)
+          .join(", ");
+        return [
+          `Compared product: ${node.title}`,
+          `Handle: ${node.handle}`,
+          `Brand: ${node.vendor || "Not provided"}`,
+          `Type: ${node.productType || "Not provided"}`,
+          `Price: ${price.amount} ${price.currencyCode}`,
+          `Availability: ${node.availableForSale ? "In stock" : "Out of stock"}`,
+          options ? `Selected options: ${options}` : "",
+          node.description ? `Description: ${node.description.slice(0, 700)}` : "",
+          node.tags?.length ? `Tags: ${node.tags.slice(0, 20).join(", ")}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n");
+      })
+      .join("\n\n")
+      .slice(0, 5000);
+  }, [comparedProducts, isComparePage]);
+  const effectiveContext = context || comparisonContext;
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -25,12 +61,19 @@ export function AIAssistant({ context = "" }: { context?: string }) {
     },
   ]);
   const suggested = useMemo(
-    () => [
-      "Find the best phone for my budget",
-      "Compare the best options",
-      "What should I buy with this phone?",
-    ],
-    [],
+    () =>
+      isComparePage && compareHandles.length > 0
+        ? [
+            "Which of these phones is the best overall?",
+            "Compare camera, battery and performance",
+            "Which one is the best value for money?",
+          ]
+        : [
+            "Find the best phone for my budget",
+            "Compare the best options",
+            "What should I buy with this phone?",
+          ],
+    [compareHandles.length, isComparePage],
   );
   const { data: recommendationProducts = [] } = useQuery(
     productsByHandlesQueryOptions(recommendationHandles),
@@ -43,7 +86,9 @@ export function AIAssistant({ context = "" }: { context?: string }) {
     setMessages((items) => [...items, { role: "user", text: message }]);
     setBusy(true);
     try {
-      const result = await askGeminiShoppingAdvisor({ data: { message, productContext: context } });
+      const result = await askGeminiShoppingAdvisor({
+        data: { message, productContext: effectiveContext },
+      });
       setMessages((items) => [...items, { role: "assistant", text: result.answer }]);
       setRecommendationHandles(result.recommendations?.map((item) => item.handle) ?? []);
       setSources(result.sources ?? []);
@@ -83,7 +128,11 @@ export function AIAssistant({ context = "" }: { context?: string }) {
               </span>
               <div>
                 <p className="text-sm font-extrabold">{STORE_NAME} AI</p>
-                <p className="text-[10px] text-muted-foreground">Real store-aware assistant</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {isComparePage && compareHandles.length > 0
+                    ? "Comparison-aware shopping assistant"
+                    : "Real store-aware assistant"}
+                </p>
               </div>
             </div>
             <Button
@@ -167,7 +216,11 @@ export function AIAssistant({ context = "" }: { context?: string }) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 maxLength={1200}
-                placeholder="Ask about phones, specs or deals…"
+                placeholder={
+                  isComparePage && compareHandles.length > 0
+                    ? "Ask which compared phone is better…"
+                    : "Ask about phones, specs or deals…"
+                }
                 aria-label="Your question for the shopping assistant"
                 className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm outline-none"
               />
