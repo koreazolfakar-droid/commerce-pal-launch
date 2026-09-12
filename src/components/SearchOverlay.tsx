@@ -1,13 +1,15 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Search, X } from "lucide-react";
+import { ArrowRight, Loader2, Search, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { trackEvent, trackProductEvent } from "@/lib/analytics";
 import { cdnImage } from "@/lib/image";
-import { formatPrice, searchStorefront } from "@/lib/shopify";
+import { formatPrice, predictiveStorefront } from "@/lib/shopify";
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const navigate = useNavigate();
   const [term, setTerm] = useState("");
   const [debounced, setDebounced] = useState("");
 
@@ -26,9 +28,10 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   }, [open, onClose]);
 
   const { data, isFetching } = useQuery({
-    queryKey: ["storefront-search", debounced],
-    queryFn: () => searchStorefront(debounced),
+    queryKey: ["storefront-predictive-search", debounced],
+    queryFn: () => predictiveStorefront(debounced),
     enabled: open && debounced.trim().length > 1,
+    staleTime: 30_000,
   });
 
   const suggestions = useMemo(
@@ -37,6 +40,14 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   );
 
   if (!open) return null;
+
+  const submitSearch = () => {
+    const query = term.trim();
+    if (!query) return;
+    trackEvent("search", { search_term: query });
+    onClose();
+    navigate({ to: "/search", search: { q: query } });
+  };
 
   return (
     <div
@@ -53,6 +64,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             autoFocus
             value={term}
             onChange={(event) => setTerm(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") submitSearch();
+            }}
             placeholder="Search for products..."
             className="border-0 shadow-none focus-visible:ring-0"
             aria-label="Search products"
@@ -123,7 +137,10 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                           <Link
                             to="/product/$handle"
                             params={{ handle: node.handle }}
-                            onClick={onClose}
+                            onClick={() => {
+                              trackProductEvent("select_item", product, { item_list_name: "predictive_search" });
+                              onClose();
+                            }}
                             className="flex items-center gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-surface"
                           >
                             <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-image-stage">
@@ -160,6 +177,15 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                   </ul>
                 </section>
               )}
+
+              <button
+                type="button"
+                onClick={submitSearch}
+                className="press flex min-h-11 w-full items-center justify-center gap-2 rounded-full border bg-background px-4 text-sm font-bold hover:border-primary hover:text-primary"
+              >
+                View all results
+                <ArrowRight className="h-4 w-4" />
+              </button>
             </div>
           )}
         </div>
