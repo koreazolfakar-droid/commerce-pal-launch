@@ -19,6 +19,7 @@ import {
   bestSellingQueryOptions,
   newestQueryOptions,
   catalogQueryOptions,
+  navigationCatalogQueryOptions,
   collectionsQueryOptions,
   showcaseCollectionsQueryOptions,
   shopPoliciesQueryOptions,
@@ -28,13 +29,14 @@ import type { CatalogFacet, CatalogIndex } from "@/lib/taxonomy";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    // The first paint only needs the catalog and collection navigation/hero data.
-    // Secondary product rails are warmed in parallel but never delay the route response.
+    // The first paint only needs light navigation metadata plus collections.
+    // Rich product variants/images are warmed in parallel for sections below the fold.
     const critical = Promise.all([
-      context.queryClient.ensureQueryData(catalogQueryOptions()),
+      context.queryClient.ensureQueryData(navigationCatalogQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
     ]);
 
+    void context.queryClient.prefetchQuery(catalogQueryOptions());
     void context.queryClient.prefetchQuery(bestSellingQueryOptions());
     void context.queryClient.prefetchQuery(newestQueryOptions());
     void context.queryClient.prefetchQuery(showcaseCollectionsQueryOptions());
@@ -149,27 +151,30 @@ function promoSlots(catalog: CatalogIndex, productOf: (facet: CatalogFacet, kind
 
 function Index() {
   const { t, language } = useLanguage();
+  const { data: navigationCatalog } = useSuspenseQuery(navigationCatalogQueryOptions());
+  const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: newItems = [] } = useQuery(newestQueryOptions());
-  const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: bestSellers = [] } = useQuery(bestSellingQueryOptions());
   const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
 
-  const products = catalog.products;
-  const brands = buildShopifyBrands(catalog.brands, collections);
+  const products = catalog?.products ?? [];
+  const brands = buildShopifyBrands(navigationCatalog.brands, collections);
   const deals = products.filter((product) => productDiscountPercent(product) !== null);
   const best = bestSellers;
-  const firstOf = (facet: CatalogFacet, kind: "brand" | "category") => products.find((p) => kind === "brand" ? catalog.brandOf.get(p.node.handle)?.slug === facet.slug : (catalog.categoryOf.get(p.node.handle) ?? []).includes(facet.slug));
-  const slots = promoSlots(catalog, firstOf);
+  const firstOf = catalog
+    ? (facet: CatalogFacet, kind: "brand" | "category") => products.find((p) => kind === "brand" ? catalog.brandOf.get(p.node.handle)?.slug === facet.slug : (catalog.categoryOf.get(p.node.handle) ?? []).includes(facet.slug))
+    : () => undefined;
+  const slots = catalog ? promoSlots(catalog, firstOf) : [];
 
   return (
     <StoreLayout>
       <div className="home-page">
-        {products.length === 0 ? (
+        {navigationCatalog.products.length === 0 ? (
           <div className="px-4"><div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center"><h1 className="text-2xl font-bold">{t("welcomeStore")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("catalogUpdating")}</p></div></div>
         ) : (
           <>
             <ShopifyHeroCollections collections={collections} />
-            <CategorySection catalog={catalog} collections={collections} />
+            <CategorySection catalog={navigationCatalog} collections={collections} />
             <TopBrands brands={brands} />
 
             {best.length > 0 && <section data-testid="best-sellers"><SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} /><ProductRail products={best} storageKey="space-cell-home-best-sellers-view" /></section>}
@@ -190,10 +195,10 @@ function Index() {
             )}
 
             <BundleSection collections={collections} />
-            <BrandShowcase catalog={catalog} collections={collections} />
-            <PromoBanners slots={slots} />
+            {catalog && <BrandShowcase catalog={catalog} collections={collections} />}
+            {catalog && <PromoBanners slots={slots} />}
             <ServicesStrip />
-            <RecentlyViewed products={products} />
+            {catalog && <RecentlyViewed products={products} />}
             <WhyShop />
             <Newsletter />
 
