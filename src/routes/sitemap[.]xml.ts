@@ -167,7 +167,10 @@ export const Route = createFileRoute("/sitemap.xml")({
           status: 200,
           headers: {
             "Content-Type": "application/xml; charset=utf-8",
-            "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
+            // Data integrity wins here: the underlying Storefront requests keep a
+            // short, webhook-invalidated cache, while crawlers never receive a
+            // day-old sitemap containing a product Shopify has unpublished.
+            "Cache-Control": "no-store, max-age=0",
             "X-Robots-Tag": "noindex, follow",
           },
         });
