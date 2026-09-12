@@ -1,7 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Loader2, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
@@ -16,7 +16,6 @@ import {
   type ShopifyCollection,
   type ShopifyProduct,
 } from "@/lib/shopify";
-import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 
 function cleanTabTitle(collection: ShopifyCollection) {
@@ -97,14 +96,6 @@ function HeroProductCard({ product }: { product: ShopifyProduct }) {
 export function ShopifyHeroCollections({ collections }: { collections: ShopifyCollection[] }) {
   const { t } = useLanguage();
   const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
-  const [activeHandle, setActiveHandle] = useState(candidates[0]?.handle ?? "");
-
-  useEffect(() => {
-    if (!candidates.length) return;
-    if (!candidates.some((collection) => collection.handle === activeHandle)) {
-      setActiveHandle(candidates[0]!.handle);
-    }
-  }, [activeHandle, candidates]);
 
   const queries = useQueries({
     queries: candidates.map((collection) => collectionQueryOptions(collection.handle)),
@@ -112,12 +103,8 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
 
   if (!candidates.length) return null;
 
-  const activeIndex = Math.max(
-    0,
-    candidates.findIndex((collection) => collection.handle === activeHandle),
-  );
-  const fallback = candidates[activeIndex] ?? candidates[0]!;
-  const activeQuery = queries[activeIndex];
+  const fallback = candidates[0]!;
+  const activeQuery = queries[0];
   const result = activeQuery?.data;
   const collection = result?.collection ?? fallback;
   const products = result?.products ?? [];
@@ -128,41 +115,9 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
     <section
       className="min-w-0"
       data-testid="collection-hero-tabs"
-      aria-label="Featured collections"
+      aria-label="Featured collection"
     >
-      <div
-        className="scroll-rail flex gap-7 border-b border-border/70 px-1 sm:gap-10"
-        role="tablist"
-        aria-label="Featured collections"
-      >
-        {candidates.map((candidate) => {
-          const active = candidate.handle === activeHandle;
-          return (
-            <button
-              key={candidate.handle}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              aria-controls={`home-hero-panel-${candidate.handle}`}
-              onClick={() => setActiveHandle(candidate.handle)}
-              className={cn(
-                "relative min-h-12 shrink-0 whitespace-nowrap px-1 pb-3 pt-2 text-[0.95rem] font-semibold text-muted-foreground transition-colors hover:text-foreground sm:min-h-14 sm:text-lg",
-                active &&
-                  "font-extrabold text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary",
-              )}
-            >
-              {cleanTabTitle(candidate)}
-            </button>
-          );
-        })}
-      </div>
-
-      <div
-        id={`home-hero-panel-${collection.handle}`}
-        role="tabpanel"
-        className="mt-4 min-w-0 sm:mt-6"
-        aria-label={collection.title}
-      >
+      <div className="min-w-0" aria-label={collection.title}>
         <Link
           to="/collections/$handle"
           params={{ handle: collection.handle }}
