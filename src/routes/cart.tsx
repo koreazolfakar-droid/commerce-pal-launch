@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ExternalLink, Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 import { StoreLayout } from "@/components/StoreLayout";
+import { WhatsAppCheckoutForm } from "@/components/WhatsAppCheckoutForm";
 import { cdnImage } from "@/lib/image";
 import { formatPrice, variantSummary } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/cart")({
 });
 
 function CartPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const {
     items,
     total: shopifyTotal,
@@ -139,19 +140,37 @@ function CartPage() {
               })}
             </ul>
 
-            <div className="mt-6 rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:bottom-4">
+            <div className="mt-6 rounded-2xl border bg-card p-5 shadow-card">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">{t("subtotal")}</span>
                 <span className="text-xl font-extrabold tracking-tight">
                   {formatPrice(total, currency)}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{t("taxesShippingCheckout")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {language === "ar"
+                  ? "اختر الطلب عبر واتساب لتعبئة بيانات التوصيل، أو تابع إلى Shopify للدفع الإلكتروني."
+                  : "Order through WhatsApp with your delivery details, or continue to Shopify for online checkout."}
+              </p>
+            </div>
+
+            <WhatsAppCheckoutForm
+              items={items}
+              total={total}
+              currency={currency}
+              disabled={isLoading || isSyncing}
+            />
+
+            <div className="mt-4 rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:bottom-4">
+              <p className="text-center text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {language === "ar" ? "أو" : "or"}
+              </p>
+              <p className="mt-2 text-center text-xs text-muted-foreground">{t("taxesShippingCheckout")}</p>
               <button
                 type="button"
                 onClick={checkout}
                 disabled={isLoading || isSyncing}
-                className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full border bg-background px-6 py-3.5 text-sm font-bold text-foreground transition-colors hover:border-primary/40 hover:bg-surface disabled:opacity-60"
               >
                 {isLoading || isSyncing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
