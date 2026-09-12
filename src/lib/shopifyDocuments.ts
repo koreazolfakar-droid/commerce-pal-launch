@@ -9,8 +9,20 @@ const VARIANT = `
 `;
 
 /**
- * Product shape used by cards, rails, search and taxonomy. Keep the full variant
- * subset used by quick-add/quick-view, but omit list metadata that the UI never reads.
+ * Minimal product metadata required to build category/brand navigation and
+ * catalog counts. It deliberately excludes images, variants and options so the
+ * first storefront request stays small.
+ */
+export const PRODUCT_INDEX_FIELDS = `
+  id title handle vendor productType availableForSale tags
+  priceRange { minVariantPrice { ${MONEY} } }
+  compareAtPriceRange { minVariantPrice { ${MONEY} } }
+  collections(first: 20) { edges { node { handle title } } }
+`;
+
+/**
+ * Product shape used by cards, rails and search. Keep the full variant subset
+ * used by quick-add/quick-view, but omit list metadata that the UI never reads.
  */
 export const PRODUCT_LIST_FIELDS = `
   id title handle vendor productType availableForSale tags
@@ -37,6 +49,14 @@ export const PRODUCT_DETAIL_FIELDS = `
 
 export const COLLECTION_FIELDS = `
   id handle title description image { ${IMAGE} }
+`;
+
+export const CATALOG_INDEX_QUERY = `
+  query GetCatalogIndex($first: Int!) {
+    products(first: $first) {
+      edges { node { ${PRODUCT_INDEX_FIELDS} } }
+    }
+  }
 `;
 
 export const PRODUCTS_QUERY = `
