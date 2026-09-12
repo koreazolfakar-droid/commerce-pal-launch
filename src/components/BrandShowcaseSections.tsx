@@ -3,12 +3,11 @@ import { collectionQueryOptions, showcaseCollectionsQueryOptions } from "@/lib/q
 import type { ShowcaseCollection } from "@/lib/merchandising";
 import { ProductRail } from "@/components/ProductRail";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Boxes } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 
 import { buildShopifyBrands } from "@/lib/brandDirectory";
 import { findFacetMerchandising } from "@/lib/homeMerchandising";
-import { cdnImage } from "@/lib/image";
 import { productsInCategory, productsOfBrand } from "@/lib/taxonomy";
 
 import {
@@ -59,18 +58,15 @@ export function CategorySection({
 
   return (
     <section aria-labelledby="home-categories" data-testid="category-section">
-      <Header id="home-categories" title={t("categoriesTitle")} href="/shop" />
+      <Header id="home-categories" title={t("categoriesTitle")} href="/categories" />
 
       <div
         className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-4 lg:gap-3 xl:grid-cols-5"
         role="list"
       >
         {catalog.categories.map((category) => {
-          const previewProduct = productsInCategory(catalog, category.slug).find(
-            (product) => product.node.images.edges[0]?.node,
-          );
-          const image = previewProduct?.node.images.edges[0]?.node;
           const label = categoryLabel(category, language);
+          const CategoryIcon = category.icon ?? Boxes;
 
           return (
             <Link
@@ -96,22 +92,12 @@ export function CategorySection({
               </span>
 
               <span
-                className="pointer-events-none absolute bottom-2 end-2 grid h-[4.45rem] w-[43%] max-w-[5rem] place-items-center overflow-hidden rounded-[0.85rem] border border-border/55 bg-white/[0.96] shadow-[0_8px_18px_-14px_rgba(15,23,42,0.35)] sm:h-[4.75rem] sm:max-w-[5.4rem] lg:h-[5rem] lg:max-w-[5.7rem] dark:border-white/[0.08] dark:bg-white/[0.92] dark:shadow-[0_10px_22px_-16px_rgba(0,0,0,0.75)]"
+                className="pointer-events-none absolute bottom-2 end-2 grid h-[4.45rem] w-[43%] max-w-[5rem] place-items-center rounded-[1rem] border border-primary/10 bg-gradient-to-br from-primary/[0.10] via-background to-primary/[0.03] shadow-[0_8px_18px_-14px_rgba(15,23,42,0.35)] sm:h-[4.75rem] sm:max-w-[5.4rem] lg:h-[5rem] lg:max-w-[5.7rem] dark:border-primary/15 dark:from-primary/[0.16] dark:via-white/[0.035] dark:to-primary/[0.05] dark:shadow-[0_10px_22px_-16px_rgba(0,0,0,0.75)]"
                 aria-hidden="true"
               >
-                {image ? (
-                  <img
-                    src={cdnImage(image.url, 260)}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    width={180}
-                    height={180}
-                    className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-[1.035] sm:p-2"
-                  />
-                ) : category.icon ? (
-                  <category.icon className="h-6 w-6 text-primary sm:h-7 sm:w-7" strokeWidth={1.7} />
-                ) : null}
+                <span className="grid h-11 w-11 place-items-center rounded-2xl border border-primary/10 bg-background/85 text-primary shadow-sm transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12 dark:bg-black/20">
+                  <CategoryIcon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={1.65} />
+                </span>
               </span>
             </Link>
           );
