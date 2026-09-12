@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n";
 
 import { absoluteUrl } from "@/lib/seo";
+import { catalogQueryOptions } from "@/lib/queries";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
@@ -78,6 +79,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // Keep the catalogue available to shared chrome (header/footer) on every route.
+  // This prevents secondary pages from rendering a different/empty footer while
+  // the same query is already populated on the homepage.
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(catalogQueryOptions());
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },

@@ -113,9 +113,13 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const result = activeQuery?.data;
   const collection = result?.collection ?? fallback;
   const products = result?.products ?? [];
-  const leadImage = collection.image ?? products[0]?.node.images.edges[0]?.node ?? null;
+  const leadProduct = products[0]?.node;
+  // Prefer the current Shopify product image over a possibly stale campaign/collection image.
+  // Merchants can update the hero simply by changing the first product in the hero collection.
+  const leadImage = leadProduct?.images.edges[0]?.node ?? collection.image ?? null;
   const displayTitle = cleanTabTitle(collection);
   const isGenericHomeTitle = /^home\s*page$/i.test(displayTitle);
+  const heroTitle = isGenericHomeTitle && leadProduct ? leadProduct.title : displayTitle;
 
   return (
     <section
@@ -136,7 +140,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
                 src={cdnImage(leadImage.url, 1800)}
                 srcSet={cdnSrcSet(leadImage.url, 1800)}
                 sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
-                alt={leadImage.altText ?? collection.title}
+                alt={leadProduct?.title ?? leadImage.altText ?? collection.title}
                 width={1672}
                 height={941}
                 loading="eager"
@@ -158,11 +162,11 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
           </span>
         </Link>
 
-        {!isGenericHomeTitle && (
+        {(leadProduct || !isGenericHomeTitle) && (
           <div className="mt-5 flex items-end justify-between gap-3 sm:mt-9">
             <div className="min-w-0">
               <h2 className="truncate text-xl font-black tracking-[-0.025em] sm:text-2xl">
-                {displayTitle}
+                {heroTitle}
               </h2>
               {collection.description && (
                 <p className="mt-1 hidden max-w-xl truncate text-sm text-muted-foreground sm:block">
