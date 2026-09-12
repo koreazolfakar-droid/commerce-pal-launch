@@ -55,9 +55,12 @@ export function MobileTopBar({
             <img
               src="/logo.svg"
               alt={STORE_NAME}
-              width={48}
-              height={32}
-              className="h-8 w-auto shrink-0 object-contain"
+              width={51}
+              height={34}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="h-[34px] w-auto shrink-0 object-contain"
             />
             <span className="truncate text-[17px] font-extrabold tracking-tight">{STORE_NAME}</span>
           </Link>
