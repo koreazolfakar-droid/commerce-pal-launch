@@ -29,7 +29,7 @@ function configuredDashboardOrigin() {
 function corsHeaders(request: Request) {
   const headers = new Headers({
     "access-control-allow-headers": "Authorization, Content-Type",
-    "access-control-allow-methods": "GET, OPTIONS",
+    "access-control-allow-methods": "GET, POST, PATCH, OPTIONS",
     "access-control-max-age": "86400",
     "cache-control": "no-store",
     vary: "Origin",
