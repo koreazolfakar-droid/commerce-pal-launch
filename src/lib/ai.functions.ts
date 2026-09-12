@@ -487,6 +487,22 @@ function candidateScore(product: ShopifyProduct, query: string, budget: number |
   return score;
 }
 
+function supportsStructuredOutputWithTools(model: string) {
+  return /^gemini-3(?:[.-]|$)/i.test(model);
+}
+
+function extractGeminiJson(text: string) {
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end <= start) return cleaned;
+  return cleaned.slice(start, end + 1);
+}
+
 async function callGeminiShoppingAdvisor(input: {
   message: string;
   productContext?: string;
@@ -516,6 +532,7 @@ HARD RULES:
 - Answer in the user's language. Keep the answer concise and practical.
 - If there is no good match in the store, say so and explain what is missing.
 - Sources must be real URLs returned/used by Google Search. Prefer official manufacturer domains for external product facts.
+- Your final response MUST be exactly one JSON object, without Markdown fences or commentary. It must contain these keys: answer, intent, recommendations, missingItems, sources. intent must be one of search, recommendation, comparison, compatibility, general. recommendations must contain objects with handle, reason, priority (1-5), addToCart. missingItems must contain objects with name, reason, searchNeeded. sources must contain objects with title and url, or be an empty array.
 
 USER REQUEST:
 ${input.message}
@@ -576,8 +593,21 @@ ${JSON.stringify(ranked)}
     required: ["answer", "intent", "recommendations", "missingItems", "sources"],
   };
 
+  const model = process.env["GEMINI_MODEL"] || "gemini-2.5-flash";
+  const generationConfig = supportsStructuredOutputWithTools(model)
+    ? {
+        temperature: 0.2,
+        maxOutputTokens: 1800,
+        responseMimeType: "application/json",
+        responseSchema: schema,
+      }
+    : {
+        temperature: 0.2,
+        maxOutputTokens: 1800,
+      };
+
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(process.env["GEMINI_MODEL"] || "gemini-2.5-flash")}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     {
       method: "POST",
       headers: {
@@ -590,12 +620,7 @@ ${JSON.stringify(ranked)}
         },
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         tools: [{ google_search: {} }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 1800,
-          responseMimeType: "application/json",
-          responseSchema: schema,
-        },
+        generationConfig,
       }),
     },
   );
@@ -605,21 +630,27 @@ ${JSON.stringify(ranked)}
     return null;
   }
 
-  const payload = (await response.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    groundingMetadata?: {
-      groundingChunks?: Array<{ web?: { title?: string; uri?: string } }>;
-    };
+  type GroundingMetadata = {
+    groundingChunks?: Array<{ web?: { title?: string; uri?: string } }>;
   };
-  const text = payload.candidates?.[0]?.content?.parts
+  const payload = (await response.json()) as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string }> };
+      groundingMetadata?: GroundingMetadata;
+    }>;
+    groundingMetadata?: GroundingMetadata;
+  };
+  const candidate = payload.candidates?.[0];
+  const text = candidate?.content?.parts
     ?.map((part) => part.text ?? "")
     .join("")
     .trim();
   if (!text) return null;
 
   try {
-    const parsed = geminiAdvisorSchema.parse(JSON.parse(text));
-    const groundedSources = (payload.groundingMetadata?.groundingChunks ?? [])
+    const parsed = geminiAdvisorSchema.parse(JSON.parse(extractGeminiJson(text)));
+    const groundingMetadata = candidate?.groundingMetadata ?? payload.groundingMetadata;
+    const groundedSources = (groundingMetadata?.groundingChunks ?? [])
       .map((chunk) => chunk.web)
       .filter((web): web is { title?: string; uri?: string } => Boolean(web?.uri))
       .map((web) => ({ title: web.title || web.uri!, url: web.uri! }));
