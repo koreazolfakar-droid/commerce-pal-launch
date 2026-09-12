@@ -1,5 +1,5 @@
 import { Bot, MessageCircle, Send, Sparkles, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -14,6 +14,8 @@ import { useCompareStore } from "@/stores/compareStore";
 
 type Message = { role: "user" | "assistant"; text: string };
 
+export const OPEN_STORE_AI_EVENT = "spacecall:open-ai";
+
 export function AIAssistant({ context = "" }: { context?: string }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -26,6 +28,13 @@ export function AIAssistant({ context = "" }: { context?: string }) {
   const { data: comparedProducts = [] } = useQuery(
     productsByHandlesQueryOptions(isComparePage ? compareHandles : []),
   );
+
+  useEffect(() => {
+    const openAssistant = () => setOpen(true);
+    window.addEventListener(OPEN_STORE_AI_EVENT, openAssistant);
+    return () => window.removeEventListener(OPEN_STORE_AI_EVENT, openAssistant);
+  }, []);
+
   const comparisonContext = useMemo(() => {
     if (!isComparePage || comparedProducts.length === 0) return "";
     return comparedProducts
