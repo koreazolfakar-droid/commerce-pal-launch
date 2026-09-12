@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Loader2, Search, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { trackEvent, trackProductEvent } from "@/lib/analytics";
+import { trackProductEvent } from "@/lib/analytics";
 import { cdnImage } from "@/lib/image";
 import { formatPrice, predictiveStorefront } from "@/lib/shopify";
 
@@ -44,7 +44,6 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const submitSearch = () => {
     const query = term.trim();
     if (!query) return;
-    trackEvent("search", { search_term: query });
     onClose();
     navigate({ to: "/search", search: { q: query } });
   };
