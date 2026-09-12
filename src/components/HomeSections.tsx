@@ -101,36 +101,46 @@ export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
   });
   const fallbackProduct = catalog?.products[0];
 
+  if (!compact) {
+    return (
+      <>
+        {hydrated &&
+          (collections.length > 0 ? (
+            <ShopifyHeroCollections collections={collections} />
+          ) : fallbackProduct ? (
+            <ProductFallbackHero product={fallbackProduct} />
+          ) : null)}
+      </>
+    );
+  }
+
   return (
-    <>
-      {!compact && hydrated && (
-        collections.length > 0 ? (
-          <ShopifyHeroCollections collections={collections} />
-        ) : fallbackProduct ? (
-          <ProductFallbackHero product={fallbackProduct} />
-        ) : null
-      )}
-      <section aria-label={t("shoppingBenefits")} data-testid="benefits-bar">
-        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border bg-border min-[360px]:grid-cols-2 lg:grid-cols-4">
-          {BENEFITS.map((benefit) => (
-            <div
-              key={benefit.title}
-              className={`flex min-w-0 flex-col items-start gap-2 bg-card ${compact ? "p-3" : "p-4"} sm:flex-row sm:gap-3`}
-            >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
-                <benefit.icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-              </span>
-              <div className="min-w-0">
-                <p className="break-words text-sm font-bold leading-relaxed">{t(benefit.title)}</p>
-                <p className="mt-0.5 break-words text-xs leading-relaxed text-muted-foreground">
-                  {t(benefit.detail)}
-                </p>
-              </div>
+    <section
+      aria-label={t("shoppingBenefits")}
+      data-testid="benefits-bar"
+      className="mx-auto w-full max-w-3xl"
+    >
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
+        {BENEFITS.map((benefit) => (
+          <div
+            key={benefit.title}
+            className="flex min-w-0 items-start gap-2 bg-card p-2.5 sm:p-3"
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground sm:h-9 sm:w-9">
+              <benefit.icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" strokeWidth={1.8} aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="break-words text-[11px] font-bold leading-snug sm:text-xs">
+                {t(benefit.title)}
+              </p>
+              <p className="mt-0.5 break-words text-[10px] leading-snug text-muted-foreground sm:text-[11px]">
+                {t(benefit.detail)}
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-    </>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
