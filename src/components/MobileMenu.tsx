@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { navigationCatalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { displayCollections } from "@/lib/taxonomy";
 import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
@@ -20,7 +20,7 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const { t, direction, language } = useLanguage();
-  const { data: catalog } = useQuery({ ...catalogQueryOptions(), enabled: open });
+  const { data: catalog } = useQuery({ ...navigationCatalogQueryOptions(), enabled: open });
   const { data: collections = [] } = useQuery({ ...collectionsQueryOptions(), enabled: open });
   const visibleCollections = useMemo(() => displayCollections(collections), [collections]);
   const close = () => setOpen(false);
