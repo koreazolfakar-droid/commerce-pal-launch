@@ -89,7 +89,7 @@ export const ProductCard = memo(function ProductCard({
         </Link>
         <QuickViewButton product={product} />
 
-        <div className="pointer-events-none absolute start-2.5 top-2.5 flex flex-col gap-1.5 sm:start-3 sm:top-3">
+        <div className="pointer-events-none absolute start-2.5 top-2.5 z-10 flex flex-col gap-1.5 sm:start-3 sm:top-3">
           {badge && (
             <span className="rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-accent-foreground">
               {badge}
@@ -112,12 +112,20 @@ export const ProductCard = memo(function ProductCard({
           onClick={handleWishlist}
           aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
           aria-pressed={wishlisted}
-          className="press absolute end-2.5 top-2.5 grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-background/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:border-primary/40 hover:text-primary sm:end-3 sm:top-3"
+          className="press absolute end-2.5 top-2.5 z-20 grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-background/95 text-muted-foreground shadow-sm backdrop-blur transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:end-3 sm:top-3"
         >
-          <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
+          <Heart
+            aria-hidden
+            className={cn("h-[18px] w-[18px]", wishlisted && "fill-primary text-primary")}
+            strokeWidth={1.9}
+          />
         </button>
         {isPhone && (
-          <CompareButton handle={node.handle} compact className="absolute end-2.5 top-14 h-10 w-10 sm:end-3 sm:top-[3.65rem]" />
+          <CompareButton
+            handle={node.handle}
+            compact
+            className="absolute end-2.5 top-14 h-10 w-10 sm:end-3 sm:top-[3.65rem]"
+          />
         )}
       </div>
 
