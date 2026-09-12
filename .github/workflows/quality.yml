@@ -11,9 +11,9 @@ permissions:
 
 jobs:
   quality:
-    name: Semantic lint, unit tests and build
+    name: Semantic lint, unit tests, build and browser smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -42,3 +42,9 @@ jobs:
 
       - name: Production build
         run: bun run build
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Browser smoke tests
+        run: bun run test:e2e
