@@ -21,6 +21,15 @@ import {
   collectionsQueryOptions,
 } from "@/lib/queries";
 import { productDiscountPercent } from "@/lib/shopify";
+import {
+  absoluteUrl,
+  canonicalLink,
+  jsonLd,
+  organizationJsonLd,
+  SITE_NAME,
+  socialMeta,
+  websiteJsonLd,
+} from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
@@ -29,54 +38,20 @@ export const Route = createFileRoute("/")({
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
     ]);
   },
-  head: () => ({
-    meta: [
-      { title: `${SITE_NAME} | Phones, Tablets & Electronics in Lebanon` },
-      {
-        name: "description",
-        content: `Shop smartphones, tablets, laptops, smartwatches, audio and accessories in Lebanon at ${SITE_NAME} with live availability and secure Shopify checkout.`,
-      },
-      { property: "og:title", content: `${SITE_NAME} | Phones, Tablets & Electronics in Lebanon` },
-      {
-        property: "og:description",
-        content:
-          "Shop smartphones, tablets, laptops, smartwatches, audio and accessories in Lebanon with live availability and secure checkout.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/") },
-      { property: "og:image", content: absoluteUrl("/logo.png") },
-      { name: "twitter:image", content: absoluteUrl("/logo.png") },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: `${SITE_NAME} | Phones, Tablets & Electronics in Lebanon` },
-      {
-        name: "twitter:description",
-        content:
-          "Shop smartphones, tablets, laptops, smartwatches, audio and accessories in Lebanon with live availability and secure checkout.",
-      },
-    ],
-    links: [canonicalLink("/")],
-    scripts: [
-      jsonLd({
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: SITE_NAME,
-        url: SITE_URL,
-        inLanguage: ["en", "ar"],
-        potentialAction: {
-          "@type": "SearchAction",
-          target: `${SITE_URL}/search?q={search_term_string}`,
-          "query-input": "required name=search_term_string",
-        },
-      }),
-      jsonLd({
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        name: SITE_NAME,
-        url: SITE_URL,
-        logo: absoluteUrl("/logo.png"),
-      }),
-    ],
-  }),
+  head: () => {
+    const title = `${SITE_NAME} Lebanon | Phones, Tablets, Laptops & Accessories`;
+    const description = `Shop smartphones, tablets, laptops, headphones, smartwatches and accessories in Lebanon at ${SITE_NAME}, with live availability and secure Shopify checkout.`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+        ...socialMeta({ title, description, path: "/" }),
+      ],
+      links: [canonicalLink("/")],
+      scripts: [jsonLd(websiteJsonLd()), jsonLd(organizationJsonLd())],
+    };
+  },
   component: Index,
 });
 
@@ -240,5 +215,3 @@ function Index() {
     </StoreLayout>
   );
 }
-
-import { absoluteUrl, canonicalLink, jsonLd, SITE_NAME, SITE_URL } from "@/lib/seo";
