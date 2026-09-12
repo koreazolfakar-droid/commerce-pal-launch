@@ -31,27 +31,27 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: `${SITE_NAME} — Premium Phones, Tablets & Audio` },
+      { title: `${SITE_NAME} | Phones, Tablets & Electronics in Lebanon` },
       {
         name: "description",
-        content: `Shop ${SITE_NAME} smartphones, tablets, smartwatches, audio and accessories with live availability and secure Shopify checkout.`,
+        content: `Shop smartphones, tablets, laptops, smartwatches, audio and accessories in Lebanon at ${SITE_NAME} with live availability and secure Shopify checkout.`,
       },
-      { property: "og:title", content: `${SITE_NAME} — Premium Phones, Tablets & Audio` },
+      { property: "og:title", content: `${SITE_NAME} | Phones, Tablets & Electronics in Lebanon` },
       {
         property: "og:description",
         content:
-          "Premium smartphones, tablets, audio and accessories with live availability and secure checkout.",
+          "Shop smartphones, tablets, laptops, smartwatches, audio and accessories in Lebanon with live availability and secure checkout.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/") },
       { property: "og:image", content: absoluteUrl("/logo.png") },
       { name: "twitter:image", content: absoluteUrl("/logo.png") },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: `${SITE_NAME} — Premium Phones, Tablets & Audio` },
+      { name: "twitter:title", content: `${SITE_NAME} | Phones, Tablets & Electronics in Lebanon` },
       {
         name: "twitter:description",
         content:
-          "Premium smartphones, tablets, audio and accessories with live availability and secure checkout.",
+          "Shop smartphones, tablets, laptops, smartwatches, audio and accessories in Lebanon with live availability and secure checkout.",
       },
     ],
     links: [canonicalLink("/")],
@@ -61,6 +61,7 @@ export const Route = createFileRoute("/")({
         "@type": "WebSite",
         name: SITE_NAME,
         url: SITE_URL,
+        inLanguage: ["en", "ar"],
         potentialAction: {
           "@type": "SearchAction",
           target: `${SITE_URL}/search?q={search_term_string}`,
@@ -72,6 +73,7 @@ export const Route = createFileRoute("/")({
         "@type": "Organization",
         name: SITE_NAME,
         url: SITE_URL,
+        logo: absoluteUrl("/logo.png"),
       }),
     ],
   }),
@@ -123,6 +125,46 @@ function DealsCountdown() {
   );
 }
 
+function HomeSeoIntro({ language }: { language: string }) {
+  const ar = language === "ar";
+
+  return (
+    <header
+      className="rounded-3xl border border-border/70 bg-card px-5 py-5 shadow-card sm:px-7 sm:py-6"
+      data-testid="homepage-seo-intro"
+    >
+      <div className="max-w-3xl">
+        <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-primary sm:text-xs">
+          {ar ? "Space Call لبنان" : "Space Call Lebanon"}
+        </p>
+        <h1 className="mt-1.5 text-xl font-black leading-tight tracking-tight text-foreground sm:text-2xl lg:text-3xl">
+          {ar ? "تسوّق الهواتف والأجهزة اللوحية والإلكترونيات في لبنان" : "Phones, Tablets & Electronics in Lebanon"}
+        </h1>
+        <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground sm:text-sm">
+          {ar
+            ? "اكتشف الهواتف الذكية والأجهزة اللوحية واللابتوبات والساعات الذكية والصوتيات والإكسسوارات من Space Call، مع توفر مباشر وأسعار واضحة وتسوق آمن عبر Shopify."
+            : "Shop smartphones, tablets, laptops, smartwatches, audio and accessories at Space Call, with live availability, clear pricing and secure Shopify checkout."}
+        </p>
+
+        <nav className="mt-4 flex flex-wrap gap-x-5 gap-y-2" aria-label={ar ? "روابط التسوق الرئيسية" : "Main shopping links"}>
+          <Link to="/shop" className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline sm:text-sm">
+            {ar ? "تسوّق كل المنتجات" : "Shop all products"}
+            <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+          </Link>
+          <Link to="/categories" className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground hover:text-primary sm:text-sm">
+            {ar ? "تصفّح الفئات" : "Browse categories"}
+            <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+          </Link>
+          <Link to="/brands" className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground hover:text-primary sm:text-sm">
+            {ar ? "تسوّق حسب العلامة التجارية" : "Shop by brand"}
+            <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+          </Link>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
 function Index() {
   const { t, language } = useLanguage();
   const [showProductSections, setShowProductSections] = useState(false);
@@ -155,6 +197,10 @@ function Index() {
         ) : (
           <>
             <ShopifyHeroCollections collections={collections} />
+
+            <HomeSeoIntro language={language} />
+            <BenefitsBar compact />
+
             <CategorySection catalog={catalog} collections={collections} />
             <TopBrands brands={brands} />
 
@@ -183,23 +229,11 @@ function Index() {
             ) : (
               <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
             )}
-            <ServicesStrip />
+
             <RecentlyViewed products={products} />
+            <ServicesStrip />
             <WhyShop />
             <Newsletter />
-
-            <header className="max-w-3xl border-t border-border/70 pt-5" data-testid="homepage-seo-intro">
-              <h1 className="text-lg font-black leading-tight tracking-tight text-foreground sm:text-xl">
-                {language === "ar" ? "تسوّق الهواتف والإلكترونيات في لبنان" : "Shop Phones & Electronics in Lebanon"}
-              </h1>
-              <p className="mt-2 max-w-2xl text-[0.78rem] leading-relaxed text-muted-foreground sm:text-sm">
-                {language === "ar"
-                  ? "اكتشف أحدث الهواتف الذكية والأجهزة اللوحية واللابتوبات والساعات الذكية والصوتيات والإكسسوارات من Space Call، مع توفر مباشر وتسوق آمن عبر متجرنا في لبنان."
-                  : "Discover smartphones, tablets, laptops, smartwatches, audio and accessories at Space Call, with live availability and secure shopping for customers in Lebanon."}
-              </p>
-            </header>
-
-            <BenefitsBar compact />
           </>
         )}
       </div>
