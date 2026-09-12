@@ -2,7 +2,7 @@ import { Bot, Check, ExternalLink, PlugZap, Shield, ShoppingCart, Sparkles, X } 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { askGeminiShoppingAdvisor } from "@/lib/ai.functions";
+import { askGeminiShoppingAdvisor } from "@/lib/geminiAdvisor.functions";
 import { Button } from "@/components/ui/button";
 import { CompactProductCard } from "@/components/CompactProductCard";
 import type { ShopifyProduct } from "@/lib/shopify";
@@ -74,6 +74,7 @@ export function GeminiShoppingAdvisor({
           .filter(Boolean) as ShopifyProduct[],
       );
       setSources(result.sources ?? []);
+      if (!result.ok) toast.error(result.answer);
     } catch {
       toast.error("The AI shopping advisor is temporarily unavailable.");
     } finally {
