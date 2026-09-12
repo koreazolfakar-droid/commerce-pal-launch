@@ -1,4 +1,4 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Plus } from "lucide-react";
 import { useMemo } from "react";
@@ -96,16 +96,16 @@ function HeroProductCard({ product }: { product: ShopifyProduct }) {
 export function ShopifyHeroCollections({ collections }: { collections: ShopifyCollection[] }) {
   const { t } = useLanguage();
   const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
-
-  const queries = useQueries({
-    queries: candidates.map((collection) => collectionQueryOptions(collection.handle)),
+  const activeCandidate = candidates[0];
+  const activeQuery = useQuery({
+    ...collectionQueryOptions(activeCandidate?.handle ?? ""),
+    enabled: Boolean(activeCandidate?.handle),
   });
 
-  if (!candidates.length) return null;
+  if (!activeCandidate) return null;
 
-  const fallback = candidates[0]!;
-  const activeQuery = queries[0];
-  const result = activeQuery?.data;
+  const fallback = activeCandidate;
+  const result = activeQuery.data;
   const collection = result?.collection ?? fallback;
   const products = result?.products ?? [];
   const leadImage = collection.image ?? products[0]?.node.images.edges[0]?.node ?? null;
@@ -145,7 +145,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               </span>
             )}
 
-            {activeQuery?.isFetching && !activeQuery?.isPending && (
+            {activeQuery.isFetching && !activeQuery.isPending && (
               <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
               </span>
@@ -174,7 +174,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               <HeroProductCard key={product.node.id} product={product} />
             ))}
           </div>
-        ) : activeQuery?.isPending ? (
+        ) : activeQuery.isPending ? (
           <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-4" aria-hidden="true">
             {Array.from({ length: 3 }).map((_, index) => (
               <div key={index} className="h-48 animate-pulse rounded-2xl bg-surface sm:h-64" />
