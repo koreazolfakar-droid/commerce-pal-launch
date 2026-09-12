@@ -13,6 +13,7 @@ import {
 import { ArrowRight } from "lucide-react";
 
 import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
+import { useHydrated } from "@/hooks/useHydrated";
 import { cdnImage } from "@/lib/image";
 import { useLanguage } from "@/lib/i18n";
 import { collectionsQueryOptions } from "@/lib/queries";
@@ -29,13 +30,16 @@ const BENEFITS = [
 
 export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
   const { t } = useLanguage();
+  const hydrated = useHydrated();
   const { data: collections = [] } = useQuery({
     ...collectionsQueryOptions(),
     enabled: !compact,
   });
   return (
     <>
-      {!compact && collections.length > 0 && <ShopifyHeroCollections collections={collections} />}
+      {!compact && hydrated && collections.length > 0 && (
+        <ShopifyHeroCollections collections={collections} />
+      )}
       <section aria-label={t("shoppingBenefits")} data-testid="benefits-bar">
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border bg-border min-[360px]:grid-cols-2 lg:grid-cols-4">
           {BENEFITS.map((benefit) => (
