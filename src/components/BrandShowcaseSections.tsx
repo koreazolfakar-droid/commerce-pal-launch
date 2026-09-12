@@ -53,11 +53,14 @@ export function CategorySection({ catalog }: { catalog: CatalogIndex; collection
                 aria-label={label}
                 className="group flex w-[6.65rem] shrink-0 snap-start flex-col items-center text-center focus-visible:outline-none sm:w-[7.6rem] lg:w-[8rem]"
               >
-                <span className="relative grid aspect-square w-full place-items-center overflow-hidden rounded-[1.55rem] border border-black/[0.055] bg-[#f6f7f9] shadow-[0_10px_26px_-22px_rgba(15,23,42,.55)] transition-[transform,box-shadow,border-color] duration-300 ease-out group-hover:-translate-y-0.5 group-hover:border-primary/20 group-hover:shadow-[0_18px_34px_-24px_rgba(37,99,235,.38)] group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2 dark:border-white/[0.075] dark:bg-[#171a20] sm:rounded-[1.75rem]" aria-hidden="true">
-                  <span className="absolute inset-x-[14%] bottom-[10%] h-[13%] rounded-full bg-black/10 blur-md dark:bg-black/35" />
-                  <span className="absolute -start-[20%] -top-[24%] h-[70%] w-[70%] rounded-full bg-white/90 blur-2xl dark:bg-white/[0.055]" />
-                  <span className="absolute -bottom-[32%] -end-[22%] h-[72%] w-[72%] rounded-full bg-primary/[0.075] blur-2xl dark:bg-primary/[0.11]" />
-                  <CategoryGlyph slug={category.slug} className="relative z-10 h-[72%] w-[72%] text-slate-700 transition-transform duration-300 ease-out group-hover:scale-[1.045] dark:text-slate-200" />
+                <span
+                  className="relative block aspect-square w-full overflow-hidden rounded-[1.55rem] border border-black/[0.055] bg-white shadow-[0_10px_28px_-21px_rgba(15,23,42,.38)] transition-[transform,box-shadow,border-color] duration-300 ease-out group-hover:-translate-y-0.5 group-hover:border-primary/20 group-hover:shadow-[0_18px_34px_-23px_rgba(37,99,235,.32)] group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2 sm:rounded-[1.75rem] dark:border-white/[0.1]"
+                  aria-hidden="true"
+                >
+                  <CategoryGlyph
+                    slug={category.slug}
+                    className="absolute inset-0 h-full w-full transition-transform duration-300 ease-out group-hover:scale-[1.035]"
+                  />
                 </span>
                 <h3 className="mt-2.5 line-clamp-2 min-h-[2rem] w-full px-0.5 text-[0.74rem] font-semibold leading-[1.25] tracking-[-0.012em] text-foreground sm:mt-3 sm:text-[0.8rem]">{label}</h3>
               </Link>
