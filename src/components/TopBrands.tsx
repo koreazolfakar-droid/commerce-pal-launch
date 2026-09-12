@@ -18,7 +18,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
           </h2>
         </div>
         <Link
-          to="/shop"
+          to="/brands"
           className="inline-flex items-center gap-1 text-xs font-bold text-primary sm:text-sm"
         >
           {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
