@@ -198,7 +198,6 @@ function Index() {
         ) : (
           <>
             <h1 className="sr-only">{t("homeTitle")}</h1>
-            <p className="px-4 py-3 text-center text-sm font-semibold">Welcome to Space Call</p>
             <BenefitsBar />
 
             <CategorySection catalog={catalog} collections={collections} />
