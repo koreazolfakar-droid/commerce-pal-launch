@@ -10,13 +10,12 @@ const VARIANT = `
 
 /** Lightweight product shape used by cards, rails, search and taxonomy. */
 export const PRODUCT_LIST_FIELDS = `
-  id title handle vendor productType availableForSale createdAt updatedAt tags
+  id title handle vendor productType availableForSale createdAt tags
   priceRange { minVariantPrice { ${MONEY} } }
   compareAtPriceRange { minVariantPrice { ${MONEY} } }
-  images(first: 2) { edges { node { ${IMAGE} } } }
-  collections(first: 20) { edges { node { handle title } } }
-  variants(first: 20) { edges { node { ${VARIANT} } } }
-  options { name values }
+  images(first: 1) { edges { node { ${IMAGE} } } }
+  collections(first: 8) { edges { node { handle title } } }
+  variants(first: 1) { edges { node { ${VARIANT} } } }
 `;
 
 /** Rich shape fetched only for a single product detail page. */

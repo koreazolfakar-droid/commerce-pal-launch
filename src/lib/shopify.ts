@@ -91,6 +91,25 @@ export { PRODUCTS_QUERY as STOREFRONT_QUERY } from "@/lib/shopifyDocuments";
 /** Fields discovered at runtime to be denied by the current token's scopes. */
 const deniedFields = new Set<string>();
 
+type StorefrontCacheEntry = { expiresAt: number; value: any };
+const STOREFRONT_CACHE_TTL_MS = 60_000;
+const STOREFRONT_CACHE_MAX_ENTRIES = 100;
+const storefrontResponseCache = new Map<string, StorefrontCacheEntry>();
+const storefrontPendingRequests = new Map<string, Promise<any>>();
+
+function storefrontCacheKey(query: string, variables: Record<string, unknown>) {
+  return `${query}\n${JSON.stringify(variables)}`;
+}
+
+function pruneStorefrontCache(now: number) {
+  for (const [key, entry] of storefrontResponseCache) {
+    if (entry.expiresAt <= now || storefrontResponseCache.size > STOREFRONT_CACHE_MAX_ENTRIES) {
+      storefrontResponseCache.delete(key);
+    }
+    if (storefrontResponseCache.size <= STOREFRONT_CACHE_MAX_ENTRIES) break;
+  }
+}
+
 function fieldsToStrip() {
   return [...RESTRICTED_STOREFRONT_FIELDS, ...deniedFields];
 }
@@ -169,21 +188,49 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
       return response.json();
     };
 
-    const sanitized = sanitizeQuery(data.query);
-    const result = await postStorefront(sanitized, data.variables);
-    const errors: Array<{ message: string }> = result.errors ?? [];
-    if (errors.length) {
-      const denied = extractDeniedFields(errors).filter((field) => !deniedFields.has(field));
-      if (denied.length) {
-        denied.forEach((field) => deniedFields.add(field));
-        const retry = await postStorefront(sanitizeQuery(data.query), data.variables);
-        if (retry?.data) return retry;
-      }
-      if (!result.data)
-        throw new Error(`Error calling Shopify: ${errors.map((e) => e.message).join(", ")}`);
-      console.warn(`Shopify partial response: ${errors.map((e) => e.message).join(", ")}`);
+    const isMutation = /^\s*mutation\b/i.test(data.query);
+    const key = storefrontCacheKey(data.query, data.variables);
+    const now = Date.now();
+
+    if (!isMutation) {
+      const cached = storefrontResponseCache.get(key);
+      if (cached && cached.expiresAt > now) return cached.value;
+      const pending = storefrontPendingRequests.get(key);
+      if (pending) return pending;
+      pruneStorefrontCache(now);
     }
-    return result;
+
+    const request = (async () => {
+      const sanitized = sanitizeQuery(data.query);
+      const result = await postStorefront(sanitized, data.variables);
+      const errors: Array<{ message: string }> = result.errors ?? [];
+      if (errors.length) {
+        const denied = extractDeniedFields(errors).filter((field) => !deniedFields.has(field));
+        if (denied.length) {
+          denied.forEach((field) => deniedFields.add(field));
+          const retry = await postStorefront(sanitizeQuery(data.query), data.variables);
+          if (retry?.data) return retry;
+        }
+        if (!result.data)
+          throw new Error(`Error calling Shopify: ${errors.map((e) => e.message).join(", ")}`);
+        console.warn(`Shopify partial response: ${errors.map((e) => e.message).join(", ")}`);
+      }
+      return result;
+    })();
+
+    if (isMutation) return request;
+
+    storefrontPendingRequests.set(key, request);
+    try {
+      const result = await request;
+      storefrontResponseCache.set(key, {
+        value: result,
+        expiresAt: Date.now() + STOREFRONT_CACHE_TTL_MS,
+      });
+      return result;
+    } finally {
+      storefrontPendingRequests.delete(key);
+    }
   });
 
 export async function storefrontApiRequest(query: string, variables: Record<string, unknown> = {}) {

@@ -196,7 +196,10 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return withSecurityHeaders(await normalizeCatastrophicSsrResponse(response));
+      return withDocumentCache(
+        request,
+        withSecurityHeaders(await normalizeCatastrophicSsrResponse(response)),
+      );
     } catch (error) {
       console.error(error);
       return withSecurityHeaders(
@@ -210,6 +213,24 @@ export default {
 };
 
 /** Clone headers: upstream responses can have immutable header objects. */
+function withDocumentCache(request: Request, response: Response): Response {
+  if (
+    request.method === "GET" &&
+    response.ok &&
+    !response.headers.has("set-cookie") &&
+    response.headers.get("content-type")?.toLowerCase().includes("text/html")
+  ) {
+    const headers = new Headers(response.headers);
+    headers.set("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  }
+  return response;
+}
+
 export function withSecurityHeaders(response: Response): Response {
   const headers = new Headers(response.headers);
   headers.set("X-Content-Type-Options", "nosniff");

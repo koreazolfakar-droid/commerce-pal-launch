@@ -26,11 +26,13 @@ export function cdnImage(url: string | undefined, width: number): string | undef
   }
 }
 
-/** Builds a `srcset` for 1x/2x displays at the given layout width. */
+/** Builds a responsive width-descriptor srcset so mobile never downloads desktop artwork. */
 export function cdnSrcSet(url: string | undefined, width: number): string | undefined {
   if (!url || !SHOPIFY_CDN.test(url)) return undefined;
-  const one = cdnImage(url, width);
-  const two = cdnImage(url, width * 2);
-  if (!one || !two) return undefined;
-  return `${one} 1x, ${two} 2x`;
+  const maximum = Math.max(320, Math.round(width * 2));
+  const candidates = [160, 240, 320, 480, 640, 800, 960, 1200, 1600, 1800, 2400, maximum]
+    .filter((candidate) => candidate <= maximum)
+    .concat(maximum);
+  const widths = [...new Set(candidates)].sort((a, b) => a - b);
+  return widths.map((candidate) => `${cdnImage(url, candidate)} ${candidate}w`).join(", ");
 }

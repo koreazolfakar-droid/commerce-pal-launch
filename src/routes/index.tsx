@@ -3,7 +3,7 @@ import { DealSpotlight } from "@/components/DealSpotlight";
 import { useEffect, useState } from "react";
 import { ProductRail } from "@/components/ProductRail";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
 import { BenefitsBar, RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
@@ -19,8 +19,6 @@ import {
   newestQueryOptions,
   catalogQueryOptions,
   collectionsQueryOptions,
-  showcaseCollectionsQueryOptions,
-  shopPoliciesQueryOptions,
 } from "@/lib/queries";
 import { productDiscountPercent } from "@/lib/shopify";
 
@@ -28,11 +26,7 @@ export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
-      context.queryClient.ensureQueryData(bestSellingQueryOptions()),
-      context.queryClient.ensureQueryData(newestQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
-      context.queryClient.ensureQueryData(showcaseCollectionsQueryOptions()),
-      context.queryClient.ensureQueryData(shopPoliciesQueryOptions()),
     ]);
   },
   head: () => ({
@@ -131,10 +125,22 @@ function DealsCountdown() {
 
 function Index() {
   const { t, language } = useLanguage();
-  const { data: newItems } = useSuspenseQuery(newestQueryOptions());
+  const [showProductSections, setShowProductSections] = useState(false);
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
-  const { data: bestSellers } = useSuspenseQuery(bestSellingQueryOptions());
   const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
+  const { data: newItems = [] } = useQuery({
+    ...newestQueryOptions(),
+    enabled: showProductSections,
+  });
+  const { data: bestSellers = [] } = useQuery({
+    ...bestSellingQueryOptions(),
+    enabled: showProductSections,
+  });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowProductSections(true), 350);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const products = catalog.products;
   const brands = buildShopifyBrands(catalog.brands, collections);
@@ -152,25 +158,31 @@ function Index() {
             <CategorySection catalog={catalog} collections={collections} />
             <TopBrands brands={brands} />
 
-            {best.length > 0 && <section data-testid="best-sellers"><SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} /><ProductRail products={best} storageKey="space-cell-home-best-sellers-view" /></section>}
+            {showProductSections ? (
+              <>
+                {best.length > 0 && <section data-testid="best-sellers"><SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} /><ProductRail products={best} storageKey="space-cell-home-best-sellers-view" /></section>}
 
-            {deals.length > 0 && (
-              <section id="deals" className="scroll-mt-24" data-testid="deals-section">
-                <SectionHeader title={t("todaysDeals")} subtitle={t("dealsDescription")} action={<DealsCountdown />} />
-                {deals.length <= 2 ? <DealSpotlight products={deals} /> : <ProductRail products={deals} storageKey="space-cell-home-deals-view" />}
-                <div className="mt-4"><Link to="/shop" search={{ availability: "on-sale" }} className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary">{t("allDeals")} <ArrowRight className="h-3.5 w-3.5" /></Link></div>
-              </section>
+                {deals.length > 0 && (
+                  <section id="deals" className="scroll-mt-24" data-testid="deals-section">
+                    <SectionHeader title={t("todaysDeals")} subtitle={t("dealsDescription")} action={<DealsCountdown />} />
+                    {deals.length <= 2 ? <DealSpotlight products={deals} /> : <ProductRail products={deals} storageKey="space-cell-home-deals-view" />}
+                    <div className="mt-4"><Link to="/shop" search={{ availability: "on-sale" }} className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary">{t("allDeals")} <ArrowRight className="h-3.5 w-3.5" /></Link></div>
+                  </section>
+                )}
+
+                {newItems.length > 0 && (
+                  <section data-testid="new-items">
+                    <SectionHeader title={t("newItems")} subtitle={t("newItemsDescription")} action={<Link to="/shop" search={{ sort: "newest" }} className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline">{t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" /></Link>} />
+                    <ProductRail products={newItems} storageKey="space-cell-home-new-items-view" />
+                  </section>
+                )}
+
+                <BundleSection collections={collections} />
+                <BrandShowcase catalog={catalog} collections={collections} />
+              </>
+            ) : (
+              <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
             )}
-
-            {newItems.length > 0 && (
-              <section data-testid="new-items">
-                <SectionHeader title={t("newItems")} subtitle={t("newItemsDescription")} action={<Link to="/shop" search={{ sort: "newest" }} className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline">{t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" /></Link>} />
-                <ProductRail products={newItems} storageKey="space-cell-home-new-items-view" />
-              </section>
-            )}
-
-            <BundleSection collections={collections} />
-            <BrandShowcase catalog={catalog} collections={collections} />
             <ServicesStrip />
             <RecentlyViewed products={products} />
             <WhyShop />

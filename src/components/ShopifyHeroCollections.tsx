@@ -2,6 +2,7 @@ import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Plus } from "lucide-react";
 import { useMemo } from "react";
+import { useHydrated } from "@/hooks/useHydrated";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
@@ -96,9 +97,13 @@ function HeroProductCard({ product }: { product: ShopifyProduct }) {
 export function ShopifyHeroCollections({ collections }: { collections: ShopifyCollection[] }) {
   const { t } = useLanguage();
   const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
+  const hydrated = useHydrated();
 
   const queries = useQueries({
-    queries: candidates.map((collection) => collectionQueryOptions(collection.handle)),
+    queries: candidates.map((collection) => ({
+      ...collectionQueryOptions(collection.handle, 3),
+      enabled: hydrated,
+    })),
   });
 
   if (!candidates.length) return null;

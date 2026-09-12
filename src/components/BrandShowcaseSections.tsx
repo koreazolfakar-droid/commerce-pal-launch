@@ -118,6 +118,6 @@ function FacetSection({ id, title, description, href, products, kind, slug }: { 
 
 function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
   const { t } = useLanguage();
-  const { data, isPending } = useQuery(collectionQueryOptions(collection.handle));
+  const { data, isPending } = useQuery(collectionQueryOptions(collection.handle, 12));
   return <section className="overflow-hidden rounded-2xl border bg-card" aria-labelledby={`showcase-${collection.handle}`}><div className="p-4 sm:p-5"><Header id={`showcase-${collection.handle}`} title={collection.title} subtitle={collection.description} href={`/collections/${collection.handle}`} /></div><div className="border-t p-4 sm:p-5"><p className="mb-2 text-xs text-muted-foreground">{collection.productCount} {t(collection.productCount === 1 ? "product" : "products")}</p>{data?.products.length ? <ProductRail products={data.products} storageKey={`showcase-${collection.handle}-view`} /> : isPending ? <div className="shimmer h-48 rounded-2xl bg-surface" aria-hidden="true" /> : <p className="text-sm text-muted-foreground">{t("noProducts")}</p>}</div></section>;
 }

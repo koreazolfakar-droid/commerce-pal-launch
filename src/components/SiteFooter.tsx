@@ -18,8 +18,11 @@ const SOCIALS = [
 export function SiteFooter() {
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { language, t } = useLanguage();
-  const { data: policies } = useQuery(shopPoliciesQueryOptions());
   const hydrated = useHydrated();
+  const { data: policies } = useQuery({
+    ...shopPoliciesQueryOptions(),
+    enabled: hydrated,
+  });
   const shopLinks = (catalog?.categories ?? []).slice(0, 6);
   const brandLinks = (catalog?.brands ?? []).slice(0, 5);
   const isAr = language === "ar";
@@ -49,7 +52,7 @@ export function SiteFooter() {
           <div className="min-w-0 lg:col-span-2">
             <div className="flex items-center gap-2">
               <img
-                src="/logo.png"
+                src="/favicon.ico"
                 alt={STORE_NAME}
                 width={32}
                 height={32}
