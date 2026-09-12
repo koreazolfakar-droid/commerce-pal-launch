@@ -54,7 +54,7 @@ export function BottomNav() {
     cn(
       "relative grid h-9 w-12 max-w-full place-items-center rounded-2xl border border-transparent transition-all duration-200 group-active:scale-95",
       isActive
-        ? "border-primary/15 bg-gradient-to-br from-accent to-primary/10 text-primary shadow-[0_7px_18px_-13px_var(--primary)]"
+        ? "border-primary/15 bg-linear-to-br from-accent to-primary/10 text-primary shadow-[0_7px_18px_-13px_var(--primary)]"
         : "text-muted-foreground group-hover:bg-muted/70 group-hover:text-foreground",
     );
 
@@ -83,11 +83,11 @@ export function BottomNav() {
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-primary/35 to-transparent"
+          className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-linear-to-r from-transparent via-primary/35 to-transparent"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-0 h-14 w-28 -translate-x-1/2 -translate-y-5 rounded-full bg-primary/8 blur-2xl"
+          className="pointer-events-none absolute left-1/2 top-0 h-14 w-28 -translate-x-1/2 -translate-y-5 rounded-full bg-primary/10 blur-2xl"
         />
 
         <div className="mx-auto flex min-h-[5.15rem] max-w-md items-stretch px-2 pb-[env(safe-area-inset-bottom)] pt-1">
@@ -126,11 +126,11 @@ export function BottomNav() {
           >
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute top-0 h-12 w-20 rounded-full bg-primary/12 blur-xl transition-opacity duration-300 group-active:opacity-70"
+              className="pointer-events-none absolute top-0 h-12 w-20 rounded-full bg-primary/10 blur-xl transition-opacity duration-300 group-active:opacity-70"
             />
             <span
               className={cn(
-                "relative -mt-6 grid h-[3.75rem] w-[3.75rem] shrink-0 place-items-center overflow-hidden rounded-[1.45rem] border-[3px] border-background bg-gradient-to-br from-primary via-primary to-accent-foreground text-primary-foreground shadow-[0_12px_26px_-12px_var(--primary)] ring-1 ring-primary/20 transition-all duration-200 group-active:scale-95",
+                "relative -mt-6 grid h-[3.75rem] w-[3.75rem] shrink-0 place-items-center overflow-hidden rounded-[1.45rem] border-[3px] border-background bg-linear-to-br from-primary via-primary to-accent-foreground text-primary-foreground shadow-[0_12px_26px_-12px_var(--primary)] ring-1 ring-primary/20 transition-all duration-200 group-active:scale-95",
                 homeActive && "scale-[1.035] shadow-[0_15px_30px_-12px_var(--primary)]",
               )}
             >
