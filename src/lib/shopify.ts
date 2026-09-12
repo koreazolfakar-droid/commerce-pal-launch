@@ -7,9 +7,11 @@ import {
   CART_QUERY,
   COLLECTION_BY_HANDLE_QUERY,
   COLLECTIONS_QUERY,
+  PREDICTIVE_SEARCH_QUERY,
   PRODUCT_BY_HANDLE_QUERY,
   PRODUCT_RECOMMENDATIONS_QUERY,
   PRODUCTS_QUERY,
+  SEARCH_QUERY,
   SHOP_QUERY,
 } from "@/lib/shopifyDocuments";
 import { STORE_CONFIG } from "@/lib/storeConfig";
@@ -216,6 +218,8 @@ const PUBLIC_STOREFRONT_QUERY_NAMES = new Set([
   SHOWCASE_COLLECTIONS_QUERY,
   SHOP_POLICIES_QUERY,
   PRODUCTS_QUERY,
+  SEARCH_QUERY,
+  PREDICTIVE_SEARCH_QUERY,
   PRODUCT_BY_HANDLE_QUERY,
   COLLECTIONS_QUERY,
   COLLECTION_BY_HANDLE_QUERY,
@@ -424,19 +428,30 @@ export async function fetchCollectionByHandle(
   };
 }
 
+/** Full search results. Shopify ranks these by relevance and supports prefix matching. */
 export async function searchStorefront(term: string) {
   const trimmed = term.trim();
   if (!trimmed) return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
-  const [products, collections] = await Promise.all([
-    fetchProducts(20, trimmed),
-    fetchCollections(30),
-  ]);
-  const lowered = trimmed.toLowerCase();
+  const data = await storefrontApiRequest(SEARCH_QUERY, {
+    query: trimmed,
+    first: 48,
+  });
+  const nodes: ShopifyProductNode[] = data?.data?.search?.nodes ?? [];
   return {
-    products,
-    collections: collections.filter((collection) =>
-      collection.title.toLowerCase().includes(lowered),
-    ),
+    products: nodes.map((node) => ({ node })),
+    collections: [] as ShopifyCollection[],
+  };
+}
+
+/** Type-ahead results search title, type, tags, vendor, variant title and SKU. */
+export async function predictiveStorefront(term: string) {
+  const trimmed = term.trim();
+  if (!trimmed) return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
+  const data = await storefrontApiRequest(PREDICTIVE_SEARCH_QUERY, { query: trimmed });
+  const predictive = data?.data?.predictiveSearch;
+  return {
+    products: (predictive?.products ?? []).map((node: ShopifyProductNode) => ({ node })),
+    collections: (predictive?.collections ?? []) as ShopifyCollection[],
   };
 }
 
