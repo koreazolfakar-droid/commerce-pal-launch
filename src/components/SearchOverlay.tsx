@@ -6,7 +6,7 @@ import { Loader2, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cdnImage } from "@/lib/image";
 import { formatPrice } from "@/lib/shopify";
-import { storefrontSearchQueryOptions } from "@/lib/queries";
+import { collectionsQueryOptions, productSearchQueryOptions } from "@/lib/queries";
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [term, setTerm] = useState("");
@@ -27,10 +27,22 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const { data, isFetching } = useQuery({
-    ...storefrontSearchQueryOptions(debounced),
-    enabled: open && debounced.trim().length > 1,
+  const normalized = debounced.trim();
+  const searchEnabled = open && normalized.length > 1;
+  const { data: products = [], isFetching: productsFetching } = useQuery({
+    ...productSearchQueryOptions(normalized),
+    enabled: searchEnabled,
   });
+  const { data: allCollections = [], isFetching: collectionsFetching } = useQuery({
+    ...collectionsQueryOptions(),
+    enabled: searchEnabled,
+  });
+  const collections = useMemo(() => {
+    if (!searchEnabled) return [];
+    const lowered = normalized.toLowerCase();
+    return allCollections.filter((collection) => collection.title.toLowerCase().includes(lowered));
+  }, [allCollections, normalized, searchEnabled]);
+  const isFetching = productsFetching || collectionsFetching;
 
   const suggestions = useMemo(
     () => ["iPhone", "Samsung", "Xiaomi", "Earbuds", "Power bank", "256GB"],
@@ -70,7 +82,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         <div className="mt-4 max-h-[65vh] overflow-y-auto border-t pt-4">
-          {debounced.trim().length < 2 ? (
+          {normalized.length < 2 ? (
             <div className="flex flex-wrap gap-2">
               {suggestions.map((suggestion) => (
                 <button
@@ -83,19 +95,19 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 </button>
               ))}
             </div>
-          ) : !data || (data.products.length === 0 && data.collections.length === 0) ? (
+          ) : products.length === 0 && collections.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               {isFetching ? "Searching…" : "No matches found"}
             </p>
           ) : (
             <div className="space-y-6">
-              {data.collections.length > 0 && (
+              {collections.length > 0 && (
                 <section>
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Collections
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {data.collections.map((collection) => (
+                    {collections.map((collection) => (
                       <Link
                         key={collection.id}
                         to="/collections/$handle"
@@ -110,13 +122,13 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 </section>
               )}
 
-              {data.products.length > 0 && (
+              {products.length > 0 && (
                 <section>
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Products
                   </h3>
                   <ul className="divide-y">
-                    {data.products.map((product) => {
+                    {products.map((product) => {
                       const node = product.node;
                       const image = node.images.edges[0]?.node;
                       return (
