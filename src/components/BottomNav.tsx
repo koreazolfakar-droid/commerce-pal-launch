@@ -3,8 +3,8 @@ import { Heart, Home, LayoutGrid, Search, ShoppingBag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { SearchOverlay } from "@/components/SearchOverlay";
-import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
@@ -44,15 +44,17 @@ export function BottomNav() {
 
   const itemClass = (isActive?: boolean) =>
     cn(
-      "press relative flex min-w-0 flex-1 flex-col items-center gap-1 px-0.5 pb-2 pt-2 text-center text-[11px] font-semibold leading-snug transition-colors",
+      "press relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-0.5 pb-2 pt-2 text-center text-[11px] font-semibold leading-snug transition-colors duration-200",
       isActive ? "font-extrabold text-primary" : "text-muted-foreground",
     );
 
   const iconClass = (isActive?: boolean) =>
     cn(
-      "grid h-8 w-12 max-w-full place-items-center rounded-2xl border border-transparent transition-all duration-200",
+      "grid h-9 w-12 max-w-full place-items-center rounded-2xl border border-transparent transition-all duration-200",
       isActive && "border-primary/10 bg-primary/10 shadow-sm",
     );
+
+  const homeActive = pathname === "/";
 
   return (
     <>
@@ -60,41 +62,54 @@ export function BottomNav() {
         ref={navRef}
         data-testid="bottom-nav"
         aria-label="Primary"
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/95 shadow-[0_-10px_30px_-26px_rgba(15,23,42,.65)] backdrop-blur-xl lg:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/95 shadow-[0_-12px_34px_-28px_rgba(15,23,42,.75)] backdrop-blur-xl lg:hidden"
       >
-        <div className="mx-auto flex min-h-[4.7rem] max-w-md items-stretch px-2 pb-[env(safe-area-inset-bottom)]">
-          <Link
-            to="/"
-            className={itemClass(pathname === "/")}
-            aria-current={pathname === "/" ? "page" : undefined}
+        <div className="mx-auto flex min-h-[5rem] max-w-md items-stretch px-2 pb-[env(safe-area-inset-bottom)] pt-1">
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className={itemClass(false)}
           >
-            <span className={iconClass(pathname === "/")}>
-              <Home className="h-[19px] w-[19px]" strokeWidth={pathname === "/" ? 2.4 : 1.9} />
-            </span>
-            {t("home")}
-          </Link>
-          <button type="button" onClick={() => setSearchOpen(true)} className={itemClass()}>
-            <span className={iconClass()}>
-              <Search className="h-[19px] w-[19px]" strokeWidth={1.9} />
+            <span className={iconClass(false)}>
+              <Search className="h-5 w-5" strokeWidth={1.9} />
             </span>
             {t("searchLabel")}
           </button>
+
           <Link to="/shop" className={itemClass(pathname.startsWith("/shop"))}>
             <span className={iconClass(pathname.startsWith("/shop"))}>
-              <LayoutGrid className="h-[19px] w-[19px]" strokeWidth={1.9} />
+              <LayoutGrid className="h-5 w-5" strokeWidth={1.9} />
             </span>
             {t("shop")}
           </Link>
+
+          <Link
+            to="/"
+            className="press relative flex min-w-0 flex-1 flex-col items-center justify-end pb-2 text-center text-[11px] font-extrabold leading-snug text-primary"
+            aria-current={homeActive ? "page" : undefined}
+          >
+            <span
+              className={cn(
+                "relative -mt-5 grid h-14 w-14 shrink-0 place-items-center rounded-[1.35rem] border-4 border-background bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-200",
+                homeActive && "scale-[1.03] shadow-xl shadow-primary/30",
+              )}
+            >
+              <Home className="h-6 w-6" strokeWidth={2.4} />
+            </span>
+            <span className="mt-1">{t("home")}</span>
+          </Link>
+
           <Link to="/wishlist" className={itemClass(pathname.startsWith("/wishlist"))}>
             <span className={cn(iconClass(pathname.startsWith("/wishlist")), "relative")}>
-              <Heart className="h-[19px] w-[19px]" strokeWidth={1.9} />
+              <Heart className="h-5 w-5" strokeWidth={1.9} />
               <Count value={wishlistCount} />
             </span>
             {t("saved")}
           </Link>
+
           <Link to="/cart" className={itemClass(pathname.startsWith("/cart"))}>
             <span className={cn(iconClass(pathname.startsWith("/cart")), "relative")}>
-              <ShoppingBag className="h-[19px] w-[19px]" strokeWidth={1.9} />
+              <ShoppingBag className="h-5 w-5" strokeWidth={1.9} />
               <Count value={cartCount} />
             </span>
             {t("bag")}
