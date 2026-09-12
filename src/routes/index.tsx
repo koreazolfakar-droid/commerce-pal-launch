@@ -22,7 +22,6 @@ import {
 } from "@/lib/queries";
 import { productDiscountPercent } from "@/lib/shopify";
 import {
-  absoluteUrl,
   canonicalLink,
   jsonLd,
   organizationJsonLd,
@@ -39,12 +38,14 @@ export const Route = createFileRoute("/")({
     ]);
   },
   head: () => {
-    const title = `${SITE_NAME} Lebanon | Phones, Tablets, Laptops & Accessories`;
-    const description = `Shop smartphones, tablets, laptops, headphones, smartwatches and accessories in Lebanon at ${SITE_NAME}, with live availability and secure Shopify checkout.`;
+    const title = `${SITE_NAME} Lebanon | Official Online Electronics Store`;
+    const description = `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and secure Shopify checkout.`;
     return {
       meta: [
         { title },
         { name: "description", content: description },
+        { name: "application-name", content: SITE_NAME },
+        { name: "apple-mobile-web-app-title", content: SITE_NAME },
         { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
         ...socialMeta({ title, description, path: "/" }),
       ],
@@ -113,12 +114,12 @@ function HomeSeoIntro({ language }: { language: string }) {
           {ar ? "Space Call لبنان" : "Space Call Lebanon"}
         </p>
         <h1 className="mt-1.5 text-xl font-black leading-tight tracking-tight text-foreground sm:text-2xl lg:text-3xl">
-          {ar ? "تسوّق الهواتف والأجهزة اللوحية والإلكترونيات في لبنان" : "Phones, Tablets & Electronics in Lebanon"}
+          {ar ? "Space Call — متجر إلكترونيات وهواتف في لبنان" : "Space Call — Phones & Electronics Store in Lebanon"}
         </h1>
         <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground sm:text-sm">
           {ar
-            ? "اكتشف الهواتف الذكية والأجهزة اللوحية واللابتوبات والساعات الذكية والصوتيات والإكسسوارات من Space Call، مع توفر مباشر وأسعار واضحة وتسوق آمن عبر Shopify."
-            : "Shop smartphones, tablets, laptops, smartwatches, audio and accessories at Space Call, with live availability, clear pricing and secure Shopify checkout."}
+            ? "Space Call هو متجر إلكترونيات في لبنان لشراء الهواتف الذكية والأجهزة اللوحية واللابتوبات والساعات الذكية والصوتيات والإكسسوارات، مع توفر مباشر وأسعار واضحة وتسوق آمن عبر Shopify."
+            : "Space Call is an electronics store in Lebanon for smartphones, tablets, laptops, smartwatches, audio and accessories, with live availability, clear pricing and secure Shopify checkout."}
         </p>
 
         <nav className="mt-4 flex flex-wrap gap-x-5 gap-y-2" aria-label={ar ? "روابط التسوق الرئيسية" : "Main shopping links"}>
