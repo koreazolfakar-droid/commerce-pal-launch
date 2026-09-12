@@ -66,13 +66,17 @@ export function CategoryGlyph({ slug, className = "", style, ...props }: Props) 
     backgroundRepeat: "no-repeat",
     backgroundSize: "700% 200%",
     backgroundPosition: `${x}% ${y}%`,
+    imageRendering: "auto",
+    WebkitBackfaceVisibility: "hidden",
+    backfaceVisibility: "hidden",
+    transform: "translateZ(0)",
     ...style,
   };
 
   return (
     <span
       aria-hidden="true"
-      className={`block bg-no-repeat ${className}`}
+      className={`block bg-no-repeat [background-origin:border-box] [background-clip:border-box] ${className}`}
       style={spriteStyle}
       {...props}
     />
