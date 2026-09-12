@@ -31,7 +31,8 @@ jobs:
       # focused on semantic ESLint rules so unrelated formatting does not mask
       # actual correctness failures in a production PR.
       - name: Semantic lint
-        run: bunx eslint . --rule 'prettier/prettier: off'
+        run: |
+          bunx eslint . --rule 'prettier/prettier: off'
 
       - name: Unit tests
         run: bun run test:unit
