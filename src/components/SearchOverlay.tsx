@@ -5,16 +5,18 @@ import { Loader2, Search, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { cdnImage } from "@/lib/image";
-import { formatPrice, searchStorefront } from "@/lib/shopify";
+import { formatPrice } from "@/lib/shopify";
+import { storefrontSearchQueryOptions } from "@/lib/queries";
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [term, setTerm] = useState("");
   const [debounced, setDebounced] = useState("");
 
   useEffect(() => {
+    if (!open) return;
     const timer = setTimeout(() => setDebounced(term), 250);
     return () => clearTimeout(timer);
-  }, [term]);
+  }, [open, term]);
 
   useEffect(() => {
     if (!open) return;
@@ -26,8 +28,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   }, [open, onClose]);
 
   const { data, isFetching } = useQuery({
-    queryKey: ["storefront-search", debounced],
-    queryFn: () => searchStorefront(debounced),
+    ...storefrontSearchQueryOptions(debounced),
     enabled: open && debounced.trim().length > 1,
   });
 
