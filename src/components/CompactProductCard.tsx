@@ -75,12 +75,12 @@ export const CompactProductCard = memo(function CompactProductCard({
         <QuickViewButton product={product} />
 
         {discount !== null && (
-          <span className="absolute start-2 top-2 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold tracking-wide text-destructive-foreground">
+          <span className="absolute start-2 top-2 z-10 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold tracking-wide text-destructive-foreground">
             -{discount}%
           </span>
         )}
         {!inStock && (
-          <span className="absolute start-2 top-12 rounded-full bg-foreground/80 px-2 py-0.5 text-[10px] font-semibold text-background">
+          <span className="absolute start-2 top-12 z-10 rounded-full bg-foreground/80 px-2 py-0.5 text-[10px] font-semibold text-background">
             {t("soldOut")}
           </span>
         )}
@@ -92,12 +92,16 @@ export const CompactProductCard = memo(function CompactProductCard({
           }}
           aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
           aria-pressed={wishlisted}
-          className="press absolute end-2 top-2 grid h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:border-primary/40 hover:text-primary"
+          className="press absolute end-2 top-2 z-20 grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-background/95 text-muted-foreground shadow-sm backdrop-blur transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
+          <Heart
+            aria-hidden
+            className={cn("h-[18px] w-[18px]", wishlisted && "fill-primary text-primary")}
+            strokeWidth={1.9}
+          />
         </button>
         {isPhone && (
-          <CompareButton handle={node.handle} compact className="absolute end-2 top-12 h-9 w-9" />
+          <CompareButton handle={node.handle} compact className="absolute end-2 top-14 h-10 w-10" />
         )}
 
         <button
@@ -105,9 +109,13 @@ export const CompactProductCard = memo(function CompactProductCard({
           onClick={handleAdd}
           disabled={isLoading || !variant || !inStock}
           aria-label={`Add ${node.title} to bag`}
-          className="press absolute bottom-2 end-2 grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-card-hover transition-[opacity,transform] hover:opacity-90 disabled:opacity-40"
+          className="press absolute bottom-2.5 end-2.5 z-20 grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-card-hover transition-[opacity,transform] hover:scale-[1.03] hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:scale-100 disabled:opacity-40"
         >
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          {isLoading ? (
+            <Loader2 aria-hidden className="h-[18px] w-[18px] animate-spin" />
+          ) : (
+            <Plus aria-hidden className="h-[18px] w-[18px]" strokeWidth={2} />
+          )}
         </button>
       </div>
 
