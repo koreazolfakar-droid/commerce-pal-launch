@@ -6,7 +6,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
-import { HeroBanner } from "@/components/HeroBanner";
 import { BenefitsBar, RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
 import { Newsletter } from "@/components/Newsletter";
 import { PromoBanners, type PromoSlot } from "@/components/PromoBanners";
@@ -20,11 +19,10 @@ import {
   newestQueryOptions,
   catalogQueryOptions,
   collectionsQueryOptions,
-  homepageHeroQueryOptions,
   showcaseCollectionsQueryOptions,
   shopPoliciesQueryOptions,
 } from "@/lib/queries";
-import { productDiscountPercent, productInStock, type ShopifyProduct } from "@/lib/shopify";
+import { productDiscountPercent, type ShopifyProduct } from "@/lib/shopify";
 import type { CatalogFacet, CatalogIndex } from "@/lib/taxonomy";
 
 export const Route = createFileRoute("/")({
@@ -34,7 +32,6 @@ export const Route = createFileRoute("/")({
       context.queryClient.ensureQueryData(bestSellingQueryOptions()),
       context.queryClient.ensureQueryData(newestQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
-      context.queryClient.ensureQueryData(homepageHeroQueryOptions()),
       context.queryClient.ensureQueryData(showcaseCollectionsQueryOptions()),
       context.queryClient.ensureQueryData(shopPoliciesQueryOptions()),
     ]);
@@ -175,21 +172,10 @@ function Index() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: bestSellers } = useSuspenseQuery(bestSellingQueryOptions());
   const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
-  const { data: heroCollection } = useSuspenseQuery(homepageHeroQueryOptions());
 
   const products = catalog.products;
   const brands = buildShopifyBrands(catalog.brands, collections);
-  const inStock = products.filter(productInStock);
   const deals = products.filter((product) => productDiscountPercent(product) !== null);
-  const hero = (
-    heroCollection?.products.length
-      ? heroCollection.products
-      : deals.length
-        ? deals
-        : inStock.length
-          ? inStock
-          : products
-  ).slice(0, 5);
   const best = bestSellers ?? [];
   const firstOf = (facet: CatalogFacet, kind: "brand" | "category") =>
     products.find((p) =>
@@ -212,9 +198,6 @@ function Index() {
         ) : (
           <>
             <h1 className="sr-only">{t("homeTitle")}</h1>
-            <HeroBanner products={hero} campaign={heroCollection?.collection} />
-
-            {/* Trust strip directly under the billboard, Apple/Samsung-style. */}
             <BenefitsBar />
 
             <CategorySection catalog={catalog} collections={collections} />
