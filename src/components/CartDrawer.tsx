@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Loader2, Minus, Plus, ShoppingBag, Trash2, ExternalLink } from "lucide-react";
+import {
+  ExternalLink,
+  Loader2,
+  MessageCircle,
+  Minus,
+  Plus,
+  ShoppingBag,
+  Trash2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +25,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { useLanguage } from "@/lib/i18n";
 
 export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const {
     items,
@@ -33,6 +41,8 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = Number(total?.amount ?? 0);
   const currency = total?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
+  const whatsappLabel = language === "ar" ? "اطلب عبر واتساب" : "Order via WhatsApp";
+  const orLabel = language === "ar" ? "أو" : "or";
 
   useEffect(() => {
     if (isOpen) syncCart();
@@ -116,31 +126,31 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6"
+                          className="h-8 w-8"
                           onClick={() => removeItem(item.variantId)}
                           aria-label={t("removeItem")}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                         <div className="flex items-center gap-1">
                           <Button
                             variant="outline"
                             size="icon"
-                            className="h-6 w-6"
+                            className="h-8 w-8"
                             onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
                             aria-label={t("decreaseQuantity")}
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-3.5 w-3.5" />
                           </Button>
                           <span className="w-8 text-center text-sm">{item.quantity}</span>
                           <Button
                             variant="outline"
                             size="icon"
-                            className="h-6 w-6"
+                            className="h-8 w-8"
                             onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
                             aria-label={t("increaseQuantity")}
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -148,14 +158,33 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
                   ))}
                 </div>
               </div>
-              <div className="flex-shrink-0 space-y-4 border-t bg-background pt-4">
+              <div className="flex-shrink-0 space-y-3 border-t bg-background pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold">{t("total")}</span>
                   <span className="text-xl font-bold">{formatPrice(totalPrice, currency)}</span>
                 </div>
+
+                <Button
+                  asChild
+                  className="min-h-12 w-full bg-[#25D366] font-extrabold text-white hover:bg-[#20bd5a]"
+                  size="lg"
+                >
+                  <a href="/cart#whatsapp-checkout" onClick={() => setIsOpen(false)}>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    {whatsappLabel}
+                  </a>
+                </Button>
+
+                <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  <span className="h-px flex-1 bg-border" />
+                  <span>{orLabel}</span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+
                 <Button
                   onClick={handleCheckout}
-                  className="w-full"
+                  variant="outline"
+                  className="min-h-12 w-full"
                   size="lg"
                   disabled={items.length === 0 || isLoading || isSyncing}
                 >

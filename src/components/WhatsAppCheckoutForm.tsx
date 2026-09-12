@@ -177,7 +177,11 @@ export function WhatsAppCheckoutForm({
     "mt-1.5 w-full rounded-xl border bg-background px-3.5 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
 
   return (
-    <section className="mt-6 rounded-2xl border bg-card p-5 shadow-card" aria-labelledby="whatsapp-checkout-title">
+    <section
+      id="whatsapp-checkout"
+      className="mt-6 scroll-mt-24 rounded-2xl border bg-card p-5 shadow-card"
+      aria-labelledby="whatsapp-checkout-title"
+    >
       <div className="flex items-start gap-3">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
           <MessageCircle className="h-5 w-5" />
