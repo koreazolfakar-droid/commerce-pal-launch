@@ -14,14 +14,16 @@ import "../ui-overhaul.css";
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
 export function StoreLayout({ children, aiContext }: { children: ReactNode; aiContext?: string }) {
-  const onHomePage = useRouterState({ select: (state) => state.location.pathname === "/" });
-  const onProductPage = useRouterState({
-    select: (state) => state.location.pathname.startsWith("/product/"),
-  });
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const onHomePage = pathname === "/";
+  const onCartPage = pathname === "/cart";
+  const onProductPage = pathname.startsWith("/product/");
+
   return (
     <div
       className="store-layout flex min-h-screen min-w-0 flex-col bg-background"
       data-product-page={onProductPage}
+      data-cart-page={onCartPage}
     >
       <a
         href="#main-content"
@@ -32,13 +34,13 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       <div className="hidden lg:block">
         <SiteHeader />
       </div>
-      <MobileTopBar showCategoryRail={!onHomePage} />
+      <MobileTopBar showCategoryRail={!onHomePage && !onCartPage} />
       <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
         {children}
       </main>
       <SiteFooter />
-      <WhatsAppCTA />
-      <AIAssistant {...(aiContext ? { context: aiContext } : {})} />
+      {!onCartPage ? <WhatsAppCTA /> : null}
+      {!onCartPage ? <AIAssistant {...(aiContext ? { context: aiContext } : {})} /> : null}
       <BottomNav />
     </div>
   );
