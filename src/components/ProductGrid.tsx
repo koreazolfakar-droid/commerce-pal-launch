@@ -3,7 +3,7 @@ import { PackageSearch } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductListCard } from "@/components/ProductListCard";
 import { ProductViewToggle } from "@/components/ProductViewToggle";
-import { useProductViewMode } from "@/hooks/useProductViewMode";
+import { useProductViewMode, type ProductViewMode } from "@/hooks/useProductViewMode";
 import type { ShopifyProduct } from "@/lib/shopify";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
@@ -37,6 +37,8 @@ export function ProductGrid({
   action,
   eagerCount = 0,
   showViewToggle = true,
+  viewMode: controlledViewMode,
+  onViewModeChange,
 }: {
   products: ShopifyProduct[];
   className?: string;
@@ -45,9 +47,13 @@ export function ProductGrid({
   action?: React.ReactNode;
   eagerCount?: number;
   showViewToggle?: boolean;
+  viewMode?: ProductViewMode;
+  onViewModeChange?: (mode: ProductViewMode) => void;
 }) {
-  const [viewMode, setViewMode] = useProductViewMode();
+  const [storedViewMode, setStoredViewMode] = useProductViewMode();
   const { t } = useLanguage();
+  const viewMode = controlledViewMode ?? storedViewMode;
+  const setViewMode = onViewModeChange ?? setStoredViewMode;
 
   const resolvedEmptyTitle = emptyTitle ?? t("noProducts");
   const resolvedEmptyHint = emptyHint ?? t("tryAnother");
