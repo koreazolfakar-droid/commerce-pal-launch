@@ -12,15 +12,15 @@ import {
   INFO_PAGES,
   POLICY_PAGES,
   POLICY_LINKS,
-  SHOP_ACCOUNT_URL,
   type InfoPageName,
 } from "@/lib/infoPages";
 import { useLanguage } from "@/lib/i18n";
 import { shopPoliciesQueryOptions } from "@/lib/queries";
+import { SHOPIFY_ACCOUNT_URL } from "@/lib/storeConfig";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 
 export function InfoPage({ page }: { page: InfoPageName }) {
-  const { t, direction } = useLanguage();
+  const { t, direction, language } = useLanguage();
   const { data: policies, isPending } = useQuery(shopPoliciesQueryOptions());
   const policy =
     page in POLICY_PAGES ? policies?.[POLICY_PAGES[page as keyof typeof POLICY_PAGES]] : null;
@@ -55,11 +55,16 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 {t("contactWhatsApp")}
               </a>
             </section>
-            <section className="rounded-2xl border bg-card p-6">
+            <section id="account-orders" className="scroll-mt-28 rounded-2xl border bg-card p-6">
               <h2 className="text-xl font-bold">{t("accountOrders")}</h2>
               <p className="mt-3 text-base text-muted-foreground">{t("accountDescription")}</p>
+              <p className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm leading-6 text-muted-foreground">
+                {language === "ar"
+                  ? "عند المتابعة سيتم تحويلك إلى صفحة حساب Shopify الآمنة لإدارة الطلبات. هذا التحويل تابع لمزوّد الدفع والمتجر ولا يغيّر بيانات طلبك."
+                  : "When you continue, you’ll be redirected to the secure Shopify account page to manage your orders. This hand-off is provided by Shopify and does not change your order data."}
+              </p>
               <a
-                href={SHOP_ACCOUNT_URL}
+                href={SHOPIFY_ACCOUNT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold hover:bg-accent"

@@ -212,7 +212,11 @@ export default {
   },
 };
 
-/** Clone headers: upstream responses can have immutable header objects. */
+/**
+ * HTML is dynamic storefront state and must never survive a deploy at the CDN.
+ * Hashed JS/CSS/images keep their normal platform caching; only documents are
+ * forced fresh so /, /shop, /help and product pages cannot expose mixed builds.
+ */
 function withDocumentCache(request: Request, response: Response): Response {
   if (
     request.method === "GET" &&
@@ -221,7 +225,9 @@ function withDocumentCache(request: Request, response: Response): Response {
     response.headers.get("content-type")?.toLowerCase().includes("text/html")
   ) {
     const headers = new Headers(response.headers);
-    headers.set("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
+    headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    headers.set("CDN-Cache-Control", "no-store");
+    headers.set("Surrogate-Control", "no-store");
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,

@@ -1,6 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Loader2, Plus } from "lucide-react";
+import { ArrowRight, Loader2, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { useHydrated } from "@/hooks/useHydrated";
 import { toast } from "sonner";
@@ -94,8 +94,14 @@ function HeroProductCard({ product }: { product: ShopifyProduct }) {
   );
 }
 
-export function ShopifyHeroCollections({ collections }: { collections: ShopifyCollection[] }) {
-  const { t } = useLanguage();
+export function ShopifyHeroCollections({
+  collections,
+  featuredProduct,
+}: {
+  collections: ShopifyCollection[];
+  featuredProduct?: ShopifyProduct | undefined;
+}) {
+  const { t, language } = useLanguage();
   const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
   const hydrated = useHydrated();
 
@@ -113,9 +119,52 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const result = activeQuery?.data;
   const collection = result?.collection ?? fallback;
   const products = result?.products ?? [];
-  const leadImage = collection.image ?? products[0]?.node.images.edges[0]?.node ?? null;
+  const featuredNode = featuredProduct?.node;
+  const featuredImage = featuredNode?.images.edges[0]?.node;
+  const leadImage = featuredImage ?? collection.image ?? products[0]?.node.images.edges[0]?.node ?? null;
   const displayTitle = cleanTabTitle(collection);
   const isGenericHomeTitle = /^home\s*page$/i.test(displayTitle);
+  const heroTitle = featuredNode?.title ?? displayTitle;
+  const featuredVariant = featuredProduct ? productPrimaryVariant(featuredProduct) : undefined;
+  const featuredPrice = featuredNode
+    ? (featuredVariant?.price ?? featuredNode.priceRange.minVariantPrice)
+    : undefined;
+  const isAr = language === "ar";
+
+  const heroVisual = (
+    <span
+      className={`relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-surface/70 leading-none shadow-card ${featuredProduct ? "aspect-[16/7]" : ""}`}
+    >
+      {leadImage ? (
+        <img
+          src={cdnImage(leadImage.url, 1800)}
+          srcSet={cdnSrcSet(leadImage.url, 1800)}
+          sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
+          alt={leadImage.altText ?? heroTitle}
+          width={1672}
+          height={941}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          className={
+            featuredProduct
+              ? "m-0 block h-full w-full max-w-none object-contain p-[clamp(1rem,5vw,4.5rem)]"
+              : "m-0 block h-auto w-full max-w-none align-top"
+          }
+        />
+      ) : (
+        <span className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
+          {t("galleryEmpty")}
+        </span>
+      )}
+
+      {activeQuery?.isFetching && !activeQuery?.isPending && (
+        <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
+        </span>
+      )}
+    </span>
+  );
 
   return (
     <section
@@ -124,41 +173,53 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
       aria-label="Featured collection"
     >
       <div className="min-w-0" aria-label={collection.title}>
-        <Link
-          to="/collections/$handle"
-          params={{ handle: collection.handle }}
-          className="group relative -mx-3 block w-[calc(100%+1.5rem)] max-w-none bg-transparent sm:mx-0 sm:w-full"
-          data-testid="collection-hero-visual"
-        >
-          <span className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
-            {leadImage ? (
-              <img
-                src={cdnImage(leadImage.url, 1800)}
-                srcSet={cdnSrcSet(leadImage.url, 1800)}
-                sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
-                alt={leadImage.altText ?? collection.title}
-                width={1672}
-                height={941}
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-                className="m-0 block h-auto w-full max-w-none align-top"
-              />
-            ) : (
-              <span className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
-                {t("galleryEmpty")}
-              </span>
-            )}
+        {featuredNode ? (
+          <Link
+            to="/product/$handle"
+            params={{ handle: featuredNode.handle }}
+            className="group relative -mx-3 block w-[calc(100%+1.5rem)] max-w-none bg-transparent sm:mx-0 sm:w-full"
+            data-testid="collection-hero-visual"
+            aria-label={featuredNode.title}
+          >
+            {heroVisual}
+          </Link>
+        ) : (
+          <Link
+            to="/collections/$handle"
+            params={{ handle: collection.handle }}
+            className="group relative -mx-3 block w-[calc(100%+1.5rem)] max-w-none bg-transparent sm:mx-0 sm:w-full"
+            data-testid="collection-hero-visual"
+            aria-label={collection.title}
+          >
+            {heroVisual}
+          </Link>
+        )}
 
-            {activeQuery?.isFetching && !activeQuery?.isPending && (
-              <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
-              </span>
-            )}
-          </span>
-        </Link>
-
-        {!isGenericHomeTitle && (
+        {featuredNode ? (
+          <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-4 shadow-card sm:mt-7 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="min-w-0">
+              <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.14em] text-primary">
+                {isAr ? "أحدث وصول" : "Latest arrival"}
+              </p>
+              <h2 className="mt-1 truncate text-xl font-black tracking-[-0.025em] sm:text-2xl">
+                {featuredNode.title}
+              </h2>
+              {featuredPrice && (
+                <bdi className="mt-1 block text-sm font-bold text-muted-foreground">
+                  {formatPrice(featuredPrice.amount, featuredPrice.currencyCode)}
+                </bdi>
+              )}
+            </div>
+            <Link
+              to="/product/$handle"
+              params={{ handle: featuredNode.handle }}
+              className="press inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground"
+            >
+              {isAr ? "عرض المنتج" : "View product"}
+              <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+            </Link>
+          </div>
+        ) : !isGenericHomeTitle ? (
           <div className="mt-5 flex items-end justify-between gap-3 sm:mt-9">
             <div className="min-w-0">
               <h2 className="truncate text-xl font-black tracking-[-0.025em] sm:text-2xl">
@@ -171,7 +232,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {products.length > 0 ? (
           <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-4">
