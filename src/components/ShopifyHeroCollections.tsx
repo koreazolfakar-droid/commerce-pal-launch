@@ -1,6 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Loader2, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
@@ -121,48 +121,27 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
         <Link
           to="/collections/$handle"
           params={{ handle: collection.handle }}
-          className="group relative block min-h-[13.5rem] overflow-hidden rounded-[1.5rem] border border-border/70 bg-surface shadow-card sm:min-h-[21rem] sm:rounded-[2rem] lg:min-h-[25rem]"
+          className="group relative block w-full overflow-hidden rounded-[1.5rem] border border-border/70 bg-black shadow-card sm:rounded-[2rem]"
           data-testid="collection-hero-visual"
         >
           {leadImage ? (
             <img
-              src={cdnImage(leadImage.url, 1600)}
-              srcSet={cdnSrcSet(leadImage.url, 1600)}
-              sizes="(min-width: 1280px) 1100px, 96vw"
+              src={cdnImage(leadImage.url, 1800)}
+              srcSet={cdnSrcSet(leadImage.url, 1800)}
+              sizes="(min-width: 1280px) 1280px, 100vw"
               alt={leadImage.altText ?? collection.title}
-              width={1600}
-              height={900}
+              width={1536}
+              height={864}
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.015]"
+              className="block aspect-video h-auto w-full object-contain"
             />
           ) : (
-            <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">
+            <div className="grid aspect-video w-full place-items-center text-sm text-muted-foreground">
               {t("galleryEmpty")}
             </div>
           )}
-
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/88 to-background/10 rtl:bg-gradient-to-l sm:via-background/76 sm:to-transparent" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-background/5" />
-
-          <div className="relative z-10 flex min-h-[13.5rem] max-w-[72%] flex-col justify-center p-5 sm:min-h-[21rem] sm:max-w-[55%] sm:p-8 lg:min-h-[25rem] lg:max-w-[48%] lg:p-10">
-            <span className="mb-3 w-fit rounded-full border border-border/70 bg-background/82 px-3 py-1.5 text-[0.62rem] font-bold text-muted-foreground shadow-sm backdrop-blur sm:mb-4 sm:px-4 sm:text-xs">
-              {displayTitle}
-            </span>
-            <h2 className="text-balance text-2xl font-black leading-[0.98] tracking-[-0.045em] text-foreground sm:text-4xl lg:text-5xl">
-              {displayTitle}
-            </h2>
-            {collection.description && (
-              <p className="mt-2 line-clamp-3 max-w-md text-[0.75rem] font-medium leading-relaxed text-muted-foreground sm:mt-4 sm:text-base">
-                {collection.description}
-              </p>
-            )}
-            <span className="mt-4 inline-flex min-h-10 w-fit items-center gap-2 rounded-full bg-foreground px-4 py-2.5 text-[0.72rem] font-bold text-background shadow-sm transition-transform group-hover:translate-x-0.5 sm:mt-6 sm:min-h-12 sm:px-6 sm:text-sm rtl:group-hover:-translate-x-0.5">
-              {t("viewAll")}
-              <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-            </span>
-          </div>
 
           {activeQuery?.isFetching && !activeQuery?.isPending && (
             <span className="absolute end-4 top-4 z-20 grid h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:end-6 sm:top-6">
@@ -182,16 +161,6 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               </p>
             )}
           </div>
-          <Link
-            to="/collections/$handle"
-            params={{ handle: collection.handle }}
-            className="press inline-flex shrink-0 items-center gap-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-primary sm:text-sm"
-          >
-            <span>{t("viewAll")}</span>
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground transition-transform group-hover:translate-x-0.5 sm:h-10 sm:w-10">
-              <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-            </span>
-          </Link>
         </div>
 
         {products.length > 0 ? (
