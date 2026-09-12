@@ -35,12 +35,12 @@ export function CompareButton({
         aria-label={selected ? "Remove from comparison" : "Add to comparison"}
         aria-pressed={selected}
         className={cn(
-          "h-10 w-10 rounded-full bg-background/90 shadow-sm backdrop-blur",
-          selected && "border-primary bg-accent text-primary",
+          "press z-20 h-10 w-10 rounded-full border-border/70 bg-background/95 text-muted-foreground shadow-sm backdrop-blur hover:border-primary/40 hover:bg-background hover:text-primary [&_svg]:size-[18px]",
+          selected && "border-primary bg-accent text-primary hover:bg-accent",
           className,
         )}
       >
-        <Columns2 className="h-4 w-4" />
+        <Columns2 strokeWidth={1.9} />
       </Button>
     );
   }
