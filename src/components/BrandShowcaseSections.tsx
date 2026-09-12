@@ -59,20 +59,21 @@ export function CategorySection({
     <section aria-labelledby="home-categories" data-testid="category-section">
       <Header id="home-categories" title={t("categoriesTitle")} href="/shop" />
 
-      <div className="scroll-rail category-icon-rail">
+      <div className="scroll-rail category-icon-rail" role="list">
         {catalog.categories.map((category) => (
           <Link
             key={category.slug}
             to="/category/$slug"
             params={{ slug: category.slug }}
-            className="group flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center transition-colors hover:bg-surface focus-visible:outline-2 focus-visible:outline-primary"
+            role="listitem"
+            className="category-icon-card group min-w-0 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-accent text-accent-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+            <span className="category-icon-badge" aria-hidden="true">
               {category.icon ? (
-                <category.icon className="h-5 w-5" strokeWidth={1.7} aria-hidden="true" />
+                <category.icon className="h-6 w-6" strokeWidth={1.8} />
               ) : null}
             </span>
-            <span className="break-words text-xs font-semibold leading-snug">
+            <span className="category-icon-label">
               {categoryLabel(category, language)}
             </span>
           </Link>
