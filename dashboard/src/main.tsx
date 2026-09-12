@@ -16,6 +16,7 @@ import {
   storeApiKey,
   type HealthResponse,
 } from "./api";
+import { InventoryManager } from "./InventoryManager";
 import { ProductsView as ProductManagerView } from "./ProductManager";
 import "./styles.css";
 import "./phase1.css";
@@ -312,7 +313,7 @@ function App() {
           <OrdersView orders={filteredOrders} allOrders={orders} orderFilter={orderFilter} setOrderFilter={setOrderFilter} />
         ) : null}
 
-        {view === "inventory" ? <InventoryView products={products} /> : null}
+        {view === "inventory" ? <InventoryManager products={products} onRefresh={loadDashboard} /> : null}
         {view === "customers" ? <CustomersView customers={customers} /> : null}
 
         {view === "settings" ? (
