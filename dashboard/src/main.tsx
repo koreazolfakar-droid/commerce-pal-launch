@@ -3,16 +3,19 @@ import { createRoot } from "react-dom/client";
 import {
   API_BASE,
   AdminApiError,
-  AdminProduct,
-  PREVIEW_MODE,
+  type AdminCustomer,
+  type AdminOrder,
+  type AdminOrderStatus,
+  type AdminProduct,
   checkHealth,
   clearApiKey,
+  fetchCustomers,
+  fetchOrders,
   fetchProducts,
   getStoredApiKey,
   storeApiKey,
   type HealthResponse,
 } from "./api";
-import { DEMO_CUSTOMERS, DEMO_ORDERS, DEMO_SALES_SERIES, type DemoOrder } from "./demoData";
 import "./styles.css";
 import "./phase1.css";
 
@@ -27,7 +30,7 @@ const NAV_ITEMS: Array<{ id: View; label: string; short: string; icon: string }>
   { id: "settings", label: "الإعدادات", short: "المزيد", icon: "⚙" },
 ];
 
-const ORDER_LABELS: Record<DemoOrder["status"], string> = {
+const ORDER_LABELS: Record<AdminOrderStatus, string> = {
   NEW: "جديد",
   CONFIRMED: "مؤكد",
   PREPARING: "قيد التحضير",
@@ -55,21 +58,46 @@ function formatTime(value: string) {
   return new Date(value).toLocaleTimeString("ar-LB", { hour: "2-digit", minute: "2-digit" });
 }
 
+function buildSalesSeries(orders: AdminOrder[]) {
+  const now = new Date();
+  const buckets = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(now);
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
+    return {
+      key: `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`,
+      label: date.toLocaleDateString("ar-LB", { weekday: "short" }),
+      value: 0,
+    };
+  });
+  const byKey = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+  for (const order of orders) {
+    if (order.status === "CANCELLED") continue;
+    const date = new Date(order.createdAt);
+    const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    const bucket = byKey.get(key);
+    if (bucket) bucket.value += order.total;
+  }
+
+  return buckets.map(({ label, value }) => ({ label, value }));
+}
+
 function App() {
   const [view, setView] = useState<View>("overview");
   const [apiKey, setApiKey] = useState(getStoredApiKey());
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [productFilter, setProductFilter] = useState<"ALL" | "ACTIVE" | "LOW" | "OUT">("ALL");
-  const [orderFilter, setOrderFilter] = useState<"ALL" | DemoOrder["status"]>("ALL");
+  const [orderFilter, setOrderFilter] = useState<"ALL" | AdminOrderStatus>("ALL");
 
   const connected = Boolean(health?.ok);
-  const orders = PREVIEW_MODE ? DEMO_ORDERS : [];
-  const customers = PREVIEW_MODE ? DEMO_CUSTOMERS : [];
-  const salesSeries = PREVIEW_MODE ? DEMO_SALES_SERIES : DEMO_SALES_SERIES.map((item) => ({ ...item, value: 0 }));
+  const salesSeries = useMemo(() => buildSalesSeries(orders), [orders]);
 
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -121,13 +149,45 @@ function App() {
     try {
       const healthResult = await checkHealth();
       setHealth(healthResult);
-      if (healthResult.config.shopifyAdminConfigured) {
-        const productsResult = await fetchProducts(50);
-        setProducts(productsResult.products);
+
+      if (!healthResult.config.shopifyAdminConfigured) {
+        setError("Shopify Admin API غير مضبوطة على السيرفر بعد.");
+        return;
+      }
+
+      const [productsResult, ordersResult, customersResult] = await Promise.allSettled([
+        fetchProducts(100),
+        fetchOrders(100),
+        fetchCustomers(100),
+      ]);
+
+      const problems: string[] = [];
+      if (productsResult.status === "fulfilled") setProducts(productsResult.value.products);
+      else {
+        setProducts([]);
+        problems.push("المنتجات/المخزون");
+      }
+
+      if (ordersResult.status === "fulfilled") setOrders(ordersResult.value.orders);
+      else {
+        setOrders([]);
+        problems.push("الطلبات");
+      }
+
+      if (customersResult.status === "fulfilled") setCustomers(customersResult.value.customers);
+      else {
+        setCustomers([]);
+        problems.push("العملاء");
+      }
+
+      if (problems.length) {
+        setError(`تم الاتصال بـ Shopify، لكن تعذر تحميل: ${problems.join("، ")}. راجع صلاحيات Shopify Admin API.`);
       }
     } catch (caught) {
       setHealth(null);
       setProducts([]);
+      setOrders([]);
+      setCustomers([]);
       if (caught instanceof AdminApiError) setError(caught.message);
       else setError("تعذر الاتصال بـ API الخاصة بالمتجر.");
     } finally {
@@ -151,6 +211,8 @@ function App() {
     setApiKey("");
     setHealth(null);
     setProducts([]);
+    setOrders([]);
+    setCustomers([]);
     setError("");
   }
 
@@ -162,7 +224,7 @@ function App() {
           <div>
             <span className="eyebrow">SPACE CALL</span>
             <h1>لوحة إدارة المتجر</h1>
-            <p>Dashboard مستقلة تتصل بالمتجر من خلال طبقة API آمنة.</p>
+            <p>Dashboard مستقلة تتصل ببيانات Shopify الحقيقية من خلال API آمنة.</p>
           </div>
           <form onSubmit={handleLogin} className="login-form">
             <label htmlFor="apiKey">Admin API Key</label>
@@ -203,7 +265,7 @@ function App() {
         </nav>
         <div className="sidebar-footer">
           <span className="status-dot" />
-          <div><strong>{PREVIEW_MODE ? "Preview Mode" : "API متصلة"}</strong><small>{health.config.shopifyDomain}</small></div>
+          <div><strong>LIVE • Shopify</strong><small>{health.config.shopifyDomain}</small></div>
         </div>
       </aside>
 
@@ -212,7 +274,7 @@ function App() {
           <div>
             <span className="eyebrow">SPACE CALL / COMMERCE OS</span>
             <h1>{NAV_ITEMS.find((item) => item.id === view)?.label}</h1>
-            {PREVIEW_MODE ? <span className="preview-badge">بيانات تجريبية آمنة</span> : null}
+            <span className="preview-badge">LIVE DATA</span>
           </div>
           <div className="topbar-actions">
             <button className="ghost-button" onClick={() => void loadDashboard()} disabled={loading}>{loading ? "تحديث…" : "تحديث"}</button>
@@ -254,9 +316,9 @@ function App() {
         {view === "settings" ? (
           <section className="panel empty-state">
             <div className="empty-icon">⚙</div>
-            <span className="eyebrow">PHASE 2</span>
+            <span className="eyebrow">LIVE INTEGRATIONS</span>
             <h2>مركز الإعدادات والتكاملات</h2>
-            <p>سيضم Shopify، WhatsApp، AI، المستخدمين والصلاحيات. حافظنا على مكانه داخل البنية حتى نضيفه بدون تغيير التنقل لاحقًا.</p>
+            <p>Shopify Admin متصل عبر API server-only. سنضيف هنا WhatsApp، AI، المستخدمين والصلاحيات بدون كشف مفاتيح الإدارة للمتصفح.</p>
           </section>
         ) : null}
       </main>
@@ -282,7 +344,7 @@ function Overview({
   setView,
 }: {
   products: AdminProduct[];
-  orders: DemoOrder[];
+  orders: AdminOrder[];
   stats: { active: number; inventory: number; lowStock: number; revenue: number };
   lowStockProducts: AdminProduct[];
   salesSeries: Array<{ label: string; value: number }>;
@@ -300,15 +362,15 @@ function Overview({
       </div>
 
       <section className="metric-grid">
-        <Metric label="إجمالي المبيعات" value={money(stats.revenue)} detail="ضمن طلبات الـPreview الحالية" />
+        <Metric label="إجمالي المبيعات" value={money(stats.revenue)} detail="من آخر طلبات Shopify المحملة" />
         <Metric label="الطلبات" value={String(orders.length)} detail={`${orders.filter((o) => o.status === "NEW").length} طلب جديد`} />
-        <Metric label="المنتجات النشطة" value={String(stats.active)} detail={`${products.length} منتج محمل`} />
+        <Metric label="المنتجات النشطة" value={String(stats.active)} detail={`${products.length} منتج حقيقي محمل`} />
         <Metric label="مخزون منخفض" value={String(stats.lowStock)} detail="5 قطع أو أقل" danger={stats.lowStock > 0} />
       </section>
 
       <section className="dashboard-grid">
         <article className="panel wide-panel">
-          <div className="panel-heading"><div><span className="eyebrow">SALES OVERVIEW</span><h2>أداء آخر 7 أيام</h2></div><span className="pill muted">7 Days</span></div>
+          <div className="panel-heading"><div><span className="eyebrow">SALES OVERVIEW</span><h2>أداء آخر 7 أيام</h2></div><span className="pill muted">Live</span></div>
           <div className="sales-chart">
             {salesSeries.map((item) => (
               <div className="sales-bar-wrap" key={item.label} title={`${item.label}: ${money(item.value)}`}>
@@ -379,8 +441,8 @@ function ProductsView({
   );
 }
 
-function OrdersView({ orders, allOrders, orderFilter, setOrderFilter }: { orders: DemoOrder[]; allOrders: DemoOrder[]; orderFilter: "ALL" | DemoOrder["status"]; setOrderFilter: (value: "ALL" | DemoOrder["status"]) => void }) {
-  const filters: Array<["ALL" | DemoOrder["status"], string]> = [["ALL", "الكل"], ["NEW", "جديد"], ["CONFIRMED", "مؤكد"], ["PREPARING", "تحضير"], ["READY", "جاهز"], ["DELIVERED", "تم التوصيل"]];
+function OrdersView({ orders, allOrders, orderFilter, setOrderFilter }: { orders: AdminOrder[]; allOrders: AdminOrder[]; orderFilter: "ALL" | AdminOrderStatus; setOrderFilter: (value: "ALL" | AdminOrderStatus) => void }) {
+  const filters: Array<["ALL" | AdminOrderStatus, string]> = [["ALL", "الكل"], ["NEW", "جديد"], ["CONFIRMED", "مؤكد"], ["PREPARING", "تحضير"], ["READY", "جاهز"], ["DELIVERED", "تم التوصيل"]];
   return (
     <div className="orders-layout">
       <section className="summary-strip">
@@ -425,7 +487,7 @@ function InventoryView({ products }: { products: AdminProduct[] }) {
   );
 }
 
-function CustomersView({ customers }: { customers: typeof DEMO_CUSTOMERS }) {
+function CustomersView({ customers }: { customers: AdminCustomer[] }) {
   const spent = customers.reduce((sum, customer) => sum + customer.totalSpent, 0);
   return (
     <div className="customers-layout">
@@ -439,7 +501,7 @@ function CustomersView({ customers }: { customers: typeof DEMO_CUSTOMERS }) {
         <div className="section-toolbar"><div><span className="eyebrow">CUSTOMER CRM</span><h2>العملاء</h2></div><button className="quick-action">تصدير CSV</button></div>
         <div className="table-wrap"><table><thead><tr><th>العميل</th><th>الشريحة</th><th>الطلبات</th><th>إجمالي الإنفاق</th><th>آخر طلب</th></tr></thead><tbody>
           {customers.map((customer) => <tr key={customer.id}><td><div className="product-name"><strong>{customer.name}</strong><span>{customer.phone}</span></div></td><td><span className={`customer-segment ${customer.segment}`}>{customer.segment}</span></td><td>{customer.orders}</td><td>{money(customer.totalSpent)}</td><td>{formatDate(customer.lastOrder)}</td></tr>)}
-          {!customers.length ? <tr><td colSpan={5} className="empty-table">سيظهر العملاء هنا بعد إضافة Customer API.</td></tr> : null}
+          {!customers.length ? <tr><td colSpan={5} className="empty-table">لا توجد بيانات عملاء متاحة أو أن صلاحية read_customers غير مفعلة.</td></tr> : null}
         </tbody></table></div>
       </section>
     </div>
@@ -458,11 +520,11 @@ function StatusRow({ label, ok }: { label: string; ok: boolean }) {
   return <div className="status-row"><span>{label}</span><strong className={ok ? "pill success" : "pill danger"}>{ok ? "جاهز" : "غير مضبوط"}</strong></div>;
 }
 
-function OrdersTable({ orders }: { orders: DemoOrder[] }) {
+function OrdersTable({ orders }: { orders: AdminOrder[] }) {
   return (
     <div className="table-wrap"><table><thead><tr><th>الطلب</th><th>العميل</th><th>الإجمالي</th><th>الدفع</th><th>الحالة</th><th>الوقت</th></tr></thead><tbody>
-      {orders.map((order) => <tr key={order.id}><td><strong>{order.id}</strong></td><td><div className="product-name"><strong>{order.customer}</strong><span>{order.phone}</span></div></td><td>{money(order.total)}</td><td>{order.payment}</td><td><span className={`pill order-status ${order.status}`}>{ORDER_LABELS[order.status]}</span></td><td>{formatTime(order.createdAt)}</td></tr>)}
-      {!orders.length ? <tr><td colSpan={6} className="empty-table">لا توجد طلبات لعرضها.</td></tr> : null}
+      {orders.map((order) => <tr key={order.id}><td><strong>{order.name}</strong></td><td><div className="product-name"><strong>{order.customer}</strong><span>{order.phone}</span></div></td><td>{money(order.total)}</td><td>{order.payment}</td><td><span className={`pill order-status ${order.status}`}>{ORDER_LABELS[order.status]}</span></td><td>{formatTime(order.createdAt)}</td></tr>)}
+      {!orders.length ? <tr><td colSpan={6} className="empty-table">لا توجد طلبات متاحة أو أن صلاحية read_orders غير مفعلة.</td></tr> : null}
     </tbody></table></div>
   );
 }
