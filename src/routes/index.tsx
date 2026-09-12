@@ -9,7 +9,6 @@ import { ArrowRight, Timer } from "lucide-react";
 import { BenefitsBar, RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
 import { Newsletter } from "@/components/Newsletter";
 import { PromoBanners, type PromoSlot } from "@/components/PromoBanners";
-import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
 import { StoreLayout } from "@/components/StoreLayout";
 import { TopBrands } from "@/components/TopBrands";
 import { WhyShop } from "@/components/WhyShop";
@@ -164,7 +163,7 @@ function Index() {
         ) : (
           <>
             <BenefitsBar />
-            <ShopifyHeroCollections collections={collections} />
+
             <CategorySection catalog={catalog} collections={collections} />
             <TopBrands brands={brands} />
 
