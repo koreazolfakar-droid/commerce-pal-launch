@@ -62,10 +62,10 @@ export function CategorySection({
       <Header id="home-categories" title={t("categoriesTitle")} href="/shop" />
 
       <div
-        className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 xl:grid-cols-5"
+        className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-4 lg:gap-3 xl:grid-cols-5"
         role="list"
       >
-        {catalog.categories.map((category, index) => {
+        {catalog.categories.map((category) => {
           const previewProduct = productsInCategory(catalog, category.slug).find(
             (product) => product.node.images.edges[0]?.node,
           );
@@ -78,54 +78,41 @@ export function CategorySection({
               to="/category/$slug"
               params={{ slug: category.slug }}
               role="listitem"
-              className="group relative isolate min-h-[7.4rem] overflow-hidden rounded-[1.15rem] border border-border/70 bg-card p-3 shadow-card transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-[8.25rem] sm:rounded-[1.3rem] sm:p-3.5 lg:min-h-[8.75rem]"
+              className="group relative isolate min-h-[6.6rem] overflow-hidden rounded-[1rem] border border-border/75 bg-card p-3 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] ring-1 ring-inset ring-white/[0.015] transition-[transform,border-color,box-shadow,background-color] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_28px_-18px_rgba(37,99,235,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-[7rem] sm:rounded-[1.1rem] lg:min-h-[7.3rem] dark:border-white/[0.08] dark:bg-[linear-gradient(145deg,rgba(20,24,32,0.96),rgba(11,14,20,0.98))] dark:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)] dark:ring-white/[0.025] dark:hover:border-primary/35"
             >
               <div
-                className={`pointer-events-none absolute inset-0 opacity-90 ${
-                  index % 4 === 0
-                    ? "bg-gradient-to-br from-primary/[0.10] via-transparent to-sky-400/[0.06]"
-                    : index % 4 === 1
-                      ? "bg-gradient-to-br from-violet-500/[0.08] via-transparent to-primary/[0.06]"
-                      : index % 4 === 2
-                        ? "bg-gradient-to-br from-cyan-400/[0.08] via-transparent to-primary/[0.07]"
-                        : "bg-gradient-to-br from-primary/[0.07] via-transparent to-indigo-400/[0.07]"
-                }`}
+                className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.055] via-transparent to-sky-400/[0.035] dark:from-primary/[0.09] dark:via-transparent dark:to-primary/[0.025]"
                 aria-hidden="true"
               />
 
-              <div className="relative z-10 max-w-[66%] sm:max-w-[62%]">
-                <h3 className="line-clamp-2 text-[0.82rem] font-black leading-[1.15] tracking-tight text-foreground sm:text-sm">
+              <div className="relative z-10 max-w-[58%] pe-1">
+                <h3 className="line-clamp-2 text-[0.78rem] font-extrabold leading-[1.15] tracking-tight text-foreground sm:text-[0.84rem] lg:text-sm">
                   {label}
                 </h3>
-                <span className="mt-2.5 grid h-7 w-7 place-items-center rounded-full border border-border/70 bg-background/85 text-primary shadow-sm backdrop-blur transition group-hover:border-primary/30 group-hover:bg-primary group-hover:text-primary-foreground sm:mt-3 sm:h-8 sm:w-8">
-                  <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
-                </span>
               </div>
 
-              {image ? (
-                <img
-                  src={cdnImage(image.url, 320)}
-                  alt=""
-                  aria-hidden="true"
-                  loading="lazy"
-                  decoding="async"
-                  width={220}
-                  height={220}
-                  className="pointer-events-none absolute -bottom-2 -end-2 h-[74%] w-[58%] object-contain object-bottom transition-transform duration-300 group-hover:scale-[1.045] sm:-bottom-2 sm:-end-1 sm:h-[78%] sm:w-[60%]"
-                />
-              ) : category.icon ? (
-                <span
-                  className="pointer-events-none absolute bottom-3 end-3 grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/[0.07] text-primary sm:h-14 sm:w-14"
-                  aria-hidden="true"
-                >
-                  <category.icon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={1.7} />
-                </span>
-              ) : null}
+              <span className="absolute bottom-2.5 start-2.5 z-10 grid h-7 w-7 place-items-center rounded-full border border-border/70 bg-background/80 text-primary shadow-sm backdrop-blur transition group-hover:border-primary/30 group-hover:bg-primary group-hover:text-primary-foreground sm:h-7.5 sm:w-7.5 dark:border-white/[0.08] dark:bg-black/25">
+                <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+              </span>
 
-              <div
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card/55 to-transparent"
+              <span
+                className="pointer-events-none absolute bottom-2 end-2 grid h-[4.45rem] w-[43%] max-w-[5rem] place-items-center overflow-hidden rounded-[0.85rem] border border-border/55 bg-white/[0.96] shadow-[0_8px_18px_-14px_rgba(15,23,42,0.35)] sm:h-[4.75rem] sm:max-w-[5.4rem] lg:h-[5rem] lg:max-w-[5.7rem] dark:border-white/[0.08] dark:bg-white/[0.92] dark:shadow-[0_10px_22px_-16px_rgba(0,0,0,0.75)]"
                 aria-hidden="true"
-              />
+              >
+                {image ? (
+                  <img
+                    src={cdnImage(image.url, 260)}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    width={180}
+                    height={180}
+                    className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-[1.035] sm:p-2"
+                  />
+                ) : category.icon ? (
+                  <category.icon className="h-6 w-6 text-primary sm:h-7 sm:w-7" strokeWidth={1.7} />
+                ) : null}
+              </span>
             </Link>
           );
         })}
