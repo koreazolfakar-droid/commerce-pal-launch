@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 import { AIAssistant } from "@/components/AIAssistant";
 import "../ux-polish.css";
+import "../ux-welcome.css";
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
 export function StoreLayout({ children, aiContext }: { children: ReactNode; aiContext?: string }) {
