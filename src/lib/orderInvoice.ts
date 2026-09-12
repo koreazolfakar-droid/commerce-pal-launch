@@ -17,6 +17,9 @@ export type InvoiceLineItem = {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  warranty?: string;
+  imei?: string;
+  serialNumber?: string;
 };
 
 export type OrderInvoiceInput = {
@@ -26,9 +29,17 @@ export type OrderInvoiceInput = {
   language: InvoiceLanguage;
   currency: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  deliveryFee?: number;
+  tax?: number;
   customer: InvoiceCustomer;
   paymentMethod: string;
   paymentStatus: string;
+  paymentTransactionId?: string;
+  locationUrl?: string;
+  verificationUrl?: string;
+  invoiceNote?: string;
   items: InvoiceLineItem[];
 };
 
@@ -37,6 +48,9 @@ const PAGE_HEIGHT = 1754;
 const PAGE_PADDING = 82;
 const FOOTER_HEIGHT = 120;
 const ACCENT = "#2563eb";
+const ACCENT_SOFT = "#eff6ff";
+const SUCCESS = "#15803d";
+const WARNING = "#b45309";
 const TEXT = "#0f172a";
 const MUTED = "#64748b";
 const BORDER = "#e2e8f0";
@@ -119,6 +133,33 @@ function createPage(language: InvoiceLanguage) {
   return { canvas, ctx };
 }
 
+function statusColor(status: string) {
+  const normalized = status.toLowerCase();
+  if (/(paid|confirmed|مدفوع|مؤكد)/.test(normalized)) return SUCCESS;
+  if (/(pending|due|waiting|بانتظار|مستحق)/.test(normalized)) return WARNING;
+  return ACCENT;
+}
+
+function drawStatusPill(
+  ctx: CanvasRenderingContext2D,
+  label: string,
+  x: number,
+  y: number,
+  align: "left" | "right",
+) {
+  ctx.font = "700 16px Arial, sans-serif";
+  const width = Math.min(280, Math.max(150, ctx.measureText(label).width + 34));
+  const left = align === "right" ? x - width : x;
+  const color = statusColor(label);
+  ctx.fillStyle = `${color}18`;
+  ctx.fillRect(left, y, width, 38);
+  ctx.strokeStyle = `${color}55`;
+  ctx.strokeRect(left, y, width, 38);
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  ctx.fillText(label, align === "right" ? x - 16 : x + 16, y + 25);
+}
+
 function drawCompanyHeader(
   ctx: CanvasRenderingContext2D,
   input: OrderInvoiceInput,
@@ -182,13 +223,9 @@ function drawCompanyHeader(
   return dividerY + 36;
 }
 
-function drawInfoCard(
-  ctx: CanvasRenderingContext2D,
-  input: OrderInvoiceInput,
-  y: number,
-) {
+function drawInfoCard(ctx: CanvasRenderingContext2D, input: OrderInvoiceInput, y: number) {
   const isArabic = input.language === "ar";
-  const cardHeight = 260;
+  const cardHeight = input.locationUrl || input.paymentTransactionId ? 300 : 260;
   ctx.fillStyle = SOFT;
   ctx.fillRect(PAGE_PADDING, y, PAGE_WIDTH - PAGE_PADDING * 2, cardHeight);
   ctx.strokeStyle = BORDER;
@@ -198,16 +235,14 @@ function drawInfoCard(
   const colWidth = (PAGE_WIDTH - PAGE_PADDING * 2 - 76) / 2;
   const leftX = PAGE_PADDING + 30;
   const rightX = PAGE_PADDING + 46 + colWidth;
+  const customerX = isArabic ? leftX + colWidth : leftX;
+  const paymentX = isArabic ? rightX + colWidth : rightX;
 
-  const customerTitle = isArabic ? "بيانات الزبون" : "Customer details";
-  const paymentTitle = isArabic ? "الدفع" : "Payment";
   ctx.fillStyle = TEXT;
   ctx.font = "800 22px Arial, sans-serif";
   ctx.textAlign = isArabic ? "right" : "left";
-  const customerX = isArabic ? leftX + colWidth : leftX;
-  const paymentX = isArabic ? rightX + colWidth : rightX;
-  ctx.fillText(customerTitle, customerX, y + 38);
-  ctx.fillText(paymentTitle, paymentX, y + 38);
+  ctx.fillText(isArabic ? "بيانات الزبون" : "Customer details", customerX, y + 38);
+  ctx.fillText(isArabic ? "الدفع" : "Payment", paymentX, y + 38);
 
   ctx.fillStyle = MUTED;
   ctx.font = "500 18px Arial, sans-serif";
@@ -217,6 +252,7 @@ function drawInfoCard(
     `${isArabic ? "المنطقة" : "Area"}: ${input.customer.area}`,
     `${isArabic ? "العنوان" : "Address"}: ${input.customer.address}`,
     input.customer.landmark ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${input.customer.landmark}` : "",
+    input.locationUrl ? `${isArabic ? "الموقع" : "Location"}: ${input.locationUrl}` : "",
   ].filter(Boolean);
 
   let customerY = y + 74;
@@ -227,14 +263,24 @@ function drawInfoCard(
 
   const paymentLines = [
     `${isArabic ? "الطريقة" : "Method"}: ${input.paymentMethod}`,
-    `${isArabic ? "الحالة" : "Status"}: ${input.paymentStatus}`,
-    `${isArabic ? "إجمالي الطلب" : "Order total"}: ${formatMoney(input.total, input.currency, input.language)}`,
-  ];
+    input.paymentTransactionId
+      ? `${isArabic ? "رقم العملية" : "Transaction"}: ${input.paymentTransactionId}`
+      : "",
+  ].filter(Boolean);
+
   let paymentY = y + 74;
   paymentLines.forEach((line) => {
     const used = drawWrappedText(ctx, line, paymentX, paymentY, colWidth, 25, 2);
-    paymentY += Math.max(used, 25) + 13;
+    paymentY += Math.max(used, 25) + 10;
   });
+
+  drawStatusPill(
+    ctx,
+    input.paymentStatus,
+    isArabic ? paymentX : rightX,
+    Math.min(y + cardHeight - 62, paymentY + 4),
+    isArabic ? "right" : "left",
+  );
 
   return y + cardHeight + 36;
 }
@@ -248,29 +294,25 @@ function drawTableHeader(ctx: CanvasRenderingContext2D, language: InvoiceLanguag
   ctx.font = "800 17px Arial, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText(isArabic ? "المنتج" : "Product", PAGE_PADDING + 20, y + 36);
-  ctx.fillText(isArabic ? "التفاصيل" : "Details", PAGE_PADDING + 530, y + 36);
+  ctx.fillText(isArabic ? "التفاصيل" : "Details", PAGE_PADDING + 500, y + 36);
   ctx.textAlign = "center";
-  ctx.fillText(isArabic ? "الكمية" : "Qty", PAGE_PADDING + 815, y + 36);
+  ctx.fillText(isArabic ? "الكمية" : "Qty", PAGE_PADDING + 805, y + 36);
   ctx.textAlign = "right";
-  ctx.fillText(isArabic ? "السعر" : "Unit", PAGE_PADDING + 965, y + 36);
+  ctx.fillText(isArabic ? "السعر" : "Unit", PAGE_PADDING + 955, y + 36);
   ctx.fillText(isArabic ? "الإجمالي" : "Total", PAGE_WIDTH - PAGE_PADDING - 18, y + 36);
   return y + 56;
 }
 
 function rowHeight(ctx: CanvasRenderingContext2D, item: InvoiceLineItem) {
   ctx.font = "700 18px Arial, sans-serif";
-  const titleLines = Math.min(2, wrapText(ctx, item.title, 470).length);
+  const titleLines = Math.min(2, wrapText(ctx, item.title, 430).length);
   ctx.font = "500 16px Arial, sans-serif";
-  const variantLines = item.variant ? Math.min(2, wrapText(ctx, item.variant, 240).length) : 1;
-  return Math.max(86, Math.max(titleLines, variantLines) * 25 + 36);
+  const detailText = [item.variant, item.warranty, item.imei, item.serialNumber].filter(Boolean).join(" • ");
+  const detailLines = Math.min(4, wrapText(ctx, detailText || "—", 280).length);
+  return Math.max(86, Math.max(titleLines, detailLines) * 24 + 36);
 }
 
-function drawItemRow(
-  ctx: CanvasRenderingContext2D,
-  input: OrderInvoiceInput,
-  item: InvoiceLineItem,
-  y: number,
-) {
+function drawItemRow(ctx: CanvasRenderingContext2D, input: OrderInvoiceInput, item: InvoiceLineItem, y: number) {
   const height = rowHeight(ctx, item);
   const bottom = y + height;
   ctx.strokeStyle = BORDER;
@@ -281,68 +323,111 @@ function drawItemRow(
   ctx.font = "700 18px Arial, sans-serif";
   ctx.textAlign = "left";
   ctx.direction = input.language === "ar" ? "rtl" : "ltr";
-  drawWrappedText(ctx, item.title, PAGE_PADDING + 20, y + 32, 470, 25, 2);
+  drawWrappedText(ctx, item.title, PAGE_PADDING + 20, y + 32, 430, 25, 2);
+
+  const isArabic = input.language === "ar";
+  const details = [
+    item.variant || "",
+    item.warranty ? `${isArabic ? "ضمان" : "Warranty"}: ${item.warranty}` : "",
+    item.imei ? `IMEI: ${item.imei}` : "",
+    item.serialNumber ? `${isArabic ? "سيريال" : "Serial"}: ${item.serialNumber}` : "",
+  ].filter(Boolean);
 
   ctx.fillStyle = MUTED;
   ctx.font = "500 16px Arial, sans-serif";
-  drawWrappedText(ctx, item.variant || "—", PAGE_PADDING + 530, y + 32, 240, 24, 2);
+  drawWrappedText(ctx, details.join(" • ") || "—", PAGE_PADDING + 500, y + 32, 280, 24, 4);
 
   ctx.direction = "ltr";
   ctx.fillStyle = TEXT;
   ctx.font = "700 17px Arial, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(String(item.quantity), PAGE_PADDING + 815, y + 32);
+  ctx.fillText(String(item.quantity), PAGE_PADDING + 805, y + 32);
   ctx.textAlign = "right";
-  ctx.fillText(formatMoney(item.unitPrice, input.currency, input.language), PAGE_PADDING + 965, y + 32);
+  ctx.fillText(formatMoney(item.unitPrice, input.currency, input.language), PAGE_PADDING + 955, y + 32);
   ctx.font = "800 18px Arial, sans-serif";
   ctx.fillText(formatMoney(item.lineTotal, input.currency, input.language), PAGE_WIDTH - PAGE_PADDING - 18, y + 32);
   ctx.direction = input.language === "ar" ? "rtl" : "ltr";
   return bottom;
 }
 
+function calculatedSubtotal(input: OrderInvoiceInput) {
+  return input.subtotal ?? input.items.reduce((sum, item) => sum + item.lineTotal, 0);
+}
+
 function drawTotalsAndNotes(ctx: CanvasRenderingContext2D, input: OrderInvoiceInput, y: number) {
   const isArabic = input.language === "ar";
   const right = PAGE_WIDTH - PAGE_PADDING;
   const left = PAGE_PADDING;
+  const subtotal = calculatedSubtotal(input);
+  const rows = [
+    [isArabic ? "المجموع الفرعي" : "Subtotal", subtotal],
+    input.discount ? [isArabic ? "الخصم" : "Discount", -Math.abs(input.discount)] : null,
+    input.deliveryFee ? [isArabic ? "التوصيل" : "Delivery", input.deliveryFee] : null,
+    input.tax ? [isArabic ? "الضريبة" : "Tax", input.tax] : null,
+  ].filter(Boolean) as Array<[string, number]>;
 
-  ctx.fillStyle = SOFT;
-  ctx.fillRect(left, y, PAGE_WIDTH - PAGE_PADDING * 2, 126);
+  const boxHeight = 92 + rows.length * 34;
+  ctx.fillStyle = ACCENT_SOFT;
+  ctx.fillRect(left, y, PAGE_WIDTH - PAGE_PADDING * 2, boxHeight);
   ctx.strokeStyle = BORDER;
   ctx.lineWidth = 2;
-  ctx.strokeRect(left, y, PAGE_WIDTH - PAGE_PADDING * 2, 126);
+  ctx.strokeRect(left, y, PAGE_WIDTH - PAGE_PADDING * 2, boxHeight);
 
-  ctx.fillStyle = MUTED;
-  ctx.font = "700 19px Arial, sans-serif";
+  ctx.font = "600 17px Arial, sans-serif";
+  rows.forEach(([label, value], index) => {
+    const rowY = y + 32 + index * 34;
+    ctx.fillStyle = MUTED;
+    ctx.textAlign = isArabic ? "right" : "left";
+    ctx.fillText(label, isArabic ? right - 28 : left + 28, rowY);
+    ctx.fillStyle = TEXT;
+    ctx.textAlign = isArabic ? "left" : "right";
+    ctx.direction = "ltr";
+    ctx.fillText(formatMoney(value, input.currency, input.language), isArabic ? left + 28 : right - 28, rowY);
+    ctx.direction = isArabic ? "rtl" : "ltr";
+  });
+
+  const totalY = y + boxHeight - 26;
+  ctx.fillStyle = TEXT;
+  ctx.font = "800 21px Arial, sans-serif";
   ctx.textAlign = isArabic ? "right" : "left";
-  ctx.fillText(isArabic ? "الإجمالي المستحق" : "Order total", isArabic ? right - 28 : left + 28, y + 45);
-
+  ctx.fillText(isArabic ? "الإجمالي النهائي" : "Grand total", isArabic ? right - 28 : left + 28, totalY);
   ctx.fillStyle = ACCENT;
-  ctx.font = "900 34px Arial, sans-serif";
+  ctx.font = "900 32px Arial, sans-serif";
   ctx.textAlign = isArabic ? "left" : "right";
   ctx.direction = "ltr";
-  ctx.fillText(formatMoney(input.total, input.currency, input.language), isArabic ? left + 28 : right - 28, y + 82);
+  ctx.fillText(formatMoney(input.total, input.currency, input.language), isArabic ? left + 28 : right - 28, totalY);
   ctx.direction = isArabic ? "rtl" : "ltr";
 
-  let nextY = y + 160;
-  if (input.customer.notes) {
+  let nextY = y + boxHeight + 34;
+  const notes = [
+    input.customer.notes ? `${isArabic ? "ملاحظات الطلب" : "Order notes"}: ${input.customer.notes}` : "",
+    input.invoiceNote || "",
+    input.verificationUrl
+      ? `${isArabic ? "تحقق من الفاتورة" : "Verify invoice"}: ${input.verificationUrl}`
+      : "",
+  ].filter(Boolean);
+
+  if (notes.length) {
     ctx.fillStyle = TEXT;
     ctx.font = "800 19px Arial, sans-serif";
     ctx.textAlign = isArabic ? "right" : "left";
     const x = isArabic ? right : left;
-    ctx.fillText(isArabic ? "ملاحظات الطلب" : "Order notes", x, nextY);
+    ctx.fillText(isArabic ? "معلومات إضافية" : "Additional information", x, nextY);
     ctx.fillStyle = MUTED;
-    ctx.font = "500 17px Arial, sans-serif";
+    ctx.font = "500 16px Arial, sans-serif";
     nextY += 30;
-    nextY += drawWrappedText(ctx, input.customer.notes, x, nextY, PAGE_WIDTH - PAGE_PADDING * 2, 24, 4) + 18;
+    for (const note of notes) {
+      nextY += drawWrappedText(ctx, note, x, nextY, PAGE_WIDTH - PAGE_PADDING * 2, 23, 4) + 10;
+    }
   }
 
   ctx.fillStyle = MUTED;
   ctx.font = "500 15px Arial, sans-serif";
   ctx.textAlign = isArabic ? "right" : "left";
-  const note = isArabic
+  const disclaimer = isArabic
     ? "هذه فاتورة طلب مولّدة من بيانات الزبون. لا تُعد إيصالًا ضريبيًا أو إثبات دفع ما لم يذكر خلاف ذلك."
     : "This order invoice is generated from the customer's order details. It is not a tax receipt or proof of payment unless explicitly stated otherwise.";
-  drawWrappedText(ctx, note, isArabic ? right : left, nextY, PAGE_WIDTH - PAGE_PADDING * 2, 22, 3);
+  drawWrappedText(ctx, disclaimer, isArabic ? right : left, nextY, PAGE_WIDTH - PAGE_PADDING * 2, 22, 3);
 }
 
 function drawFooter(ctx: CanvasRenderingContext2D, input: OrderInvoiceInput, page: number, totalPages: number) {
@@ -423,9 +508,9 @@ function buildImagePdf(images: Uint8Array[]) {
   return new Blob(chunks, { type: "application/pdf" });
 }
 
-export async function downloadOrderInvoicePdf(input: OrderInvoiceInput) {
+export async function createOrderInvoicePdfBlob(input: OrderInvoiceInput) {
   if (typeof document === "undefined" || typeof window === "undefined") {
-    throw new Error("Invoice downloads are only available in the browser.");
+    throw new Error("Invoice generation is only available in the browser.");
   }
 
   await document.fonts?.ready;
@@ -438,7 +523,7 @@ export async function downloadOrderInvoicePdf(input: OrderInvoiceInput) {
 
   for (const item of input.items) {
     const height = rowHeight(page.ctx, item);
-    if (y + height > PAGE_HEIGHT - FOOTER_HEIGHT - 220) {
+    if (y + height > PAGE_HEIGHT - FOOTER_HEIGHT - 260) {
       pages.push(page.canvas);
       page = createPage(input.language);
       y = drawCompanyHeader(page.ctx, input, logo, true);
@@ -447,7 +532,7 @@ export async function downloadOrderInvoicePdf(input: OrderInvoiceInput) {
     y = drawItemRow(page.ctx, input, item, y);
   }
 
-  if (y + 300 > PAGE_HEIGHT - FOOTER_HEIGHT) {
+  if (y + 360 > PAGE_HEIGHT - FOOTER_HEIGHT) {
     pages.push(page.canvas);
     page = createPage(input.language);
     y = drawCompanyHeader(page.ctx, input, logo, true);
@@ -463,7 +548,11 @@ export async function downloadOrderInvoicePdf(input: OrderInvoiceInput) {
   });
 
   const jpegPages = pages.map((canvas) => decodeDataUrl(canvas.toDataURL("image/jpeg", 0.94)));
-  const pdf = buildImagePdf(jpegPages);
+  return buildImagePdf(jpegPages);
+}
+
+export async function downloadOrderInvoicePdf(input: OrderInvoiceInput) {
+  const pdf = await createOrderInvoicePdfBlob(input);
   const url = URL.createObjectURL(pdf);
   const anchor = document.createElement("a");
   anchor.href = url;
