@@ -16,11 +16,11 @@ const AIAssistant = lazy(() =>
 );
 
 /**
- * Keep SSR and the first client render identical, then unmount the header that
- * cannot be visible at the Tailwind lg breakpoint. This avoids keeping both
- * desktop and mobile header trees subscribed for the lifetime of every page.
+ * Keep SSR and the first client render identical, then unmount responsive UI
+ * that cannot be visible at the Tailwind lg breakpoint. This preserves
+ * hydration while avoiding hidden React trees for the rest of the session.
  */
-function useDesktopHeader() {
+function useDesktopLayout() {
   const [desktop, setDesktop] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
   const onProductPage = useRouterState({
     select: (state) => state.location.pathname.startsWith("/product/"),
   });
-  const desktopHeader = useDesktopHeader();
+  const desktopLayout = useDesktopLayout();
 
   return (
     <div
@@ -53,12 +53,12 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       >
         Skip to content
       </a>
-      {desktopHeader !== false && (
+      {desktopLayout !== false && (
         <div className="hidden lg:block">
           <SiteHeader />
         </div>
       )}
-      {desktopHeader !== true && <MobileTopBar showCategoryRail={!onHomePage} />}
+      {desktopLayout !== true && <MobileTopBar showCategoryRail={!onHomePage} />}
       <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
         {children}
       </main>
@@ -67,7 +67,7 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       <Suspense fallback={null}>
         <AIAssistant {...(aiContext ? { context: aiContext } : {})} />
       </Suspense>
-      <BottomNav />
+      {desktopLayout !== true && <BottomNav />}
     </div>
   );
 }
