@@ -10,6 +10,8 @@ function normalizedOrigin(input: string) {
   return input.replace(/\/+$/, "");
 }
 
+const generatedVersion = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
+
 /** Public, non-secret storefront settings. Secrets remain server-only environment variables. */
 export const STORE_CONFIG = Object.freeze({
   socialInstagram: value("VITE_SOCIAL_INSTAGRAM", ""),
@@ -17,7 +19,7 @@ export const STORE_CONFIG = Object.freeze({
   socialX: value("VITE_SOCIAL_X", ""),
   socialYoutube: value("VITE_SOCIAL_YOUTUBE", ""),
   name: value("VITE_STORE_NAME", "Space Call"),
-  version: value("VITE_APP_VERSION", "1.0.0"),
+  version: generatedVersion,
   siteUrl: normalizedOrigin(value("VITE_SITE_URL", "https://spacecallapp.store")),
   shopifyDomain: value("VITE_SHOPIFY_STORE_DOMAIN", "dj6qeq-j9.myshopify.com")
     .replace(/^https?:\/\//, "")
