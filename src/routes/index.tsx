@@ -263,6 +263,7 @@ function Index() {
             <RecentlyViewed products={products} />
             <WhyShop />
             <Newsletter />
+            <BenefitsBar compact />
           </>
         )}
       </div>
