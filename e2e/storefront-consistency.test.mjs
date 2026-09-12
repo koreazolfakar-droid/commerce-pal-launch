@@ -61,14 +61,16 @@ test("account links stay branded before the Shopify hand-off", async () => {
   assert.match(infoPage, /secure Shopify account page/);
 });
 
-test("hero is sourced from the newest Shopify product and the empty updates CTA is removed", async () => {
+test("hero preserves the original Shopify collection banner and empty updates CTA stays removed", async () => {
   const home = await source("src/routes/index.tsx");
   const hero = await source("src/components/ShopifyHeroCollections.tsx");
 
-  assert.match(home, /ensureQueryData\(newestQueryOptions\(\)\)/);
-  assert.match(home, /featuredProduct=\{newItems\[0\]\}/);
+  assert.doesNotMatch(home, /ensureQueryData\(newestQueryOptions\(\)\)/);
+  assert.doesNotMatch(home, /featuredProduct=\{newItems\[0\]\}/);
   assert.doesNotMatch(home, /Newsletter/);
-  assert.match(hero, /featuredNode\?\.images\.edges\[0\]\?\.node/);
-  assert.match(hero, /alt=\{leadImage\.altText \?\? heroTitle\}/);
-  assert.match(hero, /Latest arrival/);
+  assert.match(home, /<ShopifyHeroCollections collections=\{collections\} \/>/);
+  assert.match(hero, /const leadImage = collection\.image \?\? products\[0\]\?\.node\.images\.edges\[0\]\?\.node \?\? null/);
+  assert.match(hero, /to="\/collections\/\$handle"/);
+  assert.match(hero, /alt=\{leadImage\.altText \?\? collection\.title\}/);
+  assert.doesNotMatch(hero, /featuredProduct|featuredNode|Latest arrival|أحدث وصول/);
 });
