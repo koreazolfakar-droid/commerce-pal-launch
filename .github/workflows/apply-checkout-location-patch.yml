@@ -1,0 +1,36 @@
+name: Apply checkout location patch
+
+on:
+  push:
+    paths:
+      - .github/workflows/apply-checkout-location-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Apply location patch
+        run: python scripts/patch_checkout_location.py
+
+      - name: Validate patch
+        run: |
+          git diff --check
+          grep -q 'googleMapsEmbedUrl' src/components/WhatsAppCheckoutForm.tsx
+          grep -q 'Location permission is blocked' src/components/WhatsAppCheckoutForm.tsx
+          grep -q 'Live location preview' src/components/WhatsAppCheckoutForm.tsx
+          ! grep -q "We couldn't detect your location. You can still send the order without it." src/components/WhatsAppCheckoutForm.tsx
+
+      - name: Commit verified changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-checkout-location-patch.yml scripts/patch_checkout_location.py
+          git add src/components/WhatsAppCheckoutForm.tsx
+          git commit -m "Improve checkout location detection and add live map"
+          git push
