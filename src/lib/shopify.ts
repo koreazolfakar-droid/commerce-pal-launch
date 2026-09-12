@@ -90,7 +90,6 @@ export { PRODUCTS_QUERY as STOREFRONT_QUERY } from "@/lib/shopifyDocuments";
 
 /** Fields discovered at runtime to be denied by the current token's scopes. */
 const deniedFields = new Set<string>();
-const responseCache = new Map<string, { expiresAt: number; value: unknown }>();
 
 function fieldsToStrip() {
   return [...RESTRICTED_STOREFRONT_FIELDS, ...deniedFields];
@@ -157,8 +156,11 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
         headers: {
           "Content-Type": "application/json",
           "X-Shopify-Storefront-Access-Token": token,
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
         },
         body: JSON.stringify({ query, variables }),
+        cache: "no-store",
       });
       if (response.status === 402) {
         throw new Error("Shopify billing is required");
@@ -168,10 +170,6 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
     };
 
     const sanitized = sanitizeQuery(data.query);
-    const cacheable = /^\s*query\b/.test(sanitized) && !/\bcart\s*\(/i.test(sanitized);
-    const cacheKey = cacheable ? JSON.stringify([sanitized, data.variables]) : "";
-    const cached = cacheKey ? responseCache.get(cacheKey) : undefined;
-    if (cached && cached.expiresAt > Date.now()) return cached.value;
     const result = await postStorefront(sanitized, data.variables);
     const errors: Array<{ message: string }> = result.errors ?? [];
     if (errors.length) {
@@ -184,10 +182,6 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
       if (!result.data)
         throw new Error(`Error calling Shopify: ${errors.map((e) => e.message).join(", ")}`);
       console.warn(`Shopify partial response: ${errors.map((e) => e.message).join(", ")}`);
-    }
-    if (cacheKey && result?.data) {
-      if (responseCache.size >= 200) responseCache.delete(responseCache.keys().next().value ?? "");
-      responseCache.set(cacheKey, { expiresAt: Date.now() + 120_000, value: result });
     }
     return result;
   });
