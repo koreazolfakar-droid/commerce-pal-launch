@@ -164,21 +164,18 @@ function Index() {
           <>
             <BenefitsBar />
 
-            <header className="max-w-3xl py-1 sm:py-2" data-testid="homepage-seo-intro">
-              <h1 className="text-[1.35rem] font-black leading-tight tracking-tight text-foreground sm:text-2xl lg:text-[1.7rem]">
-                {language === "ar" ? "تسوّق الهواتف والإلكترونيات في لبنان" : "Shop Phones & Electronics in Lebanon"}
-              </h1>
-              <p className="mt-2 max-w-2xl text-[0.82rem] leading-relaxed text-muted-foreground sm:text-sm">
-                {language === "ar"
-                  ? "اكتشف أحدث الهواتف الذكية والأجهزة اللوحية واللابتوبات والساعات الذكية والصوتيات والإكسسوارات من Space Call، مع توفر مباشر وتسوق آمن عبر متجرنا في لبنان."
-                  : "Discover smartphones, tablets, laptops, smartwatches, audio and accessories at Space Call, with live availability and secure shopping for customers in Lebanon."}
-              </p>
-            </header>
-
             <CategorySection catalog={catalog} collections={collections} />
             <TopBrands brands={brands} />
 
             {best.length > 0 && <section data-testid="best-sellers"><SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} /><ProductRail products={best} storageKey="space-cell-home-best-sellers-view" /></section>}
+
+            {deals.length > 0 && (
+              <section id="deals" className="scroll-mt-24" data-testid="deals-section">
+                <SectionHeader title={t("todaysDeals")} subtitle={t("dealsDescription")} action={<DealsCountdown />} />
+                {deals.length <= 2 ? <DealSpotlight products={deals} /> : <ProductRail products={deals} storageKey="space-cell-home-deals-view" />}
+                <div className="mt-4"><Link to="/shop" search={{ availability: "on-sale" }} className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary">{t("allDeals")} <ArrowRight className="h-3.5 w-3.5" /></Link></div>
+              </section>
+            )}
 
             {newItems.length > 0 && (
               <section data-testid="new-items">
@@ -187,22 +184,25 @@ function Index() {
               </section>
             )}
 
-            <BrandShowcase catalog={catalog} collections={collections} />
-
-            {deals.length > 0 && (
-              <section id="deals" className="scroll-mt-24">
-                <SectionHeader title={t("todaysDeals")} subtitle={t("dealsDescription")} action={<DealsCountdown />} />
-                {deals.length <= 2 ? <DealSpotlight products={deals} /> : <ProductRail products={deals} storageKey="space-cell-home-deals-view" />}
-                <div className="mt-4"><Link to="/shop" search={{ availability: "on-sale" }} className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary">{t("allDeals")} <ArrowRight className="h-3.5 w-3.5" /></Link></div>
-              </section>
-            )}
-
             <BundleSection collections={collections} />
+            <BrandShowcase catalog={catalog} collections={collections} />
             <PromoBanners slots={slots} />
             <ServicesStrip />
             <RecentlyViewed products={products} />
             <WhyShop />
             <Newsletter />
+
+            <header className="max-w-3xl border-t border-border/70 pt-5" data-testid="homepage-seo-intro">
+              <h1 className="text-lg font-black leading-tight tracking-tight text-foreground sm:text-xl">
+                {language === "ar" ? "تسوّق الهواتف والإلكترونيات في لبنان" : "Shop Phones & Electronics in Lebanon"}
+              </h1>
+              <p className="mt-2 max-w-2xl text-[0.78rem] leading-relaxed text-muted-foreground sm:text-sm">
+                {language === "ar"
+                  ? "اكتشف أحدث الهواتف الذكية والأجهزة اللوحية واللابتوبات والساعات الذكية والصوتيات والإكسسوارات من Space Call، مع توفر مباشر وتسوق آمن عبر متجرنا في لبنان."
+                  : "Discover smartphones, tablets, laptops, smartwatches, audio and accessories at Space Call, with live availability and secure shopping for customers in Lebanon."}
+              </p>
+            </header>
+
             <BenefitsBar compact />
           </>
         )}
