@@ -12,6 +12,9 @@ export function findFacetMerchandising(
   return handles.map((handle) => collections.find((item) => item.handle === handle)).find(Boolean);
 }
 
+/** Backwards-compatible name retained for older callers and regression tests. */
+export const findFacetHero = findFacetMerchandising;
+
 /**
  * Homepage hero tabs are driven by Shopify collections.
  * Preferred handles can use home-hero-*, hero-home-*, or the merchant-friendly hero-* naming.
