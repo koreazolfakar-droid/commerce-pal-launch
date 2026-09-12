@@ -35,8 +35,8 @@ export function CompareButton({
         aria-label={selected ? "Remove from comparison" : "Add to comparison"}
         aria-pressed={selected}
         className={cn(
-          "h-9 w-9 rounded-full bg-background/90",
-          selected && "border-primary text-primary",
+          "h-10 w-10 rounded-full bg-background/90 shadow-sm backdrop-blur",
+          selected && "border-primary bg-accent text-primary",
           className,
         )}
       >
@@ -46,19 +46,19 @@ export function CompareButton({
   }
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
       <Button
         type="button"
         variant="outline"
         onClick={onToggle}
         aria-pressed={selected}
-        className="rounded-full"
+        className={cn("rounded-xl", selected && "border-primary bg-accent text-primary")}
       >
         <Columns2 className="h-4 w-4" />
         {selected ? "Added to compare" : "Compare"}
       </Button>
       {handles.length >= 2 && (
-        <Button asChild variant="ghost" className="rounded-full">
+        <Button asChild variant="ghost" className="rounded-xl">
           <Link to="/compare" search={{ products: undefined }}>
             View comparison ({handles.length})
           </Link>

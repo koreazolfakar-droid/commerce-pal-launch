@@ -8,7 +8,7 @@ import type { ShopifyProduct } from "@/lib/shopify";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
 
-const GRID = "grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4";
+const GRID = "grid grid-cols-2 gap-x-2.5 gap-y-4 sm:gap-5 md:grid-cols-3 xl:grid-cols-4";
 const LIST = "grid gap-3 sm:gap-4";
 
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
@@ -17,11 +17,11 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
       {Array.from({ length: count }).map((_, index) => (
         <div key={index} className="overflow-hidden rounded-2xl border bg-card shadow-card">
           <div className="shimmer aspect-square w-full border-b bg-surface" />
-          <div className="space-y-2.5 p-4">
+          <div className="space-y-2.5 p-3.5 sm:p-4">
             <div className="h-2.5 w-1/3 rounded-full bg-surface" />
             <div className="h-3.5 w-4/5 rounded-full bg-surface" />
             <div className="h-4 w-1/2 rounded-full bg-surface" />
-            <div className="h-9 w-full rounded-xl bg-surface" />
+            <div className="h-11 w-full rounded-xl bg-surface" />
           </div>
         </div>
       ))}

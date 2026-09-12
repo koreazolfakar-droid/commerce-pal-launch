@@ -67,11 +67,11 @@ export const ProductCard = memo(function ProductCard({
   return (
     <article
       className={cn(
-        "card-lift group flex flex-col overflow-hidden rounded-2xl border bg-card shadow-card",
+        "card-lift group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-card hover:border-primary/30",
         className,
       )}
     >
-      <div className="relative border-b">
+      <div className="relative border-b bg-image-stage">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
@@ -84,12 +84,12 @@ export const ProductCard = memo(function ProductCard({
             size={480}
             sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
             eager={eager}
-            imageClassName="group-hover:scale-[1.05]"
+            imageClassName="group-hover:scale-[1.045]"
           />
         </Link>
         <QuickViewButton product={product} />
 
-        <div className="pointer-events-none absolute start-3 top-3 flex flex-col gap-1.5">
+        <div className="pointer-events-none absolute start-2.5 top-2.5 flex flex-col gap-1.5 sm:start-3 sm:top-3">
           {badge && (
             <span className="rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-accent-foreground">
               {badge}
@@ -112,16 +112,16 @@ export const ProductCard = memo(function ProductCard({
           onClick={handleWishlist}
           aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
           aria-pressed={wishlisted}
-          className="press absolute end-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-background/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:text-primary"
+          className="press absolute end-2.5 top-2.5 grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-background/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:border-primary/40 hover:text-primary sm:end-3 sm:top-3"
         >
           <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
         </button>
         {isPhone && (
-          <CompareButton handle={node.handle} compact className="absolute end-3 top-14" />
+          <CompareButton handle={node.handle} compact className="absolute end-2.5 top-14 h-10 w-10 sm:end-3 sm:top-[3.65rem]" />
         )}
       </div>
 
-      <div className="flex flex-1 min-w-0 flex-col gap-1.5 p-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 p-3.5 sm:p-4">
         {brand && (
           <div className="flex min-w-0 items-center gap-1.5">
             <BrandLogo slug={brand.slug} label={brand.label} size={20} className="rounded-md" />
@@ -131,14 +131,14 @@ export const ProductCard = memo(function ProductCard({
           </div>
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug transition-colors group-hover:text-primary">
+          <h3 className="line-clamp-2 min-h-[2.65rem] break-words text-sm font-semibold leading-[1.4] transition-colors group-hover:text-primary">
             {node.title}
           </h3>
         </Link>
         {summary && <p className="truncate text-xs text-muted-foreground">{summary}</p>}
 
-        <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="text-base font-bold tracking-tight">
+        <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-base font-extrabold tracking-tight">
             {formatPrice(price.amount, price.currencyCode)}
           </span>
           {discount !== null && compareAt && (
@@ -150,7 +150,7 @@ export const ProductCard = memo(function ProductCard({
 
         <p
           className={cn(
-            "mt-0.5 inline-flex items-center gap-1.5 text-xs font-medium",
+            "inline-flex items-center gap-1.5 text-xs font-medium",
             inStock ? "text-success" : "text-muted-foreground",
           )}
         >
@@ -164,11 +164,11 @@ export const ProductCard = memo(function ProductCard({
           {t(inStock ? "inStock" : "outOfStock")}
         </p>
 
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-2">
           <Button
             onClick={handleAddToCart}
             disabled={isLoading || !selectedVariant || !inStock}
-            className="press w-full rounded-xl"
+            className="press h-11 w-full rounded-xl"
             size="sm"
           >
             {isLoading ? (

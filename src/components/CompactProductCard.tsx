@@ -56,8 +56,8 @@ export const CompactProductCard = memo(function CompactProductCard({
   };
 
   return (
-    <article className={cn("group relative flex min-w-0 w-full flex-col", className)}>
-      <div className="card-lift relative overflow-hidden rounded-2xl border">
+    <article className={cn("group relative flex h-full min-w-0 w-full flex-col", className)}>
+      <div className="card-lift relative overflow-hidden rounded-2xl border bg-card shadow-card hover:border-primary/30">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
@@ -69,7 +69,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             alt={image?.altText ?? node.title}
             size={320}
             sizes="(min-width: 1024px) 220px, 45vw"
-            imageClassName="group-hover:scale-[1.06]"
+            imageClassName="group-hover:scale-[1.045]"
           />
         </Link>
         <QuickViewButton product={product} />
@@ -92,12 +92,12 @@ export const CompactProductCard = memo(function CompactProductCard({
           }}
           aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
           aria-pressed={wishlisted}
-          className="press absolute end-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-background/80 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
+          className="press absolute end-2 top-2 grid h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:border-primary/40 hover:text-primary"
         >
           <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
         </button>
         {isPhone && (
-          <CompareButton handle={node.handle} compact className="absolute end-2 top-12 h-8 w-8" />
+          <CompareButton handle={node.handle} compact className="absolute end-2 top-12 h-9 w-9" />
         )}
 
         <button
@@ -105,13 +105,13 @@ export const CompactProductCard = memo(function CompactProductCard({
           onClick={handleAdd}
           disabled={isLoading || !variant || !inStock}
           aria-label={`Add ${node.title} to bag`}
-          className="press absolute bottom-2 end-2 grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-card-hover transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="press absolute bottom-2 end-2 grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-card-hover transition-[opacity,transform] hover:opacity-90 disabled:opacity-40"
         >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
         </button>
       </div>
 
-      <div className="mt-3 flex min-w-0 flex-col gap-1.5">
+      <div className="mt-3 flex min-w-0 flex-1 flex-col gap-1.5">
         {brand && (
           <div className="flex min-w-0 items-center gap-1.5">
             <BrandLogo slug={brand.slug} label={brand.label} size={18} className="rounded-md" />
@@ -127,7 +127,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         </Link>
 
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <bdi className="text-sm font-bold tracking-tight">
+          <bdi className="text-sm font-extrabold tracking-tight">
             {formatPrice(price.amount, price.currencyCode)}
           </bdi>
           {discount !== null && compareAt && (

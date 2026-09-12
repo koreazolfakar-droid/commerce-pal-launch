@@ -57,7 +57,7 @@ export const ProductListCard = memo(function ProductListCard({
   };
 
   return (
-    <article className="product-list-card group overflow-hidden rounded-2xl border bg-card shadow-card transition-shadow hover:shadow-card-hover">
+    <article className="product-list-card group overflow-hidden rounded-2xl border bg-card shadow-card transition-[border-color,box-shadow] hover:border-primary/30 hover:shadow-card-hover">
       <div className="product-list-media">
         <Link
           to="/product/$handle"
@@ -71,17 +71,17 @@ export const ProductListCard = memo(function ProductListCard({
             size={480}
             sizes="(min-width: 640px) 144px, 128px"
             eager={eager}
-            className="product-list-image rounded-xl"
-            imageClassName="!p-1.5 group-hover:scale-[1.03]"
+            className="product-list-image rounded-xl border"
+            imageClassName="!p-[7%] group-hover:scale-[1.025]"
           />
         </Link>
         {discount !== null && (
-          <span className="absolute start-1 top-1 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">
+          <span className="absolute start-1.5 top-1.5 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">
             -{discount}%
           </span>
         )}
         {!inStock && (
-          <span className="absolute bottom-1 start-1 rounded-full bg-foreground/85 px-2 py-0.5 text-[10px] font-semibold text-background">
+          <span className="absolute bottom-1.5 start-1.5 rounded-full bg-foreground/85 px-2 py-0.5 text-[10px] font-semibold text-background">
             {t("soldOut")}
           </span>
         )}
@@ -99,17 +99,17 @@ export const ProductListCard = memo(function ProductListCard({
               </>
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
               onClick={wish}
               aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
               aria-pressed={wishlisted}
-              className="press grid h-8 w-8 place-items-center rounded-full border bg-background text-muted-foreground hover:text-primary"
+              className="press grid h-11 w-11 place-items-center rounded-full border bg-background text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
             >
               <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
             </button>
-            {isPhone && <CompareButton handle={node.handle} compact className="h-8 w-8" />}
+            {isPhone && <CompareButton handle={node.handle} compact className="h-11 w-11" />}
           </div>
         </div>
 
@@ -145,7 +145,7 @@ export const ProductListCard = memo(function ProductListCard({
           onClick={add}
           disabled={isLoading || !variant || !inStock}
           size="sm"
-          className="product-list-add press h-10 w-full rounded-full"
+          className="product-list-add press h-11 w-full rounded-xl"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

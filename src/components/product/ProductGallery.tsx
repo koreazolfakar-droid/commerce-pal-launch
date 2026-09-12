@@ -62,7 +62,6 @@ export function ProductGallery({
           "lg:grid lg:grid-cols-[5.25rem_minmax(0,1fr)] lg:gap-3",
       )}
     >
-
       <div className="group relative aspect-square overflow-hidden rounded-[1.6rem] border bg-image-stage shadow-card lg:order-2">
         {image ? (
           <img
@@ -74,10 +73,11 @@ export function ProductGallery({
             decoding="async"
             width={900}
             height={900}
-            className="h-full w-full object-contain p-6 sm:p-10"
+            draggable={false}
+            className="h-full w-full select-none object-contain p-4 transition-transform duration-300 sm:p-6 lg:p-8"
           />
         ) : (
-          <div className="grid h-full place-items-center text-sm text-muted-foreground">
+          <div className="grid h-full place-items-center px-4 text-center text-sm text-muted-foreground">
             {t("galleryEmpty")}
           </div>
         )}
@@ -89,7 +89,7 @@ export function ProductGallery({
             type="button"
             onClick={() => setZoomed(true)}
             aria-label={t("galleryZoom")}
-            className="press absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-opacity"
+            className="press absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-card sm:bottom-4 sm:right-4"
           >
             <Expand className="h-4 w-4" />
           </button>
@@ -101,7 +101,7 @@ export function ProductGallery({
               type="button"
               onClick={() => step(-1)}
               aria-label={t("galleryPrevious")}
-              className="press absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur"
+              className="press absolute left-2.5 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-card sm:left-3"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -109,7 +109,7 @@ export function ProductGallery({
               type="button"
               onClick={() => step(1)}
               aria-label={t("galleryNext")}
-              className="press absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur"
+              className="press absolute right-2.5 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-card sm:right-3"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -134,8 +134,10 @@ export function ProductGallery({
               aria-label={`${t("galleryImage")} ${thumbIndex + 1} ${t("ofLabel")} ${images.length}`}
               onClick={() => onSelect(thumbIndex)}
               className={cn(
-                "press h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-2 bg-image-stage transition-colors sm:h-20 sm:w-20",
-                thumbIndex === index ? "border-primary" : "border-border hover:border-primary/50",
+                "press h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-image-stage transition-[border-color,box-shadow] sm:h-20 sm:w-20",
+                thumbIndex === index
+                  ? "border-primary shadow-sm"
+                  : "border-border hover:border-primary/50",
               )}
             >
               <img
@@ -145,7 +147,8 @@ export function ProductGallery({
                 decoding="async"
                 width={80}
                 height={80}
-                className="h-full w-full object-contain p-1.5"
+                draggable={false}
+                className="h-full w-full select-none object-contain p-1.5"
               />
             </button>
           ))}
@@ -161,19 +164,20 @@ export function ProductGallery({
           onClick={() => setZoomed(false)}
         >
           <div
-            className="relative max-h-full w-full max-w-3xl overflow-hidden rounded-3xl border bg-image-stage"
+            className="relative max-h-full w-full max-w-4xl overflow-hidden rounded-3xl border bg-image-stage shadow-float"
             onClick={(event) => event.stopPropagation()}
           >
             <img
               src={cdnImage(image.url, 1400)}
               alt={image.altText ?? title}
-              className="mx-auto max-h-[80vh] w-full object-contain p-6"
+              draggable={false}
+              className="mx-auto max-h-[84vh] w-full select-none object-contain p-4 sm:p-6"
             />
             <button
               type="button"
               onClick={() => setZoomed(false)}
               aria-label={t("galleryClose")}
-              className="press absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-foreground shadow-card"
+              className="press absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-card text-foreground shadow-card transition-colors hover:border-primary/40 sm:right-4 sm:top-4"
             >
               <X className="h-4 w-4" />
             </button>

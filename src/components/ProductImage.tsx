@@ -29,7 +29,7 @@ export function ProductImage({
   const { t } = useLanguage();
   const [failedUrl, setFailedUrl] = useState<string>();
   return (
-    <div className={cn("relative aspect-square w-full overflow-hidden bg-image-stage", className)}>
+    <div className={cn("relative isolate aspect-square w-full overflow-hidden bg-image-stage", className)}>
       {url && failedUrl !== url ? (
         <img
           src={cdnImage(url, size)}
@@ -41,14 +41,15 @@ export function ProductImage({
           decoding="async"
           width={size}
           height={size}
+          draggable={false}
           onError={() => setFailedUrl(url)}
           className={cn(
-            "absolute inset-0 h-full w-full object-contain p-[12%] transition-transform duration-500",
+            "absolute inset-0 h-full w-full select-none object-contain p-[8%] transition-transform duration-500 sm:p-[9%]",
             imageClassName,
           )}
         />
       ) : (
-        <span className="absolute inset-0 grid place-items-center text-xs text-neutral-400">
+        <span className="absolute inset-0 grid place-items-center px-3 text-center text-xs text-neutral-400">
           {t("galleryEmpty")}
         </span>
       )}
