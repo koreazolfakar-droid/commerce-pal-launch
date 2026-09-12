@@ -1,16 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-import { fetchCatalogProducts, fetchCollections } from "@/lib/shopify";
+import {
+  storefrontApiRequest,
+  type ShopifyCollection,
+  type ShopifyProduct,
+} from "@/lib/shopify";
+import { COLLECTIONS_QUERY, PRODUCTS_QUERY } from "@/lib/shopifyDocuments";
 import { absoluteUrl } from "@/lib/seo";
 import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";
 
 interface SitemapEntry {
   path: string;
-  changefreq?: "daily" | "weekly" | "monthly";
-  priority?: string;
   lastmod?: string;
 }
+
+const PAGE_SIZE = 100;
+const MAX_PRODUCT_PAGES = 490;
+const MAX_COLLECTION_PAGES = 100;
 
 function escapeXml(value: string) {
   return value
@@ -21,21 +28,71 @@ function escapeXml(value: string) {
     .replace(/'/g, "&apos;");
 }
 
+async function fetchAllProductsForSitemap(): Promise<ShopifyProduct[]> {
+  const products: ShopifyProduct[] = [];
+  let after: string | null = null;
+
+  for (let page = 0; page < MAX_PRODUCT_PAGES; page += 1) {
+    const response = await storefrontApiRequest(PRODUCTS_QUERY, {
+      first: PAGE_SIZE,
+      after,
+    });
+    const connection = response?.data?.products;
+    const edges = Array.isArray(connection?.edges) ? connection.edges : [];
+    products.push(...edges);
+
+    const nextCursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
+    if (!nextCursor) break;
+    after = nextCursor;
+  }
+
+  return products;
+}
+
+async function fetchAllCollectionsForSitemap(): Promise<ShopifyCollection[]> {
+  const collections: ShopifyCollection[] = [];
+  let after: string | null = null;
+
+  for (let page = 0; page < MAX_COLLECTION_PAGES; page += 1) {
+    const response = await storefrontApiRequest(COLLECTIONS_QUERY, {
+      first: PAGE_SIZE,
+      after,
+    });
+    const connection = response?.data?.collections;
+    const edges = Array.isArray(connection?.edges) ? connection.edges : [];
+    collections.push(...edges.map((edge: { node: ShopifyCollection }) => edge.node));
+
+    const nextCursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
+    if (!nextCursor) break;
+    after = nextCursor;
+  }
+
+  return collections;
+}
+
+function productLastmod(product: ShopifyProduct) {
+  const node = product.node as ShopifyProduct["node"] & { updatedAt?: string };
+  return (node.updatedAt || node.createdAt)?.slice(0, 10);
+}
+
+function collectionLastmod(collection: ShopifyCollection) {
+  return (collection as ShopifyCollection & { updatedAt?: string }).updatedAt?.slice(0, 10);
+}
+
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const today = new Date().toISOString().slice(0, 10);
         const [products, collections] = await Promise.all([
-          fetchCatalogProducts(100),
-          fetchCollections(100),
+          fetchAllProductsForSitemap(),
+          fetchAllCollectionsForSitemap(),
         ]);
         const catalog = buildCatalogIndex(products);
         const entries: SitemapEntry[] = [
-          { path: "/", changefreq: "daily", priority: "1.0", lastmod: today },
-          { path: "/shop", changefreq: "daily", priority: "0.9", lastmod: today },
-          { path: "/used-phones", changefreq: "daily", priority: "0.8", lastmod: today },
-          { path: "/collections", changefreq: "weekly", priority: "0.8", lastmod: today },
+          { path: "/" },
+          { path: "/shop" },
+          { path: "/used-phones" },
+          { path: "/collections" },
           ...[
             "help",
             "contact",
@@ -46,36 +103,24 @@ export const Route = createFileRoute("/sitemap.xml")({
             "about",
             "privacy",
             "terms",
-          ].map((path) => ({
-            path: `/${path}`,
-            changefreq: "monthly" as const,
-            priority: "0.4",
-            lastmod: today,
-          })),
+          ].map((path) => ({ path: `/${path}` })),
           ...catalog.categories
             .filter((category) => category.count > 0)
             .map((category) => ({
               path: `/category/${encodeURIComponent(category.slug)}`,
-              changefreq: "daily" as const,
-              priority: "0.8",
             })),
           ...catalog.brands
             .filter((brand) => brand.count > 0)
             .map((brand) => ({
               path: `/brand/${encodeURIComponent(brand.slug)}`,
-              changefreq: "daily" as const,
-              priority: "0.8",
             })),
           ...displayCollections(collections).map((collection) => ({
             path: `/collections/${encodeURIComponent(collection.handle)}`,
-            changefreq: "daily" as const,
-            priority: "0.8",
+            lastmod: collectionLastmod(collection),
           })),
           ...products.map((product) => ({
             path: `/product/${encodeURIComponent(product.node.handle)}`,
-            changefreq: "weekly" as const,
-            priority: "0.9",
-            lastmod: product.node.createdAt ? product.node.createdAt.slice(0, 10) : today,
+            lastmod: productLastmod(product),
           })),
         ];
 
@@ -87,8 +132,6 @@ export const Route = createFileRoute("/sitemap.xml")({
               "  <url>",
               `    <loc>${escapeXml(absoluteUrl(entry.path))}</loc>`,
               entry.lastmod ? `    <lastmod>${escapeXml(entry.lastmod)}</lastmod>` : null,
-              entry.changefreq ? `    <changefreq>${entry.changefreq}</changefreq>` : null,
-              entry.priority ? `    <priority>${entry.priority}</priority>` : null,
               "  </url>",
             ]
               .filter(Boolean)
