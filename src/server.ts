@@ -27,6 +27,25 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
+function syncRuntimeEnv(env: unknown) {
+  if (!env || typeof env !== "object") return;
+  const runtime = env as Record<string, unknown>;
+  for (const key of [
+    "SHOPIFY_STOREFRONT_TOKEN",
+    "SHOPIFY_STOREFRONT_ACCESS_TOKEN",
+    "OPENAI_API_KEY",
+    "OPENAI_MODEL",
+    "GEMINI_API_KEY",
+    "GOOGLE_API_KEY",
+    "GEMINI_MODEL",
+  ]) {
+    const value = runtime[key];
+    if (typeof value === "string" && value && !process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+}
+
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
 async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
@@ -169,6 +188,11 @@ export default {
     const blocked = guardIncomingRequest(request);
     if (blocked) return blocked;
 
+    // Cloudflare/Lovable runtime bindings are passed through `env`; TanStack server
+    // functions in this app read server-only secrets from process.env. Mirror only
+    // the known server-side bindings so Shopify works in SSR without exposing tokens.
+    syncRuntimeEnv(env);
+
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
@@ -226,9 +250,4 @@ export function withSecurityHeaders(response: Response): Response {
     statusText: response.statusText,
     headers,
   });
-}
-
-/** Backwards-compatible name used by earlier hardening tests/docs. */
-export function withHtmlSecurityHeaders(response: Response): Response {
-  return withSecurityHeaders(response);
 }
