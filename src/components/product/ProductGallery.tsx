@@ -1,5 +1,5 @@
 import { useLanguage } from "@/lib/i18n";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 
 import { cdnImage, cdnSrcSet } from "@/lib/image";
@@ -13,8 +13,8 @@ export interface GalleryImage {
 /**
  * Product image stage + thumbnail rail + lightbox.
  * Images are always the real Shopify media, rendered with object-contain so
- * nothing is cropped or stretched. Mobile uses a slightly shorter stage to
- * surface purchasing controls earlier while keeping the product visually large.
+ * nothing is cropped or stretched. Mobile supports native-feeling horizontal
+ * swipe while preserving vertical page scrolling.
  */
 export function ProductGallery({
   images,
@@ -33,6 +33,7 @@ export function ProductGallery({
 }) {
   const { t } = useLanguage();
   const [zoomed, setZoomed] = useState(false);
+  const touchStartX = useRef<number | null>(null);
   const index = images.length > 0 ? Math.min(activeIndex, images.length - 1) : 0;
   const image = images[index];
 
@@ -63,7 +64,20 @@ export function ProductGallery({
           "lg:grid lg:grid-cols-[5.25rem_minmax(0,1fr)] lg:gap-3",
       )}
     >
-      <div className="group relative aspect-[1/0.92] overflow-hidden rounded-[1.6rem] border bg-image-stage shadow-card sm:aspect-square lg:order-2">
+      <div
+        className="group relative aspect-[1/0.92] touch-pan-y overflow-hidden rounded-[1.6rem] border bg-image-stage shadow-card sm:aspect-square lg:order-2"
+        onTouchStart={(event) => {
+          touchStartX.current = event.touches[0]?.clientX ?? null;
+        }}
+        onTouchEnd={(event) => {
+          const start = touchStartX.current;
+          const end = event.changedTouches[0]?.clientX;
+          touchStartX.current = null;
+          if (start == null || end == null) return;
+          const delta = start - end;
+          if (Math.abs(delta) >= 45) step(delta > 0 ? 1 : -1);
+        }}
+      >
         {image ? (
           <img
             src={cdnImage(image.url, 900)}
