@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Menu } from "lucide-react";
@@ -20,8 +20,9 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const { t, direction, language } = useLanguage();
-  const { data: catalog } = useQuery(catalogQueryOptions());
-  const { data: collections = [] } = useQuery(collectionsQueryOptions());
+  const { data: catalog } = useQuery({ ...catalogQueryOptions(), enabled: open });
+  const { data: collections = [] } = useQuery({ ...collectionsQueryOptions(), enabled: open });
+  const visibleCollections = useMemo(() => displayCollections(collections), [collections]);
   const close = () => setOpen(false);
   const linkClass =
     "block min-h-11 rounded-xl px-3 py-3 text-sm hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring";
@@ -81,10 +82,10 @@ export function MobileMenu() {
               ))}
             </section>
           )}
-          {displayCollections(collections).length > 0 && (
+          {visibleCollections.length > 0 && (
             <section>
               <h2 className="mb-1 px-3 text-sm font-bold">{t("collections")}</h2>
-              {displayCollections(collections).map((item) => (
+              {visibleCollections.map((item) => (
                 <Link
                   key={item.handle}
                   to="/collections/$handle"
