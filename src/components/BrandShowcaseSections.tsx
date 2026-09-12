@@ -2,8 +2,9 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { collectionQueryOptions, showcaseCollectionsQueryOptions } from "@/lib/queries";
 import type { ShowcaseCollection } from "@/lib/merchandising";
 import { ProductRail } from "@/components/ProductRail";
+import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Boxes } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 
 import { buildShopifyBrands } from "@/lib/brandDirectory";
@@ -66,7 +67,6 @@ export function CategorySection({
       >
         {catalog.categories.map((category) => {
           const label = categoryLabel(category, language);
-          const CategoryIcon = category.icon ?? Boxes;
 
           return (
             <Link
@@ -92,11 +92,11 @@ export function CategorySection({
               </span>
 
               <span
-                className="pointer-events-none absolute bottom-2 end-2 grid h-[4.45rem] w-[43%] max-w-[5rem] place-items-center rounded-[1rem] border border-primary/10 bg-gradient-to-br from-primary/[0.10] via-background to-primary/[0.03] shadow-[0_8px_18px_-14px_rgba(15,23,42,0.35)] sm:h-[4.75rem] sm:max-w-[5.4rem] lg:h-[5rem] lg:max-w-[5.7rem] dark:border-primary/15 dark:from-primary/[0.16] dark:via-white/[0.035] dark:to-primary/[0.05] dark:shadow-[0_10px_22px_-16px_rgba(0,0,0,0.75)]"
+                className="pointer-events-none absolute bottom-2 end-2 grid h-[4.45rem] w-[43%] max-w-[5rem] place-items-center rounded-[1rem] border border-primary/10 bg-gradient-to-br from-primary/[0.12] via-background to-cyan-400/[0.08] shadow-[0_8px_18px_-14px_rgba(15,23,42,0.35)] sm:h-[4.75rem] sm:max-w-[5.4rem] lg:h-[5rem] lg:max-w-[5.7rem] dark:border-primary/15 dark:from-primary/[0.18] dark:via-white/[0.035] dark:to-cyan-400/[0.07] dark:shadow-[0_10px_22px_-16px_rgba(0,0,0,0.75)]"
                 aria-hidden="true"
               >
-                <span className="grid h-11 w-11 place-items-center rounded-2xl border border-primary/10 bg-background/85 text-primary shadow-sm transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12 dark:bg-black/20">
-                  <CategoryIcon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={1.65} />
+                <span className="grid h-12 w-12 place-items-center rounded-[1.1rem] border border-primary/15 bg-background/90 text-primary shadow-sm ring-1 ring-inset ring-white/5 transition-transform duration-300 group-hover:scale-105 sm:h-[3.25rem] sm:w-[3.25rem] dark:bg-black/20">
+                  <CategoryGlyph slug={category.slug} className="h-7 w-7 sm:h-8 sm:w-8" />
                 </span>
               </span>
             </Link>
