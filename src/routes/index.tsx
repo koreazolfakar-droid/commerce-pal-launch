@@ -85,17 +85,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-function SectionHeader({
-  title,
-  subtitle,
-  href = "/shop",
-  action,
-}: {
-  title: string;
-  subtitle?: string;
-  href?: string;
-  action?: React.ReactNode;
-}) {
+function SectionHeader({ title, subtitle, href = "/shop", action }: { title: string; subtitle?: string; href?: string; action?: React.ReactNode }) {
   const { t } = useLanguage();
   return (
     <div className="home-section-header">
@@ -104,10 +94,7 @@ function SectionHeader({
         {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       {action ?? (
-        <Link
-          to={href as "/shop"}
-          className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-primary hover:underline"
-        >
+        <Link to={href as "/shop"} className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-primary hover:underline">
           {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
         </Link>
       )}
@@ -135,31 +122,19 @@ function DealsCountdown() {
   return (
     <div className="flex shrink-0 items-center gap-2 rounded-full border bg-card px-3 py-1.5 shadow-card">
       <Timer className="h-3.5 w-3.5 text-primary" />
-      <span className="hidden text-[11px] font-semibold text-muted-foreground sm:inline">
-        {t("todayEnds")}
-      </span>
+      <span className="hidden text-[11px] font-semibold text-muted-foreground sm:inline">{t("todayEnds")}</span>
       <span className="flex items-center gap-1 font-mono text-xs font-bold tabular-nums">
-        {parts.map((part, i) => (
-          <span key={i} className="rounded-md bg-accent px-1.5 py-0.5 text-accent-foreground">
-            {String(part).padStart(2, "0")}
-          </span>
-        ))}
+        {parts.map((part, i) => <span key={i} className="rounded-md bg-accent px-1.5 py-0.5 text-accent-foreground">{String(part).padStart(2, "0")}</span>)}
       </span>
     </div>
   );
 }
 
-function promoSlots(
-  catalog: CatalogIndex,
-  productOf: (facet: CatalogFacet, kind: "brand" | "category") => ShopifyProduct | undefined,
-): PromoSlot[] {
+function promoSlots(catalog: CatalogIndex, productOf: (facet: CatalogFacet, kind: "brand" | "category") => ShopifyProduct | undefined): PromoSlot[] {
   const brandBy = (slug: string) => catalog.brands.find((b) => b.slug === slug);
-  const categoryBy = (...slugs: string[]) =>
-    slugs.map((slug) => catalog.categories.find((c) => c.slug === slug)).find(Boolean);
+  const categoryBy = (...slugs: string[]) => slugs.map((slug) => catalog.categories.find((c) => c.slug === slug)).find(Boolean);
   const slots: PromoSlot[] = [];
-  const add = (kind: "brand" | "category", facet?: CatalogFacet) => {
-    if (facet) slots.push({ kind, facet, product: productOf(facet, kind) });
-  };
+  const add = (kind: "brand" | "category", facet?: CatalogFacet) => { if (facet) slots.push({ kind, facet, product: productOf(facet, kind) }); };
   add("brand", brandBy("samsung") ?? catalog.brands[0]);
   add("category", categoryBy("laptops"));
   add("category", categoryBy("audio", "headphones"));
@@ -167,7 +142,7 @@ function promoSlots(
 }
 
 function Index() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { data: newItems } = useSuspenseQuery(newestQueryOptions());
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: bestSellers } = useSuspenseQuery(bestSellingQueryOptions());
@@ -177,55 +152,37 @@ function Index() {
   const brands = buildShopifyBrands(catalog.brands, collections);
   const deals = products.filter((product) => productDiscountPercent(product) !== null);
   const best = bestSellers ?? [];
-  const firstOf = (facet: CatalogFacet, kind: "brand" | "category") =>
-    products.find((p) =>
-      kind === "brand"
-        ? catalog.brandOf.get(p.node.handle)?.slug === facet.slug
-        : (catalog.categoryOf.get(p.node.handle) ?? []).includes(facet.slug),
-    );
+  const firstOf = (facet: CatalogFacet, kind: "brand" | "category") => products.find((p) => kind === "brand" ? catalog.brandOf.get(p.node.handle)?.slug === facet.slug : (catalog.categoryOf.get(p.node.handle) ?? []).includes(facet.slug));
   const slots = promoSlots(catalog, firstOf);
 
   return (
     <StoreLayout>
       <div className="home-page">
         {products.length === 0 ? (
-          <div className="px-4">
-            <div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center">
-              <h1 className="text-2xl font-bold">{t("welcomeStore")}</h1>
-              <p className="mt-2 text-sm text-muted-foreground">{t("catalogUpdating")}</p>
-            </div>
-          </div>
+          <div className="px-4"><div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center"><h1 className="text-2xl font-bold">{t("welcomeStore")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("catalogUpdating")}</p></div></div>
         ) : (
           <>
-            <h1 className="sr-only">{t("homeTitle")}</h1>
             <BenefitsBar />
 
-            <CategorySection catalog={catalog} collections={collections} />
+            <header className="max-w-3xl py-1 sm:py-2" data-testid="homepage-seo-intro">
+              <h1 className="text-[1.35rem] font-black leading-tight tracking-tight text-foreground sm:text-2xl lg:text-[1.7rem]">
+                {language === "ar" ? "تسوّق الهواتف والإلكترونيات في لبنان" : "Shop Phones & Electronics in Lebanon"}
+              </h1>
+              <p className="mt-2 max-w-2xl text-[0.82rem] leading-relaxed text-muted-foreground sm:text-sm">
+                {language === "ar"
+                  ? "اكتشف أحدث الهواتف الذكية والأجهزة اللوحية واللابتوبات والساعات الذكية والصوتيات والإكسسوارات من Space Call، مع توفر مباشر وتسوق آمن عبر متجرنا في لبنان."
+                  : "Discover smartphones, tablets, laptops, smartwatches, audio and accessories at Space Call, with live availability and secure shopping for customers in Lebanon."}
+              </p>
+            </header>
 
+            <CategorySection catalog={catalog} collections={collections} />
             <TopBrands brands={brands} />
 
-            {best.length > 0 && (
-              <section data-testid="best-sellers">
-                <SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} />
-                <ProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
-              </section>
-            )}
+            {best.length > 0 && <section data-testid="best-sellers"><SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} /><ProductRail products={best} storageKey="space-cell-home-best-sellers-view" /></section>}
 
             {newItems.length > 0 && (
               <section data-testid="new-items">
-                <SectionHeader
-                  title={t("newItems")}
-                  subtitle={t("newItemsDescription")}
-                  action={
-                    <Link
-                      to="/shop"
-                      search={{ sort: "newest" }}
-                      className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline"
-                    >
-                      {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
-                    </Link>
-                  }
-                />
+                <SectionHeader title={t("newItems")} subtitle={t("newItemsDescription")} action={<Link to="/shop" search={{ sort: "newest" }} className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline">{t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" /></Link>} />
                 <ProductRail products={newItems} storageKey="space-cell-home-new-items-view" />
               </section>
             )}
@@ -234,30 +191,13 @@ function Index() {
 
             {deals.length > 0 && (
               <section id="deals" className="scroll-mt-24">
-                <SectionHeader
-                  title={t("todaysDeals")}
-                  subtitle={t("dealsDescription")}
-                  action={<DealsCountdown />}
-                />
-                {deals.length <= 2 ? (
-                  <DealSpotlight products={deals} />
-                ) : (
-                  <ProductRail products={deals} storageKey="space-cell-home-deals-view" />
-                )}
-                <div className="mt-4">
-                  <Link
-                    to="/shop"
-                    search={{ availability: "on-sale" }}
-                    className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary"
-                  >
-                    {t("allDeals")} <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
+                <SectionHeader title={t("todaysDeals")} subtitle={t("dealsDescription")} action={<DealsCountdown />} />
+                {deals.length <= 2 ? <DealSpotlight products={deals} /> : <ProductRail products={deals} storageKey="space-cell-home-deals-view" />}
+                <div className="mt-4"><Link to="/shop" search={{ availability: "on-sale" }} className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary">{t("allDeals")} <ArrowRight className="h-3.5 w-3.5" /></Link></div>
               </section>
             )}
 
             <BundleSection collections={collections} />
-
             <PromoBanners slots={slots} />
             <ServicesStrip />
             <RecentlyViewed products={products} />
