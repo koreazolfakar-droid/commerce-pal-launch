@@ -12,8 +12,9 @@ export interface GalleryImage {
 
 /**
  * Product image stage + thumbnail rail + lightbox.
- * Images are always the real Shopify media, rendered on a fixed square stage
- * with object-contain so nothing is cropped or stretched.
+ * Images are always the real Shopify media, rendered with object-contain so
+ * nothing is cropped or stretched. Mobile uses a slightly shorter stage to
+ * surface purchasing controls earlier while keeping the product visually large.
  */
 export function ProductGallery({
   images,
@@ -62,7 +63,7 @@ export function ProductGallery({
           "lg:grid lg:grid-cols-[5.25rem_minmax(0,1fr)] lg:gap-3",
       )}
     >
-      <div className="group relative aspect-square overflow-hidden rounded-[1.6rem] border bg-image-stage shadow-card lg:order-2">
+      <div className="group relative aspect-[1/0.92] overflow-hidden rounded-[1.6rem] border bg-image-stage shadow-card sm:aspect-square lg:order-2">
         {image ? (
           <img
             src={cdnImage(image.url, 900)}
@@ -74,7 +75,7 @@ export function ProductGallery({
             width={900}
             height={900}
             draggable={false}
-            className="h-full w-full select-none object-contain p-4 transition-transform duration-300 sm:p-6 lg:p-8"
+            className="h-full w-full select-none object-contain p-2.5 transition-transform duration-300 sm:p-5 lg:p-8"
           />
         ) : (
           <div className="grid h-full place-items-center px-4 text-center text-sm text-muted-foreground">
@@ -89,7 +90,7 @@ export function ProductGallery({
             type="button"
             onClick={() => setZoomed(true)}
             aria-label={t("galleryZoom")}
-            className="press absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-card sm:bottom-4 sm:right-4"
+            className="press absolute bottom-3 right-3 grid h-10 w-10 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-card sm:bottom-4 sm:right-4 sm:h-11 sm:w-11"
           >
             <Expand className="h-4 w-4" />
           </button>
@@ -101,7 +102,7 @@ export function ProductGallery({
               type="button"
               onClick={() => step(-1)}
               aria-label={t("galleryPrevious")}
-              className="press absolute left-2.5 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-card sm:left-3"
+              className="press absolute left-2.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-card sm:left-3 sm:h-11 sm:w-11"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -109,7 +110,7 @@ export function ProductGallery({
               type="button"
               onClick={() => step(1)}
               aria-label={t("galleryNext")}
-              className="press absolute right-2.5 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-card sm:right-3"
+              className="press absolute right-2.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-card/90 text-foreground shadow-card backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-card sm:right-3 sm:h-11 sm:w-11"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -120,7 +121,7 @@ export function ProductGallery({
       {images.length > 1 && (
         <div
           className={cn(
-            "scroll-rail mt-3 flex gap-2.5 overflow-x-auto",
+            "scroll-rail mt-3 flex gap-2 overflow-x-auto",
             !compact && "lg:order-1 lg:mt-0 lg:flex-col lg:overflow-visible",
           )}
           role="group"
@@ -134,7 +135,7 @@ export function ProductGallery({
               aria-label={`${t("galleryImage")} ${thumbIndex + 1} ${t("ofLabel")} ${images.length}`}
               onClick={() => onSelect(thumbIndex)}
               className={cn(
-                "press h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-image-stage transition-[border-color,box-shadow] sm:h-20 sm:w-20",
+                "press h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 bg-image-stage transition-[border-color,box-shadow] sm:h-20 sm:w-20",
                 thumbIndex === index
                   ? "border-primary shadow-sm"
                   : "border-border hover:border-primary/50",
