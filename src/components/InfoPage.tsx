@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, ExternalLink } from "lucide-react";
+import { MessageCircle, ExternalLink, ShieldCheck } from "lucide-react";
 import { StoreLayout } from "@/components/StoreLayout";
 import {
   Accordion,
@@ -12,7 +12,7 @@ import {
   INFO_PAGES,
   POLICY_PAGES,
   POLICY_LINKS,
-  SHOP_ACCOUNT_URL,
+  SHOPIFY_ACCOUNT_URL,
   type InfoPageName,
 } from "@/lib/infoPages";
 import { useLanguage } from "@/lib/i18n";
@@ -20,12 +20,13 @@ import { shopPoliciesQueryOptions } from "@/lib/queries";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 
 export function InfoPage({ page }: { page: InfoPageName }) {
-  const { t, direction } = useLanguage();
+  const { t, direction, language } = useLanguage();
   const { data: policies, isPending } = useQuery(shopPoliciesQueryOptions());
   const policy =
     page in POLICY_PAGES ? policies?.[POLICY_PAGES[page as keyof typeof POLICY_PAGES]] : null;
   const contactPage = page === "help" || page === "contact";
   const legalPage = page in POLICY_PAGES || page === "warranty";
+  const isAr = language === "ar";
   const faqs = [
     ["faqOriginalQ", "faqOriginalA"],
     ["faqTrackingQ", "faqTrackingA"],
@@ -55,11 +56,19 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 {t("contactWhatsApp")}
               </a>
             </section>
-            <section className="rounded-2xl border bg-card p-6">
+            <section id="account-orders" className="scroll-mt-28 rounded-2xl border bg-card p-6">
               <h2 className="text-xl font-bold">{t("accountOrders")}</h2>
               <p className="mt-3 text-base text-muted-foreground">{t("accountDescription")}</p>
+              <div className="mt-4 flex gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm leading-6 text-muted-foreground">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                <p>
+                  {isAr
+                    ? "سيتم تحويلك إلى صفحة حساب Shopify الآمنة لإدارة الطلبات. قد يظهر نطاق myshopify.com أثناء هذه الخطوة."
+                    : "You’ll be redirected to Shopify’s secure account page to manage orders. The myshopify.com domain may appear during this step."}
+                </p>
+              </div>
               <a
-                href={SHOP_ACCOUNT_URL}
+                href={SHOPIFY_ACCOUNT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold hover:bg-accent"
