@@ -98,7 +98,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
   const activeCandidate = candidates[0];
   const activeQuery = useQuery({
-    ...collectionQueryOptions(activeCandidate?.handle ?? ""),
+    ...collectionQueryOptions(activeCandidate?.handle ?? "", 3),
     enabled: Boolean(activeCandidate?.handle),
   });
 
