@@ -62,7 +62,7 @@ export function CategorySection({
       <Header id="home-categories" title={t("categoriesTitle")} href="/categories" />
 
       <div
-        className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-4 lg:gap-3 xl:grid-cols-5"
+        className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0"
         role="list"
       >
         {catalog.categories.map((category) => {
@@ -74,7 +74,7 @@ export function CategorySection({
               to="/category/$slug"
               params={{ slug: category.slug }}
               role="listitem"
-              className="group relative isolate min-h-[6.6rem] overflow-hidden rounded-[1rem] border border-border/75 bg-card p-3 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] ring-1 ring-inset ring-white/[0.015] transition-[transform,border-color,box-shadow,background-color] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_28px_-18px_rgba(37,99,235,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-[7rem] sm:rounded-[1.1rem] lg:min-h-[7.3rem] dark:border-white/[0.08] dark:bg-[linear-gradient(145deg,rgba(20,24,32,0.96),rgba(11,14,20,0.98))] dark:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)] dark:ring-white/[0.025] dark:hover:border-primary/35"
+              className="group relative isolate min-h-[6.6rem] w-[10.5rem] shrink-0 snap-start overflow-hidden rounded-[1rem] border border-border/75 bg-card p-3 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] ring-1 ring-inset ring-white/[0.015] transition-[transform,border-color,box-shadow,background-color] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_28px_-18px_rgba(37,99,235,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-[7rem] sm:w-[11.5rem] sm:rounded-[1.1rem] lg:min-h-[7.3rem] lg:w-[12rem] dark:border-white/[0.08] dark:bg-[linear-gradient(145deg,rgba(20,24,32,0.96),rgba(11,14,20,0.98))] dark:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)] dark:ring-white/[0.025] dark:hover:border-primary/35"
             >
               <div
                 className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.055] via-transparent to-sky-400/[0.035] dark:from-primary/[0.09] dark:via-transparent dark:to-primary/[0.025]"
