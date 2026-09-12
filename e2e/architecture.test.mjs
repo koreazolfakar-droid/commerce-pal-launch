@@ -42,3 +42,24 @@ test("Shopify cart responses contain authoritative merchandise prices and totals
   assert.match(store, /set\(remoteState\(result\.cart\)\)/);
   assert.doesNotMatch(store, /quantity:\s*i\.quantity\s*\+/);
 });
+
+test("server applies mutation abuse guards and hardened browser headers", async () => {
+  const server = await read("src/server.ts");
+  assert.match(server, /MAX_REQUEST_BYTES/);
+  assert.match(server, /RATE_LIMIT_MAX_MUTATIONS/);
+  assert.match(server, /sec-fetch-site/);
+  assert.match(server, /Cross-site mutation blocked/);
+  assert.match(server, /Content-Security-Policy/);
+  assert.match(server, /frame-ancestors 'self'/);
+  assert.match(server, /Strict-Transport-Security/);
+  assert.match(server, /Cross-Origin-Resource-Policy/);
+});
+
+test("secret environment files and private keys cannot be committed accidentally", async () => {
+  const gitignore = await read(".gitignore");
+  assert.match(gitignore, /^\.env$/m);
+  assert.match(gitignore, /^\.env\.\*$/m);
+  assert.match(gitignore, /^!\.env\.example$/m);
+  assert.match(gitignore, /^\*\.pem$/m);
+  assert.match(gitignore, /^\*\.key$/m);
+});
