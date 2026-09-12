@@ -3,6 +3,7 @@ import { fetchShowcaseCollections } from "@/lib/merchandising";
 import { queryOptions } from "@tanstack/react-query";
 
 import {
+  fetchCatalogIndexProducts,
   fetchCatalogProducts,
   fetchBestSellingProducts,
   fetchProducts,
@@ -18,7 +19,18 @@ import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 2 * 60 * 1000;
 
-/** Bounded discovery index. Route-specific product data uses dedicated queries. */
+/**
+ * Lightweight discovery index for navigation, category rails and brand facets.
+ * It intentionally excludes product images/variants/options from the Shopify payload.
+ */
+export const navigationCatalogQueryOptions = () =>
+  queryOptions({
+    queryKey: ["shopify", "catalog-navigation"],
+    queryFn: async () => buildCatalogIndex(await fetchCatalogIndexProducts(60)),
+    staleTime: CATALOG_STALE_TIME,
+  });
+
+/** Rich bounded catalog used by product grids and quick actions. */
 export const catalogQueryOptions = () =>
   queryOptions({
     queryKey: ["shopify", "catalog"],
