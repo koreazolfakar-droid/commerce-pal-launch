@@ -15,7 +15,7 @@ const SOCIALS = [
 /**
  * Footer navigation is intentionally deterministic. It must not depend on a
  * page-specific catalog query, otherwise cached/SSR pages can render different
- * footers or transient "No brands yet" placeholders.
+ * footers or transient empty-brand placeholders.
  */
 const FOOTER_SHOP_LINKS = [
   { slug: "smartphones", en: "Smartphones", ar: "الهواتف الذكية" },
