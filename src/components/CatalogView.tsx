@@ -89,48 +89,49 @@ function FilterControls({
   currency: string;
   onChange: (patch: Patch) => void;
 }) {
+  const [min, setMin] = useState(filters.min?.toString() ?? "");
+  const [max, setMax] = useState(filters.max?.toString() ?? "");
   const { t, language } = useLanguage();
-  const [min, setMin] = useState(filters.minPrice?.toString() ?? "");
-  const [max, setMax] = useState(filters.maxPrice?.toString() ?? "");
 
-  useEffect(() => setMin(filters.minPrice?.toString() ?? ""), [filters.minPrice]);
-  useEffect(() => setMax(filters.maxPrice?.toString() ?? ""), [filters.maxPrice]);
+  useEffect(() => {
+    setMin(filters.min?.toString() ?? "");
+    setMax(filters.max?.toString() ?? "");
+  }, [filters.min, filters.max]);
 
   const applyPrice = () => {
-    const parsedMin = min === "" ? undefined : Number(min);
-    const parsedMax = max === "" ? undefined : Number(max);
+    const parsed = parseProductSearch({ min, max });
     onChange({
-      minPrice: Number.isFinite(parsedMin) ? parsedMin : undefined,
-      maxPrice: Number.isFinite(parsedMax) ? parsedMax : undefined,
+      min: parsed.min,
+      max: parsed.max,
     });
   };
 
   return (
     <div className="space-y-5">
-      {facets.categories && (
-        <FacetList
-          title={t("categories")}
-          items={facets.categories.map((item) => ({ ...item, label: categoryLabel(item, language) }))}
-          selected={filters.category}
-          onToggle={(slug) => onChange({ category: toggleValue(filters.category, slug) })}
-        />
-      )}
-      {facets.brands && (
-        <FacetList
-          title={t("brands")}
-          items={facets.brands}
-          selected={filters.brand}
-          onToggle={(slug) => onChange({ brand: toggleValue(filters.brand, slug) })}
-        />
-      )}
-      {facets.collections && (
-        <FacetList
-          title={t("collections")}
-          items={facets.collections.map((item) => ({ slug: item.handle, label: item.title }))}
-          selected={filters.collection}
-          onToggle={(slug) => onChange({ collection: toggleValue(filters.collection, slug) })}
-        />
-      )}
+      <FacetList
+        title={t("allCategories")}
+        items={(facets.categories ?? []).map((category) => ({
+          ...category,
+          label: categoryLabel(category, language),
+        }))}
+        selected={filters.category}
+        onToggle={(slug) => onChange({ category: toggleValue(filters.category, slug) })}
+      />
+      <FacetList
+        title={t("brands")}
+        items={facets.brands ?? []}
+        selected={filters.brand}
+        onToggle={(slug) => onChange({ brand: toggleValue(filters.brand, slug) })}
+      />
+      <FacetList
+        title={t("collections")}
+        items={(facets.collections ?? []).map((collection) => ({
+          slug: collection.handle,
+          label: collection.title,
+        }))}
+        selected={filters.collection}
+        onToggle={(slug) => onChange({ collection: toggleValue(filters.collection, slug) })}
+      />
 
       <div className="border-b pb-5">
         <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">
@@ -138,20 +139,14 @@ function FilterControls({
         </h3>
         <div className="flex flex-wrap gap-2">
           {[
-            { value: "in-stock", label: t("inStock") },
-            { value: "on-sale", label: t("onSale") },
+            { value: undefined, label: t("all") },
+            { value: "in-stock" as const, label: t("inStock") },
+            { value: "on-sale" as const, label: t("onSale") },
           ].map((option) => (
             <button
-              key={option.value}
+              key={option.label}
               type="button"
-              onClick={() =>
-                onChange({
-                  availability:
-                    filters.availability === option.value
-                      ? undefined
-                      : (option.value as ProductFilters["availability"]),
-                })
-              }
+              onClick={() => onChange({ availability: option.value })}
               className={cn(
                 "press rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
                 filters.availability === option.value
@@ -333,11 +328,12 @@ export function CatalogView({
                         {
                           featured: t("featured"),
                           newest: t("newest"),
-                          "price-low": t("priceLowHigh"),
-                          "price-high": t("priceHighLow"),
-                          "name-az": t("nameAZ"),
-                        } as const
-                      )[option.value]}
+                          "price-asc": t("priceLowHigh"),
+                          "price-desc": t("priceHighLow"),
+                          discount: t("biggestDiscount"),
+                          "title-asc": t("nameAZ"),
+                        } as Record<string, string>
+                      )[option.value] ?? option.label}
                     </option>
                   ))}
                 </select>
@@ -346,19 +342,76 @@ export function CatalogView({
           </div>
 
           {activeCount > 0 && (
-            <div className="mb-5 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">{t("activeFilters")}</span>
-              <Button type="button" variant="ghost" size="sm" className="h-8 rounded-full px-3 text-xs" onClick={onReset}>
-                <X className="me-1 h-3.5 w-3.5" /> {t("clearAll")}
-              </Button>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {[
+                ...(filters.category ?? []).map((slug) => ({
+                  key: `category-${slug}`,
+                  label: categoryLabel(
+                    facets.categories?.find((facet) => facet.slug === slug) ?? {
+                      slug,
+                      label: slug,
+                    },
+                    language,
+                  ),
+                  clear: () => onChange({ category: toggleValue(filters.category, slug) }),
+                })),
+                ...(filters.brand ?? []).map((slug) => ({
+                  key: `brand-${slug}`,
+                  label: facets.brands?.find((facet) => facet.slug === slug)?.label ?? slug,
+                  clear: () => onChange({ brand: toggleValue(filters.brand, slug) }),
+                })),
+                ...(filters.collection ?? []).map((handle) => ({
+                  key: `collection-${handle}`,
+                  label:
+                    facets.collections?.find((collection) => collection.handle === handle)?.title ??
+                    handle,
+                  clear: () => onChange({ collection: toggleValue(filters.collection, handle) }),
+                })),
+                ...(filters.availability
+                  ? [
+                      {
+                        key: "availability",
+                        label: filters.availability === "in-stock" ? t("inStock") : t("onSale"),
+                        clear: () => onChange({ availability: undefined }),
+                      },
+                    ]
+                  : []),
+                ...(filters.min !== undefined || filters.max !== undefined
+                  ? [
+                      {
+                        key: "price",
+                        label: `${filters.min ?? priceMin} – ${filters.max ?? priceMax}`,
+                        clear: () => onChange({ min: undefined, max: undefined }),
+                      },
+                    ]
+                  : []),
+              ].map((chip) => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={chip.clear}
+                  className="inline-flex items-center gap-1.5 rounded-full border bg-surface px-3 py-1 text-xs font-medium hover:border-primary hover:text-primary"
+                >
+                  {chip.label}
+                  <X className="h-3 w-3" />
+                </button>
+              ))}
             </div>
           )}
 
-          <ProductGrid products={products} />
+          <ProductGrid
+            eagerCount={4}
+            products={products}
+            action={
+              activeCount > 0 ? (
+                <Button variant="outline" onClick={onReset}>
+                  {t("clearAll")}
+                </Button>
+              ) : undefined
+            }
+          />
         </div>
       </div>
     </div>
   );
 }
-
-export { parseProductSearch };
