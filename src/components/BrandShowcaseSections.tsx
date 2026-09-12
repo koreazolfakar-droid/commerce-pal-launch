@@ -61,47 +61,58 @@ export function CategorySection({
     <section aria-labelledby="home-categories" data-testid="category-section">
       <Header id="home-categories" title={t("categoriesTitle")} href="/categories" />
 
-      <div
-        className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0"
-        role="list"
-      >
-        {catalog.categories.map((category) => {
-          const label = categoryLabel(category, language);
+      <div className="relative">
+        <div
+          className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 pe-12 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:gap-4 sm:px-0 sm:pe-0"
+          role="list"
+          aria-label={t("categoriesTitle")}
+        >
+          {catalog.categories.map((category) => {
+            const label = categoryLabel(category, language);
 
-          return (
-            <Link
-              key={category.slug}
-              to="/category/$slug"
-              params={{ slug: category.slug }}
-              role="listitem"
-              className="group relative isolate min-h-[6.6rem] w-[10.5rem] shrink-0 snap-start overflow-hidden rounded-[1rem] border border-border/75 bg-card p-3 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] ring-1 ring-inset ring-white/[0.015] transition-[transform,border-color,box-shadow,background-color] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_28px_-18px_rgba(37,99,235,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-[7rem] sm:w-[11.5rem] sm:rounded-[1.1rem] lg:min-h-[7.3rem] lg:w-[12rem] dark:border-white/[0.08] dark:bg-[linear-gradient(145deg,rgba(20,24,32,0.96),rgba(11,14,20,0.98))] dark:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)] dark:ring-white/[0.025] dark:hover:border-primary/35"
-            >
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.055] via-transparent to-sky-400/[0.035] dark:from-primary/[0.09] dark:via-transparent dark:to-primary/[0.025]"
-                aria-hidden="true"
-              />
+            return (
+              <Link
+                key={category.slug}
+                to="/category/$slug"
+                params={{ slug: category.slug }}
+                role="listitem"
+                aria-label={label}
+                className="group relative flex min-h-[9rem] w-[7.9rem] shrink-0 snap-start flex-col items-center rounded-[1.45rem] border border-border/70 bg-card px-3 pb-3 pt-3.5 text-center shadow-[0_12px_30px_-24px_rgba(15,23,42,0.45)] ring-1 ring-inset ring-white/35 transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_22px_40px_-26px_rgba(37,99,235,0.38)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-[9.6rem] sm:w-[8.8rem] sm:px-4 sm:pb-4 sm:pt-4 dark:border-white/[0.08] dark:bg-[linear-gradient(160deg,rgba(24,28,36,0.98),rgba(10,13,19,0.98))] dark:ring-white/[0.035] dark:hover:border-primary/35"
+              >
+                <span
+                  className="pointer-events-none absolute inset-x-4 top-3 h-16 rounded-full bg-primary/[0.06] blur-2xl transition-opacity duration-300 group-hover:opacity-100 dark:bg-primary/[0.1]"
+                  aria-hidden="true"
+                />
 
-              <div className="relative z-10 max-w-[58%] pe-1">
-                <h3 className="line-clamp-2 text-[0.78rem] font-extrabold leading-[1.15] tracking-tight text-foreground sm:text-[0.84rem] lg:text-sm">
+                <span
+                  className="relative grid aspect-square w-[5.65rem] place-items-center overflow-hidden rounded-[1.35rem] border border-black/[0.045] bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(244,247,251,0.94))] shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_12px_30px_-22px_rgba(15,23,42,0.5)] transition-transform duration-300 ease-out group-hover:scale-[1.045] sm:w-[6.2rem] dark:border-white/[0.08] dark:bg-[linear-gradient(145deg,rgba(40,45,56,0.92),rgba(16,20,28,0.96))] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_14px_34px_-24px_rgba(0,0,0,0.95)]"
+                  aria-hidden="true"
+                >
+                  <span className="absolute inset-[7%] rounded-[1.08rem] border border-primary/[0.08] bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.92),rgba(219,234,254,0.18)_34%,transparent_70%)] dark:border-primary/[0.12] dark:bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),rgba(37,99,235,0.08)_34%,transparent_70%)]" />
+                  <CategoryGlyph
+                    slug={category.slug}
+                    className="relative z-10 h-[4.25rem] w-[4.25rem] text-slate-700 transition-transform duration-300 ease-out group-hover:scale-[1.04] sm:h-[4.7rem] sm:w-[4.7rem] dark:text-slate-200"
+                  />
+                </span>
+
+                <h3 className="mt-2.5 line-clamp-2 min-h-[2.1rem] w-full text-[0.76rem] font-semibold leading-[1.25] tracking-[-0.01em] text-foreground sm:mt-3 sm:text-[0.82rem]">
                   {label}
                 </h3>
-              </div>
+              </Link>
+            );
+          })}
+        </div>
 
-              <span className="absolute bottom-2.5 start-2.5 z-10 grid h-7 w-7 place-items-center rounded-full border border-border/70 bg-background/80 text-primary shadow-sm backdrop-blur transition group-hover:border-primary/30 group-hover:bg-primary group-hover:text-primary-foreground sm:h-7.5 sm:w-7.5 dark:border-white/[0.08] dark:bg-black/25">
-                <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
-              </span>
-
-              <span
-                className="pointer-events-none absolute bottom-2 end-2 grid h-[4.45rem] w-[43%] max-w-[5rem] place-items-center rounded-[1rem] border border-primary/10 bg-gradient-to-br from-primary/[0.12] via-background to-cyan-400/[0.08] shadow-[0_8px_18px_-14px_rgba(15,23,42,0.35)] sm:h-[4.75rem] sm:max-w-[5.4rem] lg:h-[5rem] lg:max-w-[5.7rem] dark:border-primary/15 dark:from-primary/[0.18] dark:via-white/[0.035] dark:to-cyan-400/[0.07] dark:shadow-[0_10px_22px_-16px_rgba(0,0,0,0.75)]"
-                aria-hidden="true"
-              >
-                <span className="grid h-12 w-12 place-items-center rounded-[1.1rem] border border-primary/15 bg-background/90 text-primary shadow-sm ring-1 ring-inset ring-white/5 transition-transform duration-300 group-hover:scale-105 sm:h-[3.25rem] sm:w-[3.25rem] dark:bg-black/20">
-                  <CategoryGlyph slug={category.slug} className="h-7 w-7 sm:h-8 sm:w-8" />
-                </span>
-              </span>
-            </Link>
-          );
-        })}
+        <div
+          className="pointer-events-none absolute inset-y-0 end-0 w-12 bg-gradient-to-l from-background via-background/90 to-transparent sm:hidden"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute end-1 top-[3.2rem] grid h-7 w-7 place-items-center rounded-full border border-border/70 bg-background/90 text-muted-foreground shadow-sm backdrop-blur sm:hidden"
+          aria-hidden="true"
+        >
+          <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
+        </div>
       </div>
     </section>
   );
