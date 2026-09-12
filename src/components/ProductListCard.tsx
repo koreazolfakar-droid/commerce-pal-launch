@@ -9,6 +9,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { CompareButton } from "@/components/CompareButton";
 import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
+import { trackProductEvent } from "@/lib/analytics";
 import { discountPercent, formatPrice, variantSummary, type ShopifyProduct } from "@/lib/shopify";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
@@ -55,6 +56,7 @@ export const ProductListCard = memo(function ProductListCard({
   const wish = () => {
     toggleWishlist(node.handle);
   };
+  const select = () => trackProductEvent("select_item", product);
 
   return (
     <article className="product-list-card group overflow-hidden rounded-2xl border bg-card shadow-card transition-[border-color,box-shadow] hover:border-primary/30 hover:shadow-card-hover">
@@ -64,6 +66,7 @@ export const ProductListCard = memo(function ProductListCard({
           params={{ handle: node.handle }}
           aria-label={node.title}
           className="block"
+          onClick={select}
         >
           <ProductImage
             url={image?.url}
@@ -119,7 +122,7 @@ export const ProductListCard = memo(function ProductListCard({
           </div>
         </div>
 
-        <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
+        <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0" onClick={select}>
           <h3 className="line-clamp-2 break-words text-sm font-bold leading-snug transition-colors group-hover:text-primary sm:text-base">
             {node.title}
           </h3>
