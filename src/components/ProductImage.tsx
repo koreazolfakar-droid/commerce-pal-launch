@@ -5,9 +5,9 @@ import { useState } from "react";
 
 /**
  * Shared product image area for every normal product card.
- * Guarantees a fixed square container, theme-aware image-stage backdrop, centred product,
- * preserved aspect ratio (object-contain) and a normalized visual scale so
- * source images with different canvas sizes still look the same size.
+ * Uses one consistent soft-square/squircle stage so product artwork never looks
+ * trapped in a harsh box or mismatched against the rounded storefront controls.
+ * Product artwork stays centred, uncropped and visually balanced across cards.
  */
 export function ProductImage({
   url,
@@ -28,8 +28,19 @@ export function ProductImage({
 }) {
   const { t } = useLanguage();
   const [failedUrl, setFailedUrl] = useState<string>();
+
   return (
-    <div className={cn("relative isolate aspect-square w-full overflow-hidden bg-image-stage", className)}>
+    <div
+      className={cn(
+        "relative isolate aspect-square w-full overflow-hidden rounded-[1.35rem] border border-border/55 bg-image-stage",
+        className,
+      )}
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-[5%] rounded-[1.1rem] bg-surface/35"
+      />
+
       {url && failedUrl !== url ? (
         <img
           src={cdnImage(url, size)}
@@ -44,12 +55,12 @@ export function ProductImage({
           draggable={false}
           onError={() => setFailedUrl(url)}
           className={cn(
-            "absolute inset-0 h-full w-full select-none object-contain p-[8%] transition-transform duration-500 sm:p-[9%]",
+            "absolute inset-0 z-10 h-full w-full select-none object-contain p-[9%] transition-transform duration-500 sm:p-[10%]",
             imageClassName,
           )}
         />
       ) : (
-        <span className="absolute inset-0 grid place-items-center px-3 text-center text-xs text-neutral-400">
+        <span className="absolute inset-0 z-10 grid place-items-center px-3 text-center text-xs text-neutral-400">
           {t("galleryEmpty")}
         </span>
       )}
