@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
 import { BenefitsBar, RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
+import { useHydrated } from "@/hooks/useHydrated";
 import { Newsletter } from "@/components/Newsletter";
 import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
 import { StoreLayout } from "@/components/StoreLayout";
@@ -27,11 +28,14 @@ export const Route = createFileRoute("/")({
     const criticalData = Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
-    ]).catch(() => undefined);
-    await Promise.race([
+    ])
+      .then(() => true)
+      .catch(() => false);
+    const loaded = await Promise.race([
       criticalData,
-      new Promise<void>((resolve) => setTimeout(resolve, 650)),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 650)),
     ]);
+    return { loaded };
   },
   head: () => ({
     meta: [
@@ -129,6 +133,8 @@ function DealsCountdown() {
 
 function Index() {
   const { t, language } = useLanguage();
+  const { loaded: serverDataReady } = Route.useLoaderData();
+  const hydrated = useHydrated();
   const [showProductSections, setShowProductSections] = useState(false);
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: collections = [] } = useQuery(collectionsQueryOptions());
@@ -146,7 +152,7 @@ function Index() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  if (!catalog) {
+  if ((!serverDataReady && !hydrated) || !catalog) {
     return (
       <StoreLayout>
         <div className="home-page" aria-busy="true" aria-label={t("catalogUpdating")}>
