@@ -200,7 +200,11 @@ export function WhatsAppCheckoutForm({
         locating: "جارٍ تحديد الموقع...",
         locationReady: "تم تحديد الموقع وسيُرفق مع الطلب.",
         locationPermissionDenied:
-          "صلاحية الموقع مرفوضة. فعّل Location لهذا الموقع من إعدادات المتصفح ثم اضغط تحديد موقعي من جديد.",
+          "صلاحية الموقع محظورة لهذا الموقع. المتصفح لا يسمح للموقع بإعادة فتح نافذة الإذن تلقائيًا بعد الحظر.",
+        locationPermissionHelp:
+          "على Chrome في Android: اضغط أيقونة معلومات/إعدادات الموقع بجانب العنوان ← الأذونات Permissions ← الموقع Location ← سماح Allow، ثم ارجع واضغط إعادة المحاولة.",
+        retryLocation: "إعادة محاولة تحديد الموقع",
+        continueWithoutLocation: "المتابعة بدون الموقع",
         locationUnavailable:
           "تعذر الحصول على إشارة الموقع. تأكد أن خدمة Location/GPS مفعّلة ثم أعد المحاولة.",
         locationTimeout: "استغرق تحديد الموقع وقتًا طويلًا. اقترب من نافذة أو فعّل GPS ثم أعد المحاولة.",
@@ -255,7 +259,11 @@ export function WhatsAppCheckoutForm({
         locating: "Detecting location...",
         locationReady: "Location detected and will be attached to the order.",
         locationPermissionDenied:
-          "Location permission is blocked. Allow Location for this site in your browser settings, then try again.",
+          "Location access is blocked for this site. Browsers cannot reopen a blocked permission automatically.",
+        locationPermissionHelp:
+          "On Chrome for Android: tap the site controls/info icon next to the address → Permissions → Location → Allow, then come back and try again.",
+        retryLocation: "Try location again",
+        continueWithoutLocation: "Continue without location",
         locationUnavailable: "We couldn't get a location signal. Turn on Location/GPS and try again.",
         locationTimeout: "Location detection timed out. Turn on GPS or move to a clearer area, then try again.",
         locationUnsupported: "This browser doesn't support location. Please try Chrome or another modern browser.",
@@ -662,9 +670,52 @@ export function WhatsAppCheckoutForm({
               </div>
 
               {locationError ? (
-                <p role="alert" className="text-xs font-medium leading-5 text-amber-700 dark:text-amber-300">
-                  {locationErrorMessage()}
-                </p>
+                <div
+                  role="alert"
+                  className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-3 text-xs font-medium leading-5 text-amber-800 dark:text-amber-200"
+                >
+                  <p>{locationErrorMessage()}</p>
+
+                  {locationError === "permission_denied" ? (
+                    <>
+                      <p className="mt-1.5 text-[11px] leading-5 text-amber-800/90 dark:text-amber-100/90">
+                        {copy.locationPermissionHelp}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={locateCustomer}
+                          disabled={locating}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-background px-3 py-1.5 text-[11px] font-bold text-foreground transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
+                        >
+                          {locating ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+                          {copy.retryLocation}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShareLocation(false);
+                            setLocationError(null);
+                            setSubmitted(false);
+                          }}
+                          className="rounded-full border border-transparent px-3 py-1.5 text-[11px] font-bold text-foreground underline-offset-2 transition hover:bg-background/70 hover:underline"
+                        >
+                          {copy.continueWithoutLocation}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={locateCustomer}
+                      disabled={locating}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-background px-3 py-1.5 text-[11px] font-bold text-foreground transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {locating ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+                      {copy.retryLocation}
+                    </button>
+                  )}
+                </div>
               ) : null}
 
               {location ? (
