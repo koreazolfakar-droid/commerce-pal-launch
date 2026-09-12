@@ -241,7 +241,7 @@ export function withSecurityHeaders(response: Response): Response {
   const headers = new Headers(response.headers);
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self), payment=()");
   headers.set("X-Frame-Options", "SAMEORIGIN");
   headers.set("X-DNS-Prefetch-Control", "off");
   headers.set("Origin-Agent-Cluster", "?1");
@@ -264,7 +264,7 @@ export function withSecurityHeaders(response: Response): Response {
         "img-src 'self' data: blob: https://cdn.shopify.com https://*.shopifycdn.com",
         "media-src 'self' https://cdn.shopify.com https://*.shopifycdn.com",
         "connect-src 'self' https://*.myshopify.com https://cdn.shopify.com",
-        "frame-src 'self' https://*.myshopify.com https://checkout.shopify.com",
+        "frame-src 'self' https://*.myshopify.com https://checkout.shopify.com https://maps.google.com https://www.google.com",
         "worker-src 'self' blob:",
         "manifest-src 'self'",
         "upgrade-insecure-requests",
