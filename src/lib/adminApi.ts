@@ -5,6 +5,19 @@ type AdminGraphqlResponse<T> = {
   errors?: Array<{ message?: string }>;
 };
 
+type ShopifyTokenResponse = {
+  access_token?: string;
+  scope?: string;
+  expires_in?: number;
+};
+
+type CachedToken = {
+  value: string;
+  expiresAt: number;
+};
+
+let cachedClientCredentialsToken: CachedToken | null = null;
+
 function normalizeOrigin(value: string) {
   return value.trim().replace(/\/+$/, "");
 }
@@ -38,6 +51,58 @@ function constantTimeEqual(a: string, b: string) {
     diff |= (a.charCodeAt(index) || 0) ^ (b.charCodeAt(index) || 0);
   }
   return diff === 0;
+}
+
+function hasShopifyClientCredentials() {
+  return Boolean(
+    process.env["SHOPIFY_ADMIN_CLIENT_ID"]?.trim() &&
+      process.env["SHOPIFY_ADMIN_CLIENT_SECRET"]?.trim(),
+  );
+}
+
+async function getShopifyAdminToken() {
+  const staticToken = process.env["SHOPIFY_ADMIN_API_TOKEN"]?.trim();
+  if (staticToken) return staticToken;
+
+  const clientId = process.env["SHOPIFY_ADMIN_CLIENT_ID"]?.trim();
+  const clientSecret = process.env["SHOPIFY_ADMIN_CLIENT_SECRET"]?.trim();
+  if (!clientId || !clientSecret) {
+    throw new Error("Shopify Admin credentials are not configured");
+  }
+
+  const now = Date.now();
+  if (cachedClientCredentialsToken && cachedClientCredentialsToken.expiresAt > now) {
+    return cachedClientCredentialsToken.value;
+  }
+
+  const body = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: clientId,
+    client_secret: clientSecret,
+  });
+
+  const response = await fetch(
+    `https://${STORE_CONFIG.shopifyDomain}/admin/oauth/access_token`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body,
+    },
+  );
+
+  const payload = (await response.json()) as ShopifyTokenResponse & { error?: string; error_description?: string };
+  if (!response.ok || !payload.access_token) {
+    const message = payload.error_description || payload.error || `HTTP ${response.status}`;
+    throw new Error(`Unable to authenticate Shopify Admin API: ${message}`);
+  }
+
+  const expiresInSeconds = Math.max(Number(payload.expires_in || 86399), 60);
+  cachedClientCredentialsToken = {
+    value: payload.access_token,
+    expiresAt: now + Math.max(expiresInSeconds - 300, 30) * 1000,
+  };
+
+  return payload.access_token;
 }
 
 export function adminJson(request: Request, payload: unknown, status = 200) {
@@ -84,7 +149,14 @@ export function adminConfiguration() {
   return {
     dashboardOriginConfigured: Boolean(configuredDashboardOrigin()),
     apiKeyConfigured: Boolean(process.env["ADMIN_DASHBOARD_API_KEY"]?.trim()),
-    shopifyAdminConfigured: Boolean(process.env["SHOPIFY_ADMIN_API_TOKEN"]?.trim()),
+    shopifyAdminConfigured: Boolean(
+      process.env["SHOPIFY_ADMIN_API_TOKEN"]?.trim() || hasShopifyClientCredentials(),
+    ),
+    shopifyAuthMode: process.env["SHOPIFY_ADMIN_API_TOKEN"]?.trim()
+      ? "static-token"
+      : hasShopifyClientCredentials()
+        ? "client-credentials"
+        : "not-configured",
     shopifyDomain: STORE_CONFIG.shopifyDomain,
     storeName: STORE_CONFIG.name,
   };
@@ -94,9 +166,7 @@ export async function shopifyAdminRequest<T>(
   query: string,
   variables: Record<string, unknown> = {},
 ): Promise<T> {
-  const token = process.env["SHOPIFY_ADMIN_API_TOKEN"]?.trim();
-  if (!token) throw new Error("Shopify Admin API token is not configured");
-
+  const token = await getShopifyAdminToken();
   const apiVersion =
     process.env["SHOPIFY_ADMIN_API_VERSION"]?.trim() || STORE_CONFIG.shopifyApiVersion;
   const url = `https://${STORE_CONFIG.shopifyDomain}/admin/api/${apiVersion}/graphql.json`;
