@@ -63,6 +63,7 @@ function LogoImage({
   const imgRef = useRef<HTMLImageElement>(null);
   const source = sources[attempt];
   const loaded = Boolean(source && loadedSource === source);
+  const exhausted = sources.length === 0 || (!source && attempt >= sources.length);
 
   // Catch cached loads/errors which happened before hydration attached the handlers.
   useEffect(() => {
@@ -82,13 +83,16 @@ function LogoImage({
         className,
       )}
     >
-      {!loaded && (
+      {!loaded && !exhausted && (
+        <span aria-hidden="true" className="absolute inset-[12%] animate-pulse rounded bg-black/[0.035]" />
+      )}
+      {exhausted && (
         <span
           aria-hidden="true"
           style={{
             fontSize: wordmark ? 13 : Math.max(10, size * 0.34),
           }}
-          className="absolute inset-0 grid place-items-center bg-white text-center font-semibold leading-tight text-black"
+          className="absolute inset-0 grid place-items-center bg-white px-[10%] text-center font-semibold leading-tight text-black"
         >
           {wordmark ? label : brandMonogram(label)}
         </span>
@@ -107,7 +111,7 @@ function LogoImage({
           style={{ width: "100%", height: "100%", opacity: loaded ? 1 : 0 }}
           onLoad={() => setLoadedSource(source)}
           onError={() => setAttempt((value) => value + 1)}
-          className="relative min-h-0 min-w-0 object-contain transition-opacity"
+          className="relative min-h-0 min-w-0 object-contain p-[10%] transition-opacity"
         />
       )}
     </span>
