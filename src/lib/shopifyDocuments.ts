@@ -44,6 +44,44 @@ export const PRODUCTS_QUERY = `
   }
 `;
 
+/** Full-text product search, sorted by Shopify relevance with last-term prefix matching. */
+export const SEARCH_QUERY = `
+  query SearchProducts($query: String!, $first: Int!, $after: String) {
+    search(
+      query: $query
+      first: $first
+      after: $after
+      types: [PRODUCT]
+      sortKey: RELEVANCE
+      prefix: LAST
+      unavailableProducts: LAST
+    ) {
+      totalCount
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        ... on Product { ${PRODUCT_LIST_FIELDS} }
+      }
+    }
+  }
+`;
+
+/** Type-ahead search including SKU and tags in addition to Shopify's default fields. */
+export const PREDICTIVE_SEARCH_QUERY = `
+  query PredictStorefront($query: String!) {
+    predictiveSearch(
+      query: $query
+      limit: 10
+      limitScope: EACH
+      types: [PRODUCT, COLLECTION]
+      searchableFields: [TITLE, PRODUCT_TYPE, TAG, VENDOR, VARIANTS_SKU, VARIANTS_TITLE]
+      unavailableProducts: LAST
+    ) {
+      products { ${PRODUCT_LIST_FIELDS} }
+      collections { ${COLLECTION_FIELDS} }
+    }
+  }
+`;
+
 export const PRODUCT_BY_HANDLE_QUERY = `
   query GetProduct($handle: String!) {
     product(handle: $handle) { ${PRODUCT_DETAIL_FIELDS} }
