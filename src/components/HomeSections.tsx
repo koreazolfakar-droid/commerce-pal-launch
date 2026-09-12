@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   CreditCard,
@@ -10,9 +11,12 @@ import {
   Truck,
 } from "lucide-react";
 import { ArrowRight } from "lucide-react";
+
+import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
 import { cdnImage } from "@/lib/image";
-import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { useLanguage } from "@/lib/i18n";
+import { collectionsQueryOptions } from "@/lib/queries";
+import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import type { ShopifyProduct } from "@/lib/shopify";
 
@@ -25,27 +29,34 @@ const BENEFITS = [
 
 export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
   const { t } = useLanguage();
+  const { data: collections = [] } = useQuery({
+    ...collectionsQueryOptions(),
+    enabled: !compact,
+  });
   return (
-    <section aria-label={t("shoppingBenefits")} data-testid="benefits-bar">
-      <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border bg-border min-[360px]:grid-cols-2 lg:grid-cols-4">
-        {BENEFITS.map((benefit) => (
-          <div
-            key={benefit.title}
-            className={`flex min-w-0 flex-col items-start gap-2 bg-card ${compact ? "p-3" : "p-4"} sm:flex-row sm:gap-3`}
-          >
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
-              <benefit.icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <p className="break-words text-sm font-bold leading-relaxed">{t(benefit.title)}</p>
-              <p className="mt-0.5 break-words text-xs leading-relaxed text-muted-foreground">
-                {t(benefit.detail)}
-              </p>
+    <>
+      {!compact && collections.length > 0 && <ShopifyHeroCollections collections={collections} />}
+      <section aria-label={t("shoppingBenefits")} data-testid="benefits-bar">
+        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border bg-border min-[360px]:grid-cols-2 lg:grid-cols-4">
+          {BENEFITS.map((benefit) => (
+            <div
+              key={benefit.title}
+              className={`flex min-w-0 flex-col items-start gap-2 bg-card ${compact ? "p-3" : "p-4"} sm:flex-row sm:gap-3`}
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
+                <benefit.icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="break-words text-sm font-bold leading-relaxed">{t(benefit.title)}</p>
+                <p className="mt-0.5 break-words text-xs leading-relaxed text-muted-foreground">
+                  {t(benefit.detail)}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </section>
+          ))}
+        </div>
+      </section>
+    </>
   );
 }
 

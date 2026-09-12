@@ -1,13 +1,14 @@
 import { test, expect } from "@playwright/test";
 
-test("homepage has one heading, no heroes, one benefits strip and adaptive deals", async ({
+test("homepage has Shopify-driven hero tabs, one heading, one benefits strip and adaptive deals", async ({
   page,
   isMobile,
 }) => {
   await page.goto("/");
   await expect(page.locator("h1")).toHaveCount(1);
-  await expect(page.getByTestId("hero-banner")).toHaveCount(0);
-  await expect(page.locator('img[alt^="Merchant artwork hero-"]')).toHaveCount(0);
+  await expect(page.getByTestId("collection-hero-tabs")).toBeVisible();
+  expect(await page.getByTestId("collection-hero-tabs").getByRole("tab").count()).toBeGreaterThanOrEqual(3);
+  await expect(page.getByTestId("collection-hero-visual").locator("img")).toBeVisible();
   await expect(page.getByTestId("benefits-bar")).toHaveCount(1);
   await expect(page.getByTestId("category-section")).toHaveCount(1);
   await expect(page.getByTestId("top-brands")).toBeVisible();
@@ -17,6 +18,7 @@ test("homepage has one heading, no heroes, one benefits strip and adaptive deals
     .locator(".home-page [data-testid]")
     .evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")));
   const expected = [
+    "collection-hero-tabs",
     "benefits-bar",
     "category-section",
     "top-brands",
@@ -35,7 +37,20 @@ test("homepage has one heading, no heroes, one benefits strip and adaptive deals
   await expect(showcase.first()).toContainText("Zeta showcase");
 });
 
-test("each brand keeps its compact showcase, products and exact destination without hero artwork", async ({
+test("hero tabs switch Shopify collection artwork and products", async ({ page }) => {
+  await page.goto("/");
+  const hero = page.getByTestId("collection-hero-tabs");
+  const tabs = hero.getByRole("tab");
+  await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+  const firstAlt = await page.getByTestId("collection-hero-visual").locator("img").getAttribute("alt");
+  await tabs.nth(1).click();
+  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+  const secondAlt = await page.getByTestId("collection-hero-visual").locator("img").getAttribute("alt");
+  expect(secondAlt).not.toBe(firstAlt);
+  await expect(hero.locator('a[href^="/product/"]')).toHaveCount(6);
+});
+
+test("each brand keeps its compact showcase, products and exact destination without duplicate hero artwork", async ({
   page,
 }) => {
   await page.goto("/");
@@ -52,7 +67,9 @@ test("each brand keeps its compact showcase, products and exact destination with
     ).toBeAttached();
     await expect(section.locator(`a[href="/product/fixture-phone-${excluded}"]`)).toHaveCount(0);
   }
-  await expect(page.locator('img[alt^="Merchant artwork hero-"]')).toHaveCount(0);
+  await expect(
+    page.getByTestId("brand-showcases").locator('img[alt^="Merchant artwork hero-"]'),
+  ).toHaveCount(0);
   await expect(
     page.locator('[data-facet-kind="category"][data-facet-slug="e-readers"]'),
   ).toBeAttached();
