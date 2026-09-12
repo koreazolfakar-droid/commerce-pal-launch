@@ -22,7 +22,10 @@ export const POLICY_PAGES = {
   terms: "termsOfService",
 } as const satisfies Partial<Record<InfoPageName, PolicyKey>>;
 export const POLICY_LINKS = ["shipping", "returns", "warranty", "privacy", "terms"] as const;
-export const SHOP_ACCOUNT_URL = CONFIG_ACCOUNT_URL;
+
+/** Keep account/order links on the Space Call domain first, then explain the Shopify hand-off. */
+export const SHOP_ACCOUNT_URL = "/help#account-orders";
+export const SHOPIFY_ACCOUNT_URL = CONFIG_ACCOUNT_URL;
 
 export function infoPageHead(page: InfoPageName) {
   const title = `${translate("en", INFO_PAGES[page])} — ${STORE_NAME}`;
