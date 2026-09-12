@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
 import { useLanguage } from "@/lib/i18n";
-import { cdnImage, cdnSrcSet } from "@/lib/image";
+import { cdnImage, cdnSrcSet, productImageSizes } from "@/lib/image";
 import { homeHeroCollections } from "@/lib/homeMerchandising";
 import { productPrimaryVariant } from "@/lib/productPricing";
 import { collectionQueryOptions } from "@/lib/queries";
@@ -60,7 +60,7 @@ function HeroProductCard({ product }: { product: ShopifyProduct }) {
             url={image?.url}
             alt={image?.altText ?? node.title}
             size={360}
-            sizes="(max-width: 639px) 31vw, 220px"
+            sizes={productImageSizes.compactCard}
             className="h-full border-0 bg-transparent"
             imageClassName="p-[8%] transition-transform duration-500 group-hover:scale-[1.035]"
           />
@@ -128,9 +128,9 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
           <span className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
             {leadImage ? (
               <img
-                src={cdnImage(leadImage.url, 1800)}
-                srcSet={cdnSrcSet(leadImage.url, 1800)}
-                sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
+                src={cdnImage(leadImage.url, { width: 1800, quality: 84 })}
+                srcSet={cdnSrcSet(leadImage.url, 1800, [480, 768, 1024, 1280, 1600, 1920], 84)}
+                sizes={productImageSizes.hero}
                 alt={leadImage.altText ?? collection.title}
                 width={1672}
                 height={941}

@@ -2,7 +2,7 @@ import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 
-import { cdnImage, cdnSrcSet } from "@/lib/image";
+import { cdnImage, cdnSrcSet, productImageSizes } from "@/lib/image";
 import { cn } from "@/lib/utils";
 
 export interface GalleryImage {
@@ -12,8 +12,8 @@ export interface GalleryImage {
 
 /**
  * Product image stage + thumbnail rail + lightbox.
- * Images are always the real Shopify media, rendered on a fixed square stage
- * with object-contain so nothing is cropped or stretched.
+ * Shopify media is delivered at responsive widths from the CDN, preserving
+ * detail in the main gallery/lightbox without shipping full-size originals.
  */
 export function ProductGallery({
   images,
@@ -65,9 +65,9 @@ export function ProductGallery({
       <div className="group relative aspect-square overflow-hidden rounded-[1.6rem] border bg-image-stage shadow-card lg:order-2">
         {image ? (
           <img
-            src={cdnImage(image.url, 900)}
-            srcSet={cdnSrcSet(image.url, 900)}
-            sizes="(min-width: 1024px) 560px, 92vw"
+            src={cdnImage(image.url, { width: 900, quality: 84 })}
+            srcSet={cdnSrcSet(image.url, 900, [420, 640, 900, 1200, 1600], 84)}
+            sizes={productImageSizes.gallery}
             alt={image.altText ?? title}
             fetchPriority="high"
             decoding="async"
@@ -141,7 +141,9 @@ export function ProductGallery({
               )}
             >
               <img
-                src={cdnImage(thumb.url, 160)}
+                src={cdnImage(thumb.url, { width: 160, quality: 72 })}
+                srcSet={cdnSrcSet(thumb.url, 160, [80, 120, 160, 240], 72)}
+                sizes="80px"
                 alt=""
                 loading="lazy"
                 decoding="async"
@@ -168,8 +170,11 @@ export function ProductGallery({
             onClick={(event) => event.stopPropagation()}
           >
             <img
-              src={cdnImage(image.url, 1400)}
+              src={cdnImage(image.url, { width: 1600, quality: 88 })}
+              srcSet={cdnSrcSet(image.url, 1600, [900, 1200, 1600, 2000, 2400], 88)}
+              sizes="min(92vw, 1400px)"
               alt={image.altText ?? title}
+              decoding="async"
               draggable={false}
               className="mx-auto max-h-[84vh] w-full select-none object-contain p-4 sm:p-6"
             />

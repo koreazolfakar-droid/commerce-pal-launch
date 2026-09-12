@@ -1,19 +1,19 @@
-import { cdnImage, cdnSrcSet } from "@/lib/image";
+import { cdnImage, cdnSrcSet, productImageSizes } from "@/lib/image";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
 import { useState } from "react";
 
 /**
  * Shared product image area for every normal product card.
- * Uses one consistent soft-square/squircle stage so product artwork never looks
- * trapped in a harsh box or mismatched against the rounded storefront controls.
- * Product artwork stays centred, uncropped and visually balanced across cards.
+ * Shopify images are requested from the CDN at responsive widths instead of
+ * downloading the original asset. The browser chooses the smallest useful
+ * candidate through `srcset` while retaining crisp 2x rendering.
  */
 export function ProductImage({
   url,
   alt,
   size = 480,
-  sizes,
+  sizes = productImageSizes.card,
   eager = false,
   className,
   imageClassName,
@@ -43,8 +43,8 @@ export function ProductImage({
 
       {url && failedUrl !== url ? (
         <img
-          src={cdnImage(url, size)}
-          srcSet={cdnSrcSet(url, size)}
+          src={cdnImage(url, { width: size, quality: eager ? 82 : 76 })}
+          srcSet={cdnSrcSet(url, size, undefined, eager ? 82 : 76)}
           sizes={sizes}
           alt={alt}
           loading={eager ? "eager" : "lazy"}
