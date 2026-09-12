@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav } from "@/components/BottomNav";
@@ -6,11 +6,14 @@ import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WhatsAppCTA } from "@/components/WhatsAppCTA";
-import { AIAssistant } from "@/components/AIAssistant";
 import "../ux-polish.css";
 import "../ux-welcome.css";
 import "../dark-black.css";
 import "../ui-overhaul.css";
+
+const AIAssistant = lazy(() =>
+  import("@/components/AIAssistant").then((module) => ({ default: module.AIAssistant })),
+);
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
 export function StoreLayout({ children, aiContext }: { children: ReactNode; aiContext?: string }) {
@@ -38,7 +41,9 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       </main>
       <SiteFooter />
       <WhatsAppCTA />
-      <AIAssistant {...(aiContext ? { context: aiContext } : {})} />
+      <Suspense fallback={null}>
+        <AIAssistant {...(aiContext ? { context: aiContext } : {})} />
+      </Suspense>
       <BottomNav />
     </div>
   );
