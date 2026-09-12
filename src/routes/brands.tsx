@@ -41,40 +41,45 @@ function BrandsPage() {
 
   return (
     <StoreLayout>
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:py-10 lg:px-6">
-        <header className="mb-7 max-w-2xl">
-          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+      <div className="mx-auto w-full max-w-7xl px-4 py-7 sm:px-5 sm:py-10 lg:px-6">
+        <header className="mb-6 max-w-2xl sm:mb-8">
+          <h1 className="text-[2rem] font-black leading-none tracking-[-0.045em] sm:text-4xl">
             {language === "ar" ? "كل البراندات" : "All Brands"}
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
             {language === "ar"
               ? "تصفح جميع البراندات المتوفرة في Space Call وانتقل مباشرة إلى منتجات كل علامة."
               : "Browse every brand available at Space Call and jump directly to its products."}
           </p>
         </header>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {brands.map((brand) => (
             <Link
               key={brand.slug}
               to="/brand/$slug"
               params={{ slug: brand.slug }}
-              className="group flex min-h-36 flex-col items-center justify-between rounded-2xl border border-border/75 bg-card p-4 text-center shadow-card transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="group flex min-h-[12.25rem] flex-col rounded-[1.55rem] border border-border/70 bg-card p-3.5 shadow-[0_10px_28px_-20px_rgba(15,23,42,0.35)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_16px_34px_-22px_rgba(37,99,235,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-[12.75rem] sm:p-4"
               aria-label={brand.label}
             >
-              <span className="grid min-h-20 w-full place-items-center rounded-xl bg-surface px-3">
-                <BrandLogo
-                  slug={brand.slug}
-                  label={brand.label}
-                  size={46}
-                  wordmark
-                  {...(brand.image ? { imageUrl: brand.image } : {})}
-                />
+              <span className="grid h-[6.6rem] w-full place-items-center overflow-hidden rounded-[1.2rem] border border-black/[0.045] bg-white px-4 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.015)] sm:h-[7rem] dark:border-white/[0.08] dark:bg-white">
+                <span className="grid h-full w-full place-items-center [&_img]:max-h-[64%] [&_img]:max-w-[82%] [&_img]:object-contain [&_svg]:max-h-[64%] [&_svg]:max-w-[82%]">
+                  <BrandLogo
+                    slug={brand.slug}
+                    label={brand.label}
+                    size={48}
+                    wordmark
+                    {...(brand.image ? { imageUrl: brand.image } : {})}
+                  />
+                </span>
               </span>
-              <span className="mt-4 flex w-full items-center justify-between gap-2">
-                <span className="min-w-0 truncate text-sm font-extrabold">{brand.label}</span>
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                  <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+
+              <span className="mt-auto flex min-h-14 w-full items-end justify-between gap-3 pt-4">
+                <span className="min-w-0 truncate text-[0.98rem] font-extrabold leading-none tracking-[-0.02em] text-foreground">
+                  {brand.label}
+                </span>
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <ArrowRight className="h-[1.05rem] w-[1.05rem] rtl:rotate-180" aria-hidden="true" />
                 </span>
               </span>
             </Link>
