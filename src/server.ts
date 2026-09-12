@@ -92,6 +92,34 @@ function requestContentLength(request: Request) {
   return Number.isFinite(value) && value >= 0 ? value : null;
 }
 
+async function requestBodyExceedsLimit(request: Request) {
+  if (!MUTATING_METHODS.has(request.method.toUpperCase())) return false;
+
+  const declared = requestContentLength(request);
+  if (declared !== null) return declared > MAX_REQUEST_BYTES;
+
+  // Content-Length is optional (for example with streamed/chunked requests), so
+  // inspect a clone and stop as soon as the configured limit is exceeded.
+  const body = request.clone().body;
+  if (!body) return false;
+
+  const reader = body.getReader();
+  let received = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) return false;
+      received += value.byteLength;
+      if (received > MAX_REQUEST_BYTES) {
+        await reader.cancel("request body too large").catch(() => undefined);
+        return true;
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 function isTrustedMutationOrigin(request: Request) {
   if (!MUTATING_METHODS.has(request.method.toUpperCase())) return true;
 
@@ -123,14 +151,10 @@ function isTrustedMutationOrigin(request: Request) {
 }
 
 function clientAddress(request: Request) {
-  const direct =
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("true-client-ip") ??
-    request.headers.get("x-real-ip");
-  if (direct) return direct.trim().slice(0, 128);
-
-  const forwarded = request.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim().slice(0, 128) || null;
+  // Only trust the address header supplied by the deployment edge. Generic
+  // X-Forwarded-For/X-Real-IP values can be spoofed by direct clients.
+  const cloudflare = request.headers.get("cf-connecting-ip");
+  return cloudflare?.trim().slice(0, 128) || null;
 }
 
 function consumeMutationRateLimit(request: Request) {
@@ -139,7 +163,8 @@ function consumeMutationRateLimit(request: Request) {
   if (!address) return { allowed: true, retryAfter: 0 };
 
   const now = Date.now();
-  const key = address;
+  const pathname = new URL(request.url).pathname.slice(0, 256);
+  const key = `${address}:${pathname}`;
   const existing = mutationRateBuckets.get(key);
 
   if (!existing || existing.resetAt <= now) {
@@ -165,9 +190,8 @@ function consumeMutationRateLimit(request: Request) {
   return { allowed: true, retryAfter: 0 };
 }
 
-export function guardIncomingRequest(request: Request): Response | null {
-  const length = requestContentLength(request);
-  if (length !== null && length > MAX_REQUEST_BYTES) {
+export async function guardIncomingRequest(request: Request): Promise<Response | null> {
+  if (await requestBodyExceedsLimit(request)) {
     return securityError(413, "Request body is too large");
   }
 
@@ -185,7 +209,7 @@ export function guardIncomingRequest(request: Request): Response | null {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
-    const blocked = guardIncomingRequest(request);
+    const blocked = await guardIncomingRequest(request);
     if (blocked) return blocked;
 
     // Cloudflare/Lovable runtime bindings are passed through `env`; TanStack server
@@ -236,7 +260,7 @@ export function withSecurityHeaders(response: Response): Response {
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
-  headers.set("X-Frame-Options", "SAMEORIGIN");
+  headers.set("X-Frame-Options", "DENY");
   headers.set("X-DNS-Prefetch-Control", "off");
   headers.set("Origin-Agent-Cluster", "?1");
   headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
@@ -250,9 +274,10 @@ export function withSecurityHeaders(response: Response): Response {
         "default-src 'self'",
         "base-uri 'self'",
         "object-src 'none'",
-        "frame-ancestors 'self'",
+        "frame-ancestors 'none'",
         "form-action 'self' https://*.myshopify.com https://checkout.shopify.com",
         "script-src 'self' 'unsafe-inline'",
+        "script-src-attr 'none'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' data: https://fonts.gstatic.com",
         "img-src 'self' data: blob: https://cdn.shopify.com https://*.shopifycdn.com",
