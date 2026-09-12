@@ -99,17 +99,23 @@ export const ProductListCard = memo(function ProductListCard({
               </>
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={wish}
               aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
               aria-pressed={wishlisted}
-              className="press grid h-11 w-11 place-items-center rounded-full border bg-background text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              className="press grid h-11 w-11 place-items-center rounded-full border border-border/70 bg-background/95 text-muted-foreground shadow-sm transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
+              <Heart
+                aria-hidden
+                className={cn("h-[18px] w-[18px]", wishlisted && "fill-primary text-primary")}
+                strokeWidth={1.9}
+              />
             </button>
-            {isPhone && <CompareButton handle={node.handle} compact className="h-11 w-11" />}
+            {isPhone && (
+              <CompareButton handle={node.handle} compact className="h-11 w-11 [&_svg]:size-[18px]" />
+            )}
           </div>
         </div>
 
