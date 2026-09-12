@@ -54,6 +54,22 @@ export type ProductWriteInput = {
   barcode: string;
 };
 
+export type InventoryLocation = {
+  id: string;
+  name: string;
+  isActive: boolean;
+};
+
+export type InventoryReceipt = {
+  product: string;
+  variant: string;
+  quantity: number;
+  locationId: string;
+  reference: string | null;
+  createdAt: string;
+  referenceDocumentUri: string | null;
+};
+
 export type AdminOrderStatus = "NEW" | "CONFIRMED" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED";
 
 export type AdminOrder = {
@@ -90,6 +106,8 @@ type PageInfo = {
 
 export type ProductsResponse = { ok: true; products: AdminProduct[]; pageInfo: PageInfo };
 export type ProductMutationResponse = { ok: true; product: AdminProduct };
+export type InventoryLocationsResponse = { ok: true; locations: InventoryLocation[] };
+export type InventoryReceiveResponse = { ok: true; receipt: InventoryReceipt };
 export type OrdersResponse = { ok: true; orders: AdminOrder[]; pageInfo: PageInfo };
 export type CustomersResponse = { ok: true; customers: AdminCustomer[]; pageInfo: PageInfo };
 
@@ -169,6 +187,23 @@ export function createProduct(input: ProductWriteInput) {
 export function updateProduct(input: ProductWriteInput & { id: string }) {
   return request<ProductMutationResponse>("/api/admin/products", {
     method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchInventoryLocations() {
+  return request<InventoryLocationsResponse>("/api/admin/inventory");
+}
+
+export function receiveInventory(input: {
+  variantId: string;
+  locationId: string;
+  quantity: number;
+  reference?: string;
+}) {
+  return request<InventoryReceiveResponse>("/api/admin/inventory", {
+    method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
