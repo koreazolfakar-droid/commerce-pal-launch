@@ -88,6 +88,21 @@ export const productsByHandlesQueryOptions = (handles: string[]) => {
   });
 };
 
+/**
+ * Product-only search. Collections are query-independent and should come from
+ * collectionsQueryOptions() so typing several terms does not refetch them.
+ */
+export const productSearchQueryOptions = (term: string) => {
+  const normalized = term.trim();
+  return queryOptions({
+    queryKey: ["shopify", "product-search", normalized],
+    queryFn: () => fetchProducts(20, normalized),
+    enabled: Boolean(normalized),
+    staleTime: 60 * 1000,
+  });
+};
+
+/** Legacy combined search kept for compatibility with any remaining consumers. */
 export const storefrontSearchQueryOptions = (term: string) =>
   queryOptions({
     queryKey: ["shopify", "search", term.trim()],
