@@ -114,22 +114,23 @@ export function SiteFooter() {
           </FooterColumn>
 
           <FooterColumn title={isAr ? "العلامات التجارية" : "Brands"}>
-            {brandLinks.map((entry) => (
-              <li key={entry.slug}>
-                <Link
-                  to="/brand/$slug"
-                  params={{ slug: entry.slug }}
-                  className="text-sm text-muted-foreground hover:text-primary"
-                >
-                  {entry.label}
-                </Link>
+            {brandLinks.length ? (
+              brandLinks.map((entry) => (
+                <li key={entry.slug}>
+                  <Link
+                    to="/brand/$slug"
+                    params={{ slug: entry.slug }}
+                    className="text-sm text-muted-foreground hover:text-primary"
+                  >
+                    {entry.label}
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-muted-foreground">
+                {isAr ? "لا توجد علامات بعد" : "No brands yet"}
               </li>
-            ))}
-            <li>
-              <Link to="/brands" className="text-sm text-muted-foreground hover:text-primary">
-                {isAr ? "عرض كل العلامات" : "View all brands"}
-              </Link>
-            </li>
+            )}
           </FooterColumn>
 
           <div className="grid gap-10 sm:grid-cols-2 lg:contents">
@@ -218,8 +219,11 @@ function FooterColumn({ title, children }: { title: string; children: React.Reac
     <details className="footer-column group min-w-0 break-words lg:block" open>
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold [&::-webkit-details-marker]:hidden lg:pointer-events-none">
         {title}
+        <span className="text-lg font-normal text-muted-foreground transition-transform group-open:rotate-45 lg:hidden">
+          +
+        </span>
       </summary>
-      <ul className="mt-3 space-y-2">{children}</ul>
+      <ul className="mt-2 space-y-2 pb-2 lg:mt-3 lg:pb-0">{children}</ul>
     </details>
   );
 }
