@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
+import { Facebook, Instagram, MessageCircle, Youtube, Twitter } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { catalogQueryOptions, shopPoliciesQueryOptions } from "@/lib/queries";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { useLanguage } from "@/lib/i18n";
-import { STORE_CONFIG, STORE_NAME, STORE_VERSION } from "@/lib/storeConfig";
+import { STORE_CONFIG, STORE_NAME } from "@/lib/storeConfig";
 import { useHydrated } from "@/hooks/useHydrated";
 
 const SOCIALS = [
@@ -69,8 +69,9 @@ export function SiteFooter() {
               href={generalWhatsAppUrl()}
               target="_blank"
               rel="noreferrer"
-              className="mt-5 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
+              <MessageCircle className="h-4 w-4" aria-hidden="true" />
               {isAr ? "تواصل معنا عبر واتساب" : "Contact us on WhatsApp"}
             </a>
             <div className="mt-5 flex gap-3 text-muted-foreground">
@@ -128,7 +129,7 @@ export function SiteFooter() {
               ))
             ) : (
               <li className="text-sm text-muted-foreground">
-                {isAr ? "لا توجد علامات بعد" : "No brands yet"}
+                {isAr ? "جارٍ تحميل العلامات التجارية…" : "Loading brands…"}
               </li>
             )}
           </FooterColumn>
@@ -204,9 +205,6 @@ export function SiteFooter() {
           <p>
             © {new Date().getFullYear()} {STORE_NAME}.{" "}
             {isAr ? "الدفع الآمن عبر Shopify." : "Secure checkout powered by Shopify."}
-          </p>
-          <p className="mt-2 text-[11px] font-medium tracking-wide text-muted-foreground/80" data-testid="app-version">
-            {isAr ? "الإصدار" : "Version"} v{STORE_VERSION}
           </p>
         </div>
       </div>
