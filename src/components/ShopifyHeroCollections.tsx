@@ -121,7 +121,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
         <Link
           to="/collections/$handle"
           params={{ handle: collection.handle }}
-          className="group relative -mx-3 block w-[calc(100%+1.5rem)] max-w-none overflow-hidden rounded-none border-y border-border/70 bg-black shadow-card sm:mx-0 sm:w-full sm:rounded-[2rem] sm:border"
+          className="group relative -mx-3 block h-fit w-[calc(100%+1.5rem)] max-w-none overflow-hidden rounded-none border-y border-border/70 bg-black leading-none shadow-card sm:mx-0 sm:w-full sm:rounded-[2rem] sm:border"
           data-testid="collection-hero-visual"
         >
           {leadImage ? (
@@ -135,10 +135,10 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="block aspect-video h-auto w-full object-contain"
+              className="m-0 block h-auto w-full max-w-none align-top"
             />
           ) : (
-            <div className="grid aspect-video w-full place-items-center text-sm text-muted-foreground">
+            <div className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
               {t("galleryEmpty")}
             </div>
           )}
