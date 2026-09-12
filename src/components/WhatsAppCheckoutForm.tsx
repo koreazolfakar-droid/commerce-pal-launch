@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { CheckCircle2, MapPin, MessageCircle, Phone, StickyNote, UserRound } from "lucide-react";
+import { CheckCircle2, CreditCard, MapPin, MessageCircle, Phone, StickyNote, UserRound, WalletCards } from "lucide-react";
 
 import { useLanguage } from "@/lib/i18n";
 import { formatPrice, variantSummary } from "@/lib/shopify";
@@ -9,6 +9,8 @@ import type { CartItem } from "@/stores/cartStore";
 
 const STORAGE_KEY = "space-call-whatsapp-checkout-customer";
 
+type PaymentMethod = "cash_on_delivery" | "whish_money";
+
 type CustomerDetails = {
   name: string;
   phone: string;
@@ -16,6 +18,7 @@ type CustomerDetails = {
   address: string;
   landmark: string;
   notes: string;
+  paymentMethod: PaymentMethod;
 };
 
 const EMPTY_DETAILS: CustomerDetails = {
@@ -25,6 +28,7 @@ const EMPTY_DETAILS: CustomerDetails = {
   address: "",
   landmark: "",
   notes: "",
+  paymentMethod: "cash_on_delivery",
 };
 
 interface WhatsAppCheckoutFormProps {
@@ -60,7 +64,7 @@ export function WhatsAppCheckoutForm({
   const copy = isArabic
     ? {
         title: "اطلب عبر واتساب",
-        description: "املأ بيانات التوصيل وسنرسل تفاصيل السلة كاملة إلى واتساب.",
+        description: "املأ بيانات التوصيل واختر طريقة الدفع، وسنرسل تفاصيل السلة كاملة إلى واتساب.",
         name: "الاسم الكامل",
         namePlaceholder: "مثال: حسين علي",
         phone: "رقم الهاتف",
@@ -73,6 +77,11 @@ export function WhatsAppCheckoutForm({
         landmarkPlaceholder: "مثال: قرب الساحة الرئيسية",
         notes: "ملاحظات الطلب (اختياري)",
         notesPlaceholder: "لون مفضل، وقت مناسب للتوصيل، أو أي ملاحظة",
+        paymentTitle: "طريقة الدفع",
+        cashOnDelivery: "الدفع عند الاستلام",
+        cashOnDeliveryDescription: "ادفع نقدًا عند استلام الطلب.",
+        whishMoney: "Whish Money",
+        whishMoneyDescription: "حوّل المبلغ عبر Whish Money. سنؤكد لك تفاصيل التحويل على واتساب قبل تجهيز الطلب.",
         button: "إرسال الطلب عبر واتساب",
         required: "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان قبل إرسال الطلب.",
         privacy: "سيتم فتح واتساب فقط بعد ضغطك على زر الإرسال. لا تُرسل بياناتك تلقائيًا.",
@@ -80,7 +89,7 @@ export function WhatsAppCheckoutForm({
       }
     : {
         title: "Order via WhatsApp",
-        description: "Fill in your delivery details and we’ll prepare your full cart for WhatsApp.",
+        description: "Fill in your delivery details, choose a payment method, and we’ll prepare your full cart for WhatsApp.",
         name: "Full name",
         namePlaceholder: "e.g. Hussein Ali",
         phone: "Phone number",
@@ -93,6 +102,11 @@ export function WhatsAppCheckoutForm({
         landmarkPlaceholder: "e.g. Near the main square",
         notes: "Order notes (optional)",
         notesPlaceholder: "Preferred colour, delivery time, or any request",
+        paymentTitle: "Payment method",
+        cashOnDelivery: "Cash on delivery",
+        cashOnDeliveryDescription: "Pay in cash when you receive your order.",
+        whishMoney: "Whish Money",
+        whishMoneyDescription: "Transfer the amount using Whish Money. We’ll confirm the transfer details with you on WhatsApp before preparing the order.",
         button: "Send order on WhatsApp",
         required: "Please fill in your name, phone number, area and address before sending the order.",
         privacy: "WhatsApp opens only after you press send. Your details are not submitted automatically.",
@@ -110,7 +124,7 @@ export function WhatsAppCheckoutForm({
     }
   }, []);
 
-  const update = (field: keyof CustomerDetails, value: string) => {
+  const update = <K extends keyof CustomerDetails>(field: K, value: CustomerDetails[K]) => {
     setDetails((current) => ({ ...current, [field]: value }));
     setError("");
     setSubmitted(false);
@@ -132,6 +146,8 @@ export function WhatsAppCheckoutForm({
     }
 
     const reference = orderReference();
+    const paymentLabel =
+      details.paymentMethod === "whish_money" ? copy.whishMoney : copy.cashOnDelivery;
     const lines = items.flatMap((item, index) => {
       const options = variantSummary(item.selectedOptions);
       const unitPrice = formatPrice(item.price.amount, item.price.currencyCode);
@@ -158,6 +174,13 @@ export function WhatsAppCheckoutForm({
         ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${details.landmark.trim()}`
         : "",
       "",
+      `💳 ${isArabic ? "طريقة الدفع" : "Payment method"}: ${paymentLabel}`,
+      details.paymentMethod === "whish_money"
+        ? isArabic
+          ? "⚠️ الدفع عبر Whish Money بانتظار تأكيد تفاصيل التحويل من المتجر."
+          : "⚠️ Whish Money payment is pending store confirmation of the transfer details."
+        : "",
+      "",
       `📦 ${isArabic ? "المنتجات" : "Items"}`,
       ...lines,
       "",
@@ -175,6 +198,13 @@ export function WhatsAppCheckoutForm({
 
   const fieldClass =
     "mt-1.5 w-full rounded-xl border bg-background px-3.5 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
+
+  const paymentCardClass = (selected: boolean) =>
+    `flex cursor-pointer gap-3 rounded-2xl border p-4 transition ${
+      selected
+        ? "border-primary bg-primary/5 ring-2 ring-primary/10"
+        : "border-border bg-background hover:border-primary/40"
+    }`;
 
   return (
     <section
@@ -279,6 +309,55 @@ export function WhatsAppCheckoutForm({
             required
           />
         </label>
+
+        <fieldset className="space-y-3">
+          <legend className="flex items-center gap-2 text-sm font-extrabold">
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            {copy.paymentTitle}
+          </legend>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className={paymentCardClass(details.paymentMethod === "cash_on_delivery")}>
+              <input
+                type="radio"
+                name="payment-method"
+                value="cash_on_delivery"
+                checked={details.paymentMethod === "cash_on_delivery"}
+                onChange={() => update("paymentMethod", "cash_on_delivery")}
+                className="mt-1 h-4 w-4 accent-primary"
+              />
+              <span>
+                <span className="flex items-center gap-2 font-bold">
+                  <WalletCards className="h-4 w-4" />
+                  {copy.cashOnDelivery}
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                  {copy.cashOnDeliveryDescription}
+                </span>
+              </span>
+            </label>
+
+            <label className={paymentCardClass(details.paymentMethod === "whish_money")}>
+              <input
+                type="radio"
+                name="payment-method"
+                value="whish_money"
+                checked={details.paymentMethod === "whish_money"}
+                onChange={() => update("paymentMethod", "whish_money")}
+                className="mt-1 h-4 w-4 accent-primary"
+              />
+              <span>
+                <span className="flex items-center gap-2 font-bold">
+                  <CreditCard className="h-4 w-4" />
+                  {copy.whishMoney}
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                  {copy.whishMoneyDescription}
+                </span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
 
         <label className="block text-sm font-semibold">
           <span className="flex items-center gap-2">
