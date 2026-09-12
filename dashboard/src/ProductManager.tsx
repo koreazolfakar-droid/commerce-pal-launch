@@ -6,6 +6,7 @@ import {
   createProduct,
   updateProduct,
 } from "./api";
+import "./phase2.css";
 
 type ProductFilter = "ALL" | "ACTIVE" | "LOW" | "OUT";
 
