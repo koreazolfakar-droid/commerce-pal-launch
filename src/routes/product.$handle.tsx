@@ -41,7 +41,7 @@ import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
 import { productWhatsAppUrl } from "@/lib/whatsapp";
-import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, productJsonLd, socialMeta } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, productJsonLd } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { useCartStore } from "@/stores/cartStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
@@ -62,38 +62,44 @@ export const Route = createFileRoute("/product/$handle")({
         ],
       };
     }
-    const title = loaderData.product.node.title ?? "Product";
-    const metaTitle = `${title} | ${STORE_NAME} Lebanon`;
+    const title = loaderData?.product.node.title ?? "Product";
     const description =
-      loaderData.product.node.description?.replace(/\s+/g, " ").trim().slice(0, 155) ||
-      `Shop ${title} in Lebanon at ${STORE_NAME} with live availability and secure Shopify checkout.`;
-    const image = loaderData.product.node.images.edges[0]?.node.url;
+      loaderData?.product.node.description?.slice(0, 150) ||
+      `Shop phones, tablets and accessories at ${STORE_NAME}.`;
+    const image = loaderData?.product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
-    const product = loaderData.product;
+    const product = loaderData?.product;
     return {
       meta: [
-        { title: metaTitle },
+        { title: `${title} — ${STORE_NAME}` },
         { name: "description", content: description },
-        { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1" },
-        ...socialMeta({
-          title: metaTitle,
-          description,
-          path,
-          image: image || absoluteUrl("/logo.png"),
-          type: "product",
-        }),
+        { property: "og:title", content: `${title} — ${STORE_NAME}` },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "product" },
+        { property: "og:url", content: absoluteUrl(path) },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${title} — ${STORE_NAME}` },
+        { name: "twitter:description", content: description },
+        ...(image
+          ? [
+              { property: "og:image", content: image },
+              { name: "twitter:image", content: image },
+            ]
+          : []),
       ],
       links: [canonicalLink(path)],
-      scripts: [
-        jsonLd(productJsonLd(product)),
-        jsonLd(
-          breadcrumbJsonLd([
-            { name: "Home", path: "/" },
-            { name: "Shop", path: "/shop" },
-            { name: title, path },
-          ]),
-        ),
-      ],
+      scripts: product
+        ? [
+            jsonLd(productJsonLd(product)),
+            jsonLd(
+              breadcrumbJsonLd([
+                { name: "Home", path: "/" },
+                { name: "Shop", path: "/shop" },
+                { name: title, path },
+              ]),
+            ),
+          ]
+        : [],
     };
   },
   component: ProductPage,
@@ -142,6 +148,7 @@ function ProductPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node.handle]);
 
+  // Keep the gallery in sync with the variant's own Shopify image when present.
   useEffect(() => {
     const variantImage = selectedVariant?.image?.url;
     if (!variantImage) return;
@@ -171,117 +178,472 @@ function ProductPage() {
     if (!selectedVariant) return;
     setPending(checkout ? "buy" : "cart");
     try {
-      await addItem({ product, variantId: selectedVariant.id, quantity });
+      const success = await addItem({
+        product,
+        variantId: selectedVariant.id,
+        variantTitle: selectedVariant.title,
+        price: selectedVariant.price,
+        quantity,
+        selectedOptions: selectedVariant.selectedOptions ?? [],
+      });
+      if (!success) {
+        toast.error(t("addToCartFailed"), { position: "top-center" });
+        return;
+      }
+      toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
       if (checkout) {
-        const url = useCartStore.getState().getCheckoutUrl();
-        if (url) window.open(url, "_blank", "noopener,noreferrer");
-      } else {
-        toast.success(t("addedToBag"));
+        const checkoutUrl = useCartStore.getState().getCheckoutUrl();
+        if (checkoutUrl) window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+        else toast.error(t("addToCartFailed"));
       }
     } catch {
-      toast.error(t("addToBagFailed"));
+      toast.error(t("addToCartFailed"));
     } finally {
       setPending(null);
     }
   };
 
-  const parsed = useMemo(
+  const compareAt =
+    selectedVariant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount;
+  const discount = discountPercent(selectedVariant?.price.amount, compareAt);
+  const currency = selectedVariant?.price.currencyCode ?? "USD";
+  const inStock = Boolean(selectedVariant?.availableForSale);
+  const brand = resolveBrand(product);
+  const sameVendorProducts = (vendorProducts ?? [])
+    .filter((item) => item.node.handle !== node.handle && item.node.vendor === node.vendor)
+    .slice(0, 8);
+  const category = primaryCategory(product);
+  const busy = pending !== null || cartLoading;
+  const isPhone = category?.slug === "smartphones";
+  const whatsappOrderUrl = productWhatsAppUrl({
+    title: node.title,
+    url: absoluteUrl(`/product/${node.handle}`),
+    quantity,
+    options: selectedVariant?.selectedOptions ?? [],
+  });
+
+  const content = useMemo(
     () => splitSections(parseDescription(node.descriptionHtml, node.description)),
     [node.descriptionHtml, node.description],
   );
-  const specs = useMemo(() => groupSpecs(parsed.specs), [parsed.specs]);
-  const brand = resolveBrand(node);
-  const category = primaryCategory(node);
-  const price = selectedVariant?.price ?? node.priceRange.minVariantPrice;
-  const compareAt = selectedVariant?.compareAtPrice;
-  const sale = compareAt ? discountPercent(compareAt, price) : null;
+
+  const specGroups = useMemo(() => {
+    const rows: SpecRow[] = [
+      ...content.specs,
+      ...(selectedVariant?.selectedOptions ?? [])
+        .filter((option) => option.value !== "Default Title")
+        .map((option) => ({ label: option.name, value: option.value })),
+      ...(node.productType ? [{ label: "Product type", value: node.productType }] : []),
+      ...(node.vendor ? [{ label: "Brand", value: node.vendor }] : []),
+      ...(selectedVariant?.sku ? [{ label: "SKU", value: selectedVariant.sku }] : []),
+      ...(selectedVariant?.barcode ? [{ label: "Barcode", value: selectedVariant.barcode }] : []),
+      ...(selectedVariant?.weight != null &&
+      selectedVariant.weight > 0 &&
+      selectedVariant.weightUnit
+        ? [{ label: "Weight", value: `${selectedVariant.weight} ${selectedVariant.weightUnit}` }]
+        : []),
+    ];
+    return groupSpecs(rows);
+  }, [content.specs, selectedVariant, node.productType, node.vendor]);
+
+  // Shopify's own recommendations first, then the bounded same-vendor query.
+  const similar = useMemo(() => {
+    const fromShopify = (recommended ?? []).filter(
+      (candidate) => candidate.node.handle !== node.handle,
+    );
+    if (fromShopify.length >= 4) return fromShopify.slice(0, 8);
+    const seen = new Set([node.handle, ...fromShopify.map((item) => item.node.handle)]);
+    const fallback = (vendorProducts ?? []).filter((candidate) => !seen.has(candidate.node.handle));
+    return [...fromShopify, ...fallback].slice(0, 8);
+  }, [recommended, vendorProducts, node.handle]);
+
+  const hasOverview = content.overview.length > 0;
+  const hasBox = content.box.length > 0;
+  const hasShipping = content.shipping.length > 0;
+  const hasSpecs = specGroups.length > 0;
+  const defaultTab = hasOverview
+    ? "overview"
+    : hasSpecs
+      ? "specifications"
+      : hasBox
+        ? "box"
+        : "shipping";
 
   return (
-    <StoreLayout>
-      <main className="mx-auto max-w-7xl px-4 py-6 lg:py-10">
-        <nav className="mb-5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground" aria-label="Breadcrumb">
-          <Link to="/" className="hover:text-primary">{t("home")}</Link>
-          <ChevronRight className="h-3.5 w-3.5" />
-          <Link to="/shop" className="hover:text-primary">{t("shop")}</Link>
-          {category && <><ChevronRight className="h-3.5 w-3.5" /><Link to="/category/$slug" params={{ slug: category.slug }} className="hover:text-primary">{category.label}</Link></>}
-          <ChevronRight className="h-3.5 w-3.5" />
+    <StoreLayout
+      aiContext={`Product: ${node.title}. Brand: ${node.vendor ?? ""}. Type: ${node.productType ?? ""}. Price: ${selectedVariant ? formatPrice(selectedVariant.price.amount, currency) : ""}. Availability: ${inStock ? "in stock" : "out of stock"}. Description: ${(node.description ?? "").slice(0, 2800)}`}
+    >
+      <div className="mx-auto max-w-7xl px-4 py-6 pb-32 lg:py-10 lg:pb-14">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-1 text-xs text-muted-foreground"
+        >
+          <Link to="/" className="transition-colors hover:text-primary">
+            Home
+          </Link>
+          <ChevronRight aria-hidden className="h-3.5 w-3.5" />
+          <Link to="/shop" className="transition-colors hover:text-primary">
+            Shop
+          </Link>
+          {category && (
+            <>
+              <ChevronRight aria-hidden className="h-3.5 w-3.5" />
+              <Link
+                to="/category/$slug"
+                params={{ slug: category.slug }}
+                className="transition-colors hover:text-primary"
+              >
+                {category.label}
+              </Link>
+            </>
+          )}
+          <ChevronRight aria-hidden className="h-3.5 w-3.5" />
           <span className="truncate text-foreground">{node.title}</span>
         </nav>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:gap-12">
-          <ProductGallery images={images} activeIndex={activeImage} onActiveIndexChange={setActiveImage} title={node.title} />
+        <div className="mt-5 grid gap-7 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,.92fr)] lg:gap-10">
+          <ProductGallery
+            images={images}
+            title={node.title}
+            activeIndex={activeImage}
+            onSelect={setActiveImage}
+            badge={
+              discount !== null ? (
+                <span className="absolute left-4 top-4 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground shadow-card">
+                  -{discount}%
+                </span>
+              ) : null
+            }
+          />
 
-          <section>
-            {brand && (
-              <div className="mb-3 flex items-center gap-2">
-                <BrandLogo slug={brand.slug} label={brand.label} size={28} />
-                <Link to="/brand/$slug" params={{ slug: brand.slug }} className="text-sm font-semibold text-muted-foreground hover:text-primary">{brand.label}</Link>
-              </div>
-            )}
-            <h1 className="text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">{node.title}</h1>
-
-            <div className="mt-4 flex flex-wrap items-end gap-3">
-              <span className="text-2xl font-black">{formatPrice(price)}</span>
-              {compareAt && Number(compareAt.amount) > Number(price.amount) && (
-                <span className="text-base text-muted-foreground line-through">{formatPrice(compareAt)}</span>
+          <div className="flex min-w-0 flex-col gap-6 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7">
+            <div className="min-w-0">
+              {brand && (
+                <Link
+                  to="/brand/$slug"
+                  params={{ slug: brand.slug }}
+                  className="inline-flex items-center gap-2 rounded-full border bg-card py-1 pl-1 pr-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
+                >
+                  <BrandLogo
+                    slug={brand.slug}
+                    label={brand.label}
+                    size={26}
+                    className="rounded-full"
+                  />
+                  {brand.label}
+                </Link>
               )}
-              {sale !== null && sale > 0 && <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-bold text-destructive">-{sale}%</span>}
-            </div>
+              <h1 className="mt-3 text-[1.6rem] font-extrabold leading-tight tracking-tight sm:text-3xl lg:text-[2.35rem] lg:leading-[1.1]">
+                {node.title}
+              </h1>
 
-            <VariantPicker variants={variants} selectedOptions={selectedOptions} onSelect={handleOptionSelect} />
-
-            <div className="mt-6 flex items-center gap-3">
-              <div className="flex h-11 items-center rounded-full border">
-                <button type="button" aria-label={t("decreaseQuantity")} onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="grid h-11 w-10 place-items-center"><Minus className="h-4 w-4" /></button>
-                <span className="min-w-8 text-center text-sm font-bold tabular-nums">{quantity}</span>
-                <button type="button" aria-label={t("increaseQuantity")} onClick={() => setQuantity((value) => value + 1)} className="grid h-11 w-10 place-items-center"><Plus className="h-4 w-4" /></button>
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-2">
+                <span className="text-2xl font-extrabold tracking-tight text-foreground lg:text-[2rem]">
+                  {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
+                </span>
+                {discount !== null && compareAt && (
+                  <>
+                    <span className="text-sm text-muted-foreground line-through">
+                      {formatPrice(compareAt, currency)}
+                    </span>
+                    <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-primary">
+                      Save {discount}%
+                    </span>
+                  </>
+                )}
               </div>
-              <Button disabled={!selectedVariant?.availableForSale || cartLoading || pending !== null} onClick={() => handleAddToCart(false)} className="h-11 flex-1 rounded-full font-bold">
-                {pending === "cart" ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <ShoppingBag className="me-2 h-4 w-4" />}
-                {selectedVariant?.availableForSale ? t("addToBag") : t("outOfStock")}
+
+              <p
+                className={cn(
+                  "mt-3.5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold",
+                  inStock ? "border-success/30 text-success" : "text-muted-foreground",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    inStock ? "bg-success" : "bg-muted-foreground",
+                  )}
+                />
+                {t(inStock ? "inStock" : "outOfStock")}
+              </p>
+            </div>
+
+            <VariantPicker
+              options={node.options ?? []}
+              variants={variants}
+              selected={selectedOptions}
+              onSelect={handleOptionSelect}
+            />
+
+            <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+              <div
+                className="flex h-12 w-fit items-center rounded-full border bg-card p-1"
+                aria-label="Quantity"
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-full"
+                  onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                  disabled={quantity <= 1}
+                  aria-label={t("decreaseQuantity")}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="w-9 text-center text-sm font-semibold" aria-live="polite">
+                  {quantity}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-full"
+                  onClick={() => setQuantity((value) => Math.min(99, value + 1))}
+                  aria-label={t("increaseQuantity")}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="hidden flex-wrap gap-3 sm:flex">
+                <Button
+                  size="lg"
+                  onClick={() => handleAddToCart()}
+                  disabled={busy || !inStock}
+                  className="press flex-1 rounded-full"
+                >
+                  {pending === "cart" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShoppingBag className="h-4 w-4" />
+                  )}
+                  {t(inStock ? "addToCart" : "soldOut")}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={() => handleAddToCart(true)}
+                  disabled={busy || !inStock}
+                  className="press rounded-full"
+                >
+                  {pending === "buy" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Zap className="h-4 w-4" />
+                  )}
+                  Buy now
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => {
+                    toggleWishlist(node.handle);
+                  }}
+                  aria-pressed={wishlisted}
+                  aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
+                  className="press rounded-full"
+                >
+                  <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
+                  <span className="sr-only sm:not-sr-only">
+                    {t(wishlisted ? "saved" : "saveWishlist")}
+                  </span>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleShare}
+                  aria-label={t("shareProduct")}
+                  className="press shrink-0 rounded-full"
+                >
+                  <Share2 aria-hidden className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleShare}
+                aria-label={t("shareProduct")}
+                className="rounded-full sm:hidden"
+              >
+                <Share2 aria-hidden className="h-4 w-4" />
+                {t("shareProduct")}
               </Button>
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <Button variant="secondary" disabled={!selectedVariant?.availableForSale || pending !== null} onClick={() => handleAddToCart(true)} className="h-11 rounded-full font-bold">
-                {pending === "buy" ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <Zap className="me-2 h-4 w-4" />}{t("buyNow")}
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-full border-success/40 text-success hover:bg-success/10 hover:text-success"
+              >
+                <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="h-4 w-4" /> Order via WhatsApp
+                </a>
               </Button>
-              <a href={productWhatsAppUrl(node.title, absoluteUrl(`/product/${node.handle}`))} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center justify-center rounded-full border px-4 text-sm font-bold hover:border-primary hover:text-primary"><MessageCircle className="me-2 h-4 w-4" />WhatsApp</a>
+              {isPhone && <CompareButton handle={node.handle} />}
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" onClick={() => toggleWishlist(node.handle)} className={cn("inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-xs font-bold", wishlisted && "border-primary text-primary")}><Heart className={cn("h-4 w-4", wishlisted && "fill-current")} />{t("wishlistTitle")}</button>
-              <CompareButton product={product} />
-              <button type="button" onClick={handleShare} className="inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-xs font-bold"><Share2 className="h-4 w-4" />{t("share")}</button>
-            </div>
-
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              {PURCHASE_ASSURANCES.map((assurance) => (
-                <div key={assurance.title} className="rounded-xl border bg-surface px-3 py-3">
-                  <p className="text-xs font-bold">{assurance.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{assurance.description}</p>
-                </div>
+            <ul className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+              {PURCHASE_ASSURANCES.map((item) => (
+                <li
+                  key={item.title}
+                  className="rounded-2xl border bg-card p-3 text-center shadow-card"
+                >
+                  <item.icon aria-hidden className="mx-auto h-5 w-5 text-primary" />
+                  <p className="mt-2 text-[12px] font-bold leading-tight text-foreground">
+                    {item.title}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                    {item.detail}
+                  </p>
+                </li>
               ))}
-            </div>
-          </section>
+            </ul>
+          </div>
         </div>
 
-        <Tabs defaultValue="details" className="mt-10">
-          <TabsList className="flex h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
-            <TabsTrigger value="details">{t("details")}</TabsTrigger>
-            <TabsTrigger value="specs">{t("specifications")}</TabsTrigger>
-            <TabsTrigger value="research">{t("officialResearch")}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="details" className="mt-5"><ProseSections sections={parsed.sections} fallback={node.description} /></TabsContent>
-          <TabsContent value="specs" className="mt-5"><SpecSheet groups={specs as Array<{ title: string; rows: SpecRow[] }>} /></TabsContent>
-          <TabsContent value="research" className="mt-5"><OfficialProductResearch product={product} /></TabsContent>
-        </Tabs>
+        <section className="mt-6" aria-label="Smart accessory recommendations">
+          <GeminiShoppingAdvisor
+            product={product}
+            catalog={{ products: [...(recommended ?? []), ...(vendorProducts ?? [])] }}
+          />
+        </section>
 
-        <GeminiShoppingAdvisor product={product} />
+        {(hasOverview || hasSpecs || hasBox || hasShipping) && (
+          <section
+            className="mt-8 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7"
+            aria-label="Product details"
+          >
+            <Tabs defaultValue={defaultTab} className="w-full">
+              <TabsList className="scroll-rail h-auto w-full justify-start gap-1 rounded-2xl bg-surface p-1.5">
+                {hasOverview && <TabsTrigger value="overview">Description</TabsTrigger>}
+                {hasSpecs && <TabsTrigger value="specifications">Specifications</TabsTrigger>}
+                {hasBox && <TabsTrigger value="box">In the box</TabsTrigger>}
+                {hasShipping && <TabsTrigger value="shipping">Shipping &amp; returns</TabsTrigger>}
+              </TabsList>
+              {hasOverview && (
+                <TabsContent value="overview" className="pt-6">
+                  <ProseSections sections={content.overview} />
+                </TabsContent>
+              )}
+              {hasSpecs && (
+                <TabsContent value="specifications" className="pt-6">
+                  <SpecSheet groups={specGroups} />
+                </TabsContent>
+              )}
+              {hasBox && (
+                <TabsContent value="box" className="pt-6">
+                  <ProseSections sections={content.box} />
+                </TabsContent>
+              )}
+              {hasShipping && (
+                <TabsContent value="shipping" className="pt-6">
+                  <ProseSections sections={content.shipping} />
+                </TabsContent>
+              )}
+            </Tabs>
+          </section>
+        )}
 
-        {recommended?.length ? <section className="mt-12"><h2 className="mb-5 text-xl font-black">{t("youMayAlsoLike")}</h2><ProductRail products={recommended} storageKey={`recommended-${node.handle}`} /></section> : null}
-        {vendorProducts?.length ? <section className="mt-12"><h2 className="mb-5 text-xl font-black">{t("moreFromBrand")}</h2><ProductGrid products={vendorProducts.filter((item) => item.node.handle !== node.handle).slice(0, 8)} /></section> : null}
-      </main>
+        <section className="mt-8" aria-label="Official manufacturer information">
+          <OfficialProductResearch
+            title={node.title}
+            {...(node.vendor ? { vendor: node.vendor } : {})}
+          />
+        </section>
+
+        {similar.length > 0 && (
+          <section className="mt-16 border-t pt-10" aria-labelledby="similar-products">
+            <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+              <div className="min-w-0">
+                <h2 id="similar-products" className="text-xl font-bold tracking-tight">
+                  You may also like
+                </h2>
+                <p className="mt-1 truncate text-sm text-muted-foreground">
+                  Recommended from the live {STORE_NAME} catalogue
+                </p>
+              </div>
+              {category && (
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: category.slug }}
+                  className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
+                  View all <ChevronRight aria-hidden className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
+            <ProductGrid products={similar} />
+          </section>
+        )}
+        {sameVendorProducts.length > 0 && (
+          <section className="mt-12 border-t pt-8" aria-labelledby="more-from-brand">
+            <div className="home-section-header">
+              <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-bold">
+                {t("moreFromBrand")} {brand?.label}
+              </h2>
+              {brand && (
+                <Link
+                  to="/brand/$slug"
+                  params={{ slug: brand.slug }}
+                  className="shrink-0 text-sm font-semibold text-primary hover:underline"
+                >
+                  {t("viewAll")}
+                </Link>
+              )}
+            </div>
+            <ProductRail products={sameVendorProducts} storageKey={`more-from-${node.vendor}`} />
+          </section>
+        )}
+      </div>
+
+      {/* Mobile sticky buy bar — sits above the bottom navigation. */}
+      <div className="fixed bottom-[var(--mobile-nav-height)] left-0 right-0 z-30 border-t bg-background/90 px-4 py-2.5 backdrop-blur-xl sm:hidden">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              toggleWishlist(node.handle);
+            }}
+            aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
+            aria-pressed={wishlisted}
+            className="press grid h-11 w-11 shrink-0 place-items-center rounded-full border bg-card"
+          >
+            <Heart className={cn("h-5 w-5", wishlisted && "fill-primary text-primary")} />
+          </button>
+          <Button
+            onClick={() => handleAddToCart()}
+            disabled={busy || !inStock}
+            className="press h-11 flex-1 rounded-full text-sm font-bold"
+          >
+            {pending === "cart" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : inStock ? (
+              <>
+                <ShoppingBag className="h-4 w-4" />
+                Add to cart ·{" "}
+                {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
+              </>
+            ) : (
+              t("soldOut")
+            )}
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 shrink-0 rounded-full border-success/40 text-success"
+          >
+            <a
+              href={whatsappOrderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Order via WhatsApp"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </a>
+          </Button>
+        </div>
+      </div>
     </StoreLayout>
   );
 }
