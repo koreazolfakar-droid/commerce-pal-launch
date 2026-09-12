@@ -6,6 +6,7 @@ import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 
 import { buildShopifyBrands } from "@/lib/brandDirectory";
 import { findFacetMerchandising } from "@/lib/homeMerchandising";
@@ -17,6 +18,34 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
+
+function useNearViewport<T extends HTMLElement>(rootMargin = "900px 0px") {
+  const ref = useRef<T>(null);
+  const [near, setNear] = useState(false);
+
+  useEffect(() => {
+    if (near) return;
+    const element = ref.current;
+    if (!element) return;
+    if (!("IntersectionObserver" in window)) {
+      setNear(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setNear(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [near, rootMargin]);
+
+  return [ref, near] as const;
+}
 
 function Header({ id, title, subtitle, href = "/shop" }: { id?: string; title: string; subtitle?: string | undefined; href?: string }) {
   const { t } = useLanguage();
@@ -75,36 +104,55 @@ export function CategorySection({ catalog }: { catalog: CatalogIndex; collection
 
 export function BundleSection({ collections }: { collections: ShopifyCollection[] }) {
   const { t } = useLanguage();
+  const [sectionRef, near] = useNearViewport<HTMLElement>("1000px 0px");
   const candidates = collections.filter((c) => /(?:^|[\s-])(bundle|pack|kit|combo|set)s?(?:$|[\s-])/i.test(`${c.handle} ${c.title}`)).slice(0, 4);
-  const results = useQueries({ queries: candidates.map((c) => ({ queryKey: ["home-bundle", c.handle], queryFn: () => fetchCollectionByHandle(c.handle, 8), staleTime: 5 * 60 * 1000 })) });
+  const results = useQueries({
+    queries: candidates.map((c) => ({
+      queryKey: ["home-bundle", c.handle],
+      queryFn: () => fetchCollectionByHandle(c.handle, 8),
+      enabled: near,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+  if (!candidates.length) return null;
   const sections = candidates.map((c, i) => ({ collection: c, products: results[i]?.data?.products ?? [] })).filter((x) => x.products.length);
-  if (!sections.length) return null;
+  const finished = near && results.every((result) => !result.isPending && !result.isFetching);
+  if (finished && !sections.length) return null;
+
   return (
-    <section aria-labelledby="home-bundles">
+    <section ref={sectionRef} aria-labelledby="home-bundles">
       <Header id="home-bundles" title={t("bundlesTitle")} subtitle={t("bundlesDescription")} href="/collections" />
-      <div className="grid gap-3 md:grid-cols-2">
-        {sections.map(({ collection, products }) => (
-          <div key={collection.id} className="overflow-hidden rounded-2xl border bg-card shadow-card">
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-surface px-4 py-3">
-              <div className="min-w-0"><h3 className="truncate text-sm font-extrabold">{collection.title}</h3><p className="mt-0.5 text-[11px] text-muted-foreground">{collection.description || `${products.length} ${t("products")}`}</p></div>
-              <Link to="/collections/$handle" params={{ handle: collection.handle }} className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground">{t("shopBundle")}</Link>
+      {!near || !sections.length ? (
+        <div className="shimmer h-40 rounded-2xl bg-surface" aria-hidden="true" />
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2">
+          {sections.map(({ collection, products }) => (
+            <div key={collection.id} className="overflow-hidden rounded-2xl border bg-card shadow-card">
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-surface px-4 py-3">
+                <div className="min-w-0"><h3 className="truncate text-sm font-extrabold">{collection.title}</h3><p className="mt-0.5 text-[11px] text-muted-foreground">{collection.description || `${products.length} ${t("products")}`}</p></div>
+                <Link to="/collections/$handle" params={{ handle: collection.handle }} className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground">{t("shopBundle")}</Link>
+              </div>
+              <div className="p-4"><ProductRail products={products.slice(0, 5)} storageKey={`space-cell-bundle-${collection.handle}-view`} /></div>
             </div>
-            <div className="p-4"><ProductRail products={products.slice(0, 5)} storageKey={`space-cell-bundle-${collection.handle}-view`} /></div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
 export function BrandShowcase({ catalog, collections }: { catalog: CatalogIndex; collections: ShopifyCollection[] }) {
   const { t, language } = useLanguage();
-  const { data: showcases = [] } = useQuery(showcaseCollectionsQueryOptions());
+  const [showcaseRef, nearShowcases] = useNearViewport<HTMLDivElement>("1200px 0px");
+  const { data: showcases = [] } = useQuery({
+    ...showcaseCollectionsQueryOptions(),
+    enabled: nearShowcases,
+  });
   const brands = buildShopifyBrands(catalog.brands, collections);
   const usedShowcases = new Set(brands.map((brand) => `showcase-${brand.slug}`));
   const categoryFeatures = catalog.categories.flatMap((category) => { const merchandising = findFacetMerchandising(collections, "category", category.slug); return merchandising ? [{ category, merchandising }] : []; });
   return (
-    <div className="space-y-6" data-testid="brand-showcases">
+    <div ref={showcaseRef} className="space-y-6" data-testid="brand-showcases">
       {brands.map((brand) => { const products = productsOfBrand(catalog, brand.slug); const merchandising = findFacetMerchandising(collections, "brand", brand.slug); return <FacetSection key={brand.slug} id={`brand-${brand.slug}`} kind="brand" slug={brand.slug} title={merchandising?.title || brand.label} description={merchandising?.description || t("brandSelection")} href={`/brand/${brand.slug}`} products={products} />; })}
       {categoryFeatures.map(({ category, merchandising }) => <FacetSection key={category.slug} id={`category-${category.slug}`} kind="category" slug={category.slug} title={merchandising.title || categoryLabel(category, language)} description={merchandising.description} href={`/category/${category.slug}`} products={productsInCategory(catalog, category.slug)} />)}
       {showcases.filter((collection) => !usedShowcases.has(collection.handle)).map((collection) => <ShopifyShowcase key={collection.handle} collection={collection} />)}
@@ -118,6 +166,10 @@ function FacetSection({ id, title, description, href, products, kind, slug }: { 
 
 function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
   const { t } = useLanguage();
-  const { data, isPending } = useQuery(collectionQueryOptions(collection.handle));
-  return <section className="overflow-hidden rounded-2xl border bg-card" aria-labelledby={`showcase-${collection.handle}`}><div className="p-4 sm:p-5"><Header id={`showcase-${collection.handle}`} title={collection.title} subtitle={collection.description} href={`/collections/${collection.handle}`} /></div><div className="border-t p-4 sm:p-5"><p className="mb-2 text-xs text-muted-foreground">{collection.productCount} {t(collection.productCount === 1 ? "product" : "products")}</p>{data?.products.length ? <ProductRail products={data.products} storageKey={`showcase-${collection.handle}-view`} /> : isPending ? <div className="shimmer h-48 rounded-2xl bg-surface" aria-hidden="true" /> : <p className="text-sm text-muted-foreground">{t("noProducts")}</p>}</div></section>;
+  const [sectionRef, near] = useNearViewport<HTMLElement>("900px 0px");
+  const { data, isPending } = useQuery({
+    ...collectionQueryOptions(collection.handle, 10),
+    enabled: near,
+  });
+  return <section ref={sectionRef} className="overflow-hidden rounded-2xl border bg-card" aria-labelledby={`showcase-${collection.handle}`}><div className="p-4 sm:p-5"><Header id={`showcase-${collection.handle}`} title={collection.title} subtitle={collection.description} href={`/collections/${collection.handle}`} /></div><div className="border-t p-4 sm:p-5"><p className="mb-2 text-xs text-muted-foreground">{collection.productCount} {t(collection.productCount === 1 ? "product" : "products")}</p>{data?.products.length ? <ProductRail products={data.products} storageKey={`showcase-${collection.handle}-view`} /> : !near || isPending ? <div className="shimmer h-48 rounded-2xl bg-surface" aria-hidden="true" /> : <p className="text-sm text-muted-foreground">{t("noProducts")}</p>}</div></section>;
 }
