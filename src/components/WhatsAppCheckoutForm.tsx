@@ -1,5 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { CheckCircle2, CreditCard, MapPin, MessageCircle, Phone, StickyNote, UserRound, WalletCards } from "lucide-react";
+import {
+  CheckCircle2,
+  Copy,
+  CreditCard,
+  MapPin,
+  MessageCircle,
+  Phone,
+  StickyNote,
+  UserRound,
+  WalletCards,
+} from "lucide-react";
 
 import { useLanguage } from "@/lib/i18n";
 import { formatPrice, variantSummary } from "@/lib/shopify";
@@ -8,6 +18,8 @@ import { whatsappUrl } from "@/lib/whatsapp";
 import type { CartItem } from "@/stores/cartStore";
 
 const STORAGE_KEY = "space-call-whatsapp-checkout-customer";
+const WHISH_MONEY_ACCOUNT = (import.meta.env.VITE_WHISH_MONEY_ACCOUNT ?? "").trim();
+const WHISH_MONEY_ACCOUNT_NAME = (import.meta.env.VITE_WHISH_MONEY_ACCOUNT_NAME ?? STORE_NAME).trim();
 
 type PaymentMethod = "cash_on_delivery" | "whish_money";
 
@@ -60,6 +72,9 @@ export function WhatsAppCheckoutForm({
   const [details, setDetails] = useState<CustomerDetails>(EMPTY_DETAILS);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const whishConfigured = WHISH_MONEY_ACCOUNT.length > 0;
 
   const copy = isArabic
     ? {
@@ -81,7 +96,12 @@ export function WhatsAppCheckoutForm({
         cashOnDelivery: "الدفع عند الاستلام",
         cashOnDeliveryDescription: "ادفع نقدًا عند استلام الطلب.",
         whishMoney: "Whish Money",
-        whishMoneyDescription: "حوّل المبلغ عبر Whish Money. سنؤكد لك تفاصيل التحويل على واتساب قبل تجهيز الطلب.",
+        whishMoneyDescription: "حوّل قيمة الطلب مباشرة إلى حساب المتجر عبر Whish Money.",
+        whishAccount: "حساب Whish Money",
+        whishAccountName: "اسم الحساب",
+        copyAccount: "نسخ الحساب",
+        copied: "تم النسخ",
+        whishUnavailable: "حساب Whish Money غير مضبوط بعد.",
         button: "إرسال الطلب عبر واتساب",
         required: "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان قبل إرسال الطلب.",
         privacy: "سيتم فتح واتساب فقط بعد ضغطك على زر الإرسال. لا تُرسل بياناتك تلقائيًا.",
@@ -106,7 +126,12 @@ export function WhatsAppCheckoutForm({
         cashOnDelivery: "Cash on delivery",
         cashOnDeliveryDescription: "Pay in cash when you receive your order.",
         whishMoney: "Whish Money",
-        whishMoneyDescription: "Transfer the amount using Whish Money. We’ll confirm the transfer details with you on WhatsApp before preparing the order.",
+        whishMoneyDescription: "Transfer the order total directly to the store's Whish Money account.",
+        whishAccount: "Whish Money account",
+        whishAccountName: "Account name",
+        copyAccount: "Copy account",
+        copied: "Copied",
+        whishUnavailable: "Whish Money account is not configured yet.",
         button: "Send order on WhatsApp",
         required: "Please fill in your name, phone number, area and address before sending the order.",
         privacy: "WhatsApp opens only after you press send. Your details are not submitted automatically.",
@@ -130,6 +155,17 @@ export function WhatsAppCheckoutForm({
     setSubmitted(false);
   };
 
+  const copyWhishAccount = async () => {
+    if (!WHISH_MONEY_ACCOUNT) return;
+    try {
+      await navigator.clipboard.writeText(WHISH_MONEY_ACCOUNT);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Clipboard can be blocked by browser permissions; the account stays visible for manual copying.
+    }
+  };
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -146,8 +182,7 @@ export function WhatsAppCheckoutForm({
     }
 
     const reference = orderReference();
-    const paymentLabel =
-      details.paymentMethod === "whish_money" ? copy.whishMoney : copy.cashOnDelivery;
+    const paymentLabel = details.paymentMethod === "whish_money" ? copy.whishMoney : copy.cashOnDelivery;
     const lines = items.flatMap((item, index) => {
       const options = variantSummary(item.selectedOptions);
       const unitPrice = formatPrice(item.price.amount, item.price.currencyCode);
@@ -170,24 +205,21 @@ export function WhatsAppCheckoutForm({
       `${isArabic ? "الهاتف" : "Phone"}: ${details.phone.trim()}`,
       `${isArabic ? "المنطقة" : "Area"}: ${details.area.trim()}`,
       `${isArabic ? "العنوان" : "Address"}: ${details.address.trim()}`,
-      details.landmark.trim()
-        ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${details.landmark.trim()}`
-        : "",
+      details.landmark.trim() ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${details.landmark.trim()}` : "",
       "",
       `💳 ${isArabic ? "طريقة الدفع" : "Payment method"}: ${paymentLabel}`,
-      details.paymentMethod === "whish_money"
-        ? isArabic
-          ? "⚠️ الدفع عبر Whish Money بانتظار تأكيد تفاصيل التحويل من المتجر."
-          : "⚠️ Whish Money payment is pending store confirmation of the transfer details."
+      details.paymentMethod === "whish_money" && whishConfigured
+        ? `📱 ${copy.whishAccount}: ${WHISH_MONEY_ACCOUNT}`
+        : "",
+      details.paymentMethod === "whish_money" && whishConfigured
+        ? `👤 ${copy.whishAccountName}: ${WHISH_MONEY_ACCOUNT_NAME}`
         : "",
       "",
       `📦 ${isArabic ? "المنتجات" : "Items"}`,
       ...lines,
       "",
       `💰 ${isArabic ? "المجموع" : "Total"}: ${formatPrice(total, currency)}`,
-      details.notes.trim()
-        ? `📝 ${isArabic ? "ملاحظات" : "Notes"}: ${details.notes.trim()}`
-        : "",
+      details.notes.trim() ? `📝 ${isArabic ? "ملاحظات" : "Notes"}: ${details.notes.trim()}` : "",
       "",
       `${isArabic ? "تم إنشاء الطلب من" : "Order created from"}: ${storeUrl("/cart")}`,
     ].filter(Boolean);
@@ -346,7 +378,7 @@ export function WhatsAppCheckoutForm({
                 onChange={() => update("paymentMethod", "whish_money")}
                 className="mt-1 h-4 w-4 accent-primary"
               />
-              <span>
+              <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2 font-bold">
                   <CreditCard className="h-4 w-4" />
                   {copy.whishMoney}
@@ -357,6 +389,43 @@ export function WhatsAppCheckoutForm({
               </span>
             </label>
           </div>
+
+          {details.paymentMethod === "whish_money" ? (
+            whishConfigured ? (
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {copy.whishAccount}
+                    </p>
+                    <p dir="ltr" className="mt-1 text-lg font-extrabold tracking-wide">
+                      {WHISH_MONEY_ACCOUNT}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {copy.whishAccountName}: {WHISH_MONEY_ACCOUNT_NAME}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={copyWhishAccount}
+                    className="inline-flex items-center gap-2 rounded-full border bg-background px-3.5 py-2 text-xs font-bold transition hover:bg-muted"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    {copied ? copy.copied : copy.copyAccount}
+                  </button>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                  {isArabic
+                    ? `حوّل ${formatPrice(total, currency)} إلى الحساب الظاهر أعلاه، ثم أرسل الطلب عبر واتساب لتأكيد التحويل.`
+                    : `Transfer ${formatPrice(total, currency)} to the account above, then send the order on WhatsApp to confirm the transfer.`}
+                </p>
+              </div>
+            ) : (
+              <p className="rounded-xl bg-amber-500/10 px-3.5 py-3 text-sm font-medium text-amber-700 dark:text-amber-300">
+                {copy.whishUnavailable}
+              </p>
+            )
+          ) : null}
         </fieldset>
 
         <label className="block text-sm font-semibold">
@@ -389,7 +458,7 @@ export function WhatsAppCheckoutForm({
 
         <button
           type="submit"
-          disabled={disabled || items.length === 0}
+          disabled={disabled || items.length === 0 || (details.paymentMethod === "whish_money" && !whishConfigured)}
           className="press flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-3.5 text-sm font-extrabold text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <MessageCircle className="h-4 w-4" />
