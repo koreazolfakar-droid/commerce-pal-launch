@@ -185,6 +185,8 @@ function App() {
     );
   }
 
+  if (!health) return null;
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
