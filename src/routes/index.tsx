@@ -3,7 +3,7 @@ import { DealSpotlight } from "@/components/DealSpotlight";
 import { useEffect, useState } from "react";
 import { ProductRail } from "@/components/ProductRail";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
 import { BenefitsBar, RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
@@ -28,15 +28,15 @@ import type { CatalogFacet, CatalogIndex } from "@/lib/taxonomy";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    // Only block the first paint on data required to render the visible storefront.
-    // Lower-priority homepage data is prefetched in parallel without delaying the route.
+    // The first paint only needs the catalog and collection navigation/hero data.
+    // Secondary product rails are warmed in parallel but never delay the route response.
     const critical = Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
-      context.queryClient.ensureQueryData(bestSellingQueryOptions()),
-      context.queryClient.ensureQueryData(newestQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
     ]);
 
+    void context.queryClient.prefetchQuery(bestSellingQueryOptions());
+    void context.queryClient.prefetchQuery(newestQueryOptions());
     void context.queryClient.prefetchQuery(showcaseCollectionsQueryOptions());
     void context.queryClient.prefetchQuery(shopPoliciesQueryOptions());
 
@@ -149,15 +149,15 @@ function promoSlots(catalog: CatalogIndex, productOf: (facet: CatalogFacet, kind
 
 function Index() {
   const { t, language } = useLanguage();
-  const { data: newItems } = useSuspenseQuery(newestQueryOptions());
+  const { data: newItems = [] } = useQuery(newestQueryOptions());
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
-  const { data: bestSellers } = useSuspenseQuery(bestSellingQueryOptions());
+  const { data: bestSellers = [] } = useQuery(bestSellingQueryOptions());
   const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
 
   const products = catalog.products;
   const brands = buildShopifyBrands(catalog.brands, collections);
   const deals = products.filter((product) => productDiscountPercent(product) !== null);
-  const best = bestSellers ?? [];
+  const best = bestSellers;
   const firstOf = (facet: CatalogFacet, kind: "brand" | "category") => products.find((p) => kind === "brand" ? catalog.brandOf.get(p.node.handle)?.slug === facet.slug : (catalog.categoryOf.get(p.node.handle) ?? []).includes(facet.slug));
   const slots = promoSlots(catalog, firstOf);
 
