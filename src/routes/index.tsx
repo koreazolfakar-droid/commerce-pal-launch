@@ -28,14 +28,19 @@ import type { CatalogFacet, CatalogIndex } from "@/lib/taxonomy";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    await Promise.all([
+    // Only block the first paint on data required to render the visible storefront.
+    // Lower-priority homepage data is prefetched in parallel without delaying the route.
+    const critical = Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(bestSellingQueryOptions()),
       context.queryClient.ensureQueryData(newestQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
-      context.queryClient.ensureQueryData(showcaseCollectionsQueryOptions()),
-      context.queryClient.ensureQueryData(shopPoliciesQueryOptions()),
     ]);
+
+    void context.queryClient.prefetchQuery(showcaseCollectionsQueryOptions());
+    void context.queryClient.prefetchQuery(shopPoliciesQueryOptions());
+
+    await critical;
   },
   head: () => ({
     meta: [
