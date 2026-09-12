@@ -8,6 +8,7 @@ import {
   CART_LINES_UPDATE_MUTATION,
   CART_QUERY,
 } from "@/lib/shopifyDocuments";
+import { trackCartEvent } from "@/lib/analytics";
 import { storefrontApiRequest, type ShopifyProduct } from "@/lib/shopify";
 import { STORE_CONFIG } from "@/lib/storeConfig";
 
@@ -200,6 +201,7 @@ export const useCartStore = create<CartStore>()(
           if (result.cartNotFound) get().clearCart();
           if (!result.success || !result.cart) return false;
           set(remoteState(result.cart));
+          trackCartEvent("add_to_cart", [{ ...item, lineId: null }]);
           return true;
         } finally {
           set({ isLoading: false });
@@ -215,7 +217,13 @@ export const useCartStore = create<CartStore>()(
           const result = await updateLine(cartId, item.lineId, quantity);
           if (result.cartNotFound) get().clearCart();
           if (!result.success || !result.cart) return false;
+          const difference = quantity - item.quantity;
           set(remoteState(result.cart));
+          if (difference !== 0) {
+            trackCartEvent(difference > 0 ? "add_to_cart" : "remove_from_cart", [
+              { ...item, quantity: Math.abs(difference) },
+            ]);
+          }
           return true;
         } finally {
           set({ isLoading: false });
@@ -230,6 +238,7 @@ export const useCartStore = create<CartStore>()(
           const result = await removeLine(cartId, item.lineId);
           if (result.cartNotFound) get().clearCart();
           if (!result.success || !result.cart) return false;
+          trackCartEvent("remove_from_cart", [item]);
           if (result.cart.totalQuantity === 0) get().clearCart();
           else set(remoteState(result.cart));
           return true;
