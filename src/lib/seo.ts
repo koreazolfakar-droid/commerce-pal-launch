@@ -77,11 +77,14 @@ export function organizationJsonLd() {
     "@type": "Organization",
     "@id": `${SITE_URL}/#organization`,
     name: SITE_NAME,
+    alternateName: ["Space Call Lebanon", "SpaceCall"],
     url: SITE_URL,
     logo: {
       "@type": "ImageObject",
       url: DEFAULT_OG_IMAGE,
     },
+    image: DEFAULT_OG_IMAGE,
+    description: `${SITE_NAME} is an electronics store in Lebanon for smartphones, tablets, laptops, audio, wearables and accessories.`,
     areaServed: {
       "@type": "Country",
       name: "Lebanon",
@@ -96,6 +99,7 @@ export function websiteJsonLd() {
     "@type": "WebSite",
     "@id": `${SITE_URL}/#website`,
     name: SITE_NAME,
+    alternateName: "Space Call Lebanon",
     url: SITE_URL,
     publisher: { "@id": `${SITE_URL}/#organization` },
     inLanguage: ["en-LB", "ar-LB"],
