@@ -16,6 +16,7 @@ import {
   storeApiKey,
   type HealthResponse,
 } from "./api";
+import { ProductsView as ProductManagerView } from "./ProductManager";
 import "./styles.css";
 import "./phase1.css";
 
@@ -297,12 +298,13 @@ function App() {
         ) : null}
 
         {view === "products" ? (
-          <ProductsView
+          <ProductManagerView
             products={filteredProducts}
             query={query}
             setQuery={setQuery}
             productFilter={productFilter}
             setProductFilter={setProductFilter}
+            onRefresh={loadDashboard}
           />
         ) : null}
 
@@ -412,35 +414,6 @@ function Overview({
   );
 }
 
-function ProductsView({
-  products,
-  query,
-  setQuery,
-  productFilter,
-  setProductFilter,
-}: {
-  products: AdminProduct[];
-  query: string;
-  setQuery: (value: string) => void;
-  productFilter: "ALL" | "ACTIVE" | "LOW" | "OUT";
-  setProductFilter: (value: "ALL" | "ACTIVE" | "LOW" | "OUT") => void;
-}) {
-  const filters: Array<[typeof productFilter, string]> = [["ALL", "الكل"], ["ACTIVE", "نشط"], ["LOW", "مخزون منخفض"], ["OUT", "نفد المخزون"]];
-  return (
-    <section className="panel products-panel">
-      <div className="section-toolbar">
-        <div><span className="eyebrow">CATALOG</span><h2>إدارة المنتجات</h2></div>
-        <div className="toolbar-actions"><button className="quick-action primary">＋ منتج جديد</button></div>
-      </div>
-      <div className="section-toolbar">
-        <div className="toolbar-actions">{filters.map(([id, label]) => <button key={id} className={productFilter === id ? "filter-chip active" : "filter-chip"} onClick={() => setProductFilter(id)}>{label}</button>)}</div>
-        <input className="search-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="بحث بالاسم، البراند أو النوع…" />
-      </div>
-      <ProductTable products={products} />
-    </section>
-  );
-}
-
 function OrdersView({ orders, allOrders, orderFilter, setOrderFilter }: { orders: AdminOrder[]; allOrders: AdminOrder[]; orderFilter: "ALL" | AdminOrderStatus; setOrderFilter: (value: "ALL" | AdminOrderStatus) => void }) {
   const filters: Array<["ALL" | AdminOrderStatus, string]> = [["ALL", "الكل"], ["NEW", "جديد"], ["CONFIRMED", "مؤكد"], ["PREPARING", "تحضير"], ["READY", "جاهز"], ["DELIVERED", "تم التوصيل"]];
   return (
@@ -525,14 +498,6 @@ function OrdersTable({ orders }: { orders: AdminOrder[] }) {
     <div className="table-wrap"><table><thead><tr><th>الطلب</th><th>العميل</th><th>الإجمالي</th><th>الدفع</th><th>الحالة</th><th>الوقت</th></tr></thead><tbody>
       {orders.map((order) => <tr key={order.id}><td><strong>{order.name}</strong></td><td><div className="product-name"><strong>{order.customer}</strong><span>{order.phone}</span></div></td><td>{money(order.total)}</td><td>{order.payment}</td><td><span className={`pill order-status ${order.status}`}>{ORDER_LABELS[order.status]}</span></td><td>{formatTime(order.createdAt)}</td></tr>)}
       {!orders.length ? <tr><td colSpan={6} className="empty-table">لا توجد طلبات متاحة أو أن صلاحية read_orders غير مفعلة.</td></tr> : null}
-    </tbody></table></div>
-  );
-}
-
-function ProductTable({ products }: { products: AdminProduct[] }) {
-  return (
-    <div className="table-wrap"><table><thead><tr><th>المنتج</th><th>الحالة</th><th>السعر</th><th>المخزون</th><th>Variants</th><th>آخر تحديث</th></tr></thead><tbody>
-      {products.length ? products.map((product) => <tr key={product.id}><td><div className="product-name"><strong>{product.title}</strong><span>{product.vendor || product.productType || product.handle}</span></div></td><td><span className={product.status === "ACTIVE" ? "pill success" : "pill muted"}>{product.status}</span></td><td>{money(product.minPrice)}</td><td><span className={`inventory ${inventoryTone(product.totalInventory)}`}>{product.totalInventory ?? "—"}</span></td><td>{product.variantsCount}</td><td>{formatDate(product.updatedAt)}</td></tr>) : <tr><td colSpan={6} className="empty-table">لا توجد منتجات لعرضها.</td></tr>}
     </tbody></table></div>
   );
 }
