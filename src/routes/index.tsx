@@ -8,7 +8,6 @@ import { ArrowRight, Timer } from "lucide-react";
 
 import { BenefitsBar, RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
 import { Newsletter } from "@/components/Newsletter";
-import { PromoBanners, type PromoSlot } from "@/components/PromoBanners";
 import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
 import { StoreLayout } from "@/components/StoreLayout";
 import { TopBrands } from "@/components/TopBrands";
@@ -23,8 +22,7 @@ import {
   showcaseCollectionsQueryOptions,
   shopPoliciesQueryOptions,
 } from "@/lib/queries";
-import { productDiscountPercent, type ShopifyProduct } from "@/lib/shopify";
-import type { CatalogFacet, CatalogIndex } from "@/lib/taxonomy";
+import { productDiscountPercent } from "@/lib/shopify";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
@@ -72,7 +70,7 @@ export const Route = createFileRoute("/")({
         potentialAction: {
           "@type": "SearchAction",
           target: `${SITE_URL}/search?q={search_term_string}`,
-          "query-input": "required name=search_term_string",
+          "query-input": "required name=query-input required name=search_term_string",
         },
       }),
       jsonLd({
@@ -131,17 +129,6 @@ function DealsCountdown() {
   );
 }
 
-function promoSlots(catalog: CatalogIndex, productOf: (facet: CatalogFacet, kind: "brand" | "category") => ShopifyProduct | undefined): PromoSlot[] {
-  const brandBy = (slug: string) => catalog.brands.find((b) => b.slug === slug);
-  const categoryBy = (...slugs: string[]) => slugs.map((slug) => catalog.categories.find((c) => c.slug === slug)).find(Boolean);
-  const slots: PromoSlot[] = [];
-  const add = (kind: "brand" | "category", facet?: CatalogFacet) => { if (facet) slots.push({ kind, facet, product: productOf(facet, kind) }); };
-  add("brand", brandBy("samsung") ?? catalog.brands[0]);
-  add("category", categoryBy("laptops"));
-  add("category", categoryBy("audio", "headphones"));
-  return slots;
-}
-
 function Index() {
   const { t, language } = useLanguage();
   const { data: newItems } = useSuspenseQuery(newestQueryOptions());
@@ -153,8 +140,6 @@ function Index() {
   const brands = buildShopifyBrands(catalog.brands, collections);
   const deals = products.filter((product) => productDiscountPercent(product) !== null);
   const best = bestSellers ?? [];
-  const firstOf = (facet: CatalogFacet, kind: "brand" | "category") => products.find((p) => kind === "brand" ? catalog.brandOf.get(p.node.handle)?.slug === facet.slug : (catalog.categoryOf.get(p.node.handle) ?? []).includes(facet.slug));
-  const slots = promoSlots(catalog, firstOf);
 
   return (
     <StoreLayout>
@@ -186,7 +171,6 @@ function Index() {
 
             <BundleSection collections={collections} />
             <BrandShowcase catalog={catalog} collections={collections} />
-            <PromoBanners slots={slots} />
             <ServicesStrip />
             <RecentlyViewed products={products} />
             <WhyShop />
