@@ -121,33 +121,35 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
         <Link
           to="/collections/$handle"
           params={{ handle: collection.handle }}
-          className="group relative -mx-3 block h-fit w-[calc(100%+1.5rem)] max-w-none overflow-hidden rounded-none border-y border-border/70 bg-black leading-none shadow-card sm:mx-0 sm:w-full sm:rounded-[2rem] sm:border"
+          className="group relative -mx-3 block w-[calc(100%+1.5rem)] max-w-none bg-transparent sm:mx-0 sm:w-full"
           data-testid="collection-hero-visual"
         >
-          {leadImage ? (
-            <img
-              src={cdnImage(leadImage.url, 1800)}
-              srcSet={cdnSrcSet(leadImage.url, 1800)}
-              sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
-              alt={leadImage.altText ?? collection.title}
-              width={1536}
-              height={864}
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-              className="m-0 block h-auto w-full max-w-none align-top"
-            />
-          ) : (
-            <div className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
-              {t("galleryEmpty")}
-            </div>
-          )}
+          <span className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
+            {leadImage ? (
+              <img
+                src={cdnImage(leadImage.url, 1800)}
+                srcSet={cdnSrcSet(leadImage.url, 1800)}
+                sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
+                alt={leadImage.altText ?? collection.title}
+                width={1672}
+                height={941}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                className="m-0 block h-auto w-full max-w-none align-top"
+              />
+            ) : (
+              <span className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
+                {t("galleryEmpty")}
+              </span>
+            )}
 
-          {activeQuery?.isFetching && !activeQuery?.isPending && (
-            <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
-            </span>
-          )}
+            {activeQuery?.isFetching && !activeQuery?.isPending && (
+              <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
+              </span>
+            )}
+          </span>
         </Link>
 
         <div className="mt-5 flex items-end justify-between gap-3 sm:mt-9">
