@@ -5,13 +5,16 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const source = (path) => readFile(new URL(path, root), "utf8");
 
-test("curated broken-brand assets are local and BrandLogo rejects raw markup", async () => {
+test("curated broken-brand assets are static local URLs and raw SVG markup is rejected", async () => {
   for (const asset of [
-    "src/assets/brands/apple.svg",
-    "src/assets/brands/xiaomi.svg",
-    "src/assets/brands/anker.svg",
-    "src/assets/brands/poco.png",
-    "src/assets/brands/tecno.svg",
+    "public/brand-logos/apple.svg",
+    "public/brand-logos/xiaomi.svg",
+    "public/brand-logos/anker.svg",
+    "public/brand-logos/poco.png",
+    "public/brand-logos/tecno.svg",
+    "public/brand-logos/samsung.png",
+    "public/brand-logos/ugreen.png",
+    "public/brand-logos/vention.png",
   ]) {
     await access(new URL(asset, root));
   }
@@ -23,8 +26,9 @@ test("curated broken-brand assets are local and BrandLogo rejects raw markup", a
   assert.match(brandLogo, /<\\s\*svg\\b/);
   assert.match(brandLogo, /builtInIsLocal/);
   for (const name of ["apple", "xiaomi", "anker", "poco", "tecno"]) {
-    assert.match(brands, new RegExp(`\\b${name}\\b`));
+    assert.match(brands, new RegExp(`/${name}\\.(?:svg|png)`));
   }
+  assert.doesNotMatch(brands, /from "@\/assets\/brands\//);
 });
 
 test("shared footer is deterministic and hides technical build data", async () => {
