@@ -4,7 +4,7 @@ import { SITE_URL as CONFIG_SITE_URL, STORE_CONFIG, STORE_NAME, storeUrl } from 
 
 export const SITE_URL = CONFIG_SITE_URL;
 export const SITE_NAME = STORE_NAME;
-export const DEFAULT_OG_IMAGE = storeUrl("/logo.png");
+export const DEFAULT_OG_IMAGE = storeUrl("/logo.svg");
 
 export function absoluteUrl(path = "/") {
   return storeUrl(path);
