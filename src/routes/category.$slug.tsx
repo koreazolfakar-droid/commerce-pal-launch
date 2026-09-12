@@ -6,6 +6,7 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { productCollectionHandles, productPriceBounds } from "@/lib/productPricing";
 import { categoryDefinition, displayCollections, productsInCategory } from "@/lib/taxonomy";
 import {
   breadcrumbJsonLd,
@@ -76,12 +77,16 @@ function CategoryPage() {
   const label = definition ? categoryLabel(definition, language) : slug;
   const inCategory = productsInCategory(catalog, slug);
   const products = applyFilters(inCategory, catalog, filters);
+  const price = productPriceBounds(inCategory);
 
   const update = (patch: Partial<ProductFilters>) =>
     navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) });
 
   const brands = catalog.brands.filter((brand) =>
     inCategory.some((product) => catalog.brandOf.get(product.node.handle)?.slug === brand.slug),
+  );
+  const categoryCollections = displayCollections(collections ?? []).filter((collection) =>
+    inCategory.some((product) => productCollectionHandles(product).includes(collection.handle)),
   );
 
   const header = (
@@ -107,11 +112,11 @@ function CategoryPage() {
         filters={filters}
         facets={{
           brands,
-          collections: displayCollections(collections ?? []),
+          collections: categoryCollections,
         }}
-        priceMin={catalog.priceMin}
-        priceMax={catalog.priceMax}
-        currency={catalog.currency}
+        priceMin={price.min}
+        priceMax={price.max}
+        currency={price.currency}
         header={header}
         onChange={update}
         onReset={() => navigate({ search: {} })}
