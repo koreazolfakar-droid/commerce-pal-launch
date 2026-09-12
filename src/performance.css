@@ -1,0 +1,11 @@
+/* Progressive rendering optimization for the long storefront homepage.
+ * Above-the-fold hero/category/brand content stays fully renderable.
+ * Modern browsers can skip layout/paint work for distant sections until they
+ * approach the viewport; unsupported browsers simply ignore these rules.
+ */
+@supports (content-visibility: auto) {
+  .home-page > :nth-child(n + 4) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 420px;
+  }
+}
