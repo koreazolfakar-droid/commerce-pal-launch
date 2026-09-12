@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ExternalLink, Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 import { StoreLayout } from "@/components/StoreLayout";
 import { WhatsAppCheckoutForm } from "@/components/WhatsAppCheckoutForm";
+import { trackCartEvent } from "@/lib/analytics";
 import { cdnImage } from "@/lib/image";
 import { formatPrice, variantSummary } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
@@ -43,14 +45,25 @@ function CartPage() {
     removeItem,
     getCheckoutUrl,
   } = useCartStore();
+  const trackedView = useRef(false);
   const currency = shopifyTotal?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
   const total = shopifyTotal
     ? Number(shopifyTotal.amount)
     : items.reduce((sum, item) => sum + Number(item.price.amount) * item.quantity, 0);
 
+  useEffect(() => {
+    if (!trackedView.current && items.length > 0) {
+      trackCartEvent("view_cart", items);
+      trackedView.current = true;
+    }
+  }, [items]);
+
   const checkout = () => {
     const url = getCheckoutUrl();
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
+    if (url) {
+      trackCartEvent("begin_checkout", items);
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
   };
 
   return (
