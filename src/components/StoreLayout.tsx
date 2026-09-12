@@ -10,6 +10,7 @@ import "../ux-polish.css";
 import "../ux-welcome.css";
 import "../dark-black.css";
 import "../ui-overhaul.css";
+import "../performance.css";
 
 const AIAssistant = lazy(() =>
   import("@/components/AIAssistant").then((module) => ({ default: module.AIAssistant })),
