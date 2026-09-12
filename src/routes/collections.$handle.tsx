@@ -4,7 +4,6 @@ import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { buildCatalogIndex } from "@/lib/taxonomy";
-import { ProductImage } from "@/components/ProductImage";
 import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchCollectionByHandle } from "@/lib/shopify";
@@ -87,30 +86,6 @@ function CollectionPage() {
         priceMin={catalog.priceMin}
         priceMax={catalog.priceMax}
         currency={catalog.currency}
-        header={
-          <section className="mb-7 grid items-center gap-6 overflow-hidden rounded-3xl border bg-surface p-5 sm:p-8 md:grid-cols-2">
-            <div className="min-w-0">
-              <h1 className="break-words text-3xl font-extrabold leading-tight">
-                {collection.title}
-              </h1>
-              {collection.description && (
-                <p className="mt-3 break-words leading-relaxed text-muted-foreground">
-                  {collection.description}
-                </p>
-              )}
-            </div>
-            {collection.image && (
-              <ProductImage
-                url={collection.image.url}
-                alt={collection.image.altText ?? collection.title}
-                eager
-                className="max-h-64 rounded-2xl"
-                size={900}
-                imageClassName="p-3"
-              />
-            )}
-          </section>
-        }
         onChange={(patch: Partial<ProductFilters>) =>
           navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) })
         }

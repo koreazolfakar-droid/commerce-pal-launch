@@ -1,8 +1,8 @@
 import type { ShopifyCollection } from "@/lib/shopify";
 import type { CatalogFacet } from "@/lib/taxonomy";
 
-/** Exact handles only: a logo, compatibility collection or similarly named brand is never a hero. */
-export function findFacetHero(
+/** Exact merchandising handles only; these collections are configuration, not customer-facing banners. */
+export function findFacetMerchandising(
   collections: ShopifyCollection[],
   kind: "brand" | "category",
   slug: string,

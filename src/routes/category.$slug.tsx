@@ -3,8 +3,6 @@ import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 
 import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
-import { FacetHero } from "@/components/FacetHero";
-import { findFacetHero } from "@/lib/homeMerchandising";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
@@ -75,7 +73,6 @@ function CategoryPage() {
   const definition =
     catalog.categories.find((item) => item.slug === slug) ?? categoryDefinition(slug);
   const label = definition ? categoryLabel(definition, language) : slug;
-  const hero = findFacetHero(collections ?? [], "category", slug);
   const inCategory = productsInCategory(catalog, slug);
   const products = applyFilters(inCategory, catalog, filters);
 
@@ -90,22 +87,6 @@ function CategoryPage() {
     <StoreLayout>
       <CatalogView
         title={label}
-        header={
-          hero ? (
-            <section className="mb-7 overflow-hidden rounded-3xl border">
-              <FacetHero
-                id="category-page-title"
-                title={hero.title || label}
-                description={hero.description}
-                image={hero.image}
-                href={`/category/${slug}`}
-                headingLevel={1}
-                showAction={false}
-                eager
-              />
-            </section>
-          ) : undefined
-        }
         description={`${inCategory.length} ${t(inCategory.length === 1 ? "product" : "products")}`}
         products={products}
         total={inCategory.length}

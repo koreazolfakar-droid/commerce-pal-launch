@@ -6,9 +6,8 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 
-import { FacetHero } from "@/components/FacetHero";
 import { buildShopifyBrands } from "@/lib/brandDirectory";
-import { findFacetHero } from "@/lib/homeMerchandising";
+import { findFacetMerchandising } from "@/lib/homeMerchandising";
 import { productsInCategory, productsOfBrand } from "@/lib/taxonomy";
 
 import {
@@ -143,7 +142,7 @@ export function BundleSection({ collections }: { collections: ShopifyCollection[
   );
 }
 
-/** Every live brand gets its own section, even when a merchant also adds custom showcases. */
+/** Every live brand keeps a compact product section without any hero artwork. */
 export function BrandShowcase({
   catalog,
   collections,
@@ -155,73 +154,80 @@ export function BrandShowcase({
   const { data: showcases = [] } = useQuery(showcaseCollectionsQueryOptions());
   const brands = buildShopifyBrands(catalog.brands, collections);
   const usedShowcases = new Set(brands.map((brand) => `showcase-${brand.slug}`));
-  const categoryHeroes = catalog.categories.flatMap((category) => {
-    const hero = findFacetHero(collections, "category", category.slug);
-    return hero ? [{ category, hero }] : [];
+  const categoryFeatures = catalog.categories.flatMap((category) => {
+    const merchandising = findFacetMerchandising(collections, "category", category.slug);
+    return merchandising ? [{ category, merchandising }] : [];
   });
+
   return (
-    <div className="space-y-8" data-testid="brand-showcases">
-      {brands.map((brand, index) => {
+    <div className="space-y-6" data-testid="brand-showcases">
+      {brands.map((brand) => {
         const products = productsOfBrand(catalog, brand.slug);
-        const hero = findFacetHero(collections, "brand", brand.slug);
+        const merchandising = findFacetMerchandising(collections, "brand", brand.slug);
         return (
           <FacetSection
             key={brand.slug}
             id={`brand-${brand.slug}`}
             kind="brand"
             slug={brand.slug}
-            title={hero?.title || brand.label}
-            description={hero?.description || t("brandSelection")}
-            image={hero?.image ?? products[0]?.node.images.edges[0]?.node ?? null}
+            title={merchandising?.title || brand.label}
+            description={merchandising?.description || t("brandSelection")}
             href={`/brand/${brand.slug}`}
             products={products}
-            flip={index % 2 === 1}
-            brand={brand}
           />
         );
       })}
-      {categoryHeroes.map(({ category, hero }, index) => (
+
+      {categoryFeatures.map(({ category, merchandising }) => (
         <FacetSection
           key={category.slug}
           id={`category-${category.slug}`}
           kind="category"
           slug={category.slug}
-          title={hero.title || categoryLabel(category, language)}
-          description={hero.description}
-          image={hero.image}
+          title={merchandising.title || categoryLabel(category, language)}
+          description={merchandising.description}
           href={`/category/${category.slug}`}
           products={productsInCategory(catalog, category.slug)}
-          flip={index % 2 === 1}
         />
       ))}
+
       {showcases
         .filter((collection) => !usedShowcases.has(collection.handle))
-        .map((collection, index) => (
-          <ShopifyShowcase key={collection.handle} collection={collection} flip={index % 2 === 1} />
+        .map((collection) => (
+          <ShopifyShowcase key={collection.handle} collection={collection} />
         ))}
     </div>
   );
 }
 
 function FacetSection({
+  id,
+  title,
+  description,
+  href,
   products,
   kind,
   slug,
-  ...hero
-}: Parameters<typeof FacetHero>[0] & {
+}: {
+  id: string;
+  title: string;
+  description?: string | null;
+  href: string;
   products: ShopifyProduct[];
   kind: "brand" | "category";
   slug: string;
 }) {
   return (
     <section
-      aria-labelledby={hero.id}
+      aria-labelledby={id}
       data-facet-kind={kind}
       data-facet-slug={slug}
-      className="overflow-hidden rounded-3xl border bg-card"
+      className="overflow-hidden rounded-2xl border bg-card"
     >
-      <FacetHero {...hero} />
-      <div className="border-t p-4 sm:p-6">
+      <div className="p-4 sm:p-5">
+        <Header id={id} title={title} subtitle={description || undefined} href={href} />
+      </div>
+      <div className="border-t p-4 sm:p-5">
         <ProductRail
           products={products.slice(0, 8)}
           storageKey={`space-cell-${kind}-${slug}-view`}
@@ -231,23 +237,23 @@ function FacetSection({
   );
 }
 
-function ShopifyShowcase({ collection, flip }: { collection: ShowcaseCollection; flip: boolean }) {
+function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
   const { t } = useLanguage();
   const { data, isPending } = useQuery(collectionQueryOptions(collection.handle));
   return (
     <section
-      className="overflow-hidden rounded-3xl border bg-card"
+      className="overflow-hidden rounded-2xl border bg-card"
       aria-labelledby={`showcase-${collection.handle}`}
     >
-      <FacetHero
-        id={`showcase-${collection.handle}`}
-        title={collection.title}
-        description={collection.description}
-        image={collection.image}
-        href={`/collections/${collection.handle}`}
-        flip={flip}
-      />
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-5">
+        <Header
+          id={`showcase-${collection.handle}`}
+          title={collection.title}
+          subtitle={collection.description}
+          href={`/collections/${collection.handle}`}
+        />
+      </div>
+      <div className="border-t p-4 sm:p-5">
         <p className="mb-2 text-xs text-muted-foreground">
           {collection.productCount} {t(collection.productCount === 1 ? "product" : "products")}
         </p>

@@ -1,12 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-test("homepage has one heading, one benefits strip and adaptive deals", async ({
+test("homepage has one heading, no heroes, one benefits strip and adaptive deals", async ({
   page,
   isMobile,
 }) => {
   await page.goto("/");
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.getByTestId("hero-banner")).toHaveCount(0);
+  await expect(page.locator('img[alt^="Merchant artwork hero-"]')).toHaveCount(0);
   await expect(page.getByTestId("benefits-bar")).toHaveCount(1);
   await expect(page.getByTestId("category-section")).toHaveCount(1);
   await expect(page.getByTestId("top-brands")).toBeVisible();
@@ -34,7 +35,9 @@ test("homepage has one heading, one benefits strip and adaptive deals", async ({
   await expect(showcase.first()).toContainText("Zeta showcase");
 });
 
-test("each brand keeps its own showcase, products and exact destination", async ({ page }) => {
+test("each brand keeps its compact showcase, products and exact destination without hero artwork", async ({
+  page,
+}) => {
   await page.goto("/");
   for (const [brand, included, excluded] of [
     ["apple", "2", "1"],
@@ -49,9 +52,7 @@ test("each brand keeps its own showcase, products and exact destination", async 
     ).toBeAttached();
     await expect(section.locator(`a[href="/product/fixture-phone-${excluded}"]`)).toHaveCount(0);
   }
-  await expect(
-    page.locator('[data-facet-slug="apple"] img[alt="Merchant artwork hero-brand-apple"]'),
-  ).toBeAttached();
+  await expect(page.locator('img[alt^="Merchant artwork hero-"]')).toHaveCount(0);
   await expect(
     page.locator('[data-facet-kind="category"][data-facet-slug="e-readers"]'),
   ).toBeAttached();
