@@ -16,7 +16,9 @@ import {
 } from "@/lib/shopify";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
-const CATALOG_STALE_TIME = 2 * 60 * 1000;
+// Keep client data aligned with the one-minute server cache. Shopify webhooks
+// invalidate the server immediately; active tabs revalidate as soon as data is stale.
+const CATALOG_STALE_TIME = 30 * 1000;
 
 /** Bounded discovery index. Route-specific product data uses dedicated queries. */
 export const catalogQueryOptions = () =>
@@ -84,7 +86,7 @@ export const productsByHandlesQueryOptions = (handles: string[]) => {
     queryKey: ["shopify", "products-by-handles", normalized],
     queryFn: () => fetchProductsByHandles(normalized),
     enabled: normalized.length > 0,
-    staleTime: 60 * 1000,
+    staleTime: CATALOG_STALE_TIME,
   });
 };
 
@@ -93,7 +95,7 @@ export const storefrontSearchQueryOptions = (term: string) =>
     queryKey: ["shopify", "search", term.trim()],
     queryFn: () => searchStorefront(term),
     enabled: Boolean(term.trim()),
-    staleTime: 60 * 1000,
+    staleTime: CATALOG_STALE_TIME,
   });
 
 export const shopPoliciesQueryOptions = () =>
