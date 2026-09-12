@@ -147,9 +147,9 @@ export function SiteHeader() {
         <div className="mx-auto grid max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-5 px-4 py-2">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
             <img
-              src="/favicon.ico"
+              src="/logo.svg"
               alt={STORE_NAME}
-              width={32}
+              width={48}
               height={32}
               className="h-8 w-auto shrink-0 object-contain"
             />
