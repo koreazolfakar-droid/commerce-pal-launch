@@ -110,6 +110,47 @@ function pruneStorefrontCache(now: number) {
   }
 }
 
+function persistentStorefrontRequest(key: string) {
+  let first = 2166136261;
+  let second = 2246822519;
+  for (let index = 0; index < key.length; index += 1) {
+    const code = key.charCodeAt(index);
+    first = Math.imul(first ^ code, 16777619);
+    second = Math.imul(second ^ code, 3266489917);
+  }
+  const digest = `${(first >>> 0).toString(36)}-${(second >>> 0).toString(36)}-${key.length}`;
+  return new Request(`https://storefront-cache.space-call.invalid/${digest}`);
+}
+
+async function readPersistentStorefrontCache(key: string): Promise<any | undefined> {
+  if (typeof caches === "undefined") return undefined;
+  try {
+    const cache = await caches.open("space-call-storefront-v1");
+    const response = await cache.match(persistentStorefrontRequest(key));
+    return response ? response.json() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function writePersistentStorefrontCache(key: string, value: any) {
+  if (typeof caches === "undefined") return;
+  try {
+    const cache = await caches.open("space-call-storefront-v1");
+    await cache.put(
+      persistentStorefrontRequest(key),
+      new Response(JSON.stringify(value), {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "public, max-age=60",
+        },
+      }),
+    );
+  } catch {
+    // The in-memory cache remains available on runtimes without CacheStorage.
+  }
+}
+
 function fieldsToStrip() {
   return [...RESTRICTED_STOREFRONT_FIELDS, ...deniedFields];
 }
@@ -139,7 +180,7 @@ function extractDeniedFields(errors: Array<{ message: string }>) {
   return found;
 }
 
-const STOREFRONT_QUERY_NAMES = new Set([
+const PUBLIC_STOREFRONT_QUERY_NAMES = new Set([
   SHOWCASE_COLLECTIONS_QUERY,
   SHOP_POLICIES_QUERY,
   PRODUCTS_QUERY,
@@ -148,6 +189,10 @@ const STOREFRONT_QUERY_NAMES = new Set([
   COLLECTION_BY_HANDLE_QUERY,
   PRODUCT_RECOMMENDATIONS_QUERY,
   SHOP_QUERY,
+]);
+
+const STOREFRONT_QUERY_NAMES = new Set([
+  ...PUBLIC_STOREFRONT_QUERY_NAMES,
   CART_QUERY,
   CART_CREATE_MUTATION,
   CART_LINES_ADD_MUTATION,
@@ -188,11 +233,11 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
       return response.json();
     };
 
-    const isMutation = /^\s*mutation\b/i.test(data.query);
+    const cacheable = PUBLIC_STOREFRONT_QUERY_NAMES.has(data.query);
     const key = storefrontCacheKey(data.query, data.variables);
     const now = Date.now();
 
-    if (!isMutation) {
+    if (cacheable) {
       const cached = storefrontResponseCache.get(key);
       if (cached && cached.expiresAt > now) return cached.value;
       const pending = storefrontPendingRequests.get(key);
@@ -201,6 +246,11 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
     }
 
     const request = (async () => {
+      if (cacheable) {
+        const persistent = await readPersistentStorefrontCache(key);
+        if (persistent !== undefined) return persistent;
+      }
+
       const sanitized = sanitizeQuery(data.query);
       const result = await postStorefront(sanitized, data.variables);
       const errors: Array<{ message: string }> = result.errors ?? [];
@@ -218,7 +268,7 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
       return result;
     })();
 
-    if (isMutation) return request;
+    if (!cacheable) return request;
 
     storefrontPendingRequests.set(key, request);
     try {
@@ -227,6 +277,7 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
         value: result,
         expiresAt: Date.now() + STOREFRONT_CACHE_TTL_MS,
       });
+      await writePersistentStorefrontCache(key, result);
       return result;
     } finally {
       storefrontPendingRequests.delete(key);
