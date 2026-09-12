@@ -8,7 +8,10 @@ const VARIANT = `
   selectedOptions { name value }
 `;
 
-/** Lightweight product shape used by cards, rails, search and taxonomy. */
+/**
+ * Product shape used by cards, rails, search and taxonomy. Keep the full variant
+ * subset used by quick-add/quick-view, but omit list metadata that the UI never reads.
+ */
 export const PRODUCT_LIST_FIELDS = `
   id title handle vendor productType availableForSale tags
   priceRange { minVariantPrice { ${MONEY} } }
