@@ -59,22 +59,23 @@ function BrandsPage() {
               key={brand.slug}
               to="/brand/$slug"
               params={{ slug: brand.slug }}
-              className="group flex min-h-[12.25rem] flex-col rounded-[1.55rem] border border-border/70 bg-card p-3.5 shadow-[0_10px_28px_-20px_rgba(15,23,42,0.35)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_16px_34px_-22px_rgba(37,99,235,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-[12.75rem] sm:p-4"
+              className="group flex min-h-[11.75rem] flex-col rounded-[1.55rem] border border-border/70 bg-card p-3.5 shadow-[0_10px_28px_-20px_rgba(15,23,42,0.35)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_16px_34px_-22px_rgba(37,99,235,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:min-h-[12.25rem] sm:p-4"
               aria-label={brand.label}
             >
-              <span className="grid h-[6.6rem] w-full place-items-center overflow-hidden rounded-[1.2rem] border border-black/[0.045] bg-white px-4 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.015)] sm:h-[7rem] dark:border-white/[0.08] dark:bg-white">
-                <span className="grid h-full w-full place-items-center [&_img]:max-h-[64%] [&_img]:max-w-[82%] [&_img]:object-contain [&_svg]:max-h-[64%] [&_svg]:max-w-[82%]">
+              <span className="grid h-[6.25rem] w-full place-items-center overflow-hidden rounded-[1.2rem] border border-black/[0.045] bg-white p-3 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.015)] sm:h-[6.75rem] sm:p-3.5 dark:border-white/[0.08] dark:bg-white">
+                <span className="flex h-full w-full items-center justify-center overflow-hidden">
                   <BrandLogo
                     slug={brand.slug}
                     label={brand.label}
-                    size={48}
+                    size={56}
                     wordmark
+                    className="!h-[3.5rem] !w-full !max-w-[10rem] !rounded-none !bg-transparent [&>img]:!h-full [&>img]:!w-full [&>img]:!object-contain"
                     {...(brand.image ? { imageUrl: brand.image } : {})}
                   />
                 </span>
               </span>
 
-              <span className="mt-auto flex min-h-14 w-full items-end justify-between gap-3 pt-4">
+              <span className="mt-auto flex min-h-12 w-full items-end justify-between gap-3 pt-3.5">
                 <span className="min-w-0 truncate text-[0.98rem] font-extrabold leading-none tracking-[-0.02em] text-foreground">
                   {brand.label}
                 </span>
