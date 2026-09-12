@@ -25,7 +25,7 @@ function Header({
 }: {
   id?: string;
   title: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
   href?: string;
 }) {
   const { t } = useLanguage();
