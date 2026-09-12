@@ -2,6 +2,7 @@ import { SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ProductGrid } from "@/components/ProductGrid";
+import { ProductViewToggle } from "@/components/ProductViewToggle";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import { formatPrice, type ShopifyCollection, type ShopifyProduct } from "@/lib/
 import type { CatalogFacet } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
+import { useProductViewMode } from "@/hooks/useProductViewMode";
 
 export interface FacetGroups {
   categories?: CatalogFacet[];
@@ -194,10 +196,6 @@ function FilterControls({
   );
 }
 
-/**
- * Shared catalog view: facet sidebar, sort toolbar and product grid.
- * Every facet value comes from the live Shopify catalog.
- */
 export function CatalogView({
   title,
   description,
@@ -227,18 +225,18 @@ export function CatalogView({
 }) {
   const { t, direction, language } = useLanguage();
   const activeCount = activeFilterCount(filters);
+  const [viewMode, setViewMode] = useProductViewMode();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 lg:py-10">
-      <header className="mb-6">
+    <div className="mx-auto max-w-7xl px-4 py-5 lg:py-10">
+      <header className="mb-4 sm:mb-5">
         <h1 className="text-2xl font-extrabold tracking-tight lg:text-[2rem]">{title}</h1>
         {description && (
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             {description}
           </p>
         )}
       </header>
-      {header}
 
       <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
         <aside className="hidden lg:block">
@@ -246,11 +244,7 @@ export function CatalogView({
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">{t("filters")}</h2>
               {activeCount > 0 && (
-                <button
-                  type="button"
-                  onClick={onReset}
-                  className="text-xs font-medium text-primary hover:underline"
-                >
+                <button type="button" onClick={onReset} className="text-xs font-medium text-primary hover:underline">
                   {t("clearAll")}
                 </button>
               )}
@@ -267,10 +261,30 @@ export function CatalogView({
         </aside>
 
         <div>
-          <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 lg:hidden">
+            <span className="shrink-0 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground">
+              {t("all")}
+            </span>
+            {(facets.categories ?? []).slice(0, 6).map((category) => {
+              const pressed = filters.category?.includes(category.slug) ?? false;
+              return (
+                <button
+                  key={category.slug}
+                  type="button"
+                  onClick={() => onChange({ category: toggleValue(filters.category, category.slug) })}
+                  aria-pressed={pressed}
+                  className="shrink-0 rounded-full border bg-card px-3.5 py-2 text-xs font-semibold text-foreground aria-pressed:border-primary aria-pressed:bg-accent"
+                >
+                  {categoryLabel(category, language)}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mb-4 flex items-center justify-between gap-2">
             <p className="min-w-0 truncate text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{products.length}</span> {t("ofLabel")}{" "}
-              {total} {products.length === 1 ? t("product") : t("products")}
+              <span className="font-medium text-foreground">{products.length}</span> {t("ofLabel")} {total}{" "}
+              {products.length === 1 ? t("product") : t("products")}
             </p>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -286,11 +300,7 @@ export function CatalogView({
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent
-                  side={direction === "rtl" ? "right" : "left"}
-                  dir={direction}
-                  className="w-[88vw] max-w-sm overflow-y-auto"
-                >
+                <SheetContent side={direction === "rtl" ? "right" : "left"} dir={direction} className="w-[88vw] max-w-sm overflow-y-auto">
                   <SheetHeader>
                     <SheetTitle>{t("filters")}</SheetTitle>
                   </SheetHeader>
@@ -312,32 +322,27 @@ export function CatalogView({
                 </SheetContent>
               </Sheet>
 
-              <label className="flex items-center gap-2 text-sm">
-                <span className="hidden text-muted-foreground sm:inline">{t("sort")}</span>
-                <select
-                  value={filters.sort ?? "featured"}
-                  onChange={(event) =>
-                    onChange({ sort: event.target.value as ProductFilters["sort"] })
-                  }
-                  className="h-9 rounded-full border bg-background px-3 text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label={t("sort")}
-                >
-                  {SORT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {(
-                        {
-                          featured: t("featured"),
-                          newest: t("newest"),
-                          "price-asc": t("priceLowHigh"),
-                          "price-desc": t("priceHighLow"),
-                          discount: t("biggestDiscount"),
-                          "title-asc": t("nameAZ"),
-                        } as Record<string, string>
-                      )[option.value] ?? option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <select
+                value={filters.sort ?? "featured"}
+                onChange={(event) => onChange({ sort: event.target.value as ProductFilters["sort"] })}
+                className="h-9 max-w-[122px] rounded-full border bg-background px-3 text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-none"
+                aria-label={t("sort")}
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {({
+                      featured: t("featured"),
+                      newest: t("newest"),
+                      "price-asc": t("priceLowHigh"),
+                      "price-desc": t("priceHighLow"),
+                      discount: t("biggestDiscount"),
+                      "title-asc": t("nameAZ"),
+                    } as Record<string, string>)[option.value] ?? option.label}
+                  </option>
+                ))}
+              </select>
+
+              <ProductViewToggle mode={viewMode} onChange={setViewMode} />
             </div>
           </div>
 
@@ -347,10 +352,7 @@ export function CatalogView({
                 ...(filters.category ?? []).map((slug) => ({
                   key: `category-${slug}`,
                   label: categoryLabel(
-                    facets.categories?.find((facet) => facet.slug === slug) ?? {
-                      slug,
-                      label: slug,
-                    },
+                    facets.categories?.find((facet) => facet.slug === slug) ?? { slug, label: slug },
                     language,
                   ),
                   clear: () => onChange({ category: toggleValue(filters.category, slug) }),
@@ -362,28 +364,22 @@ export function CatalogView({
                 })),
                 ...(filters.collection ?? []).map((handle) => ({
                   key: `collection-${handle}`,
-                  label:
-                    facets.collections?.find((collection) => collection.handle === handle)?.title ??
-                    handle,
+                  label: facets.collections?.find((collection) => collection.handle === handle)?.title ?? handle,
                   clear: () => onChange({ collection: toggleValue(filters.collection, handle) }),
                 })),
                 ...(filters.availability
-                  ? [
-                      {
-                        key: "availability",
-                        label: filters.availability === "in-stock" ? t("inStock") : t("onSale"),
-                        clear: () => onChange({ availability: undefined }),
-                      },
-                    ]
+                  ? [{
+                      key: "availability",
+                      label: filters.availability === "in-stock" ? t("inStock") : t("onSale"),
+                      clear: () => onChange({ availability: undefined }),
+                    }]
                   : []),
                 ...(filters.min !== undefined || filters.max !== undefined
-                  ? [
-                      {
-                        key: "price",
-                        label: `${filters.min ?? priceMin} – ${filters.max ?? priceMax}`,
-                        clear: () => onChange({ min: undefined, max: undefined }),
-                      },
-                    ]
+                  ? [{
+                      key: "price",
+                      label: `${filters.min ?? priceMin} – ${filters.max ?? priceMax}`,
+                      clear: () => onChange({ min: undefined, max: undefined }),
+                    }]
                   : []),
               ].map((chip) => (
                 <button
@@ -402,6 +398,9 @@ export function CatalogView({
           <ProductGrid
             eagerCount={4}
             products={products}
+            showViewToggle={false}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
             action={
               activeCount > 0 ? (
                 <Button variant="outline" onClick={onReset}>
@@ -410,6 +409,8 @@ export function CatalogView({
               ) : undefined
             }
           />
+
+          {header ? <div className="mt-10 border-t pt-7 sm:mt-12 sm:pt-8">{header}</div> : null}
         </div>
       </div>
     </div>
