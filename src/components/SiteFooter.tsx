@@ -57,13 +57,15 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid min-w-0 gap-10 md:grid-cols-2 lg:grid-cols-6">
           <div className="min-w-0 lg:col-span-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <img
-                src="/favicon.ico"
+                src="/logo.svg"
                 alt={STORE_NAME}
-                width={32}
-                height={32}
-                className="h-8 w-auto shrink-0 object-contain"
+                width={54}
+                height={36}
+                loading="lazy"
+                decoding="async"
+                className="h-9 w-auto shrink-0 object-contain"
               />
               <span className="text-lg font-semibold tracking-tight">{STORE_NAME}</span>
             </div>
