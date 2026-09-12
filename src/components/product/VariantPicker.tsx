@@ -78,9 +78,12 @@ const COLOR_WORDS: Record<string, string> = {
   light: "#cfe3f2",
   cobalt: "#5b4bd0",
   shadow: "#3a3550",
+  glacier: "#d8e5ee",
 };
 
 function swatchColor(value: string) {
+  const normalized = value.toLowerCase().replace(/[^a-z]/g, "");
+  if (COLOR_WORDS[normalized]) return COLOR_WORDS[normalized];
   const words = value
     .toLowerCase()
     .split(/[^a-z]+/)
@@ -111,8 +114,6 @@ export function VariantPicker({
   selected: Record<string, string>;
   onSelect: (name: string, value: string) => void;
 }) {
-  // Shopify's implicit single option ("Title": Default / Default Title) is not
-  // a real customer choice, so it never renders as a selector.
   const real = options.filter(
     (option) =>
       option.values.length > 0 &&
@@ -133,12 +134,12 @@ export function VariantPicker({
     );
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4 sm:gap-5">
       {real.map((option) => {
         const color = isColorOption(option.name);
         return (
           <div key={option.name}>
-            <div className="mb-2.5 flex items-baseline gap-2">
+            <div className="mb-2 flex items-baseline gap-2 sm:mb-2.5">
               <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                 {option.name}
               </h2>
@@ -148,7 +149,7 @@ export function VariantPicker({
                 </span>
               )}
             </div>
-            <div className={cn("flex flex-wrap", color ? "gap-2.5" : "gap-2")}>
+            <div className={cn("flex flex-wrap", color ? "gap-2" : "gap-2")}>
               {option.values.map((value) => {
                 const active = selected[option.name] === value;
                 const available = isAvailable(option.name, value);
@@ -164,21 +165,22 @@ export function VariantPicker({
                       disabled={!available}
                       onClick={() => onSelect(option.name, value)}
                       className={cn(
-                        "press relative grid h-11 w-11 place-items-center rounded-full border-2 transition-colors",
-                        active ? "border-primary" : "border-border hover:border-primary/50",
+                        "press relative grid h-10 w-10 place-items-center rounded-full border-2 bg-card transition-colors sm:h-11 sm:w-11",
+                        active ? "border-primary ring-2 ring-primary/15" : "border-border hover:border-primary/50",
                         !available && "opacity-40",
                       )}
                     >
                       {hex ? (
                         <span
                           aria-hidden
-                          className="h-7 w-7 rounded-full border border-border/60"
+                          className="h-6 w-6 rounded-full border border-border/60 sm:h-7 sm:w-7"
                           style={{ backgroundColor: hex }}
                         />
                       ) : (
-                        <span className="px-1 text-[10px] font-bold uppercase">
-                          {value.slice(0, 3)}
-                        </span>
+                        <span
+                          aria-hidden
+                          className="h-6 w-6 rounded-full border border-dashed border-muted-foreground/50 bg-gradient-to-br from-surface to-background sm:h-7 sm:w-7"
+                        />
                       )}
                       {active && (
                         <Check
