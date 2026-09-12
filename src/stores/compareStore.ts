@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+import { trackHandleEvent } from "@/lib/analytics";
+
 export const MAX_COMPARE_PRODUCTS = 4;
 
 interface CompareState {
@@ -21,6 +23,7 @@ export const useCompareStore = create<CompareState>()(
         if (current.includes(handle)) return "exists";
         if (current.length >= MAX_COMPARE_PRODUCTS) return "full";
         set({ handles: [...current, handle] });
+        trackHandleEvent("compare_product", handle);
         return "added";
       },
       remove: (handle) =>
@@ -33,6 +36,7 @@ export const useCompareStore = create<CompareState>()(
         }
         if (current.length >= MAX_COMPARE_PRODUCTS) return "full";
         set({ handles: [...current, handle] });
+        trackHandleEvent("compare_product", handle);
         return "added";
       },
       clear: () => set({ handles: [] }),
