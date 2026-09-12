@@ -14,11 +14,13 @@ export function findFacetMerchandising(
 
 /**
  * Homepage hero tabs are driven entirely by Shopify collections.
- * Preferred handles: home-hero-01-apple, home-hero-02-xiaomi, ...
- * Legacy hero-brand-* / hero-category-* collections are used only until a dedicated home-hero-* set exists.
+ * Preferred handles can use home-hero-*, hero-home-*, or the merchant-friendly hero-* naming.
+ * Facet-specific hero-brand-* / hero-category-* collections remain legacy fallbacks only.
  */
 export function homeHeroCollections(collections: ShopifyCollection[]): ShopifyCollection[] {
-  const dedicated = collections.filter((collection) => /^(home-hero-|hero-home-)/.test(collection.handle));
+  const dedicated = collections.filter((collection) =>
+    /^(home-hero-|hero-home-|hero-(?!brand-|category-))/.test(collection.handle),
+  );
   const legacy = collections.filter((collection) => /^(hero-brand-|hero-category-)/.test(collection.handle));
   const source = dedicated.length ? dedicated : legacy;
   return [...source].sort((a, b) => a.handle.localeCompare(b.handle)).slice(0, 10);
@@ -35,7 +37,7 @@ export function orderedBrands<T extends CatalogFacet>(brands: T[]): T[] {
 
 /** Configuration collections stay out of navigation and customer-facing filters. */
 export function isMerchandisingCollection(handle: string): boolean {
-  return /^(homepage-hero$|home-hero-|hero-home-|hero-brand-|hero-category-|logo-|brand-logo-)/.test(
+  return /^(homepage-hero$|home-hero-|hero-home-|hero-(?!brand-|category-)|hero-brand-|hero-category-|logo-|brand-logo-)/.test(
     handle,
   );
 }
