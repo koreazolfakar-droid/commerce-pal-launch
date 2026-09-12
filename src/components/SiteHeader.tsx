@@ -149,9 +149,12 @@ export function SiteHeader() {
             <img
               src="/logo.svg"
               alt={STORE_NAME}
-              width={48}
-              height={32}
-              className="h-8 w-auto shrink-0 object-contain"
+              width={54}
+              height={36}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="h-9 w-auto shrink-0 object-contain"
             />
             <span className="truncate text-[19px] font-extrabold tracking-tight">{STORE_NAME}</span>
           </Link>
