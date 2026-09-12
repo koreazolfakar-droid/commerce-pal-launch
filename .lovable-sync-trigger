@@ -1,4 +1,4 @@
 Lovable sync trigger
-Triggered from ChatGPT on 2026-09-12 after SEO merge
-SEO main commit: a8e8aaf6e3a5df2752220cb42f861d1318280b7a
-Reason: force Lovable to pull and rebuild the latest Google indexing / technical SEO changes
+Triggered from ChatGPT on 2026-09-12 after homepage SEO intro update
+Latest main commit before trigger: 737e4c094581a73260ec607d507fc2ee5b956a91
+Reason: force Lovable to pull and rebuild the latest homepage changes, including removal of the old Home page heading
