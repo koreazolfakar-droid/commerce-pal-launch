@@ -44,7 +44,9 @@ function CartPage() {
     getCheckoutUrl,
   } = useCartStore();
   const currency = shopifyTotal?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
-  const total = Number(shopifyTotal?.amount ?? 0);
+  const total = shopifyTotal
+    ? Number(shopifyTotal.amount)
+    : items.reduce((sum, item) => sum + Number(item.price.amount) * item.quantity, 0);
 
   const checkout = () => {
     const url = getCheckoutUrl();
