@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, Copy, Scale, Trash2, X, Sparkles } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { AlertTriangle, Check, Copy, Loader2, Scale, Sparkles, Trash2, X } from "lucide-react";
+import { Fragment, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
 import { OPEN_STORE_AI_EVENT } from "@/components/AIAssistant";
@@ -11,14 +11,20 @@ import { Button } from "@/components/ui/button";
 import { useHydrated } from "@/hooks/useHydrated";
 import { groupSpecs, parseDescription, splitSections } from "@/lib/productContent";
 import { productsByHandlesQueryOptions } from "@/lib/queries";
-import { formatPrice, productInStock, type ShopifyProduct } from "@/lib/shopify";
-import { useCompareStore } from "@/stores/compareStore";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
-import { cn } from "@/lib/utils";
+import { formatPrice, productInStock, type ShopifyProduct } from "@/lib/shopify";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { cn } from "@/lib/utils";
+import { useCompareStore } from "@/stores/compareStore";
 
 interface CompareSearch {
   products: string | undefined;
+}
+
+interface ComparisonRow {
+  group: string;
+  label: string;
+  values: string[];
 }
 
 export const Route = createFileRoute("/compare")({
@@ -66,37 +72,73 @@ function productSpecs(product: ShopifyProduct) {
   ]).flatMap((group) => group.rows.map((row) => ({ ...row, group: group.title })));
 }
 
+function normalizedHandles(value: string | undefined) {
+  if (!value) return [];
+  return [...new Set(value.split(",").map((handle) => handle.trim()).filter(Boolean))].slice(0, 4);
+}
+
+function sameHandles(left: string[], right: string[]) {
+  return left.length === right.length && left.every((handle, index) => handle === right[index]);
+}
+
+function isDifferentRow(row: ComparisonRow) {
+  const comparable = row.values.filter((value) => value !== "—");
+  return comparable.length > 1 && new Set(comparable).size > 1;
+}
+
 function ComparePage() {
   const hydrated = useHydrated();
+  const navigate = useNavigate({ from: "/compare" });
   const { products: sharedProducts } = Route.useSearch();
   const handles = useCompareStore((state) => state.handles);
   const remove = useCompareStore((state) => state.remove);
   const clear = useCompareStore((state) => state.clear);
   const replace = useCompareStore((state) => state.replace);
+
+  const sharedHandles = useMemo(() => normalizedHandles(sharedProducts), [sharedProducts]);
   const requestedHandles = useMemo(
-    () =>
-      sharedProducts
-        ? [...new Set([...handles, ...sharedProducts.split(",").filter(Boolean)])].slice(0, 4)
-        : handles,
-    [handles, sharedProducts],
+    () => (sharedHandles.length > 0 ? sharedHandles : handles),
+    [handles, sharedHandles],
   );
-  const { data: fetchedProducts = [] } = useQuery(
-    productsByHandlesQueryOptions(hydrated ? requestedHandles : []),
-  );
+
+  const {
+    data: fetchedProducts = [],
+    isPending,
+    isError,
+    refetch,
+  } = useQuery(productsByHandlesQueryOptions(hydrated ? requestedHandles : []));
 
   useEffect(() => {
-    if (!sharedProducts) return;
-    const valid = sharedProducts
-      .split(",")
-      .filter((handle) => fetchedProducts.some((product) => product.node.handle === handle));
-    if (valid.length > 0 && valid.join(",") !== handles.join(",")) replace(valid);
-  }, [sharedProducts, fetchedProducts, handles, replace]);
+    if (!hydrated || isPending || isError || requestedHandles.length === 0) return;
 
-  const products = (hydrated ? handles : [])
+    const validHandles = requestedHandles.filter((handle) =>
+      fetchedProducts.some((product) => product.node.handle === handle),
+    );
+
+    if (!sameHandles(validHandles, handles)) replace(validHandles);
+
+    // A shared comparison URL is an import, not a permanent source of truth.
+    // Removing the query after import prevents Clear/Remove from re-adding products.
+    if (sharedProducts) {
+      void navigate({ search: { products: undefined }, replace: true });
+    }
+  }, [
+    fetchedProducts,
+    handles,
+    hydrated,
+    isError,
+    isPending,
+    navigate,
+    replace,
+    requestedHandles,
+    sharedProducts,
+  ]);
+
+  const products = (hydrated ? requestedHandles : [])
     .map((handle) => fetchedProducts.find((product) => product.node.handle === handle))
     .filter((product): product is ShopifyProduct => Boolean(product));
 
-  const rows = useMemo(() => {
+  const rows = useMemo<ComparisonRow[]>(() => {
     const perProduct = products.map(productSpecs);
     const labels = new Map<string, { group: string; label: string }>();
     perProduct.flat().forEach((row) =>
@@ -114,17 +156,22 @@ function ComparePage() {
     }));
   }, [products]);
 
-  const winningRows = useMemo(
-    () =>
-      rows.filter((row) => {
-        const values = row.values.filter((value) => value !== "—");
-        return values.length > 1 && new Set(values).size > 1;
-      }).length,
-    [rows],
-  );
+  const groupedRows = useMemo(() => {
+    const groups = new Map<string, ComparisonRow[]>();
+    rows.forEach((row) => {
+      const existing = groups.get(row.group) ?? [];
+      existing.push(row);
+      groups.set(row.group, existing);
+    });
+    return [...groups.entries()].map(([group, groupRows]) => ({ group, rows: groupRows }));
+  }, [rows]);
+
+  const differingRows = useMemo(() => rows.filter(isDifferentRow).length, [rows]);
 
   const copyShareLink = async () => {
-    const url = `${window.location.origin}/compare?products=${encodeURIComponent(handles.join(","))}`;
+    const productHandles = products.map((product) => product.node.handle);
+    if (productHandles.length === 0) return;
+    const url = `${window.location.origin}/compare?products=${encodeURIComponent(productHandles.join(","))}`;
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Comparison link copied");
@@ -135,54 +182,97 @@ function ComparePage() {
 
   const openAiComparison = () => window.dispatchEvent(new Event(OPEN_STORE_AI_EVENT));
 
+  const loading = hydrated && requestedHandles.length > 0 && isPending;
+
   return (
     <StoreLayout>
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 lg:py-12">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-6">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
-              Phone comparison
-            </p>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Compare smartphones</h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Live product details from Shopify. Compare up to four phones with differences
-              highlighted automatically.
-            </p>
+      <div className="mx-auto w-full max-w-[90rem] px-3 py-6 sm:px-4 sm:py-8 lg:px-6 lg:py-12">
+        <header className="overflow-hidden rounded-3xl border bg-card shadow-card">
+          <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-end lg:justify-between lg:p-8">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-bold text-accent-foreground">
+                  <Scale className="h-3.5 w-3.5" /> Phone comparison
+                </span>
+                {products.length > 0 && (
+                  <span className="rounded-full border px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                    {products.length} of 4 selected
+                  </span>
+                )}
+              </div>
+              <h1 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
+                Compare smartphones clearly
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                Live Shopify prices, availability and specifications in a layout designed to stay
+                readable on phones, tablets and desktop screens.
+              </p>
+            </div>
+
+            {products.length > 0 && (
+              <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+                {products.length >= 2 && (
+                  <Button className="col-span-2 rounded-xl sm:col-span-1" onClick={openAiComparison}>
+                    <Sparkles className="h-4 w-4" /> Ask AI to compare
+                  </Button>
+                )}
+                <Button variant="outline" className="rounded-xl" onClick={copyShareLink}>
+                  <Copy className="h-4 w-4" /> Share
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="rounded-xl text-muted-foreground"
+                  onClick={clear}
+                >
+                  <Trash2 className="h-4 w-4" /> Clear
+                </Button>
+              </div>
+            )}
           </div>
-          {products.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border bg-surface px-3 py-2 text-xs font-semibold text-muted-foreground">
-                <Sparkles className="h-3.5 w-3.5 text-primary" /> {winningRows} differing specs
+
+          {products.length >= 2 && (
+            <div className="flex flex-wrap items-center gap-2 border-t bg-surface/60 px-5 py-3 text-xs font-medium text-muted-foreground sm:px-6 lg:px-8">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span>
+                {differingRows} specification{differingRows === 1 ? "" : "s"} differ across the
+                selected phones.
               </span>
-              <Button className="rounded-full" onClick={openAiComparison}>
-                <Sparkles className="h-4 w-4" /> Ask AI to compare
-              </Button>
-              <Button variant="outline" className="rounded-full" onClick={copyShareLink}>
-                <Copy className="h-4 w-4" /> Share
-              </Button>
-              <Button
-                variant="ghost"
-                className="rounded-full text-muted-foreground"
-                onClick={clear}
-              >
-                <Trash2 className="h-4 w-4" /> Clear
-              </Button>
             </div>
           )}
-        </div>
+        </header>
 
-        {products.length === 0 ? (
+        {loading ? (
+          <div className="grid min-h-[24rem] place-items-center text-center">
+            <div>
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+              <p className="mt-4 font-semibold">Loading comparison…</p>
+              <p className="mt-1 text-sm text-muted-foreground">Fetching the latest Shopify data.</p>
+            </div>
+          </div>
+        ) : isError ? (
+          <div className="mt-8 rounded-3xl border bg-card p-8 text-center shadow-card">
+            <AlertTriangle className="mx-auto h-9 w-9 text-destructive" />
+            <h2 className="mt-4 text-xl font-bold">Comparison could not be loaded</h2>
+            <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
+              The selected phones are still saved. Retry the live Shopify request without losing
+              your comparison.
+            </p>
+            <Button className="mt-5 rounded-xl" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          </div>
+        ) : products.length === 0 ? (
           <div className="grid min-h-[28rem] place-items-center text-center">
-            <div className="max-w-md">
+            <div className="max-w-md px-4">
               <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-accent text-primary">
                 <Scale className="h-7 w-7" />
               </span>
               <h2 className="mt-5 text-xl font-bold">No phones selected</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Add two or more smartphones from a product card or product page to compare them
-                here.
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Add two or more smartphones from a product card or product page, then return here
+                for a clean side-by-side comparison.
               </p>
-              <Button asChild className="mt-6 rounded-full">
+              <Button asChild className="mt-6 rounded-xl">
                 <Link to="/category/$slug" params={{ slug: "smartphones" }}>
                   Browse smartphones
                 </Link>
@@ -190,97 +280,216 @@ function ComparePage() {
             </div>
           </div>
         ) : (
-          <div className="scroll-rail mt-8 overflow-x-auto rounded-2xl border bg-card shadow-card">
-            <table className="w-full min-w-[720px] border-collapse text-start text-sm">
-              <thead>
-                <tr className="align-top">
-                  <th className="sticky left-0 z-10 w-44 border-b border-r bg-card p-4 text-muted-foreground">
-                    Product
-                  </th>
-                  {products.map((product) => {
-                    const node = product.node;
-                    const image = node.images.edges[0]?.node;
-                    const price =
-                      node.variants.edges[0]?.node.price ?? node.priceRange.minVariantPrice;
-                    return (
-                      <th
-                        key={node.handle}
-                        className="min-w-56 border-b border-r p-4 last:border-r-0"
+          <>
+            <section aria-label="Selected products" className="mt-6 sm:mt-8">
+              <div className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:-mx-4 sm:px-4 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
+                {products.map((product) => {
+                  const node = product.node;
+                  const image = node.images.edges[0]?.node;
+                  const price = node.variants.edges[0]?.node.price ?? node.priceRange.minVariantPrice;
+                  const inStock = productInStock(product);
+
+                  return (
+                    <article
+                      key={node.handle}
+                      className="relative min-w-[78vw] snap-start rounded-2xl border bg-card p-4 shadow-card sm:min-w-[20rem] md:min-w-0"
+                    >
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(node.handle)}
+                        className="absolute end-3 top-3 z-20 h-9 w-9 rounded-full bg-background/90 shadow-sm backdrop-blur"
+                        aria-label={`Remove ${node.title}`}
                       >
-                        <div className="relative">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(node.handle)}
-                            className="absolute right-0 top-0 h-8 w-8 rounded-full"
-                            aria-label={`Remove ${node.title}`}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                          <Link
-                            to="/product/$handle"
-                            params={{ handle: node.handle }}
-                            className="block pr-8"
-                          >
-                            <ProductImage
-                              url={image?.url}
-                              alt={image?.altText ?? node.title}
-                              size={240}
-                              sizes="224px"
-                              className="max-w-40 rounded-xl"
-                            />
-                            <span className="mt-3 block line-clamp-2 font-bold text-foreground hover:text-primary">
-                              {node.title}
-                            </span>
-                          </Link>
-                          <span className="mt-2 block text-base font-extrabold">
-                            {formatPrice(price.amount, price.currencyCode)}
-                          </span>
-                          <span className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                            {productInStock(product) && (
-                              <Check className="h-3.5 w-3.5 text-success" />
-                            )}
-                            {productInStock(product) ? "In stock" : "Out of stock"}
-                          </span>
-                        </div>
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr
-                    key={`${row.group}-${row.label}`}
-                    className={index % 2 === 0 ? "bg-surface/60" : undefined}
-                  >
-                    <th className="sticky left-0 z-10 border-r bg-inherit p-4 font-semibold">
-                      <span className="block text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-                        {row.group}
-                      </span>
-                      {row.label}
-                    </th>
-                    {row.values.map((value, valueIndex) => {
-                      const comparable = row.values.filter((item) => item !== "—");
-                      const different =
-                        comparable.length > 1 && new Set(comparable).size > 1 && value !== "—";
-                      return (
-                        <td
-                          key={`${row.label}-${products[valueIndex]?.node.handle}`}
+                        <X className="h-4 w-4" />
+                      </Button>
+
+                      <Link
+                        to="/product/$handle"
+                        params={{ handle: node.handle }}
+                        className="block min-w-0"
+                      >
+                        <ProductImage
+                          url={image?.url}
+                          alt={image?.altText ?? node.title}
+                          size={320}
+                          sizes="(min-width: 1024px) 240px, (min-width: 768px) 40vw, 70vw"
+                          className="mx-auto w-full max-w-44 rounded-2xl"
+                        />
+                        <h2 className="mt-4 line-clamp-2 min-h-11 break-words pe-8 text-base font-bold leading-snug hover:text-primary">
+                          {node.title}
+                        </h2>
+                      </Link>
+
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                        <span className="text-lg font-extrabold">
+                          {formatPrice(price.amount, price.currencyCode)}
+                        </span>
+                        <span
                           className={cn(
-                            "border-r p-4 align-top last:border-r-0",
-                            different && "bg-primary/5 font-semibold",
+                            "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold",
+                            inStock
+                              ? "bg-success/10 text-success"
+                              : "bg-muted text-muted-foreground",
                           )}
                         >
-                          {value}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          {inStock && <Check className="h-3.5 w-3.5" />}
+                          {inStock ? "In stock" : "Out of stock"}
+                        </span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+
+            {rows.length === 0 ? (
+              <div className="mt-6 rounded-2xl border bg-card p-6 text-center text-sm text-muted-foreground sm:mt-8">
+                No comparable specifications were found for the selected product data.
+              </div>
+            ) : (
+              <section aria-label="Specifications comparison" className="mt-6 sm:mt-8">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">
+                      Specifications
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Differences are highlighted automatically.
+                    </p>
+                  </div>
+                  {products.length === 1 && (
+                    <span className="rounded-full border px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                      Add another phone to compare
+                    </span>
+                  )}
+                </div>
+
+                {/* Mobile/tablet: stacked comparison avoids clipped columns and overlap. */}
+                <div className="space-y-4 lg:hidden">
+                  {groupedRows.map(({ group, rows: groupItems }) => (
+                    <div key={group} className="overflow-hidden rounded-2xl border bg-card shadow-card">
+                      <div className="border-b bg-surface/70 px-4 py-3">
+                        <h3 className="text-xs font-extrabold uppercase tracking-[0.1em] text-muted-foreground">
+                          {group}
+                        </h3>
+                      </div>
+                      <div className="divide-y">
+                        {groupItems.map((row) => {
+                          const different = isDifferentRow(row);
+                          return (
+                            <div key={`${row.group}-${row.label}`} className="p-4">
+                              <div className="flex items-center justify-between gap-3">
+                                <h4 className="font-bold">{row.label}</h4>
+                                {different && products.length > 1 && (
+                                  <span className="shrink-0 rounded-full bg-accent px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-accent-foreground">
+                                    Different
+                                  </span>
+                                )}
+                              </div>
+                              <div
+                                className={cn(
+                                  "mt-3 grid gap-2",
+                                  products.length > 1 ? "grid-cols-2" : "grid-cols-1",
+                                )}
+                              >
+                                {products.map((product, index) => (
+                                  <div
+                                    key={`${row.label}-${product.node.handle}`}
+                                    className={cn(
+                                      "min-w-0 rounded-xl border bg-background p-3",
+                                      different && "border-primary/25 bg-primary/5",
+                                    )}
+                                  >
+                                    <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                                      {product.node.title}
+                                    </p>
+                                    <p className="mt-1 break-words text-sm font-semibold leading-5">
+                                      {row.values[index]}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: a true side-by-side matrix with a logical sticky label column. */}
+                <div className="hidden overflow-hidden rounded-2xl border bg-card shadow-card lg:block">
+                  <div className="overflow-x-auto">
+                    <table
+                      className="w-full border-collapse text-start text-sm"
+                      style={{ minWidth: `${190 + products.length * 240}px` }}
+                    >
+                      <thead>
+                        <tr className="border-b bg-surface/80">
+                          <th className="sticky start-0 z-20 w-[190px] min-w-[190px] border-e bg-surface p-4 text-start font-bold text-muted-foreground">
+                            Specification
+                          </th>
+                          {products.map((product) => (
+                            <th
+                              key={product.node.handle}
+                              className="min-w-[240px] border-e p-4 text-start last:border-e-0"
+                            >
+                              <Link
+                                to="/product/$handle"
+                                params={{ handle: product.node.handle }}
+                                className="line-clamp-2 font-bold hover:text-primary"
+                              >
+                                {product.node.title}
+                              </Link>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {groupedRows.map(({ group, rows: groupItems }) => (
+                          <Fragment key={group}>
+                            <tr className="border-b bg-muted/35">
+                              <th
+                                colSpan={products.length + 1}
+                                className="px-4 py-2.5 text-start text-[11px] font-extrabold uppercase tracking-[0.1em] text-muted-foreground"
+                              >
+                                {group}
+                              </th>
+                            </tr>
+                            {groupItems.map((row) => {
+                              const different = isDifferentRow(row);
+                              return (
+                                <tr
+                                  key={`${row.group}-${row.label}`}
+                                  className="border-b last:border-b-0 hover:bg-surface/45"
+                                >
+                                  <th className="sticky start-0 z-10 w-[190px] min-w-[190px] border-e bg-card p-4 text-start font-semibold">
+                                    {row.label}
+                                  </th>
+                                  {row.values.map((value, valueIndex) => (
+                                    <td
+                                      key={`${row.label}-${products[valueIndex]?.node.handle}`}
+                                      className={cn(
+                                        "min-w-[240px] border-e p-4 align-top leading-6 last:border-e-0",
+                                        different && value !== "—" && "bg-primary/5 font-semibold",
+                                      )}
+                                    >
+                                      <span className="break-words">{value}</span>
+                                    </td>
+                                  ))}
+                                </tr>
+                              );
+                            })}
+                          </Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            )}
+          </>
         )}
       </div>
     </StoreLayout>
