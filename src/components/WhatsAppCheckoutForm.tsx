@@ -33,6 +33,12 @@ type CustomerDetails = {
   paymentMethod: PaymentMethod;
 };
 
+type SharedLocation = {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+};
+
 const EMPTY_DETAILS: CustomerDetails = {
   name: "",
   phone: "",
@@ -61,6 +67,36 @@ function orderReference() {
   return `SC-${date}-${time}`;
 }
 
+function googleMapsUrl(location: SharedLocation) {
+  const latitude = location.latitude.toFixed(6);
+  const longitude = location.longitude.toFixed(6);
+  return `https://www.google.com/maps?q=${latitude},${longitude}`;
+}
+
+function getCurrentLocation(): Promise<SharedLocation | null> {
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
+    return Promise.resolve(null);
+  }
+
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+      },
+      () => resolve(null),
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      },
+    );
+  });
+}
+
 export function WhatsAppCheckoutForm({
   items,
   total,
@@ -73,6 +109,10 @@ export function WhatsAppCheckoutForm({
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [shareLocation, setShareLocation] = useState(true);
+  const [location, setLocation] = useState<SharedLocation | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationFailed, setLocationFailed] = useState(false);
 
   const whishConfigured = WHISH_MONEY_ACCOUNT.length > 0;
 
@@ -90,6 +130,15 @@ export function WhatsAppCheckoutForm({
         addressPlaceholder: "الحي، الشارع، المبنى والطابق",
         landmark: "أقرب نقطة دالة (اختياري)",
         landmarkPlaceholder: "مثال: قرب الساحة الرئيسية",
+        locationTitle: "الموقع الحالي",
+        locationDescription:
+          "سنرفق رابط موقعك الحالي تلقائيًا مع رسالة واتساب عند الإرسال. سيطلب المتصفح إذنك أولًا.",
+        attachLocation: "إرفاق موقعي تلقائيًا",
+        detectLocation: "تحديد موقعي الآن",
+        locating: "جارٍ تحديد الموقع...",
+        locationReady: "تم تحديد الموقع وسيُرفق مع الطلب.",
+        locationUnavailable: "تعذر تحديد الموقع. يمكنك متابعة إرسال الطلب بدون الموقع.",
+        locationLabel: "الموقع على الخريطة",
         notes: "ملاحظات الطلب (اختياري)",
         notesPlaceholder: "لون مفضل، وقت مناسب للتوصيل، أو أي ملاحظة",
         paymentTitle: "طريقة الدفع",
@@ -104,7 +153,8 @@ export function WhatsAppCheckoutForm({
         whishUnavailable: "حساب Whish Money غير مضبوط بعد.",
         button: "إرسال الطلب عبر واتساب",
         required: "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان قبل إرسال الطلب.",
-        privacy: "سيتم فتح واتساب فقط بعد ضغطك على زر الإرسال. لا تُرسل بياناتك تلقائيًا.",
+        privacy:
+          "لن نصل إلى موقعك إلا بعد موافقتك. يُرسل رابط الموقع فقط ضمن رسالة واتساب عند الإرسال، ولا يتم حفظ الإحداثيات في بيانات النموذج.",
         ready: "تم تجهيز الطلب — سيتم فتح واتساب الآن.",
       }
     : {
@@ -120,6 +170,15 @@ export function WhatsAppCheckoutForm({
         addressPlaceholder: "District, street, building and floor",
         landmark: "Nearby landmark (optional)",
         landmarkPlaceholder: "e.g. Near the main square",
+        locationTitle: "Current location",
+        locationDescription:
+          "We’ll automatically attach your current location to the WhatsApp order when you send it. Your browser will ask for permission first.",
+        attachLocation: "Attach my location automatically",
+        detectLocation: "Detect my location now",
+        locating: "Detecting location...",
+        locationReady: "Location detected and will be attached to the order.",
+        locationUnavailable: "We couldn't detect your location. You can still send the order without it.",
+        locationLabel: "Map location",
         notes: "Order notes (optional)",
         notesPlaceholder: "Preferred colour, delivery time, or any request",
         paymentTitle: "Payment method",
@@ -134,7 +193,8 @@ export function WhatsAppCheckoutForm({
         whishUnavailable: "Whish Money account is not configured yet.",
         button: "Send order on WhatsApp",
         required: "Please fill in your name, phone number, area and address before sending the order.",
-        privacy: "WhatsApp opens only after you press send. Your details are not submitted automatically.",
+        privacy:
+          "We only access your location after you approve it. The map link is added only to the WhatsApp message and the coordinates are not stored with your saved form details.",
         ready: "Order prepared — opening WhatsApp now.",
       };
 
@@ -166,7 +226,24 @@ export function WhatsAppCheckoutForm({
     }
   };
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const locateCustomer = async () => {
+    setLocating(true);
+    setLocationFailed(false);
+    const result = await getCurrentLocation();
+    setLocating(false);
+
+    if (result) {
+      setLocation(result);
+      setSubmitted(false);
+      return result;
+    }
+
+    setLocation(null);
+    setLocationFailed(true);
+    return null;
+  };
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const required = [details.name, details.phone, details.area, details.address];
@@ -179,6 +256,11 @@ export function WhatsAppCheckoutForm({
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(details));
     } catch {
       // Checkout must still work when storage is blocked.
+    }
+
+    let resolvedLocation = location;
+    if (shareLocation && !resolvedLocation) {
+      resolvedLocation = await locateCustomer();
     }
 
     const reference = orderReference();
@@ -206,6 +288,9 @@ export function WhatsAppCheckoutForm({
       `${isArabic ? "المنطقة" : "Area"}: ${details.area.trim()}`,
       `${isArabic ? "العنوان" : "Address"}: ${details.address.trim()}`,
       details.landmark.trim() ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${details.landmark.trim()}` : "",
+      shareLocation && resolvedLocation
+        ? `📍 ${copy.locationLabel}: ${googleMapsUrl(resolvedLocation)}`
+        : "",
       "",
       `💳 ${isArabic ? "طريقة الدفع" : "Payment method"}: ${paymentLabel}`,
       details.paymentMethod === "whish_money" && whishConfigured
@@ -225,7 +310,11 @@ export function WhatsAppCheckoutForm({
     ].filter(Boolean);
 
     setSubmitted(true);
-    window.open(whatsappUrl(message.join("\n")), "_blank", "noopener,noreferrer");
+    const target = whatsappUrl(message.join("\n"));
+    const popup = window.open(target, "_blank", "noopener,noreferrer");
+    if (!popup) {
+      window.location.assign(target);
+    }
   };
 
   const fieldClass =
@@ -341,6 +430,57 @@ export function WhatsAppCheckoutForm({
             required
           />
         </label>
+
+        <div className="rounded-2xl border bg-muted/30 p-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={shareLocation}
+              onChange={(event) => {
+                setShareLocation(event.target.checked);
+                setLocationFailed(false);
+                setSubmitted(false);
+              }}
+              className="mt-1 h-4 w-4 accent-primary"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2 text-sm font-extrabold">
+                <MapPin className="h-4 w-4 text-primary" />
+                {copy.attachLocation}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                {copy.locationDescription}
+              </span>
+            </span>
+          </label>
+
+          {shareLocation ? (
+            <div className="mt-3 flex flex-wrap items-center gap-3 ps-7">
+              <button
+                type="button"
+                onClick={locateCustomer}
+                disabled={locating}
+                className="inline-flex items-center gap-2 rounded-full border bg-background px-3.5 py-2 text-xs font-bold transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
+              >
+                <MapPin className="h-3.5 w-3.5" />
+                {locating ? copy.locating : copy.detectLocation}
+              </button>
+
+              {location ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {copy.locationReady}
+                </span>
+              ) : null}
+
+              {locationFailed ? (
+                <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                  {copy.locationUnavailable}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         <fieldset className="space-y-3">
           <legend className="flex items-center gap-2 text-sm font-extrabold">
@@ -458,11 +598,16 @@ export function WhatsAppCheckoutForm({
 
         <button
           type="submit"
-          disabled={disabled || items.length === 0 || (details.paymentMethod === "whish_money" && !whishConfigured)}
+          disabled={
+            disabled ||
+            items.length === 0 ||
+            locating ||
+            (details.paymentMethod === "whish_money" && !whishConfigured)
+          }
           className="press flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-3.5 text-sm font-extrabold text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <MessageCircle className="h-4 w-4" />
-          {copy.button}
+          {locating ? copy.locating : copy.button}
         </button>
 
         <p className="text-center text-xs leading-5 text-muted-foreground">{copy.privacy}</p>
