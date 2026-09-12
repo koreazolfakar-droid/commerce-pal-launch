@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav } from "@/components/BottomNav";
@@ -6,11 +6,34 @@ import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WhatsAppCTA } from "@/components/WhatsAppCTA";
-import { AIAssistant } from "@/components/AIAssistant";
 import "../ux-polish.css";
 import "../ux-welcome.css";
 import "../dark-black.css";
 import "../ui-overhaul.css";
+import "../performance.css";
+
+const AIAssistant = lazy(() =>
+  import("@/components/AIAssistant").then((module) => ({ default: module.AIAssistant })),
+);
+
+/**
+ * Keep SSR and the first client render identical, then unmount responsive UI
+ * that cannot be visible at the Tailwind lg breakpoint. This preserves
+ * hydration while avoiding hidden React trees for the rest of the session.
+ */
+function useDesktopLayout() {
+  const [desktop, setDesktop] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1024px)");
+    const update = () => setDesktop(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return desktop;
+}
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
 export function StoreLayout({ children, aiContext }: { children: ReactNode; aiContext?: string }) {
@@ -18,6 +41,8 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
   const onProductPage = useRouterState({
     select: (state) => state.location.pathname.startsWith("/product/"),
   });
+  const desktopLayout = useDesktopLayout();
+
   return (
     <div
       className="store-layout flex min-h-screen min-w-0 flex-col bg-background"
@@ -29,17 +54,21 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       >
         Skip to content
       </a>
-      <div className="hidden lg:block">
-        <SiteHeader />
-      </div>
-      <MobileTopBar showCategoryRail={!onHomePage} />
+      {desktopLayout !== false && (
+        <div className="hidden lg:block">
+          <SiteHeader />
+        </div>
+      )}
+      {desktopLayout !== true && <MobileTopBar showCategoryRail={!onHomePage} />}
       <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
         {children}
       </main>
       <SiteFooter />
       <WhatsAppCTA />
-      <AIAssistant {...(aiContext ? { context: aiContext } : {})} />
-      <BottomNav />
+      <Suspense fallback={null}>
+        <AIAssistant {...(aiContext ? { context: aiContext } : {})} />
+      </Suspense>
+      {desktopLayout !== true && <BottomNav />}
     </div>
   );
 }

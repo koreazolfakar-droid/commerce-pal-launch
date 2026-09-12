@@ -3,6 +3,7 @@ import { fetchShowcaseCollections } from "@/lib/merchandising";
 import { queryOptions } from "@tanstack/react-query";
 
 import {
+  fetchCatalogIndexProducts,
   fetchCatalogProducts,
   fetchBestSellingProducts,
   fetchProducts,
@@ -18,7 +19,18 @@ import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 2 * 60 * 1000;
 
-/** Bounded discovery index. Route-specific product data uses dedicated queries. */
+/**
+ * Lightweight discovery index for navigation, category rails and brand facets.
+ * It intentionally excludes product images/variants/options from the Shopify payload.
+ */
+export const navigationCatalogQueryOptions = () =>
+  queryOptions({
+    queryKey: ["shopify", "catalog-navigation"],
+    queryFn: async () => buildCatalogIndex(await fetchCatalogIndexProducts(60)),
+    staleTime: CATALOG_STALE_TIME,
+  });
+
+/** Rich bounded catalog used by product grids and quick actions. */
 export const catalogQueryOptions = () =>
   queryOptions({
     queryKey: ["shopify", "catalog"],
@@ -40,10 +52,10 @@ export const bestSellingQueryOptions = () =>
     staleTime: CATALOG_STALE_TIME,
   });
 
-export const collectionQueryOptions = (handle: string) =>
+export const collectionQueryOptions = (handle: string, pageSize = 48) =>
   queryOptions({
-    queryKey: ["shopify", "collection", handle],
-    queryFn: () => fetchCollectionByHandle(handle),
+    queryKey: ["shopify", "collection", handle, pageSize],
+    queryFn: () => fetchCollectionByHandle(handle, pageSize),
     staleTime: CATALOG_STALE_TIME,
   });
 
@@ -88,13 +100,34 @@ export const productsByHandlesQueryOptions = (handles: string[]) => {
   });
 };
 
-export const storefrontSearchQueryOptions = (term: string) =>
-  queryOptions({
-    queryKey: ["shopify", "search", term.trim()],
-    queryFn: () => searchStorefront(term),
-    enabled: Boolean(term.trim()),
+function normalizeSearchTerm(term: string) {
+  return term.trim().replace(/\s+/g, " ");
+}
+
+/**
+ * Product-only search. Collections are query-independent and should come from
+ * collectionsQueryOptions() so typing several terms does not refetch them.
+ */
+export const productSearchQueryOptions = (term: string) => {
+  const normalized = normalizeSearchTerm(term);
+  return queryOptions({
+    queryKey: ["shopify", "product-search", normalized.toLowerCase()],
+    queryFn: () => fetchProducts(20, normalized),
+    enabled: Boolean(normalized),
     staleTime: 60 * 1000,
   });
+};
+
+/** Legacy combined search kept for compatibility with any remaining consumers. */
+export const storefrontSearchQueryOptions = (term: string) => {
+  const normalized = normalizeSearchTerm(term);
+  return queryOptions({
+    queryKey: ["shopify", "search", normalized.toLowerCase()],
+    queryFn: () => searchStorefront(normalized),
+    enabled: Boolean(normalized),
+    staleTime: 60 * 1000,
+  });
+};
 
 export const shopPoliciesQueryOptions = () =>
   queryOptions({

@@ -8,9 +8,24 @@ const VARIANT = `
   selectedOptions { name value }
 `;
 
-/** Lightweight product shape used by cards, rails, search and taxonomy. */
+/**
+ * Minimal product metadata required to build category/brand navigation and
+ * catalog counts. It deliberately excludes images, variants and options so the
+ * first storefront request stays small.
+ */
+export const PRODUCT_INDEX_FIELDS = `
+  id title handle vendor productType availableForSale tags
+  priceRange { minVariantPrice { ${MONEY} } }
+  compareAtPriceRange { minVariantPrice { ${MONEY} } }
+  collections(first: 20) { edges { node { handle title } } }
+`;
+
+/**
+ * Product shape used by cards, rails and search. Keep the full variant subset
+ * used by quick-add/quick-view, but omit list metadata that the UI never reads.
+ */
 export const PRODUCT_LIST_FIELDS = `
-  id title handle vendor productType availableForSale createdAt updatedAt tags
+  id title handle vendor productType availableForSale tags
   priceRange { minVariantPrice { ${MONEY} } }
   compareAtPriceRange { minVariantPrice { ${MONEY} } }
   images(first: 2) { edges { node { ${IMAGE} } } }
@@ -33,13 +48,20 @@ export const PRODUCT_DETAIL_FIELDS = `
 `;
 
 export const COLLECTION_FIELDS = `
-  id handle title description updatedAt image { ${IMAGE} }
+  id handle title description image { ${IMAGE} }
+`;
+
+export const CATALOG_INDEX_QUERY = `
+  query GetCatalogIndex($first: Int!) {
+    products(first: $first) {
+      edges { node { ${PRODUCT_INDEX_FIELDS} } }
+    }
+  }
 `;
 
 export const PRODUCTS_QUERY = `
-  query GetProducts($first: Int!, $after: String, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
-    products(first: $first, after: $after, query: $query, sortKey: $sortKey, reverse: $reverse) {
-      pageInfo { hasNextPage endCursor }
+  query GetProducts($first: Int!, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
+    products(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse) {
       edges { node { ${PRODUCT_LIST_FIELDS} } }
     }
   }
@@ -52,20 +74,18 @@ export const PRODUCT_BY_HANDLE_QUERY = `
 `;
 
 export const COLLECTIONS_QUERY = `
-  query GetCollections($first: Int!, $after: String) {
-    collections(first: $first, after: $after, sortKey: TITLE) {
-      pageInfo { hasNextPage endCursor }
+  query GetCollections($first: Int!) {
+    collections(first: $first, sortKey: TITLE) {
       edges { node { ${COLLECTION_FIELDS} } }
     }
   }
 `;
 
 export const COLLECTION_BY_HANDLE_QUERY = `
-  query GetCollection($handle: String!, $first: Int!, $after: String) {
+  query GetCollection($handle: String!, $first: Int!) {
     collection(handle: $handle) {
       ${COLLECTION_FIELDS}
-      products(first: $first, after: $after) {
-        pageInfo { hasNextPage endCursor }
+      products(first: $first) {
         edges { node { ${PRODUCT_LIST_FIELDS} } }
       }
     }

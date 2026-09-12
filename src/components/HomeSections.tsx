@@ -1,3 +1,4 @@
+import { useLanguage } from "@/lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -10,12 +11,12 @@ import {
   Tag,
   Truck,
 } from "lucide-react";
+import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 
 import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
 import { useHydrated } from "@/hooks/useHydrated";
 import { cdnImage } from "@/lib/image";
-import { useLanguage } from "@/lib/i18n";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
@@ -227,9 +228,15 @@ export function ServicesStrip() {
 export function RecentlyViewed({ products }: { products: ShopifyProduct[] }) {
   const { t } = useLanguage();
   const handles = useRecentlyViewedStore((state) => state.handles);
-  const recent = handles
-    .map((handle) => products.find((p) => p.node.handle === handle))
-    .filter(Boolean) as ShopifyProduct[];
+  const recent = useMemo(() => {
+    if (!handles.length) return [];
+    const byHandle = new Map(products.map((product) => [product.node.handle, product]));
+    return handles.flatMap((handle) => {
+      const product = byHandle.get(handle);
+      return product ? [product] : [];
+    });
+  }, [handles, products]);
+
   if (!recent.length) return null;
   return (
     <section aria-labelledby="recently-viewed">

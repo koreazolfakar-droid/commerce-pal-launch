@@ -4,7 +4,7 @@ import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
-import { catalogQueryOptions, storefrontSearchQueryOptions } from "@/lib/queries";
+import { catalogQueryOptions, productSearchQueryOptions } from "@/lib/queries";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
@@ -44,8 +44,8 @@ function SearchPage() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
-  const { data: nativeSearch } = useQuery(storefrontSearchQueryOptions(filters.q ?? ""));
-  const sourceProducts = filters.q?.trim() ? (nativeSearch?.products ?? []) : catalog.products;
+  const { data: nativeProducts } = useQuery(productSearchQueryOptions(filters.q ?? ""));
+  const sourceProducts = filters.q?.trim() ? (nativeProducts ?? []) : catalog.products;
   const products = applyFilters(sourceProducts, catalog, { ...filters, q: undefined });
 
   return (

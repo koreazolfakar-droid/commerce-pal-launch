@@ -1,4 +1,4 @@
-import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
+import { productPrimaryVariant } from "@/lib/productPricing";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, ShoppingBag } from "lucide-react";
@@ -32,7 +32,9 @@ export const ProductListCard = memo(function ProductListCard({
   const variant = productPrimaryVariant(product);
   const image = node.images.edges[0]?.node;
   const price = variant?.price ?? node.priceRange.minVariantPrice;
-  const compareAt = productCompareAt(product);
+  const compareAt = variant
+    ? (variant.compareAtPrice?.amount ?? null)
+    : (node.compareAtPriceRange?.minVariantPrice.amount ?? null);
   const discount = discountPercent(price.amount, compareAt);
   const summary = variantSummary(variant?.selectedOptions);
   const inStock = variant?.availableForSale ?? node.availableForSale ?? true;

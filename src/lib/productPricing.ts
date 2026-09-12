@@ -30,13 +30,29 @@ export function variantSummary(options?: Array<{ name: string; value: string }>)
     .join(" • ");
 }
 
-/** Cards, quick-add, price filters and discount sorting all describe this same variant. */
+/**
+ * Cards, quick-add, price filters and discount sorting all describe this same
+ * variant. Select the cheapest available variant in one pass instead of
+ * cloning/filtering/sorting the full variants array on every render.
+ */
 export function productPrimaryVariant(product: ShopifyProduct) {
-  const variants = product.node.variants.edges.map((edge) => edge.node);
-  const available = variants.filter((variant) => variant.availableForSale);
-  return [...(available.length ? available : variants)].sort(
-    (a, b) => Number(a.price.amount) - Number(b.price.amount),
-  )[0];
+  let cheapestAvailable: ShopifyProduct["node"]["variants"]["edges"][number]["node"] | undefined;
+  let cheapestAny: ShopifyProduct["node"]["variants"]["edges"][number]["node"] | undefined;
+
+  for (const { node: variant } of product.node.variants.edges) {
+    const price = Number(variant.price.amount);
+    const anyPrice = cheapestAny ? Number(cheapestAny.price.amount) : Number.POSITIVE_INFINITY;
+    if (!cheapestAny || price < anyPrice) cheapestAny = variant;
+
+    if (variant.availableForSale) {
+      const availablePrice = cheapestAvailable
+        ? Number(cheapestAvailable.price.amount)
+        : Number.POSITIVE_INFINITY;
+      if (!cheapestAvailable || price < availablePrice) cheapestAvailable = variant;
+    }
+  }
+
+  return cheapestAvailable ?? cheapestAny;
 }
 
 export function productPrice(product: ShopifyProduct) {

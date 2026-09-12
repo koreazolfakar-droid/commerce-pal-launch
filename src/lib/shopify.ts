@@ -5,6 +5,7 @@ import {
   CART_LINES_REMOVE_MUTATION,
   CART_LINES_UPDATE_MUTATION,
   CART_QUERY,
+  CATALOG_INDEX_QUERY,
   COLLECTION_BY_HANDLE_QUERY,
   COLLECTIONS_QUERY,
   PRODUCT_BY_HANDLE_QUERY,
@@ -123,6 +124,7 @@ function extractDeniedFields(errors: Array<{ message: string }>) {
 const STOREFRONT_QUERY_NAMES = new Set([
   SHOWCASE_COLLECTIONS_QUERY,
   SHOP_POLICIES_QUERY,
+  CATALOG_INDEX_QUERY,
   PRODUCTS_QUERY,
   PRODUCT_BY_HANDLE_QUERY,
   COLLECTIONS_QUERY,
@@ -211,11 +213,32 @@ export async function fetchBestSellingProducts(first = 12): Promise<ShopifyProdu
 }
 
 /**
- * Bounded discovery page used for navigation and homepage taxonomy. Product
- * detail, search, collection and recommendation routes have dedicated queries.
+ * Rich bounded discovery page used by routes that render product cards and need
+ * variants/options for quick actions.
  */
 export async function fetchCatalogProducts(first = 60): Promise<ShopifyProduct[]> {
   return fetchProducts(Math.min(Math.max(first, 1), 100));
+}
+
+/**
+ * Lightweight catalog metadata for navigation, category/brand facets and counts.
+ * Empty product UI fields are normalized locally so the same taxonomy builder can
+ * be reused without transferring images, variants or options from Shopify.
+ */
+export async function fetchCatalogIndexProducts(first = 60): Promise<ShopifyProduct[]> {
+  const data = await storefrontApiRequest(CATALOG_INDEX_QUERY, {
+    first: Math.min(Math.max(first, 1), 100),
+  });
+  const edges = data?.data?.products?.edges ?? [];
+  return edges.map((edge: { node: Omit<ShopifyProductNode, "description" | "images" | "variants" | "options"> }) => ({
+    node: {
+      ...edge.node,
+      description: "",
+      images: { edges: [] },
+      variants: { edges: [] },
+      options: [],
+    },
+  }));
 }
 
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {

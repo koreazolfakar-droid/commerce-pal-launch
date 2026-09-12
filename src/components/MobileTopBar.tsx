@@ -7,7 +7,7 @@ import { SearchOverlay } from "@/components/SearchOverlay";
 import { MobileMenu } from "@/components/MobileMenu";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { useHydrated } from "@/hooks/useHydrated";
-import { catalogQueryOptions } from "@/lib/queries";
+import { navigationCatalogQueryOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -38,7 +38,7 @@ export function MobileTopBar({
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
 
-  const { data: catalog, isLoading } = useQuery(catalogQueryOptions());
+  const { data: catalog, isLoading } = useQuery(navigationCatalogQueryOptions());
   const list = hydrated ? (catalog?.categories ?? []) : [];
 
   return (
