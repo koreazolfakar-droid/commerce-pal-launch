@@ -18,23 +18,23 @@ export const Route = createFileRoute("/shop")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `Shop All Tech — ${STORE_NAME}` },
+      { title: `Phones & Tech in Lebanon | ${STORE_NAME}` },
       {
         name: "description",
-        content: `Browse the ${STORE_NAME} catalogue: smartphones, tablets, audio, wearables, chargers and accessories with filters, sorting and live stock.`,
+        content: `Shop smartphones, tablets, audio, wearables, chargers and accessories in Lebanon from ${STORE_NAME}, with live pricing and stock from Shopify.`,
       },
-      { property: "og:title", content: `Shop All Tech — ${STORE_NAME}` },
+      { property: "og:title", content: `Phones & Tech in Lebanon | ${STORE_NAME}` },
       {
         property: "og:description",
-        content: `Filter and sort the ${STORE_NAME} technology catalogue.`,
+        content: `Browse ${STORE_NAME} phones, tablets and accessories in Lebanon with live pricing and stock.`,
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/shop") },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: `Shop All Tech — ${STORE_NAME}` },
+      { name: "twitter:title", content: `Phones & Tech in Lebanon | ${STORE_NAME}` },
       {
         name: "twitter:description",
-        content: `Filter and sort the ${STORE_NAME} technology catalogue.`,
+        content: `Browse ${STORE_NAME} phones, tablets and accessories in Lebanon with live pricing and stock.`,
       },
     ],
     links: [canonicalLink("/shop")],
@@ -58,7 +58,7 @@ function ShopPage() {
     <StoreLayout>
       <CatalogView
         title="Shop all products"
-        description="Every product published in the store, straight from Shopify — filter by category, brand, collection, price and availability."
+        description="Browse Space Call phones, tablets, audio, wearables and accessories available for shoppers in Lebanon."
         products={products}
         total={catalog.products.length}
         filters={filters}
