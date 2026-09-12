@@ -30,12 +30,28 @@ export type AdminProduct = {
   status: string;
   vendor: string;
   productType: string;
+  descriptionHtml: string;
+  tags: string[];
   updatedAt: string;
   totalInventory: number | null;
   variants: { nodes: AdminVariant[] };
   minPrice: number | null;
   maxPrice: number | null;
   variantsCount: number;
+};
+
+export type ProductWriteInput = {
+  id?: string;
+  variantId?: string;
+  title: string;
+  vendor: string;
+  productType: string;
+  status: "ACTIVE" | "DRAFT" | "ARCHIVED";
+  descriptionHtml: string;
+  tags: string[];
+  price?: number | null;
+  sku: string;
+  barcode: string;
 };
 
 export type AdminOrderStatus = "NEW" | "CONFIRMED" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED";
@@ -73,6 +89,7 @@ type PageInfo = {
 };
 
 export type ProductsResponse = { ok: true; products: AdminProduct[]; pageInfo: PageInfo };
+export type ProductMutationResponse = { ok: true; product: AdminProduct };
 export type OrdersResponse = { ok: true; orders: AdminOrder[]; pageInfo: PageInfo };
 export type CustomersResponse = { ok: true; customers: AdminCustomer[]; pageInfo: PageInfo };
 
@@ -139,6 +156,22 @@ export function checkHealth() {
 
 export function fetchProducts(first = 50, after?: string | null) {
   return request<ProductsResponse>(`/api/admin/products?${paginationParams(first, after)}`);
+}
+
+export function createProduct(input: ProductWriteInput) {
+  return request<ProductMutationResponse>("/api/admin/products", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateProduct(input: ProductWriteInput & { id: string }) {
+  return request<ProductMutationResponse>("/api/admin/products", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 }
 
 export function fetchOrders(first = 50, after?: string | null) {
