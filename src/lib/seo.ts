@@ -1,9 +1,10 @@
 import { cdnImage } from "@/lib/image";
 import { productInStock, type ShopifyProduct } from "@/lib/shopify";
-import { SITE_URL as CONFIG_SITE_URL, STORE_NAME, storeUrl } from "@/lib/storeConfig";
+import { SITE_URL as CONFIG_SITE_URL, STORE_CONFIG, STORE_NAME, storeUrl } from "@/lib/storeConfig";
 
 export const SITE_URL = CONFIG_SITE_URL;
 export const SITE_NAME = STORE_NAME;
+export const DEFAULT_OG_IMAGE = storeUrl("/logo.png");
 
 export function absoluteUrl(path = "/") {
   return storeUrl(path);
@@ -20,6 +21,36 @@ export function jsonLd(data: Record<string, unknown>) {
   };
 }
 
+export function socialMeta({
+  title,
+  description,
+  path,
+  image = DEFAULT_OG_IMAGE,
+  type = "website",
+}: {
+  title: string;
+  description: string;
+  path: string;
+  image?: string;
+  type?: "website" | "product";
+}) {
+  return [
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:type", content: type },
+    { property: "og:url", content: absoluteUrl(path) },
+    { property: "og:image", content: image },
+    { property: "og:image:alt", content: title },
+    { property: "og:site_name", content: SITE_NAME },
+    { property: "og:locale", content: "en_LB" },
+    { property: "og:locale:alternate", content: "ar_LB" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: image },
+  ];
+}
+
 export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
   return {
     "@context": "https://schema.org",
@@ -30,6 +61,49 @@ export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
       name: item.name,
       item: absoluteUrl(item.path),
     })),
+  };
+}
+
+export function organizationJsonLd() {
+  const sameAs = [
+    STORE_CONFIG.socialInstagram,
+    STORE_CONFIG.socialFacebook,
+    STORE_CONFIG.socialX,
+    STORE_CONFIG.socialYoutube,
+  ].filter(Boolean);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${SITE_URL}/#organization`,
+    name: SITE_NAME,
+    url: SITE_URL,
+    logo: {
+      "@type": "ImageObject",
+      url: DEFAULT_OG_IMAGE,
+    },
+    areaServed: {
+      "@type": "Country",
+      name: "Lebanon",
+    },
+    ...(sameAs.length ? { sameAs } : {}),
+  };
+}
+
+export function websiteJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITE_URL}/#website`,
+    name: SITE_NAME,
+    url: SITE_URL,
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    inLanguage: ["en-LB", "ar-LB"],
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
   };
 }
 
@@ -66,16 +140,17 @@ export function productJsonLd(product: ShopifyProduct) {
   const node = product.node;
   const variant = node.variants.edges[0]?.node;
   const price = variant?.price ?? node.priceRange.minVariantPrice;
-  const image = node.images.edges[0]?.node.url;
+  const images = node.images.edges.slice(0, 10).map((entry) => cdnImage(entry.node.url, 1200));
   const sku = variant?.sku || undefined;
   const brand = node.vendor?.trim() || undefined;
 
   return {
     "@context": "https://schema.org",
     "@type": "Product",
+    "@id": `${absoluteUrl(`/product/${node.handle}`)}#product`,
     name: node.title,
     description: node.description || undefined,
-    image: image ? [cdnImage(image, 1200)] : undefined,
+    image: images.length ? images : undefined,
     sku,
     ...gtinJsonLd(variant?.barcode),
     brand: brand ? { "@type": "Brand", name: brand } : undefined,
@@ -89,17 +164,7 @@ export function productJsonLd(product: ShopifyProduct) {
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
-      seller: {
-        "@type": "Organization",
-        name: STORE_NAME,
-        url: CONFIG_SITE_URL,
-        logo: absoluteUrl("/logo.png"),
-        areaServed: {
-          "@type": "Country",
-          name: "Lebanon",
-        },
-      },
-      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      seller: { "@id": `${SITE_URL}/#organization` },
     },
   };
 }

@@ -91,6 +91,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         const entries: SitemapEntry[] = [
           { path: "/" },
           { path: "/shop" },
+          { path: "/categories" },
+          { path: "/brands" },
           { path: "/used-phones" },
           { path: "/collections" },
           ...[

@@ -230,16 +230,15 @@ export function CatalogView({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 lg:py-10">
-      {header ?? (
-        <header className="mb-6">
-          <h1 className="text-2xl font-extrabold tracking-tight lg:text-[2rem]">{title}</h1>
-          {description && (
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              {description}
-            </p>
-          )}
-        </header>
-      )}
+      <header className="mb-6">
+        <h1 className="text-2xl font-extrabold tracking-tight lg:text-[2rem]">{title}</h1>
+        {description && (
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+        )}
+      </header>
+      {header}
 
       <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
         <aside className="hidden lg:block">
