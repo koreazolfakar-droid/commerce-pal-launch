@@ -44,13 +44,13 @@ export function MobileTopBar({
   return (
     <>
       {/* Only the main header row stays sticky. */}
-      <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-xl lg:hidden">
-        <div className="flex items-center justify-between gap-3 px-4 py-2">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
+        <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-3 py-2.5">
           <MobileMenu />
           <Link
             to="/"
             aria-label={`${STORE_NAME} home`}
-            className="flex min-w-0 flex-1 items-center gap-2"
+            className="flex min-w-0 flex-1 items-center justify-center gap-2"
           >
             <img
               src="/logo.svg"
@@ -60,9 +60,9 @@ export function MobileTopBar({
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="h-[34px] w-auto shrink-0 object-contain"
+              className="h-[34px] w-auto shrink-0 object-contain drop-shadow-sm"
             />
-            <span className="truncate text-[17px] font-extrabold tracking-tight">{STORE_NAME}</span>
+            <span className="truncate text-[17px] font-black tracking-[-0.025em]">{STORE_NAME}</span>
           </Link>
           <div className="flex shrink-0 items-center gap-0.5">
             <Link
@@ -77,7 +77,7 @@ export function MobileTopBar({
               type="button"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
               aria-label={`Cart, ${cartCount} items`}
-              className="press relative grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-surface"
+              className="press relative grid h-10 w-10 place-items-center rounded-full border border-transparent transition-colors hover:border-border hover:bg-surface"
             >
               <ShoppingBag className="h-[21px] w-[21px]" strokeWidth={1.9} />
               <Badge value={cartCount} />
@@ -87,12 +87,12 @@ export function MobileTopBar({
       </header>
 
       {/* Search + compact category rail scroll away with the page. */}
-      <div className="border-b bg-background lg:hidden">
-        <div className="flex min-w-0 items-center gap-2 px-4 py-2">
+      <div className="border-b border-border/50 bg-background lg:hidden">
+        <div className="mx-auto flex max-w-md min-w-0 items-center gap-2 px-3 py-2.5">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-2xl bg-surface px-4 text-start text-sm text-muted-foreground transition-colors hover:bg-accent"
+            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-4 text-start text-sm text-muted-foreground shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
           >
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="truncate">{t("search")}</span>
@@ -101,7 +101,7 @@ export function MobileTopBar({
             to="/compare"
             search={{ products: undefined }}
             aria-label="Compare smartphones"
-            className="press grid h-11 w-11 shrink-0 place-items-center rounded-2xl border bg-surface hover:bg-accent"
+            className="press grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border/70 bg-card shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
           >
             <Columns2 className="h-5 w-5" strokeWidth={1.9} />
           </Link>

@@ -34,16 +34,22 @@ function Header({ id, title, subtitle, href = "/shop" }: { id?: string; title: s
 }
 
 export function CategorySection({ catalog }: { catalog: CatalogIndex; collections: ShopifyCollection[] }) {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   if (!catalog.categories.length) return null;
+  const title = language === "ar" ? "تسوّق حسب الفئة" : "Shop by Category";
 
   return (
     <section aria-labelledby="home-categories" data-testid="category-section" className="overflow-hidden">
-      <Header id="home-categories" title={t("categoriesTitle")} href="/categories" />
+      <Header id="home-categories" title={title} href="/categories" />
       <div className="relative">
-        <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 pe-14 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:gap-4 sm:px-0 sm:pe-0" role="list" aria-label={t("categoriesTitle")}>
+        <div
+          className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 pe-14 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:gap-4 sm:px-0 sm:pe-0"
+          role="list"
+          aria-label={title}
+        >
           {catalog.categories.map((category) => {
             const label = categoryLabel(category, language);
+            const detail = language === "ar" ? `تسوّق ${label}` : `Explore ${label}`;
             return (
               <Link
                 key={category.slug}
@@ -51,18 +57,30 @@ export function CategorySection({ catalog }: { catalog: CatalogIndex; collection
                 params={{ slug: category.slug }}
                 role="listitem"
                 aria-label={label}
-                className="group flex w-[6.65rem] shrink-0 snap-start flex-col items-center text-center focus-visible:outline-none sm:w-[7.6rem] lg:w-[8rem]"
+                className="group w-[9.35rem] shrink-0 snap-start overflow-hidden rounded-[1.35rem] border border-border/70 bg-card text-start shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[10.5rem] sm:rounded-[1.55rem] lg:w-[11.25rem]"
               >
                 <span
-                  className="relative block aspect-square w-full overflow-hidden rounded-[1.55rem] border border-black/[0.055] bg-white shadow-[0_10px_28px_-21px_rgba(15,23,42,.38)] transition-[transform,box-shadow,border-color] duration-300 ease-out group-hover:-translate-y-0.5 group-hover:border-primary/20 group-hover:shadow-[0_18px_34px_-23px_rgba(37,99,235,.32)] group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2 sm:rounded-[1.75rem] dark:border-white/[0.1]"
+                  className="relative block aspect-[1.28/1] w-full overflow-hidden border-b border-border/60 bg-gradient-to-br from-white via-white to-slate-50 dark:from-card dark:via-card dark:to-surface"
                   aria-hidden="true"
                 >
                   <CategoryGlyph
                     slug={category.slug}
-                    className="absolute inset-0 h-full w-full transition-transform duration-300 ease-out group-hover:scale-[1.035]"
+                    className="absolute inset-0 h-full w-full p-[4%] transition-transform duration-300 ease-out group-hover:scale-[1.045]"
                   />
                 </span>
-                <h3 className="mt-2.5 line-clamp-2 min-h-[2rem] w-full px-0.5 text-[0.74rem] font-semibold leading-[1.25] tracking-[-0.012em] text-foreground sm:mt-3 sm:text-[0.8rem]">{label}</h3>
+                <span className="block min-w-0 p-3">
+                  <span className="flex min-w-0 items-center justify-between gap-2">
+                    <h3 className="truncate text-[0.78rem] font-extrabold leading-tight tracking-[-0.015em] text-foreground sm:text-sm">
+                      {label}
+                    </h3>
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                      <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+                    </span>
+                  </span>
+                  <span className="mt-1 block truncate text-[10px] font-medium text-muted-foreground sm:text-[11px]">
+                    {detail}
+                  </span>
+                </span>
               </Link>
             );
           })}

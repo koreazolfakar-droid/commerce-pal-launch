@@ -118,22 +118,22 @@ export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
     <section
       aria-label={t("shoppingBenefits")}
       data-testid="benefits-bar"
-      className="mx-auto w-full max-w-3xl"
+      className="w-full"
     >
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
         {BENEFITS.map((benefit) => (
           <div
             key={benefit.title}
-            className="flex min-w-0 items-start gap-2 bg-card p-2.5 sm:p-3"
+            className="group flex min-h-[5.75rem] min-w-0 items-start gap-2.5 rounded-2xl border border-border/70 bg-card p-3 shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-card-hover sm:min-h-[6.25rem] sm:p-3.5"
           >
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground sm:h-9 sm:w-9">
-              <benefit.icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" strokeWidth={1.8} aria-hidden="true" />
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-10 sm:w-10">
+              <benefit.icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" strokeWidth={1.8} aria-hidden="true" />
             </span>
-            <div className="min-w-0">
-              <p className="break-words text-[11px] font-bold leading-snug sm:text-xs">
+            <div className="min-w-0 pt-0.5">
+              <p className="break-words text-[11px] font-extrabold leading-snug tracking-[-0.01em] sm:text-xs">
                 {t(benefit.title)}
               </p>
-              <p className="mt-0.5 break-words text-[10px] leading-snug text-muted-foreground sm:text-[11px]">
+              <p className="mt-1 break-words text-[10px] leading-snug text-muted-foreground sm:text-[11px]">
                 {t(benefit.detail)}
               </p>
             </div>

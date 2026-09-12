@@ -44,14 +44,14 @@ export function BottomNav() {
 
   const itemClass = (isActive?: boolean) =>
     cn(
-      "press relative flex min-w-0 flex-1 flex-col items-center gap-1 px-0.5 pb-2 pt-2.5 text-center text-xs font-semibold leading-snug transition-colors",
-      isActive ? "text-primary" : "text-muted-foreground",
+      "press relative flex min-w-0 flex-1 flex-col items-center gap-1 px-0.5 pb-2 pt-2 text-center text-[11px] font-semibold leading-snug transition-colors",
+      isActive ? "font-extrabold text-primary" : "text-muted-foreground",
     );
 
   const iconClass = (isActive?: boolean) =>
     cn(
-      "grid h-8 w-14 max-w-full place-items-center rounded-full transition-colors",
-      isActive && "bg-accent",
+      "grid h-8 w-12 max-w-full place-items-center rounded-2xl border border-transparent transition-all duration-200",
+      isActive && "border-primary/10 bg-primary/10 shadow-sm",
     );
 
   return (
@@ -60,9 +60,9 @@ export function BottomNav() {
         ref={navRef}
         data-testid="bottom-nav"
         aria-label="Primary"
-        className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/90 backdrop-blur-xl lg:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/95 shadow-[0_-10px_30px_-26px_rgba(15,23,42,.65)] backdrop-blur-xl lg:hidden"
       >
-        <div className="mx-auto flex min-h-20 max-w-md items-stretch px-1 pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex min-h-[4.7rem] max-w-md items-stretch px-2 pb-[env(safe-area-inset-bottom)]">
           <Link
             to="/"
             className={itemClass(pathname === "/")}
