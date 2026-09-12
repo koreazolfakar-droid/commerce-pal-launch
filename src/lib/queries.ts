@@ -52,10 +52,10 @@ export const bestSellingQueryOptions = () =>
     staleTime: CATALOG_STALE_TIME,
   });
 
-export const collectionQueryOptions = (handle: string) =>
+export const collectionQueryOptions = (handle: string, pageSize = 48) =>
   queryOptions({
-    queryKey: ["shopify", "collection", handle],
-    queryFn: () => fetchCollectionByHandle(handle),
+    queryKey: ["shopify", "collection", handle, pageSize],
+    queryFn: () => fetchCollectionByHandle(handle, pageSize),
     staleTime: CATALOG_STALE_TIME,
   });
 
