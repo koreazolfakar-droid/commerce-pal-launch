@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { catalogQueryOptions, shopPoliciesQueryOptions } from "@/lib/queries";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { useLanguage } from "@/lib/i18n";
-import { STORE_CONFIG, STORE_NAME } from "@/lib/storeConfig";
+import { STORE_CONFIG, STORE_NAME, STORE_VERSION } from "@/lib/storeConfig";
 import { useHydrated } from "@/hooks/useHydrated";
 
 const SOCIALS = [
@@ -201,6 +201,9 @@ export function SiteFooter() {
           <p>
             © {new Date().getFullYear()} {STORE_NAME}.{" "}
             {isAr ? "الدفع الآمن عبر Shopify." : "Secure checkout powered by Shopify."}
+          </p>
+          <p className="mt-2 text-[11px] font-medium tracking-wide text-muted-foreground/80" data-testid="app-version">
+            {isAr ? "الإصدار" : "Version"} v{STORE_VERSION}
           </p>
         </div>
       </div>
