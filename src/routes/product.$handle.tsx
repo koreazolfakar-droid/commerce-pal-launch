@@ -3,7 +3,7 @@ import { useLanguage } from "@/lib/i18n";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   ChevronRight,
   Heart,
@@ -20,8 +20,6 @@ import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
-import { OfficialProductResearch } from "@/components/product/OfficialProductResearch";
-import { GeminiShoppingAdvisor } from "@/components/GeminiShoppingAdvisor";
 import { ProseSections } from "@/components/product/ProseSection";
 import { SpecSheet } from "@/components/product/SpecSheet";
 import { VariantPicker } from "@/components/product/VariantPicker";
@@ -29,12 +27,14 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { trackCartEvent, trackProductEvent } from "@/lib/analytics";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import {
   discountPercent,
   fetchProductByHandle,
   formatPrice,
+  productPrice,
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
@@ -46,6 +46,17 @@ import { STORE_NAME } from "@/lib/storeConfig";
 import { useCartStore } from "@/stores/cartStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+
+const LazyGeminiShoppingAdvisor = lazy(() =>
+  import("@/components/GeminiShoppingAdvisor").then((module) => ({
+    default: module.GeminiShoppingAdvisor,
+  })),
+);
+const LazyOfficialProductResearch = lazy(() =>
+  import("@/components/product/OfficialProductResearch").then((module) => ({
+    default: module.OfficialProductResearch,
+  })),
+);
 
 export const Route = createFileRoute("/product/$handle")({
   loader: async ({ params }) => {
@@ -62,23 +73,24 @@ export const Route = createFileRoute("/product/$handle")({
         ],
       };
     }
-    const title = loaderData?.product.node.title ?? "Product";
-    const description =
-      loaderData?.product.node.description?.slice(0, 150) ||
-      `Shop phones, tablets and accessories at ${STORE_NAME}.`;
-    const image = loaderData?.product.node.images.edges[0]?.node.url;
+    const product = loaderData.product;
+    const productTitle = product.node.title ?? "Product";
+    const vendor = product.node.vendor?.trim();
+    const title = `${productTitle} Price in Lebanon | ${STORE_NAME}`;
+    const description = `Buy ${productTitle} in Lebanon from ${STORE_NAME}.${vendor ? ` Shop ${vendor}` : ""} with live availability, variant options, warranty and secure Shopify checkout.`;
+    const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
-    const product = loaderData?.product;
     return {
       meta: [
-        { title: `${title} — ${STORE_NAME}` },
+        { title },
         { name: "description", content: description },
-        { property: "og:title", content: `${title} — ${STORE_NAME}` },
+        { name: "robots", content: "index, follow, max-image-preview:large" },
+        { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "product" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: `${title} — ${STORE_NAME}` },
+        { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         ...(image
           ? [
@@ -88,18 +100,16 @@ export const Route = createFileRoute("/product/$handle")({
           : []),
       ],
       links: [canonicalLink(path)],
-      scripts: product
-        ? [
-            jsonLd(productJsonLd(product)),
-            jsonLd(
-              breadcrumbJsonLd([
-                { name: "Home", path: "/" },
-                { name: "Shop", path: "/shop" },
-                { name: title, path },
-              ]),
-            ),
-          ]
-        : [],
+      scripts: [
+        jsonLd(productJsonLd(product)),
+        jsonLd(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Shop", path: "/shop" },
+            { name: productTitle, path },
+          ]),
+        ),
+      ],
     };
   },
   component: ProductPage,
@@ -120,6 +130,7 @@ function ProductPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [pending, setPending] = useState<"cart" | "buy" | null>(null);
+  const [showProductIntelligence, setShowProductIntelligence] = useState(false);
 
   const selectedVariant = useMemo(() => {
     const match = variants.find((variant) =>
@@ -138,13 +149,17 @@ function ProductPage() {
 
   useEffect(() => {
     addRecentlyViewed(node.handle);
+    trackProductEvent("view_item", product);
     setActiveImage(0);
     setQuantity(1);
+    setShowProductIntelligence(false);
     setSelectedOptions(
       Object.fromEntries(
         (variants[0]?.selectedOptions ?? []).map((option) => [option.name, option.value]),
       ),
     );
+    const timer = window.setTimeout(() => setShowProductIntelligence(true), 1800);
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node.handle]);
 
@@ -191,9 +206,12 @@ function ProductPage() {
       }
       toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
       if (checkout) {
-        const checkoutUrl = useCartStore.getState().getCheckoutUrl();
-        if (checkoutUrl) window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-        else toast.error(t("addToCartFailed"));
+        const cartState = useCartStore.getState();
+        const checkoutUrl = cartState.getCheckoutUrl();
+        if (checkoutUrl) {
+          trackCartEvent("begin_checkout", cartState.items);
+          window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+        } else toast.error(t("addToCartFailed"));
       }
     } catch {
       toast.error(t("addToCartFailed"));
@@ -217,6 +235,7 @@ function ProductPage() {
   const whatsappOrderUrl = productWhatsAppUrl({
     title: node.title,
     url: absoluteUrl(`/product/${node.handle}`),
+    price: selectedVariant ? formatPrice(selectedVariant.price.amount, currency) : undefined,
     quantity,
     options: selectedVariant?.selectedOptions ?? [],
   });
@@ -236,9 +255,7 @@ function ProductPage() {
       ...(node.vendor ? [{ label: "Brand", value: node.vendor }] : []),
       ...(selectedVariant?.sku ? [{ label: "SKU", value: selectedVariant.sku }] : []),
       ...(selectedVariant?.barcode ? [{ label: "Barcode", value: selectedVariant.barcode }] : []),
-      ...(selectedVariant?.weight != null &&
-      selectedVariant.weight > 0 &&
-      selectedVariant.weightUnit
+      ...(selectedVariant?.weight != null && selectedVariant.weight > 0 && selectedVariant.weightUnit
         ? [{ label: "Weight", value: `${selectedVariant.weight} ${selectedVariant.weightUnit}` }]
         : []),
     ];
@@ -246,14 +263,26 @@ function ProductPage() {
   }, [content.specs, selectedVariant, node.productType, node.vendor]);
 
   const similar = useMemo(() => {
-    const fromShopify = (recommended ?? []).filter(
-      (candidate) => candidate.node.handle !== node.handle,
-    );
-    if (fromShopify.length >= 4) return fromShopify.slice(0, 8);
-    const seen = new Set([node.handle, ...fromShopify.map((item) => item.node.handle)]);
-    const fallback = (vendorProducts ?? []).filter((candidate) => !seen.has(candidate.node.handle));
-    return [...fromShopify, ...fallback].slice(0, 8);
-  }, [recommended, vendorProducts, node.handle]);
+    const seen = new Set<string>([node.handle]);
+    const candidates = [...(recommended ?? []), ...(vendorProducts ?? [])].filter((candidate) => {
+      if (seen.has(candidate.node.handle)) return false;
+      seen.add(candidate.node.handle);
+      return true;
+    });
+    const currentPrice = Number(selectedVariant?.price.amount ?? productPrice(product));
+    return candidates
+      .sort((a, b) => {
+        const score = (candidate: ShopifyProduct) => {
+          const categoryPenalty = primaryCategory(candidate)?.slug === category?.slug ? 0 : 2;
+          const brandPenalty = candidate.node.vendor === node.vendor ? 0 : 1;
+          const candidatePrice = productPrice(candidate);
+          const pricePenalty = currentPrice > 0 ? Math.abs(candidatePrice - currentPrice) / currentPrice : 0;
+          return categoryPenalty + brandPenalty + pricePenalty;
+        };
+        return score(a) - score(b);
+      })
+      .slice(0, 8);
+  }, [recommended, vendorProducts, node.handle, node.vendor, category?.slug, selectedVariant?.price.amount, product]);
 
   const hasOverview = content.overview.length > 0;
   const hasBox = content.box.length > 0;
@@ -378,9 +407,13 @@ function ProductPage() {
           </div>
         </div>
 
-        <section className="mt-6" aria-label="Smart accessory recommendations">
-          <GeminiShoppingAdvisor product={product} catalog={{ products: [...(recommended ?? []), ...(vendorProducts ?? [])] }} />
-        </section>
+        {showProductIntelligence && (
+          <section className="mt-6" aria-label="Smart accessory recommendations">
+            <Suspense fallback={<div className="h-24 animate-pulse rounded-2xl bg-surface" aria-hidden="true" />}>
+              <LazyGeminiShoppingAdvisor product={product} catalog={{ products: [...(recommended ?? []), ...(vendorProducts ?? [])] }} />
+            </Suspense>
+          </section>
+        )}
 
         {(hasOverview || hasSpecs || hasBox || hasShipping) && (
           <section className="mt-8 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7" aria-label="Product details">
@@ -399,9 +432,13 @@ function ProductPage() {
           </section>
         )}
 
-        <section className="mt-8" aria-label="Official manufacturer information">
-          <OfficialProductResearch title={node.title} {...(node.vendor ? { vendor: node.vendor } : {})} />
-        </section>
+        {showProductIntelligence && (
+          <section className="mt-8" aria-label="Official manufacturer information">
+            <Suspense fallback={<div className="h-24 animate-pulse rounded-2xl bg-surface" aria-hidden="true" />}>
+              <LazyOfficialProductResearch title={node.title} {...(node.vendor ? { vendor: node.vendor } : {})} />
+            </Suspense>
+          </section>
+        )}
 
         {similar.length > 0 && (
           <section className="mt-16 border-t pt-10" aria-labelledby="similar-products">
