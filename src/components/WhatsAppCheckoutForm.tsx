@@ -3,6 +3,9 @@ import {
   CheckCircle2,
   Copy,
   CreditCard,
+  Download,
+  FileText,
+  LoaderCircle,
   MapPin,
   MessageCircle,
   Phone,
@@ -12,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { useLanguage } from "@/lib/i18n";
+import { downloadOrderInvoicePdf } from "@/lib/orderInvoice";
 import { formatPrice, variantSummary } from "@/lib/shopify";
 import { STORE_NAME, storeUrl } from "@/lib/storeConfig";
 import { whatsappUrl } from "@/lib/whatsapp";
@@ -56,15 +60,21 @@ interface WhatsAppCheckoutFormProps {
   disabled?: boolean;
 }
 
-function orderReference() {
-  const now = new Date();
+function orderReference(now = new Date()) {
   const date = [now.getFullYear(), now.getMonth() + 1, now.getDate()]
     .map((part) => String(part).padStart(2, "0"))
     .join("");
   const time = [now.getHours(), now.getMinutes(), now.getSeconds()]
     .map((part) => String(part).padStart(2, "0"))
     .join("");
-  return `SC-${date}-${time}`;
+  const random = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0");
+  return `SC-${date}-${time}-${random}`;
+}
+
+function invoiceNumber(reference: string) {
+  return reference.replace(/^SC-/, "SC-INV-");
 }
 
 function googleMapsUrl(location: SharedLocation) {
@@ -113,6 +123,9 @@ export function WhatsAppCheckoutForm({
   const [location, setLocation] = useState<SharedLocation | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationFailed, setLocationFailed] = useState(false);
+  const [reference, setReference] = useState<string | null>(null);
+  const [referenceCreatedAt, setReferenceCreatedAt] = useState<Date | null>(null);
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
 
   const whishConfigured = WHISH_MONEY_ACCOUNT.length > 0;
 
@@ -152,10 +165,15 @@ export function WhatsAppCheckoutForm({
         copied: "تم النسخ",
         whishUnavailable: "حساب Whish Money غير مضبوط بعد.",
         button: "إرسال الطلب عبر واتساب",
-        required: "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان قبل إرسال الطلب.",
+        invoiceButton: "تحميل الفاتورة PDF",
+        invoicePreparing: "جارٍ تجهيز الفاتورة...",
+        invoiceHint: "بعد تعبئة البيانات يمكنك تنزيل فاتورة الطلب والاحتفاظ بها على هاتفك.",
+        invoiceNumber: "رقم الفاتورة",
+        invoiceError: "تعذر إنشاء ملف PDF الآن. جرّب مرة أخرى من متصفح حديث.",
+        required: "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان قبل إرسال الطلب أو تحميل الفاتورة.",
         privacy:
-          "لن نصل إلى موقعك إلا بعد موافقتك. يُرسل رابط الموقع فقط ضمن رسالة واتساب عند الإرسال، ولا يتم حفظ الإحداثيات في بيانات النموذج.",
-        ready: "تم تجهيز الطلب — سيتم فتح واتساب الآن.",
+          "لن نصل إلى موقعك إلا بعد موافقتك. رابط الموقع يضاف إلى واتساب فقط، وملف PDF يُنشأ محليًا على جهازك ولا يرفع إلى خادم منفصل.",
+        ready: "تم تجهيز الطلب — يمكنك تنزيل الفاتورة أو متابعة الإرسال عبر واتساب.",
       }
     : {
         title: "Order via WhatsApp",
@@ -192,10 +210,15 @@ export function WhatsAppCheckoutForm({
         copied: "Copied",
         whishUnavailable: "Whish Money account is not configured yet.",
         button: "Send order on WhatsApp",
-        required: "Please fill in your name, phone number, area and address before sending the order.",
+        invoiceButton: "Download invoice PDF",
+        invoicePreparing: "Preparing invoice...",
+        invoiceHint: "Once your details are complete, you can download and keep a professional order invoice.",
+        invoiceNumber: "Invoice number",
+        invoiceError: "We couldn't generate the PDF right now. Please try again in a modern browser.",
+        required: "Please fill in your name, phone number, area and address before sending the order or downloading the invoice.",
         privacy:
-          "We only access your location after you approve it. The map link is added only to the WhatsApp message and the coordinates are not stored with your saved form details.",
-        ready: "Order prepared — opening WhatsApp now.",
+          "We only access your location after you approve it. The map link is added only to WhatsApp, and the PDF is generated locally on your device without a separate upload.",
+        ready: "Order prepared — you can download the invoice or continue on WhatsApp.",
       };
 
   useEffect(() => {
@@ -243,27 +266,99 @@ export function WhatsAppCheckoutForm({
     return null;
   };
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const validateDetails = () => {
     const required = [details.name, details.phone, details.area, details.address];
     if (required.some((value) => value.trim().length < 2)) {
       setError(copy.required);
-      return;
+      return false;
     }
+    if (details.paymentMethod === "whish_money" && !whishConfigured) {
+      setError(copy.whishUnavailable);
+      return false;
+    }
+    return true;
+  };
 
+  const persistDetails = () => {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(details));
     } catch {
-      // Checkout must still work when storage is blocked.
+      // Checkout and invoice downloads still work when storage is blocked.
     }
+  };
+
+  const ensureOrderIdentity = () => {
+    if (reference && referenceCreatedAt) return { reference, createdAt: referenceCreatedAt };
+    const createdAt = new Date();
+    const nextReference = orderReference(createdAt);
+    setReference(nextReference);
+    setReferenceCreatedAt(createdAt);
+    return { reference: nextReference, createdAt };
+  };
+
+  const buildInvoiceInput = (orderIdentity: { reference: string; createdAt: Date }) => ({
+    invoiceNumber: invoiceNumber(orderIdentity.reference),
+    orderReference: orderIdentity.reference,
+    createdAt: orderIdentity.createdAt,
+    language: (isArabic ? "ar" : "en") as "ar" | "en",
+    currency,
+    total,
+    customer: {
+      name: details.name.trim(),
+      phone: details.phone.trim(),
+      area: details.area.trim(),
+      address: details.address.trim(),
+      landmark: details.landmark.trim(),
+      notes: details.notes.trim(),
+    },
+    paymentMethod: details.paymentMethod === "whish_money" ? copy.whishMoney : copy.cashOnDelivery,
+    paymentStatus:
+      details.paymentMethod === "whish_money"
+        ? isArabic
+          ? "بانتظار تأكيد التحويل"
+          : "Pending transfer confirmation"
+        : isArabic
+          ? "مستحق عند الاستلام"
+          : "Due on delivery",
+    items: items.map((item) => ({
+      title: item.product.node.title,
+      variant: variantSummary(item.selectedOptions),
+      quantity: item.quantity,
+      unitPrice: Number(item.price.amount),
+      lineTotal: Number(item.price.amount) * item.quantity,
+    })),
+  });
+
+  const downloadInvoice = async () => {
+    if (!validateDetails() || items.length === 0) return;
+    persistDetails();
+    const orderIdentity = ensureOrderIdentity();
+    setInvoiceBusy(true);
+    setError("");
+    try {
+      await downloadOrderInvoicePdf(buildInvoiceInput(orderIdentity));
+      setSubmitted(true);
+    } catch (invoiceError) {
+      console.error("Invoice PDF generation failed", invoiceError);
+      setError(copy.invoiceError);
+    } finally {
+      setInvoiceBusy(false);
+    }
+  };
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!validateDetails()) return;
+    persistDetails();
 
     let resolvedLocation = location;
     if (shareLocation && !resolvedLocation) {
       resolvedLocation = await locateCustomer();
     }
 
-    const reference = orderReference();
+    const orderIdentity = ensureOrderIdentity();
+    const referenceValue = orderIdentity.reference;
+    const invoiceValue = invoiceNumber(referenceValue);
     const paymentLabel = details.paymentMethod === "whish_money" ? copy.whishMoney : copy.cashOnDelivery;
     const lines = items.flatMap((item, index) => {
       const options = variantSummary(item.selectedOptions);
@@ -280,7 +375,8 @@ export function WhatsAppCheckoutForm({
 
     const message = [
       `🛍️ ${isArabic ? "طلب جديد" : "New order"} — ${STORE_NAME}`,
-      `${isArabic ? "رقم الطلب" : "Order ref"}: ${reference}`,
+      `${isArabic ? "رقم الطلب" : "Order ref"}: ${referenceValue}`,
+      `${copy.invoiceNumber}: ${invoiceValue}`,
       "",
       `👤 ${isArabic ? "بيانات الزبون" : "Customer details"}`,
       `${isArabic ? "الاسم" : "Name"}: ${details.name.trim()}`,
@@ -326,6 +422,9 @@ export function WhatsAppCheckoutForm({
         ? "border-primary bg-primary/5 ring-2 ring-primary/10"
         : "border-border bg-background hover:border-primary/40"
     }`;
+
+  const actionDisabled =
+    disabled || items.length === 0 || locating || (details.paymentMethod === "whish_money" && !whishConfigured);
 
   return (
     <section
@@ -583,6 +682,23 @@ export function WhatsAppCheckoutForm({
           />
         </label>
 
+        <div className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <FileText className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-extrabold">{copy.invoiceButton}</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{copy.invoiceHint}</p>
+              {reference ? (
+                <p dir="ltr" className="mt-2 text-xs font-bold text-foreground">
+                  {copy.invoiceNumber}: {invoiceNumber(reference)}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
         {error ? (
           <p role="alert" className="rounded-xl bg-destructive/10 px-3.5 py-3 text-sm font-medium text-destructive">
             {error}
@@ -596,19 +712,26 @@ export function WhatsAppCheckoutForm({
           </p>
         ) : null}
 
-        <button
-          type="submit"
-          disabled={
-            disabled ||
-            items.length === 0 ||
-            locating ||
-            (details.paymentMethod === "whish_money" && !whishConfigured)
-          }
-          className="press flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-3.5 text-sm font-extrabold text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <MessageCircle className="h-4 w-4" />
-          {locating ? copy.locating : copy.button}
-        </button>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={downloadInvoice}
+            disabled={actionDisabled || invoiceBusy}
+            className="press flex w-full items-center justify-center gap-2 rounded-full border border-primary/25 bg-background px-6 py-3.5 text-sm font-extrabold text-foreground shadow-sm transition hover:border-primary/50 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {invoiceBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {invoiceBusy ? copy.invoicePreparing : copy.invoiceButton}
+          </button>
+
+          <button
+            type="submit"
+            disabled={actionDisabled || invoiceBusy}
+            className="press flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-3.5 text-sm font-extrabold text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <MessageCircle className="h-4 w-4" />
+            {locating ? copy.locating : copy.button}
+          </button>
+        </div>
 
         <p className="text-center text-xs leading-5 text-muted-foreground">{copy.privacy}</p>
       </form>
