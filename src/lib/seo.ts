@@ -53,6 +53,15 @@ export function itemListJsonLd(
   };
 }
 
+function gtinJsonLd(barcode?: string | null): Record<string, string> {
+  const digits = barcode?.replace(/\D/g, "") ?? "";
+  if (digits.length === 8) return { gtin8: digits };
+  if (digits.length === 12) return { gtin12: digits };
+  if (digits.length === 13) return { gtin13: digits };
+  if (digits.length === 14) return { gtin14: digits };
+  return {};
+}
+
 export function productJsonLd(product: ShopifyProduct) {
   const node = product.node;
   const variant = node.variants.edges[0]?.node;
@@ -68,6 +77,7 @@ export function productJsonLd(product: ShopifyProduct) {
     description: node.description || undefined,
     image: image ? [cdnImage(image, 1200)] : undefined,
     sku,
+    ...gtinJsonLd(variant?.barcode),
     brand: brand ? { "@type": "Brand", name: brand } : undefined,
     url: absoluteUrl(`/product/${node.handle}`),
     offers: {
@@ -83,6 +93,11 @@ export function productJsonLd(product: ShopifyProduct) {
         "@type": "Organization",
         name: STORE_NAME,
         url: CONFIG_SITE_URL,
+        logo: absoluteUrl("/logo.png"),
+        areaServed: {
+          "@type": "Country",
+          name: "Lebanon",
+        },
       },
       priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     },
