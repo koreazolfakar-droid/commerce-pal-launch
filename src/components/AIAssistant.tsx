@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { askGeminiShoppingAdvisor } from "@/lib/ai.functions";
+import { askGeminiShoppingAdvisor } from "@/lib/geminiAdvisor.functions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/ProductCard";
@@ -101,7 +101,7 @@ export function AIAssistant({ context = "" }: { context?: string }) {
       setMessages((items) => [...items, { role: "assistant", text: result.answer }]);
       setRecommendationHandles(result.recommendations?.map((item) => item.handle) ?? []);
       setSources(result.sources ?? []);
-      if (!result.ok) toast.message("AI assistant needs configuration");
+      if (!result.ok) toast.error(result.answer);
     } catch {
       setMessages((items) => [
         ...items,
