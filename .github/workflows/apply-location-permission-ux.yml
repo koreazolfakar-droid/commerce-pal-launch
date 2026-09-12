@@ -1,0 +1,37 @@
+name: Apply location permission UX patch
+
+on:
+  push:
+    paths:
+      - .github/workflows/apply-location-permission-ux.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Apply blocked-location UX patch
+        run: python scripts/patch_location_permission_ux.py
+
+      - name: Validate patch
+        run: |
+          git diff --check
+          grep -q 'Browsers cannot reopen a blocked permission automatically' src/components/WhatsAppCheckoutForm.tsx
+          grep -q 'locationPermissionHelp' src/components/WhatsAppCheckoutForm.tsx
+          grep -q 'continueWithoutLocation' src/components/WhatsAppCheckoutForm.tsx
+          grep -q 'setShareLocation(false)' src/components/WhatsAppCheckoutForm.tsx
+          grep -q 'Live location preview' src/components/WhatsAppCheckoutForm.tsx
+
+      - name: Commit verified changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-location-permission-ux.yml scripts/patch_location_permission_ux.py
+          git add src/components/WhatsAppCheckoutForm.tsx
+          git commit -m "Improve blocked location permission UX"
+          git push
