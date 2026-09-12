@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { trackProductList } from "@/lib/analytics";
 import {
   activeFilterCount,
   parseProductSearch,
@@ -26,6 +27,7 @@ export interface FacetGroups {
 }
 
 type Patch = Partial<ProductFilters>;
+const PRODUCT_PAGE_SIZE = 24;
 
 function toggleValue(list: string[] | undefined, value: string) {
   const current = list ?? [];
@@ -226,6 +228,14 @@ export function CatalogView({
   const { t, direction, language } = useLanguage();
   const activeCount = activeFilterCount(filters);
   const [viewMode, setViewMode] = useProductViewMode();
+  const [visibleCount, setVisibleCount] = useState(PRODUCT_PAGE_SIZE);
+  const visibleProducts = products.slice(0, visibleCount);
+  const hasMore = visibleCount < products.length;
+
+  useEffect(() => {
+    setVisibleCount(PRODUCT_PAGE_SIZE);
+    trackProductList(title, products);
+  }, [title, products]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-5 lg:py-10">
@@ -397,7 +407,7 @@ export function CatalogView({
 
           <ProductGrid
             eagerCount={4}
-            products={products}
+            products={visibleProducts}
             showViewToggle={false}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -409,6 +419,19 @@ export function CatalogView({
               ) : undefined
             }
           />
+
+          {hasMore && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-w-40 rounded-full"
+                onClick={() => setVisibleCount((count) => Math.min(count + PRODUCT_PAGE_SIZE, products.length))}
+              >
+                {language === "ar" ? "عرض المزيد" : "Load more"}
+              </Button>
+            </div>
+          )}
 
           {header ? <div className="mt-10 border-t pt-7 sm:mt-12 sm:pt-8">{header}</div> : null}
         </div>
