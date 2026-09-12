@@ -10,6 +10,7 @@ import { AIAssistant } from "@/components/AIAssistant";
 import "../ux-polish.css";
 import "../ux-welcome.css";
 import "../dark-black.css";
+import "../ui-overhaul.css";
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
 export function StoreLayout({ children, aiContext }: { children: ReactNode; aiContext?: string }) {
