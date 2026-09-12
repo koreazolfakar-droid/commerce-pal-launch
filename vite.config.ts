@@ -6,7 +6,25 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+function buildVersion() {
+  const now = new Date();
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(now.getUTCDate()).padStart(2, "0");
+  const hh = String(now.getUTCHours()).padStart(2, "0");
+  const min = String(now.getUTCMinutes()).padStart(2, "0");
+  const sec = String(now.getUTCSeconds()).padStart(2, "0");
+  return `${yyyy}.${mm}.${dd}.${hh}${min}${sec}`;
+}
+
+const APP_VERSION = buildVersion();
+
 export default defineConfig({
+  vite: {
+    define: {
+      __APP_VERSION__: JSON.stringify(APP_VERSION),
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
