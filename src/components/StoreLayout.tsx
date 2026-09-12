@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav } from "@/components/BottomNav";
@@ -6,11 +6,14 @@ import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WhatsAppCTA } from "@/components/WhatsAppCTA";
-import { AIAssistant } from "@/components/AIAssistant";
 import "../ux-polish.css";
 import "../ux-welcome.css";
 import "../dark-black.css";
 import "../ui-overhaul.css";
+
+const LazyAIAssistant = lazy(() =>
+  import("@/components/AIAssistant").then((module) => ({ default: module.AIAssistant })),
+);
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
 export function StoreLayout({ children, aiContext }: { children: ReactNode; aiContext?: string }) {
@@ -18,6 +21,29 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
   const onProductPage = useRouterState({
     select: (state) => state.location.pathname.startsWith("/product/"),
   });
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
+
+  useEffect(() => {
+    let activated = false;
+    const activate = () => {
+      if (activated) return;
+      activated = true;
+      setShowAiAssistant(true);
+      window.removeEventListener("pointerdown", activate);
+      window.removeEventListener("keydown", activate);
+    };
+
+    window.addEventListener("pointerdown", activate, { once: true, passive: true });
+    window.addEventListener("keydown", activate, { once: true });
+    const timer = window.setTimeout(activate, 3000);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointerdown", activate);
+      window.removeEventListener("keydown", activate);
+    };
+  }, []);
+
   return (
     <div
       className="store-layout flex min-h-screen min-w-0 flex-col bg-background"
@@ -38,7 +64,11 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       </main>
       <SiteFooter />
       <WhatsAppCTA />
-      <AIAssistant {...(aiContext ? { context: aiContext } : {})} />
+      {showAiAssistant && (
+        <Suspense fallback={null}>
+          <LazyAIAssistant {...(aiContext ? { context: aiContext } : {})} />
+        </Suspense>
+      )}
       <BottomNav />
     </div>
   );

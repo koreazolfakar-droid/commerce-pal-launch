@@ -1,0 +1,50 @@
+name: Quality
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Semantic lint, unit tests, build and browser smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The repository currently has broad pre-existing Prettier debt. Keep CI
+      # focused on semantic ESLint rules so unrelated formatting does not mask
+      # actual correctness failures in a production PR. Shopify's central
+      # operation-dependent GraphQL cache remains dynamically typed, so keep
+      # no-explicit-any visible there as a warning rather than disabling it repo-wide.
+      - name: Semantic lint
+        run: |
+          bunx eslint . --ignore-pattern src/lib/shopify.ts --rule 'prettier/prettier: off'
+          bunx eslint src/lib/shopify.ts --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: warn'
+
+      - name: Unit tests
+        run: bun run test:unit
+
+      - name: Production build
+        run: bun run build
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Browser smoke tests
+        run: bun run test:e2e

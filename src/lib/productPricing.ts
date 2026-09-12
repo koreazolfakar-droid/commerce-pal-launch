@@ -55,6 +55,16 @@ export function productCurrency(product: ShopifyProduct) {
   );
 }
 
+/** Price range for the products actually available in the current route scope. */
+export function productPriceBounds(products: ShopifyProduct[]) {
+  const positivePrices = products.map(productPrice).filter((price) => Number.isFinite(price) && price > 0);
+  return {
+    min: positivePrices.length ? Math.floor(Math.min(...positivePrices)) : 0,
+    max: positivePrices.length ? Math.ceil(Math.max(...positivePrices)) : 0,
+    currency: products[0] ? productCurrency(products[0]) : "USD",
+  };
+}
+
 export function productCompareAt(product: ShopifyProduct) {
   const variant = productPrimaryVariant(product);
   return variant

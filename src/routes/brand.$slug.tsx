@@ -7,6 +7,8 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { productCollectionHandles, productPriceBounds } from "@/lib/productPricing";
+import { displayCollections } from "@/lib/taxonomy";
 import {
   breadcrumbJsonLd,
   canonicalLink,
@@ -82,11 +84,15 @@ function BrandPage() {
     (product) => catalog.brandOf.get(product.node.handle)?.slug === slug,
   );
   const products = applyFilters(inBrand, catalog, filters);
+  const price = productPriceBounds(inBrand);
 
   const categories = catalog.categories.filter((category) =>
     inBrand.some((product) =>
       (catalog.categoryOf.get(product.node.handle) ?? []).includes(category.slug),
     ),
+  );
+  const brandCollections = displayCollections(collections).filter((collection) =>
+    inBrand.some((product) => productCollectionHandles(product).includes(collection.handle)),
   );
 
   const header = (
@@ -131,10 +137,10 @@ function BrandPage() {
         products={products}
         total={inBrand.length}
         filters={filters}
-        facets={{ categories }}
-        priceMin={catalog.priceMin}
-        priceMax={catalog.priceMax}
-        currency={catalog.currency}
+        facets={{ categories, collections: brandCollections }}
+        priceMin={price.min}
+        priceMax={price.max}
+        currency={price.currency}
         header={header}
         onChange={(patch: Partial<ProductFilters>) =>
           navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) })

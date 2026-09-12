@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -18,6 +19,9 @@ import { useCartSync } from "@/hooks/useCartSync";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { trackPageView } from "@/lib/analytics";
+
+const GOOGLE_SITE_VERIFICATION = String(import.meta.env.VITE_GOOGLE_SITE_VERIFICATION ?? "").trim();
 
 function NotFoundComponent() {
   const { t } = useLanguage();
@@ -91,6 +95,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "robots",
         content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
       },
+      ...(GOOGLE_SITE_VERIFICATION
+        ? [{ name: "google-site-verification", content: GOOGLE_SITE_VERIFICATION }]
+        : []),
       { property: "og:title", content: STORE_NAME },
       {
         property: "og:description",
@@ -147,7 +154,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   useCartSync();
+
+  useEffect(() => {
+    trackPageView(pathname, document.title);
+  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>

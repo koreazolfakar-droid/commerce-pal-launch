@@ -7,9 +7,11 @@ import {
   CART_QUERY,
   COLLECTION_BY_HANDLE_QUERY,
   COLLECTIONS_QUERY,
+  PREDICTIVE_SEARCH_QUERY,
   PRODUCT_BY_HANDLE_QUERY,
   PRODUCT_RECOMMENDATIONS_QUERY,
   PRODUCTS_QUERY,
+  SEARCH_QUERY,
   SHOP_QUERY,
 } from "@/lib/shopifyDocuments";
 import { STORE_CONFIG } from "@/lib/storeConfig";
@@ -94,6 +96,8 @@ const deniedFields = new Set<string>();
 type StorefrontCacheEntry = { expiresAt: number; value: any };
 const STOREFRONT_CACHE_TTL_MS = 60_000;
 const STOREFRONT_CACHE_MAX_ENTRIES = 100;
+const STOREFRONT_CACHE_NAME = "space-call-storefront-v2";
+const LEGACY_STOREFRONT_CACHE_NAME = "space-call-storefront-v1";
 const storefrontResponseCache = new Map<string, StorefrontCacheEntry>();
 const storefrontPendingRequests = new Map<string, Promise<any>>();
 
@@ -125,9 +129,20 @@ function persistentStorefrontRequest(key: string) {
 async function readPersistentStorefrontCache(key: string): Promise<any | undefined> {
   if (typeof caches === "undefined") return undefined;
   try {
-    const cache = await caches.open("space-call-storefront-v1");
-    const response = await cache.match(persistentStorefrontRequest(key));
-    return response ? response.json() : undefined;
+    const cache = await caches.open(STOREFRONT_CACHE_NAME);
+    const request = persistentStorefrontRequest(key);
+    const response = await cache.match(request);
+    if (!response) return undefined;
+    const envelope = (await response.json()) as Partial<StorefrontCacheEntry>;
+    if (
+      typeof envelope.expiresAt !== "number" ||
+      envelope.expiresAt <= Date.now() ||
+      !("value" in envelope)
+    ) {
+      await cache.delete(request);
+      return undefined;
+    }
+    return envelope.value;
   } catch {
     return undefined;
   }
@@ -136,19 +151,38 @@ async function readPersistentStorefrontCache(key: string): Promise<any | undefin
 async function writePersistentStorefrontCache(key: string, value: any) {
   if (typeof caches === "undefined") return;
   try {
-    const cache = await caches.open("space-call-storefront-v1");
+    const cache = await caches.open(STOREFRONT_CACHE_NAME);
+    const envelope: StorefrontCacheEntry = {
+      expiresAt: Date.now() + STOREFRONT_CACHE_TTL_MS,
+      value,
+    };
     await cache.put(
       persistentStorefrontRequest(key),
-      new Response(JSON.stringify(value), {
+      new Response(JSON.stringify(envelope), {
         headers: {
           "content-type": "application/json; charset=utf-8",
-          "cache-control": "public, max-age=60",
+          "cache-control": "no-store",
         },
       }),
     );
   } catch {
     // The in-memory cache remains available on runtimes without CacheStorage.
   }
+}
+
+/**
+ * Clears every server-side Storefront cache layer. Shopify product, inventory,
+ * publication and collection webhooks call this so a Draft/Archived/unpublished
+ * product cannot survive in application cache after Shopify stops returning it.
+ */
+export async function invalidateStorefrontCache() {
+  storefrontResponseCache.clear();
+  storefrontPendingRequests.clear();
+  if (typeof caches === "undefined") return;
+  await Promise.allSettled([
+    caches.delete(STOREFRONT_CACHE_NAME),
+    caches.delete(LEGACY_STOREFRONT_CACHE_NAME),
+  ]);
 }
 
 function fieldsToStrip() {
@@ -184,6 +218,8 @@ const PUBLIC_STOREFRONT_QUERY_NAMES = new Set([
   SHOWCASE_COLLECTIONS_QUERY,
   SHOP_POLICIES_QUERY,
   PRODUCTS_QUERY,
+  SEARCH_QUERY,
+  PREDICTIVE_SEARCH_QUERY,
   PRODUCT_BY_HANDLE_QUERY,
   COLLECTIONS_QUERY,
   COLLECTION_BY_HANDLE_QUERY,
@@ -288,19 +324,48 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
   return storefrontApiRequestFn({ data: { query, variables } });
 }
 
+export interface ShopifyProductPage {
+  products: ShopifyProduct[];
+  hasNextPage: boolean;
+  endCursor: string | null;
+}
+
+/** Cursor-native product page used by progressive catalogue loading. */
+export async function fetchProductsPage({
+  first = 24,
+  after,
+  query,
+  sortKey,
+  reverse,
+}: {
+  first?: number;
+  after?: string | null;
+  query?: string;
+  sortKey?: "BEST_SELLING" | "CREATED_AT" | "PRICE" | "TITLE";
+  reverse?: boolean;
+} = {}): Promise<ShopifyProductPage> {
+  const data = await storefrontApiRequest(PRODUCTS_QUERY, {
+    first: Math.min(Math.max(first, 1), 100),
+    after: after || undefined,
+    query,
+    sortKey,
+    reverse,
+  });
+  const connection = data?.data?.products;
+  return {
+    products: connection?.edges ?? [],
+    hasNextPage: Boolean(connection?.pageInfo?.hasNextPage),
+    endCursor: connection?.pageInfo?.endCursor ?? null,
+  };
+}
+
 export async function fetchProducts(
   first = 30,
   query?: string,
   sortKey?: "BEST_SELLING" | "CREATED_AT" | "PRICE" | "TITLE",
   reverse?: boolean,
 ): Promise<ShopifyProduct[]> {
-  const data = await storefrontApiRequest(PRODUCTS_QUERY, {
-    first,
-    query,
-    sortKey,
-    reverse,
-  });
-  return data?.data?.products?.edges ?? [];
+  return (await fetchProductsPage({ first, query, sortKey, reverse })).products;
 }
 
 /** Shopify's native merchandising order; never a fabricated popularity list. */
@@ -363,19 +428,30 @@ export async function fetchCollectionByHandle(
   };
 }
 
+/** Full search results. Shopify ranks these by relevance and supports prefix matching. */
 export async function searchStorefront(term: string) {
   const trimmed = term.trim();
   if (!trimmed) return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
-  const [products, collections] = await Promise.all([
-    fetchProducts(20, trimmed),
-    fetchCollections(30),
-  ]);
-  const lowered = trimmed.toLowerCase();
+  const data = await storefrontApiRequest(SEARCH_QUERY, {
+    query: trimmed,
+    first: 48,
+  });
+  const nodes: ShopifyProductNode[] = data?.data?.search?.nodes ?? [];
   return {
-    products,
-    collections: collections.filter((collection) =>
-      collection.title.toLowerCase().includes(lowered),
-    ),
+    products: nodes.map((node) => ({ node })),
+    collections: [] as ShopifyCollection[],
+  };
+}
+
+/** Type-ahead results search title, type, tags, vendor, variant title and SKU. */
+export async function predictiveStorefront(term: string) {
+  const trimmed = term.trim();
+  if (!trimmed) return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
+  const data = await storefrontApiRequest(PREDICTIVE_SEARCH_QUERY, { query: trimmed });
+  const predictive = data?.data?.predictiveSearch;
+  return {
+    products: (predictive?.products ?? []).map((node: ShopifyProductNode) => ({ node })),
+    collections: (predictive?.collections ?? []) as ShopifyCollection[],
   };
 }
 
