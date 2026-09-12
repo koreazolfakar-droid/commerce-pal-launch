@@ -26,10 +26,10 @@ export const Route = createFileRoute("/collections/$handle")({
         ],
       };
     }
-    const title = `${loaderData.collection.title} — ${STORE_NAME}`;
+    const title = `${loaderData.collection.title} in Lebanon | ${STORE_NAME}`;
     const description =
-      loaderData.collection.description?.slice(0, 155) ||
-      `Shop ${loaderData.collection.title} at ${STORE_NAME} with secure checkout.`;
+      loaderData.collection.description?.slice(0, 145) ||
+      `Shop ${loaderData.collection.title} in Lebanon from ${STORE_NAME} with live pricing and secure checkout.`;
     const image = loaderData.collection.image?.url;
     const path = `/collections/${params.handle}`;
     return {

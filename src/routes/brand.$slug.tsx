@@ -34,18 +34,19 @@ export const Route = createFileRoute("/brand/$slug")({
       };
     }
     const label = loaderData?.label ?? params.slug.replace(/-/g, " ");
-    const description = `Shop ${label} devices and accessories at ${STORE_NAME} with live Shopify pricing and stock.`;
+    const title = `${label} Products in Lebanon | ${STORE_NAME}`;
+    const description = `Shop ${label} phones, devices and accessories in Lebanon from ${STORE_NAME} with live Shopify pricing and stock.`;
     const path = `/brand/${params.slug}`;
     return {
       meta: [
-        { title: `${label} products — ${STORE_NAME}` },
+        { title },
         { name: "description", content: description },
-        { property: "og:title", content: `${label} products — ${STORE_NAME}` },
+        { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: absoluteUrl(path) },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: `${label} products — ${STORE_NAME}` },
+        { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
       ],
       links: [canonicalLink(path)],

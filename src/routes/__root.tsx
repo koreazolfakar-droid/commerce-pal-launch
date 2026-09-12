@@ -17,7 +17,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useCartSync } from "@/hooks/useCartSync";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { SITE_URL, STORE_NAME } from "@/lib/storeConfig";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 function NotFoundComponent() {
   const { t } = useLanguage();
@@ -83,13 +83,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: STORE_NAME },
-      { name: "description", content: `Phones, tablets and accessories from ${STORE_NAME}.` },
+      {
+        name: "description",
+        content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
+      },
+      {
+        name: "robots",
+        content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+      },
       { property: "og:title", content: STORE_NAME },
       {
         property: "og:description",
-        content: `Phones, tablets and accessories from ${STORE_NAME}.`,
+        content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: STORE_NAME },
+      { property: "og:locale", content: "en_LB" },
+      { property: "og:locale:alternate", content: "ar_LB" },
       { property: "og:image", content: absoluteUrl("/logo.png") },
       { name: "twitter:image", content: absoluteUrl("/logo.png") },
       { name: "twitter:card", content: "summary_large_image" },
@@ -108,9 +118,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
       },
       { rel: "icon", href: "/logo.png", type: "image/png" },
-      { rel: "alternate", hrefLang: "en", href: SITE_URL + "/" },
-      { rel: "alternate", hrefLang: "ar", href: SITE_URL + "/" },
-      { rel: "alternate", hrefLang: "x-default", href: SITE_URL + "/" },
     ],
   }),
   shellComponent: RootShell,
