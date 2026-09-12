@@ -110,6 +110,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const products = result?.products ?? [];
   const leadImage = collection.image ?? products[0]?.node.images.edges[0]?.node ?? null;
   const displayTitle = cleanTabTitle(collection);
+  const isGenericHomeTitle = /^home\s*page$/i.test(displayTitle);
 
   return (
     <section
@@ -152,18 +153,20 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
           </span>
         </Link>
 
-        <div className="mt-5 flex items-end justify-between gap-3 sm:mt-9">
-          <div className="min-w-0">
-            <h2 className="truncate text-xl font-black tracking-[-0.025em] sm:text-2xl">
-              {displayTitle}
-            </h2>
-            {collection.description && (
-              <p className="mt-1 hidden max-w-xl truncate text-sm text-muted-foreground sm:block">
-                {collection.description}
-              </p>
-            )}
+        {!isGenericHomeTitle && (
+          <div className="mt-5 flex items-end justify-between gap-3 sm:mt-9">
+            <div className="min-w-0">
+              <h2 className="truncate text-xl font-black tracking-[-0.025em] sm:text-2xl">
+                {displayTitle}
+              </h2>
+              {collection.description && (
+                <p className="mt-1 hidden max-w-xl truncate text-sm text-muted-foreground sm:block">
+                  {collection.description}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {products.length > 0 ? (
           <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-4">
