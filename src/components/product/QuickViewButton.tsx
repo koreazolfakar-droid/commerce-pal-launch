@@ -15,9 +15,9 @@ export function QuickViewButton({ product }: { product: ShopifyProduct }) {
         <button
           type="button"
           aria-label={`${t("quickView")} ${product.node.title}`}
-          className="press absolute bottom-2 start-1/2 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-full border bg-background/95 text-foreground shadow-card transition-opacity rtl:translate-x-1/2 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+          className="press absolute bottom-2.5 start-2.5 z-20 grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-background/95 text-foreground shadow-sm backdrop-blur transition-[opacity,transform,border-color,color,background-color] hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100"
         >
-          <Eye aria-hidden className="h-4 w-4" />
+          <Eye aria-hidden className="h-[18px] w-[18px]" strokeWidth={1.9} />
         </button>
       </DialogTrigger>
       {open && (
