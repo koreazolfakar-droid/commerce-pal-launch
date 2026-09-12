@@ -1,42 +1,28 @@
 /**
  * Brand logo resolution.
  *
- * Every Shopify vendor/brand is resolved to a logo URL automatically from its
- * normalized name — no per-homepage editing when a new company is added:
- *   1. explicit slug → icon-slug/domain map (curated for the common brands)
- *   2. heuristic: normalized name as a Simple Icons slug
- *   3. Logo.dev by domain when a publishable key is configured
- * Anything unresolved renders a polished monogram instead of a broken image.
+ * Every curated logo is served from /public/brand-logos as a normal static
+ * asset URL. This deliberately avoids bundler-specific SVG import behaviour
+ * that can turn an SVG file into escaped markup instead of an <img> source.
+ * Shopify collection imagery remains a fallback for brands without a curated
+ * local logo, followed by Simple Icons where available.
  */
 
-import anker from "@/assets/brands/anker.svg";
-import apple from "@/assets/brands/apple.svg";
-import samsung from "@/assets/brands/samsung.png";
-import xiaomi from "@/assets/brands/xiaomi.svg";
-import blackshark from "@/assets/brands/blackshark.svg";
-import poco from "@/assets/brands/poco.png";
-import realme from "@/assets/brands/realme.svg";
-import redmagic from "@/assets/brands/redmagic.png";
-import redmi from "@/assets/brands/redmi.svg";
-import tecno from "@/assets/brands/tecno.svg";
-import ugreen from "@/assets/brands/ugreen.png";
-import vention from "@/assets/brands/vention.png";
-
 const LOCAL_LOGOS: Record<string, string> = {
-  apple,
-  samsung,
-  xiaomi,
-  anker,
-  blackshark,
-  "black-shark": blackshark,
-  poco,
-  realme,
-  redmagic,
-  "red-magic": redmagic,
-  redmi,
-  tecno,
-  ugreen,
-  vention,
+  apple: "/brand-logos/apple.svg",
+  samsung: "/brand-logos/samsung.png",
+  xiaomi: "/brand-logos/xiaomi.svg",
+  anker: "/brand-logos/anker.svg",
+  blackshark: "/brand-logos/blackshark.svg",
+  "black-shark": "/brand-logos/blackshark.svg",
+  poco: "/brand-logos/poco.png",
+  realme: "/brand-logos/realme.svg",
+  redmagic: "/brand-logos/redmagic.png",
+  "red-magic": "/brand-logos/redmagic.png",
+  redmi: "/brand-logos/redmi.svg",
+  tecno: "/brand-logos/tecno.svg",
+  ugreen: "/brand-logos/ugreen.png",
+  vention: "/brand-logos/vention.png",
 };
 
 export interface BrandMeta {
@@ -101,11 +87,7 @@ function brandKey(slug: string, label: string) {
   return key;
 }
 
-/**
- * Logo sources are deliberately limited to Shopify-hosted brand images and
- * Simple Icons. Shopify wins because merchants can upload the exact official
- * brand asset they are licensed to use in the matching collection image.
- */
+/** Local curated assets win; remote sources are fallback-only. */
 export function brandLogoSources(slug: string, label: string, _size = 128): string[] {
   const sources: string[] = [];
   const key = brandKey(slug, label);
@@ -130,16 +112,16 @@ export function brandMonogram(label: string) {
  * premium look rather than the single flat theme colour used everywhere.
  */
 const MONOGRAM_PALETTE: readonly { bg: string; fg: string }[] = [
-  { bg: "#E0E7FF", fg: "#3730A3" }, // indigo
-  { bg: "#CFFAFE", fg: "#155E75" }, // cyan
-  { bg: "#FFEDD5", fg: "#9A3412" }, // orange
-  { bg: "#DCFCE7", fg: "#166534" }, // green
-  { bg: "#FCE7F3", fg: "#9D174D" }, // pink
-  { bg: "#FEF3C7", fg: "#92400E" }, // amber
-  { bg: "#EDE9FE", fg: "#5B21B6" }, // violet
-  { bg: "#DBEAFE", fg: "#1E40AF" }, // blue
-  { bg: "#FEE2E2", fg: "#991B1B" }, // red
-  { bg: "#D1FAE5", fg: "#065F46" }, // emerald
+  { bg: "#E0E7FF", fg: "#3730A3" },
+  { bg: "#CFFAFE", fg: "#155E75" },
+  { bg: "#FFEDD5", fg: "#9A3412" },
+  { bg: "#DCFCE7", fg: "#166534" },
+  { bg: "#FCE7F3", fg: "#9D174D" },
+  { bg: "#FEF3C7", fg: "#92400E" },
+  { bg: "#EDE9FE", fg: "#5B21B6" },
+  { bg: "#DBEAFE", fg: "#1E40AF" },
+  { bg: "#FEE2E2", fg: "#991B1B" },
+  { bg: "#D1FAE5", fg: "#065F46" },
 ];
 
 /** Deterministic palette pick so a given brand always renders the same colour. */

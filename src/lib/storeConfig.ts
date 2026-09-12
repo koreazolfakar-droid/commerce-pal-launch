@@ -31,7 +31,13 @@ export const STORE_CONFIG = Object.freeze({
 export const STORE_NAME = STORE_CONFIG.name;
 export const STORE_VERSION = STORE_CONFIG.version;
 export const SITE_URL = STORE_CONFIG.siteUrl;
-export const SHOP_ACCOUNT_URL = `https://${STORE_CONFIG.shopifyDomain}/account`;
+
+/**
+ * Public navigation stays on the branded Space Call domain first. The Help
+ * page explains the Shopify hand-off before the customer chooses to continue.
+ */
+export const SHOP_ACCOUNT_URL = `${SITE_URL}/help#account-orders`;
+export const SHOPIFY_ACCOUNT_URL = `https://${STORE_CONFIG.shopifyDomain}/account`;
 
 export function storeUrl(path = "/") {
   const normalized = path === "/" ? "/" : `/${path.replace(/^\/+|\/+$/g, "")}`;

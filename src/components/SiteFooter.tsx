@@ -1,12 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Facebook, Instagram, MessageCircle, Youtube, Twitter } from "lucide-react";
 
-import { catalogQueryOptions, shopPoliciesQueryOptions } from "@/lib/queries";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { useLanguage } from "@/lib/i18n";
-import { STORE_CONFIG, STORE_NAME, STORE_VERSION } from "@/lib/storeConfig";
-import { useHydrated } from "@/hooks/useHydrated";
+import { STORE_CONFIG, STORE_NAME } from "@/lib/storeConfig";
 
 const SOCIALS = [
   { label: "Instagram", Icon: Instagram, href: STORE_CONFIG.socialInstagram },
@@ -15,16 +12,30 @@ const SOCIALS = [
   { label: "YouTube", Icon: Youtube, href: STORE_CONFIG.socialYoutube },
 ];
 
+/**
+ * Footer navigation is intentionally deterministic. It must not depend on a
+ * page-specific catalog query, otherwise cached/SSR pages can render different
+ * footers or transient "No brands yet" placeholders.
+ */
+const FOOTER_SHOP_LINKS = [
+  { slug: "smartphones", en: "Smartphones", ar: "الهواتف الذكية" },
+  { slug: "tablets", en: "Tablets", ar: "الأجهزة اللوحية" },
+  { slug: "laptops", en: "Laptops", ar: "اللابتوبات" },
+  { slug: "headphones", en: "Headphones & Earbuds", ar: "السماعات وسماعات الأذن" },
+  { slug: "chargers", en: "Chargers", ar: "الشواحن" },
+  { slug: "power-banks", en: "Power Banks", ar: "الباور بانك" },
+] as const;
+
+const FOOTER_BRAND_LINKS = [
+  { slug: "apple", label: "Apple" },
+  { slug: "samsung", label: "Samsung" },
+  { slug: "xiaomi", label: "Xiaomi" },
+  { slug: "anker", label: "Anker" },
+  { slug: "poco", label: "POCO" },
+] as const;
+
 export function SiteFooter() {
-  const { data: catalog } = useQuery(catalogQueryOptions());
   const { language, t } = useLanguage();
-  const hydrated = useHydrated();
-  const { data: policies } = useQuery({
-    ...shopPoliciesQueryOptions(),
-    enabled: hydrated,
-  });
-  const shopLinks = (catalog?.categories ?? []).slice(0, 6);
-  const brandLinks = (catalog?.brands ?? []).slice(0, 5);
   const isAr = language === "ar";
 
   const support = [
@@ -35,10 +46,6 @@ export function SiteFooter() {
     ["Warranty", "/warranty"],
     ["FAQ", "/faq"],
   ] as const;
-  const supportPolicy = {
-    "/shipping": policies?.shippingPolicy,
-    "/returns": policies?.refundPolicy,
-  };
   const company = [
     ["About", "/about"],
     ["Privacy", "/privacy"],
@@ -69,8 +76,9 @@ export function SiteFooter() {
               href={generalWhatsAppUrl()}
               target="_blank"
               rel="noreferrer"
-              className="mt-5 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
             >
+              <MessageCircle className="h-4 w-4" aria-hidden="true" />
               {isAr ? "تواصل معنا عبر واتساب" : "Contact us on WhatsApp"}
             </a>
             <div className="mt-5 flex gap-3 text-muted-foreground">
@@ -90,14 +98,14 @@ export function SiteFooter() {
           </div>
 
           <FooterColumn title={isAr ? "المتجر" : "Shop"}>
-            {shopLinks.map((entry) => (
+            {FOOTER_SHOP_LINKS.map((entry) => (
               <li key={entry.slug}>
                 <Link
                   to="/category/$slug"
                   params={{ slug: entry.slug }}
                   className="text-sm text-muted-foreground hover:text-primary"
                 >
-                  {entry.label}
+                  {isAr ? entry.ar : entry.en}
                 </Link>
               </li>
             ))}
@@ -114,77 +122,45 @@ export function SiteFooter() {
           </FooterColumn>
 
           <FooterColumn title={isAr ? "العلامات التجارية" : "Brands"}>
-            {brandLinks.length ? (
-              brandLinks.map((entry) => (
-                <li key={entry.slug}>
-                  <Link
-                    to="/brand/$slug"
-                    params={{ slug: entry.slug }}
-                    className="text-sm text-muted-foreground hover:text-primary"
-                  >
-                    {entry.label}
-                  </Link>
-                </li>
-              ))
-            ) : (
-              <li className="text-sm text-muted-foreground">
-                {isAr ? "لا توجد علامات بعد" : "No brands yet"}
+            {FOOTER_BRAND_LINKS.map((entry) => (
+              <li key={entry.slug}>
+                <Link
+                  to="/brand/$slug"
+                  params={{ slug: entry.slug }}
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  {entry.label}
+                </Link>
               </li>
-            )}
+            ))}
+            <li>
+              <Link to="/brands" className="text-sm text-muted-foreground hover:text-primary">
+                {isAr ? "كل العلامات التجارية" : "All brands"}
+              </Link>
+            </li>
           </FooterColumn>
 
           <div className="grid gap-10 sm:grid-cols-2 lg:contents">
             <FooterColumn title={isAr ? "الدعم" : "Support"}>
               {support.map(([label, href]) => (
                 <li key={href}>
-                  {href in supportPolicy &&
-                  supportPolicy[href as keyof typeof supportPolicy]?.url ? (
-                    <a
-                      href={supportPolicy[href as keyof typeof supportPolicy]!.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-muted-foreground hover:text-primary"
-                    >
-                      {t(href === "/shipping" ? "shippingTitle" : "returnsTitle")}
-                    </a>
-                  ) : (
-                    <Link to={href} className="text-sm text-muted-foreground hover:text-primary">
-                      {label === "Help"
-                        ? t("helpTitle")
-                        : isAr
-                          ? (
-                              {
-                                Contact: "اتصل بنا",
-                                Shipping: "الشحن",
-                                Returns: "الإرجاع",
-                                Warranty: "الضمان",
-                                FAQ: "الأسئلة الشائعة",
-                              } as const
-                            )[label]
-                          : label}
-                    </Link>
-                  )}
+                  <Link to={href} className="text-sm text-muted-foreground hover:text-primary">
+                    {label === "Help"
+                      ? t("helpTitle")
+                      : isAr
+                        ? (
+                            {
+                              Contact: "اتصل بنا",
+                              Shipping: "الشحن",
+                              Returns: "الإرجاع",
+                              Warranty: "الضمان",
+                              FAQ: "الأسئلة الشائعة",
+                            } as const
+                          )[label]
+                        : label}
+                  </Link>
                 </li>
               ))}
-              {(
-                [
-                  [policies?.privacyPolicy, "privacyTitle"],
-                  [policies?.termsOfService, "termsTitle"],
-                ] as const
-              ).map(([policy, key]) =>
-                hydrated && policy?.url ? (
-                  <li key={key}>
-                    <a
-                      href={policy.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-muted-foreground hover:text-primary"
-                    >
-                      {t(key)}
-                    </a>
-                  </li>
-                ) : null,
-              )}
             </FooterColumn>
             <FooterColumn title={isAr ? "الشركة" : "Company"}>
               {company.map(([label, href]) => (
@@ -204,9 +180,6 @@ export function SiteFooter() {
           <p>
             © {new Date().getFullYear()} {STORE_NAME}.{" "}
             {isAr ? "الدفع الآمن عبر Shopify." : "Secure checkout powered by Shopify."}
-          </p>
-          <p className="mt-2 text-[11px] font-medium tracking-wide text-muted-foreground/80" data-testid="app-version">
-            {isAr ? "الإصدار" : "Version"} v{STORE_VERSION}
           </p>
         </div>
       </div>

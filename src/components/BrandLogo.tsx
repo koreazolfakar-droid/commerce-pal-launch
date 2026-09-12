@@ -12,6 +12,18 @@ type BrandLogoProps = {
   wordmark?: boolean;
 };
 
+function safeImageSource(value?: string) {
+  const source = value?.trim();
+  if (!source) return undefined;
+
+  // Never allow escaped/raw markup to become an image source. This protects
+  // against Shopify fields accidentally containing an inline <svg> string.
+  if (/<\s*svg\b|<\/?[a-z][^>]*>/i.test(source)) return undefined;
+
+  if (/^(?:https?:\/\/|\/|data:image\/|blob:)/i.test(source)) return source;
+  return undefined;
+}
+
 export function BrandLogo({ size = 40, ...props }: BrandLogoProps) {
   // Reset loading/error state when a card is reused for a different brand or source.
   return (
@@ -31,12 +43,21 @@ function LogoImage({
   imageUrl,
   wordmark = false,
 }: BrandLogoProps) {
-  const sources = useMemo(
-    () => [
-      ...new Set([...(imageUrl ? [imageUrl] : []), ...brandLogoSources(slug, label, size * 2)]),
-    ],
-    [imageUrl, slug, label, size],
-  );
+  const sources = useMemo(() => {
+    const builtIn = brandLogoSources(slug, label, size * 2).map(safeImageSource).filter(Boolean) as string[];
+    const merchant = safeImageSource(imageUrl);
+    const firstBuiltIn = builtIn[0];
+    const builtInIsLocal = Boolean(firstBuiltIn && !/^https?:\/\//i.test(firstBuiltIn));
+
+    // Curated local assets always win for the brands we explicitly ship with.
+    // For brands without a local asset, a merchant-provided Shopify image wins
+    // over remote fallbacks so CSP/CDN failures never create empty logo tiles.
+    const ordered = builtInIsLocal
+      ? [...builtIn, ...(merchant ? [merchant] : [])]
+      : [...(merchant ? [merchant] : []), ...builtIn];
+
+    return [...new Set(ordered)];
+  }, [imageUrl, slug, label, size]);
   const [attempt, setAttempt] = useState(0);
   const [loadedSource, setLoadedSource] = useState<string>();
   const imgRef = useRef<HTMLImageElement>(null);

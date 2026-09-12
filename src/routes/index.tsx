@@ -7,7 +7,6 @@ import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
 import { BenefitsBar, RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
-import { Newsletter } from "@/components/Newsletter";
 import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
 import { StoreLayout } from "@/components/StoreLayout";
 import { TopBrands } from "@/components/TopBrands";
@@ -35,6 +34,7 @@ export const Route = createFileRoute("/")({
     await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
+      context.queryClient.ensureQueryData(newestQueryOptions()),
     ]);
   },
   head: () => {
@@ -146,10 +146,7 @@ function Index() {
   const [showProductSections, setShowProductSections] = useState(false);
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
-  const { data: newItems = [] } = useQuery({
-    ...newestQueryOptions(),
-    enabled: showProductSections,
-  });
+  const { data: newItems = [] } = useSuspenseQuery(newestQueryOptions());
   const { data: bestSellers = [] } = useQuery({
     ...bestSellingQueryOptions(),
     enabled: showProductSections,
@@ -172,7 +169,7 @@ function Index() {
           <div className="px-4"><div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center"><h1 className="text-2xl font-bold">{t("welcomeStore")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("catalogUpdating")}</p></div></div>
         ) : (
           <>
-            <ShopifyHeroCollections collections={collections} />
+            <ShopifyHeroCollections collections={collections} featuredProduct={newItems[0]} />
 
             <HomeSeoIntro language={language} />
             <BenefitsBar compact />
@@ -209,7 +206,6 @@ function Index() {
             <RecentlyViewed products={products} />
             <ServicesStrip />
             <WhyShop />
-            <Newsletter />
           </>
         )}
       </div>
