@@ -12,6 +12,26 @@ export function findFacetMerchandising(
   return handles.map((handle) => collections.find((item) => item.handle === handle)).find(Boolean);
 }
 
+/**
+ * Dedicated homepage hero collections are artwork configuration only.
+ * Their collection image is used directly; catalogue product images are never a fallback.
+ */
+export function homepageHeroCollections(collections: ShopifyCollection[]): ShopifyCollection[] {
+  return collections
+    .filter(
+      (collection) =>
+        Boolean(collection.image?.url) &&
+        /^(homepage-hero$|home-hero-|hero-home-|hero-slide-|hero-(?!brand-|category-))/.test(
+          collection.handle,
+        ),
+    )
+    .sort((a, b) => {
+      const primaryRank = Number(a.handle !== "homepage-hero") - Number(b.handle !== "homepage-hero");
+      return primaryRank || a.handle.localeCompare(b.handle);
+    })
+    .slice(0, 10);
+}
+
 export function orderedBrands<T extends CatalogFacet>(brands: T[]): T[] {
   const priority = ["apple", "samsung", "xiaomi"];
   const rank = (slug: string) => {
