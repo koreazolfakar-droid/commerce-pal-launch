@@ -56,11 +56,11 @@ body,
 /* Backdrop filters on fixed/sticky full-width chrome are expensive while the
  * document is moving. These surfaces are already near-opaque, so keep the same
  * visual hierarchy without continuously filtering content behind them.
- * Reserve the navigation height here as a final unlayered guardrail so the
- * fixed bar can never cover the last scrollable content on small screens. */
+ * Reserve the exact 4rem app-bar height plus the platform safe-area here as a
+ * final unlayered guardrail so fixed navigation never covers page content. */
 @media (max-width: 1023px) {
   .store-layout {
-    padding-bottom: var(--mobile-nav-height);
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
   }
 
   .store-layout header[class*="lg:hidden"],
