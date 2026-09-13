@@ -59,7 +59,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         className,
       )}
     >
-      <div className="relative p-1.5 sm:p-2">
+      <div className="relative bg-white">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
@@ -71,7 +71,6 @@ export const CompactProductCard = memo(function CompactProductCard({
             alt={image?.altText ?? node.title}
             size={360}
             sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 46vw"
-            className="rounded-[0.95rem] border-0"
             imageClassName="group-hover:scale-[1.045]"
           />
         </Link>
