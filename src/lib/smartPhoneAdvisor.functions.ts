@@ -65,6 +65,12 @@ type GeminiPayload = {
   promptFeedback?: { blockReason?: string };
 };
 
+type ProviderResponse = {
+  response: Response;
+  model: string;
+  usedSearch: boolean;
+};
+
 export type SmartAdvisorComparison = z.infer<typeof comparisonItemSchema>;
 
 export type SmartAdvisorStoreRecommendation = {
@@ -170,6 +176,172 @@ function rankCatalog(products: ShopifyProduct[], message: string) {
     .map(({ product }) => compactProduct(product));
 }
 
+function uniqueModels(configuredModel?: string) {
+  // Gemini 2.5 Flash currently supports Google Search grounding on the free tier,
+  // while Gemini 3.x search grounding can require a paid tier. Try 2.5 first so
+  // a valid AI Studio key works out of the box, then try configured/newer models.
+  return ["gemini-2.5-flash", configuredModel, "gemini-3.8-flash"]
+    .filter((value): value is string => Boolean(value))
+    .filter((value, index, list) => list.indexOf(value) === index);
+}
+
+async function callGemini({
+  apiKey,
+  model,
+  prompt,
+  useSearch,
+}: {
+  apiKey: string;
+  model: string;
+  prompt: string;
+  useSearch: boolean;
+}) {
+  return fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        ...(useSearch ? { tools: [{ google_search: {} }] } : {}),
+        generationConfig: {
+          temperature: 0.18,
+          maxOutputTokens: 2600,
+        },
+      }),
+      signal: AbortSignal.timeout(30000),
+    },
+  );
+}
+
+function providerMessage(body: string) {
+  try {
+    const parsed = JSON.parse(body) as { error?: { message?: string; status?: string } };
+    return `${parsed.error?.status ?? ""} ${parsed.error?.message ?? ""}`.trim();
+  } catch {
+    return body;
+  }
+}
+
+function groundingSources(grounding?: GroundingMetadata) {
+  return (grounding?.groundingChunks ?? [])
+    .map((chunk) => chunk.web)
+    .filter((web): web is { title?: string; uri?: string } => Boolean(web?.uri))
+    .map((web) => {
+      const url = safeUrl(web.uri!);
+      return url ? { title: web.title || url, url } : null;
+    })
+    .filter((item): item is { title: string; url: string } => Boolean(item))
+    .filter((item, index, list) => list.findIndex((entry) => entry.url === item.url) === index)
+    .slice(0, 10);
+}
+
+function buildResult({
+  parsed,
+  catalog,
+  grounding,
+  searchedWeb,
+  fallbackNotice,
+}: {
+  parsed: z.infer<typeof modelResultSchema>;
+  catalog: ShopifyProduct[];
+  grounding?: GroundingMetadata;
+  searchedWeb: boolean;
+  fallbackNotice?: string;
+}): SmartAdvisorResult {
+  const byHandle = new Map(catalog.map((product) => [product.node.handle, product]));
+  const storeRecommendations = parsed.storeRecommendations
+    .filter((item) => byHandle.has(item.handle))
+    .map((item) => {
+      const product = byHandle.get(item.handle)!;
+      const price = product.node.priceRange?.minVariantPrice;
+      return {
+        handle: item.handle,
+        reason: item.reason,
+        title: product.node.title,
+        price: price?.amount ?? null,
+        currency: price?.currencyCode ?? null,
+        available: Boolean(product.node.availableForSale),
+      };
+    });
+
+  const validHandles = new Set(catalog.map((product) => product.node.handle));
+  const comparison = parsed.comparison.map((item) => ({
+    ...item,
+    storeHandle: item.storeHandle && validHandles.has(item.storeHandle) ? item.storeHandle : null,
+  }));
+
+  return {
+    ok: true,
+    provider: "gemini",
+    answer: fallbackNotice ? `${fallbackNotice}\n\n${parsed.answer}` : parsed.answer,
+    intent: parsed.intent,
+    searchedWeb,
+    comparison,
+    bestPick: parsed.bestPick,
+    storeRecommendations,
+    sources: groundingSources(grounding),
+    followUps: parsed.followUps,
+  };
+}
+
+async function parseSuccessfulResponse({
+  response,
+  catalog,
+  usedSearch,
+  fallbackNotice,
+}: {
+  response: Response;
+  catalog: ShopifyProduct[];
+  usedSearch: boolean;
+  fallbackNotice?: string;
+}): Promise<SmartAdvisorResult> {
+  const payload = (await response.json()) as GeminiPayload;
+  const candidate = payload.candidates?.[0];
+  const text = candidate?.content?.parts
+    ?.map((part) => part.text ?? "")
+    .join("")
+    .trim();
+
+  if (!text) {
+    console.error("Smart phone advisor empty response", payload.promptFeedback?.blockReason);
+    return failure("The phone advisor returned an empty response. Please try again.", "ADVISOR_EMPTY");
+  }
+
+  try {
+    const parsed = modelResultSchema.parse(JSON.parse(extractJson(text)));
+    return buildResult({
+      parsed,
+      catalog,
+      ...(candidate?.groundingMetadata ? { grounding: candidate.groundingMetadata } : {}),
+      searchedWeb: Boolean(
+        usedSearch &&
+          (candidate?.groundingMetadata?.webSearchQueries?.length ||
+            candidate?.groundingMetadata?.groundingChunks?.length),
+      ),
+      ...(fallbackNotice ? { fallbackNotice } : {}),
+    });
+  } catch (error) {
+    console.error("Smart phone advisor JSON parse error", error, text.slice(0, 1200));
+    const sources = groundingSources(candidate?.groundingMetadata);
+    return {
+      ok: true,
+      provider: "gemini",
+      answer: fallbackNotice ? `${fallbackNotice}\n\n${text.slice(0, 3000)}` : text.slice(0, 3000),
+      intent: "general",
+      searchedWeb: Boolean(usedSearch && sources.length),
+      comparison: [],
+      bestPick: null,
+      storeRecommendations: [],
+      sources,
+      followUps: [],
+    };
+  }
+}
+
 export const askSmartPhoneAdvisor = createServerFn({ method: "POST" })
   .validator(requestSchema)
   .handler(async ({ data }): Promise<SmartAdvisorResult> => {
@@ -199,17 +371,17 @@ export const askSmartPhoneAdvisor = createServerFn({ method: "POST" })
     const prompt = `You are ${STORE_NAME}'s Smart Phone Advisor, a research-first shopping agent for a real electronics store in Lebanon.
 
 YOUR JOB
-- Search the live web whenever the user asks about a phone, specifications, release information, comparison, camera, battery, performance, software support, charging, compatibility, or current recommendation.
+- Search the live web whenever web search is available and the user asks about a phone, specifications, release information, comparison, camera, battery, performance, software support, charging, compatibility, or current recommendation.
 - Compare phones intelligently instead of just listing specs.
 - Explain which phone wins for the user's priorities and why.
-- Cross-check important phone facts. Prefer official manufacturer pages first, then highly reputable technical sources when the manufacturer does not provide the needed comparison detail.
+- Prefer official manufacturer pages first, then highly reputable technical sources.
 - Use the live ${STORE_NAME} catalogue below for store prices, availability and product handles. Never invent store inventory, prices, discounts or handles.
-- A phone may be researched from the web even when it is not sold by ${STORE_NAME}; clearly distinguish web research from store availability.
+- A phone may be researched even when it is not sold by ${STORE_NAME}; clearly distinguish web facts from store availability.
 - Never claim that an item is in the box, compatible, available, or supported unless verified.
 - Answer in the user's language. If the user writes Arabic, use natural Arabic.
-- Keep the main answer concise and practical for mobile, but make the comparison data useful.
+- Keep the main answer concise and practical for mobile.
 - Scores are relative buying scores for this request, not laboratory benchmarks.
-- When two sources conflict, say that the detail is uncertain instead of guessing.
+- When facts are uncertain or sources conflict, say so instead of guessing.
 
 OUTPUT
 Return exactly one JSON object and no Markdown fences:
@@ -252,165 +424,102 @@ LIVE ${STORE_NAME} CATALOGUE CANDIDATES
 ${JSON.stringify(catalogCandidates)}`;
 
     const configuredModel = process.env["GEMINI_MODEL"]?.trim();
-    const models = [configuredModel, "gemini-3.8-flash", "gemini-2.5-flash"].filter(
-      (value, index, list): value is string => Boolean(value) && list.indexOf(value) === index,
-    );
-
+    const models = uniqueModels(configuredModel);
     let lastStatus = 0;
     let lastBody = "";
 
+    // First try real Google Search grounding. Importantly, Gemini 2.5 Flash is
+    // tried first because search grounding is available on its free tier.
     for (const model of models) {
       let response: Response;
       try {
-        response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": apiKey,
-            },
-            body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: prompt }] }],
-              tools: [{ google_search: {} }],
-              generationConfig: {
-                temperature: 0.18,
-                maxOutputTokens: 2600,
-              },
-            }),
-            signal: AbortSignal.timeout(30000),
-          },
-        );
+        response = await callGemini({ apiKey, model, prompt, useSearch: true });
       } catch (error) {
-        console.error("Smart phone advisor network error", error);
+        console.error("Smart phone advisor search network error", error);
+        continue;
+      }
+
+      if (response.ok) {
+        return parseSuccessfulResponse({ response, catalog, usedSearch: true });
+      }
+
+      lastStatus = response.status;
+      lastBody = await response.text().catch(() => "");
+      console.error("Smart phone advisor search provider error", {
+        status: response.status,
+        model,
+        body: lastBody.slice(0, 1000),
+      });
+
+      // A 401 means the key itself is invalid. Other statuses can be model/search
+      // tier limitations, so continue to another supported model before failing.
+      if (response.status === 401) {
         return failure(
-          "I couldn't reach the web research service right now. Please try again in a moment.",
-          "ADVISOR_NETWORK_ERROR",
+          "The Gemini API key was rejected. Check GEMINI_API_KEY in the deployment secrets.",
+          "ADVISOR_AUTH_ERROR",
         );
       }
 
-      if (!response.ok) {
-        lastStatus = response.status;
-        lastBody = await response.text().catch(() => "");
-        console.error("Smart phone advisor provider error", {
-          status: response.status,
-          model,
-          body: lastBody.slice(0, 1000),
-        });
-
-        if (response.status === 404) continue;
-        if (response.status === 401 || response.status === 403) {
-          return failure(
-            "The phone advisor API key was rejected. Check GEMINI_API_KEY in the deployment secrets.",
-            "ADVISOR_AUTH_ERROR",
-          );
-        }
-        if (response.status === 429) {
-          return failure(
-            "The phone advisor is temporarily over quota. Please try again shortly.",
-            "ADVISOR_QUOTA_ERROR",
-          );
-        }
-        if (response.status >= 500) continue;
-        return failure(
-          "The web research service rejected the request. Please try again.",
-          "ADVISOR_PROVIDER_ERROR",
-        );
+      if ([400, 403, 404, 429].includes(response.status) || response.status >= 500) {
+        continue;
       }
-
-      const payload = (await response.json()) as GeminiPayload;
-      const candidate = payload.candidates?.[0];
-      const text = candidate?.content?.parts
-        ?.map((part) => part.text ?? "")
-        .join("")
-        .trim();
-
-      if (!text) {
-        console.error("Smart phone advisor empty response", payload.promptFeedback?.blockReason);
-        return failure("The phone advisor returned an empty response. Please try again.", "ADVISOR_EMPTY");
-      }
-
-      let parsed: z.infer<typeof modelResultSchema>;
-      try {
-        parsed = modelResultSchema.parse(JSON.parse(extractJson(text)));
-      } catch (error) {
-        console.error("Smart phone advisor JSON parse error", error, text.slice(0, 1200));
-        return {
-          ok: true,
-          provider: "gemini",
-          answer: text.slice(0, 3000),
-          intent: "general",
-          searchedWeb: Boolean(candidate?.groundingMetadata?.groundingChunks?.length),
-          comparison: [],
-          bestPick: null,
-          storeRecommendations: [],
-          sources: (candidate?.groundingMetadata?.groundingChunks ?? [])
-            .map((chunk) => chunk.web)
-            .filter((web): web is { title?: string; uri?: string } => Boolean(web?.uri))
-            .map((web) => {
-              const url = safeUrl(web.uri!);
-              return url ? { title: web.title || url, url } : null;
-            })
-            .filter((item): item is { title: string; url: string } => Boolean(item))
-            .slice(0, 8),
-          followUps: [],
-        };
-      }
-
-      const grounding = candidate?.groundingMetadata;
-      const sources = (grounding?.groundingChunks ?? [])
-        .map((chunk) => chunk.web)
-        .filter((web): web is { title?: string; uri?: string } => Boolean(web?.uri))
-        .map((web) => {
-          const url = safeUrl(web.uri!);
-          return url ? { title: web.title || url, url } : null;
-        })
-        .filter((item): item is { title: string; url: string } => Boolean(item))
-        .filter((item, index, list) => list.findIndex((entry) => entry.url === item.url) === index)
-        .slice(0, 10);
-
-      const byHandle = new Map(catalog.map((product) => [product.node.handle, product]));
-      const storeRecommendations = parsed.storeRecommendations
-        .filter((item) => byHandle.has(item.handle))
-        .map((item) => {
-          const product = byHandle.get(item.handle)!;
-          const price = product.node.priceRange?.minVariantPrice;
-          return {
-            handle: item.handle,
-            reason: item.reason,
-            title: product.node.title,
-            price: price?.amount ?? null,
-            currency: price?.currencyCode ?? null,
-            available: Boolean(product.node.availableForSale),
-          };
-        });
-
-      const validHandles = new Set(catalog.map((product) => product.node.handle));
-      const comparison = parsed.comparison.map((item) => ({
-        ...item,
-        storeHandle: item.storeHandle && validHandles.has(item.storeHandle) ? item.storeHandle : null,
-      }));
-
-      return {
-        ok: true,
-        provider: "gemini",
-        answer: parsed.answer,
-        intent: parsed.intent,
-        searchedWeb: Boolean(grounding?.webSearchQueries?.length || grounding?.groundingChunks?.length),
-        comparison,
-        bestPick: parsed.bestPick,
-        storeRecommendations,
-        sources,
-        followUps: parsed.followUps,
-      };
     }
 
-    console.error("Smart phone advisor exhausted models", {
+    // Keep the assistant useful even when live Search Grounding is unavailable
+    // (for example a tier/quota restriction). This also proves whether the API
+    // key itself works instead of showing a misleading generic failure.
+    for (const model of models) {
+      let response: Response;
+      try {
+        response = await callGemini({ apiKey, model, prompt, useSearch: false });
+      } catch (error) {
+        console.error("Smart phone advisor fallback network error", error);
+        continue;
+      }
+
+      if (response.ok) {
+        return parseSuccessfulResponse({
+          response,
+          catalog,
+          usedSearch: false,
+          fallbackNotice:
+            "Live web search is unavailable for this API tier or quota right now, so this answer is not live-web verified.",
+        });
+      }
+
+      lastStatus = response.status;
+      lastBody = await response.text().catch(() => "");
+      console.error("Smart phone advisor fallback provider error", {
+        status: response.status,
+        model,
+        body: lastBody.slice(0, 1000),
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        return failure(
+          "The Gemini API key was rejected. Check GEMINI_API_KEY in the deployment secrets.",
+          "ADVISOR_AUTH_ERROR",
+        );
+      }
+      if (response.status === 429) continue;
+      if (response.status === 404 || response.status >= 500) continue;
+    }
+
+    const message = providerMessage(lastBody);
+    console.error("Smart phone advisor exhausted all request modes", {
       status: lastStatus,
-      body: lastBody.slice(0, 1000),
+      message: message.slice(0, 1000),
     });
+
+    if (lastStatus === 429) {
+      return failure(
+        "The Gemini API quota is exhausted for this project. Wait for the quota reset or enable billing, then try again.",
+        "ADVISOR_QUOTA_ERROR",
+      );
+    }
+
     return failure(
-      "The phone research model is unavailable right now. Please try again shortly.",
-      "ADVISOR_MODEL_ERROR",
+      "The phone advisor could not reach Gemini. Check the deployment secret and try again.",
+      "ADVISOR_PROVIDER_ERROR",
     );
   });
