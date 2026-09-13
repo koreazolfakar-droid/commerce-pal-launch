@@ -28,15 +28,40 @@ test("global crawler metadata stays indexable without fake hreflang alternates",
   assert.doesNotMatch(root, /hrefLang:/);
 });
 
-test("product structured data exposes supported GTIN fields and Lebanon seller context", async () => {
-  const seo = await source("src/lib/seo.ts");
+test("product structured data exposes Google product and offer fields", async () => {
+  const [seo, productRoute] = await Promise.all([
+    source("src/lib/seo.ts"),
+    source("src/routes/product.$handle.tsx"),
+  ]);
 
+  assert.match(seo, /"@type": "Product"/);
+  assert.match(seo, /"@type": "Offer"/);
+  assert.match(seo, /priceCurrency:/);
+  assert.match(seo, /availability:/);
+  assert.match(seo, /seller:/);
   assert.match(seo, /gtin8/);
   assert.match(seo, /gtin12/);
   assert.match(seo, /gtin13/);
   assert.match(seo, /gtin14/);
   assert.match(seo, /areaServed/);
   assert.match(seo, /name: "Lebanon"/);
+  assert.match(productRoute, /jsonLd\(productJsonLd\(product\)\)/);
+});
+
+test("header account and tracking links stay first-party", async () => {
+  const [header, infoPage] = await Promise.all([
+    source("src/components/SiteHeader.tsx"),
+    source("src/components/InfoPage.tsx"),
+  ]);
+
+  assert.match(header, /href="\/help#track-order"/);
+  assert.match(header, /href="\/help#account-orders"/);
+  assert.doesNotMatch(header, /myshopify\.com/);
+  assert.doesNotMatch(header, /SHOPIFY_ACCOUNT_URL/);
+  assert.match(infoPage, /id="track-order"/);
+  assert.match(infoPage, /id="account-orders"/);
+  assert.match(infoPage, /SHOPIFY_ACCOUNT_URL/);
+  assert.match(infoPage, /secure Shopify account page/);
 });
 
 test("commercial landing pages carry Lebanon search intent", async () => {
