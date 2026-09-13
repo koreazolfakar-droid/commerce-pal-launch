@@ -34,7 +34,7 @@ body,
 
 /* Fixed chrome is isolated from the scrolling document as much as possible. */
 [data-testid="bottom-nav"] {
-  contain: layout paint;
+  contain: layout;
 }
 
 /* Short, predictable tap feedback. */
@@ -50,6 +50,17 @@ body,
   .store-layout .category-icon-card:hover,
   .store-layout .category-icon-card:hover .category-icon-badge {
     transform: none;
+  }
+}
+
+/* Backdrop filters on fixed/sticky full-width chrome are expensive while the
+ * document is moving. These surfaces are already near-opaque, so keep the same
+ * visual hierarchy without continuously filtering content behind them. */
+@media (max-width: 1023px) {
+  .store-layout header[class*="lg:hidden"],
+  [data-testid="bottom-nav"] > div {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 
