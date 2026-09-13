@@ -15,13 +15,55 @@
   --sc-control-radius: 1rem;
   --sc-touch: 2.75rem;
 
-  /* Keep the legacy polish token aligned while old selectors are retired. */
+  /* Keep the remaining polish layer aligned while old selectors are retired. */
   --ui-shell-max: var(--sc-shell-max);
 }
 
 .home-page,
 .section-shell {
   max-width: var(--sc-shell-max);
+}
+
+/* Avoid accidental width drift from page-local wrappers. */
+.store-layout main > :is(.home-page, .section-shell) {
+  width: 100%;
+  margin-inline: auto;
+}
+
+/* Mobile + tablet chrome should expand with the viewport instead of stopping at 28rem. */
+@media (max-width: 1023px) {
+  .store-layout header[class*="lg:hidden"] > div,
+  .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > div:first-child,
+  .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > nav {
+    width: 100%;
+    max-width: var(--sc-shell-max);
+    margin-inline: auto;
+  }
+
+  .store-layout header[class*="lg:hidden"] > div,
+  .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > div:first-child {
+    padding-inline: var(--sc-gutter-mobile);
+  }
+
+  .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > nav {
+    padding-inline: var(--sc-gutter-mobile);
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .store-layout header[class*="lg:hidden"] > div,
+  .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > div:first-child,
+  .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > nav {
+    padding-inline: var(--sc-gutter-tablet);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .store-layout header[class*="lg:hidden"] > div,
+  .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > div:first-child,
+  .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > nav {
+    padding-inline: var(--sc-gutter-desktop);
+  }
 }
 
 @media (min-width: 1024px) {
@@ -44,12 +86,6 @@
   min-width: var(--sc-touch);
   min-height: var(--sc-touch);
   border-radius: var(--sc-control-radius);
-}
-
-/* Avoid accidental width drift from page-local wrappers. */
-.store-layout main > :is(.home-page, .section-shell) {
-  width: 100%;
-  margin-inline: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
