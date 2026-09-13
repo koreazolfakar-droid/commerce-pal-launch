@@ -1,0 +1,62 @@
+name: Bottom Nav Responsive CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/components/BottomNav.tsx"
+      - "src/components/StoreLayout.tsx"
+      - "src/components/MobileMenu.tsx"
+      - "src/mobile-ai-nav.css"
+      - "e2e/bottom-nav-responsive-check.mjs"
+      - ".github/workflows/bottom-nav-responsive-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/components/BottomNav.tsx"
+      - "src/components/StoreLayout.tsx"
+      - "src/components/MobileMenu.tsx"
+      - "src/mobile-ai-nav.css"
+      - "e2e/bottom-nav-responsive-check.mjs"
+      - ".github/workflows/bottom-nav-responsive-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bottom-nav-responsive-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bottom-nav-responsive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Run mobile bottom navigation checks
+        run: |
+          bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/bottom-nav-vite.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          E2E_BASE_URL=http://127.0.0.1:4173 node e2e/bottom-nav-responsive-check.mjs

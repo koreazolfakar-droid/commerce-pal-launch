@@ -108,6 +108,9 @@ export function MobileMenu() {
           </section>
           <section>
             <h2 className="mb-1 px-3 text-sm font-bold">{t("accountOrders")}</h2>
+            <Link to="/wishlist" onClick={close} className={linkClass}>
+              {t("wishlistTitle")}
+            </Link>
             <a
               href={SHOP_ACCOUNT_URL}
               target="_blank"
