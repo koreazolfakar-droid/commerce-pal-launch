@@ -108,22 +108,11 @@ try {
   await routingPage.close();
 
   const badgePage = await browser.newPage({ viewport: { width: 360, height: 740 } });
-  await badgePage.addInitScript(() => {
-    localStorage.setItem(
-      "shopify-cart",
-      JSON.stringify({
-        state: {
-          items: [{ quantity: 105 }],
-          cartId: null,
-          checkoutUrl: null,
-          subtotal: null,
-          total: null,
-        },
-        version: 0,
-      }),
-    );
-  });
   await badgePage.goto(baseURL, { waitUntil: "load" });
+  await badgePage.evaluate(async () => {
+    const { useCartStore } = await import("/src/stores/cartStore.ts");
+    useCartStore.setState({ items: [{ quantity: 105 }] });
+  });
   const badge = badgePage.locator('[data-testid="bottom-nav-cart-badge"]');
   await badge.waitFor({ state: "visible" });
   assert.equal((await badge.textContent())?.trim(), "99+", "cart badge should cap counts at 99+");
