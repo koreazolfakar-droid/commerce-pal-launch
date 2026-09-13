@@ -102,15 +102,27 @@ function DealsCountdown() {
 }
 
 function HomePromoTicker({ language }: { language: string }) {
-  const text = language === "ar"
-    ? "Space Call لبنان • متجرك الموثوق للهواتف والإلكترونيات • توفر مباشر • أسعار واضحة • دفع آمن"
-    : "Space Call Lebanon • Your trusted phones & electronics store • Live availability • Clear pricing • Secure checkout";
+  const heading = language === "ar"
+    ? "Space Call لبنان - متجر الهواتف والإلكترونيات"
+    : "Space Call Lebanon - Phones & Electronics Store";
+  const details = language === "ar"
+    ? "متجرك الموثوق للهواتف والإلكترونيات • توفر مباشر • أسعار واضحة • دفع آمن"
+    : "Your trusted phones & electronics store • Live availability • Clear pricing • Secure checkout";
+  const accessibleLabel = `${heading} • ${details}`;
 
   return (
-    <div className="home-promo-ticker" data-testid="homepage-promo-ticker" aria-label={text}>
+    <div className="home-promo-ticker" data-testid="homepage-promo-ticker" aria-label={accessibleLabel}>
       <div className="home-promo-ticker-track">
-        <h1 className="home-promo-ticker-copy">{text}</h1>
-        <span className="home-promo-ticker-copy" aria-hidden="true">{text}</span>
+        <span className="home-promo-ticker-copy">
+          <h1 className="m-0 inline text-[inherit] font-[inherit] tracking-[inherit]">{heading}</h1>
+          <span className="home-promo-ticker-dot" aria-hidden="true">•</span>
+          <span>{details}</span>
+        </span>
+        <span className="home-promo-ticker-copy" aria-hidden="true">
+          <span>{heading}</span>
+          <span className="home-promo-ticker-dot">•</span>
+          <span>{details}</span>
+        </span>
       </div>
     </div>
   );
