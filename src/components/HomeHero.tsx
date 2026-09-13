@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
@@ -5,18 +6,16 @@ import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
 import { homepageHeroCollections } from "@/lib/homeMerchandising";
 import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { useLanguage } from "@/lib/i18n";
-import type { ShopifyCollection } from "@/lib/shopify";
+import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 
 const HERO_ROTATION_MS = 8000;
 
-export function HomeHero({ collections }: { collections: ShopifyCollection[] }) {
+export function HomeHero({ products: _products }: { products: ShopifyProduct[] }) {
   const { t, language } = useLanguage();
+  const queryClient = useQueryClient();
+  const collections = queryClient.getQueryData<ShopifyCollection[]>(["shopify", "collections"]) ?? [];
   const slides = useMemo(() => homepageHeroCollections(collections), [collections]);
   const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    setActiveIndex((current) => (slides.length ? Math.min(current, slides.length - 1) : 0));
-  }, [slides.length]);
 
   useEffect(() => {
     if (slides.length <= 1) return;
@@ -26,7 +25,7 @@ export function HomeHero({ collections }: { collections: ShopifyCollection[] }) 
     return () => window.clearInterval(timer);
   }, [slides.length]);
 
-  const activeSlide = slides[activeIndex];
+  const activeSlide = slides[activeIndex] ?? slides[0];
   const image = activeSlide?.image;
 
   return (
@@ -36,7 +35,7 @@ export function HomeHero({ collections }: { collections: ShopifyCollection[] }) 
         data-testid="home-hero"
         data-hero-source={activeSlide ? "shopify-collection" : "placeholder"}
         data-hero-handle={activeSlide?.handle ?? "none"}
-        className="group relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
+        className="relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
       >
         {image ? (
           <Link
@@ -59,10 +58,7 @@ export function HomeHero({ collections }: { collections: ShopifyCollection[] }) 
             />
           </Link>
         ) : (
-          <div
-            data-testid="home-hero-media"
-            className="absolute inset-0 z-[1] grid place-items-center bg-hero px-6 text-center"
-          >
+          <div data-testid="home-hero-media" className="absolute inset-0 z-[1] grid place-items-center bg-hero px-6 text-center">
             <div>
               <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-hero-muted">Space Call</p>
               <p className="mt-2 text-xl font-black sm:text-3xl">
@@ -73,10 +69,7 @@ export function HomeHero({ collections }: { collections: ShopifyCollection[] }) 
         )}
 
         {slides.length > 1 && (
-          <div
-            data-testid="home-hero-dots"
-            className="absolute bottom-3 end-3 z-10 flex items-center gap-1.5 rounded-full bg-black/30 px-2.5 py-2 backdrop-blur-md sm:bottom-5 sm:end-5"
-          >
+          <div data-testid="home-hero-dots" className="absolute bottom-3 end-3 z-10 flex items-center gap-1.5 rounded-full bg-black/30 px-2.5 py-2 backdrop-blur-md sm:bottom-5 sm:end-5">
             {slides.map((slide, index) => (
               <button
                 key={slide.id}
