@@ -53,15 +53,6 @@ body,
   }
 }
 
-/* Keep below-the-fold sections cheap to paint while preserving their footprint. */
-@supports (content-visibility: auto) {
-  .home-page > section:not(:first-of-type),
-  [data-testid="brand-showcases"] > section {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 520px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
