@@ -23,6 +23,13 @@ const GENERIC_HERO_WORDS = new Set([
   "tech",
 ]);
 
+type HeroImage = {
+  url: string;
+  altText: string | null;
+  width?: number | null;
+  height?: number | null;
+};
+
 function cleanHeroTitle(collection: ShopifyCollection) {
   return collection.title.replace(/^hero\s*[-:|]\s*/i, "").trim() || collection.title;
 }
@@ -46,6 +53,11 @@ function promotedProductForHero(collection: ShopifyCollection, products: Shopify
       return tokens.every((token) => searchable.includes(token));
     }) ?? null
   );
+}
+
+function isProductArtwork(image: HeroImage) {
+  if (!image.width || !image.height) return false;
+  return image.width / image.height < 1.35;
 }
 
 export function ShopifyHeroCollections({ collections }: { collections: ShopifyCollection[] }) {
@@ -137,24 +149,31 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               const resolvedCollection = query?.data?.collection ?? candidate;
               const slideProducts = query?.data?.products ?? [];
               const promotedProduct = promotedProductForHero(resolvedCollection, slideProducts);
-              const heroImage =
+              const heroImage = (
                 resolvedCollection.image ??
                 candidate.image ??
                 slideProducts[0]?.node.images.edges[0]?.node ??
-                null;
+                null
+              ) as HeroImage | null;
               const slideTitle = cleanHeroTitle(resolvedCollection);
 
               if (!heroImage?.url) return null;
 
+              const productArtwork = isProductArtwork(heroImage);
               const visual = (
-                <span className="relative block aspect-video w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-surface leading-none shadow-card">
+                <span
+                  className={`relative block aspect-video w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border leading-none shadow-card ${
+                    productArtwork ? "border-black/10 bg-white" : "border-border/70 bg-surface"
+                  }`}
+                  data-hero-artwork={productArtwork ? "product" : "banner"}
+                >
                   <img
                     src={cdnImage(heroImage.url, 1800)}
                     srcSet={cdnSrcSet(heroImage.url, 1800)}
                     sizes="(max-width: 639px) calc(100vw - 1.5rem), (min-width: 1280px) 1280px, 100vw"
                     alt={heroImage.altText ?? resolvedCollection.title}
-                    width={1600}
-                    height={900}
+                    width={heroImage.width ?? 1600}
+                    height={heroImage.height ?? 900}
                     loading={index === 0 ? "eager" : "lazy"}
                     fetchPriority={index === 0 ? "high" : "auto"}
                     decoding="async"
