@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Heart, House, LayoutGrid, Search, ShoppingBag, UserRound } from "lucide-react";
+import { House, LayoutGrid, Search, ShoppingBag, UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { SearchOverlay } from "@/components/SearchOverlay";
@@ -7,7 +7,6 @@ import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
-import "../mobile-ai-nav.css";
 
 function Count({ value }: { value: number }) {
   if (value <= 0) return null;
