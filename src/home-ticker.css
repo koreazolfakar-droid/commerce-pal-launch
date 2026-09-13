@@ -42,12 +42,6 @@ html[dir="rtl"] .home-promo-ticker-track {
   }
 }
 
-@media (max-width: 639px) {
-  [data-testid="collection-hero-tabs"] > [role="tablist"] {
-    display: none;
-  }
-}
-
 @media (min-width: 640px) {
   .home-promo-ticker-copy {
     padding-block: 0.6rem;
