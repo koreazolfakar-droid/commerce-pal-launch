@@ -27,17 +27,20 @@ export function HomeHero({
 }) {
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
-  const cachedCollections =
-    queryClient.getQueryData<ShopifyCollection[]>(["shopify", "collections"]) ?? [];
+  const cachedCollections = queryClient.getQueryData<ShopifyCollection[]>([
+    "shopify",
+    "collections",
+  ]);
 
   const configuredCollections = useMemo(() => {
+    const collections = cachedCollections ?? [];
     const primary = heroCollection?.collection;
-    if (!primary) return cachedCollections;
+    if (!primary) return collections;
 
     // The dedicated homepage-hero query is the source of truth for hero artwork.
     // Always prefer it over a possibly stale copy of the same collection from
     // the general collections cache.
-    return [primary, ...cachedCollections.filter((collection) => collection.id !== primary.id)];
+    return [primary, ...collections.filter((collection) => collection.id !== primary.id)];
   }, [cachedCollections, heroCollection?.collection]);
 
   const slides = useMemo(
