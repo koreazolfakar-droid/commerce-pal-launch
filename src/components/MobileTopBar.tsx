@@ -45,7 +45,7 @@ export function MobileTopBar({
     <>
       {/* Only the main header row stays sticky. */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-3 py-2.5">
+        <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-3 py-2">
           <MobileMenu />
           <Link
             to="/"
@@ -70,7 +70,7 @@ export function MobileTopBar({
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
-              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-full transition-colors hover:bg-surface sm:grid"
+              className="press relative hidden h-11 w-11 shrink-0 place-items-center rounded-full transition-colors duration-150 hover:bg-surface sm:grid"
             >
               <Heart className="h-[21px] w-[21px]" strokeWidth={1.9} />
               <Badge value={wishlistCount} />
@@ -79,7 +79,7 @@ export function MobileTopBar({
               type="button"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
               aria-label={`Cart, ${cartCount} items`}
-              className="press relative grid h-10 w-10 place-items-center rounded-full border border-transparent transition-colors hover:border-border hover:bg-surface"
+              className="press relative grid h-11 w-11 place-items-center rounded-full border border-transparent transition-colors duration-150 hover:border-border hover:bg-surface"
             >
               <ShoppingBag className="h-[21px] w-[21px]" strokeWidth={1.9} />
               <Badge value={cartCount} />
@@ -94,7 +94,7 @@ export function MobileTopBar({
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-4 text-start text-sm text-muted-foreground shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
+            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-4 text-start text-sm text-muted-foreground shadow-sm transition duration-150 hover:border-primary/20 hover:bg-accent/60"
           >
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="truncate">{t("search")}</span>
@@ -103,7 +103,7 @@ export function MobileTopBar({
             to="/compare"
             search={{ products: undefined }}
             aria-label="Compare smartphones"
-            className="press grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border/70 bg-card shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
+            className="press grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border/70 bg-card shadow-sm transition duration-150 hover:border-primary/20 hover:bg-accent/60"
           >
             <Columns2 className="h-5 w-5" strokeWidth={1.9} />
           </Link>
@@ -115,7 +115,7 @@ export function MobileTopBar({
               ? Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={index}
-                    className="shimmer h-8 w-20 shrink-0 rounded-full bg-surface"
+                    className="shimmer h-11 w-24 shrink-0 rounded-full bg-surface"
                     aria-hidden
                   />
                 ))
@@ -124,7 +124,7 @@ export function MobileTopBar({
               <Link
                 to="/shop"
                 className={cn(
-                  "press flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
+                  "press flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors duration-150",
                   !activeSlug
                     ? "border-primary bg-primary text-primary-foreground"
                     : "bg-surface text-muted-foreground hover:bg-accent",
@@ -136,7 +136,7 @@ export function MobileTopBar({
             )}
             <Link
               to="/used-phones"
-              className="press flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-accent px-3 text-[12px] font-semibold text-accent-foreground"
+              className="press flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-accent px-3 text-[12px] font-semibold text-accent-foreground"
             >
               {t("usedPhones")}
             </Link>
@@ -149,7 +149,7 @@ export function MobileTopBar({
                   to="/category/$slug"
                   params={{ slug: category.slug }}
                   className={cn(
-                    "press flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
+                    "press flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors duration-150",
                     active
                       ? "border-primary bg-primary text-primary-foreground"
                       : "bg-surface text-muted-foreground hover:bg-accent",
