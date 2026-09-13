@@ -36,14 +36,16 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
   await expect(showcase.first()).toContainText("Zeta showcase");
 });
 
-test("rebuilt hero focuses on exactly one live catalogue product", async ({ page }) => {
+test("rebuilt hero is controlled by Shopify homepage-hero collection and links its first product", async ({ page }) => {
   await page.goto("/");
   const hero = page.getByTestId("home-hero");
+  await expect(hero).toHaveAttribute("data-hero-source", "shopify-homepage-hero");
+  await expect(hero).toHaveAttribute("data-hero-collection-handle", "homepage-hero");
   await expect(hero).toHaveAttribute("data-hero-handle", "fixture-phone-1");
   await expect(hero.getByRole("heading", { level: 2 })).toContainText(
     "Samsung Fixture Phone 512GB with a long product title",
   );
-  await expect(hero.locator("img")).toHaveAttribute("alt", "Fixture phone Front");
+  await expect(hero.locator("img")).toHaveAttribute("alt", "Merchant artwork homepage-hero");
   const productHrefs = await hero.locator('a[href^="/product/"]').evaluateAll((links) =>
     [...new Set(links.map((link) => link.getAttribute("href")))],
   );

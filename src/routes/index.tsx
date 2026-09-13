@@ -17,6 +17,7 @@ import {
   bestSellingQueryOptions,
   newestQueryOptions,
   catalogQueryOptions,
+  collectionQueryOptions,
   collectionsQueryOptions,
 } from "@/lib/queries";
 import { productDiscountPercent } from "@/lib/shopify";
@@ -30,11 +31,14 @@ import {
 } from "@/lib/seo";
 import "../home-ticker.css";
 
+const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
+
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
+      context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
     ]);
   },
   head: () => {
@@ -133,6 +137,9 @@ function Index() {
   const [showProductSections, setShowProductSections] = useState(false);
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
+  const { data: heroCollection } = useSuspenseQuery(
+    collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
+  );
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
     enabled: showProductSections,
@@ -161,7 +168,7 @@ function Index() {
           <>
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
               <HomePromoTicker language={language} />
-              <HomeHero products={products} />
+              <HomeHero products={products} heroCollection={heroCollection} />
             </div>
 
             <CategorySection catalog={catalog} collections={collections} />
