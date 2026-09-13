@@ -7,10 +7,9 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SmartPhoneAdvisor } from "@/components/SmartPhoneAdvisor";
 import { WhatsAppCTA } from "@/components/WhatsAppCTA";
-import "../ux-polish.css";
-import "../ux-welcome.css";
 import "../dark-black.css";
 import "../ui-overhaul.css";
+import "../design-consistency.css";
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
 export function StoreLayout({ children, aiContext }: { children: ReactNode; aiContext?: string }) {
