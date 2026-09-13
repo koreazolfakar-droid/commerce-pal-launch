@@ -38,9 +38,9 @@ function syncRuntimeEnv(env: unknown) {
     "GEMINI_API_KEY",
     "GOOGLE_API_KEY",
     "GEMINI_MODEL",
-    "NVIDIA_API_KEY",
-    "NVIDIA_MODEL",
-    "LOVABLE_API_KEY",
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_NVIDIA_FUNCTION",
   ]) {
     const value = runtime[key];
     if (typeof value === "string" && value && !process.env[key]) {
@@ -193,7 +193,7 @@ export default {
 
     // Cloudflare/Lovable runtime bindings are passed through `env`; TanStack server
     // functions in this app read server-only secrets from process.env. Mirror only
-    // the known server-side bindings so Shopify works in SSR without exposing tokens.
+    // the known server-side bindings so Shopify and protected API gateways work in SSR.
     syncRuntimeEnv(env);
 
     try {
