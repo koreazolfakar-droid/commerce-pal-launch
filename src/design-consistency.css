@@ -48,6 +48,11 @@
   .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > nav {
     padding-inline: var(--sc-gutter-mobile);
   }
+
+  /* Fixed bottom navigation must never hide the final content/footer controls. */
+  .store-layout:not([data-cart-page="true"]) {
+    padding-bottom: var(--mobile-nav-height);
+  }
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {
@@ -99,6 +104,45 @@
   background: var(--color-surface);
 }
 
+/* Search is already represented by the mobile search field: keep its results surface compact. */
+@media (max-width: 639px) {
+  .store-layout[data-search-page="true"] .search-catalog > div {
+    padding-top: 0.75rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .store-layout[data-search-page="true"] .search-catalog > div > header {
+    display: none;
+  }
+
+  .store-layout[data-search-page="true"] .search-catalog div:has(> p + div > select) {
+    flex-wrap: wrap;
+    row-gap: 0.55rem;
+  }
+
+  .store-layout[data-search-page="true"] .search-catalog div:has(> p + div > select) > p {
+    width: 100%;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .store-layout[data-search-page="true"] .search-catalog div:has(> p + div > select) > div {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .store-layout[data-search-page="true"] .search-catalog div:has(> p + div > select) > div > select {
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 auto;
+  }
+
+  /* Dense catalogue screens do not get floating controls over product cards. */
+  .store-layout[data-catalog-page="true"] :is(.store-contact-action, .store-ai-launcher) {
+    display: none !important;
+  }
+}
+
 /* Bottom navigation follows the same semantic palette as the rest of the store. */
 [data-testid="bottom-nav"] {
   border-color: color-mix(in oklab, var(--color-border) 72%, transparent) !important;
@@ -109,19 +153,20 @@
   color: var(--color-muted-foreground) !important;
 }
 
-[data-testid="bottom-nav"] :is(a, button)[aria-current="page"],
-[data-testid="bottom-nav"] a[href="/"] {
+[data-testid="bottom-nav"] :is(a, button)[data-active="true"] {
   color: var(--color-primary) !important;
 }
 
-[data-testid="bottom-nav"] a[href="/"] > span:first-child {
+[data-testid="bottom-nav"] :is(a, button)[data-active="true"] > span:first-child {
   border-color: color-mix(in oklab, var(--color-primary) 20%, var(--color-border)) !important;
   background: color-mix(in oklab, var(--color-primary) 11%, var(--color-card)) !important;
   box-shadow: var(--shadow-card) !important;
 }
 
-[data-testid="bottom-nav"] a[href="/"] svg path:first-child {
-  fill: var(--color-primary) !important;
+[data-testid="bottom-nav"] :is(a, button)[data-active="false"] > span:first-child {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
