@@ -147,8 +147,10 @@ function Index() {
           <div className="px-4"><div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center"><h1 className="text-2xl font-bold">{t("welcomeStore")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("catalogUpdating")}</p></div></div>
         ) : (
           <>
-            <HomePromoTicker language={language} />
-            <ShopifyHeroCollections collections={collections} />
+            <div className="grid min-w-0 gap-3 sm:gap-4">
+              <HomePromoTicker language={language} />
+              <ShopifyHeroCollections collections={collections} />
+            </div>
             <BenefitsBar compact />
 
             <CategorySection catalog={catalog} collections={collections} />
