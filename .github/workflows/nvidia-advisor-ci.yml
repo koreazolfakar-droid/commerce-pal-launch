@@ -1,0 +1,38 @@
+name: NVIDIA Advisor CI
+
+on:
+  push:
+    branches:
+      - feature/nvidia-smart-advisor-v2
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: NVIDIA advisor regression tests
+        run: node --test e2e/nvidia-advisor.test.mjs
+
+      - name: Production build
+        run: bun run build
+
+      - name: Full repository unit suite (diagnostic)
+        continue-on-error: true
+        run: bun run test:unit
