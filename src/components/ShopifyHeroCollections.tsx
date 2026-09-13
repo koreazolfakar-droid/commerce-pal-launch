@@ -21,9 +21,62 @@ import { useCartStore } from "@/stores/cartStore";
 
 const HERO_AUTOPLAY_MS = 5500;
 const HERO_SWIPE_THRESHOLD_PX = 45;
+const HERO_MATCH_NOISE = new Set([
+  "hero",
+  "collection",
+  "collections",
+  "clean",
+  "background",
+  "image",
+  "img",
+  "webp",
+  "png",
+  "jpg",
+  "jpeg",
+]);
 
 function cleanTabTitle(collection: ShopifyCollection) {
   return collection.title.replace(/^hero\s*[-:|]\s*/i, "").trim() || collection.title;
+}
+
+function heroMatchTokens(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(
+      (token) =>
+        token.length > 1 &&
+        !HERO_MATCH_NOISE.has(token) &&
+        !/^\d+x\d+$/.test(token),
+    );
+}
+
+function selectPromotedHeroProduct(collection: ShopifyCollection, products: ShopifyProduct[]) {
+  if (!products.length) return null;
+
+  const imageFile = collection.image?.url.split("/").pop()?.split("?")[0] ?? "";
+  const tokens = heroMatchTokens(`${imageFile} ${cleanTabTitle(collection)}`);
+  if (!tokens.length) return products[0]!;
+
+  let bestProduct = products[0]!;
+  let bestScore = -1;
+
+  for (const product of products) {
+    const node = product.node;
+    const searchable = `${node.title} ${node.handle} ${node.vendor ?? ""}`.toLowerCase();
+    const score = tokens.reduce(
+      (total, token) => total + (searchable.includes(token) ? 1 : 0),
+      0,
+    );
+    if (score > bestScore) {
+      bestProduct = product;
+      bestScore = score;
+    }
+  }
+
+  return bestProduct;
 }
 
 function HeroProductCard({ product }: { product: ShopifyProduct }) {
@@ -128,7 +181,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
     }, HERO_AUTOPLAY_MS);
 
     return () => window.clearInterval(timer);
-  }, [candidates.length, isAutoPaused]);
+  }, [activeIndex, candidates.length, isAutoPaused]);
 
   if (!candidates.length) return null;
 
@@ -138,7 +191,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const result = activeQuery?.data;
   const collection = result?.collection ?? fallback;
   const products = result?.products ?? [];
-  const promotedProduct = products[0] ?? null;
+  const promotedProduct = selectPromotedHeroProduct(collection, products);
   const leadImage = collection.image ?? promotedProduct?.node.images.edges[0]?.node ?? null;
   const displayTitle = cleanTabTitle(collection);
   const isGenericHomeTitle = /^home\s*page$/i.test(displayTitle);
@@ -168,6 +221,11 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
     window.setTimeout(() => {
       suppressNextClick.current = false;
     }, 350);
+  };
+
+  const handleTouchCancel = () => {
+    touchStartX.current = null;
+    setIsAutoPaused(false);
   };
 
   const handleHeroClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -218,10 +276,12 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
       className="min-w-0"
       data-testid="collection-hero-tabs"
       aria-label="Featured collection"
-      onMouseEnter={() => setIsAutoPaused(true)}
-      onMouseLeave={() => setIsAutoPaused(false)}
-      onFocusCapture={() => setIsAutoPaused(true)}
-      onBlurCapture={() => setIsAutoPaused(false)}
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") setIsAutoPaused(true);
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType === "mouse") setIsAutoPaused(false);
+      }}
     >
       <div
         id="featured-hero-panel"
@@ -229,7 +289,11 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
         className="min-w-0"
         aria-label={collection.title}
       >
-        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
+        >
           {promotedProduct ? (
             <Link
               to="/product/$handle"
