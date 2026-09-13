@@ -22,15 +22,34 @@ try {
 
     const metrics = await page.locator('[data-testid="home-hero"]').evaluate((element) => {
       const rect = element.getBoundingClientRect();
+      const parentRect = element.parentElement?.getBoundingClientRect();
+      const homeRect = document.querySelector(".home-page")?.getBoundingClientRect();
+      const bodyRect = document.body.getBoundingClientRect();
+      const normalize = (value) =>
+        value
+          ? {
+              width: value.width,
+              height: value.height,
+              left: value.left,
+              right: value.right,
+            }
+          : null;
       return {
         width: rect.width,
         height: rect.height,
         left: rect.left,
         right: rect.right,
         viewportWidth: window.innerWidth,
+        clientWidth: document.documentElement.clientWidth,
         scrollWidth: document.documentElement.scrollWidth,
+        body: normalize(bodyRect),
+        parent: normalize(parentRect),
+        home: normalize(homeRect),
+        direction: getComputedStyle(document.documentElement).direction,
       };
     });
+
+    console.log(`METRICS ${testCase.name}: ${JSON.stringify(metrics)}`);
 
     assert.ok(metrics.left >= -1, `${testCase.name}: hero starts outside viewport`);
     assert.ok(
