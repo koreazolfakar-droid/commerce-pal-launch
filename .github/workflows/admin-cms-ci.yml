@@ -1,0 +1,150 @@
+name: Admin CMS CI
+
+on:
+  pull_request:
+    paths:
+      - "admin/**"
+      - ".github/workflows/admin-cms-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "admin/**"
+      - ".github/workflows/admin-cms-ci.yml"
+
+jobs:
+  validate-admin:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: admin
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+      DATABASE_NAME: postgres
+      ADMIN_EMAIL: admin@spacecall.local
+      ADMIN_COOKIE_SECRET: ci-cookie-secret-space-call-1234567890
+      PORT: 3001
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: admin/package.json
+
+      - name: Install admin dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Create test admin password hash
+        run: |
+          HASH=$(node --input-type=module -e 'import bcrypt from "bcryptjs"; console.log(await bcrypt.hash("ci-test-password", 4))')
+          echo "ADMIN_PASSWORD_HASH=$HASH" >> "$GITHUB_ENV"
+
+      - name: Prepare CMS schema
+        working-directory: .
+        run: |
+          psql "$DATABASE_URL" <<'SQL'
+          create schema admin_private;
+          create table admin_private.sessions (
+            sid varchar not null primary key,
+            sess json not null,
+            expire timestamp(6) not null
+          );
+
+          create table public.cms_site_settings (
+            key text primary key,
+            value_text text,
+            value_json jsonb,
+            value_type text not null default 'text',
+            label text,
+            group_name text not null default 'general',
+            is_public boolean not null default true,
+            updated_at timestamptz not null default now()
+          );
+
+          create table public.cms_hero_slides (
+            id uuid primary key default gen_random_uuid(),
+            title text,
+            subtitle text,
+            image_url text not null,
+            mobile_image_url text,
+            button_label text,
+            target_type text not null default 'none',
+            target_value text,
+            sort_order integer not null default 0,
+            is_published boolean not null default false,
+            starts_at timestamptz,
+            ends_at timestamptz,
+            updated_at timestamptz not null default now(),
+            created_at timestamptz not null default now()
+          );
+
+          create table public.cms_sections (
+            id uuid primary key default gen_random_uuid(),
+            page_slug text not null,
+            section_key text not null,
+            section_type text not null,
+            title text,
+            subtitle text,
+            content jsonb not null default '{}'::jsonb,
+            sort_order integer not null default 0,
+            is_visible boolean not null default true,
+            updated_at timestamptz not null default now(),
+            created_at timestamptz not null default now()
+          );
+
+          create table public.cms_navigation_items (
+            id uuid primary key default gen_random_uuid(),
+            area text not null,
+            label text not null,
+            icon_type text not null default 'lucide',
+            icon_value text,
+            href text,
+            sort_order integer not null default 0,
+            is_visible boolean not null default true,
+            updated_at timestamptz not null default now(),
+            created_at timestamptz not null default now()
+          );
+          SQL
+
+      - name: Syntax check
+        run: node --check server.mjs
+
+      - name: Boot AdminJS and verify routes
+        run: |
+          npm start > /tmp/space-call-admin.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3001/healthz > /dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              cat /tmp/space-call-admin.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          curl --fail --silent --location http://127.0.0.1:3001/admin/login > /tmp/admin-login.html
+          grep --quiet "Space Call" /tmp/admin-login.html

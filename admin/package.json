@@ -1,0 +1,25 @@
+{
+  "name": "space-call-admin",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "NODE_ENV=development node --watch server.mjs",
+    "start": "NODE_ENV=production node server.mjs"
+  },
+  "dependencies": {
+    "@adminjs/express": "6.1.1",
+    "@adminjs/sql": "2.2.6",
+    "adminjs": "7.8.17",
+    "bcryptjs": "3.0.3",
+    "connect-pg-simple": "10.0.0",
+    "express": "4.22.2",
+    "express-formidable": "1.2.0",
+    "express-session": "1.19.0",
+    "pg": "8.23.0",
+    "tslib": "2.8.1"
+  }
+}
