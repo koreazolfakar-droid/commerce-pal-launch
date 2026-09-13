@@ -523,7 +523,7 @@ ${JSON.stringify(catalogCandidates)}`;
     // Keep the assistant useful even when live Search Grounding is unavailable
     // (for example a tier/quota restriction). This also proves whether the API
     // key itself works instead of showing a misleading generic failure.
-    for (const model of models) {
+    for (const model of apiKey ? models : []) {
       let response: Response;
       try {
         response = await callGemini({ apiKey, model, prompt, useSearch: false });
