@@ -6,7 +6,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
-import { BenefitsBar, RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
+import { RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
 import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
 import { StoreLayout } from "@/components/StoreLayout";
 import { TopBrands } from "@/components/TopBrands";
@@ -163,7 +163,6 @@ function Index() {
               <HomePromoTicker language={language} />
               <ShopifyHeroCollections collections={collections} />
             </div>
-            <BenefitsBar compact />
 
             <CategorySection catalog={catalog} collections={collections} />
             <TopBrands brands={brands} />
