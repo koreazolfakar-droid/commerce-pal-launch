@@ -69,3 +69,12 @@ jobs:
           e2e/layout.spec.ts
           --project=mobile
           --project=desktop
+
+      - name: Upload visual review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-visual-review
+          path: "*-review.png"
+          if-no-files-found: ignore
+          retention-days: 7
