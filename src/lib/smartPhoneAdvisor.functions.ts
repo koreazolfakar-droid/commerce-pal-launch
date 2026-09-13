@@ -508,7 +508,7 @@ ${JSON.stringify(catalogCandidates)}`;
 
       // A 401 means the key itself is invalid. Other statuses can be model/search
       // tier limitations, so continue to another supported model before failing.
-      if (response.status === 401) {
+      if (response.status === 401 && !gatewayKey) {
         return failure(
           "The Gemini API key was rejected. Check GEMINI_API_KEY in the deployment secrets.",
           "ADVISOR_AUTH_ERROR",
