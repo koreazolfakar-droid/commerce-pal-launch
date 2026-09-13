@@ -19,64 +19,42 @@ import {
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 
-const HERO_AUTOPLAY_MS = 5500;
-const HERO_SWIPE_THRESHOLD_PX = 45;
-const HERO_MATCH_NOISE = new Set([
-  "hero",
+const HERO_AUTOPLAY_MS = 6000;
+const GENERIC_HERO_WORDS = new Set([
+  "picks",
+  "highlights",
+  "featured",
+  "offers",
+  "offer",
   "collection",
-  "collections",
-  "clean",
-  "background",
-  "image",
-  "img",
-  "webp",
-  "png",
-  "jpg",
-  "jpeg",
+  "home",
+  "page",
+  "tech",
 ]);
 
 function cleanTabTitle(collection: ShopifyCollection) {
   return collection.title.replace(/^hero\s*[-:|]\s*/i, "").trim() || collection.title;
 }
 
-function heroMatchTokens(value: string) {
-  return value
+function promotedProductForHero(collection: ShopifyCollection, products: ShopifyProduct[]) {
+  if (!products.length) return null;
+  if (products.length === 1) return products[0]!;
+
+  const tokens = cleanTabTitle(collection)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(/\s+/)
-    .filter(
-      (token) =>
-        token.length > 1 &&
-        !HERO_MATCH_NOISE.has(token) &&
-        !/^\d+x\d+$/.test(token),
-    );
-}
+    .filter((token) => token.length > 1 && !GENERIC_HERO_WORDS.has(token));
 
-function selectPromotedHeroProduct(collection: ShopifyCollection, products: ShopifyProduct[]) {
-  if (!products.length) return null;
+  if (tokens.length < 2) return null;
 
-  const imageFile = collection.image?.url.split("/").pop()?.split("?")[0] ?? "";
-  const tokens = heroMatchTokens(`${imageFile} ${cleanTabTitle(collection)}`);
-  if (!tokens.length) return products[0]!;
-
-  let bestProduct = products[0]!;
-  let bestScore = -1;
-
-  for (const product of products) {
-    const node = product.node;
-    const searchable = `${node.title} ${node.handle} ${node.vendor ?? ""}`.toLowerCase();
-    const score = tokens.reduce(
-      (total, token) => total + (searchable.includes(token) ? 1 : 0),
-      0,
-    );
-    if (score > bestScore) {
-      bestProduct = product;
-      bestScore = score;
-    }
-  }
-
-  return bestProduct;
+  return (
+    products.find((product) => {
+      const searchable = `${product.node.vendor ?? ""} ${product.node.title}`.toLowerCase();
+      return tokens.every((token) => searchable.includes(token));
+    }) ?? null
+  );
 }
 
 function HeroProductCard({ product }: { product: ShopifyProduct }) {
@@ -155,9 +133,8 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
   const hydrated = useHydrated();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isAutoPaused, setIsAutoPaused] = useState(false);
-  const touchStartX = useRef<number | null>(null);
-  const suppressNextClick = useRef(false);
+  const [paused, setPaused] = useState(false);
+  const sliderRef = useRef<HTMLDivElement | null>(null);
 
   const queries = useQueries({
     queries: candidates.map((collection) => ({
@@ -171,17 +148,25 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   }, [activeIndex, candidates.length]);
 
   useEffect(() => {
-    if (candidates.length <= 1 || isAutoPaused) return;
+    if (candidates.length <= 1 || paused) return;
     if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
 
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % candidates.length);
+    const timer = window.setTimeout(() => {
+      const nextIndex = (activeIndex + 1) % candidates.length;
+      const slider = sliderRef.current;
+      if (!slider) return;
+
+      slider.scrollTo({
+        left: nextIndex * slider.clientWidth,
+        behavior: "smooth",
+      });
+      setActiveIndex(nextIndex);
     }, HERO_AUTOPLAY_MS);
 
-    return () => window.clearInterval(timer);
-  }, [activeIndex, candidates.length, isAutoPaused]);
+    return () => window.clearTimeout(timer);
+  }, [activeIndex, candidates.length, paused]);
 
   if (!candidates.length) return null;
 
@@ -191,163 +176,132 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const result = activeQuery?.data;
   const collection = result?.collection ?? fallback;
   const products = result?.products ?? [];
-  const promotedProduct = selectPromotedHeroProduct(collection, products);
-  const leadImage = collection.image ?? promotedProduct?.node.images.edges[0]?.node ?? null;
   const displayTitle = cleanTabTitle(collection);
   const isGenericHomeTitle = /^home\s*page$/i.test(displayTitle);
 
-  const goToIndex = (index: number) => {
-    const next = (index + candidates.length) % candidates.length;
-    setActiveIndex(next);
+  const scrollToIndex = (index: number) => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+
+    slider.scrollTo({
+      left: index * slider.clientWidth,
+      behavior:
+        typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+    });
+    setActiveIndex(index);
   };
 
-  const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
-    touchStartX.current = event.touches[0]?.clientX ?? null;
-    setIsAutoPaused(true);
+  const handleScroll = () => {
+    const slider = sliderRef.current;
+    if (!slider || slider.clientWidth === 0) return;
+
+    const nextIndex = Math.max(
+      0,
+      Math.min(candidates.length - 1, Math.round(slider.scrollLeft / slider.clientWidth)),
+    );
+
+    if (nextIndex !== activeIndex) setActiveIndex(nextIndex);
   };
-
-  const handleTouchEnd = (event: React.TouchEvent<HTMLElement>) => {
-    const startX = touchStartX.current;
-    const endX = event.changedTouches[0]?.clientX;
-    touchStartX.current = null;
-    setIsAutoPaused(false);
-
-    if (startX === null || endX === undefined) return;
-    const distance = endX - startX;
-    if (Math.abs(distance) < HERO_SWIPE_THRESHOLD_PX) return;
-
-    suppressNextClick.current = true;
-    goToIndex(safeActiveIndex + (distance < 0 ? 1 : -1));
-    window.setTimeout(() => {
-      suppressNextClick.current = false;
-    }, 350);
-  };
-
-  const handleTouchCancel = () => {
-    touchStartX.current = null;
-    setIsAutoPaused(false);
-  };
-
-  const handleHeroClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!suppressNextClick.current) return;
-    event.preventDefault();
-    suppressNextClick.current = false;
-  };
-
-  const heroVisual = (
-    <span
-      key={collection.id}
-      className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card animate-in fade-in duration-500"
-    >
-      {leadImage ? (
-        <img
-          key={`${collection.id}-${leadImage.url}`}
-          src={cdnImage(leadImage.url, 1800)}
-          srcSet={cdnSrcSet(leadImage.url, 1800)}
-          sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
-          alt={leadImage.altText ?? collection.title}
-          width={1672}
-          height={941}
-          loading={safeActiveIndex === 0 ? "eager" : "lazy"}
-          fetchPriority={safeActiveIndex === 0 ? "high" : "auto"}
-          decoding="async"
-          draggable={false}
-          className="m-0 block h-auto w-full max-w-none select-none align-top"
-        />
-      ) : (
-        <span className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
-          {t("galleryEmpty")}
-        </span>
-      )}
-
-      {activeQuery?.isFetching && !activeQuery?.isPending && (
-        <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
-          <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
-        </span>
-      )}
-    </span>
-  );
-
-  const heroLinkClass =
-    "group relative -mx-3 block w-[calc(100%+1.5rem)] max-w-none touch-pan-y bg-transparent sm:mx-0 sm:w-full";
 
   return (
-    <section
-      className="min-w-0"
-      data-testid="collection-hero-tabs"
-      aria-label="Featured collection"
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") setIsAutoPaused(true);
-      }}
-      onPointerLeave={(event) => {
-        if (event.pointerType === "mouse") setIsAutoPaused(false);
-      }}
-    >
-      <div
-        id="featured-hero-panel"
-        role="tabpanel"
-        className="min-w-0"
-        aria-label={collection.title}
-      >
+    <section className="min-w-0" aria-label="Featured offers">
+      <div className="relative -mx-3 sm:mx-0">
         <div
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchCancel}
+          ref={sliderRef}
+          onScroll={handleScroll}
+          onPointerDown={() => setPaused(true)}
+          onPointerUp={() => setPaused(false)}
+          onPointerCancel={() => setPaused(false)}
+          onPointerEnter={(event) => {
+            if (event.pointerType === "mouse") setPaused(true);
+          }}
+          onPointerLeave={(event) => {
+            if (event.pointerType === "mouse") setPaused(false);
+          }}
+          className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          data-testid="collection-hero-slider"
         >
-          {promotedProduct ? (
-            <Link
-              to="/product/$handle"
-              params={{ handle: promotedProduct.node.handle }}
-              className={heroLinkClass}
-              data-testid="collection-hero-visual"
-              aria-label={`${displayTitle}: ${promotedProduct.node.title}`}
-              onClick={handleHeroClick}
-            >
-              {heroVisual}
-            </Link>
-          ) : (
-            <Link
-              to="/collections/$handle"
-              params={{ handle: collection.handle }}
-              className={heroLinkClass}
-              data-testid="collection-hero-visual"
-              aria-label={displayTitle}
-              onClick={handleHeroClick}
-            >
-              {heroVisual}
-            </Link>
-          )}
+          {candidates.map((candidate, index) => {
+            const query = queries[index];
+            const resolvedCollection = query?.data?.collection ?? candidate;
+            const slideProducts = query?.data?.products ?? [];
+            const promotedProduct = promotedProductForHero(resolvedCollection, slideProducts);
+            const leadImage =
+              resolvedCollection.image ?? slideProducts[0]?.node.images.edges[0]?.node ?? null;
+            const slideTitle = cleanTabTitle(resolvedCollection);
+
+            const visual = (
+              <span className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
+                {leadImage ? (
+                  <img
+                    src={cdnImage(leadImage.url, 1800)}
+                    srcSet={cdnSrcSet(leadImage.url, 1800)}
+                    sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
+                    alt={leadImage.altText ?? resolvedCollection.title}
+                    width={1672}
+                    height={941}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "auto"}
+                    decoding="async"
+                    draggable={false}
+                    className="m-0 block h-auto w-full max-w-none select-none align-top"
+                  />
+                ) : (
+                  <span className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
+                    {t("galleryEmpty")}
+                  </span>
+                )}
+
+                {query?.isFetching && !query?.isPending && (
+                  <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
+                  </span>
+                )}
+              </span>
+            );
+
+            return (
+              <div key={candidate.id} className="w-full shrink-0 snap-center px-3 sm:px-0">
+                {promotedProduct ? (
+                  <Link
+                    to="/product/$handle"
+                    params={{ handle: promotedProduct.node.handle }}
+                    className="block w-full touch-pan-y"
+                    aria-label={`${slideTitle}: ${promotedProduct.node.title}`}
+                  >
+                    {visual}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/collections/$handle"
+                    params={{ handle: resolvedCollection.handle }}
+                    className="block w-full touch-pan-y"
+                    aria-label={slideTitle}
+                  >
+                    {visual}
+                  </Link>
+                )}
+              </div>
+            );
+          })}
         </div>
+      </div>
 
-        {candidates.length > 1 && (
-          <div
-            role="tablist"
-            aria-label="Featured offers"
-            className="mt-2 flex items-center justify-center gap-1.5"
-          >
-            {candidates.map((candidate, index) => {
-              const selected = index === safeActiveIndex;
-              return (
-                <button
-                  key={candidate.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  aria-controls="featured-hero-panel"
-                  aria-label={`Show ${cleanTabTitle(candidate)}`}
-                  title={cleanTabTitle(candidate)}
-                  onClick={() => goToIndex(index)}
-                  className={`h-1 rounded-full transition-all duration-300 ${
-                    selected
-                      ? "w-8 bg-primary"
-                      : "w-3 bg-border hover:bg-muted-foreground/50"
-                  }`}
-                />
-              );
-            })}
-          </div>
-        )}
+      {candidates.length > 1 && (
+        <div className="mx-auto mt-2.5 h-[3px] w-20 overflow-hidden rounded-full bg-border/70" aria-hidden="true">
+          <span
+            className="block h-full rounded-full bg-primary transition-transform duration-300"
+            style={{
+              width: `${100 / candidates.length}%`,
+              transform: `translateX(${safeActiveIndex * 100}%)`,
+            }}
+          />
+        </div>
+      )}
 
+      <div className="min-w-0" aria-live="polite">
         {!isGenericHomeTitle && (
           <div className="mt-5 flex items-end justify-between gap-3 sm:mt-9">
             <div className="min-w-0">
@@ -377,6 +331,22 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
           </div>
         ) : null}
       </div>
+
+      {candidates.length > 1 && (
+        <div className="sr-only" role="tablist" aria-label="Featured offers">
+          {candidates.map((candidate, index) => (
+            <button
+              key={candidate.id}
+              type="button"
+              role="tab"
+              aria-selected={index === safeActiveIndex}
+              onClick={() => scrollToIndex(index)}
+            >
+              {cleanTabTitle(candidate)}
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
