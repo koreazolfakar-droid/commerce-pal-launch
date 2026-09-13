@@ -13,7 +13,7 @@ function Count({ value }: { value: number }) {
   if (value <= 0) return null;
 
   return (
-    <span className="absolute -right-2 -top-2 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#1f6ff2] px-1 text-[9px] font-extrabold leading-none text-white shadow-[0_3px_10px_rgba(31,111,242,.3)] ring-2 ring-white dark:ring-[#151922]">
+    <span className="absolute -right-1.5 -top-1.5 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-[#1f6ff2] px-1 text-[8px] font-black leading-none text-white shadow-[0_4px_10px_rgba(31,111,242,.28)] ring-2 ring-white dark:ring-[#111722]">
       {value > 99 ? "99+" : value}
     </span>
   );
@@ -21,7 +21,7 @@ function Count({ value }: { value: number }) {
 
 function SearchGlyph() {
   return (
-    <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[25px] w-[25px]" fill="none">
+    <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[24px] w-[24px]" fill="none">
       <circle cx="12" cy="12" r="7.25" stroke="currentColor" strokeWidth="2.05" />
       <path d="m17.35 17.35 5.15 5.15" stroke="currentColor" strokeWidth="2.05" strokeLinecap="round" />
     </svg>
@@ -30,7 +30,7 @@ function SearchGlyph() {
 
 function AiGlyph() {
   return (
-    <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[25px] w-[25px]" fill="none">
+    <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[24px] w-[24px]" fill="none">
       <path
         d="M14 3.6c.45 4.92 2.92 7.4 7.84 7.84-4.92.45-7.4 2.92-7.84 7.84-.45-4.92-2.92-7.4-7.84-7.84C11.08 11 13.55 8.52 14 3.6Z"
         fill="currentColor"
@@ -47,7 +47,7 @@ function AiGlyph() {
 
 function HomeGlyph() {
   return (
-    <svg viewBox="0 0 30 30" aria-hidden="true" className="h-[29px] w-[29px]">
+    <svg viewBox="0 0 30 30" aria-hidden="true" className="h-[27px] w-[27px]">
       <path
         d="M4.2 12.65 13.16 5a2.84 2.84 0 0 1 3.68 0l8.96 7.65c.63.54 1 1.33 1 2.16v8.33A2.86 2.86 0 0 1 23.94 26H6.06a2.86 2.86 0 0 1-2.86-2.86v-8.33c0-.83.37-1.62 1-2.16Z"
         fill="currentColor"
@@ -59,7 +59,7 @@ function HomeGlyph() {
 
 function HeartGlyph({ active = false }: { active?: boolean }) {
   return (
-    <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[25px] w-[25px]" fill={active ? "currentColor" : "none"}>
+    <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[24px] w-[24px]" fill={active ? "currentColor" : "none"}>
       <path
         d="M14 23.55S4.2 18.1 4.2 10.92A5.47 5.47 0 0 1 14 7.58a5.47 5.47 0 0 1 9.8 3.34C23.8 18.1 14 23.55 14 23.55Z"
         stroke="currentColor"
@@ -74,7 +74,7 @@ function HeartGlyph({ active = false }: { active?: boolean }) {
 
 function BagGlyph() {
   return (
-    <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[25px] w-[25px]" fill="none">
+    <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[24px] w-[24px]" fill="none">
       <path
         d="M6.1 10.1h15.8l1.2 13.1c.1 1.05-.73 1.96-1.79 1.96H6.69c-1.06 0-1.89-.91-1.79-1.96l1.2-13.1Z"
         stroke="currentColor"
@@ -86,7 +86,7 @@ function BagGlyph() {
   );
 }
 
-/** Premium mobile navigation with direct access to Space Call AI. */
+/** Compact premium mobile navigation with a centered primary Home action. */
 export function BottomNav() {
   const navRef = useRef<HTMLElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -120,17 +120,24 @@ export function BottomNav() {
 
   const itemClass = (isActive?: boolean) =>
     cn(
-      "press group relative flex min-w-0 flex-1 flex-col items-center justify-end gap-1 px-0.5 pb-2 pt-2 text-center text-[10px] font-bold leading-none tracking-[-0.01em] transition-all duration-150 active:scale-[.97]",
-      isActive ? "text-[#1f6ff2]" : "text-[#667085] dark:text-[#aeb7c4]",
+      "press group relative flex min-w-0 flex-col items-center justify-center gap-[3px] rounded-2xl px-0.5 py-1.5 text-center text-[9.5px] font-bold leading-none tracking-[-0.01em] transition-all duration-150 active:scale-[.97]",
+      isActive ? "text-[#1f6ff2]" : "text-[#707b8c] dark:text-[#aeb7c4]",
     );
 
   const iconClass = (isActive?: boolean) =>
     cn(
-      "relative grid h-9 w-10 place-items-center rounded-[14px] transition-all duration-150",
+      "relative grid h-[35px] w-[42px] place-items-center rounded-[13px] transition-all duration-150",
       isActive
-        ? "bg-[#edf4ff] text-[#1f6ff2] dark:bg-[#20304a]"
-        : "text-[#596474] group-hover:bg-[#f6f8fb] dark:text-[#c2c9d3] dark:group-hover:bg-white/[.05]",
+        ? "bg-[#edf4ff] text-[#1f6ff2] shadow-[inset_0_0_0_1px_rgba(31,111,242,.06)] dark:bg-[#1f2b40]"
+        : "text-[#566273] group-hover:bg-[#f5f7fa] dark:text-[#c2c9d3] dark:group-hover:bg-white/[.05]",
     );
+
+  const activeDot = (
+    <span
+      className="absolute bottom-0.5 h-[3px] w-4 rounded-full bg-[#1f6ff2] shadow-[0_2px_7px_rgba(31,111,242,.3)]"
+      aria-hidden="true"
+    />
+  );
 
   const openAi = () => {
     window.dispatchEvent(new CustomEvent(OPEN_SMART_ADVISOR_EVENT));
@@ -142,11 +149,14 @@ export function BottomNav() {
         ref={navRef}
         data-testid="bottom-nav"
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-40 overflow-visible px-3 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 overflow-visible px-2.5 pb-[max(8px,env(safe-area-inset-bottom))] pt-3 lg:hidden"
       >
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-background via-background/88 to-transparent" aria-hidden="true" />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-background via-background/82 to-transparent"
+          aria-hidden="true"
+        />
 
-        <div className="relative mx-auto flex min-h-[4.85rem] max-w-md items-end rounded-[1.75rem] border border-black/[.05] bg-white/[.96] px-1.5 shadow-[0_12px_36px_-14px_rgba(15,23,42,.34),0_2px_10px_-6px_rgba(15,23,42,.18)] backdrop-blur-2xl dark:border-white/[.08] dark:bg-[#151922]/[.96]">
+        <div className="relative mx-auto grid min-h-[4.55rem] max-w-md grid-cols-5 items-end rounded-[26px] border border-black/[.055] bg-white/[.97] px-1.5 pb-1.5 pt-1 shadow-[0_16px_38px_-18px_rgba(15,23,42,.38),0_3px_12px_-7px_rgba(15,23,42,.2)] backdrop-blur-2xl before:pointer-events-none before:absolute before:inset-x-8 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white before:to-transparent dark:border-white/[.08] dark:bg-[#111722]/[.96] dark:before:via-white/10">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
@@ -156,18 +166,18 @@ export function BottomNav() {
             <span className={iconClass(searchOpen)}>
               <SearchGlyph />
             </span>
-            <span>{t("searchLabel")}</span>
-            {searchOpen && <span className="absolute bottom-0 h-1 w-5 rounded-full bg-[#1f6ff2]" aria-hidden="true" />}
+            <span className="max-w-full truncate whitespace-nowrap">{t("searchLabel")}</span>
+            {searchOpen && activeDot}
           </button>
 
           <button
             type="button"
             onClick={openAi}
-            className="press group relative flex min-w-0 flex-1 flex-col items-center justify-end gap-1 px-0.5 pb-2 pt-2 text-center text-[10px] font-extrabold leading-none tracking-[-0.01em] text-[#6b5cf6] transition-transform duration-150 active:scale-[.97] dark:text-[#9b8cff]"
+            className="press group relative flex min-w-0 flex-col items-center justify-center gap-[3px] rounded-2xl px-0.5 py-1.5 text-center text-[9.5px] font-extrabold leading-none tracking-[-0.01em] text-[#7065db] transition-all duration-150 active:scale-[.97] dark:text-[#a69cff]"
             aria-label="Open AI assistant"
           >
-            <span className="relative grid h-9 w-10 place-items-center overflow-hidden rounded-[14px] border border-[#dcd8ff] bg-linear-to-br from-[#f1efff] via-white to-[#eef5ff] text-[#6757f5] shadow-[0_6px_18px_-12px_rgba(103,87,245,.85)] transition-transform duration-150 group-hover:-translate-y-0.5 dark:border-[#4a4279] dark:from-[#282442] dark:via-[#222436] dark:to-[#1e2b3f] dark:text-[#a99cff]">
-              <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,.9),transparent_42%)] opacity-70 dark:opacity-10" />
+            <span className="relative grid h-[35px] w-[42px] place-items-center overflow-hidden rounded-[13px] border border-[#e6e2ff] bg-linear-to-br from-[#f3f1ff] via-white to-[#f2f7ff] text-[#6757f5] shadow-[0_5px_14px_-10px_rgba(103,87,245,.72)] transition-all duration-150 group-hover:-translate-y-0.5 dark:border-[#403a66] dark:from-[#26223d] dark:via-[#202334] dark:to-[#1d293b] dark:text-[#aa9fff]">
+              <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,.92),transparent_43%)] opacity-75 dark:opacity-10" />
               <span className="relative">
                 <AiGlyph />
               </span>
@@ -177,19 +187,22 @@ export function BottomNav() {
 
           <Link
             to="/"
-            className="press relative z-10 flex min-w-0 flex-1 -translate-y-2.5 flex-col items-center justify-end gap-1 px-0.5 pb-0.5 text-center text-[10px] font-extrabold leading-none tracking-[-0.01em] text-[#1f6ff2] active:scale-[.985]"
+            className="press relative z-10 flex min-w-0 -translate-y-3.5 flex-col items-center justify-end gap-1 px-0.5 text-center text-[9.5px] font-extrabold leading-none tracking-[-0.01em] text-[#1f6ff2] transition-transform duration-150 active:scale-[.98]"
             aria-current={homeActive ? "page" : undefined}
           >
-            <span
-              className={cn(
-                "grid h-[58px] w-[58px] place-items-center rounded-[20px] border-[3px] border-white bg-[#1f6ff2] text-white shadow-[0_10px_24px_-10px_rgba(31,111,242,.85)] transition-all duration-150 dark:border-[#151922]",
-                homeActive ? "scale-100" : "scale-[.94] bg-[#3f7ff0]",
-              )}
-            >
-              <HomeGlyph />
+            <span className="relative grid h-[56px] w-[56px] place-items-center rounded-full border-[4px] border-white bg-linear-to-br from-[#3788ff] to-[#1565e8] text-white shadow-[0_12px_26px_-10px_rgba(31,111,242,.78)] transition-all duration-150 dark:border-[#111722]">
+              <span className="absolute inset-[4px] rounded-full border border-white/20" aria-hidden="true" />
+              <span className="relative">
+                <HomeGlyph />
+              </span>
             </span>
-            <span>{t("home")}</span>
-            {homeActive && <span className="mt-0.5 h-1 w-5 rounded-full bg-[#1f6ff2]" aria-hidden="true" />}
+            <span className="translate-y-0.5 whitespace-nowrap">{t("home")}</span>
+            {homeActive && (
+              <span
+                className="absolute -bottom-1 h-[3px] w-[18px] rounded-full bg-[#1f6ff2] shadow-[0_2px_7px_rgba(31,111,242,.3)]"
+                aria-hidden="true"
+              />
+            )}
           </Link>
 
           <Link
@@ -201,8 +214,8 @@ export function BottomNav() {
               <HeartGlyph active={wishlistActive} />
               <Count value={wishlistCount} />
             </span>
-            <span>{t("saved")}</span>
-            {wishlistActive && <span className="absolute bottom-0 h-1 w-5 rounded-full bg-[#1f6ff2]" aria-hidden="true" />}
+            <span className="max-w-full truncate whitespace-nowrap">{t("saved")}</span>
+            {wishlistActive && activeDot}
           </Link>
 
           <Link
@@ -214,8 +227,8 @@ export function BottomNav() {
               <BagGlyph />
               <Count value={cartCount} />
             </span>
-            <span>{t("bag")}</span>
-            {cartActive && <span className="absolute bottom-0 h-1 w-5 rounded-full bg-[#1f6ff2]" aria-hidden="true" />}
+            <span className="max-w-full truncate whitespace-nowrap">{t("bag")}</span>
+            {cartActive && activeDot}
           </Link>
         </div>
       </nav>
