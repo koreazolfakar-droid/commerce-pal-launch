@@ -33,8 +33,14 @@ export function HomeHero({
   const configuredCollections = useMemo(() => {
     const primary = heroCollection?.collection;
     if (!primary) return cachedCollections;
-    if (cachedCollections.some((collection) => collection.id === primary.id)) return cachedCollections;
-    return [primary, ...cachedCollections];
+
+    // The dedicated homepage-hero query is the source of truth for hero artwork.
+    // Always prefer it over a possibly stale copy of the same collection from
+    // the general collections cache.
+    return [
+      primary,
+      ...cachedCollections.filter((collection) => collection.id !== primary.id),
+    ];
   }, [cachedCollections, heroCollection?.collection]);
 
   const slides = useMemo(
