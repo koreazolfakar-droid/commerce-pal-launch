@@ -115,7 +115,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   return (
     <>
       <section className="min-w-0 w-full" aria-label="Featured offers">
-        <div className="relative -mx-3 sm:mx-0">
+        <div className="relative">
           <div
             ref={sliderRef}
             dir="ltr"
@@ -147,11 +147,11 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               if (!heroImage?.url) return null;
 
               const visual = (
-                <span className="relative block aspect-[16/9] w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-surface leading-none shadow-card sm:aspect-[2/1] lg:aspect-[12/5] xl:aspect-[8/3]">
+                <span className="relative block aspect-video w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-surface leading-none shadow-card">
                   <img
                     src={cdnImage(heroImage.url, 1800)}
                     srcSet={cdnSrcSet(heroImage.url, 1800)}
-                    sizes="(max-width: 639px) 100vw, (max-width: 1023px) 100vw, (min-width: 1280px) 1344px, 100vw"
+                    sizes="(max-width: 639px) calc(100vw - 1.5rem), (min-width: 1280px) 1280px, 100vw"
                     alt={heroImage.altText ?? resolvedCollection.title}
                     width={1600}
                     height={900}
@@ -159,7 +159,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
                     fetchPriority={index === 0 ? "high" : "auto"}
                     decoding="async"
                     draggable={false}
-                    className="absolute inset-0 m-0 block h-full w-full max-w-none select-none object-contain object-center align-top sm:object-cover"
+                    className="absolute inset-0 m-0 block h-full w-full max-w-none select-none object-contain object-center align-top"
                   />
 
                   {query?.isFetching && !query?.isPending && (
@@ -171,7 +171,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               );
 
               return (
-                <div key={candidate.id} className="w-full shrink-0 snap-center px-3 sm:px-0">
+                <div key={candidate.id} className="w-full shrink-0 snap-center">
                   {promotedProduct ? (
                     <Link
                       to="/product/$handle"
