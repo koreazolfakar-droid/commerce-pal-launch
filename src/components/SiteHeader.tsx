@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { CartDrawer } from "@/components/CartDrawer";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SearchOverlay } from "@/components/SearchOverlay";
@@ -113,9 +112,7 @@ export function SiteHeader() {
           <ul className="flex items-center gap-5 font-semibold">
             <li>
               <a
-                href={SHOP_ACCOUNT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/help#track-order"
                 className="flex items-center gap-1.5 whitespace-nowrap hover:text-primary"
               >
                 <MapPin className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("trackOrder")}
@@ -123,9 +120,7 @@ export function SiteHeader() {
             </li>
             <li>
               <a
-                href={SHOP_ACCOUNT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/help#account-orders"
                 className="flex items-center gap-1.5 whitespace-nowrap hover:text-primary"
               >
                 <User className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("account")}
