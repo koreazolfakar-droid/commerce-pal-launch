@@ -210,6 +210,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
       <div className="relative -mx-3 sm:mx-0">
         <div
           ref={sliderRef}
+          dir="ltr"
           onScroll={handleScroll}
           onPointerDown={() => setPaused(true)}
           onPointerUp={() => setPaused(false)}
@@ -268,7 +269,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
                   <Link
                     to="/product/$handle"
                     params={{ handle: promotedProduct.node.handle }}
-                    className="block w-full touch-pan-y"
+                    className="block w-full"
                     aria-label={`${slideTitle}: ${promotedProduct.node.title}`}
                   >
                     {visual}
@@ -277,7 +278,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
                   <Link
                     to="/collections/$handle"
                     params={{ handle: resolvedCollection.handle }}
-                    className="block w-full touch-pan-y"
+                    className="block w-full"
                     aria-label={slideTitle}
                   >
                     {visual}
