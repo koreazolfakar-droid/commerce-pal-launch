@@ -217,6 +217,61 @@ async function callGemini({
   );
 }
 
+const GATEWAY_MODEL = "google/gemini-3.8-flash";
+
+/**
+ * Lovable AI Gateway fallback. Used when the direct Gemini key is missing or
+ * its quota is exhausted, so the advisor keeps answering instead of failing.
+ * Search grounding is not available through the gateway, so answers built
+ * from it are flagged as not live-web verified.
+ */
+async function callGatewayChat({ apiKey, prompt }: { apiKey: string; prompt: string }) {
+  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "Lovable-API-Key": apiKey,
+    },
+    body: JSON.stringify({
+      model: GATEWAY_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.2,
+    }),
+    signal: AbortSignal.timeout(45000),
+  });
+}
+
+function resultFromText(
+  text: string,
+  catalog: ShopifyProduct[],
+  fallbackNotice?: string,
+): SmartAdvisorResult {
+  try {
+    const parsed = modelResultSchema.parse(JSON.parse(extractJson(text)));
+    return buildResult({
+      parsed,
+      catalog,
+      searchedWeb: false,
+      ...(fallbackNotice ? { fallbackNotice } : {}),
+    });
+  } catch (error) {
+    console.error("Smart phone advisor gateway JSON parse error", error, text.slice(0, 1200));
+    return {
+      ok: true,
+      provider: "gemini",
+      answer: fallbackNotice ? `${fallbackNotice}\n\n${text.slice(0, 3000)}` : text.slice(0, 3000),
+      intent: "general",
+      searchedWeb: false,
+      comparison: [],
+      bestPick: null,
+      storeRecommendations: [],
+      sources: [],
+      followUps: [],
+    };
+  }
+}
+
 function providerMessage(body: string) {
   try {
     const parsed = JSON.parse(body) as { error?: { message?: string; status?: string } };
