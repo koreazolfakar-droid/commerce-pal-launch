@@ -44,13 +44,12 @@ export function HomeHero({
 }) {
   const { t, language } = useLanguage();
 
-  // Shopify merchant control: create/update the `homepage-hero` collection,
-  // upload its collection image and keep the promoted product first in its manual order.
-  const configuredHero =
-    heroCollection?.collection.image && heroCollection.products.length > 0 ? heroCollection : null;
-  const featured = configuredHero
-    ? configuredHeroProduct(configuredHero.products)
-    : featuredProduct(products);
+  // Shopify merchant control: create/update the `homepage-hero` collection and
+  // upload its collection image. A promoted product is optional; when omitted,
+  // the catalog fallback supplies metadata while the Shopify artwork still renders.
+  const configuredHero = heroCollection?.collection.image ? heroCollection : null;
+  const featured =
+    configuredHeroProduct(configuredHero?.products ?? []) ?? featuredProduct(products);
 
   if (!featured) return <TrustBenefitsRail />;
 
