@@ -1,6 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
 
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { StoreLayout } from "@/components/StoreLayout";
@@ -33,40 +32,50 @@ function CategoriesPage() {
 
   return (
     <StoreLayout>
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:py-10 lg:px-6">
-        <header className="mb-7 max-w-2xl">
-          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+      <div className="mx-auto w-full max-w-7xl px-4 py-7 sm:py-9 lg:px-6">
+        <header className="mb-6 max-w-2xl sm:mb-8">
+          <h1 className="text-2xl font-black tracking-[-0.035em] sm:text-4xl">
             {language === "ar" ? "كل التصنيفات" : "All Categories"}
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground sm:mt-2 sm:text-base">
             {language === "ar"
-              ? "تصفح أقسام المتجر واختر الفئة المناسبة للوصول إلى المنتجات بسرعة."
-              : "Browse every store category and jump directly to the products you need."}
+              ? "اختر الفئة للوصول إلى المنتجات بسرعة."
+              : "Choose a category and jump straight to the products you need."}
           </p>
         </header>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div
+          className="grid grid-cols-3 gap-x-2 gap-y-4 min-[480px]:grid-cols-4 sm:grid-cols-5 sm:gap-x-3 sm:gap-y-5 lg:grid-cols-7 xl:grid-cols-8"
+          role="list"
+          aria-label={language === "ar" ? "تصنيفات المتجر" : "Store categories"}
+        >
           {catalog.categories.map((category) => {
             const label = categoryLabel(category, language);
+
             return (
               <Link
                 key={category.slug}
                 to="/category/$slug"
                 params={{ slug: category.slug }}
-                className="group relative min-h-36 overflow-hidden rounded-2xl border border-border/75 bg-card p-4 shadow-card transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                role="listitem"
+                aria-label={label}
+                className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl px-1.5 py-2 text-center transition duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:gap-2.5 sm:px-2"
               >
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.10] via-transparent to-cyan-400/[0.05] dark:from-primary/[0.16] dark:to-cyan-400/[0.06]" />
-                <div className="relative z-10 flex h-full flex-col justify-between gap-5">
-                  <span className="grid h-16 w-16 place-items-center rounded-[1.25rem] border border-primary/15 bg-background/90 text-primary shadow-sm ring-1 ring-inset ring-white/5 transition-transform duration-300 group-hover:scale-105 dark:bg-black/20">
-                    <CategoryGlyph slug={category.slug} className="h-9 w-9" />
-                  </span>
-                  <div className="flex items-end justify-between gap-2">
-                    <h2 className="text-sm font-extrabold leading-snug sm:text-base">{label}</h2>
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                      <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-                    </span>
-                  </div>
-                </div>
+                <span
+                  className="relative grid h-[4.6rem] w-[4.6rem] shrink-0 place-items-center overflow-hidden rounded-[1.35rem] border border-border/70 bg-card shadow-card transition duration-300 group-hover:border-primary/25 group-hover:shadow-card-hover sm:h-[5.3rem] sm:w-[5.3rem] sm:rounded-[1.55rem]"
+                  aria-hidden="true"
+                >
+                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white via-white to-slate-50 dark:from-card dark:via-card dark:to-surface" />
+                  <span className="pointer-events-none absolute inset-x-3 top-1 h-px bg-white/80 dark:bg-white/10" />
+                  <CategoryGlyph
+                    slug={category.slug}
+                    className="relative h-[4.1rem] w-[4.1rem] transition-transform duration-300 ease-out group-hover:scale-[1.06] sm:h-[4.75rem] sm:w-[4.75rem]"
+                  />
+                </span>
+
+                <h2 className="line-clamp-2 min-h-[2rem] max-w-full text-[11px] font-extrabold leading-[1.15] tracking-[-0.015em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.15rem] sm:text-xs">
+                  {label}
+                </h2>
               </Link>
             );
           })}
