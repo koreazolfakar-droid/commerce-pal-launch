@@ -550,7 +550,7 @@ ${JSON.stringify(catalogCandidates)}`;
         body: lastBody.slice(0, 1000),
       });
 
-      if (response.status === 401 || response.status === 403) {
+      if ((response.status === 401 || response.status === 403) && !gatewayKey) {
         return failure(
           "The Gemini API key was rejected. Check GEMINI_API_KEY in the deployment secrets.",
           "ADVISOR_AUTH_ERROR",
