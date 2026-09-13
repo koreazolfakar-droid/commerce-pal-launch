@@ -26,27 +26,31 @@ Build one coherent visual system across desktop, mobile, home, catalog, category
 ### P1 — component consistency
 5. Homepage compact product cards and full catalog cards use different radius/action scales beyond their density difference.
 6. Legacy `.category-icon-*` CSS remains even though CategorySection now uses the newer icon-first structure.
-7. Footer social controls use a different touch/radius language from header/card controls.
-8. Several global selectors depend on Tailwind class-name substrings, which is fragile when component classes change.
+7. Footer social controls used a smaller/different touch-radius language from header/card controls.
+8. Bottom navigation contains legacy hard-coded color values; the canonical consistency layer now overrides the visible surface/active states with semantic tokens, while source-level cleanup remains desirable.
+9. Several global selectors depend on Tailwind class-name substrings, which is fragile when component classes change.
+10. Cart quantity/remove controls were below the shared 44px primary touch-target standard.
 
 ### P2 — polish and maintainability
-9. Remove dead deployment/welcome-only CSS.
-10. Reduce duplicate shadows/gradients and keep them behind shared tokens.
-11. Maintain keyboard focus, reduced motion, RTL and dark mode as acceptance criteria.
+11. Reduce duplicate shadows/gradients and keep them behind shared tokens.
+12. Maintain keyboard focus, reduced motion, RTL and dark mode as acceptance criteria.
+13. Verify responsive layouts visually against the Figma reference when MCP access is available again.
 
 ## Repair phases
 
 ### Phase 1 — Foundation / P0
 - [x] Introduce a canonical storefront consistency layer.
 - [x] Standardize shell width at 80rem.
-- [ ] Remove redundant legacy polish imports.
-- [ ] Make mobile/tablet chrome fluid instead of `max-w-md`.
-- [ ] Normalize desktop navigation typography/touch heights.
+- [x] Remove redundant `ux-polish.css` and `ux-welcome.css` runtime imports.
+- [x] Make mobile/tablet chrome fluid instead of being visually capped at `max-w-md`.
+- [x] Normalize desktop navigation typography/touch heights.
 
 ### Phase 2 — Components / P1
 - [ ] Normalize product-card radius, media stage, wishlist/cart control sizing and vertical rhythm.
 - [ ] Remove stale category CSS from the old category-card implementation.
-- [ ] Align footer button/social radii with the shared control language.
+- [x] Align footer social controls with the shared 44px touch/radius language.
+- [x] Raise cart quantity/remove controls to the shared 44px touch-target standard.
+- [x] Token-align the rendered BottomNav surface and active-state colors.
 - [ ] Replace fragile class-substring styling with semantic hooks where practical.
 
 ### Phase 3 — Verification / P2
@@ -56,6 +60,9 @@ Build one coherent visual system across desktop, mobile, home, catalog, category
 - [ ] Verify focus-visible and reduced-motion behavior.
 - [ ] Re-run build/CI checks when available.
 - [ ] Compare against the Space Call Figma reference once the Figma MCP Starter-plan rate limit resets.
+
+## Current execution status
+Phase 1 is applied on `main`. Phase 2 is partially applied. GitHub currently exposes no CI/status workflow for these commits, so final visual/build verification must be done through the deployment or a local build runner. Figma MCP is connected but currently rate-limited on the Starter plan, so no fresh Figma screenshot audit was possible during this pass.
 
 ## Acceptance criteria
 - Header, hero, sections, catalog and footer align to one horizontal grid.

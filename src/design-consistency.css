@@ -99,6 +99,31 @@
   background: var(--color-surface);
 }
 
+/* Bottom navigation follows the same semantic palette as the rest of the store. */
+[data-testid="bottom-nav"] {
+  border-color: color-mix(in oklab, var(--color-border) 72%, transparent) !important;
+  background: color-mix(in oklab, var(--color-background) 96%, transparent) !important;
+}
+
+[data-testid="bottom-nav"] :is(a, button) {
+  color: var(--color-muted-foreground) !important;
+}
+
+[data-testid="bottom-nav"] :is(a, button)[aria-current="page"],
+[data-testid="bottom-nav"] a[href="/"] {
+  color: var(--color-primary) !important;
+}
+
+[data-testid="bottom-nav"] a[href="/"] > span:first-child {
+  border-color: color-mix(in oklab, var(--color-primary) 20%, var(--color-border)) !important;
+  background: color-mix(in oklab, var(--color-primary) 11%, var(--color-card)) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+[data-testid="bottom-nav"] a[href="/"] svg path:first-child {
+  fill: var(--color-primary) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .store-layout :is(a, button) {
     scroll-behavior: auto;
