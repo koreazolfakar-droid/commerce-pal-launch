@@ -81,10 +81,9 @@ test("mobile primary navigation is fast, predictable, and restores scroll positi
 
   await nav.getByRole("link", { name: "Shop", exact: true }).click();
   await expect(page).toHaveURL(/\/shop(?:\?|$)/);
-  await expect(page.getByTestId("bottom-nav").getByRole("link", { name: "Shop", exact: true })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
+  await expect(
+    page.getByTestId("bottom-nav").getByRole("link", { name: "Shop", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
 
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
