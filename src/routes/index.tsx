@@ -7,7 +7,7 @@ import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
 import { RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
-import { ShopifyHeroCollections } from "@/components/ShopifyHeroCollections";
+import { HomeHero } from "@/components/HomeHero";
 import { StoreLayout } from "@/components/StoreLayout";
 import { TopBrands } from "@/components/TopBrands";
 import { WhyShop } from "@/components/WhyShop";
@@ -161,7 +161,7 @@ function Index() {
           <>
             <div className="grid min-w-0 gap-3 sm:gap-4">
               <HomePromoTicker language={language} />
-              <ShopifyHeroCollections collections={collections} />
+              <HomeHero products={products} />
             </div>
 
             <CategorySection catalog={catalog} collections={collections} />
