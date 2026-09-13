@@ -1,15 +1,14 @@
 import { test, expect } from "@playwright/test";
 
-test("homepage has Shopify-driven hero tabs, one heading, one benefits strip and adaptive deals", async ({
+test("homepage has one rebuilt catalog hero, one heading, one benefits strip and adaptive deals", async ({
   page,
   isMobile,
 }) => {
   await page.goto("/");
   await expect(page.locator("h1")).toHaveCount(1);
-  await expect(page.getByTestId("collection-hero-tabs")).toBeVisible();
-  expect(await page.getByTestId("collection-hero-tabs").getByRole("tab").count()).toBeGreaterThanOrEqual(3);
-  await expect(page.getByTestId("collection-hero-visual").locator("img")).toBeVisible();
-  await expect(page.getByTestId("benefits-bar")).toHaveCount(1);
+  await expect(page.getByTestId("home-hero")).toBeVisible();
+  await expect(page.getByTestId("home-hero").locator("img")).toBeVisible();
+  await expect(page.getByTestId("trust-benefits-rail")).toHaveCount(1);
   await expect(page.getByTestId("category-section")).toHaveCount(1);
   await expect(page.getByTestId("top-brands")).toBeVisible();
   await expect(page.getByTestId("best-sellers")).toHaveCount(1);
@@ -18,8 +17,8 @@ test("homepage has Shopify-driven hero tabs, one heading, one benefits strip and
     .locator(".home-page [data-testid]")
     .evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")));
   const expected = [
-    "collection-hero-tabs",
-    "benefits-bar",
+    "home-hero",
+    "trust-benefits-rail",
     "category-section",
     "top-brands",
     "best-sellers",
@@ -37,17 +36,19 @@ test("homepage has Shopify-driven hero tabs, one heading, one benefits strip and
   await expect(showcase.first()).toContainText("Zeta showcase");
 });
 
-test("hero tabs switch Shopify collection artwork and products", async ({ page }) => {
+test("rebuilt hero focuses on exactly one live catalogue product", async ({ page }) => {
   await page.goto("/");
-  const hero = page.getByTestId("collection-hero-tabs");
-  const tabs = hero.getByRole("tab");
-  await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
-  const firstAlt = await page.getByTestId("collection-hero-visual").locator("img").getAttribute("alt");
-  await tabs.nth(1).click();
-  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-  const secondAlt = await page.getByTestId("collection-hero-visual").locator("img").getAttribute("alt");
-  expect(secondAlt).not.toBe(firstAlt);
-  await expect(hero.locator('a[href^="/product/"]')).toHaveCount(6);
+  const hero = page.getByTestId("home-hero");
+  await expect(hero).toHaveAttribute("data-hero-handle", "fixture-phone-1");
+  await expect(hero.getByRole("heading", { level: 2 })).toContainText(
+    "Samsung Fixture Phone 512GB with a long product title",
+  );
+  await expect(hero.locator("img")).toHaveAttribute("alt", "Fixture phone Front");
+  const productHrefs = await hero.locator('a[href^="/product/"]').evaluateAll((links) =>
+    [...new Set(links.map((link) => link.getAttribute("href")))],
+  );
+  expect(productHrefs).toEqual(["/product/fixture-phone-1"]);
+  await expect(hero.getByRole("link", { name: "View all" })).toHaveAttribute("href", "/shop");
 });
 
 test("each brand keeps its compact showcase, products and exact destination without duplicate hero artwork", async ({
