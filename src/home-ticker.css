@@ -1,0 +1,64 @@
+/* Lightweight homepage promo ticker. Uses transform-only animation to stay smooth on mobile. */
+.home-promo-ticker {
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--color-border) 78%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-card) 94%, var(--color-primary) 6%);
+  box-shadow: var(--shadow-card);
+}
+
+.home-promo-ticker-track {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  align-items: center;
+  animation: home-promo-ticker 26s linear infinite;
+  will-change: transform;
+}
+
+.home-promo-ticker-copy {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 1.5rem;
+  white-space: nowrap;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--color-foreground);
+}
+
+html[dir="rtl"] .home-promo-ticker-track {
+  animation-direction: reverse;
+}
+
+@keyframes home-promo-ticker {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (max-width: 639px) {
+  [data-testid="collection-hero-tabs"] > [role="tablist"] {
+    display: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .home-promo-ticker-copy {
+    padding-block: 0.6rem;
+    font-size: 0.82rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-promo-ticker-track {
+    animation: none;
+    transform: none;
+    will-change: auto;
+  }
+}

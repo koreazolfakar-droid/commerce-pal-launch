@@ -28,6 +28,7 @@ import {
   socialMeta,
   websiteJsonLd,
 } from "@/lib/seo";
+import "../home-ticker.css";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
@@ -100,65 +101,18 @@ function DealsCountdown() {
   );
 }
 
-function HomeSeoIntro({ language }: { language: string }) {
-  const ar = language === "ar";
+function HomePromoTicker({ language }: { language: string }) {
+  const text = language === "ar"
+    ? "Space Call لبنان • متجرك الموثوق للهواتف والإلكترونيات • توفر مباشر • أسعار واضحة • دفع آمن"
+    : "Space Call Lebanon • Your trusted phones & electronics store • Live availability • Clear pricing • Secure checkout";
 
   return (
-    <header
-      className="relative overflow-hidden rounded-[1.75rem] border border-border/70 bg-gradient-to-br from-card via-card to-accent/35 px-5 py-5 shadow-card sm:px-7 sm:py-6"
-      data-testid="homepage-seo-intro"
-    >
-      <div className="pointer-events-none absolute -end-10 -top-10 h-36 w-36 rounded-full bg-primary/10 blur-2xl" aria-hidden="true" />
-      <div className="pointer-events-none absolute end-8 top-6 h-20 w-20 rounded-full border border-primary/10 bg-primary/[0.035]" aria-hidden="true" />
-
-      <div className="relative grid items-end gap-5 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="min-w-0 max-w-3xl">
-          <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-primary sm:text-xs">
-            {ar ? "Space Call لبنان" : "Space Call Lebanon"}
-          </p>
-          <h1 className="mt-1.5 max-w-2xl text-[1.35rem] font-black leading-[1.08] tracking-[-0.035em] text-foreground sm:text-2xl lg:text-3xl">
-            {ar ? "متجرك الموثوق للهواتف والإلكترونيات في لبنان" : "Your Trusted Phones & Electronics Store in Lebanon"}
-          </h1>
-          <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground sm:text-sm">
-            {ar
-              ? "هواتف ذكية، أجهزة لوحية، لابتوبات، ساعات ذكية، صوتيات وإكسسوارات مع توفر مباشر وأسعار واضحة ودفع آمن عبر Shopify."
-              : "Smartphones, tablets, laptops, smartwatches, audio and accessories with live availability, clear pricing and secure Shopify checkout."}
-          </p>
-
-          <nav className="mt-4 flex flex-wrap items-center gap-2.5" aria-label={ar ? "روابط التسوق الرئيسية" : "Main shopping links"}>
-            <Link
-              to="/shop"
-              className="press inline-flex min-h-10 items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-extrabold text-primary-foreground shadow-sm transition hover:bg-primary/90 sm:text-sm"
-            >
-              {ar ? "تسوّق الآن" : "Shop all products"}
-              <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
-            </Link>
-            <Link
-              to="/categories"
-              className="press inline-flex min-h-10 items-center gap-1.5 rounded-full border border-border/80 bg-background/75 px-4 py-2 text-xs font-bold text-foreground backdrop-blur transition hover:border-primary/35 hover:text-primary sm:text-sm"
-            >
-              {ar ? "تصفّح الفئات" : "Browse categories"}
-              <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
-            </Link>
-            <Link
-              to="/brands"
-              className="inline-flex min-h-10 items-center gap-1.5 px-1 text-xs font-bold text-muted-foreground transition hover:text-primary sm:text-sm"
-            >
-              {ar ? "حسب العلامة التجارية" : "Shop by brand"}
-              <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
-            </Link>
-          </nav>
-        </div>
-
-        <Link
-          to="/shop"
-          aria-label={ar ? "فتح المتجر" : "Open the store"}
-          className="press hidden h-12 w-12 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition hover:scale-[1.04] sm:grid"
-        >
-          <ArrowRight className="h-5 w-5 rtl:rotate-180" aria-hidden="true" />
-        </Link>
+    <div className="home-promo-ticker" data-testid="homepage-promo-ticker" aria-label={text}>
+      <div className="home-promo-ticker-track">
+        <h1 className="home-promo-ticker-copy">{text}</h1>
+        <span className="home-promo-ticker-copy" aria-hidden="true">{text}</span>
       </div>
-    </header>
+    </div>
   );
 }
 
@@ -193,9 +147,10 @@ function Index() {
           <div className="px-4"><div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center"><h1 className="text-2xl font-bold">{t("welcomeStore")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("catalogUpdating")}</p></div></div>
         ) : (
           <>
-            <ShopifyHeroCollections collections={collections} />
-
-            <HomeSeoIntro language={language} />
+            <div className="grid min-w-0 gap-3 sm:gap-4">
+              <HomePromoTicker language={language} />
+              <ShopifyHeroCollections collections={collections} />
+            </div>
             <BenefitsBar compact />
 
             <CategorySection catalog={catalog} collections={collections} />
