@@ -4,7 +4,20 @@ import { ArrowRight, BadgeCheck, Sparkles } from "lucide-react";
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
 import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { useLanguage } from "@/lib/i18n";
-import { formatPrice, productDiscountPercent, type ShopifyProduct } from "@/lib/shopify";
+import {
+  formatPrice,
+  productDiscountPercent,
+  type ShopifyCollection,
+  type ShopifyProduct,
+} from "@/lib/shopify";
+
+type HomeHeroCollection =
+  | {
+      collection: ShopifyCollection;
+      products: ShopifyProduct[];
+    }
+  | null
+  | undefined;
 
 function featuredProduct(products: ShopifyProduct[]) {
   return (
@@ -18,14 +31,31 @@ function featuredProduct(products: ShopifyProduct[]) {
   );
 }
 
-export function HomeHero({ products }: { products: ShopifyProduct[] }) {
+function configuredHeroProduct(products: ShopifyProduct[]) {
+  return products.find((product) => product.node.availableForSale !== false) ?? products[0] ?? null;
+}
+
+export function HomeHero({
+  products,
+  heroCollection,
+}: {
+  products: ShopifyProduct[];
+  heroCollection?: HomeHeroCollection;
+}) {
   const { t, language } = useLanguage();
-  const featured = featuredProduct(products);
+
+  // Shopify merchant control: create/update the `homepage-hero` collection,
+  // upload its collection image and keep the promoted product first in its manual order.
+  const configuredHero =
+    heroCollection?.collection.image && heroCollection.products.length > 0 ? heroCollection : null;
+  const featured = configuredHero
+    ? configuredHeroProduct(configuredHero.products)
+    : featuredProduct(products);
 
   if (!featured) return <TrustBenefitsRail />;
 
   const node = featured.node;
-  const image = node.images.edges[0]?.node;
+  const image = configuredHero?.collection.image ?? node.images.edges[0]?.node;
   const price = node.priceRange.minVariantPrice;
   const discount = productDiscountPercent(featured);
   const inStock = node.availableForSale !== false;
@@ -33,6 +63,8 @@ export function HomeHero({ products }: { products: ShopifyProduct[] }) {
     language === "ar"
       ? "اختيار مميز من Space Call — جهاز واحد، تركيز أوضح، وتجربة شراء أسرع."
       : "A Space Call spotlight — one featured device, clearer focus, faster shopping.";
+  const description =
+    configuredHero?.collection.description?.trim() || node.description?.trim() || intro;
 
   return (
     <>
@@ -40,6 +72,8 @@ export function HomeHero({ products }: { products: ShopifyProduct[] }) {
         aria-label={t("featuredTechnology")}
         data-testid="home-hero"
         data-hero-handle={node.handle}
+        data-hero-source={configuredHero ? "shopify-homepage-hero" : "catalog-fallback"}
+        data-hero-collection-handle={configuredHero?.collection.handle}
         className="group relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
       >
         <div
@@ -59,7 +93,7 @@ export function HomeHero({ products }: { products: ShopifyProduct[] }) {
               src={cdnImage(image.url, 1400)}
               srcSet={cdnSrcSet(image.url, 1400)}
               sizes="(max-width: 639px) calc(100vw - 1.5rem), (max-width: 767px) 100vw, (min-width: 1280px) 760px, 62vw"
-              alt={image.altText ?? node.title}
+              alt={image.altText ?? configuredHero?.collection.title ?? node.title}
               loading="eager"
               fetchPriority="high"
               decoding="async"
@@ -131,7 +165,7 @@ export function HomeHero({ products }: { products: ShopifyProduct[] }) {
           </h2>
 
           <p className="mt-4 line-clamp-2 max-w-xl text-sm leading-6 text-hero-muted lg:text-base">
-            {node.description?.trim() || intro}
+            {description}
           </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
