@@ -32,6 +32,7 @@ import {
 import "../home-ticker.css";
 
 const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
+let homeProductSectionsRevealed = false;
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
@@ -164,7 +165,7 @@ function HomePromoTicker({ language }: { language: string }) {
 
 function Index() {
   const { t, language } = useLanguage();
-  const [showProductSections, setShowProductSections] = useState(false);
+  const [showProductSections, setShowProductSections] = useState(homeProductSectionsRevealed);
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
   const { data: heroCollection } = useSuspenseQuery(
@@ -180,7 +181,12 @@ function Index() {
   });
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setShowProductSections(true), 350);
+    if (homeProductSectionsRevealed) return;
+
+    const timer = window.setTimeout(() => {
+      homeProductSectionsRevealed = true;
+      setShowProductSections(true);
+    }, 350);
     return () => window.clearTimeout(timer);
   }, []);
 
