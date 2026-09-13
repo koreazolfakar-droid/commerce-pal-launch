@@ -40,101 +40,84 @@ export function HomeHero({ products }: { products: ShopifyProduct[] }) {
         aria-label={t("featuredTechnology")}
         data-testid="home-hero"
         data-hero-handle={node.handle}
-        className="relative isolate min-w-0 overflow-hidden rounded-[clamp(1.25rem,3vw,2rem)] border border-hero-border bg-hero text-hero-foreground shadow-float"
+        className="group relative isolate min-h-[22rem] min-w-0 overflow-hidden rounded-[clamp(1.25rem,3vw,2rem)] border border-hero-border bg-hero text-hero-foreground shadow-float sm:min-h-[25rem] lg:min-h-[28rem]"
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -end-24 -top-24 h-64 w-64 rounded-full bg-primary/25 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-28 start-10 h-56 w-56 rounded-full bg-primary/10 blur-3xl"
-        />
-
-        <div className="relative grid min-w-0 md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:items-stretch">
-          <div className="flex min-w-0 flex-col justify-center px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-hero-border bg-white/5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-hero-muted backdrop-blur">
-                <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-                {t("featuredTechnology")}
-              </span>
-              {discount !== null && (
-                <span className="rounded-full bg-primary px-3 py-1.5 text-[11px] font-black text-primary-foreground">
-                  -{discount}%
-                </span>
-              )}
-            </div>
-
-            {node.vendor && (
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-hero-muted">
-                {node.vendor}
-              </p>
-            )}
-
-            <h2 className="max-w-2xl text-[clamp(1.8rem,5vw,3.8rem)] font-black leading-[1.02] tracking-[-0.045em] text-hero-foreground">
-              {node.title}
-            </h2>
-
-            <p className="mt-4 max-w-xl text-sm leading-6 text-hero-muted sm:text-base">
-              {node.description?.trim() || intro}
-            </p>
-
-            <div className="mt-5 flex flex-wrap items-center gap-3 sm:mt-6">
-              <span className="text-xl font-black tracking-tight sm:text-2xl">
-                {formatPrice(price.amount, price.currencyCode)}
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-hero-muted">
-                <BadgeCheck className="h-4 w-4 text-success" aria-hidden="true" />
-                {t(inStock ? "inStock" : "outOfStock")}
-              </span>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-2.5 sm:mt-7">
-              <Link
-                to="/product/$handle"
-                params={{ handle: node.handle }}
-                className="press inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-extrabold text-primary-foreground shadow-lg transition hover:brightness-105"
-              >
-                {t("shopNow")}
-                <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-              </Link>
-              <Link
-                to="/shop"
-                className="press inline-flex min-h-11 items-center justify-center rounded-full border border-hero-border bg-white/5 px-5 py-2.5 text-sm font-bold text-hero-foreground backdrop-blur transition hover:bg-white/10"
-              >
-                {t("viewAll")}
-              </Link>
-            </div>
-          </div>
-
+        {image?.url ? (
           <Link
             to="/product/$handle"
             params={{ handle: node.handle }}
             aria-label={node.title}
-            className="group relative flex min-h-[15.5rem] min-w-0 items-center justify-center overflow-hidden border-t border-hero-border bg-card/95 p-5 sm:min-h-[19rem] sm:p-7 md:m-4 md:min-h-[24rem] md:rounded-[1.5rem] md:border"
+            className="absolute inset-0"
           >
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-[18%] bottom-[8%] h-[16%] rounded-full bg-primary/20 blur-2xl"
+            <img
+              src={cdnImage(image.url, 1400)}
+              srcSet={cdnSrcSet(image.url, 1400)}
+              sizes="(max-width: 767px) 100vw, (min-width: 1280px) 760px, 62vw"
+              alt={image.altText ?? node.title}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              draggable={false}
+              className="h-full w-full object-cover object-[72%_center] opacity-70 transition duration-700 ease-out group-hover:scale-[1.015] sm:opacity-80 md:absolute md:end-0 md:w-[64%] md:object-[66%_center] md:opacity-100"
             />
-            {image?.url ? (
-              <img
-                src={cdnImage(image.url, 900)}
-                srcSet={cdnSrcSet(image.url, 900)}
-                sizes="(max-width: 767px) calc(100vw - 3rem), (min-width: 1280px) 560px, 46vw"
-                alt={image.altText ?? node.title}
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-                draggable={false}
-                className="relative z-10 h-[13.5rem] w-full max-w-[34rem] object-contain drop-shadow-xl transition duration-500 ease-out group-hover:scale-[1.025] sm:h-[17rem] md:h-[22rem]"
-              />
-            ) : (
-              <span className="relative z-10 grid h-36 w-36 place-items-center rounded-full border border-border bg-surface text-primary shadow-card">
-                <Sparkles className="h-12 w-12" aria-hidden="true" />
+          </Link>
+        ) : null}
+
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-hero/45 md:hidden" />
+
+        <div className="relative z-10 flex min-h-[22rem] w-[76%] flex-col justify-center bg-hero/85 px-5 py-6 backdrop-blur-[2px] sm:min-h-[25rem] sm:w-[62%] sm:px-8 sm:py-8 md:w-[48%] md:bg-hero/95 lg:min-h-[28rem] lg:px-10 lg:py-10">
+          <div className="mb-3 flex flex-wrap items-center gap-2 sm:mb-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-hero-border bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-hero-muted backdrop-blur sm:text-[11px]">
+              <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+              {t("featuredTechnology")}
+            </span>
+            {discount !== null && (
+              <span className="rounded-full bg-primary px-2.5 py-1.5 text-[10px] font-black text-primary-foreground sm:px-3 sm:text-[11px]">
+                -{discount}%
               </span>
             )}
-          </Link>
+          </div>
+
+          {node.vendor && (
+            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-hero-muted sm:mb-2 sm:text-xs">
+              {node.vendor}
+            </p>
+          )}
+
+          <h2 className="line-clamp-3 text-[clamp(1.65rem,7vw,3.8rem)] font-black leading-[1.01] tracking-[-0.045em] text-hero-foreground">
+            {node.title}
+          </h2>
+
+          <p className="mt-3 line-clamp-2 max-w-xl text-xs leading-5 text-hero-muted sm:mt-4 sm:text-sm sm:leading-6 lg:text-base">
+            {node.description?.trim() || intro}
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:mt-5 sm:gap-3">
+            <span className="text-xl font-black tracking-tight sm:text-2xl">
+              {formatPrice(price.amount, price.currencyCode)}
+            </span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-hero-muted sm:text-xs">
+              <BadgeCheck className="h-4 w-4 text-success" aria-hidden="true" />
+              {t(inStock ? "inStock" : "outOfStock")}
+            </span>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2 sm:mt-6 sm:gap-2.5">
+            <Link
+              to="/product/$handle"
+              params={{ handle: node.handle }}
+              className="press inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-xs font-extrabold text-primary-foreground shadow-lg transition hover:brightness-105 sm:gap-2 sm:px-5 sm:text-sm"
+            >
+              {t("shopNow")}
+              <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+            </Link>
+            <Link
+              to="/shop"
+              className="press inline-flex min-h-11 items-center justify-center rounded-full border border-hero-border bg-white/5 px-4 py-2.5 text-xs font-bold text-hero-foreground backdrop-blur transition hover:bg-white/10 sm:px-5 sm:text-sm"
+            >
+              {t("viewAll")}
+            </Link>
+          </div>
         </div>
       </section>
 
