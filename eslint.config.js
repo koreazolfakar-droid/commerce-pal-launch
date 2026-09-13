@@ -36,5 +36,12 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    files: ["**/*.d.ts"],
+    rules: {
+      // Ambient globals intentionally use `declare var` to merge with DOM declarations.
+      "no-var": "off",
+    },
+  },
   eslintPluginPrettier,
 );
