@@ -31,7 +31,7 @@ export function MobileMenu() {
         <button
           type="button"
           aria-label={t("openMenu")}
-          className="press grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-surface"
+          className="press grid h-11 w-11 shrink-0 place-items-center rounded-full hover:bg-surface"
         >
           <Menu aria-hidden className="h-5 w-5" />
         </button>
