@@ -4,6 +4,8 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 const source = (path) => readFile(new URL(path, root), "utf8");
+const withoutComments = (text) =>
+  text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/.*$/gm, "$1");
 
 test("curated broken-brand assets are static local URLs and raw SVG markup is rejected", async () => {
   for (const asset of [
@@ -33,13 +35,14 @@ test("curated broken-brand assets are static local URLs and raw SVG markup is re
 
 test("shared footer is deterministic and hides technical build data", async () => {
   const footer = await source("src/components/SiteFooter.tsx");
+  const runtimeFooter = withoutComments(footer);
 
-  assert.doesNotMatch(footer, /catalogQueryOptions|shopPoliciesQueryOptions|useQuery\(/);
-  assert.doesNotMatch(footer, /STORE_VERSION|app-version|No brands yet|لا توجد علامات بعد/);
-  assert.doesNotMatch(footer, /wa\.me\//);
-  assert.match(footer, /FOOTER_SHOP_LINKS/);
-  assert.match(footer, /FOOTER_BRAND_LINKS/);
-  assert.match(footer, /MessageCircle/);
+  assert.doesNotMatch(runtimeFooter, /catalogQueryOptions|shopPoliciesQueryOptions|useQuery\(/);
+  assert.doesNotMatch(runtimeFooter, /STORE_VERSION|app-version|No brands yet|لا توجد علامات بعد/);
+  assert.doesNotMatch(runtimeFooter, /wa\.me\//);
+  assert.match(runtimeFooter, /FOOTER_SHOP_LINKS/);
+  assert.match(runtimeFooter, /FOOTER_BRAND_LINKS/);
+  assert.match(runtimeFooter, /MessageCircle/);
 });
 
 test("HTML documents cannot remain stale across deploys", async () => {
@@ -61,16 +64,17 @@ test("account links stay branded before the Shopify hand-off", async () => {
   assert.match(infoPage, /secure Shopify account page/);
 });
 
-test("hero preserves the original Shopify collection banner and empty updates CTA stays removed", async () => {
+test("hero uses Shopify collection artwork and routes to the matching collection", async () => {
   const home = await source("src/routes/index.tsx");
-  const hero = await source("src/components/ShopifyHeroCollections.tsx");
+  const hero = await source("src/components/HomeHero.tsx");
 
   assert.doesNotMatch(home, /ensureQueryData\(newestQueryOptions\(\)\)/);
-  assert.doesNotMatch(home, /featuredProduct=\{newItems\[0\]\}/);
   assert.doesNotMatch(home, /Newsletter/);
-  assert.match(home, /<ShopifyHeroCollections collections=\{collections\} \/>/);
-  assert.match(hero, /const leadImage = collection\.image \?\? products\[0\]\?\.node\.images\.edges\[0\]\?\.node \?\? null/);
+  assert.match(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
+  assert.match(home, /<HomeHero products=\{products\} heroCollection=\{heroCollection\} \/>/);
+  assert.match(hero, /const image = activeSlide\?\.image/);
   assert.match(hero, /to="\/collections\/\$handle"/);
-  assert.match(hero, /alt=\{leadImage\.altText \?\? collection\.title\}/);
-  assert.doesNotMatch(hero, /featuredProduct|featuredNode|Latest arrival|أحدث وصول/);
+  assert.match(hero, /params=\{\{ handle: activeSlide\.handle \}\}/);
+  assert.match(hero, /alt=\{image\.altText \?\? activeSlide\.title \?\? "Space Call"\}/);
+  assert.doesNotMatch(hero, /products\[0\]|featuredProduct|featuredNode|Latest arrival|أحدث وصول/);
 });
