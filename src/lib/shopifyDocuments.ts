@@ -33,7 +33,7 @@ export const PRODUCT_DETAIL_FIELDS = `
 `;
 
 export const COLLECTION_FIELDS = `
-  # merchandising-cache-v2
+  # merchandising-cache-v3-2026-09-13
   id handle title description updatedAt image { ${COLLECTION_IMAGE} }
 `;
 
