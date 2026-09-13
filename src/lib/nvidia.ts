@@ -6,10 +6,12 @@ export type NvidiaChatMessage = {
   content: string;
 };
 
+type NvidiaMessageContent = string | Array<{ type?: string; text?: string }> | undefined;
+
 type NvidiaChatPayload = {
   choices?: Array<{
     message?: {
-      content?: string | Array<{ type?: string; text?: string }>;
+      content?: NvidiaMessageContent;
     };
   }>;
   error?: {
@@ -37,11 +39,7 @@ export function getNvidiaConfig() {
   return { apiKey, model };
 }
 
-function messageText(content: NvidiaChatPayload["choices"] extends Array<infer T>
-  ? T extends { message?: { content?: infer C } }
-    ? C
-    : never
-  : never) {
+function messageText(content: NvidiaMessageContent) {
   if (typeof content === "string") return content.trim();
   if (!Array.isArray(content)) return "";
   return content
