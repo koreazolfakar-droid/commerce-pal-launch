@@ -1,7 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Plus } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useHydrated } from "@/hooks/useHydrated";
 import { toast } from "sonner";
 
@@ -98,6 +98,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const { t } = useLanguage();
   const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
   const hydrated = useHydrated();
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const queries = useQueries({
     queries: candidates.map((collection) => ({
@@ -106,10 +107,15 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
     })),
   });
 
+  useEffect(() => {
+    if (activeIndex >= candidates.length) setActiveIndex(0);
+  }, [activeIndex, candidates.length]);
+
   if (!candidates.length) return null;
 
-  const fallback = candidates[0]!;
-  const activeQuery = queries[0];
+  const safeActiveIndex = Math.min(activeIndex, candidates.length - 1);
+  const fallback = candidates[safeActiveIndex]!;
+  const activeQuery = queries[safeActiveIndex];
   const result = activeQuery?.data;
   const collection = result?.collection ?? fallback;
   const products = result?.products ?? [];
@@ -123,7 +129,41 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
       data-testid="collection-hero-tabs"
       aria-label="Featured collection"
     >
-      <div className="min-w-0" aria-label={collection.title}>
+      {candidates.length > 1 && (
+        <div
+          role="tablist"
+          aria-label="Featured collections"
+          className="-mx-3 mb-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:mb-4 sm:px-0"
+        >
+          {candidates.map((candidate, index) => {
+            const selected = index === safeActiveIndex;
+            return (
+              <button
+                key={candidate.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                aria-controls="featured-hero-panel"
+                onClick={() => setActiveIndex(index)}
+                className={`press shrink-0 snap-start rounded-full border px-4 py-2 text-xs font-bold transition sm:px-5 sm:text-sm ${
+                  selected
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    : "border-border/70 bg-card text-foreground hover:border-primary/40 hover:bg-surface"
+                }`}
+              >
+                {cleanTabTitle(candidate)}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div
+        id="featured-hero-panel"
+        role="tabpanel"
+        className="min-w-0"
+        aria-label={collection.title}
+      >
         <Link
           to="/collections/$handle"
           params={{ handle: collection.handle }}
@@ -133,14 +173,15 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
           <span className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
             {leadImage ? (
               <img
+                key={`${collection.id}-${leadImage.url}`}
                 src={cdnImage(leadImage.url, 1800)}
                 srcSet={cdnSrcSet(leadImage.url, 1800)}
                 sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
                 alt={leadImage.altText ?? collection.title}
                 width={1672}
                 height={941}
-                loading="eager"
-                fetchPriority="high"
+                loading={safeActiveIndex === 0 ? "eager" : "lazy"}
+                fetchPriority={safeActiveIndex === 0 ? "high" : "auto"}
                 decoding="async"
                 className="m-0 block h-auto w-full max-w-none align-top"
               />
