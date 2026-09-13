@@ -12,6 +12,28 @@ export function findFacetMerchandising(
   return handles.map((handle) => collections.find((item) => item.handle === handle)).find(Boolean);
 }
 
+/**
+ * Homepage banners are controlled only by dedicated Shopify collections.
+ * The collection image is the hero artwork; catalogue product images are never used as a fallback.
+ * Use `homepage-hero` for the primary banner and `home-hero-*`, `hero-home-*`,
+ * `hero-slide-*`, or a generic `hero-*` handle for additional slides.
+ */
+export function homepageHeroCollections(collections: ShopifyCollection[]): ShopifyCollection[] {
+  const slides = collections.filter((collection) => {
+    if (!collection.image?.url) return false;
+    return /^(homepage-hero$|home-hero-|hero-home-|hero-slide-|hero-(?!brand-|category-))/.test(
+      collection.handle,
+    );
+  });
+
+  return [...slides]
+    .sort((a, b) => {
+      const primaryRank = Number(a.handle !== "homepage-hero") - Number(b.handle !== "homepage-hero");
+      return primaryRank || a.handle.localeCompare(b.handle);
+    })
+    .slice(0, 10);
+}
+
 export function orderedBrands<T extends CatalogFacet>(brands: T[]): T[] {
   const priority = ["apple", "samsung", "xiaomi"];
   const rank = (slug: string) => {
