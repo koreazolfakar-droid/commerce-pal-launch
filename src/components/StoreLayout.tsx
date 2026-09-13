@@ -5,8 +5,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SmartPhoneAdvisor } from "@/components/SmartPhoneAdvisor";
 import { WhatsAppCTA } from "@/components/WhatsAppCTA";
-import { AIAssistant } from "@/components/AIAssistant";
 import "../ux-polish.css";
 import "../ux-welcome.css";
 import "../dark-black.css";
@@ -40,7 +40,7 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       </main>
       <SiteFooter />
       {!onCartPage ? <WhatsAppCTA /> : null}
-      {!onCartPage ? <AIAssistant {...(aiContext ? { context: aiContext } : {})} /> : null}
+      {!onCartPage ? <SmartPhoneAdvisor {...(aiContext ? { context: aiContext } : {})} /> : null}
       <BottomNav />
     </div>
   );
