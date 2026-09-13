@@ -24,9 +24,10 @@ body,
 }
 
 /* The bottom bar has a stable, known height; no runtime ResizeObserver is
- * needed to measure it after paint. */
+ * needed to measure it after paint. The 4.75rem base exactly reserves the
+ * visible bar, border and minimum bottom inset before device safe-area is added. */
 .store-layout {
-  --mobile-nav-height: calc(4.55rem + env(safe-area-inset-bottom, 0px));
+  --mobile-nav-height: calc(4.75rem + env(safe-area-inset-bottom, 0px));
   --floating-offset: calc(var(--mobile-nav-height) + 0.75rem);
 }
 
@@ -114,7 +115,7 @@ body,
   }
 
   [data-testid="bottom-nav"] > div {
-    min-height: 4.55rem !important;
+    min-height: 4.75rem !important;
   }
 }
 
