@@ -66,15 +66,14 @@ export function CategorySection({ catalog }: { catalog: CatalogIndex; collection
   return (
     <section aria-labelledby="home-categories" data-testid="category-section" className="overflow-hidden">
       <Header id="home-categories" title={title} href="/categories" />
-      <div className="relative">
+      <div className="relative -mx-4 sm:mx-0">
         <div
-          className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 pe-14 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:gap-4 sm:px-0 sm:pe-0"
+          className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 pe-14 scroll-smooth [scroll-padding-inline:1rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 sm:px-0 sm:pe-0 lg:gap-5"
           role="list"
           aria-label={title}
         >
           {catalog.categories.map((category) => {
             const label = categoryLabel(category, language);
-            const detail = language === "ar" ? `تسوّق ${label}` : `Explore ${label}`;
             return (
               <Link
                 key={category.slug}
@@ -82,36 +81,28 @@ export function CategorySection({ catalog }: { catalog: CatalogIndex; collection
                 params={{ slug: category.slug }}
                 role="listitem"
                 aria-label={label}
-                className="group w-[9.35rem] shrink-0 snap-start overflow-hidden rounded-[1.35rem] border border-border/70 bg-card text-start shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[10.5rem] sm:rounded-[1.55rem] lg:w-[11.25rem]"
+                className="group flex w-[5.8rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl px-1 py-1.5 text-center transition duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.6rem] sm:gap-2.5 lg:w-[7.1rem]"
               >
                 <span
-                  className="relative block aspect-[1.28/1] w-full overflow-hidden border-b border-border/60 bg-gradient-to-br from-white via-white to-slate-50 dark:from-card dark:via-card dark:to-surface"
+                  className="relative grid h-[4.65rem] w-[4.65rem] shrink-0 place-items-center overflow-hidden rounded-[1.35rem] border border-border/70 bg-card shadow-card transition duration-300 group-hover:border-primary/25 group-hover:shadow-card-hover sm:h-[5.2rem] sm:w-[5.2rem] sm:rounded-[1.5rem] lg:h-[5.6rem] lg:w-[5.6rem]"
                   aria-hidden="true"
                 >
+                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white via-white to-slate-50 dark:from-card dark:via-card dark:to-surface" />
+                  <span className="pointer-events-none absolute inset-x-3 top-1 h-px bg-white/80 dark:bg-white/10" />
                   <CategoryGlyph
                     slug={category.slug}
-                    className="absolute inset-0 h-full w-full p-[4%] transition-transform duration-300 ease-out group-hover:scale-[1.045]"
+                    className="relative h-[4.15rem] w-[4.15rem] transition-transform duration-300 ease-out group-hover:scale-[1.06] sm:h-[4.65rem] sm:w-[4.65rem] lg:h-[5rem] lg:w-[5rem]"
                   />
                 </span>
-                <span className="block min-w-0 p-3">
-                  <span className="flex min-w-0 items-center justify-between gap-2">
-                    <h3 className="truncate text-[0.78rem] font-extrabold leading-tight tracking-[-0.015em] text-foreground sm:text-sm">
-                      {label}
-                    </h3>
-                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                      <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
-                    </span>
-                  </span>
-                  <span className="mt-1 block truncate text-[10px] font-medium text-muted-foreground sm:text-[11px]">
-                    {detail}
-                  </span>
-                </span>
+                <h3 className="line-clamp-2 min-h-[2rem] max-w-full text-center text-[11px] font-extrabold leading-[1.15] tracking-[-0.015em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.1rem] sm:text-xs">
+                  {label}
+                </h3>
               </Link>
             );
           })}
         </div>
         <div
-          className="pointer-events-none absolute inset-y-0 end-0 w-12 bg-gradient-to-l from-background via-background/90 to-transparent sm:hidden"
+          className="pointer-events-none absolute inset-y-0 end-0 w-10 bg-gradient-to-l from-background via-background/90 to-transparent sm:hidden"
           aria-hidden="true"
         />
       </div>
