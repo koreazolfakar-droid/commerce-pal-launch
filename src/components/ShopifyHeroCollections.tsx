@@ -1,7 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useHydrated } from "@/hooks/useHydrated";
 import { toast } from "sonner";
 
@@ -18,6 +18,9 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
+
+const HERO_AUTOPLAY_MS = 5500;
+const HERO_SWIPE_THRESHOLD_PX = 45;
 
 function cleanTabTitle(collection: ShopifyCollection) {
   return collection.title.replace(/^hero\s*[-:|]\s*/i, "").trim() || collection.title;
@@ -99,6 +102,9 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
   const hydrated = useHydrated();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isAutoPaused, setIsAutoPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const suppressNextClick = useRef(false);
 
   const queries = useQueries({
     queries: candidates.map((collection) => ({
@@ -111,6 +117,19 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
     if (activeIndex >= candidates.length) setActiveIndex(0);
   }, [activeIndex, candidates.length]);
 
+  useEffect(() => {
+    if (candidates.length <= 1 || isAutoPaused) return;
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % candidates.length);
+    }, HERO_AUTOPLAY_MS);
+
+    return () => window.clearInterval(timer);
+  }, [candidates.length, isAutoPaused]);
+
   if (!candidates.length) return null;
 
   const safeActiveIndex = Math.min(activeIndex, candidates.length - 1);
@@ -119,85 +138,151 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   const result = activeQuery?.data;
   const collection = result?.collection ?? fallback;
   const products = result?.products ?? [];
-  const leadImage = collection.image ?? products[0]?.node.images.edges[0]?.node ?? null;
+  const promotedProduct = products[0] ?? null;
+  const leadImage = collection.image ?? promotedProduct?.node.images.edges[0]?.node ?? null;
   const displayTitle = cleanTabTitle(collection);
   const isGenericHomeTitle = /^home\s*page$/i.test(displayTitle);
+
+  const goToIndex = (index: number) => {
+    const next = (index + candidates.length) % candidates.length;
+    setActiveIndex(next);
+  };
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+    setIsAutoPaused(true);
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLElement>) => {
+    const startX = touchStartX.current;
+    const endX = event.changedTouches[0]?.clientX;
+    touchStartX.current = null;
+    setIsAutoPaused(false);
+
+    if (startX === null || endX === undefined) return;
+    const distance = endX - startX;
+    if (Math.abs(distance) < HERO_SWIPE_THRESHOLD_PX) return;
+
+    suppressNextClick.current = true;
+    goToIndex(safeActiveIndex + (distance < 0 ? 1 : -1));
+    window.setTimeout(() => {
+      suppressNextClick.current = false;
+    }, 350);
+  };
+
+  const handleHeroClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!suppressNextClick.current) return;
+    event.preventDefault();
+    suppressNextClick.current = false;
+  };
+
+  const heroVisual = (
+    <span
+      key={collection.id}
+      className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card animate-in fade-in duration-500"
+    >
+      {leadImage ? (
+        <img
+          key={`${collection.id}-${leadImage.url}`}
+          src={cdnImage(leadImage.url, 1800)}
+          srcSet={cdnSrcSet(leadImage.url, 1800)}
+          sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
+          alt={leadImage.altText ?? collection.title}
+          width={1672}
+          height={941}
+          loading={safeActiveIndex === 0 ? "eager" : "lazy"}
+          fetchPriority={safeActiveIndex === 0 ? "high" : "auto"}
+          decoding="async"
+          draggable={false}
+          className="m-0 block h-auto w-full max-w-none select-none align-top"
+        />
+      ) : (
+        <span className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
+          {t("galleryEmpty")}
+        </span>
+      )}
+
+      {activeQuery?.isFetching && !activeQuery?.isPending && (
+        <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
+        </span>
+      )}
+    </span>
+  );
+
+  const heroLinkClass =
+    "group relative -mx-3 block w-[calc(100%+1.5rem)] max-w-none touch-pan-y bg-transparent sm:mx-0 sm:w-full";
 
   return (
     <section
       className="min-w-0"
       data-testid="collection-hero-tabs"
       aria-label="Featured collection"
+      onMouseEnter={() => setIsAutoPaused(true)}
+      onMouseLeave={() => setIsAutoPaused(false)}
+      onFocusCapture={() => setIsAutoPaused(true)}
+      onBlurCapture={() => setIsAutoPaused(false)}
     >
-      {candidates.length > 1 && (
-        <div
-          role="tablist"
-          aria-label="Featured collections"
-          className="-mx-3 mb-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:mb-4 sm:px-0"
-        >
-          {candidates.map((candidate, index) => {
-            const selected = index === safeActiveIndex;
-            return (
-              <button
-                key={candidate.id}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                aria-controls="featured-hero-panel"
-                onClick={() => setActiveIndex(index)}
-                className={`press shrink-0 snap-start rounded-full border px-4 py-2 text-xs font-bold transition sm:px-5 sm:text-sm ${
-                  selected
-                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                    : "border-border/70 bg-card text-foreground hover:border-primary/40 hover:bg-surface"
-                }`}
-              >
-                {cleanTabTitle(candidate)}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       <div
         id="featured-hero-panel"
         role="tabpanel"
         className="min-w-0"
         aria-label={collection.title}
       >
-        <Link
-          to="/collections/$handle"
-          params={{ handle: collection.handle }}
-          className="group relative -mx-3 block w-[calc(100%+1.5rem)] max-w-none bg-transparent sm:mx-0 sm:w-full"
-          data-testid="collection-hero-visual"
-        >
-          <span className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
-            {leadImage ? (
-              <img
-                key={`${collection.id}-${leadImage.url}`}
-                src={cdnImage(leadImage.url, 1800)}
-                srcSet={cdnSrcSet(leadImage.url, 1800)}
-                sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
-                alt={leadImage.altText ?? collection.title}
-                width={1672}
-                height={941}
-                loading={safeActiveIndex === 0 ? "eager" : "lazy"}
-                fetchPriority={safeActiveIndex === 0 ? "high" : "auto"}
-                decoding="async"
-                className="m-0 block h-auto w-full max-w-none align-top"
-              />
-            ) : (
-              <span className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
-                {t("galleryEmpty")}
-              </span>
-            )}
+        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+          {promotedProduct ? (
+            <Link
+              to="/product/$handle"
+              params={{ handle: promotedProduct.node.handle }}
+              className={heroLinkClass}
+              data-testid="collection-hero-visual"
+              aria-label={`${displayTitle}: ${promotedProduct.node.title}`}
+              onClick={handleHeroClick}
+            >
+              {heroVisual}
+            </Link>
+          ) : (
+            <Link
+              to="/collections/$handle"
+              params={{ handle: collection.handle }}
+              className={heroLinkClass}
+              data-testid="collection-hero-visual"
+              aria-label={displayTitle}
+              onClick={handleHeroClick}
+            >
+              {heroVisual}
+            </Link>
+          )}
+        </div>
 
-            {activeQuery?.isFetching && !activeQuery?.isPending && (
-              <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
-              </span>
-            )}
-          </span>
-        </Link>
+        {candidates.length > 1 && (
+          <div
+            role="tablist"
+            aria-label="Featured offers"
+            className="mt-2 flex items-center justify-center gap-1.5"
+          >
+            {candidates.map((candidate, index) => {
+              const selected = index === safeActiveIndex;
+              return (
+                <button
+                  key={candidate.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  aria-controls="featured-hero-panel"
+                  aria-label={`Show ${cleanTabTitle(candidate)}`}
+                  title={cleanTabTitle(candidate)}
+                  onClick={() => goToIndex(index)}
+                  className={`h-1 rounded-full transition-all duration-300 ${
+                    selected
+                      ? "w-8 bg-primary"
+                      : "w-3 bg-border hover:bg-muted-foreground/50"
+                  }`}
+                />
+              );
+            })}
+          </div>
+        )}
 
         {!isGenericHomeTitle && (
           <div className="mt-5 flex items-end justify-between gap-3 sm:mt-9">
