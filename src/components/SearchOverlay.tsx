@@ -62,13 +62,13 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             type="button"
             onClick={onClose}
             aria-label="Close search"
-            className="press grid h-9 w-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-surface"
+            className="press grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-surface"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="mt-4 max-h-[65vh] overflow-y-auto border-t pt-4">
+        <div className="mt-4 max-h-[65vh] overflow-y-auto overscroll-contain border-t pt-4">
           {debounced.trim().length < 2 ? (
             <div className="flex flex-wrap gap-2">
               {suggestions.map((suggestion) => (
@@ -76,7 +76,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                   key={suggestion}
                   type="button"
                   onClick={() => setTerm(suggestion)}
-                  className="press rounded-full bg-surface px-3.5 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
+                  className="press min-h-11 rounded-full bg-surface px-3.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-primary"
                 >
                   {suggestion}
                 </button>
@@ -100,7 +100,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                         to="/collections/$handle"
                         params={{ handle: collection.handle }}
                         onClick={onClose}
-                        className="rounded-full bg-surface px-3.5 py-1.5 text-[13px] font-medium transition-colors hover:bg-accent hover:text-primary"
+                        className="inline-flex min-h-11 items-center rounded-full bg-surface px-3.5 py-2 text-[13px] font-medium transition-colors duration-150 hover:bg-accent hover:text-primary"
                       >
                         {collection.title}
                       </Link>
@@ -124,7 +124,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                             to="/product/$handle"
                             params={{ handle: node.handle }}
                             onClick={onClose}
-                            className="flex items-center gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-surface"
+                            className="flex min-h-16 items-center gap-3 rounded-xl px-2 py-3 transition-colors duration-150 hover:bg-surface"
                           >
                             <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-image-stage">
                               {image && (

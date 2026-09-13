@@ -1,0 +1,83 @@
+/* Space Call interaction/performance guardrails.
+ * Keep movement short, compositor-friendly and opt-in while preserving the
+ * existing brand/theme layers and Shopify-driven storefront behavior.
+ */
+
+html {
+  scroll-behavior: auto;
+  overscroll-behavior-x: none;
+}
+
+body,
+.store-layout {
+  max-inline-size: 100%;
+  overflow-x: clip;
+}
+
+.store-layout main,
+.store-layout section,
+.store-layout article,
+.store-layout nav {
+  min-inline-size: 0;
+}
+
+.store-layout img,
+.store-layout video,
+.store-layout svg {
+  max-inline-size: 100%;
+}
+
+/* Avoid reserving a compositor layer for every card throughout a long page. */
+.store-layout .card-lift {
+  will-change: auto;
+}
+
+/* Fixed chrome is isolated from the scrolling document as much as possible. */
+[data-testid="bottom-nav"] {
+  contain: layout;
+}
+
+/* Short, predictable tap feedback. */
+.store-layout :is(a, button):active:not(:disabled) {
+  transition-duration: 120ms;
+}
+
+/* Touch devices should not retain desktop-style hover lifts while scrolling. */
+@media (hover: none), (pointer: coarse) {
+  .store-layout .card-lift:hover,
+  .store-layout .homepage-product-card:hover,
+  .store-layout .brand-logo-tile:hover,
+  .store-layout .category-icon-card:hover,
+  .store-layout .category-icon-card:hover .category-icon-badge {
+    transform: none;
+  }
+}
+
+/* Backdrop filters on fixed/sticky full-width chrome are expensive while the
+ * document is moving. These surfaces are already near-opaque, so keep the same
+ * visual hierarchy without continuously filtering content behind them.
+ * Reserve the exact 4rem app-bar height plus the platform safe-area here as a
+ * final unlayered guardrail so fixed navigation never covers page content. */
+@media (max-width: 1023px) {
+  .store-layout {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .store-layout header[class*="lg:hidden"],
+  [data-testid="bottom-nav"] > div {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .store-layout *,
+  .store-layout *::before,
+  .store-layout *::after {
+    scroll-behavior: auto !important;
+  }
+}
