@@ -1,5 +1,5 @@
-export const NVIDIA_API_BASE_URL = "https://integrate.api.nvidia.com/v1";
-export const DEFAULT_NVIDIA_MODEL = "openai/gpt-oss-20b";
+export const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
+export const DEFAULT_SUPABASE_NVIDIA_FUNCTION = "nvidia-chat";
 
 export type NvidiaChatMessage = {
   role: "system" | "user" | "assistant";
@@ -9,10 +9,14 @@ export type NvidiaChatMessage = {
 type NvidiaMessageContent = string | Array<{ type?: string; text?: string }> | undefined;
 
 type NvidiaChatPayload = {
+  model?: string;
   choices?: Array<{
     message?: { content?: NvidiaMessageContent };
   }>;
-  error?: { message?: string; type?: string; code?: string };
+  error?: string | { message?: string; type?: string; code?: string };
+  status?: number;
+  title?: string;
+  detail?: string;
 };
 
 export class NvidiaApiError extends Error {
@@ -27,10 +31,12 @@ export class NvidiaApiError extends Error {
   }
 }
 
-export function getNvidiaConfig() {
-  const apiKey = process.env["NVIDIA_API_KEY"]?.trim();
-  const model = process.env["NVIDIA_MODEL"]?.trim() || DEFAULT_NVIDIA_MODEL;
-  return { apiKey, model };
+export function getNvidiaGatewayConfig() {
+  const supabaseUrl = process.env["SUPABASE_URL"]?.trim() || DEFAULT_SUPABASE_URL;
+  const anonKey = process.env["SUPABASE_ANON_KEY"]?.trim();
+  const functionName =
+    process.env["SUPABASE_NVIDIA_FUNCTION"]?.trim() || DEFAULT_SUPABASE_NVIDIA_FUNCTION;
+  return { supabaseUrl: supabaseUrl.replace(/\/$/, ""), anonKey, functionName };
 }
 
 function messageText(content: NvidiaMessageContent) {
@@ -40,6 +46,16 @@ function messageText(content: NvidiaMessageContent) {
     .map((part) => (part && typeof part.text === "string" ? part.text : ""))
     .join("")
     .trim();
+}
+
+function providerErrorMessage(payload: NvidiaChatPayload, fallback: string) {
+  if (typeof payload.error === "string" && payload.error.trim()) return payload.error.trim();
+  if (payload.error && typeof payload.error === "object" && payload.error.message?.trim()) {
+    return payload.error.message.trim();
+  }
+  if (payload.detail?.trim()) return payload.detail.trim();
+  if (payload.title?.trim()) return payload.title.trim();
+  return fallback;
 }
 
 export function extractJsonObject(text: string) {
@@ -62,32 +78,36 @@ export async function callNvidiaChat({
   maxTokens?: number;
   temperature?: number;
 }) {
-  const { apiKey, model } = getNvidiaConfig();
-  if (!apiKey) {
-    throw new NvidiaApiError("NVIDIA_API_KEY is not configured", 0, "NVIDIA_NOT_CONFIGURED");
+  const { supabaseUrl, anonKey, functionName } = getNvidiaGatewayConfig();
+  if (!anonKey) {
+    throw new NvidiaApiError(
+      "SUPABASE_ANON_KEY is not configured",
+      0,
+      "SUPABASE_GATEWAY_NOT_CONFIGURED",
+    );
   }
+
+  const functionUrl = `${supabaseUrl}/functions/v1/${encodeURIComponent(functionName)}`;
 
   let response: Response;
   try {
-    response = await fetch(`${NVIDIA_API_BASE_URL}/chat/completions`, {
+    response = await fetch(functionUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${anonKey}`,
+        apikey: anonKey,
       },
       body: JSON.stringify({
-        model,
         messages,
         temperature,
-        top_p: 0.9,
         max_tokens: maxTokens,
-        stream: false,
       }),
-      signal: AbortSignal.timeout(35_000),
+      signal: AbortSignal.timeout(40_000),
     });
   } catch (error) {
     throw new NvidiaApiError(
-      error instanceof Error ? error.message : "NVIDIA request failed",
+      error instanceof Error ? error.message : "Supabase NVIDIA gateway request failed",
       0,
       "NETWORK_ERROR",
     );
@@ -104,14 +124,16 @@ export async function callNvidiaChat({
   }
 
   if (!response.ok) {
+    const upstreamStatus =
+      typeof payload.status === "number" && payload.status >= 400 ? payload.status : response.status;
     throw new NvidiaApiError(
-      payload.error?.message || body || `NVIDIA API error ${response.status}`,
-      response.status,
+      providerErrorMessage(payload, body || `Supabase NVIDIA gateway error ${response.status}`),
+      upstreamStatus,
       body,
     );
   }
 
   const text = messageText(payload.choices?.[0]?.message?.content);
   if (!text) throw new NvidiaApiError("NVIDIA returned an empty response", 502, body);
-  return { text, model };
+  return { text, model: payload.model?.trim() || undefined };
 }
