@@ -39,7 +39,7 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       </main>
       <SiteFooter />
       {!onCartPage ? <WhatsAppCTA /> : null}
-      {!onCartPage ? <SmartPhoneAdvisor {...(aiContext ? { context: aiContext } : {})} /> : null}
+      <SmartPhoneAdvisor {...(aiContext ? { context: aiContext } : {})} />
       <BottomNav />
     </div>
   );
