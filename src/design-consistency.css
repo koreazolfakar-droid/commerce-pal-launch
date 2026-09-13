@@ -88,6 +88,17 @@
   border-radius: var(--sc-control-radius);
 }
 
+/* Cart quantity/remove controls were visually compact but too small to tap reliably. */
+.store-layout[data-cart-page="true"] main ul button {
+  min-width: var(--sc-touch);
+  min-height: var(--sc-touch);
+  border-radius: 999px;
+}
+
+.store-layout[data-cart-page="true"] main ul button:hover {
+  background: var(--color-surface);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .store-layout :is(a, button) {
     scroll-behavior: auto;
