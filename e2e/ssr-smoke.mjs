@@ -17,7 +17,11 @@ async function request(path) {
     const location = response.headers.get("location");
     assert.ok(location, "Redirect must include a destination");
     url = new URL(location, url);
-    assert.equal(url.origin, "https://spacecallapp.store", "SSR tests only follow internal redirects");
+    assert.equal(
+      url.origin,
+      "https://spacecallapp.store",
+      "SSR tests only follow internal redirects",
+    );
   }
   const body = await response.text();
   assert.equal(response.status, 200, `${path} must render successfully`);
@@ -85,7 +89,10 @@ assert.equal(
   home.response.headers.get("strict-transport-security"),
   "max-age=31536000; includeSubDomains",
 );
-assert.ok(fixtureRequests.includes("GetCollection"), "Homepage resolves its Shopify hero collection");
+assert.ok(
+  fixtureRequests.includes("GetCollection"),
+  "Homepage resolves its Shopify hero collection",
+);
 assert.equal(
   fixtureRequests.filter((name) => name === "ShowcaseCollections").length,
   0,
