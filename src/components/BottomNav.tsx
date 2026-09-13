@@ -1,12 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  House,
-  LayoutGrid,
-  Search,
-  ShoppingBag,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
+import { House, LayoutGrid, Search, ShoppingBag, UserRound, type LucideIcon } from "lucide-react";
 
 import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { useLanguage } from "@/lib/i18n";
