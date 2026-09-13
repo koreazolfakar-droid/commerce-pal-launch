@@ -38,6 +38,8 @@ function syncRuntimeEnv(env: unknown) {
     "GEMINI_API_KEY",
     "GOOGLE_API_KEY",
     "GEMINI_MODEL",
+    "NVIDIA_API_KEY",
+    "NVIDIA_MODEL",
   ]) {
     const value = runtime[key];
     if (typeof value === "string" && value && !process.env[key]) {
