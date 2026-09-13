@@ -49,10 +49,7 @@ function promotedProductForHero(collection: ShopifyCollection, products: Shopify
 }
 
 export function ShopifyHeroCollections({ collections }: { collections: ShopifyCollection[] }) {
-  const candidates = useMemo(
-    () => homeHeroCollections(collections).filter((collection) => Boolean(collection.image?.url)),
-    [collections],
-  );
+  const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
   const hydrated = useHydrated();
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -140,7 +137,11 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               const resolvedCollection = query?.data?.collection ?? candidate;
               const slideProducts = query?.data?.products ?? [];
               const promotedProduct = promotedProductForHero(resolvedCollection, slideProducts);
-              const heroImage = resolvedCollection.image ?? candidate.image;
+              const heroImage =
+                resolvedCollection.image ??
+                candidate.image ??
+                slideProducts[0]?.node.images.edges[0]?.node ??
+                null;
               const slideTitle = cleanHeroTitle(resolvedCollection);
 
               if (!heroImage?.url) return null;
