@@ -156,8 +156,8 @@ const sitemap = await request("/sitemap.xml");
 assert.match(sitemap.body, /https:\/\/spacecallapp.store\/help/);
 assert.equal(
   sitemap.response.headers.get("x-frame-options"),
-  null,
-  "Only HTML receives framing header",
+  "SAMEORIGIN",
+  "Global security headers remain present on sitemap responses",
 );
 
 const robots = await readFile(new URL("../public/robots.txt", import.meta.url), "utf8");
