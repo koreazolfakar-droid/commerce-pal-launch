@@ -67,17 +67,19 @@ test("account links stay branded before the Shopify hand-off", async () => {
   assert.match(infoPage, /secure Shopify account page/);
 });
 
-test("hero uses Shopify collection artwork and routes to the matching collection", async () => {
+test("hero accepts CMS content while preserving Shopify collection fallback", async () => {
   const home = await source("src/routes/index.tsx");
   const hero = await source("src/components/HomeHero.tsx");
 
   assert.doesNotMatch(home, /ensureQueryData\(newestQueryOptions\(\)\)/);
   assert.doesNotMatch(home, /Newsletter/);
   assert.match(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
-  assert.match(home, /<HomeHero products=\{products\} heroCollection=\{heroCollection\} \/>/);
-  assert.match(hero, /const image = activeSlide\?\.image/);
+  assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
+  assert.match(hero, /cmsHeroSlides = \[\]/);
+  assert.match(hero, /useCmsSlides = cmsHeroSlides\.length > 0/);
   assert.match(hero, /to="\/collections\/\$handle"/);
-  assert.match(hero, /params=\{\{ handle: activeSlide\.handle \}\}/);
-  assert.match(hero, /alt=\{image\.altText \?\? activeSlide\.title \?\? "Space Call"\}/);
+  assert.match(hero, /params=\{\{ handle: shopifySlide\.handle \}\}/);
+  assert.match(hero, /alt=\{shopifyImage\.altText \?\? shopifySlide\.title \?\? "Space Call"\}/);
+  assert.match(hero, /data-hero-source=\{cmsSlide \? "cms" : shopifySlide \? "shopify-collection" : "placeholder"\}/);
   assert.doesNotMatch(hero, /products\[0\]|featuredProduct|featuredNode|Latest arrival|أحدث وصول/);
 });
