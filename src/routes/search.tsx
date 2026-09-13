@@ -50,21 +50,23 @@ function SearchPage() {
 
   return (
     <StoreLayout>
-      <CatalogView
-        title={filters.q ? `Results for “${filters.q}”` : "Search products"}
-        description={`${products.length} matching product${products.length === 1 ? "" : "s"} from the live Shopify catalogue.`}
-        products={products}
-        total={catalog.products.length}
-        filters={filters}
-        facets={{ categories: catalog.categories, brands: catalog.brands }}
-        priceMin={catalog.priceMin}
-        priceMax={catalog.priceMax}
-        currency={catalog.currency}
-        onChange={(patch: Partial<ProductFilters>) =>
-          navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) })
-        }
-        onReset={() => navigate({ search: {} })}
-      />
+      <div className="search-catalog">
+        <CatalogView
+          title={filters.q ? `Results for “${filters.q}”` : "Search products"}
+          description={`${products.length} matching product${products.length === 1 ? "" : "s"} from the live Shopify catalogue.`}
+          products={products}
+          total={catalog.products.length}
+          filters={filters}
+          facets={{ categories: catalog.categories, brands: catalog.brands }}
+          priceMin={catalog.priceMin}
+          priceMax={catalog.priceMax}
+          currency={catalog.currency}
+          onChange={(patch: Partial<ProductFilters>) =>
+            navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) })
+          }
+          onReset={() => navigate({ search: {} })}
+        />
+      </div>
     </StoreLayout>
   );
 }
