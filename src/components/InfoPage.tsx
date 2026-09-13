@@ -55,7 +55,8 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 {t("contactWhatsApp")}
               </a>
             </section>
-            <section id="account-orders" className="scroll-mt-28 rounded-2xl border bg-card p-6">
+            <section id="account-orders" className="relative scroll-mt-28 rounded-2xl border bg-card p-6">
+              <span id="track-order" className="pointer-events-none absolute -top-28 start-0" aria-hidden="true" />
               <h2 className="text-xl font-bold">{t("accountOrders")}</h2>
               <p className="mt-3 text-base text-muted-foreground">{t("accountDescription")}</p>
               <p className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm leading-6 text-muted-foreground">
