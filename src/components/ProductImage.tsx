@@ -55,7 +55,7 @@ export function ProductImage({
           draggable={false}
           onError={() => setFailedUrl(url)}
           className={cn(
-            "absolute inset-0 z-10 h-full w-full select-none object-contain p-[9%] transition-transform duration-500 sm:p-[10%]",
+            "absolute inset-0 z-10 h-full w-full select-none object-contain p-[7%] transition-transform duration-500 sm:p-[8%]",
             imageClassName,
           )}
         />
