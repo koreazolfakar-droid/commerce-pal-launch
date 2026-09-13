@@ -55,11 +55,13 @@ test("global advisor routes NVIDIA through protected Supabase Edge Function", ()
   assert.match(serverSource, /"SUPABASE_NVIDIA_FUNCTION"/);
 });
 
-test("global Smart Advisor stays NVIDIA-first and does not call Gemini directly", () => {
+test("global Smart Advisor is NVIDIA-only and does not call Gemini or Lovable", () => {
   assert.match(advisorSource, /callNvidiaChat/);
   assert.match(advisorSource, /provider: "nvidia"/);
   assert.doesNotMatch(advisorSource, /generativelanguage\.googleapis\.com/);
   assert.doesNotMatch(advisorSource, /GEMINI_API_KEY/);
+  assert.doesNotMatch(advisorSource, /ai\.gateway\.lovable\.dev/);
+  assert.doesNotMatch(advisorSource, /LOVABLE_API_KEY/);
   assert.match(advisorSource, /searchedWeb: false/);
 });
 
