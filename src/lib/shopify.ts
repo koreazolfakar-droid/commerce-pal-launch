@@ -91,11 +91,13 @@ export { PRODUCTS_QUERY as STOREFRONT_QUERY } from "@/lib/shopifyDocuments";
 /** Fields discovered at runtime to be denied by the current token's scopes. */
 const deniedFields = new Set<string>();
 
-type StorefrontCacheEntry = { expiresAt: number; value: any };
+/** JSON payload type exposed by the platform Response API. */
+type StorefrontJsonValue = Awaited<ReturnType<Response["json"]>>;
+type StorefrontCacheEntry = { expiresAt: number; value: StorefrontJsonValue };
 const STOREFRONT_CACHE_TTL_MS = 60_000;
 const STOREFRONT_CACHE_MAX_ENTRIES = 100;
 const storefrontResponseCache = new Map<string, StorefrontCacheEntry>();
-const storefrontPendingRequests = new Map<string, Promise<any>>();
+const storefrontPendingRequests = new Map<string, Promise<StorefrontJsonValue>>();
 
 function storefrontCacheKey(query: string, variables: Record<string, unknown>) {
   return `${query}\n${JSON.stringify(variables)}`;
@@ -122,7 +124,9 @@ function persistentStorefrontRequest(key: string) {
   return new Request(`https://storefront-cache.space-call.invalid/${digest}`);
 }
 
-async function readPersistentStorefrontCache(key: string): Promise<any | undefined> {
+async function readPersistentStorefrontCache(
+  key: string,
+): Promise<StorefrontJsonValue | undefined> {
   if (typeof caches === "undefined") return undefined;
   try {
     const cache = await caches.open("space-call-storefront-v1");
@@ -133,7 +137,7 @@ async function readPersistentStorefrontCache(key: string): Promise<any | undefin
   }
 }
 
-async function writePersistentStorefrontCache(key: string, value: any) {
+async function writePersistentStorefrontCache(key: string, value: StorefrontJsonValue) {
   if (typeof caches === "undefined") return;
   try {
     const cache = await caches.open("space-call-storefront-v1");

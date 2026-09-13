@@ -55,9 +55,7 @@ export function ProductRail({
       ) : (
         <div
           className={
-            visible.length === 1
-              ? "mx-auto w-full max-w-sm"
-              : "scroll-rail product-rail-items"
+            visible.length === 1 ? "mx-auto w-full max-w-sm" : "scroll-rail product-rail-items"
           }
         >
           {visible.map((product) => (

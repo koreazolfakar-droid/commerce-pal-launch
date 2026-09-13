@@ -23,7 +23,9 @@ import type { CartItem } from "@/stores/cartStore";
 
 const STORAGE_KEY = "space-call-whatsapp-checkout-customer";
 const WHISH_MONEY_ACCOUNT = (import.meta.env.VITE_WHISH_MONEY_ACCOUNT ?? "").trim();
-const WHISH_MONEY_ACCOUNT_NAME = (import.meta.env.VITE_WHISH_MONEY_ACCOUNT_NAME ?? STORE_NAME).trim();
+const WHISH_MONEY_ACCOUNT_NAME = (
+  import.meta.env.VITE_WHISH_MONEY_ACCOUNT_NAME ?? STORE_NAME
+).trim();
 
 type PaymentMethod = "cash_on_delivery" | "whish_money";
 
@@ -44,16 +46,10 @@ type SharedLocation = {
 };
 
 type LocationErrorReason =
-  | "unsupported"
-  | "insecure"
-  | "permission_denied"
-  | "unavailable"
-  | "timeout"
-  | "unknown";
+  "unsupported" | "insecure" | "permission_denied" | "unavailable" | "timeout" | "unknown";
 
 type LocationResult =
-  | { location: SharedLocation; error: null }
-  | { location: null; error: LocationErrorReason };
+  { location: SharedLocation; error: null } | { location: null; error: LocationErrorReason };
 
 const EMPTY_DETAILS: CustomerDetails = {
   name: "",
@@ -274,7 +270,8 @@ export function CheckoutDetailsForm({
         required: "Please fill in your name, phone number, area and address first.",
         pdfError: "We couldn't generate the PDF right now. Please try again.",
         ready: "Order prepared. You can keep a PDF copy or continue on WhatsApp.",
-        privacy: "We use your location only after approval, and the PDF is generated locally on your device.",
+        privacy:
+          "We use your location only after approval, and the PDF is generated locally on your device.",
         invoiceLabel: "Invoice number",
         mapLabel: "Map location",
       };
@@ -435,7 +432,10 @@ export function CheckoutDetailsForm({
     const itemLines = items.flatMap((item, index) => {
       const options = variantSummary(item.selectedOptions);
       const unitPrice = formatPrice(item.price.amount, item.price.currencyCode);
-      const lineTotal = formatPrice(Number(item.price.amount) * item.quantity, item.price.currencyCode);
+      const lineTotal = formatPrice(
+        Number(item.price.amount) * item.quantity,
+        item.price.currencyCode,
+      );
       return [
         `${index + 1}. ${item.product.node.title}`,
         options ? `   ${isArabic ? "الخيار" : "Variant"}: ${options}` : "",
@@ -455,8 +455,12 @@ export function CheckoutDetailsForm({
       `${isArabic ? "الهاتف" : "Phone"}: ${details.phone.trim()}`,
       `${isArabic ? "المنطقة" : "Area"}: ${details.area.trim()}`,
       `${isArabic ? "العنوان" : "Address"}: ${details.address.trim()}`,
-      details.landmark.trim() ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${details.landmark.trim()}` : "",
-      shareLocation && resolvedLocation ? `📍 ${copy.mapLabel}: ${googleMapsUrl(resolvedLocation)}` : "",
+      details.landmark.trim()
+        ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${details.landmark.trim()}`
+        : "",
+      shareLocation && resolvedLocation
+        ? `📍 ${copy.mapLabel}: ${googleMapsUrl(resolvedLocation)}`
+        : "",
       "",
       `💳 ${isArabic ? "طريقة الدفع" : "Payment method"}: ${paymentLabel}`,
       details.paymentMethod === "whish_money" && whishConfigured
@@ -490,7 +494,10 @@ export function CheckoutDetailsForm({
         : "border-border bg-background hover:border-primary/40"
     }`;
   const actionDisabled =
-    disabled || items.length === 0 || locating || (details.paymentMethod === "whish_money" && !whishConfigured);
+    disabled ||
+    items.length === 0 ||
+    locating ||
+    (details.paymentMethod === "whish_money" && !whishConfigured);
 
   return (
     <section
@@ -506,7 +513,9 @@ export function CheckoutDetailsForm({
           <h2 id="whatsapp-checkout-title" className="text-lg font-extrabold tracking-tight">
             {copy.title}
           </h2>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">{copy.description}</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">
+            {copy.description}
+          </p>
         </div>
       </div>
 
@@ -600,7 +609,10 @@ export function CheckoutDetailsForm({
           </label>
         </section>
 
-        <section aria-labelledby="location-section-title" className="rounded-xl border bg-muted/20 p-3.5">
+        <section
+          aria-labelledby="location-section-title"
+          className="rounded-xl border bg-muted/20 p-3.5"
+        >
           <div className="flex items-start justify-between gap-3">
             <label className="flex min-w-0 cursor-pointer items-start gap-3">
               <input
@@ -614,7 +626,10 @@ export function CheckoutDetailsForm({
                 className="mt-1 h-4 w-4 accent-primary"
               />
               <span className="min-w-0">
-                <span id="location-section-title" className="flex items-center gap-2 text-sm font-extrabold">
+                <span
+                  id="location-section-title"
+                  className="flex items-center gap-2 text-sm font-extrabold"
+                >
                   <MapPin className="h-4 w-4 text-primary" />
                   {copy.attachLocation}
                 </span>
@@ -634,7 +649,11 @@ export function CheckoutDetailsForm({
                   disabled={locating}
                   className="inline-flex items-center gap-2 rounded-full border bg-background px-3.5 py-2 text-xs font-bold transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
                 >
-                  {locating ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+                  {locating ? (
+                    <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <MapPin className="h-3.5 w-3.5" />
+                  )}
                   {locating ? copy.locating : copy.detectLocation}
                 </button>
                 {location ? (
@@ -646,9 +665,14 @@ export function CheckoutDetailsForm({
               </div>
 
               {locationError ? (
-                <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 text-xs font-medium leading-5 text-amber-800 dark:text-amber-200" role="alert">
+                <div
+                  className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2.5 text-xs font-medium leading-5 text-amber-800 dark:text-amber-200"
+                  role="alert"
+                >
                   <p>{locationErrorMessage()}</p>
-                  {locationError === "permission_denied" ? <p className="mt-1 text-[11px]">{copy.permissionHelp}</p> : null}
+                  {locationError === "permission_denied" ? (
+                    <p className="mt-1 text-[11px]">{copy.permissionHelp}</p>
+                  ) : null}
                   <div className="mt-2 flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -725,7 +749,9 @@ export function CheckoutDetailsForm({
                   <WalletCards className="h-4 w-4" />
                   {copy.cash}
                 </span>
-                <span className="mt-0.5 block text-[11px] leading-4 text-muted-foreground">{copy.cashDescription}</span>
+                <span className="mt-0.5 block text-[11px] leading-4 text-muted-foreground">
+                  {copy.cashDescription}
+                </span>
               </span>
             </label>
 
@@ -742,7 +768,9 @@ export function CheckoutDetailsForm({
                   <CreditCard className="h-4 w-4" />
                   {copy.whish}
                 </span>
-                <span className="mt-0.5 block text-[11px] leading-4 text-muted-foreground">{copy.whishDescription}</span>
+                <span className="mt-0.5 block text-[11px] leading-4 text-muted-foreground">
+                  {copy.whishDescription}
+                </span>
               </span>
             </label>
           </div>
@@ -752,8 +780,12 @@ export function CheckoutDetailsForm({
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground">{copy.whishAccount}</p>
-                    <p dir="ltr" className="mt-0.5 text-base font-extrabold tracking-wide">{WHISH_MONEY_ACCOUNT}</p>
+                    <p className="text-xs font-semibold text-muted-foreground">
+                      {copy.whishAccount}
+                    </p>
+                    <p dir="ltr" className="mt-0.5 text-base font-extrabold tracking-wide">
+                      {WHISH_MONEY_ACCOUNT}
+                    </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {copy.whishAccountName}: {WHISH_MONEY_ACCOUNT_NAME}
                     </p>
@@ -792,7 +824,10 @@ export function CheckoutDetailsForm({
         </label>
 
         {error ? (
-          <p role="alert" className="rounded-xl bg-destructive/10 px-3.5 py-3 text-sm font-medium text-destructive">
+          <p
+            role="alert"
+            className="rounded-xl bg-destructive/10 px-3.5 py-3 text-sm font-medium text-destructive"
+          >
             {error}
           </p>
         ) : null}
@@ -811,7 +846,11 @@ export function CheckoutDetailsForm({
               disabled={actionDisabled || pdfBusy}
               className="press flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-4 text-sm font-extrabold text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {locating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
+              {locating ? (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : (
+                <MessageCircle className="h-4 w-4" />
+              )}
               {locating ? copy.locating : copy.send}
             </button>
           </div>
@@ -822,7 +861,11 @@ export function CheckoutDetailsForm({
             disabled={actionDisabled || pdfBusy}
             className="press flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-background px-5 py-3 text-sm font-bold text-foreground transition hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {pdfBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {pdfBusy ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
             {pdfBusy ? copy.preparingPdf : submitted ? copy.invoicePdf : copy.summaryPdf}
           </button>
         </div>

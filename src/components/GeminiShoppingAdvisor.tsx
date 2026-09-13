@@ -40,7 +40,8 @@ export function GeminiShoppingAdvisor({
               </span>
             </div>
             <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Compare {title}, understand its strengths and trade-offs, and match it against products currently available from {STORE_NAME}.
+              Compare {title}, understand its strengths and trade-offs, and match it against
+              products currently available from {STORE_NAME}.
             </p>
           </div>
         </div>

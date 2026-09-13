@@ -58,9 +58,7 @@ export function ProductGallery({
       className={cn(
         "min-w-0",
         !compact && "lg:sticky lg:top-24 lg:self-start",
-        !compact &&
-          images.length > 1 &&
-          "lg:grid lg:grid-cols-[5.25rem_minmax(0,1fr)] lg:gap-3",
+        !compact && images.length > 1 && "lg:grid lg:grid-cols-[5.25rem_minmax(0,1fr)] lg:gap-3",
       )}
     >
       <div className="group relative aspect-[1/0.92] overflow-hidden rounded-[1.6rem] border bg-image-stage shadow-card sm:aspect-square lg:order-2">

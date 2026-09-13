@@ -87,7 +87,14 @@ function productSpecs(product: ShopifyProduct) {
 
 function normalizedHandles(value: string | undefined) {
   if (!value) return [];
-  return [...new Set(value.split(",").map((handle) => handle.trim()).filter(Boolean))].slice(0, 4);
+  return [
+    ...new Set(
+      value
+        .split(",")
+        .map((handle) => handle.trim())
+        .filter(Boolean),
+    ),
+  ].slice(0, 4);
 }
 
 function sameHandles(left: string[], right: string[]) {
@@ -212,7 +219,8 @@ function ComparePage() {
     return [...labels.entries()].map(([key, meta]) => ({
       ...meta,
       values: perProduct.map(
-        (specs) => specs.find((row) => comparisonKey(row.group, row.label) === key)?.value ?? EMPTY_VALUE,
+        (specs) =>
+          specs.find((row) => comparisonKey(row.group, row.label) === key)?.value ?? EMPTY_VALUE,
       ),
     }));
   }, [products]);
@@ -299,7 +307,10 @@ function ComparePage() {
             {products.length > 0 && (
               <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
                 {products.length >= 2 && (
-                  <Button className="col-span-2 rounded-xl sm:col-span-1" onClick={openAiComparison}>
+                  <Button
+                    className="col-span-2 rounded-xl sm:col-span-1"
+                    onClick={openAiComparison}
+                  >
                     <Sparkles className="h-4 w-4" /> AI expert research
                   </Button>
                 )}
@@ -345,7 +356,9 @@ function ComparePage() {
             <div>
               <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
               <p className="mt-4 font-semibold">Loading comparison…</p>
-              <p className="mt-1 text-sm text-muted-foreground">Fetching the latest Shopify data.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Fetching the latest Shopify data.
+              </p>
             </div>
           </div>
         ) : isError ? (
@@ -385,7 +398,8 @@ function ComparePage() {
                 {products.map((product) => {
                   const node = product.node;
                   const image = node.images.edges[0]?.node;
-                  const price = node.variants.edges[0]?.node.price ?? node.priceRange.minVariantPrice;
+                  const price =
+                    node.variants.edges[0]?.node.price ?? node.priceRange.minVariantPrice;
                   const inStock = productInStock(product);
 
                   return (
@@ -532,8 +546,12 @@ function ComparePage() {
                                           key={`${row.label}-${product.node.handle}`}
                                           className={cn(
                                             "min-w-0 overflow-hidden rounded-xl border bg-background p-3",
-                                            different && value !== EMPTY_VALUE && "border-primary/25 bg-primary/5",
-                                            different && value === EMPTY_VALUE && "border-dashed bg-muted/25",
+                                            different &&
+                                              value !== EMPTY_VALUE &&
+                                              "border-primary/25 bg-primary/5",
+                                            different &&
+                                              value === EMPTY_VALUE &&
+                                              "border-dashed bg-muted/25",
                                           )}
                                         >
                                           <p className="line-clamp-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
@@ -624,8 +642,12 @@ function ComparePage() {
                                           key={`${row.label}-${products[valueIndex]?.node.handle ?? valueIndex}`}
                                           className={cn(
                                             "min-w-[260px] border-e p-4 align-top leading-6 last:border-e-0",
-                                            different && value !== EMPTY_VALUE && "bg-primary/5 font-semibold",
-                                            different && value === EMPTY_VALUE && "bg-muted/20 text-muted-foreground",
+                                            different &&
+                                              value !== EMPTY_VALUE &&
+                                              "bg-primary/5 font-semibold",
+                                            different &&
+                                              value === EMPTY_VALUE &&
+                                              "bg-muted/20 text-muted-foreground",
                                           )}
                                         >
                                           <span className="break-words">{value}</span>

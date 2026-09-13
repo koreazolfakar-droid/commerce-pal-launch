@@ -27,20 +27,20 @@ export function HomeHero({
 }) {
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
-  const cachedCollections =
-    queryClient.getQueryData<ShopifyCollection[]>(["shopify", "collections"]) ?? [];
+  const cachedCollections = queryClient.getQueryData<ShopifyCollection[]>([
+    "shopify",
+    "collections",
+  ]);
 
   const configuredCollections = useMemo(() => {
+    const collections = cachedCollections ?? [];
     const primary = heroCollection?.collection;
-    if (!primary) return cachedCollections;
+    if (!primary) return collections;
 
     // The dedicated homepage-hero query is the source of truth for hero artwork.
     // Always prefer it over a possibly stale copy of the same collection from
     // the general collections cache.
-    return [
-      primary,
-      ...cachedCollections.filter((collection) => collection.id !== primary.id),
-    ];
+    return [primary, ...collections.filter((collection) => collection.id !== primary.id)];
   }, [cachedCollections, heroCollection?.collection]);
 
   const slides = useMemo(
@@ -77,19 +77,20 @@ export function HomeHero({
         data-hero-collection-handle={activeSlide?.handle}
         className="relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
       >
-        {image ? (
+        {image && activeSlide ? (
           <Link
-            to="/shop"
-            aria-label={activeSlide?.title ?? t("shopNow")}
+            to="/collections/$handle"
+            params={{ handle: activeSlide.handle }}
+            aria-label={activeSlide.title ?? t("shopNow")}
             data-testid="home-hero-media"
             className="absolute inset-0 z-[1] block overflow-hidden"
           >
             <img
-              key={activeSlide?.id}
+              key={activeSlide.id}
               src={cdnImage(image.url, 1800)}
               srcSet={cdnSrcSet(image.url, 1800)}
               sizes="(max-width: 639px) calc(100vw - 1.5rem), (min-width: 1280px) 1280px, 100vw"
-              alt={image.altText ?? activeSlide?.title ?? "Space Call"}
+              alt={image.altText ?? activeSlide.title ?? "Space Call"}
               loading="eager"
               fetchPriority="high"
               decoding="async"

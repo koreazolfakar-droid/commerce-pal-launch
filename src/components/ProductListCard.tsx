@@ -114,7 +114,11 @@ export const ProductListCard = memo(function ProductListCard({
               />
             </button>
             {isPhone && (
-              <CompareButton handle={node.handle} compact className="h-11 w-11 [&_svg]:size-[18px]" />
+              <CompareButton
+                handle={node.handle}
+                compact
+                className="h-11 w-11 [&_svg]:size-[18px]"
+              />
             )}
           </div>
         </div>

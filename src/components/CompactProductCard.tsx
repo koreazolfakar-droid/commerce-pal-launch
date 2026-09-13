@@ -150,7 +150,9 @@ export const CompactProductCard = memo(function CompactProductCard({
         </div>
 
         {summary && (
-          <p className="truncate text-[10px] leading-4 text-muted-foreground sm:text-xs">{summary}</p>
+          <p className="truncate text-[10px] leading-4 text-muted-foreground sm:text-xs">
+            {summary}
+          </p>
         )}
       </div>
     </article>

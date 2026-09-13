@@ -244,7 +244,11 @@ export function CatalogView({
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">{t("filters")}</h2>
               {activeCount > 0 && (
-                <button type="button" onClick={onReset} className="text-xs font-medium text-primary hover:underline">
+                <button
+                  type="button"
+                  onClick={onReset}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
                   {t("clearAll")}
                 </button>
               )}
@@ -271,7 +275,9 @@ export function CatalogView({
                 <button
                   key={category.slug}
                   type="button"
-                  onClick={() => onChange({ category: toggleValue(filters.category, category.slug) })}
+                  onClick={() =>
+                    onChange({ category: toggleValue(filters.category, category.slug) })
+                  }
                   aria-pressed={pressed}
                   className="shrink-0 rounded-full border bg-card px-3.5 py-2 text-xs font-semibold text-foreground aria-pressed:border-primary aria-pressed:bg-accent"
                 >
@@ -283,8 +289,8 @@ export function CatalogView({
 
           <div className="mb-4 flex items-center justify-between gap-2">
             <p className="min-w-0 truncate text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{products.length}</span> {t("ofLabel")} {total}{" "}
-              {products.length === 1 ? t("product") : t("products")}
+              <span className="font-medium text-foreground">{products.length}</span> {t("ofLabel")}{" "}
+              {total} {products.length === 1 ? t("product") : t("products")}
             </p>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -300,7 +306,11 @@ export function CatalogView({
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side={direction === "rtl" ? "right" : "left"} dir={direction} className="w-[88vw] max-w-sm overflow-y-auto">
+                <SheetContent
+                  side={direction === "rtl" ? "right" : "left"}
+                  dir={direction}
+                  className="w-[88vw] max-w-sm overflow-y-auto"
+                >
                   <SheetHeader>
                     <SheetTitle>{t("filters")}</SheetTitle>
                   </SheetHeader>
@@ -324,20 +334,24 @@ export function CatalogView({
 
               <select
                 value={filters.sort ?? "featured"}
-                onChange={(event) => onChange({ sort: event.target.value as ProductFilters["sort"] })}
+                onChange={(event) =>
+                  onChange({ sort: event.target.value as ProductFilters["sort"] })
+                }
                 className="h-9 max-w-[122px] rounded-full border bg-background px-3 text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-none"
                 aria-label={t("sort")}
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {({
-                      featured: t("featured"),
-                      newest: t("newest"),
-                      "price-asc": t("priceLowHigh"),
-                      "price-desc": t("priceHighLow"),
-                      discount: t("biggestDiscount"),
-                      "title-asc": t("nameAZ"),
-                    } as Record<string, string>)[option.value] ?? option.label}
+                    {(
+                      {
+                        featured: t("featured"),
+                        newest: t("newest"),
+                        "price-asc": t("priceLowHigh"),
+                        "price-desc": t("priceHighLow"),
+                        discount: t("biggestDiscount"),
+                        "title-asc": t("nameAZ"),
+                      } as Record<string, string>
+                    )[option.value] ?? option.label}
                   </option>
                 ))}
               </select>
@@ -352,7 +366,10 @@ export function CatalogView({
                 ...(filters.category ?? []).map((slug) => ({
                   key: `category-${slug}`,
                   label: categoryLabel(
-                    facets.categories?.find((facet) => facet.slug === slug) ?? { slug, label: slug },
+                    facets.categories?.find((facet) => facet.slug === slug) ?? {
+                      slug,
+                      label: slug,
+                    },
                     language,
                   ),
                   clear: () => onChange({ category: toggleValue(filters.category, slug) }),
@@ -364,22 +381,28 @@ export function CatalogView({
                 })),
                 ...(filters.collection ?? []).map((handle) => ({
                   key: `collection-${handle}`,
-                  label: facets.collections?.find((collection) => collection.handle === handle)?.title ?? handle,
+                  label:
+                    facets.collections?.find((collection) => collection.handle === handle)?.title ??
+                    handle,
                   clear: () => onChange({ collection: toggleValue(filters.collection, handle) }),
                 })),
                 ...(filters.availability
-                  ? [{
-                      key: "availability",
-                      label: filters.availability === "in-stock" ? t("inStock") : t("onSale"),
-                      clear: () => onChange({ availability: undefined }),
-                    }]
+                  ? [
+                      {
+                        key: "availability",
+                        label: filters.availability === "in-stock" ? t("inStock") : t("onSale"),
+                        clear: () => onChange({ availability: undefined }),
+                      },
+                    ]
                   : []),
                 ...(filters.min !== undefined || filters.max !== undefined
-                  ? [{
-                      key: "price",
-                      label: `${filters.min ?? priceMin} – ${filters.max ?? priceMax}`,
-                      clear: () => onChange({ min: undefined, max: undefined }),
-                    }]
+                  ? [
+                      {
+                        key: "price",
+                        label: `${filters.min ?? priceMin} – ${filters.max ?? priceMax}`,
+                        clear: () => onChange({ min: undefined, max: undefined }),
+                      },
+                    ]
                   : []),
               ].map((chip) => (
                 <button

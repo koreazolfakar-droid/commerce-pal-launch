@@ -18,10 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouterState } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
-import {
-  askSmartPhoneAdvisor,
-  type SmartAdvisorResult,
-} from "@/lib/smartPhoneAdvisor.functions";
+import { askSmartPhoneAdvisor, type SmartAdvisorResult } from "@/lib/smartPhoneAdvisor.functions";
 import { productsByHandlesQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { cn } from "@/lib/utils";
@@ -139,10 +136,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
           history,
         },
       });
-      setMessages((items) => [
-        ...items,
-        { role: "assistant", text: result.answer, result },
-      ]);
+      setMessages((items) => [...items, { role: "assistant", text: result.answer, result }]);
     } catch (error) {
       console.error("Smart phone advisor UI error", error);
       setMessages((items) => [
@@ -239,11 +233,16 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                           {Object.entries(phone.specs)
                             .filter(([, value]) => Boolean(value))
                             .map(([label, value]) => (
-                              <div key={label} className="min-w-0 rounded-xl bg-surface px-2.5 py-2">
+                              <div
+                                key={label}
+                                className="min-w-0 rounded-xl bg-surface px-2.5 py-2"
+                              >
                                 <dt className="capitalize text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
                                   {label}
                                 </dt>
-                                <dd className="mt-0.5 break-words font-semibold text-foreground">{value}</dd>
+                                <dd className="mt-0.5 break-words font-semibold text-foreground">
+                                  {value}
+                                </dd>
                               </div>
                             ))}
                         </dl>
@@ -265,7 +264,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                             )}
                             {phone.cons.length > 0 && (
                               <div className="rounded-xl border bg-surface p-2.5">
-                                <p className="text-[10px] font-bold text-muted-foreground">Trade-offs</p>
+                                <p className="text-[10px] font-bold text-muted-foreground">
+                                  Trade-offs
+                                </p>
                                 <ul className="mt-1.5 space-y-1 text-[11px] text-muted-foreground">
                                   {phone.cons.slice(0, 3).map((item) => (
                                     <li key={item}>• {item}</li>
@@ -311,7 +312,12 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                             <p className="text-xs font-extrabold text-primary">
                               {formatStorePrice(item.price, item.currency)}
                             </p>
-                            <p className={cn("mt-1 text-[9px] font-bold", item.available ? "text-success" : "text-muted-foreground")}> 
+                            <p
+                              className={cn(
+                                "mt-1 text-[9px] font-bold",
+                                item.available ? "text-success" : "text-muted-foreground",
+                              )}
+                            >
                               {item.available ? "In stock" : "Out of stock"}
                             </p>
                           </div>

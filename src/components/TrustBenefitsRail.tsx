@@ -13,7 +13,11 @@ export function TrustBenefitsRail() {
   const { t } = useLanguage();
 
   return (
-    <section aria-label={t("shoppingBenefits")} data-testid="trust-benefits-rail" className="min-w-0">
+    <section
+      aria-label={t("shoppingBenefits")}
+      data-testid="trust-benefits-rail"
+      className="min-w-0"
+    >
       <div className="-mx-3 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-3 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
         {BENEFITS.map((benefit) => (
           <article

@@ -24,7 +24,9 @@ import type { CartItem } from "@/stores/cartStore";
 
 const STORAGE_KEY = "space-call-whatsapp-checkout-customer";
 const WHISH_MONEY_ACCOUNT = (import.meta.env.VITE_WHISH_MONEY_ACCOUNT ?? "").trim();
-const WHISH_MONEY_ACCOUNT_NAME = (import.meta.env.VITE_WHISH_MONEY_ACCOUNT_NAME ?? STORE_NAME).trim();
+const WHISH_MONEY_ACCOUNT_NAME = (
+  import.meta.env.VITE_WHISH_MONEY_ACCOUNT_NAME ?? STORE_NAME
+).trim();
 
 type PaymentMethod = "cash_on_delivery" | "whish_money";
 
@@ -45,16 +47,10 @@ type SharedLocation = {
 };
 
 type LocationErrorReason =
-  | "unsupported"
-  | "insecure"
-  | "permission_denied"
-  | "unavailable"
-  | "timeout"
-  | "unknown";
+  "unsupported" | "insecure" | "permission_denied" | "unavailable" | "timeout" | "unknown";
 
 type LocationResult =
-  | { location: SharedLocation; error: null }
-  | { location: null; error: LocationErrorReason };
+  { location: SharedLocation; error: null } | { location: null; error: LocationErrorReason };
 
 const EMPTY_DETAILS: CustomerDetails = {
   name: "",
@@ -207,9 +203,11 @@ export function WhatsAppCheckoutForm({
         continueWithoutLocation: "المتابعة بدون الموقع",
         locationUnavailable:
           "تعذر الحصول على إشارة الموقع. تأكد أن خدمة Location/GPS مفعّلة ثم أعد المحاولة.",
-        locationTimeout: "استغرق تحديد الموقع وقتًا طويلًا. اقترب من نافذة أو فعّل GPS ثم أعد المحاولة.",
+        locationTimeout:
+          "استغرق تحديد الموقع وقتًا طويلًا. اقترب من نافذة أو فعّل GPS ثم أعد المحاولة.",
         locationUnsupported: "هذا المتصفح لا يدعم تحديد الموقع. جرّب Chrome أو متصفحًا حديثًا.",
-        locationInsecure: "تحديد الموقع يحتاج اتصال HTTPS آمنًا. افتح النسخة الآمنة من الموقع ثم أعد المحاولة.",
+        locationInsecure:
+          "تحديد الموقع يحتاج اتصال HTTPS آمنًا. افتح النسخة الآمنة من الموقع ثم أعد المحاولة.",
         locationUnknown: "تعذر تحديد الموقع الآن. أعد المحاولة أو أرسل الطلب بدون الموقع.",
         locationLabel: "الموقع على الخريطة",
         mapPreview: "معاينة الموقع الحية",
@@ -233,14 +231,16 @@ export function WhatsAppCheckoutForm({
         invoiceHint: "بعد تعبئة البيانات يمكنك تنزيل فاتورة الطلب والاحتفاظ بها على هاتفك.",
         invoiceNumber: "رقم الفاتورة",
         invoiceError: "تعذر إنشاء ملف PDF الآن. جرّب مرة أخرى من متصفح حديث.",
-        required: "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان قبل إرسال الطلب أو تحميل الفاتورة.",
+        required:
+          "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان قبل إرسال الطلب أو تحميل الفاتورة.",
         privacy:
           "لن نصل إلى موقعك إلا بعد موافقتك. رابط الموقع يضاف إلى واتساب فقط، وملف PDF يُنشأ محليًا على جهازك ولا يرفع إلى خادم منفصل.",
         ready: "تم تجهيز الطلب — يمكنك تنزيل الفاتورة أو متابعة الإرسال عبر واتساب.",
       }
     : {
         title: "Order via WhatsApp",
-        description: "Fill in your delivery details, choose a payment method, and we’ll prepare your full cart for WhatsApp.",
+        description:
+          "Fill in your delivery details, choose a payment method, and we’ll prepare your full cart for WhatsApp.",
         name: "Full name",
         namePlaceholder: "e.g. Hussein Ali",
         phone: "Phone number",
@@ -264,11 +264,16 @@ export function WhatsAppCheckoutForm({
           "On Chrome for Android: tap the site controls/info icon next to the address → Permissions → Location → Allow, then come back and try again.",
         retryLocation: "Try location again",
         continueWithoutLocation: "Continue without location",
-        locationUnavailable: "We couldn't get a location signal. Turn on Location/GPS and try again.",
-        locationTimeout: "Location detection timed out. Turn on GPS or move to a clearer area, then try again.",
-        locationUnsupported: "This browser doesn't support location. Please try Chrome or another modern browser.",
-        locationInsecure: "Location requires a secure HTTPS connection. Open the secure site and try again.",
-        locationUnknown: "We couldn't detect your location right now. Try again or send the order without it.",
+        locationUnavailable:
+          "We couldn't get a location signal. Turn on Location/GPS and try again.",
+        locationTimeout:
+          "Location detection timed out. Turn on GPS or move to a clearer area, then try again.",
+        locationUnsupported:
+          "This browser doesn't support location. Please try Chrome or another modern browser.",
+        locationInsecure:
+          "Location requires a secure HTTPS connection. Open the secure site and try again.",
+        locationUnknown:
+          "We couldn't detect your location right now. Try again or send the order without it.",
         locationLabel: "Map location",
         mapPreview: "Live location preview",
         openMap: "Open in Google Maps",
@@ -279,7 +284,8 @@ export function WhatsAppCheckoutForm({
         cashOnDelivery: "Cash on delivery",
         cashOnDeliveryDescription: "Pay in cash when you receive your order.",
         whishMoney: "Whish Money",
-        whishMoneyDescription: "Transfer the order total directly to the store's Whish Money account.",
+        whishMoneyDescription:
+          "Transfer the order total directly to the store's Whish Money account.",
         whishAccount: "Whish Money account",
         whishAccountName: "Account name",
         copyAccount: "Copy account",
@@ -288,10 +294,13 @@ export function WhatsAppCheckoutForm({
         button: "Send order on WhatsApp",
         invoiceButton: "Download invoice PDF",
         invoicePreparing: "Preparing invoice...",
-        invoiceHint: "Once your details are complete, you can download and keep a professional order invoice.",
+        invoiceHint:
+          "Once your details are complete, you can download and keep a professional order invoice.",
         invoiceNumber: "Invoice number",
-        invoiceError: "We couldn't generate the PDF right now. Please try again in a modern browser.",
-        required: "Please fill in your name, phone number, area and address before sending the order or downloading the invoice.",
+        invoiceError:
+          "We couldn't generate the PDF right now. Please try again in a modern browser.",
+        required:
+          "Please fill in your name, phone number, area and address before sending the order or downloading the invoice.",
         privacy:
           "We only access your location after you approve it. The map link is added only to WhatsApp, and the PDF is generated locally on your device without a separate upload.",
         ready: "Order prepared — you can download the invoice or continue on WhatsApp.",
@@ -454,11 +463,15 @@ export function WhatsAppCheckoutForm({
     const orderIdentity = ensureOrderIdentity();
     const referenceValue = orderIdentity.reference;
     const invoiceValue = invoiceNumber(referenceValue);
-    const paymentLabel = details.paymentMethod === "whish_money" ? copy.whishMoney : copy.cashOnDelivery;
+    const paymentLabel =
+      details.paymentMethod === "whish_money" ? copy.whishMoney : copy.cashOnDelivery;
     const lines = items.flatMap((item, index) => {
       const options = variantSummary(item.selectedOptions);
       const unitPrice = formatPrice(item.price.amount, item.price.currencyCode);
-      const lineTotal = formatPrice(Number(item.price.amount) * item.quantity, item.price.currencyCode);
+      const lineTotal = formatPrice(
+        Number(item.price.amount) * item.quantity,
+        item.price.currencyCode,
+      );
       return [
         `${index + 1}. ${item.product.node.title}`,
         options ? `   ${isArabic ? "الخيار" : "Variant"}: ${options}` : "",
@@ -478,7 +491,9 @@ export function WhatsAppCheckoutForm({
       `${isArabic ? "الهاتف" : "Phone"}: ${details.phone.trim()}`,
       `${isArabic ? "المنطقة" : "Area"}: ${details.area.trim()}`,
       `${isArabic ? "العنوان" : "Address"}: ${details.address.trim()}`,
-      details.landmark.trim() ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${details.landmark.trim()}` : "",
+      details.landmark.trim()
+        ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${details.landmark.trim()}`
+        : "",
       shareLocation && resolvedLocation
         ? `📍 ${copy.locationLabel}: ${googleMapsUrl(resolvedLocation)}`
         : "",
@@ -519,7 +534,10 @@ export function WhatsAppCheckoutForm({
     }`;
 
   const actionDisabled =
-    disabled || items.length === 0 || locating || (details.paymentMethod === "whish_money" && !whishConfigured);
+    disabled ||
+    items.length === 0 ||
+    locating ||
+    (details.paymentMethod === "whish_money" && !whishConfigured);
 
   return (
     <section
@@ -657,7 +675,11 @@ export function WhatsAppCheckoutForm({
                   disabled={locating}
                   className="inline-flex items-center gap-2 rounded-full border bg-background px-3.5 py-2 text-xs font-bold transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
                 >
-                  {locating ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+                  {locating ? (
+                    <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <MapPin className="h-3.5 w-3.5" />
+                  )}
                   {locating ? copy.locating : copy.detectLocation}
                 </button>
 
@@ -688,7 +710,11 @@ export function WhatsAppCheckoutForm({
                           disabled={locating}
                           className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-background px-3 py-1.5 text-[11px] font-bold text-foreground transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
                         >
-                          {locating ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+                          {locating ? (
+                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <MapPin className="h-3.5 w-3.5" />
+                          )}
                           {copy.retryLocation}
                         </button>
                         <button
@@ -711,7 +737,11 @@ export function WhatsAppCheckoutForm({
                       disabled={locating}
                       className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-background px-3 py-1.5 text-[11px] font-bold text-foreground transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
                     >
-                      {locating ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+                      {locating ? (
+                        <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <MapPin className="h-3.5 w-3.5" />
+                      )}
                       {copy.retryLocation}
                     </button>
                   )}
@@ -871,7 +901,10 @@ export function WhatsAppCheckoutForm({
         </div>
 
         {error ? (
-          <p role="alert" className="rounded-xl bg-destructive/10 px-3.5 py-3 text-sm font-medium text-destructive">
+          <p
+            role="alert"
+            className="rounded-xl bg-destructive/10 px-3.5 py-3 text-sm font-medium text-destructive"
+          >
             {error}
           </p>
         ) : null}
@@ -890,7 +923,11 @@ export function WhatsAppCheckoutForm({
             disabled={actionDisabled || invoiceBusy}
             className="press flex w-full items-center justify-center gap-2 rounded-full border border-primary/25 bg-background px-6 py-3.5 text-sm font-extrabold text-foreground shadow-sm transition hover:border-primary/50 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {invoiceBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {invoiceBusy ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
             {invoiceBusy ? copy.invoicePreparing : copy.invoiceButton}
           </button>
 

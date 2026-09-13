@@ -72,9 +72,9 @@ function UsedPhonesPage() {
                 <span className="inline-flex rounded-full border border-hero-border bg-white/5 px-3 py-1 text-[11px] font-bold tracking-wide text-primary">
                   {t("usedPhonesBadge")}
                 </span>
-                <h1 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+                <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
                   {t("usedPhonesTitle")}
-                </h1>
+                </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-hero-muted">
                   {t("usedPhonesNote")}
                 </p>

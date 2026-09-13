@@ -38,7 +38,11 @@ function Header({
 }) {
   const { t } = useLanguage();
   return (
-    <div className={compact ? "home-section-header !mb-0 flex-nowrap items-start" : "home-section-header"}>
+    <div
+      className={
+        compact ? "home-section-header !mb-0 flex-nowrap items-start" : "home-section-header"
+      }
+    >
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           <h2 id={id} className="break-words text-xl font-black tracking-tight">
@@ -51,20 +55,31 @@ function Header({
             {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
           </Link>
         </div>
-        {subtitle && <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{subtitle}</p>}
+        {subtitle && (
+          <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{subtitle}</p>
+        )}
       </div>
       {actions && <div className="shrink-0 pt-0.5">{actions}</div>}
     </div>
   );
 }
 
-export function CategorySection({ catalog }: { catalog: CatalogIndex; collections: ShopifyCollection[] }) {
+export function CategorySection({
+  catalog,
+}: {
+  catalog: CatalogIndex;
+  collections: ShopifyCollection[];
+}) {
   const { language } = useLanguage();
   if (!catalog.categories.length) return null;
   const title = language === "ar" ? "تسوّق حسب الفئة" : "Shop by Category";
 
   return (
-    <section aria-labelledby="home-categories" data-testid="category-section" className="overflow-hidden">
+    <section
+      aria-labelledby="home-categories"
+      data-testid="category-section"
+      className="overflow-hidden"
+    >
       <Header id="home-categories" title={title} href="/categories" />
       <div className="relative -mx-4 sm:mx-0">
         <div
@@ -113,7 +128,9 @@ export function CategorySection({ catalog }: { catalog: CatalogIndex; collection
 export function BundleSection({ collections }: { collections: ShopifyCollection[] }) {
   const { t } = useLanguage();
   const candidates = collections
-    .filter((c) => /(?:^|[\s-])(bundle|pack|kit|combo|set)s?(?:$|[\s-])/i.test(`${c.handle} ${c.title}`))
+    .filter((c) =>
+      /(?:^|[\s-])(bundle|pack|kit|combo|set)s?(?:$|[\s-])/i.test(`${c.handle} ${c.title}`),
+    )
     .slice(0, 4);
   const results = useQueries({
     queries: candidates.map((c) => ({
@@ -128,10 +145,18 @@ export function BundleSection({ collections }: { collections: ShopifyCollection[
   if (!sections.length) return null;
   return (
     <section aria-labelledby="home-bundles">
-      <Header id="home-bundles" title={t("bundlesTitle")} subtitle={t("bundlesDescription")} href="/collections" />
+      <Header
+        id="home-bundles"
+        title={t("bundlesTitle")}
+        subtitle={t("bundlesDescription")}
+        href="/collections"
+      />
       <div className="grid gap-3 md:grid-cols-2">
         {sections.map(({ collection, products }) => (
-          <div key={collection.id} className="overflow-hidden rounded-2xl border bg-card shadow-card">
+          <div
+            key={collection.id}
+            className="overflow-hidden rounded-2xl border bg-card shadow-card"
+          >
             <div className="flex flex-wrap items-center justify-between gap-3 bg-surface px-4 py-3">
               <div className="min-w-0">
                 <h3 className="truncate text-sm font-extrabold">{collection.title}</h3>
@@ -148,7 +173,10 @@ export function BundleSection({ collections }: { collections: ShopifyCollection[
               </Link>
             </div>
             <div className="p-4">
-              <ProductRail products={products.slice(0, 5)} storageKey={`space-cell-bundle-${collection.handle}-view`} />
+              <ProductRail
+                products={products.slice(0, 5)}
+                storageKey={`space-cell-bundle-${collection.handle}-view`}
+              />
             </div>
           </div>
         ))}
@@ -157,7 +185,13 @@ export function BundleSection({ collections }: { collections: ShopifyCollection[
   );
 }
 
-export function BrandShowcase({ catalog, collections }: { catalog: CatalogIndex; collections: ShopifyCollection[] }) {
+export function BrandShowcase({
+  catalog,
+  collections,
+}: {
+  catalog: CatalogIndex;
+  collections: ShopifyCollection[];
+}) {
   const { t, language } = useLanguage();
   const { data: showcases = [] } = useQuery(showcaseCollectionsQueryOptions());
   const brands = buildShopifyBrands(catalog.brands, collections);

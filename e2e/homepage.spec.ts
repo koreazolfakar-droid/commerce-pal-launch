@@ -29,12 +29,16 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
     expect(order.indexOf(expected[i]!)).toBeGreaterThan(order.indexOf(expected[i - 1]!));
   await expect(page.getByTestId("deal-spotlight").locator("article")).toHaveCount(2);
   if (isMobile) await expect(page.getByTestId("bottom-nav")).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBeTruthy();
   const showcase = page.locator('section[aria-labelledby^="showcase-"]');
   await expect(showcase.first()).toContainText("Zeta showcase");
 });
 
-test("hero uses independent Shopify artwork without catalogue product content", async ({ page }) => {
+test("hero uses independent Shopify artwork without catalogue product content", async ({
+  page,
+}) => {
   await page.goto("/");
   const hero = page.getByTestId("home-hero");
   await expect(hero).toHaveAttribute("data-hero-source", "shopify-collection");
@@ -59,11 +63,17 @@ test("each brand keeps its compact showcase, products and exact destination with
   ]) {
     const section = page.locator(`section[data-facet-kind="brand"][data-facet-slug="${brand}"]`);
     await expect(section.locator(`a[href="/brand/${brand}"]`)).toHaveCount(1);
-    await expect(section.locator(`a[href="/product/fixture-phone-${included}"]`).first()).toBeAttached();
+    await expect(
+      section.locator(`a[href="/product/fixture-phone-${included}"]`).first(),
+    ).toBeAttached();
     await expect(section.locator(`a[href="/product/fixture-phone-${excluded}"]`)).toHaveCount(0);
   }
-  await expect(page.getByTestId("brand-showcases").locator('img[alt^="Merchant artwork hero-"]')).toHaveCount(0);
-  await expect(page.locator('[data-facet-kind="category"][data-facet-slug="e-readers"]')).toBeAttached();
+  await expect(
+    page.getByTestId("brand-showcases").locator('img[alt^="Merchant artwork hero-"]'),
+  ).toHaveCount(0);
+  await expect(
+    page.locator('[data-facet-kind="category"][data-facet-slug="e-readers"]'),
+  ).toBeAttached();
 });
 
 test("mobile menu supports Arabic and closes after navigation", async ({ page, isMobile }) => {

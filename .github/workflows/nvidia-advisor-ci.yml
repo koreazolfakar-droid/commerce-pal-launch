@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: nvidia-advisor-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -30,9 +34,8 @@ jobs:
       - name: NVIDIA advisor regression tests
         run: node --test e2e/nvidia-advisor.test.mjs
 
+      - name: Full repository unit suite
+        run: bun run test:unit
+
       - name: Production build
         run: bun run build
-
-      - name: Full repository unit suite (diagnostic)
-        continue-on-error: true
-        run: bun run test:unit

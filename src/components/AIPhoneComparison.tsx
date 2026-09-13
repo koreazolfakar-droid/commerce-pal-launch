@@ -130,10 +130,13 @@ function ResearchResult({
                       <p className="mt-1 text-xs text-muted-foreground">Balanced expert score</p>
                     </div>
                     <span className="shrink-0 rounded-xl bg-surface px-3 py-2 text-lg font-extrabold">
-                      {assessment.score.toFixed(1)}<span className="text-xs text-muted-foreground">/10</span>
+                      {assessment.score.toFixed(1)}
+                      <span className="text-xs text-muted-foreground">/10</span>
                     </span>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{assessment.verdict}</p>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    {assessment.verdict}
+                  </p>
                   {assessment.bestFor.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {assessment.bestFor.map((item) => (
@@ -156,11 +159,15 @@ function ResearchResult({
       {result.rows.length > 0 && (
         <section aria-labelledby="ai-spec-table-title">
           <div className="mb-4">
-            <h3 id="ai-spec-table-title" className="text-xl font-extrabold tracking-tight sm:text-2xl">
+            <h3
+              id="ai-spec-table-title"
+              className="text-xl font-extrabold tracking-tight sm:text-2xl"
+            >
               Researched specification table
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Verified specifications with an expert explanation of what each difference means in practice.
+              Verified specifications with an expert explanation of what each difference means in
+              practice.
             </p>
           </div>
 
@@ -178,7 +185,9 @@ function ResearchResult({
                       <h5 className="font-bold">{row.spec}</h5>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
                         {products.map((product) => {
-                          const value = row.values.find((item) => item.handle === product.node.handle)?.value ?? "—";
+                          const value =
+                            row.values.find((item) => item.handle === product.node.handle)?.value ??
+                            "—";
                           const winner = row.winnerHandle === product.node.handle;
                           return (
                             <div
@@ -198,7 +207,9 @@ function ResearchResult({
                                   </span>
                                 )}
                               </div>
-                              <p className="mt-1 break-words text-sm font-semibold leading-5">{value}</p>
+                              <p className="mt-1 break-words text-sm font-semibold leading-5">
+                                {value}
+                              </p>
                             </div>
                           );
                         })}
@@ -248,12 +259,17 @@ function ResearchResult({
                         </th>
                       </tr>
                       {rows.map((row) => (
-                        <tr key={`${group}-${row.spec}`} className="border-b last:border-b-0 hover:bg-surface/40">
+                        <tr
+                          key={`${group}-${row.spec}`}
+                          className="border-b last:border-b-0 hover:bg-surface/40"
+                        >
                           <th className="sticky start-0 z-10 w-[230px] min-w-[230px] border-e bg-card p-4 text-start font-semibold">
                             {row.spec}
                           </th>
                           {products.map((product) => {
-                            const value = row.values.find((item) => item.handle === product.node.handle)?.value ?? "—";
+                            const value =
+                              row.values.find((item) => item.handle === product.node.handle)
+                                ?.value ?? "—";
                             const winner = row.winnerHandle === product.node.handle;
                             return (
                               <td
@@ -266,7 +282,10 @@ function ResearchResult({
                                 <div className="flex items-start gap-2">
                                   <span className="break-words">{value}</span>
                                   {winner && (
-                                    <Trophy className="mt-1 h-3.5 w-3.5 shrink-0 text-primary" aria-label="Advantage" />
+                                    <Trophy
+                                      className="mt-1 h-3.5 w-3.5 shrink-0 text-primary"
+                                      aria-label="Advantage"
+                                    />
                                   )}
                                 </div>
                               </td>
@@ -288,10 +307,15 @@ function ResearchResult({
 
       {result.keyDifferences.length > 0 && (
         <section>
-          <h3 className="text-xl font-extrabold tracking-tight sm:text-2xl">Biggest real-world differences</h3>
+          <h3 className="text-xl font-extrabold tracking-tight sm:text-2xl">
+            Biggest real-world differences
+          </h3>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {result.keyDifferences.map((difference) => (
-              <article key={difference.title} className="rounded-2xl border bg-card p-4 shadow-card sm:p-5">
+              <article
+                key={difference.title}
+                className="rounded-2xl border bg-card p-4 shadow-card sm:p-5"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <h4 className="font-extrabold">{difference.title}</h4>
                   {difference.advantageHandle && (
@@ -314,7 +338,10 @@ function ResearchResult({
           );
           if (!assessment) return null;
           return (
-            <article key={product.node.handle} className="overflow-hidden rounded-2xl border bg-card shadow-card">
+            <article
+              key={product.node.handle}
+              className="overflow-hidden rounded-2xl border bg-card shadow-card"
+            >
               <div className="border-b bg-surface/65 px-5 py-4">
                 <h3 className="font-extrabold">{product.node.title}</h3>
               </div>
@@ -356,12 +383,19 @@ function ResearchResult({
           <h3 className="text-xl font-extrabold tracking-tight">Which one should you buy?</h3>
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {result.recommendations.map((recommendation) => (
-              <div key={`${recommendation.useCase}-${recommendation.handle}`} className="rounded-xl border bg-background p-4">
+              <div
+                key={`${recommendation.useCase}-${recommendation.handle}`}
+                className="rounded-xl border bg-background p-4"
+              >
                 <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   {recommendation.useCase}
                 </p>
-                <p className="mt-1 font-extrabold">{titleForHandle(products, recommendation.handle)}</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{recommendation.reason}</p>
+                <p className="mt-1 font-extrabold">
+                  {titleForHandle(products, recommendation.handle)}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {recommendation.reason}
+                </p>
               </div>
             ))}
           </div>
@@ -374,7 +408,8 @@ function ResearchResult({
             <div>
               <h3 className="font-extrabold">Research notes</h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                Regional variants and conflicting source claims are called out instead of being guessed.
+                Regional variants and conflicting source claims are called out instead of being
+                guessed.
               </p>
               {result.caveats.length > 0 && (
                 <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
@@ -400,19 +435,24 @@ function ResearchResult({
                       className="inline-flex max-w-full items-center gap-1.5 rounded-full border bg-background px-3 py-1.5 text-xs font-semibold hover:border-primary/40 hover:text-primary"
                       title={source.title}
                     >
-                      <span className="truncate">{index + 1}. {source.title || sourceLabel(source.url)}</span>
+                      <span className="truncate">
+                        {index + 1}. {source.title || sourceLabel(source.url)}
+                      </span>
                       <ExternalLink className="h-3 w-3 shrink-0" />
                     </a>
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 text-sm text-muted-foreground">No source links were returned for this run.</p>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  No source links were returned for this run.
+                </p>
               )}
             </div>
           </div>
           <p className="mt-5 border-t pt-4 text-[11px] leading-5 text-muted-foreground">
-            Expert scores use a balanced weighting of performance, cameras, display, battery/charging,
-            software support, build quality and current store value. Research refreshed {new Date(result.researchedAt).toLocaleString()}.
+            Expert scores use a balanced weighting of performance, cameras, display,
+            battery/charging, software support, build quality and current store value. Research
+            refreshed {new Date(result.researchedAt).toLocaleString()}.
           </p>
         </section>
       )}
@@ -442,16 +482,23 @@ export function AIPhoneComparison({
 
   if (isPending) {
     return (
-      <section id="ai-expert-comparison" className="mt-6 rounded-3xl border bg-card p-8 text-center shadow-card sm:mt-8 sm:p-12">
+      <section
+        id="ai-expert-comparison"
+        className="mt-6 rounded-3xl border bg-card p-8 text-center shadow-card sm:mt-8 sm:p-12"
+      >
         <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary">
           <Search className="h-6 w-6 animate-pulse" />
         </span>
-        <h2 className="mt-5 text-xl font-extrabold sm:text-2xl">Researching both phones on the web…</h2>
+        <h2 className="mt-5 text-xl font-extrabold sm:text-2xl">
+          Researching both phones on the web…
+        </h2>
         <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          The AI is checking official specifications, trusted technical sources, regional variants and the current store price before building the expert comparison.
+          The AI is checking official specifications, trusted technical sources, regional variants
+          and the current store price before building the expert comparison.
         </p>
         <div className="mx-auto mt-5 flex w-fit items-center gap-2 rounded-full border bg-surface px-3 py-2 text-xs font-semibold text-muted-foreground">
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" /> Evidence-first comparison in progress
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" /> Evidence-first comparison in
+          progress
         </div>
       </section>
     );
@@ -459,10 +506,15 @@ export function AIPhoneComparison({
 
   if (isError || !data) {
     return (
-      <section id="ai-expert-comparison" className="mt-6 rounded-3xl border bg-card p-8 text-center shadow-card sm:mt-8">
+      <section
+        id="ai-expert-comparison"
+        className="mt-6 rounded-3xl border bg-card p-8 text-center shadow-card sm:mt-8"
+      >
         <AlertTriangle className="mx-auto h-9 w-9 text-destructive" />
         <h2 className="mt-4 text-xl font-extrabold">AI comparison could not be loaded</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Your normal product comparison is still available below.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Your normal product comparison is still available below.
+        </p>
         <Button className="mt-5 rounded-xl" onClick={() => void refetch()}>
           <RefreshCw className="h-4 w-4" /> Try again
         </Button>
@@ -472,12 +524,21 @@ export function AIPhoneComparison({
 
   if (!data.ok) {
     return (
-      <section id="ai-expert-comparison" className="mt-6 rounded-3xl border bg-card p-8 text-center shadow-card sm:mt-8">
+      <section
+        id="ai-expert-comparison"
+        className="mt-6 rounded-3xl border bg-card p-8 text-center shadow-card sm:mt-8"
+      >
         <AlertTriangle className="mx-auto h-9 w-9 text-destructive" />
         <h2 className="mt-4 text-xl font-extrabold">AI research was not completed</h2>
-        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">{data.message}</p>
+        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+          {data.message}
+        </p>
         <Button className="mt-5 rounded-xl" onClick={() => void refetch()} disabled={isFetching}>
-          {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          {isFetching ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
           Retry research
         </Button>
       </section>
@@ -485,7 +546,11 @@ export function AIPhoneComparison({
   }
 
   return (
-    <section id="ai-expert-comparison" className="mt-6 sm:mt-8" aria-label="AI expert phone comparison">
+    <section
+      id="ai-expert-comparison"
+      className="mt-6 sm:mt-8"
+      aria-label="AI expert phone comparison"
+    >
       <ResearchResult
         result={data.result}
         products={products}

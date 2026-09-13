@@ -203,7 +203,10 @@ function parseModelResult(
 function nvidiaFailure(error: unknown): SmartAdvisorResult {
   if (!(error instanceof NvidiaApiError)) {
     console.error("NVIDIA smart advisor error", error);
-    return failure("The smart advisor could not be reached. Please try again.", "ADVISOR_PROVIDER_ERROR");
+    return failure(
+      "The smart advisor could not be reached. Please try again.",
+      "ADVISOR_PROVIDER_ERROR",
+    );
   }
 
   console.error("NVIDIA smart advisor provider error", {
@@ -229,7 +232,10 @@ function nvidiaFailure(error: unknown): SmartAdvisorResult {
       "ADVISOR_QUOTA_ERROR",
     );
   }
-  return failure("The NVIDIA AI service could not complete the request. Please try again.", "ADVISOR_PROVIDER_ERROR");
+  return failure(
+    "The NVIDIA AI service could not complete the request. Please try again.",
+    "ADVISOR_PROVIDER_ERROR",
+  );
 }
 
 export const askSmartPhoneAdvisor = createServerFn({ method: "POST" })
@@ -241,7 +247,10 @@ export const askSmartPhoneAdvisor = createServerFn({ method: "POST" })
       catalog = await fetchCatalogProducts(100);
     } catch (error) {
       console.error("Smart phone advisor catalogue error", error);
-      return failure("I couldn't load the live store catalogue. Please try again.", "CATALOG_ERROR");
+      return failure(
+        "I couldn't load the live store catalogue. Please try again.",
+        "CATALOG_ERROR",
+      );
     }
 
     const catalogCandidates = rankCatalog(catalog, data.message);
@@ -316,7 +325,9 @@ ${JSON.stringify(catalogCandidates)}`;
       });
       const result = parseModelResult(text, catalog, model);
       if (result) return result;
-      return nvidiaFailure(new NvidiaApiError("NVIDIA returned invalid JSON", 502, "INVALID_RESPONSE"));
+      return nvidiaFailure(
+        new NvidiaApiError("NVIDIA returned invalid JSON", 502, "INVALID_RESPONSE"),
+      );
     } catch (error) {
       return nvidiaFailure(error);
     }
