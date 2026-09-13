@@ -1,0 +1,59 @@
+/*
+ * Space Call — canonical storefront consistency layer.
+ *
+ * This file is intentionally small and semantic. It owns the cross-page
+ * geometry that must stay consistent regardless of individual component
+ * styling. Component-specific polish belongs with the component itself.
+ */
+
+:root {
+  --sc-shell-max: 80rem;
+  --sc-gutter-mobile: 0.875rem;
+  --sc-gutter-tablet: 1rem;
+  --sc-gutter-desktop: 1.5rem;
+  --sc-card-radius: 1.25rem;
+  --sc-control-radius: 1rem;
+  --sc-touch: 2.75rem;
+
+  /* Keep the legacy polish token aligned while old selectors are retired. */
+  --ui-shell-max: var(--sc-shell-max);
+}
+
+.home-page,
+.section-shell {
+  max-width: var(--sc-shell-max);
+}
+
+@media (min-width: 1024px) {
+  .store-layout > div[class*="lg:block"] > div:first-child > div,
+  .store-layout > div[class*="lg:block"] header[class*="sticky"] > div:first-child,
+  .store-layout > div[class*="lg:block"] header nav > div {
+    max-width: var(--sc-shell-max);
+  }
+
+  /* One navigation scale: no 12/13/14px mixing in the same row. */
+  .store-layout > div[class*="lg:block"] header nav :is(a, button) {
+    min-height: 2.5rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+}
+
+/* Keep major interactive footer controls on the same radius/touch language. */
+.store-layout footer a[aria-label] {
+  min-width: var(--sc-touch);
+  min-height: var(--sc-touch);
+  border-radius: var(--sc-control-radius);
+}
+
+/* Avoid accidental width drift from page-local wrappers. */
+.store-layout main > :is(.home-page, .section-shell) {
+  width: 100%;
+  margin-inline: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-layout :is(a, button) {
+    scroll-behavior: auto;
+  }
+}
