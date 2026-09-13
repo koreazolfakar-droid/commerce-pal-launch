@@ -43,9 +43,9 @@ export function MobileTopBar({
 
   return (
     <>
-      {/* Only the main header row stays sticky. */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-3 py-2.5">
+      {/* Only the main header row stays sticky. Keep it opaque to reduce mobile scroll compositing. */}
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/98 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] lg:hidden">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-2.5">
           <MobileMenu />
           <Link
             to="/"
@@ -62,7 +62,7 @@ export function MobileTopBar({
               decoding="async"
               className="h-[34px] w-auto shrink-0 object-contain drop-shadow-sm"
             />
-            <span className="truncate text-[17px] font-black tracking-[-0.025em]">
+            <span className="hidden truncate text-[17px] font-black tracking-[-0.025em] min-[350px]:inline">
               {STORE_NAME}
             </span>
           </Link>
@@ -70,7 +70,7 @@ export function MobileTopBar({
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
-              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-full transition-colors hover:bg-surface sm:grid"
+              className="press relative grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors hover:bg-surface"
             >
               <Heart className="h-[21px] w-[21px]" strokeWidth={1.9} />
               <Badge value={wishlistCount} />
@@ -90,7 +90,7 @@ export function MobileTopBar({
 
       {/* Search + compact category rail scroll away with the page. */}
       <div className="border-b border-border/50 bg-background lg:hidden">
-        <div className="mx-auto flex max-w-md min-w-0 items-center gap-2 px-3 py-2.5">
+        <div className="mx-auto flex max-w-3xl min-w-0 items-center gap-2 px-3 py-2.5">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
