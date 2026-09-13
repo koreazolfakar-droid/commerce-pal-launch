@@ -1,23 +1,13 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useHydrated } from "@/hooks/useHydrated";
-import { toast } from "sonner";
 
-import { ProductImage } from "@/components/ProductImage";
-import { useLanguage } from "@/lib/i18n";
+import { useHydrated } from "@/hooks/useHydrated";
 import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { homeHeroCollections } from "@/lib/homeMerchandising";
-import { productPrimaryVariant } from "@/lib/productPricing";
 import { collectionQueryOptions } from "@/lib/queries";
-import {
-  formatPrice,
-  variantSummary,
-  type ShopifyCollection,
-  type ShopifyProduct,
-} from "@/lib/shopify";
-import { useCartStore } from "@/stores/cartStore";
+import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 
 const HERO_AUTOPLAY_MS = 6000;
 const GENERIC_HERO_WORDS = new Set([
@@ -32,7 +22,7 @@ const GENERIC_HERO_WORDS = new Set([
   "tech",
 ]);
 
-function cleanTabTitle(collection: ShopifyCollection) {
+function cleanHeroTitle(collection: ShopifyCollection) {
   return collection.title.replace(/^hero\s*[-:|]\s*/i, "").trim() || collection.title;
 }
 
@@ -40,7 +30,7 @@ function promotedProductForHero(collection: ShopifyCollection, products: Shopify
   if (!products.length) return null;
   if (products.length === 1) return products[0]!;
 
-  const tokens = cleanTabTitle(collection)
+  const tokens = cleanHeroTitle(collection)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
@@ -57,80 +47,11 @@ function promotedProductForHero(collection: ShopifyCollection, products: Shopify
   );
 }
 
-function HeroProductCard({ product }: { product: ShopifyProduct }) {
-  const { t } = useLanguage();
-  const addItem = useCartStore((state) => state.addItem);
-  const isLoading = useCartStore((state) => state.isLoading);
-  const node = product.node;
-  const variant = productPrimaryVariant(product);
-  const image = node.images.edges[0]?.node;
-  const price = variant?.price ?? node.priceRange.minVariantPrice;
-  const summary = variantSummary(variant?.selectedOptions);
-  const inStock = variant?.availableForSale ?? node.availableForSale ?? true;
-
-  const handleAdd = async () => {
-    if (!variant || !inStock) return;
-    const success = await addItem({
-      product,
-      variantId: variant.id,
-      variantTitle: variant.title,
-      price: variant.price,
-      quantity: 1,
-      selectedOptions: variant.selectedOptions ?? [],
-    });
-    if (success) toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
-    else toast.error(t("addToCartFailed"), { position: "top-center" });
-  };
-
-  return (
-    <article className="group min-w-0 overflow-hidden rounded-[1.15rem] border border-border/70 bg-card shadow-card transition duration-300 hover:-translate-y-0.5 hover:shadow-card-hover sm:rounded-[1.4rem]">
-      <div className="relative aspect-[0.96/1] overflow-hidden bg-surface/70 sm:aspect-square">
-        <Link
-          to="/product/$handle"
-          params={{ handle: node.handle }}
-          aria-label={node.title}
-          className="block h-full"
-        >
-          <ProductImage
-            url={image?.url}
-            alt={image?.altText ?? node.title}
-            size={360}
-            sizes="(max-width: 639px) 31vw, 220px"
-            className="h-full border-0 bg-transparent"
-            imageClassName="p-[8%] transition-transform duration-500 group-hover:scale-[1.035]"
-          />
-        </Link>
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={isLoading || !variant || !inStock}
-          aria-label={`Add ${node.title} to bag`}
-          className="press absolute bottom-2 end-2 grid h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/95 text-primary shadow-card backdrop-blur transition hover:scale-105 disabled:opacity-40 sm:bottom-3 sm:end-3 sm:h-10 sm:w-10"
-        >
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-5 w-5" />}
-        </button>
-      </div>
-
-      <div className="min-w-0 p-2.5 sm:p-4">
-        <bdi className="block truncate text-sm font-black tracking-tight sm:text-base">
-          {formatPrice(price.amount, price.currencyCode)}
-        </bdi>
-        <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-1 block min-w-0">
-          <h3 className="line-clamp-2 min-h-[2.35rem] break-words text-[0.72rem] font-semibold leading-[1.4] sm:min-h-[2.7rem] sm:text-sm">
-            {node.title}
-          </h3>
-        </Link>
-        {summary && (
-          <p className="mt-1 truncate text-[0.62rem] text-muted-foreground sm:text-xs">{summary}</p>
-        )}
-      </div>
-    </article>
-  );
-}
-
 export function ShopifyHeroCollections({ collections }: { collections: ShopifyCollection[] }) {
-  const { t } = useLanguage();
-  const candidates = useMemo(() => homeHeroCollections(collections), [collections]);
+  const candidates = useMemo(
+    () => homeHeroCollections(collections).filter((collection) => Boolean(collection.image?.url)),
+    [collections],
+  );
   const hydrated = useHydrated();
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -154,14 +75,11 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
     }
 
     const timer = window.setTimeout(() => {
-      const nextIndex = (activeIndex + 1) % candidates.length;
       const slider = sliderRef.current;
       if (!slider) return;
 
-      slider.scrollTo({
-        left: nextIndex * slider.clientWidth,
-        behavior: "smooth",
-      });
+      const nextIndex = (activeIndex + 1) % candidates.length;
+      slider.scrollTo({ left: nextIndex * slider.clientWidth, behavior: "smooth" });
       setActiveIndex(nextIndex);
     }, HERO_AUTOPLAY_MS);
 
@@ -171,24 +89,16 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
   if (!candidates.length) return null;
 
   const safeActiveIndex = Math.min(activeIndex, candidates.length - 1);
-  const fallback = candidates[safeActiveIndex]!;
-  const activeQuery = queries[safeActiveIndex];
-  const result = activeQuery?.data;
-  const collection = result?.collection ?? fallback;
-  const products = result?.products ?? [];
-  const displayTitle = cleanTabTitle(collection);
-  const isGenericHomeTitle = /^home\s*page$/i.test(displayTitle);
 
   const scrollToIndex = (index: number) => {
     const slider = sliderRef.current;
     if (!slider) return;
 
+    const reducedMotion =
+      typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     slider.scrollTo({
       left: index * slider.clientWidth,
-      behavior:
-        typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
+      behavior: reducedMotion ? "auto" : "smooth",
     });
     setActiveIndex(index);
   };
@@ -201,7 +111,6 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
       0,
       Math.min(candidates.length - 1, Math.round(slider.scrollLeft / slider.clientWidth)),
     );
-
     if (nextIndex !== activeIndex) setActiveIndex(nextIndex);
   };
 
@@ -229,31 +138,26 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
             const resolvedCollection = query?.data?.collection ?? candidate;
             const slideProducts = query?.data?.products ?? [];
             const promotedProduct = promotedProductForHero(resolvedCollection, slideProducts);
-            const leadImage =
-              resolvedCollection.image ?? slideProducts[0]?.node.images.edges[0]?.node ?? null;
-            const slideTitle = cleanTabTitle(resolvedCollection);
+            const heroImage = resolvedCollection.image ?? candidate.image;
+            const slideTitle = cleanHeroTitle(resolvedCollection);
+
+            if (!heroImage?.url) return null;
 
             const visual = (
               <span className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
-                {leadImage ? (
-                  <img
-                    src={cdnImage(leadImage.url, 1800)}
-                    srcSet={cdnSrcSet(leadImage.url, 1800)}
-                    sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
-                    alt={leadImage.altText ?? resolvedCollection.title}
-                    width={1672}
-                    height={941}
-                    loading={index === 0 ? "eager" : "lazy"}
-                    fetchPriority={index === 0 ? "high" : "auto"}
-                    decoding="async"
-                    draggable={false}
-                    className="m-0 block h-auto w-full max-w-none select-none align-top"
-                  />
-                ) : (
-                  <span className="grid aspect-video w-full place-items-center text-sm leading-normal text-muted-foreground">
-                    {t("galleryEmpty")}
-                  </span>
-                )}
+                <img
+                  src={cdnImage(heroImage.url, 1800)}
+                  srcSet={cdnSrcSet(heroImage.url, 1800)}
+                  sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
+                  alt={heroImage.altText ?? resolvedCollection.title}
+                  width={1672}
+                  height={941}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  decoding="async"
+                  draggable={false}
+                  className="m-0 block h-auto w-full max-w-none select-none align-top"
+                />
 
                 {query?.isFetching && !query?.isPending && (
                   <span className="absolute end-4 top-4 z-20 hidden h-9 w-9 place-items-center rounded-full border border-border/70 bg-background/80 shadow-sm backdrop-blur sm:grid sm:end-6 sm:top-6">
@@ -302,37 +206,6 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
         </div>
       )}
 
-      <div className="min-w-0" aria-live="polite">
-        {!isGenericHomeTitle && (
-          <div className="mt-5 flex items-end justify-between gap-3 sm:mt-9">
-            <div className="min-w-0">
-              <h2 className="truncate text-xl font-black tracking-[-0.025em] sm:text-2xl">
-                {displayTitle}
-              </h2>
-              {collection.description && (
-                <p className="mt-1 hidden max-w-xl truncate text-sm text-muted-foreground sm:block">
-                  {collection.description}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {products.length > 0 ? (
-          <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-4">
-            {products.slice(0, 3).map((product) => (
-              <HeroProductCard key={product.node.id} product={product} />
-            ))}
-          </div>
-        ) : activeQuery?.isPending ? (
-          <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-4" aria-hidden="true">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-48 animate-pulse rounded-2xl bg-surface sm:h-64" />
-            ))}
-          </div>
-        ) : null}
-      </div>
-
       {candidates.length > 1 && (
         <div className="sr-only" role="tablist" aria-label="Featured offers">
           {candidates.map((candidate, index) => (
@@ -343,7 +216,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               aria-selected={index === safeActiveIndex}
               onClick={() => scrollToIndex(index)}
             >
-              {cleanTabTitle(candidate)}
+              {cleanHeroTitle(candidate)}
             </button>
           ))}
         </div>
