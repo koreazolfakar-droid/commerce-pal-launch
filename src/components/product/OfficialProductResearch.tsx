@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Globe2, Loader2, Sparkles } from "lucide-react";
 
-import { enrichProductFromOfficialSource } from "@/lib/ai.functions";
+import { enrichProductFromOfficialSource } from "@/lib/productResearch.functions";
 
 export function OfficialProductResearch({
   title,
