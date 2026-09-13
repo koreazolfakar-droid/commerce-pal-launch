@@ -1,0 +1,71 @@
+name: UX Performance CI
+
+on:
+  push:
+    branches:
+      - "ux-ui-performance-pass-*"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/components/BottomNav.tsx"
+      - "src/components/MobileTopBar.tsx"
+      - "src/components/StoreLayout.tsx"
+      - "src/router.tsx"
+      - "src/ux-performance.css"
+      - "playwright.config.ts"
+      - "e2e/**"
+      - ".github/workflows/ux-performance-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ux-performance-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-browser-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: TypeScript
+        run: bun run typecheck
+
+      - name: ESLint
+        run: bun run lint
+
+      - name: Unit and architecture tests
+        run: bun run test:unit
+
+      - name: Production build
+        run: bun run build
+
+      - name: SSR smoke test
+        run: bun run test:ssr
+
+      - name: Install Chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Mobile-first storefront runtime tests
+        run: >-
+          ./node_modules/.bin/playwright test
+          e2e/ux-performance.spec.ts
+          e2e/cart.spec.ts
+          e2e/header.spec.ts
+          e2e/homepage.spec.ts
+          e2e/product.spec.ts
+          e2e/layout.spec.ts
+          --project=mobile
+          --project=desktop

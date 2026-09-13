@@ -1,0 +1,139 @@
+/*
+ * Space Call UX/performance pass.
+ * Loaded after the visual polish layers so it can remove expensive motion and
+ * fixed-element effects without changing the storefront identity or data flow.
+ */
+
+:root {
+  --ux-fast: 160ms;
+  --ux-standard: 200ms;
+}
+
+/* Navigation should feel native. Global smooth scrolling makes history
+ * restoration and short route transitions feel delayed, so keep it opt-in. */
+html {
+  scroll-behavior: auto !important;
+  overscroll-behavior-x: none;
+}
+
+body,
+.store-layout,
+.store-layout main {
+  max-inline-size: 100%;
+  overflow-x: clip;
+}
+
+/* The bottom bar has a stable, known height; no runtime ResizeObserver is
+ * needed to measure it after paint. */
+.store-layout {
+  --mobile-nav-height: calc(4.55rem + env(safe-area-inset-bottom, 0px));
+  --floating-offset: calc(var(--mobile-nav-height) + 0.75rem);
+}
+
+/* Keep interactive feedback fast and consistent. */
+.press {
+  transition-duration: var(--ux-fast) !important;
+}
+
+.press:active {
+  transform: scale(0.985) !important;
+}
+
+.card-lift {
+  will-change: auto !important;
+  transition-duration: var(--ux-standard) !important;
+}
+
+.media-frame > img,
+.homepage-product-card img,
+.product-list-card img {
+  transition-duration: var(--ux-standard) !important;
+}
+
+/* Fixed translucent blur is one of the most expensive effects during mobile
+ * scrolling. Use a nearly opaque surface instead so the bars remain premium
+ * while scrolling stays cheap to composite. */
+[data-testid="bottom-nav"],
+[data-testid="bottom-nav"] > div,
+.store-layout header[class*="lg:hidden"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+[data-testid="bottom-nav"] {
+  background: transparent !important;
+  box-shadow: 0 -8px 24px -22px color-mix(in oklab, var(--color-foreground) 38%, transparent) !important;
+}
+
+[data-testid="bottom-nav"] > div {
+  background: color-mix(in oklab, var(--color-background) 98%, var(--color-card)) !important;
+}
+
+.store-layout header[class*="lg:hidden"] {
+  background: color-mix(in oklab, var(--color-background) 98%, var(--color-card)) !important;
+}
+
+.catalog-toolbar {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Slightly tighter rhythm gets important content on screen faster, especially
+ * at 320-430px, without making sections feel cramped. */
+.home-page {
+  gap: clamp(1.25rem, 2.4vw, 2.15rem) !important;
+}
+
+.home-section-header {
+  margin-bottom: 0.7rem !important;
+}
+
+/* Only fine pointers get lift-on-hover. Touch users get tap feedback without
+ * a sticky hover transform that can make scrolling feel unstable. */
+@media (hover: none), (pointer: coarse) {
+  .card-lift:hover,
+  .category-icon-card:hover,
+  .brand-logo-tile:hover {
+    transform: none !important;
+  }
+
+  .category-icon-card:hover .category-icon-badge {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .home-page {
+    gap: 1.25rem !important;
+    padding-top: 0.65rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+
+  .home-section-header {
+    margin-bottom: 0.625rem !important;
+  }
+
+  [data-testid="bottom-nav"] > div {
+    min-height: 4.55rem !important;
+  }
+}
+
+/* Tablet chrome should use the available width instead of looking like a phone
+ * bar floating in the middle of a 768-1023px viewport. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .store-layout header[class*="lg:hidden"] > div,
+  .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > div:first-child {
+    max-width: 48rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
