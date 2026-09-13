@@ -55,8 +55,14 @@ body,
 
 /* Backdrop filters on fixed/sticky full-width chrome are expensive while the
  * document is moving. These surfaces are already near-opaque, so keep the same
- * visual hierarchy without continuously filtering content behind them. */
+ * visual hierarchy without continuously filtering content behind them.
+ * Reserve the navigation height here as a final unlayered guardrail so the
+ * fixed bar can never cover the last scrollable content on small screens. */
 @media (max-width: 1023px) {
+  .store-layout {
+    padding-bottom: var(--mobile-nav-height);
+  }
+
   .store-layout header[class*="lg:hidden"],
   [data-testid="bottom-nav"] > div {
     -webkit-backdrop-filter: none;
