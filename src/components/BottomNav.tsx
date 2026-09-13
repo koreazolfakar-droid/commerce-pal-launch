@@ -3,7 +3,6 @@ import { House, LayoutGrid, Search, ShoppingBag, UserRound } from "lucide-react"
 import { useEffect, useRef, useState } from "react";
 
 import { SearchOverlay } from "@/components/SearchOverlay";
-import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
@@ -55,6 +54,7 @@ export function BottomNav() {
     pathname.startsWith("/brand/") ||
     pathname === "/used-phones";
   const cartActive = pathname.startsWith("/cart");
+  const accountActive = pathname === "/help";
 
   const tabClass = (isActive?: boolean) =>
     cn(
@@ -129,12 +129,18 @@ export function BottomNav() {
               <span className="max-w-full truncate whitespace-nowrap">{t("bag")}</span>
             </Link>
 
-            <a href={SHOP_ACCOUNT_URL} className={tabClass()} aria-label={t("account")}>
-              <span className={iconClass()}>
+            <Link
+              to="/help"
+              hash="account-orders"
+              className={tabClass(accountActive)}
+              aria-current={accountActive ? "page" : undefined}
+              aria-label={t("account")}
+            >
+              <span className={iconClass(accountActive)}>
                 <UserRound aria-hidden="true" className="size-[23px]" strokeWidth={2} />
               </span>
               <span className="max-w-full truncate whitespace-nowrap">{t("account")}</span>
-            </a>
+            </Link>
           </div>
         </div>
       </nav>
