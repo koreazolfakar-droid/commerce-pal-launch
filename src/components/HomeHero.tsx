@@ -149,7 +149,11 @@ export function HomeHero({
           to="/categories"
           className="press inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-bold shadow-card transition-[background-color,border-color,color,transform] duration-150 hover:border-primary/25 hover:bg-accent/50"
         >
-          <LayoutGrid aria-hidden="true" className="size-4 shrink-0 text-primary" strokeWidth={2} />
+          <LayoutGrid
+            aria-hidden="true"
+            className="size-4 shrink-0 text-primary"
+            strokeWidth={2}
+          />
           <span className="truncate">{t("categoriesTitle")}</span>
         </Link>
         <Link
@@ -157,7 +161,11 @@ export function HomeHero({
           search={{ availability: "on-sale" }}
           className="press inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-bold shadow-card transition-[background-color,border-color,color,transform] duration-150 hover:border-primary/25 hover:bg-accent/50"
         >
-          <BadgePercent aria-hidden="true" className="size-4 shrink-0 text-primary" strokeWidth={2} />
+          <BadgePercent
+            aria-hidden="true"
+            className="size-4 shrink-0 text-primary"
+            strokeWidth={2}
+          />
           <span className="truncate">{t("deals")}</span>
         </Link>
         <Link
@@ -165,14 +173,22 @@ export function HomeHero({
           search={{ sort: "newest" }}
           className="press inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-bold shadow-card transition-[background-color,border-color,color,transform] duration-150 hover:border-primary/25 hover:bg-accent/50"
         >
-          <Sparkles aria-hidden="true" className="size-4 shrink-0 text-primary" strokeWidth={2} />
+          <Sparkles
+            aria-hidden="true"
+            className="size-4 shrink-0 text-primary"
+            strokeWidth={2}
+          />
           <span className="truncate">{t("newest")}</span>
         </Link>
         <Link
           to="/wishlist"
           className="press inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-bold shadow-card transition-[background-color,border-color,color,transform] duration-150 hover:border-primary/25 hover:bg-accent/50"
         >
-          <Heart aria-hidden="true" className="size-4 shrink-0 text-primary" strokeWidth={2} />
+          <Heart
+            aria-hidden="true"
+            className="size-4 shrink-0 text-primary"
+            strokeWidth={2}
+          />
           <span className="truncate">{t("saved")}</span>
         </Link>
       </nav>
