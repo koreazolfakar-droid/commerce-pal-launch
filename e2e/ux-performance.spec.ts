@@ -53,6 +53,13 @@ test("required responsive widths stay inside the viewport with stable mobile chr
     const heroAfter = await page.getByTestId("home-hero").boundingBox();
     expect(Math.abs((heroAfter?.height ?? 0) - (heroBefore?.height ?? 0))).toBeLessThanOrEqual(1);
     expect(Math.abs((heroAfter?.width ?? 0) - (heroBefore?.width ?? 0))).toBeLessThanOrEqual(1);
+
+    if (width === 390) {
+      await page.screenshot({ path: "mobile-review.png", fullPage: true });
+    }
+    if (width === 1440) {
+      await page.screenshot({ path: "desktop-review.png", fullPage: true });
+    }
   }
 });
 
