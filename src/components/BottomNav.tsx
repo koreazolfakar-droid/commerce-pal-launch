@@ -1,30 +1,21 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { House, LayoutGrid, Search, ShoppingBag, UserRound, type LucideIcon } from "lucide-react";
+import { House, LayoutGrid, Search, ShoppingBag, type LucideIcon } from "lucide-react";
 
-import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 
 export const MOBILE_NAV_HEIGHT = "calc(4rem + env(safe-area-inset-bottom, 0px))";
 
-type NavItem =
-  | {
-      id: "home" | "categories" | "search" | "cart";
-      kind: "route";
-      to: "/" | "/categories" | "/search" | "/cart";
-      labelKey: "home" | "categoriesTitle" | "searchLabel" | "bag";
-      icon: LucideIcon;
-      matches: (pathname: string) => boolean;
-      badge?: "cart";
-    }
-  | {
-      id: "account";
-      kind: "external";
-      labelKey: "account";
-      icon: LucideIcon;
-      matches: (pathname: string) => boolean;
-    };
+type NavItem = {
+  id: "home" | "categories" | "search" | "cart";
+  kind: "route";
+  to: "/" | "/categories" | "/search" | "/cart";
+  labelKey: "home" | "categoriesTitle" | "searchLabel" | "bag";
+  icon: LucideIcon;
+  matches: (pathname: string) => boolean;
+  badge?: "cart";
+};
 
 const startsWithRoute = (pathname: string, route: string) =>
   pathname === route || pathname.startsWith(`${route}/`);
@@ -69,13 +60,6 @@ const NAV_ITEMS: readonly NavItem[] = [
     icon: ShoppingBag,
     matches: (pathname) => startsWithRoute(pathname, "/cart"),
     badge: "cart",
-  },
-  {
-    id: "account",
-    kind: "external",
-    labelKey: "account",
-    icon: UserRound,
-    matches: () => false,
   },
 ] as const;
 
@@ -132,27 +116,10 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 lg:hidden"
     >
       <div className="border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_18px_-16px_rgba(15,23,42,.55)] supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md">
-        <div className="mx-auto grid h-16 max-w-[560px] grid-cols-5 px-1 sm:px-3">
+        <div className="mx-auto grid h-16 max-w-[560px] grid-cols-4 px-1 sm:px-3">
           {NAV_ITEMS.map((item) => {
             const active = item.matches(pathname);
             const label = t(item.labelKey);
-
-            if (item.kind === "external") {
-              return (
-                <a
-                  key={item.id}
-                  href={SHOP_ACCOUNT_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-nav-id={item.id}
-                  data-active="false"
-                  className={itemClass(false)}
-                  aria-label={label}
-                >
-                  {itemContent(item, false)}
-                </a>
-              );
-            }
 
             return (
               <Link
