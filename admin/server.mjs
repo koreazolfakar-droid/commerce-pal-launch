@@ -142,13 +142,7 @@ const admin = new AdminJS({
       options: {
         navigation: appearanceNavigation,
         sort: { sortBy: "sort_order", direction: "asc" },
-        listProperties: [
-          "page_slug",
-          "section_key",
-          "title",
-          "sort_order",
-          "is_visible",
-        ],
+        listProperties: ["page_slug", "section_key", "title", "sort_order", "is_visible"],
         editProperties: [
           "page_slug",
           "section_key",
