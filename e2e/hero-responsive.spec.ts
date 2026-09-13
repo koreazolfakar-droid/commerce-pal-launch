@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-async function heroMetrics(page: Parameters<typeof test>[0] extends never ? never : any) {
+async function heroMetrics(page: Page) {
   const hero = page.getByTestId("home-hero");
   await expect(hero).toBeVisible();
   return hero.evaluate((element: HTMLElement) => {
