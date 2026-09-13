@@ -116,14 +116,11 @@ try {
     page.on("pageerror", (error) => pageErrors.push(error.message));
 
     if (testCase.slow) {
-      const client = await context.newCDPSession(page);
-      await client.send("Network.enable");
-      await client.send("Network.emulateNetworkConditions", {
-        offline: false,
-        latency: 180,
-        downloadThroughput: (900 * 1024) / 8,
-        uploadThroughput: (450 * 1024) / 8,
-        connectionType: "cellular3g",
+      await page.route("**/*", async (route) => {
+        if (route.request().resourceType() === "image") {
+          await new Promise((resolve) => setTimeout(resolve, 350));
+        }
+        await route.continue();
       });
     }
 
