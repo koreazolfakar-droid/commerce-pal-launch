@@ -40,7 +40,7 @@ export function HomeHero({ products }: { products: ShopifyProduct[] }) {
         aria-label={t("featuredTechnology")}
         data-testid="home-hero"
         data-hero-handle={node.handle}
-        className="group relative isolate aspect-[16/9] min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
+        className="group relative isolate mx-auto aspect-[16/9] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:mx-0 sm:aspect-auto sm:min-h-[25rem] sm:w-auto sm:max-w-none sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
       >
         <div
           aria-hidden="true"
