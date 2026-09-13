@@ -1,4 +1,4 @@
 Lovable sync trigger
-Triggered from ChatGPT on 2026-09-12 after homepage SEO intro update
-Latest main commit before trigger: 737e4c094581a73260ec607d507fc2ee5b956a91
-Reason: force Lovable to pull and rebuild the latest homepage changes, including removal of the old Home page heading
+Triggered from ChatGPT on 2026-09-13 after production CMS integration
+Latest main commit before trigger: 58b818b969b6b9d25ec69375f02dfddc0ba4b84c
+Reason: force Lovable to pull and rebuild storefront with live Supabase CMS for hero, sections, ticker and bottom navigation
