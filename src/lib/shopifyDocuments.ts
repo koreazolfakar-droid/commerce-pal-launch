@@ -1,5 +1,6 @@
 const MONEY = `amount currencyCode`;
 const IMAGE = `url altText`;
+const COLLECTION_IMAGE = `url altText width height`;
 const VARIANT = `
   id title availableForSale
   price { ${MONEY} }
@@ -32,7 +33,7 @@ export const PRODUCT_DETAIL_FIELDS = `
 `;
 
 export const COLLECTION_FIELDS = `
-  id handle title description updatedAt image { ${IMAGE} }
+  id handle title description updatedAt image { ${COLLECTION_IMAGE} }
 `;
 
 export const PRODUCTS_QUERY = `
