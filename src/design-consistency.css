@@ -138,7 +138,8 @@
   }
 
   /* Dense catalogue screens do not get floating controls over product cards. */
-  .store-layout[data-catalog-page="true"] :is(.store-contact-action, .store-ai-launcher) {
+  .store-layout[data-catalog-page="true"]
+    :is(.store-contact-action, .store-ai-launcher, button[aria-label="Open smart phone advisor"]) {
     display: none !important;
   }
 }
