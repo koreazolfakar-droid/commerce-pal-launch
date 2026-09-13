@@ -80,6 +80,9 @@ test("hero accepts CMS content while preserving Shopify collection fallback", as
   assert.match(hero, /to="\/collections\/\$handle"/);
   assert.match(hero, /params=\{\{ handle: shopifySlide\.handle \}\}/);
   assert.match(hero, /alt=\{shopifyImage\.altText \?\? shopifySlide\.title \?\? "Space Call"\}/);
-  assert.match(hero, /data-hero-source=\{cmsSlide \? "cms" : shopifySlide \? "shopify-collection" : "placeholder"\}/);
+  assert.match(
+    hero,
+    /data-hero-source=\{cmsSlide \? "cms" : shopifySlide \? "shopify-collection" : "placeholder"\}/,
+  );
   assert.doesNotMatch(hero, /products\[0\]|featuredProduct|featuredNode|Latest arrival|أحدث وصول/);
 });
