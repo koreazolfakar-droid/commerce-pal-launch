@@ -1,11 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-import {
-  storefrontApiRequest,
-  type ShopifyCollection,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { storefrontApiRequest, type ShopifyCollection, type ShopifyProduct } from "@/lib/shopify";
 import { COLLECTIONS_QUERY, PRODUCTS_QUERY } from "@/lib/shopifyDocuments";
 import { absoluteUrl } from "@/lib/seo";
 import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";

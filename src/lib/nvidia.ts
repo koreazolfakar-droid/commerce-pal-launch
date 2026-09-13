@@ -125,7 +125,9 @@ export async function callNvidiaChat({
 
   if (!response.ok) {
     const upstreamStatus =
-      typeof payload.status === "number" && payload.status >= 400 ? payload.status : response.status;
+      typeof payload.status === "number" && payload.status >= 400
+        ? payload.status
+        : response.status;
     throw new NvidiaApiError(
       providerErrorMessage(payload, body || `Supabase NVIDIA gateway error ${response.status}`),
       upstreamStatus,

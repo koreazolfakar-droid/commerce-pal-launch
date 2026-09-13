@@ -23,7 +23,12 @@ function SearchGlyph() {
   return (
     <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[23px] w-[23px]" fill="none">
       <circle cx="12" cy="12" r="7.25" stroke="currentColor" strokeWidth="2.05" />
-      <path d="m17.35 17.35 5.15 5.15" stroke="currentColor" strokeWidth="2.05" strokeLinecap="round" />
+      <path
+        d="m17.35 17.35 5.15 5.15"
+        stroke="currentColor"
+        strokeWidth="2.05"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -59,7 +64,12 @@ function HomeGlyph() {
 
 function HeartGlyph({ active = false }: { active?: boolean }) {
   return (
-    <svg viewBox="0 0 28 28" aria-hidden="true" className="h-[23px] w-[23px]" fill={active ? "currentColor" : "none"}>
+    <svg
+      viewBox="0 0 28 28"
+      aria-hidden="true"
+      className="h-[23px] w-[23px]"
+      fill={active ? "currentColor" : "none"}
+    >
       <path
         d="M14 23.55S4.2 18.1 4.2 10.92A5.47 5.47 0 0 1 14 7.58a5.47 5.47 0 0 1 9.8 3.34C23.8 18.1 14 23.55 14 23.55Z"
         stroke="currentColor"
@@ -81,7 +91,12 @@ function BagGlyph() {
         strokeWidth="2.05"
         strokeLinejoin="round"
       />
-      <path d="M10.05 11V8.1a3.95 3.95 0 0 1 7.9 0V11" stroke="currentColor" strokeWidth="2.05" strokeLinecap="round" />
+      <path
+        d="M10.05 11V8.1a3.95 3.95 0 0 1 7.9 0V11"
+        stroke="currentColor"
+        strokeWidth="2.05"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -193,7 +208,10 @@ export function BottomNav() {
             aria-current={homeActive ? "page" : undefined}
           >
             <span className="relative grid h-[52px] w-[52px] place-items-center rounded-full border-[4px] border-white bg-linear-to-br from-[#3a8cff] to-[#1463e6] text-white shadow-[0_11px_24px_-11px_rgba(31,111,242,.8)] transition-all duration-150 dark:border-[#111722]">
-              <span className="absolute inset-[4px] rounded-full border border-white/20" aria-hidden="true" />
+              <span
+                className="absolute inset-[4px] rounded-full border border-white/20"
+                aria-hidden="true"
+              />
               <span className="relative">
                 <HomeGlyph />
               </span>

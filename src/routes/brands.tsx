@@ -80,7 +80,10 @@ function BrandsPage() {
                   {brand.label}
                 </span>
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <ArrowRight className="h-[1.05rem] w-[1.05rem] rtl:rotate-180" aria-hidden="true" />
+                  <ArrowRight
+                    className="h-[1.05rem] w-[1.05rem] rtl:rotate-180"
+                    aria-hidden="true"
+                  />
                 </span>
               </span>
             </Link>

@@ -346,7 +346,10 @@ ${JSON.stringify(productContext)}`;
     );
   } catch (error) {
     console.error("AI phone comparison network error", error);
-    return failure("The AI research service could not be reached. Please try again.", "NETWORK_ERROR");
+    return failure(
+      "The AI research service could not be reached. Please try again.",
+      "NETWORK_ERROR",
+    );
   }
 
   if (!response.ok) {
@@ -356,7 +359,10 @@ ${JSON.stringify(productContext)}`;
       return failure("The AI research key was rejected by the provider.", "AUTH_ERROR");
     }
     if (response.status === 429) {
-      return failure("AI research is temporarily rate-limited. Please try again shortly.", "QUOTA_ERROR");
+      return failure(
+        "AI research is temporarily rate-limited. Please try again shortly.",
+        "QUOTA_ERROR",
+      );
     }
     return failure(`AI research failed (${response.status}). Please try again.`, "PROVIDER_ERROR");
   }
@@ -374,7 +380,8 @@ ${JSON.stringify(productContext)}`;
     .join("")
     .trim();
 
-  if (!text) return failure("AI research returned an empty result. Please retry.", "EMPTY_RESPONSE");
+  if (!text)
+    return failure("AI research returned an empty result. Please retry.", "EMPTY_RESPONSE");
 
   try {
     const parsed = comparisonResultSchema.parse(JSON.parse(text));
@@ -403,11 +410,17 @@ export const researchPhoneComparison = createServerFn({ method: "POST" })
         .filter((product): product is ShopifyProduct => Boolean(product));
     } catch (error) {
       console.error("AI phone comparison Shopify error", error);
-      return failure("The selected store products could not be loaded for research.", "CATALOG_ERROR");
+      return failure(
+        "The selected store products could not be loaded for research.",
+        "CATALOG_ERROR",
+      );
     }
 
     if (products.length < 2) {
-      return failure("Select at least two valid phones before starting AI research.", "NOT_ENOUGH_PRODUCTS");
+      return failure(
+        "Select at least two valid phones before starting AI research.",
+        "NOT_ENOUGH_PRODUCTS",
+      );
     }
 
     return runGroundedComparison(products, data.language);

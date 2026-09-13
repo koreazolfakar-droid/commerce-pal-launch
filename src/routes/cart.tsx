@@ -167,7 +167,9 @@ function CartPage() {
               <p className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {language === "ar" ? "أو ادفع أونلاين" : "or pay online"}
               </p>
-              <p className="mt-1.5 text-center text-xs text-muted-foreground">{t("taxesShippingCheckout")}</p>
+              <p className="mt-1.5 text-center text-xs text-muted-foreground">
+                {t("taxesShippingCheckout")}
+              </p>
               <button
                 type="button"
                 onClick={checkout}

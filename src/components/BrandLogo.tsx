@@ -44,7 +44,9 @@ function LogoImage({
   wordmark = false,
 }: BrandLogoProps) {
   const sources = useMemo(() => {
-    const builtIn = brandLogoSources(slug, label, size * 2).map(safeImageSource).filter(Boolean) as string[];
+    const builtIn = brandLogoSources(slug, label, size * 2)
+      .map(safeImageSource)
+      .filter(Boolean) as string[];
     const merchant = safeImageSource(imageUrl);
     const firstBuiltIn = builtIn[0];
     const builtInIsLocal = Boolean(firstBuiltIn && !/^https?:\/\//i.test(firstBuiltIn));

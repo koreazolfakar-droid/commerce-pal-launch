@@ -7,13 +7,7 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
-import {
-  breadcrumbJsonLd,
-  canonicalLink,
-  itemListJsonLd,
-  jsonLd,
-  socialMeta,
-} from "@/lib/seo";
+import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/brand/$slug")({
@@ -93,7 +87,9 @@ function BrandPage() {
     <div className="mb-6 space-y-4">
       <div className="rounded-2xl border bg-card p-4 sm:p-5">
         <h2 className="text-base font-extrabold tracking-tight sm:text-lg">
-          {language === "ar" ? `تسوّق منتجات ${brandLabel} في لبنان` : `Shop ${brandLabel} in Lebanon`}
+          {language === "ar"
+            ? `تسوّق منتجات ${brandLabel} في لبنان`
+            : `Shop ${brandLabel} in Lebanon`}
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
           {language === "ar"

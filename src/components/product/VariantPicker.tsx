@@ -166,7 +166,9 @@ export function VariantPicker({
                       onClick={() => onSelect(option.name, value)}
                       className={cn(
                         "press relative grid h-10 w-10 place-items-center rounded-full border-2 bg-card transition-colors sm:h-11 sm:w-11",
-                        active ? "border-primary ring-2 ring-primary/15" : "border-border hover:border-primary/50",
+                        active
+                          ? "border-primary ring-2 ring-primary/15"
+                          : "border-border hover:border-primary/50",
                         !available && "opacity-40",
                       )}
                     >

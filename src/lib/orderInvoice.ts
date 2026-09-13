@@ -190,10 +190,22 @@ function drawCompanyHeader(
 
   ctx.fillStyle = MUTED;
   ctx.font = "600 19px Arial, sans-serif";
-  ctx.fillText(`${isArabic ? "رقم الفاتورة" : "Invoice"}: ${input.invoiceNumber}`, endX, PAGE_PADDING + 58);
-  ctx.fillText(`${isArabic ? "رقم الطلب" : "Order"}: ${input.orderReference}`, endX, PAGE_PADDING + 88);
+  ctx.fillText(
+    `${isArabic ? "رقم الفاتورة" : "Invoice"}: ${input.invoiceNumber}`,
+    endX,
+    PAGE_PADDING + 58,
+  );
+  ctx.fillText(
+    `${isArabic ? "رقم الطلب" : "Order"}: ${input.orderReference}`,
+    endX,
+    PAGE_PADDING + 88,
+  );
   if (!compact) {
-    ctx.fillText(`${isArabic ? "التاريخ" : "Date"}: ${formatDate(input.createdAt, input.language)}`, endX, PAGE_PADDING + 118);
+    ctx.fillText(
+      `${isArabic ? "التاريخ" : "Date"}: ${formatDate(input.createdAt, input.language)}`,
+      endX,
+      PAGE_PADDING + 118,
+    );
   }
 
   const infoX = isArabic ? PAGE_WIDTH - PAGE_PADDING : PAGE_PADDING;
@@ -251,7 +263,9 @@ function drawInfoCard(ctx: CanvasRenderingContext2D, input: OrderInvoiceInput, y
     `${isArabic ? "الهاتف" : "Phone"}: ${input.customer.phone}`,
     `${isArabic ? "المنطقة" : "Area"}: ${input.customer.area}`,
     `${isArabic ? "العنوان" : "Address"}: ${input.customer.address}`,
-    input.customer.landmark ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${input.customer.landmark}` : "",
+    input.customer.landmark
+      ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${input.customer.landmark}`
+      : "",
     input.locationUrl ? `${isArabic ? "الموقع" : "Location"}: ${input.locationUrl}` : "",
   ].filter(Boolean);
 
@@ -307,12 +321,19 @@ function rowHeight(ctx: CanvasRenderingContext2D, item: InvoiceLineItem) {
   ctx.font = "700 18px Arial, sans-serif";
   const titleLines = Math.min(2, wrapText(ctx, item.title, 430).length);
   ctx.font = "500 16px Arial, sans-serif";
-  const detailText = [item.variant, item.warranty, item.imei, item.serialNumber].filter(Boolean).join(" • ");
+  const detailText = [item.variant, item.warranty, item.imei, item.serialNumber]
+    .filter(Boolean)
+    .join(" • ");
   const detailLines = Math.min(4, wrapText(ctx, detailText || "—", 280).length);
   return Math.max(86, Math.max(titleLines, detailLines) * 24 + 36);
 }
 
-function drawItemRow(ctx: CanvasRenderingContext2D, input: OrderInvoiceInput, item: InvoiceLineItem, y: number) {
+function drawItemRow(
+  ctx: CanvasRenderingContext2D,
+  input: OrderInvoiceInput,
+  item: InvoiceLineItem,
+  y: number,
+) {
   const height = rowHeight(ctx, item);
   const bottom = y + height;
   ctx.strokeStyle = BORDER;
@@ -343,9 +364,17 @@ function drawItemRow(ctx: CanvasRenderingContext2D, input: OrderInvoiceInput, it
   ctx.textAlign = "center";
   ctx.fillText(String(item.quantity), PAGE_PADDING + 805, y + 32);
   ctx.textAlign = "right";
-  ctx.fillText(formatMoney(item.unitPrice, input.currency, input.language), PAGE_PADDING + 955, y + 32);
+  ctx.fillText(
+    formatMoney(item.unitPrice, input.currency, input.language),
+    PAGE_PADDING + 955,
+    y + 32,
+  );
   ctx.font = "800 18px Arial, sans-serif";
-  ctx.fillText(formatMoney(item.lineTotal, input.currency, input.language), PAGE_WIDTH - PAGE_PADDING - 18, y + 32);
+  ctx.fillText(
+    formatMoney(item.lineTotal, input.currency, input.language),
+    PAGE_WIDTH - PAGE_PADDING - 18,
+    y + 32,
+  );
   ctx.direction = input.language === "ar" ? "rtl" : "ltr";
   return bottom;
 }
@@ -382,7 +411,11 @@ function drawTotalsAndNotes(ctx: CanvasRenderingContext2D, input: OrderInvoiceIn
     ctx.fillStyle = TEXT;
     ctx.textAlign = isArabic ? "left" : "right";
     ctx.direction = "ltr";
-    ctx.fillText(formatMoney(value, input.currency, input.language), isArabic ? left + 28 : right - 28, rowY);
+    ctx.fillText(
+      formatMoney(value, input.currency, input.language),
+      isArabic ? left + 28 : right - 28,
+      rowY,
+    );
     ctx.direction = isArabic ? "rtl" : "ltr";
   });
 
@@ -390,17 +423,27 @@ function drawTotalsAndNotes(ctx: CanvasRenderingContext2D, input: OrderInvoiceIn
   ctx.fillStyle = TEXT;
   ctx.font = "800 21px Arial, sans-serif";
   ctx.textAlign = isArabic ? "right" : "left";
-  ctx.fillText(isArabic ? "الإجمالي النهائي" : "Grand total", isArabic ? right - 28 : left + 28, totalY);
+  ctx.fillText(
+    isArabic ? "الإجمالي النهائي" : "Grand total",
+    isArabic ? right - 28 : left + 28,
+    totalY,
+  );
   ctx.fillStyle = ACCENT;
   ctx.font = "900 32px Arial, sans-serif";
   ctx.textAlign = isArabic ? "left" : "right";
   ctx.direction = "ltr";
-  ctx.fillText(formatMoney(input.total, input.currency, input.language), isArabic ? left + 28 : right - 28, totalY);
+  ctx.fillText(
+    formatMoney(input.total, input.currency, input.language),
+    isArabic ? left + 28 : right - 28,
+    totalY,
+  );
   ctx.direction = isArabic ? "rtl" : "ltr";
 
   let nextY = y + boxHeight + 34;
   const notes = [
-    input.customer.notes ? `${isArabic ? "ملاحظات الطلب" : "Order notes"}: ${input.customer.notes}` : "",
+    input.customer.notes
+      ? `${isArabic ? "ملاحظات الطلب" : "Order notes"}: ${input.customer.notes}`
+      : "",
     input.invoiceNote || "",
     input.verificationUrl
       ? `${isArabic ? "تحقق من الفاتورة" : "Verify invoice"}: ${input.verificationUrl}`
@@ -427,10 +470,23 @@ function drawTotalsAndNotes(ctx: CanvasRenderingContext2D, input: OrderInvoiceIn
   const disclaimer = isArabic
     ? "هذه فاتورة طلب مولّدة من بيانات الزبون. لا تُعد إيصالًا ضريبيًا أو إثبات دفع ما لم يذكر خلاف ذلك."
     : "This order invoice is generated from the customer's order details. It is not a tax receipt or proof of payment unless explicitly stated otherwise.";
-  drawWrappedText(ctx, disclaimer, isArabic ? right : left, nextY, PAGE_WIDTH - PAGE_PADDING * 2, 22, 3);
+  drawWrappedText(
+    ctx,
+    disclaimer,
+    isArabic ? right : left,
+    nextY,
+    PAGE_WIDTH - PAGE_PADDING * 2,
+    22,
+    3,
+  );
 }
 
-function drawFooter(ctx: CanvasRenderingContext2D, input: OrderInvoiceInput, page: number, totalPages: number) {
+function drawFooter(
+  ctx: CanvasRenderingContext2D,
+  input: OrderInvoiceInput,
+  page: number,
+  totalPages: number,
+) {
   const isArabic = input.language === "ar";
   const y = PAGE_HEIGHT - 58;
   ctx.strokeStyle = BORDER;
@@ -445,7 +501,11 @@ function drawFooter(ctx: CanvasRenderingContext2D, input: OrderInvoiceInput, pag
   ctx.textAlign = isArabic ? "right" : "left";
   ctx.fillText(STORE_CONFIG.siteUrl, isArabic ? PAGE_WIDTH - PAGE_PADDING : PAGE_PADDING, y);
   ctx.textAlign = isArabic ? "left" : "right";
-  ctx.fillText(`${isArabic ? "صفحة" : "Page"} ${page}/${totalPages}`, isArabic ? PAGE_PADDING : PAGE_WIDTH - PAGE_PADDING, y);
+  ctx.fillText(
+    `${isArabic ? "صفحة" : "Page"} ${page}/${totalPages}`,
+    isArabic ? PAGE_PADDING : PAGE_WIDTH - PAGE_PADDING,
+    y,
+  );
 }
 
 function decodeDataUrl(dataUrl: string) {
@@ -478,7 +538,9 @@ function buildImagePdf(images: Uint8Array[]) {
   object(1, ["<</Type /Catalog /Pages 2 0 R>>"]);
 
   const pageIds = images.map((_, index) => 3 + index * 3);
-  object(2, [`<</Type /Pages /Count ${images.length} /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}]>>`]);
+  object(2, [
+    `<</Type /Pages /Count ${images.length} /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}]>>`,
+  ]);
 
   images.forEach((jpeg, index) => {
     const pageId = 3 + index * 3;

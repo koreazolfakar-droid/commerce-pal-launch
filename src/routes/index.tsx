@@ -50,7 +50,10 @@ export const Route = createFileRoute("/")({
         { name: "description", content: description },
         { name: "application-name", content: SITE_NAME },
         { name: "apple-mobile-web-app-title", content: SITE_NAME },
-        { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+        {
+          name: "robots",
+          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        },
         ...socialMeta({ title, description, path: "/" }),
       ],
       links: [canonicalLink("/")],
@@ -60,7 +63,17 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-function SectionHeader({ title, subtitle, href = "/shop", action }: { title: string; subtitle?: string; href?: string; action?: React.ReactNode }) {
+function SectionHeader({
+  title,
+  subtitle,
+  href = "/shop",
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  href?: string;
+  action?: React.ReactNode;
+}) {
   const { t } = useLanguage();
   return (
     <div className="home-section-header">
@@ -69,7 +82,10 @@ function SectionHeader({ title, subtitle, href = "/shop", action }: { title: str
         {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       {action ?? (
-        <Link to={href as "/shop"} className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-primary hover:underline">
+        <Link
+          to={href as "/shop"}
+          className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-primary hover:underline"
+        >
           {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
         </Link>
       )}
@@ -97,29 +113,43 @@ function DealsCountdown() {
   return (
     <div className="flex shrink-0 items-center gap-2 rounded-full border bg-card px-3 py-1.5 shadow-card">
       <Timer className="h-3.5 w-3.5 text-primary" />
-      <span className="hidden text-[11px] font-semibold text-muted-foreground sm:inline">{t("todayEnds")}</span>
+      <span className="hidden text-[11px] font-semibold text-muted-foreground sm:inline">
+        {t("todayEnds")}
+      </span>
       <span className="flex items-center gap-1 font-mono text-xs font-bold tabular-nums">
-        {parts.map((part, i) => <span key={i} className="rounded-md bg-accent px-1.5 py-0.5 text-accent-foreground">{String(part).padStart(2, "0")}</span>)}
+        {parts.map((part, i) => (
+          <span key={i} className="rounded-md bg-accent px-1.5 py-0.5 text-accent-foreground">
+            {String(part).padStart(2, "0")}
+          </span>
+        ))}
       </span>
     </div>
   );
 }
 
 function HomePromoTicker({ language }: { language: string }) {
-  const heading = language === "ar"
-    ? "Space Call لبنان - متجر الهواتف والإلكترونيات"
-    : "Space Call Lebanon - Phones & Electronics Store";
-  const details = language === "ar"
-    ? "متجرك الموثوق للهواتف والإلكترونيات • توفر مباشر • أسعار واضحة • دفع آمن"
-    : "Your trusted phones & electronics store • Live availability • Clear pricing • Secure checkout";
+  const heading =
+    language === "ar"
+      ? "Space Call لبنان - متجر الهواتف والإلكترونيات"
+      : "Space Call Lebanon - Phones & Electronics Store";
+  const details =
+    language === "ar"
+      ? "متجرك الموثوق للهواتف والإلكترونيات • توفر مباشر • أسعار واضحة • دفع آمن"
+      : "Your trusted phones & electronics store • Live availability • Clear pricing • Secure checkout";
   const accessibleLabel = `${heading} • ${details}`;
 
   return (
-    <div className="home-promo-ticker" data-testid="homepage-promo-ticker" aria-label={accessibleLabel}>
+    <div
+      className="home-promo-ticker"
+      data-testid="homepage-promo-ticker"
+      aria-label={accessibleLabel}
+    >
       <div className="home-promo-ticker-track">
         <span className="home-promo-ticker-copy">
           <h1 className="m-0 inline text-[inherit] font-[inherit] tracking-[inherit]">{heading}</h1>
-          <span className="home-promo-ticker-dot" aria-hidden="true">•</span>
+          <span className="home-promo-ticker-dot" aria-hidden="true">
+            •
+          </span>
           <span>{details}</span>
         </span>
         <span className="home-promo-ticker-copy" aria-hidden="true">
@@ -163,7 +193,12 @@ function Index() {
     <StoreLayout>
       <div className="home-page">
         {products.length === 0 ? (
-          <div className="px-4"><div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center"><h1 className="text-2xl font-bold">{t("welcomeStore")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("catalogUpdating")}</p></div></div>
+          <div className="px-4">
+            <div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center">
+              <h1 className="text-2xl font-bold">{t("welcomeStore")}</h1>
+              <p className="mt-2 text-sm text-muted-foreground">{t("catalogUpdating")}</p>
+            </div>
+          </div>
         ) : (
           <>
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
@@ -176,19 +211,55 @@ function Index() {
 
             {showProductSections ? (
               <>
-                {best.length > 0 && <section data-testid="best-sellers"><SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} /><ProductRail products={best} storageKey="space-cell-home-best-sellers-view" /></section>}
+                {best.length > 0 && (
+                  <section data-testid="best-sellers">
+                    <SectionHeader
+                      title={t("bestSellers")}
+                      subtitle={t("bestSellersDescription")}
+                    />
+                    <ProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
+                  </section>
+                )}
 
                 {deals.length > 0 && (
                   <section id="deals" className="scroll-mt-24" data-testid="deals-section">
-                    <SectionHeader title={t("todaysDeals")} subtitle={t("dealsDescription")} action={<DealsCountdown />} />
-                    {deals.length <= 2 ? <DealSpotlight products={deals} /> : <ProductRail products={deals} storageKey="space-cell-home-deals-view" />}
-                    <div className="mt-4"><Link to="/shop" search={{ availability: "on-sale" }} className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary">{t("allDeals")} <ArrowRight className="h-3.5 w-3.5" /></Link></div>
+                    <SectionHeader
+                      title={t("todaysDeals")}
+                      subtitle={t("dealsDescription")}
+                      action={<DealsCountdown />}
+                    />
+                    {deals.length <= 2 ? (
+                      <DealSpotlight products={deals} />
+                    ) : (
+                      <ProductRail products={deals} storageKey="space-cell-home-deals-view" />
+                    )}
+                    <div className="mt-4">
+                      <Link
+                        to="/shop"
+                        search={{ availability: "on-sale" }}
+                        className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary"
+                      >
+                        {t("allDeals")} <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </section>
                 )}
 
                 {newItems.length > 0 && (
                   <section data-testid="new-items">
-                    <SectionHeader title={t("newItems")} subtitle={t("newItemsDescription")} action={<Link to="/shop" search={{ sort: "newest" }} className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline">{t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" /></Link>} />
+                    <SectionHeader
+                      title={t("newItems")}
+                      subtitle={t("newItemsDescription")}
+                      action={
+                        <Link
+                          to="/shop"
+                          search={{ sort: "newest" }}
+                          className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline"
+                        >
+                          {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
+                        </Link>
+                      }
+                    />
                     <ProductRail products={newItems} storageKey="space-cell-home-new-items-view" />
                   </section>
                 )}

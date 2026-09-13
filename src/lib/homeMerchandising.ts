@@ -26,7 +26,8 @@ export function homepageHeroCollections(collections: ShopifyCollection[]): Shopi
         ),
     )
     .sort((a, b) => {
-      const primaryRank = Number(a.handle !== "homepage-hero") - Number(b.handle !== "homepage-hero");
+      const primaryRank =
+        Number(a.handle !== "homepage-hero") - Number(b.handle !== "homepage-hero");
       return primaryRank || a.handle.localeCompare(b.handle);
     })
     .slice(0, 10);

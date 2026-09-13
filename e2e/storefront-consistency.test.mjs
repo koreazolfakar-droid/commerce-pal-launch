@@ -59,7 +59,10 @@ test("account links stay branded before the Shopify hand-off", async () => {
   const infoPage = await source("src/components/InfoPage.tsx");
 
   assert.match(config, /SHOP_ACCOUNT_URL = `\$\{SITE_URL\}\/help#account-orders`/);
-  assert.match(config, /SHOPIFY_ACCOUNT_URL = `https:\/\/\$\{STORE_CONFIG\.shopifyDomain\}\/account`/);
+  assert.match(
+    config,
+    /SHOPIFY_ACCOUNT_URL = `https:\/\/\$\{STORE_CONFIG\.shopifyDomain\}\/account`/,
+  );
   assert.match(infoPage, /id="account-orders"/);
   assert.match(infoPage, /secure Shopify account page/);
 });

@@ -24,7 +24,7 @@ A single `resolveTaxonomy(product)` layer assigns each product to categories and
 4. **Vendor** for brand
 5. Fallback: keyword matching on title/description against a keyword→category dictionary (Smartphones, Tablets, Laptops, Smartwatches, Headphones & Earbuds, Audio, Chargers, Cables, Power Banks, Cases & Protection, Accessories) and a brand keyword list (Apple/iPhone, Samsung, Xiaomi, Google, OnePlus, Anker, Honor, Oppo, Realme, Baseus, JBL, Sony…)
 
-The dictionary maps *keywords to sections*, not products to sections — adding "Samsung Galaxy S26 Ultra" or "Anker 20,000mAh Power Bank" in Shopify automatically resolves to Smartphones+Samsung and Power Banks+Anker with no code change.
+The dictionary maps _keywords to sections_, not products to sections — adding "Samsung Galaxy S26 Ultra" or "Anker 20,000mAh Power Bank" in Shopify automatically resolves to Smartphones+Samsung and Power Banks+Anker with no code change.
 
 Navigation and homepage sections are generated at runtime from the products/collections actually present: a category or brand only appears in the menu when at least one product resolves into it. New Shopify collections show up automatically on the shop and menu.
 

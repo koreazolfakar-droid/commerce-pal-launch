@@ -272,14 +272,25 @@ function ProductPage() {
       aiContext={`Product: ${node.title}. Brand: ${node.vendor ?? ""}. Type: ${node.productType ?? ""}. Price: ${selectedVariant ? formatPrice(selectedVariant.price.amount, currency) : ""}. Availability: ${inStock ? "in stock" : "out of stock"}. Description: ${(node.description ?? "").slice(0, 2800)}`}
     >
       <div className="mx-auto max-w-7xl px-4 py-5 pb-32 lg:py-10 lg:pb-14">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Link to="/" className="transition-colors hover:text-primary">Home</Link>
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-1 text-xs text-muted-foreground"
+        >
+          <Link to="/" className="transition-colors hover:text-primary">
+            Home
+          </Link>
           <ChevronRight aria-hidden className="h-3.5 w-3.5" />
-          <Link to="/shop" className="transition-colors hover:text-primary">Shop</Link>
+          <Link to="/shop" className="transition-colors hover:text-primary">
+            Shop
+          </Link>
           {category && (
             <>
               <ChevronRight aria-hidden className="h-3.5 w-3.5" />
-              <Link to="/category/$slug" params={{ slug: category.slug }} className="transition-colors hover:text-primary">
+              <Link
+                to="/category/$slug"
+                params={{ slug: category.slug }}
+                className="transition-colors hover:text-primary"
+              >
                 {category.label}
               </Link>
             </>
@@ -294,73 +305,163 @@ function ProductPage() {
             title={node.title}
             activeIndex={activeImage}
             onSelect={setActiveImage}
-            badge={discount !== null ? (
-              <span className="absolute left-4 top-4 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground shadow-card">-{discount}%</span>
-            ) : null}
+            badge={
+              discount !== null ? (
+                <span className="absolute left-4 top-4 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground shadow-card">
+                  -{discount}%
+                </span>
+              ) : null
+            }
           />
 
           <div className="flex min-w-0 flex-col gap-4 rounded-[1.5rem] border bg-card p-5 shadow-card sm:gap-6 sm:p-7">
             <div className="min-w-0">
               {brand && (
-                <Link to="/brand/$slug" params={{ slug: brand.slug }} className="inline-flex items-center gap-2 rounded-full border bg-card py-1 pl-1 pr-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary">
-                  <BrandLogo slug={brand.slug} label={brand.label} size={26} className="rounded-full" />
+                <Link
+                  to="/brand/$slug"
+                  params={{ slug: brand.slug }}
+                  className="inline-flex items-center gap-2 rounded-full border bg-card py-1 pl-1 pr-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
+                >
+                  <BrandLogo
+                    slug={brand.slug}
+                    label={brand.label}
+                    size={26}
+                    className="rounded-full"
+                  />
                   {brand.label}
                 </Link>
               )}
-              <h1 className="mt-3 text-[1.55rem] font-extrabold leading-tight tracking-tight sm:text-3xl lg:text-[2.35rem] lg:leading-[1.1]">{node.title}</h1>
+              <h1 className="mt-3 text-[1.55rem] font-extrabold leading-tight tracking-tight sm:text-3xl lg:text-[2.35rem] lg:leading-[1.1]">
+                {node.title}
+              </h1>
               <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-2">
                 <span className="text-2xl font-extrabold tracking-tight text-foreground lg:text-[2rem]">
                   {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
                 </span>
                 {discount !== null && compareAt && (
                   <>
-                    <span className="text-sm text-muted-foreground line-through">{formatPrice(compareAt, currency)}</span>
-                    <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-primary">Save {discount}%</span>
+                    <span className="text-sm text-muted-foreground line-through">
+                      {formatPrice(compareAt, currency)}
+                    </span>
+                    <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-primary">
+                      Save {discount}%
+                    </span>
                   </>
                 )}
               </div>
-              <p className={cn("mt-2.5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold", inStock ? "border-success/30 text-success" : "text-muted-foreground")}> 
-                <span aria-hidden className={cn("h-1.5 w-1.5 rounded-full", inStock ? "bg-success" : "bg-muted-foreground")} />
+              <p
+                className={cn(
+                  "mt-2.5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold",
+                  inStock ? "border-success/30 text-success" : "text-muted-foreground",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    inStock ? "bg-success" : "bg-muted-foreground",
+                  )}
+                />
                 {t(inStock ? "inStock" : "outOfStock")}
               </p>
             </div>
 
-            <VariantPicker options={node.options ?? []} variants={variants} selected={selectedOptions} onSelect={handleOptionSelect} />
+            <VariantPicker
+              options={node.options ?? []}
+              variants={variants}
+              selected={selectedOptions}
+              onSelect={handleOptionSelect}
+            />
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex h-11 w-fit items-center rounded-full border bg-card p-1" aria-label="Quantity">
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setQuantity((value) => Math.max(1, value - 1))} disabled={quantity <= 1} aria-label={t("decreaseQuantity")}>
+              <div
+                className="flex h-11 w-fit items-center rounded-full border bg-card p-1"
+                aria-label="Quantity"
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                  disabled={quantity <= 1}
+                  aria-label={t("decreaseQuantity")}
+                >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="w-8 text-center text-sm font-semibold" aria-live="polite">{quantity}</span>
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setQuantity((value) => Math.min(99, value + 1))} aria-label={t("increaseQuantity")}>
+                <span className="w-8 text-center text-sm font-semibold" aria-live="polite">
+                  {quantity}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={() => setQuantity((value) => Math.min(99, value + 1))}
+                  aria-label={t("increaseQuantity")}
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
 
               <div className="hidden flex-1 flex-wrap gap-2 sm:flex">
-                <Button size="lg" onClick={() => handleAddToCart()} disabled={busy || !inStock} className="press flex-1 rounded-full">
-                  {pending === "cart" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingBag className="h-4 w-4" />}
+                <Button
+                  size="lg"
+                  onClick={() => handleAddToCart()}
+                  disabled={busy || !inStock}
+                  className="press flex-1 rounded-full"
+                >
+                  {pending === "cart" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShoppingBag className="h-4 w-4" />
+                  )}
                   {t(inStock ? "addToCart" : "soldOut")}
                 </Button>
-                <Button size="lg" variant="secondary" onClick={() => handleAddToCart(true)} disabled={busy || !inStock} className="press rounded-full">
-                  {pending === "buy" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={() => handleAddToCart(true)}
+                  disabled={busy || !inStock}
+                  className="press rounded-full"
+                >
+                  {pending === "buy" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Zap className="h-4 w-4" />
+                  )}
                   Buy now
                 </Button>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-              <Button variant="ghost" size="sm" onClick={() => toggleWishlist(node.handle)} aria-pressed={wishlisted} aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")} className="rounded-full">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleWishlist(node.handle)}
+                aria-pressed={wishlisted}
+                aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
+                className="rounded-full"
+              >
                 <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
                 {t(wishlisted ? "saved" : "saveWishlist")}
               </Button>
               {isPhone && <CompareButton handle={node.handle} />}
-              <Button variant="ghost" size="sm" onClick={handleShare} aria-label={t("shareProduct")} className="rounded-full">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleShare}
+                aria-label={t("shareProduct")}
+                className="rounded-full"
+              >
                 <Share2 aria-hidden className="h-4 w-4" />
                 {t("shareProduct")}
               </Button>
-              <Button asChild variant="outline" size="sm" className="rounded-full border-success/40 text-success hover:bg-success/10 hover:text-success">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="rounded-full border-success/40 text-success hover:bg-success/10 hover:text-success"
+              >
                 <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="h-4 w-4" /> WhatsApp
                 </a>
@@ -379,11 +480,17 @@ function ProductPage() {
         </div>
 
         <section className="mt-6" aria-label="Smart accessory recommendations">
-          <GeminiShoppingAdvisor product={product} catalog={{ products: [...(recommended ?? []), ...(vendorProducts ?? [])] }} />
+          <GeminiShoppingAdvisor
+            product={product}
+            catalog={{ products: [...(recommended ?? []), ...(vendorProducts ?? [])] }}
+          />
         </section>
 
         {(hasOverview || hasSpecs || hasBox || hasShipping) && (
-          <section className="mt-8 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7" aria-label="Product details">
+          <section
+            className="mt-8 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7"
+            aria-label="Product details"
+          >
             <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="scroll-rail h-auto w-full justify-start gap-1 rounded-2xl bg-surface p-1.5">
                 {hasOverview && <TabsTrigger value="overview">Description</TabsTrigger>}
@@ -391,27 +498,54 @@ function ProductPage() {
                 {hasBox && <TabsTrigger value="box">In the box</TabsTrigger>}
                 {hasShipping && <TabsTrigger value="shipping">Shipping &amp; returns</TabsTrigger>}
               </TabsList>
-              {hasOverview && <TabsContent value="overview" className="pt-6"><ProseSections sections={content.overview} /></TabsContent>}
-              {hasSpecs && <TabsContent value="specifications" className="pt-6"><SpecSheet groups={specGroups} /></TabsContent>}
-              {hasBox && <TabsContent value="box" className="pt-6"><ProseSections sections={content.box} /></TabsContent>}
-              {hasShipping && <TabsContent value="shipping" className="pt-6"><ProseSections sections={content.shipping} /></TabsContent>}
+              {hasOverview && (
+                <TabsContent value="overview" className="pt-6">
+                  <ProseSections sections={content.overview} />
+                </TabsContent>
+              )}
+              {hasSpecs && (
+                <TabsContent value="specifications" className="pt-6">
+                  <SpecSheet groups={specGroups} />
+                </TabsContent>
+              )}
+              {hasBox && (
+                <TabsContent value="box" className="pt-6">
+                  <ProseSections sections={content.box} />
+                </TabsContent>
+              )}
+              {hasShipping && (
+                <TabsContent value="shipping" className="pt-6">
+                  <ProseSections sections={content.shipping} />
+                </TabsContent>
+              )}
             </Tabs>
           </section>
         )}
 
         <section className="mt-8" aria-label="Official manufacturer information">
-          <OfficialProductResearch title={node.title} {...(node.vendor ? { vendor: node.vendor } : {})} />
+          <OfficialProductResearch
+            title={node.title}
+            {...(node.vendor ? { vendor: node.vendor } : {})}
+          />
         </section>
 
         {similar.length > 0 && (
           <section className="mt-16 border-t pt-10" aria-labelledby="similar-products">
             <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
               <div className="min-w-0">
-                <h2 id="similar-products" className="text-xl font-bold tracking-tight">You may also like</h2>
-                <p className="mt-1 truncate text-sm text-muted-foreground">Recommended from the live {STORE_NAME} catalogue</p>
+                <h2 id="similar-products" className="text-xl font-bold tracking-tight">
+                  You may also like
+                </h2>
+                <p className="mt-1 truncate text-sm text-muted-foreground">
+                  Recommended from the live {STORE_NAME} catalogue
+                </p>
               </div>
               {category && (
-                <Link to="/category/$slug" params={{ slug: category.slug }} className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: category.slug }}
+                  className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
                   View all <ChevronRight aria-hidden className="h-4 w-4" />
                 </Link>
               )}
@@ -423,9 +557,17 @@ function ProductPage() {
         {sameVendorProducts.length > 0 && (
           <section className="mt-12 border-t pt-8" aria-labelledby="more-from-brand">
             <div className="home-section-header">
-              <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-bold">{t("moreFromBrand")} {brand?.label}</h2>
+              <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-bold">
+                {t("moreFromBrand")} {brand?.label}
+              </h2>
               {brand && (
-                <Link to="/brand/$slug" params={{ slug: brand.slug }} className="shrink-0 text-sm font-semibold text-primary hover:underline">{t("viewAll")}</Link>
+                <Link
+                  to="/brand/$slug"
+                  params={{ slug: brand.slug }}
+                  className="shrink-0 text-sm font-semibold text-primary hover:underline"
+                >
+                  {t("viewAll")}
+                </Link>
               )}
             </div>
             <ProductRail products={sameVendorProducts} storageKey={`more-from-${node.vendor}`} />
@@ -435,11 +577,31 @@ function ProductPage() {
 
       <div className="fixed bottom-[var(--mobile-nav-height)] left-0 right-0 z-30 border-t bg-background/90 px-4 py-2.5 backdrop-blur-xl sm:hidden">
         <div className="flex items-center gap-2.5">
-          <button type="button" onClick={() => toggleWishlist(node.handle)} aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")} aria-pressed={wishlisted} className="press grid h-11 w-11 shrink-0 place-items-center rounded-full border bg-card">
+          <button
+            type="button"
+            onClick={() => toggleWishlist(node.handle)}
+            aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
+            aria-pressed={wishlisted}
+            className="press grid h-11 w-11 shrink-0 place-items-center rounded-full border bg-card"
+          >
             <Heart className={cn("h-5 w-5", wishlisted && "fill-primary text-primary")} />
           </button>
-          <Button onClick={() => handleAddToCart()} disabled={busy || !inStock} className="press h-11 flex-1 rounded-full text-sm font-bold">
-            {pending === "cart" ? <Loader2 className="h-4 w-4 animate-spin" /> : inStock ? <><ShoppingBag className="h-4 w-4" />Add to cart · {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}</> : t("soldOut")}
+          <Button
+            onClick={() => handleAddToCart()}
+            disabled={busy || !inStock}
+            className="press h-11 flex-1 rounded-full text-sm font-bold"
+          >
+            {pending === "cart" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : inStock ? (
+              <>
+                <ShoppingBag className="h-4 w-4" />
+                Add to cart ·{" "}
+                {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
+              </>
+            ) : (
+              t("soldOut")
+            )}
           </Button>
         </div>
       </div>

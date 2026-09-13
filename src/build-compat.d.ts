@@ -19,10 +19,7 @@ interface ImportMetaEnv {
  */
 interface BlobConstructorCompat {
   readonly prototype: Blob;
-  new (
-    blobParts?: Array<BlobPart | Uint8Array<ArrayBufferLike>>,
-    options?: BlobPropertyBag,
-  ): Blob;
+  new (blobParts?: Array<BlobPart | Uint8Array<ArrayBufferLike>>, options?: BlobPropertyBag): Blob;
 }
 
 declare var Blob: BlobConstructorCompat;

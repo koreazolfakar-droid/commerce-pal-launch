@@ -13,7 +13,9 @@ const browser = await chromium.launch({ headless: true });
 
 try {
   for (const testCase of cases) {
-    const page = await browser.newPage({ viewport: { width: testCase.width, height: testCase.height } });
+    const page = await browser.newPage({
+      viewport: { width: testCase.width, height: testCase.height },
+    });
     await page.goto(baseURL, { waitUntil: "load" });
     await page.waitForTimeout(350);
 
@@ -33,8 +35,14 @@ try {
     });
 
     assert.ok(metrics.left >= -1, `${testCase.name}: hero starts outside viewport`);
-    assert.ok(metrics.right <= metrics.viewportWidth + 1, `${testCase.name}: hero exceeds viewport`);
-    assert.ok(metrics.scrollWidth <= metrics.viewportWidth, `${testCase.name}: horizontal overflow`);
+    assert.ok(
+      metrics.right <= metrics.viewportWidth + 1,
+      `${testCase.name}: hero exceeds viewport`,
+    );
+    assert.ok(
+      metrics.scrollWidth <= metrics.viewportWidth,
+      `${testCase.name}: horizontal overflow`,
+    );
     assert.equal(await hero.getAttribute("data-hero-source"), "shopify-collection");
     assert.equal(await hero.getAttribute("data-hero-handle"), "homepage-hero");
     assert.equal(await hero.locator('a[href^="/product/"]').count(), 0);
@@ -47,8 +55,14 @@ try {
 
     const mediaBox = await page.locator('[data-testid="home-hero-media"]').boundingBox();
     assert.ok(mediaBox, `${testCase.name}: hero media is missing`);
-    assert.ok(Math.abs(mediaBox.width - metrics.width) <= 2, `${testCase.name}: media width mismatch`);
-    assert.ok(Math.abs(mediaBox.height - metrics.height) <= 2, `${testCase.name}: media height mismatch`);
+    assert.ok(
+      Math.abs(mediaBox.width - metrics.width) <= 2,
+      `${testCase.name}: media width mismatch`,
+    );
+    assert.ok(
+      Math.abs(mediaBox.height - metrics.height) <= 2,
+      `${testCase.name}: media height mismatch`,
+    );
 
     if (testCase.mobile) {
       const ratio = metrics.height / metrics.width;
