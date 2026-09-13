@@ -400,8 +400,9 @@ async function parseSuccessfulResponse({
 export const askSmartPhoneAdvisor = createServerFn({ method: "POST" })
   .validator(requestSchema)
   .handler(async ({ data }): Promise<SmartAdvisorResult> => {
-    const apiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"];
-    if (!apiKey) {
+    const apiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || undefined;
+    const gatewayKey = process.env["LOVABLE_API_KEY"] || undefined;
+    if (!apiKey && !gatewayKey) {
       return failure(
         "The smart phone advisor is not configured yet. Add GEMINI_API_KEY to the server secrets and redeploy.",
         "ADVISOR_NOT_CONFIGURED",
