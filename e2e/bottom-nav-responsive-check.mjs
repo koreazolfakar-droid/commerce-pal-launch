@@ -111,7 +111,33 @@ try {
   await badgePage.goto(baseURL, { waitUntil: "load" });
   await badgePage.evaluate(async () => {
     const { useCartStore } = await import("/src/stores/cartStore.ts");
-    useCartStore.setState({ items: [{ quantity: 105 }] });
+    const price = { amount: "1.00", currencyCode: "USD" };
+    useCartStore.setState({
+      items: [
+        {
+          lineId: null,
+          variantId: "gid://shopify/ProductVariant/test",
+          variantTitle: "Test variant",
+          price,
+          quantity: 105,
+          selectedOptions: [],
+          product: {
+            node: {
+              id: "gid://shopify/Product/test",
+              title: "Test product",
+              handle: "test-product",
+              description: "",
+              availableForSale: true,
+              priceRange: { minVariantPrice: price },
+              images: { edges: [] },
+              collections: { edges: [] },
+              variants: { edges: [] },
+              options: [],
+            },
+          },
+        },
+      ],
+    });
   });
   const badge = badgePage.locator('[data-testid="bottom-nav-cart-badge"]');
   await badge.waitFor({ state: "visible" });
