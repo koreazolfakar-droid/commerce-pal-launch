@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
-import { BottomNav } from "@/components/BottomNav";
+import { BottomNav, MOBILE_NAV_HEIGHT } from "@/components/BottomNav";
 import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -17,12 +17,16 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
   const onHomePage = pathname === "/";
   const onCartPage = pathname === "/cart";
   const onProductPage = pathname.startsWith("/product/");
+  const mobileNavStyle = {
+    "--mobile-nav-height": MOBILE_NAV_HEIGHT,
+  } as CSSProperties;
 
   return (
     <div
       className="store-layout flex min-h-screen min-w-0 flex-col bg-background"
       data-product-page={onProductPage}
       data-cart-page={onCartPage}
+      style={mobileNavStyle}
     >
       <a
         href="#main-content"
