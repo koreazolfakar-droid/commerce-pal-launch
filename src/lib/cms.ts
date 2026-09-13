@@ -17,6 +17,12 @@ export type CmsHeroSlide = {
   sort_order: number;
 };
 
+type CmsHeroSlideRow = CmsHeroSlide & {
+  is_published: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
 export type CmsSection = {
   id: string;
   page_slug: string;
@@ -71,6 +77,20 @@ function parseSetting(row: CmsSettingRow): CmsSettingValue {
   return row.value_text;
 }
 
+function activeHeroSlide(row: CmsHeroSlideRow, now: number) {
+  if (!row.is_published) return false;
+  const startsAt = row.starts_at ? Date.parse(row.starts_at) : null;
+  const endsAt = row.ends_at ? Date.parse(row.ends_at) : null;
+  if (startsAt !== null && Number.isFinite(startsAt) && startsAt > now) return false;
+  if (endsAt !== null && Number.isFinite(endsAt) && endsAt <= now) return false;
+  return true;
+}
+
+function publicHeroSlide(row: CmsHeroSlideRow): CmsHeroSlide {
+  const { is_published: _published, starts_at: _startsAt, ends_at: _endsAt, ...slide } = row;
+  return slide;
+}
+
 const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
   const baseUrl = process.env["SUPABASE_URL"]?.replace(/\/$/, "");
   const apiKey = process.env["SUPABASE_ANON_KEY"];
@@ -94,12 +114,12 @@ const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
   };
 
   try {
-    const [settingRows, heroSlides, sections, navigation] = await Promise.all([
+    const [settingRows, heroRows, sections, navigation] = await Promise.all([
       read<CmsSettingRow[]>(
-        "cms_site_settings?select=key,value_text,value_json,value_type&order=key.asc",
+        "cms_site_settings?select=key,value_text,value_json,value_type&is_public=eq.true&order=key.asc",
       ),
-      read<CmsHeroSlide[]>(
-        "cms_hero_slides?select=id,title,subtitle,image_url,mobile_image_url,button_label,target_type,target_value,sort_order&order=sort_order.asc",
+      read<CmsHeroSlideRow[]>(
+        "cms_hero_slides?select=id,title,subtitle,image_url,mobile_image_url,button_label,target_type,target_value,sort_order,is_published,starts_at,ends_at&is_published=eq.true&order=sort_order.asc",
       ),
       read<CmsSection[]>(
         "cms_sections?select=id,page_slug,section_key,section_type,title,subtitle,content,sort_order,is_visible&order=sort_order.asc",
@@ -108,6 +128,9 @@ const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
         "cms_navigation_items?select=id,area,label,icon_type,icon_value,href,sort_order,is_visible&order=area.asc,sort_order.asc",
       ),
     ]);
+
+    const now = Date.now();
+    const heroSlides = heroRows.filter((row) => activeHeroSlide(row, now)).map(publicHeroSlide);
 
     return {
       settings: Object.fromEntries(settingRows.map((row) => [row.key, parseSetting(row)])),
