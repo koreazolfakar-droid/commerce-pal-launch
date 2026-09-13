@@ -69,7 +69,11 @@ async function assertMobileNavigation(page, testCase) {
 
   const quick = page.getByTestId("home-quick-access");
   await quick.waitFor({ state: "visible" });
-  assert.equal(await quick.locator("a").count(), 4, `${testCase.width}px: quick access must expose four routes`);
+  assert.equal(
+    await quick.locator("a").count(),
+    4,
+    `${testCase.width}px: quick access must expose four routes`,
+  );
   for (const item of await quick.locator("a").all()) {
     const box = await item.boundingBox();
     assert.ok(box && box.height >= 44, `${testCase.width}px: quick access target is below 44px`);
@@ -132,7 +136,10 @@ try {
     await assertNoHorizontalOverflow(page, name);
 
     const heroBefore = await page.getByTestId("home-hero").boundingBox();
-    assert.ok(heroBefore && heroBefore.width > 0 && heroBefore.height > 0, `${name}: hero has no stable box`);
+    assert.ok(
+      heroBefore && heroBefore.width > 0 && heroBefore.height > 0,
+      `${name}: hero has no stable box`,
+    );
     await page.waitForTimeout(350);
     const heroAfter = await page.getByTestId("home-hero").boundingBox();
     assert.ok(heroAfter, `${name}: hero disappeared after load`);
