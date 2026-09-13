@@ -146,7 +146,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               if (!heroImage?.url) return null;
 
               const visual = (
-                <span className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
+                <span className="relative block aspect-[1672/941] w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
                   <img
                     src={cdnImage(heroImage.url, 1800)}
                     srcSet={cdnSrcSet(heroImage.url, 1800)}
@@ -158,7 +158,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
                     fetchPriority={index === 0 ? "high" : "auto"}
                     decoding="async"
                     draggable={false}
-                    className="m-0 block h-auto w-full max-w-none select-none align-top"
+                    className="m-0 block h-full w-full max-w-none select-none object-cover object-center align-top"
                   />
 
                   {query?.isFetching && !query?.isPending && (
