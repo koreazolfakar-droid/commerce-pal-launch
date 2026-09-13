@@ -66,7 +66,7 @@ export type SmartAdvisorStoreRecommendation = {
 
 export type SmartAdvisorResult = {
   ok: boolean;
-  provider: "nvidia" | "lovable";
+  provider: "nvidia";
   model?: string;
   errorCode?: string;
   answer: string;
@@ -142,7 +142,6 @@ function rankCatalog(products: ShopifyProduct[], message: string) {
 function buildResult(
   parsed: z.infer<typeof modelResultSchema>,
   catalog: ShopifyProduct[],
-  provider: "nvidia" | "lovable",
   model?: string,
 ): SmartAdvisorResult {
   const byHandle = new Map(catalog.map((product) => [product.node.handle, product]));
@@ -170,7 +169,7 @@ function buildResult(
 
   return {
     ok: true,
-    provider,
+    provider: "nvidia",
     ...(model ? { model } : {}),
     answer: parsed.answer,
     intent: parsed.intent,
@@ -186,56 +185,19 @@ function buildResult(
 function parseModelResult(
   text: string,
   catalog: ShopifyProduct[],
-  provider: "nvidia" | "lovable",
   model?: string,
 ): SmartAdvisorResult | null {
   try {
     const parsed = modelResultSchema.parse(JSON.parse(extractJsonObject(text)));
-    return buildResult(parsed, catalog, provider, model);
+    return buildResult(parsed, catalog, model);
   } catch (error) {
-    console.error("Smart advisor JSON parse error", { provider, error, sample: text.slice(0, 1200) });
-    return null;
-  }
-}
-
-async function callLovableFallback(prompt: string) {
-  const apiKey = process.env["LOVABLE_API_KEY"]?.trim();
-  if (!apiKey) return null;
-
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      "Lovable-API-Key": apiKey,
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3.8-flash",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a precise electronics shopping assistant. Follow the requested JSON shape exactly, never fabricate store data, and never claim live web browsing.",
-        },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.18,
-    }),
-    signal: AbortSignal.timeout(35_000),
-  });
-
-  if (!response.ok) {
-    console.error("Lovable advisor fallback error", {
-      status: response.status,
-      body: (await response.text().catch(() => "")).slice(0, 500),
+    console.error("Smart advisor JSON parse error", {
+      provider: "nvidia",
+      error,
+      sample: text.slice(0, 1200),
     });
     return null;
   }
-
-  const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  return payload.choices?.[0]?.message?.content?.trim() || null;
 }
 
 function nvidiaFailure(error: unknown): SmartAdvisorResult {
@@ -249,15 +211,15 @@ function nvidiaFailure(error: unknown): SmartAdvisorResult {
     message: error.message.slice(0, 500),
   });
 
-  if (error.body === "NVIDIA_NOT_CONFIGURED") {
+  if (error.body === "SUPABASE_GATEWAY_NOT_CONFIGURED") {
     return failure(
-      "The smart advisor is not configured yet. Add NVIDIA_API_KEY to the server secrets and redeploy.",
+      "The smart advisor gateway is not configured yet. Add the Supabase server credentials to the deployment and try again.",
       "ADVISOR_NOT_CONFIGURED",
     );
   }
   if (error.status === 401 || error.status === 403) {
     return failure(
-      "The NVIDIA API key was rejected. Check NVIDIA_API_KEY in the deployment secrets.",
+      "The secure Supabase AI gateway rejected the request. Check the server-side Supabase credentials.",
       "ADVISOR_AUTH_ERROR",
     );
   }
@@ -341,7 +303,6 @@ ${data.message}
 LIVE ${STORE_NAME} CATALOGUE CANDIDATES
 ${JSON.stringify(catalogCandidates)}`;
 
-    let nvidiaError: unknown;
     try {
       const { text, model } = await callNvidiaChat({
         messages: [
@@ -353,24 +314,10 @@ ${JSON.stringify(catalogCandidates)}`;
           { role: "user", content: prompt },
         ],
       });
-      const result = parseModelResult(text, catalog, "nvidia", model);
+      const result = parseModelResult(text, catalog, model);
       if (result) return result;
-      nvidiaError = new NvidiaApiError("NVIDIA returned invalid JSON", 502, "INVALID_RESPONSE");
+      return nvidiaFailure(new NvidiaApiError("NVIDIA returned invalid JSON", 502, "INVALID_RESPONSE"));
     } catch (error) {
-      nvidiaError = error;
+      return nvidiaFailure(error);
     }
-
-    // Preserve the existing Lovable gateway as a last-resort fallback, but never
-    // present fallback answers as live-web verified.
-    try {
-      const fallbackText = await callLovableFallback(prompt);
-      if (fallbackText) {
-        const result = parseModelResult(fallbackText, catalog, "lovable");
-        if (result) return result;
-      }
-    } catch (error) {
-      console.error("Lovable advisor fallback network error", error);
-    }
-
-    return nvidiaFailure(nvidiaError);
   });
