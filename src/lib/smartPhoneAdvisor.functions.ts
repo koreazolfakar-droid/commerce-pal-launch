@@ -489,7 +489,7 @@ ${JSON.stringify(catalogCandidates)}`;
     for (const model of apiKey ? models : []) {
       let response: Response;
       try {
-        response = await callGemini({ apiKey, model, prompt, useSearch: true });
+        response = await callGemini({ apiKey: apiKey as string, model, prompt, useSearch: true });
       } catch (error) {
         console.error("Smart phone advisor search network error", error);
         continue;
@@ -527,7 +527,7 @@ ${JSON.stringify(catalogCandidates)}`;
     for (const model of apiKey ? models : []) {
       let response: Response;
       try {
-        response = await callGemini({ apiKey, model, prompt, useSearch: false });
+        response = await callGemini({ apiKey: apiKey as string, model, prompt, useSearch: false });
       } catch (error) {
         console.error("Smart phone advisor fallback network error", error);
         continue;
