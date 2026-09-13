@@ -8,7 +8,9 @@ on:
       - "src/components/BottomNav.tsx"
       - "src/components/StoreLayout.tsx"
       - "src/components/MobileMenu.tsx"
+      - "src/design-consistency.css"
       - "src/mobile-ai-nav.css"
+      - "src/routes/search.tsx"
       - "e2e/bottom-nav-responsive-check.mjs"
       - ".github/workflows/bottom-nav-responsive-ci.yml"
   pull_request:
@@ -18,7 +20,9 @@ on:
       - "src/components/BottomNav.tsx"
       - "src/components/StoreLayout.tsx"
       - "src/components/MobileMenu.tsx"
+      - "src/design-consistency.css"
       - "src/mobile-ai-nav.css"
+      - "src/routes/search.tsx"
       - "e2e/bottom-nav-responsive-check.mjs"
       - ".github/workflows/bottom-nav-responsive-ci.yml"
 

@@ -26,6 +26,42 @@ async function assertActive(page, id) {
   assert.equal(await item.getAttribute("aria-current"), "page", `${id} should expose aria-current`);
 }
 
+async function assertSearchMobilePolish(page) {
+  const activeItems = page.locator('[data-testid="bottom-nav"] [data-active="true"]');
+  assert.equal(await activeItems.count(), 1, "search route should have exactly one active nav item");
+
+  const visualStates = await page.locator('[data-testid="bottom-nav"] [data-nav-id]').evaluateAll((items) =>
+    items.map((item) => {
+      const pill = item.querySelector("span:first-child");
+      return {
+        id: item.getAttribute("data-nav-id"),
+        color: getComputedStyle(item).color,
+        pillBackground: pill ? getComputedStyle(pill).backgroundColor : "",
+      };
+    }),
+  );
+  const byId = Object.fromEntries(visualStates.map((item) => [item.id, item]));
+  assert.equal(byId.home.color, byId.categories.color, "inactive Home should not keep active color");
+  assert.equal(
+    byId.home.pillBackground,
+    byId.categories.pillBackground,
+    "inactive Home should not keep the active pill",
+  );
+  assert.notEqual(byId.search.color, byId.home.color, "Search should be the visually active tab");
+
+  assert.equal(
+    await page.locator('nav[aria-label="Product categories"]').count(),
+    0,
+    "search should not render the duplicate top category rail",
+  );
+  assert.equal(await page.locator("main h1").first().isVisible(), false, "mobile search heading should be compacted");
+  assert.equal(
+    await page.getByRole("button", { name: "Open smart phone advisor" }).isVisible(),
+    false,
+    "AI launcher should not cover mobile search product cards",
+  );
+}
+
 try {
   for (const testCase of cases) {
     const page = await browser.newPage({ viewport: testCase });
@@ -94,6 +130,7 @@ try {
 
   await routingPage.goto(`${baseURL}/search`, { waitUntil: "load" });
   await assertActive(routingPage, "search");
+  await assertSearchMobilePolish(routingPage);
   await routingPage.goBack({ waitUntil: "load" });
   await assertActive(routingPage, "categories");
 
@@ -154,7 +191,7 @@ try {
   assert.equal(rtlOverflow, false, "Arabic/RTL bottom navigation causes horizontal overflow");
   await rtlPage.close();
 
-  console.log("PASS routing, refresh/back, cart badge, dark mode and RTL checks");
+  console.log("PASS routing, refresh/back, search polish, cart badge, dark mode and RTL checks");
 } finally {
   await browser.close();
 }
