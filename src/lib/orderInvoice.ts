@@ -505,7 +505,7 @@ function buildImagePdf(images: Uint8Array[]) {
   }
   push(`trailer\n<</Size ${maxId + 1} /Root 1 0 R>>\nstartxref\n${xrefOffset}\n%%EOF`);
 
-  return new Blob(chunks, { type: "application/pdf" });
+  return new Blob(chunks as BlobPart[], { type: "application/pdf" });
 }
 
 export async function createOrderInvoicePdfBlob(input: OrderInvoiceInput) {

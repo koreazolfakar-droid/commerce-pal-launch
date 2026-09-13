@@ -217,6 +217,61 @@ async function callGemini({
   );
 }
 
+const GATEWAY_MODEL = "google/gemini-3.8-flash";
+
+/**
+ * Lovable AI Gateway fallback. Used when the direct Gemini key is missing or
+ * its quota is exhausted, so the advisor keeps answering instead of failing.
+ * Search grounding is not available through the gateway, so answers built
+ * from it are flagged as not live-web verified.
+ */
+async function callGatewayChat({ apiKey, prompt }: { apiKey: string; prompt: string }) {
+  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "Lovable-API-Key": apiKey,
+    },
+    body: JSON.stringify({
+      model: GATEWAY_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.2,
+    }),
+    signal: AbortSignal.timeout(45000),
+  });
+}
+
+function resultFromText(
+  text: string,
+  catalog: ShopifyProduct[],
+  fallbackNotice?: string,
+): SmartAdvisorResult {
+  try {
+    const parsed = modelResultSchema.parse(JSON.parse(extractJson(text)));
+    return buildResult({
+      parsed,
+      catalog,
+      searchedWeb: false,
+      ...(fallbackNotice ? { fallbackNotice } : {}),
+    });
+  } catch (error) {
+    console.error("Smart phone advisor gateway JSON parse error", error, text.slice(0, 1200));
+    return {
+      ok: true,
+      provider: "gemini",
+      answer: fallbackNotice ? `${fallbackNotice}\n\n${text.slice(0, 3000)}` : text.slice(0, 3000),
+      intent: "general",
+      searchedWeb: false,
+      comparison: [],
+      bestPick: null,
+      storeRecommendations: [],
+      sources: [],
+      followUps: [],
+    };
+  }
+}
+
 function providerMessage(body: string) {
   try {
     const parsed = JSON.parse(body) as { error?: { message?: string; status?: string } };
@@ -345,8 +400,9 @@ async function parseSuccessfulResponse({
 export const askSmartPhoneAdvisor = createServerFn({ method: "POST" })
   .validator(requestSchema)
   .handler(async ({ data }): Promise<SmartAdvisorResult> => {
-    const apiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"];
-    if (!apiKey) {
+    const apiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || undefined;
+    const gatewayKey = process.env["LOVABLE_API_KEY"] || undefined;
+    if (!apiKey && !gatewayKey) {
       return failure(
         "The smart phone advisor is not configured yet. Add GEMINI_API_KEY to the server secrets and redeploy.",
         "ADVISOR_NOT_CONFIGURED",
@@ -430,10 +486,10 @@ ${JSON.stringify(catalogCandidates)}`;
 
     // First try real Google Search grounding. Importantly, Gemini 2.5 Flash is
     // tried first because search grounding is available on its free tier.
-    for (const model of models) {
+    for (const model of apiKey ? models : []) {
       let response: Response;
       try {
-        response = await callGemini({ apiKey, model, prompt, useSearch: true });
+        response = await callGemini({ apiKey: apiKey as string, model, prompt, useSearch: true });
       } catch (error) {
         console.error("Smart phone advisor search network error", error);
         continue;
@@ -453,7 +509,7 @@ ${JSON.stringify(catalogCandidates)}`;
 
       // A 401 means the key itself is invalid. Other statuses can be model/search
       // tier limitations, so continue to another supported model before failing.
-      if (response.status === 401) {
+      if (response.status === 401 && !gatewayKey) {
         return failure(
           "The Gemini API key was rejected. Check GEMINI_API_KEY in the deployment secrets.",
           "ADVISOR_AUTH_ERROR",
@@ -468,10 +524,10 @@ ${JSON.stringify(catalogCandidates)}`;
     // Keep the assistant useful even when live Search Grounding is unavailable
     // (for example a tier/quota restriction). This also proves whether the API
     // key itself works instead of showing a misleading generic failure.
-    for (const model of models) {
+    for (const model of apiKey ? models : []) {
       let response: Response;
       try {
-        response = await callGemini({ apiKey, model, prompt, useSearch: false });
+        response = await callGemini({ apiKey: apiKey as string, model, prompt, useSearch: false });
       } catch (error) {
         console.error("Smart phone advisor fallback network error", error);
         continue;
@@ -495,7 +551,7 @@ ${JSON.stringify(catalogCandidates)}`;
         body: lastBody.slice(0, 1000),
       });
 
-      if (response.status === 401 || response.status === 403) {
+      if ((response.status === 401 || response.status === 403) && !gatewayKey) {
         return failure(
           "The Gemini API key was rejected. Check GEMINI_API_KEY in the deployment secrets.",
           "ADVISOR_AUTH_ERROR",
@@ -510,6 +566,34 @@ ${JSON.stringify(catalogCandidates)}`;
       status: lastStatus,
       message: message.slice(0, 1000),
     });
+
+    // Last resort: Lovable AI. Keeps the advisor working when the direct Gemini
+    // key is missing, rejected, or out of quota.
+    if (gatewayKey) {
+      try {
+        const gatewayResponse = await callGatewayChat({ apiKey: gatewayKey, prompt });
+        if (gatewayResponse.ok) {
+          const payload = (await gatewayResponse.json()) as {
+            choices?: Array<{ message?: { content?: string } }>;
+          };
+          const text = payload.choices?.[0]?.message?.content?.trim();
+          if (text) {
+            return resultFromText(
+              text,
+              catalog,
+              "Live web search is unavailable right now, so this answer is not live-web verified.",
+            );
+          }
+        } else {
+          console.error("Smart phone advisor gateway error", {
+            status: gatewayResponse.status,
+            body: (await gatewayResponse.text().catch(() => "")).slice(0, 500),
+          });
+        }
+      } catch (error) {
+        console.error("Smart phone advisor gateway network error", error);
+      }
+    }
 
     if (lastStatus === 429) {
       return failure(
