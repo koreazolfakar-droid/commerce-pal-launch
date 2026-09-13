@@ -184,7 +184,8 @@ function Index() {
   const brands = buildShopifyBrands(catalog.brands, collections);
   const deals = products.filter((product) => productDiscountPercent(product) !== null);
   const best = bestSellers ?? [];
-  const isVisible = (key: string) => cms.sections.find((section) => section.section_key === key)?.is_visible ?? true;
+  const isVisible = (key: string) =>
+    cms.sections.find((section) => section.section_key === key)?.is_visible ?? true;
 
   const tickerHeading =
     cmsText(cms, language === "ar" ? "home_ticker_heading_ar" : "home_ticker_heading_en") ??
