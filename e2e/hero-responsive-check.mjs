@@ -17,7 +17,10 @@ try {
       viewport: { width: testCase.width, height: testCase.height },
     });
 
-    await page.goto(baseURL, { waitUntil: "domcontentloaded" });
+    await page.goto(baseURL, { waitUntil: "load" });
+    await page.waitForLoadState("networkidle").catch(() => undefined);
+    await page.waitForTimeout(250);
+
     const hero = page.locator('[data-testid="home-hero"]');
     await hero.waitFor({ state: "visible" });
 
