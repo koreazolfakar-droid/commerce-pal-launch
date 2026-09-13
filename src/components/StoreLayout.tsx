@@ -16,7 +16,15 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const onHomePage = pathname === "/";
   const onCartPage = pathname === "/cart";
+  const onSearchPage = pathname === "/search";
   const onProductPage = pathname.startsWith("/product/");
+  const onCatalogPage =
+    onSearchPage ||
+    pathname === "/shop" ||
+    pathname === "/used-phones" ||
+    pathname.startsWith("/category/") ||
+    pathname.startsWith("/collections/") ||
+    pathname.startsWith("/brand/");
   const mobileNavStyle = {
     "--mobile-nav-height": MOBILE_NAV_HEIGHT,
   } as CSSProperties;
@@ -26,6 +34,8 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       className="store-layout flex min-h-screen min-w-0 flex-col bg-background"
       data-product-page={onProductPage}
       data-cart-page={onCartPage}
+      data-search-page={onSearchPage}
+      data-catalog-page={onCatalogPage}
       style={mobileNavStyle}
     >
       <a
@@ -37,7 +47,7 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
       <div className="hidden lg:block">
         <SiteHeader />
       </div>
-      <MobileTopBar showCategoryRail={!onHomePage && !onCartPage} />
+      <MobileTopBar showCategoryRail={!onHomePage && !onCartPage && !onCatalogPage} />
       <main id="main-content" tabIndex={-1} className="min-w-0 flex-1">
         {children}
       </main>
