@@ -25,6 +25,8 @@ try {
       const parentRect = element.parentElement?.getBoundingClientRect();
       const homeRect = document.querySelector(".home-page")?.getBoundingClientRect();
       const bodyRect = document.body.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      const parentStyle = element.parentElement ? getComputedStyle(element.parentElement) : null;
       const normalize = (value) =>
         value
           ? {
@@ -46,6 +48,33 @@ try {
         parent: normalize(parentRect),
         home: normalize(homeRect),
         direction: getComputedStyle(document.documentElement).direction,
+        computed: {
+          position: style.position,
+          display: style.display,
+          width: style.width,
+          maxWidth: style.maxWidth,
+          marginLeft: style.marginLeft,
+          marginRight: style.marginRight,
+          left: style.left,
+          right: style.right,
+          insetInlineStart: style.insetInlineStart,
+          insetInlineEnd: style.insetInlineEnd,
+          transform: style.transform,
+          translate: style.translate,
+          justifySelf: style.justifySelf,
+          alignSelf: style.alignSelf,
+        },
+        parentComputed: parentStyle
+          ? {
+              display: parentStyle.display,
+              width: parentStyle.width,
+              transform: parentStyle.transform,
+              translate: parentStyle.translate,
+              justifyItems: parentStyle.justifyItems,
+              gridTemplateColumns: parentStyle.gridTemplateColumns,
+              overflowX: parentStyle.overflowX,
+            }
+          : null,
       };
     });
 
