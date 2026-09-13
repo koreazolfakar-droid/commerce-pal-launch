@@ -74,9 +74,7 @@ export function HomeHero({
   }, [slideCount]);
 
   const cmsSlide = useCmsSlides ? (cmsHeroSlides[activeIndex] ?? cmsHeroSlides[0]) : undefined;
-  const shopifySlide = !useCmsSlides
-    ? (shopifySlides[activeIndex] ?? shopifySlides[0])
-    : undefined;
+  const shopifySlide = !useCmsSlides ? (shopifySlides[activeIndex] ?? shopifySlides[0]) : undefined;
   const shopifyImage = shopifySlide?.image;
   const cmsHref = cmsSlide ? cmsSlideHref(cmsSlide) : null;
 
@@ -144,9 +142,13 @@ export function HomeHero({
 
         {cmsSlide && (cmsSlide.title || cmsSlide.subtitle || cmsSlide.button_label) ? (
           <div className="pointer-events-none absolute inset-x-4 bottom-4 z-[3] max-w-xl rounded-2xl bg-black/35 p-4 text-white backdrop-blur-sm sm:inset-x-8 sm:bottom-8 sm:p-6">
-            {cmsSlide.title ? <h2 className="text-xl font-black sm:text-3xl">{cmsSlide.title}</h2> : null}
+            {cmsSlide.title ? (
+              <h2 className="text-xl font-black sm:text-3xl">{cmsSlide.title}</h2>
+            ) : null}
             {cmsSlide.subtitle ? (
-              <p className="mt-1 max-w-prose text-sm text-white/85 sm:text-base">{cmsSlide.subtitle}</p>
+              <p className="mt-1 max-w-prose text-sm text-white/85 sm:text-base">
+                {cmsSlide.subtitle}
+              </p>
             ) : null}
             {cmsSlide.button_label && cmsHref ? (
               <span className="mt-3 inline-flex rounded-full bg-white px-4 py-2 text-xs font-bold text-black sm:text-sm">
