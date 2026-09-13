@@ -1,6 +1,20 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { House, LayoutGrid, Search, ShoppingBag, type LucideIcon } from "lucide-react";
+import {
+  Grid2X2,
+  Heart,
+  House,
+  LayoutGrid,
+  Menu,
+  Search,
+  ShoppingBag,
+  Smartphone,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 
+import type { CmsNavigationItem } from "@/lib/cms";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
@@ -9,7 +23,6 @@ export const MOBILE_NAV_HEIGHT = "calc(4rem + env(safe-area-inset-bottom, 0px))"
 
 type NavItem = {
   id: "home" | "categories" | "search" | "cart";
-  kind: "route";
   to: "/" | "/categories" | "/search" | "/cart";
   labelKey: "home" | "categoriesTitle" | "searchLabel" | "bag";
   icon: LucideIcon;
@@ -23,7 +36,6 @@ const startsWithRoute = (pathname: string, route: string) =>
 const NAV_ITEMS: readonly NavItem[] = [
   {
     id: "home",
-    kind: "route",
     to: "/",
     labelKey: "home",
     icon: House,
@@ -31,7 +43,6 @@ const NAV_ITEMS: readonly NavItem[] = [
   },
   {
     id: "categories",
-    kind: "route",
     to: "/categories",
     labelKey: "categoriesTitle",
     icon: LayoutGrid,
@@ -46,7 +57,6 @@ const NAV_ITEMS: readonly NavItem[] = [
   },
   {
     id: "search",
-    kind: "route",
     to: "/search",
     labelKey: "searchLabel",
     icon: Search,
@@ -54,7 +64,6 @@ const NAV_ITEMS: readonly NavItem[] = [
   },
   {
     id: "cart",
-    kind: "route",
     to: "/cart",
     labelKey: "bag",
     icon: ShoppingBag,
@@ -62,6 +71,35 @@ const NAV_ITEMS: readonly NavItem[] = [
     badge: "cart",
   },
 ] as const;
+
+const CMS_ICONS: Record<string, LucideIcon> = {
+  Grid2X2,
+  Heart,
+  House,
+  LayoutGrid,
+  Menu,
+  Search,
+  ShoppingBag,
+  Smartphone,
+  User,
+};
+
+function routeActive(pathname: string, href: string | null) {
+  if (!href) return false;
+  if (href === "/") return pathname === "/" || pathname.startsWith("/product/");
+  if (href === "/categories") {
+    return (
+      startsWithRoute(pathname, "/categories") ||
+      pathname.startsWith("/category/") ||
+      startsWithRoute(pathname, "/collections") ||
+      startsWithRoute(pathname, "/shop") ||
+      startsWithRoute(pathname, "/brands") ||
+      pathname.startsWith("/brand/") ||
+      startsWithRoute(pathname, "/used-phones")
+    );
+  }
+  return startsWithRoute(pathname, href);
+}
 
 function CartBadge({ value }: { value: number }) {
   if (value <= 0) return null;
@@ -77,13 +115,27 @@ function CartBadge({ value }: { value: number }) {
   );
 }
 
+function CmsIcon({ item }: { item: CmsNavigationItem }) {
+  if ((item.icon_type === "image" || item.icon_type === "svg") && item.icon_value) {
+    return <img src={item.icon_value} alt="" aria-hidden="true" className="h-[23px] w-[23px] object-contain" />;
+  }
+
+  const Icon = (item.icon_value && CMS_ICONS[item.icon_value]) || House;
+  return <Icon aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />;
+}
+
 /** Premium mobile-only primary navigation for the Space Call storefront. */
 export function BottomNav() {
   const { t } = useLanguage();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { data: cms } = useQuery(cmsQueryOptions());
   const cartCount = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
+  const cmsItems =
+    cms?.navigation
+      .filter((item) => item.area === "bottom" && item.is_visible && item.href)
+      .sort((a, b) => a.sort_order - b.sort_order) ?? [];
 
   const itemClass = (active: boolean) =>
     cn(
@@ -91,22 +143,12 @@ export function BottomNav() {
       active ? "text-primary" : "text-muted-foreground hover:text-foreground",
     );
 
-  const itemContent = (item: NavItem, active: boolean) => {
-    const Icon = item.icon;
-    return (
-      <>
-        <span
-          className={cn(
-            "relative grid h-8 w-10 place-items-center rounded-xl transition-[background-color,color] duration-200 ease-out",
-            active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
-          )}
-        >
-          <Icon aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
-          {item.id === "cart" ? <CartBadge value={cartCount} /> : null}
-        </span>
-        <span className="max-w-full truncate whitespace-nowrap px-0.5">{t(item.labelKey)}</span>
-      </>
-    );
+  const knownLabel = (href: string | null, fallback: string) => {
+    if (href === "/") return t("home");
+    if (href === "/categories") return t("categoriesTitle");
+    if (href === "/search") return t("searchLabel");
+    if (href === "/cart") return t("bag");
+    return fallback;
   };
 
   return (
@@ -116,26 +158,71 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 lg:hidden"
     >
       <div className="border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_18px_-16px_rgba(15,23,42,.55)] supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md">
-        <div className="mx-auto grid h-16 max-w-[560px] grid-cols-4 px-1 sm:px-3">
-          {NAV_ITEMS.map((item) => {
-            const active = item.matches(pathname);
-            const label = t(item.labelKey);
+        {cmsItems.length > 0 ? (
+          <div
+            className="mx-auto grid h-16 max-w-[560px] px-1 sm:px-3"
+            style={{ gridTemplateColumns: `repeat(${cmsItems.length}, minmax(0, 1fr))` }}
+          >
+            {cmsItems.map((item) => {
+              const active = routeActive(pathname, item.href);
+              const label = knownLabel(item.href, item.label);
+              const isCart = item.href === "/cart";
+              return (
+                <a
+                  key={item.id}
+                  href={item.href ?? "/"}
+                  data-nav-id={item.id}
+                  data-active={active ? "true" : "false"}
+                  className={itemClass(active)}
+                  aria-label={label}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span
+                    className={cn(
+                      "relative grid h-8 w-10 place-items-center rounded-xl transition-[background-color,color] duration-200 ease-out",
+                      active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
+                    )}
+                  >
+                    <CmsIcon item={item} />
+                    {isCart ? <CartBadge value={cartCount} /> : null}
+                  </span>
+                  <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
+                </a>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mx-auto grid h-16 max-w-[560px] grid-cols-4 px-1 sm:px-3">
+            {NAV_ITEMS.map((item) => {
+              const active = item.matches(pathname);
+              const label = t(item.labelKey);
+              const Icon = item.icon;
 
-            return (
-              <Link
-                key={item.id}
-                to={item.to}
-                data-nav-id={item.id}
-                data-active={active ? "true" : "false"}
-                className={itemClass(active)}
-                aria-label={label}
-                aria-current={active ? "page" : undefined}
-              >
-                {itemContent(item, active)}
-              </Link>
-            );
-          })}
-        </div>
+              return (
+                <Link
+                  key={item.id}
+                  to={item.to}
+                  data-nav-id={item.id}
+                  data-active={active ? "true" : "false"}
+                  className={itemClass(active)}
+                  aria-label={label}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span
+                    className={cn(
+                      "relative grid h-8 w-10 place-items-center rounded-xl transition-[background-color,color] duration-200 ease-out",
+                      active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
+                    )}
+                  >
+                    <Icon aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
+                    {item.id === "cart" ? <CartBadge value={cartCount} /> : null}
+                  </span>
+                  <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </nav>
   );
