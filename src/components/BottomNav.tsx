@@ -9,8 +9,6 @@ import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import "../mobile-ai-nav.css";
 
-const NAV_BLUE = "#1f6ff2";
-
 function Count({ value }: { value: number }) {
   if (value <= 0) return null;
 
