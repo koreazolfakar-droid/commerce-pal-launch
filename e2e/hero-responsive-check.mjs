@@ -18,118 +18,74 @@ try {
     });
 
     await page.goto(baseURL, { waitUntil: "domcontentloaded" });
-    await page.locator('[data-testid="home-hero"]').waitFor({ state: "visible" });
+    const hero = page.locator('[data-testid="home-hero"]');
+    await hero.waitFor({ state: "visible" });
 
-    const metrics = await page.locator('[data-testid="home-hero"]').evaluate((element) => {
+    const metrics = await hero.evaluate((element) => {
       const rect = element.getBoundingClientRect();
-      const parentRect = element.parentElement?.getBoundingClientRect();
-      const homeRect = document.querySelector(".home-page")?.getBoundingClientRect();
-      const bodyRect = document.body.getBoundingClientRect();
-      const style = getComputedStyle(element);
-      const parentStyle = element.parentElement ? getComputedStyle(element.parentElement) : null;
-      const normalize = (value) =>
-        value
-          ? {
-              width: value.width,
-              height: value.height,
-              left: value.left,
-              right: value.right,
-            }
-          : null;
       return {
         width: rect.width,
         height: rect.height,
         left: rect.left,
         right: rect.right,
         viewportWidth: window.innerWidth,
-        clientWidth: document.documentElement.clientWidth,
         scrollWidth: document.documentElement.scrollWidth,
-        body: normalize(bodyRect),
-        parent: normalize(parentRect),
-        home: normalize(homeRect),
-        direction: getComputedStyle(document.documentElement).direction,
-        computed: {
-          position: style.position,
-          display: style.display,
-          width: style.width,
-          maxWidth: style.maxWidth,
-          marginLeft: style.marginLeft,
-          marginRight: style.marginRight,
-          left: style.left,
-          right: style.right,
-          insetInlineStart: style.insetInlineStart,
-          insetInlineEnd: style.insetInlineEnd,
-          transform: style.transform,
-          translate: style.translate,
-          justifySelf: style.justifySelf,
-          alignSelf: style.alignSelf,
-        },
-        parentComputed: parentStyle
-          ? {
-              display: parentStyle.display,
-              width: parentStyle.width,
-              transform: parentStyle.transform,
-              translate: parentStyle.translate,
-              justifyItems: parentStyle.justifyItems,
-              gridTemplateColumns: parentStyle.gridTemplateColumns,
-              overflowX: parentStyle.overflowX,
-            }
-          : null,
       };
     });
 
-    console.log(`METRICS ${testCase.name}: ${JSON.stringify(metrics)}`);
-
     assert.ok(metrics.left >= -1, `${testCase.name}: hero starts outside viewport`);
-    assert.ok(
-      metrics.right <= metrics.viewportWidth + 1,
-      `${testCase.name}: hero exceeds viewport width`,
+    assert.ok(metrics.right <= metrics.viewportWidth + 1, `${testCase.name}: hero exceeds viewport`);
+    assert.ok(metrics.scrollWidth <= metrics.viewportWidth, `${testCase.name}: horizontal overflow`);
+
+    assert.equal(
+      await hero.getAttribute("data-hero-source"),
+      "shopify-collection",
+      `${testCase.name}: hero is not using Shopify collection artwork`,
     );
-    assert.ok(
-      metrics.scrollWidth <= metrics.viewportWidth,
-      `${testCase.name}: page has horizontal overflow`,
+    assert.equal(
+      await hero.getAttribute("data-hero-handle"),
+      "homepage-hero",
+      `${testCase.name}: wrong hero collection selected`,
+    );
+    assert.equal(
+      await hero.locator('a[href^="/product/"]').count(),
+      0,
+      `${testCase.name}: product link leaked into hero`,
+    );
+    assert.equal(
+      await hero.locator('[data-testid="home-hero-content"]').count(),
+      0,
+      `${testCase.name}: product content leaked into hero`,
+    );
+
+    const image = hero.locator("img");
+    await image.waitFor({ state: "visible" });
+    assert.equal(
+      await image.getAttribute("alt"),
+      "Merchant artwork homepage-hero",
+      `${testCase.name}: hero is not using merchant-managed artwork`,
     );
 
     const mediaBox = await page.locator('[data-testid="home-hero-media"]').boundingBox();
     assert.ok(mediaBox, `${testCase.name}: hero media is missing`);
+    assert.ok(
+      Math.abs(mediaBox.width - metrics.width) <= 2,
+      `${testCase.name}: media width does not match hero`,
+    );
+    assert.ok(
+      Math.abs(mediaBox.height - metrics.height) <= 2,
+      `${testCase.name}: media height does not match hero`,
+    );
 
     if (testCase.mobile) {
       const ratio = metrics.height / metrics.width;
-      assert.ok(ratio > 0.55 && ratio < 0.575, `${testCase.name}: hero is not 16:9`);
-      assert.ok(
-        Math.abs(mediaBox.width - metrics.width) <= 2,
-        `${testCase.name}: media width does not match hero`,
-      );
-      assert.ok(
-        Math.abs(mediaBox.height - metrics.height) <= 2,
-        `${testCase.name}: media height does not match hero`,
-      );
-
-      const mobileControlsVisible = await page
-        .locator('[data-testid="home-hero-mobile-controls"]')
-        .isVisible();
-      const dotsVisible = await page.locator('[data-testid="home-hero-dots"]').isVisible();
-      const desktopContentVisible = await page.locator('[data-testid="home-hero-content"]').isVisible();
-
-      assert.equal(mobileControlsVisible, true, `${testCase.name}: mobile CTA is hidden`);
-      assert.equal(dotsVisible, true, `${testCase.name}: pagination dots are hidden`);
-      assert.equal(desktopContentVisible, false, `${testCase.name}: desktop content leaks into mobile`);
+      assert.ok(ratio > 0.55 && ratio < 0.575, `${testCase.name}: mobile hero is not 16:9`);
     } else {
       assert.ok(metrics.height >= 400, `${testCase.name}: desktop hero became too short`);
-      assert.equal(
-        await page.locator('[data-testid="home-hero-content"]').isVisible(),
-        true,
-        `${testCase.name}: desktop hero content is hidden`,
-      );
-      assert.equal(
-        await page.locator('[data-testid="home-hero-mobile-controls"]').isVisible(),
-        false,
-        `${testCase.name}: mobile controls leak into desktop`,
-      );
     }
 
     console.log(
-      `PASS ${testCase.name}: hero ${Math.round(metrics.width)}x${Math.round(metrics.height)}, overflow OK`,
+      `PASS ${testCase.name}: collection hero ${Math.round(metrics.width)}x${Math.round(metrics.height)}, no product content, overflow OK`,
     );
     await page.close();
   }
