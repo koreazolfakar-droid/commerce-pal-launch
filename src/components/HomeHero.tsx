@@ -71,7 +71,7 @@ export function HomeHero({ products }: { products: ShopifyProduct[] }) {
 
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 start-0 w-[68%] bg-gradient-to-e from-transparent via-hero/95 to-hero sm:w-[66%] md:w-[64%]"
+          className="pointer-events-none absolute inset-y-0 start-0 w-[68%] bg-gradient-to-r from-hero via-hero/95 to-transparent rtl:bg-gradient-to-l sm:w-[66%] md:w-[64%]"
         />
         <div
           aria-hidden="true"
