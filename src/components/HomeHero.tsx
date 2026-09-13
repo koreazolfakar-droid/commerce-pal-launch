@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { BadgePercent, Heart, LayoutGrid, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
@@ -66,6 +67,7 @@ export function HomeHero({
 
   const activeSlide = slides[activeIndex] ?? slides[0];
   const image = activeSlide?.image;
+  const firstHeroPaint = activeIndex === 0;
 
   return (
     <>
@@ -91,8 +93,8 @@ export function HomeHero({
               srcSet={cdnSrcSet(image.url, 1800)}
               sizes="(max-width: 639px) calc(100vw - 1.5rem), (min-width: 1280px) 1280px, 100vw"
               alt={image.altText ?? activeSlide.title ?? "Space Call"}
-              loading="eager"
-              fetchPriority="high"
+              loading={firstHeroPaint ? "eager" : "lazy"}
+              fetchPriority={firstHeroPaint ? "high" : "auto"}
               decoding="async"
               draggable={false}
               className="absolute inset-0 h-full w-full object-cover object-center"
@@ -125,8 +127,8 @@ export function HomeHero({
                 aria-current={index === activeIndex ? "true" : undefined}
                 className={
                   index === activeIndex
-                    ? "h-2.5 w-6 rounded-full bg-primary transition-all"
-                    : "h-2.5 w-2.5 rounded-full bg-white/55 transition-all hover:bg-white/80"
+                    ? "h-2.5 w-6 rounded-full bg-primary transition-all duration-150"
+                    : "h-2.5 w-2.5 rounded-full bg-white/55 transition-all duration-150 hover:bg-white/80"
                 }
               />
             ))}
@@ -137,6 +139,47 @@ export function HomeHero({
       <div className="mt-3 sm:mt-4">
         <TrustBenefitsRail />
       </div>
+
+      <nav
+        data-testid="home-quick-access"
+        aria-label={language === "ar" ? "وصول سريع" : "Quick access"}
+        className="mt-2 grid grid-cols-2 gap-2 sm:mt-3 sm:grid-cols-4"
+      >
+        <Link
+          to="/categories"
+          className="press inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-bold shadow-card transition-[background-color,border-color,color,transform] duration-150 hover:border-primary/25 hover:bg-accent/50"
+        >
+          <LayoutGrid aria-hidden="true" className="size-4 shrink-0 text-primary" strokeWidth={2} />
+          <span className="truncate">{t("categoriesTitle")}</span>
+        </Link>
+        <Link
+          to="/shop"
+          search={{ availability: "on-sale" }}
+          className="press inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-bold shadow-card transition-[background-color,border-color,color,transform] duration-150 hover:border-primary/25 hover:bg-accent/50"
+        >
+          <BadgePercent
+            aria-hidden="true"
+            className="size-4 shrink-0 text-primary"
+            strokeWidth={2}
+          />
+          <span className="truncate">{t("deals")}</span>
+        </Link>
+        <Link
+          to="/shop"
+          search={{ sort: "newest" }}
+          className="press inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-bold shadow-card transition-[background-color,border-color,color,transform] duration-150 hover:border-primary/25 hover:bg-accent/50"
+        >
+          <Sparkles aria-hidden="true" className="size-4 shrink-0 text-primary" strokeWidth={2} />
+          <span className="truncate">{t("newest")}</span>
+        </Link>
+        <Link
+          to="/wishlist"
+          className="press inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-bold shadow-card transition-[background-color,border-color,color,transform] duration-150 hover:border-primary/25 hover:bg-accent/50"
+        >
+          <Heart aria-hidden="true" className="size-4 shrink-0 text-primary" strokeWidth={2} />
+          <span className="truncate">{t("saved")}</span>
+        </Link>
+      </nav>
     </>
   );
 }

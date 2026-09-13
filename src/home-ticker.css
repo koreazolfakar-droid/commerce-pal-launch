@@ -1,4 +1,4 @@
-/* Lightweight homepage promo ticker. Uses transform-only animation to stay smooth on mobile. */
+/* Lightweight homepage promo ticker. Uses transform-only animation on larger screens. */
 .home-promo-ticker {
   overflow: hidden;
   border: 1px solid color-mix(in oklab, var(--color-border) 78%, transparent);
@@ -13,7 +13,6 @@
   min-width: 100%;
   align-items: center;
   animation: home-promo-ticker 26s linear infinite;
-  will-change: transform;
 }
 
 .home-promo-ticker-copy {
@@ -42,7 +41,37 @@ html[dir="rtl"] .home-promo-ticker-track {
   }
 }
 
+/* Continuous marquees compete with touch scrolling on small phones. Keep the
+ * message compact and static there; larger screens retain the subtle ticker. */
+@media (max-width: 639px) {
+  .home-promo-ticker-track {
+    width: 100%;
+    min-width: 0;
+    animation: none;
+    transform: none;
+  }
+
+  .home-promo-ticker-copy {
+    width: 100%;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.35;
+  }
+
+  .home-promo-ticker-copy[aria-hidden="true"],
+  .home-promo-ticker-copy > .home-promo-ticker-dot,
+  .home-promo-ticker-copy > span:last-child {
+    display: none;
+  }
+}
+
 @media (min-width: 640px) {
+  .home-promo-ticker-track {
+    will-change: transform;
+  }
+
   .home-promo-ticker-copy {
     padding-block: 0.6rem;
     font-size: 0.82rem;

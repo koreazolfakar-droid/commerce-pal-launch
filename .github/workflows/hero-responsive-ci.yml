@@ -6,14 +6,34 @@ on:
       - main
     paths:
       - "src/components/HomeHero.tsx"
+      - "src/components/BottomNav.tsx"
+      - "src/components/MobileTopBar.tsx"
+      - "src/components/MobileMenu.tsx"
+      - "src/components/SearchOverlay.tsx"
+      - "src/components/StoreLayout.tsx"
+      - "src/performance.css"
+      - "src/home-ticker.css"
+      - "src/router.tsx"
       - "e2e/hero-responsive-check.mjs"
+      - "e2e/ux-performance-check.mjs"
+      - "e2e/ux-visual-review.mjs"
       - ".github/workflows/hero-responsive-ci.yml"
   pull_request:
     branches:
       - main
     paths:
       - "src/components/HomeHero.tsx"
+      - "src/components/BottomNav.tsx"
+      - "src/components/MobileTopBar.tsx"
+      - "src/components/MobileMenu.tsx"
+      - "src/components/SearchOverlay.tsx"
+      - "src/components/StoreLayout.tsx"
+      - "src/performance.css"
+      - "src/home-ticker.css"
+      - "src/router.tsx"
       - "e2e/hero-responsive-check.mjs"
+      - "e2e/ux-performance-check.mjs"
+      - "e2e/ux-visual-review.mjs"
       - ".github/workflows/hero-responsive-ci.yml"
 
 permissions:
@@ -42,7 +62,7 @@ jobs:
       - name: Install Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Run four real-browser hero checks
+      - name: Run real-browser responsive and UX checks
         run: |
           bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/hero-vite.log 2>&1 &
           SERVER_PID=$!
@@ -54,6 +74,16 @@ jobs:
             sleep 1
           done
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/hero-responsive-check.mjs
+          E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ux-performance-check.mjs
+          E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ux-visual-review.mjs
+
+      - name: Upload visual review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-visual-review
+          path: artifacts/*.png
+          if-no-files-found: ignore
 
       - name: Production build
         run: bun run build
