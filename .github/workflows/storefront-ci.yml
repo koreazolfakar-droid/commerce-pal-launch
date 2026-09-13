@@ -40,8 +40,8 @@ jobs:
       - name: Unit and architecture tests
         run: bun run test:unit
 
-      - name: SSR smoke test
-        run: bun run test:ssr
-
       - name: Production build
         run: bun run build
+
+      - name: SSR smoke test
+        run: bun run test:ssr
