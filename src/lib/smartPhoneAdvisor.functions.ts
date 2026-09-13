@@ -566,6 +566,34 @@ ${JSON.stringify(catalogCandidates)}`;
       message: message.slice(0, 1000),
     });
 
+    // Last resort: Lovable AI. Keeps the advisor working when the direct Gemini
+    // key is missing, rejected, or out of quota.
+    if (gatewayKey) {
+      try {
+        const gatewayResponse = await callGatewayChat({ apiKey: gatewayKey, prompt });
+        if (gatewayResponse.ok) {
+          const payload = (await gatewayResponse.json()) as {
+            choices?: Array<{ message?: { content?: string } }>;
+          };
+          const text = payload.choices?.[0]?.message?.content?.trim();
+          if (text) {
+            return resultFromText(
+              text,
+              catalog,
+              "Live web search is unavailable right now, so this answer is not live-web verified.",
+            );
+          }
+        } else {
+          console.error("Smart phone advisor gateway error", {
+            status: gatewayResponse.status,
+            body: (await gatewayResponse.text().catch(() => "")).slice(0, 500),
+          });
+        }
+      } catch (error) {
+        console.error("Smart phone advisor gateway network error", error);
+      }
+    }
+
     if (lastStatus === 429) {
       return failure(
         "The Gemini API quota is exhausted for this project. Wait for the quota reset or enable billing, then try again.",
