@@ -101,17 +101,9 @@ export function HomeHero({
         ) : (
           <div
             data-testid="home-hero-media"
-            className="absolute inset-0 z-[1] grid place-items-center bg-hero px-6 text-center"
-          >
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-hero-muted">
-                Space Call
-              </p>
-              <p className="mt-2 text-xl font-black sm:text-3xl">
-                {language === "ar" ? "أضف صورة الهيرو من Shopify" : "Add hero artwork from Shopify"}
-              </p>
-            </div>
-          </div>
+            aria-hidden="true"
+            className="absolute inset-0 z-[1] bg-hero"
+          />
         )}
 
         {slides.length > 1 && (
