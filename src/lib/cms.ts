@@ -1,6 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 
-export type CmsSettingValue = string | number | boolean | Record<string, unknown> | unknown[] | null;
+export type CmsJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | CmsJsonValue[]
+  | { [key: string]: CmsJsonValue };
+
+export type CmsSettingValue = CmsJsonValue;
 
 export type CmsHeroSlide = {
   id: string;
@@ -21,7 +29,7 @@ export type CmsSection = {
   section_type: string;
   title: string | null;
   subtitle: string | null;
-  content: Record<string, unknown>;
+  content: { [key: string]: CmsJsonValue };
   sort_order: number;
   is_visible: boolean;
 };
