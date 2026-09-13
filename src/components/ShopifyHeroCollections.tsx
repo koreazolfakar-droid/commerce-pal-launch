@@ -147,17 +147,14 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               if (!heroImage?.url) return null;
 
               const visual = (
-                <span
-                  className="relative block min-h-0 w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card"
-                  style={{ aspectRatio: "1672 / 941" }}
-                >
+                <span className="relative block aspect-video w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
                   <img
                     src={cdnImage(heroImage.url, 1800)}
                     srcSet={cdnSrcSet(heroImage.url, 1800)}
                     sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
                     alt={heroImage.altText ?? resolvedCollection.title}
-                    width={1672}
-                    height={941}
+                    width={1600}
+                    height={900}
                     loading={index === 0 ? "eager" : "lazy"}
                     fetchPriority={index === 0 ? "high" : "auto"}
                     decoding="async"
