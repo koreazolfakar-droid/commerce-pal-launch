@@ -47,14 +47,11 @@ async function assertMobileNavigation(page, testCase) {
 
   const geometry = await page.evaluate(() => {
     const navElement = document.querySelector('[data-testid="bottom-nav"]');
-    const layout = document.querySelector(".store-layout");
-    if (!(navElement instanceof HTMLElement) || !(layout instanceof HTMLElement)) return null;
+    if (!(navElement instanceof HTMLElement)) return null;
     const navRect = navElement.getBoundingClientRect();
     return {
       bottom: navRect.bottom,
       viewportHeight: window.innerHeight,
-      navHeight: navRect.height,
-      layoutPaddingBottom: Number.parseFloat(getComputedStyle(layout).paddingBottom),
     };
   });
   assert.ok(geometry, `${testCase.width}px: mobile navigation geometry unavailable`);
@@ -62,10 +59,24 @@ async function assertMobileNavigation(page, testCase) {
     geometry.bottom <= geometry.viewportHeight + 1,
     `${testCase.width}px: bottom nav exceeds viewport`,
   );
+
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(120);
+  const clearance = await page.evaluate(() => {
+    const navElement = document.querySelector('[data-testid="bottom-nav"]');
+    const footer = document.querySelector("footer");
+    if (!(navElement instanceof HTMLElement) || !(footer instanceof HTMLElement)) return null;
+    return {
+      navTop: navElement.getBoundingClientRect().top,
+      footerBottom: footer.getBoundingClientRect().bottom,
+    };
+  });
+  assert.ok(clearance, `${testCase.width}px: footer/nav clearance is not measurable`);
   assert.ok(
-    geometry.layoutPaddingBottom >= geometry.navHeight - 2,
-    `${testCase.width}px: content padding does not reserve bottom-nav space`,
+    clearance.footerBottom <= clearance.navTop + 2,
+    `${testCase.width}px: bottom nav overlaps the final page content`,
   );
+  await page.evaluate(() => window.scrollTo(0, 0));
 
   const quick = page.getByTestId("home-quick-access");
   await quick.waitFor({ state: "visible" });
