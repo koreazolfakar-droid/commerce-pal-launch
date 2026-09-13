@@ -1,12 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 export type CmsJsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | CmsJsonValue[]
-  | { [key: string]: CmsJsonValue };
+  string | number | boolean | null | CmsJsonValue[] | { [key: string]: CmsJsonValue };
 
 export type CmsSettingValue = CmsJsonValue;
 
