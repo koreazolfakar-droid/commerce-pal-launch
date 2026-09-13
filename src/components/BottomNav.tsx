@@ -117,7 +117,14 @@ function CartBadge({ value }: { value: number }) {
 
 function CmsIcon({ item }: { item: CmsNavigationItem }) {
   if ((item.icon_type === "image" || item.icon_type === "svg") && item.icon_value) {
-    return <img src={item.icon_value} alt="" aria-hidden="true" className="h-[23px] w-[23px] object-contain" />;
+    return (
+      <img
+        src={item.icon_value}
+        alt=""
+        aria-hidden="true"
+        className="h-[23px] w-[23px] object-contain"
+      />
+    );
   }
 
   const Icon = (item.icon_value && CMS_ICONS[item.icon_value]) || House;
