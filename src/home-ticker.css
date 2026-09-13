@@ -29,11 +29,6 @@
   color: var(--color-foreground);
 }
 
-.home-promo-ticker-dot {
-  color: var(--color-primary);
-  font-size: 0.9em;
-}
-
 html[dir="rtl"] .home-promo-ticker-track {
   animation-direction: reverse;
 }
@@ -44,6 +39,12 @@ html[dir="rtl"] .home-promo-ticker-track {
   }
   to {
     transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (max-width: 639px) {
+  [data-testid="collection-hero-tabs"] > [role="tablist"] {
+    display: none;
   }
 }
 
