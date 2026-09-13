@@ -38,14 +38,32 @@ export function ProductRail({
             <ProductListCard key={product.node.id} product={product} />
           ))}
         </div>
+      ) : compactGrid && visible.length > 1 ? (
+        <div className="relative min-w-0">
+          <div
+            className="-mx-3.5 flex touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto px-3.5 pb-2 pe-[18%] scroll-smooth [overscroll-behavior-inline:contain] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:touch-auto sm:snap-none sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 sm:pe-0 lg:grid-cols-4"
+            role="list"
+            aria-label="Products"
+          >
+            {visible.map((product, index) => (
+              <CompactProductCard
+                key={product.node.id}
+                product={product}
+                className="homepage-product-card w-[82%] shrink-0 snap-start transition-transform duration-300 ease-out motion-safe:animate-rise active:scale-[0.985] sm:w-auto sm:shrink sm:snap-none sm:hover:-translate-y-0.5"
+              />
+            ))}
+          </div>
+          <div
+            className="pointer-events-none absolute inset-y-0 end-0 z-30 w-12 bg-gradient-to-l from-card via-card/90 to-transparent rtl:bg-gradient-to-r sm:hidden"
+            aria-hidden="true"
+          />
+        </div>
       ) : (
         <div
           className={
             visible.length === 1
               ? "mx-auto w-full max-w-sm"
-              : compactGrid
-                ? "grid grid-cols-2 gap-2.5 py-0.5 sm:grid-cols-3 lg:grid-cols-4"
-                : "scroll-rail product-rail-items"
+              : "scroll-rail product-rail-items"
           }
         >
           {visible.map((product) => (
