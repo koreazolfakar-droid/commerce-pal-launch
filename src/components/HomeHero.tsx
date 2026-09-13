@@ -66,7 +66,7 @@ export function HomeHero({ products }: { products: ShopifyProduct[] }) {
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-hero/45 md:hidden" />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 start-0 hidden w-[59%] bg-hero md:block"
+          className="pointer-events-none absolute inset-y-0 start-0 hidden w-[62%] bg-hero md:block"
         />
 
         <div className="relative z-10 flex min-h-[22rem] w-[76%] flex-col justify-center bg-hero/85 px-5 py-6 backdrop-blur-[2px] sm:min-h-[25rem] sm:w-[62%] sm:px-8 sm:py-8 md:w-[52%] md:bg-transparent md:backdrop-blur-none lg:min-h-[28rem] lg:w-[50%] lg:px-10 lg:py-10">
