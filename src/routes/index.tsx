@@ -13,6 +13,8 @@ import { TopBrands } from "@/components/TopBrands";
 import { WhyShop } from "@/components/WhyShop";
 import { BrandShowcase, BundleSection, CategorySection } from "@/components/BrandShowcaseSections";
 import { buildShopifyBrands } from "@/lib/brandDirectory";
+import { cmsText } from "@/lib/cms";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import {
   bestSellingQueryOptions,
   newestQueryOptions,
@@ -39,6 +41,7 @@ export const Route = createFileRoute("/")({
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
       context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
+      context.queryClient.ensureQueryData(cmsQueryOptions()),
     ]);
   },
   head: () => {
@@ -127,15 +130,7 @@ function DealsCountdown() {
   );
 }
 
-function HomePromoTicker({ language }: { language: string }) {
-  const heading =
-    language === "ar"
-      ? "Space Call لبنان - متجر الهواتف والإلكترونيات"
-      : "Space Call Lebanon - Phones & Electronics Store";
-  const details =
-    language === "ar"
-      ? "متجرك الموثوق للهواتف والإلكترونيات • توفر مباشر • أسعار واضحة • دفع آمن"
-      : "Your trusted phones & electronics store • Live availability • Clear pricing • Secure checkout";
+function HomePromoTicker({ heading, details }: { heading: string; details: string }) {
   const accessibleLabel = `${heading} • ${details}`;
 
   return (
@@ -165,6 +160,7 @@ function HomePromoTicker({ language }: { language: string }) {
 function Index() {
   const { t, language } = useLanguage();
   const [showProductSections, setShowProductSections] = useState(false);
+  const { data: cms } = useSuspenseQuery(cmsQueryOptions());
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
   const { data: heroCollection } = useSuspenseQuery(
@@ -188,6 +184,19 @@ function Index() {
   const brands = buildShopifyBrands(catalog.brands, collections);
   const deals = products.filter((product) => productDiscountPercent(product) !== null);
   const best = bestSellers ?? [];
+  const isVisible = (key: string) =>
+    cms.sections.find((section) => section.section_key === key)?.is_visible ?? true;
+
+  const tickerHeading =
+    cmsText(cms, language === "ar" ? "home_ticker_heading_ar" : "home_ticker_heading_en") ??
+    (language === "ar"
+      ? "Space Call لبنان - متجر الهواتف والإلكترونيات"
+      : "Space Call Lebanon - Phones & Electronics Store");
+  const tickerDetails =
+    cmsText(cms, language === "ar" ? "home_ticker_details_ar" : "home_ticker_details_en") ??
+    (language === "ar"
+      ? "متجرك الموثوق للهواتف والإلكترونيات • توفر مباشر • أسعار واضحة • دفع آمن"
+      : "Your trusted phones & electronics store • Live availability • Clear pricing • Secure checkout");
 
   return (
     <StoreLayout>
@@ -201,17 +210,23 @@ function Index() {
           </div>
         ) : (
           <>
-            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
-              <HomePromoTicker language={language} />
-              <HomeHero products={products} heroCollection={heroCollection} />
-            </div>
+            {isVisible("hero") ? (
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
+                <HomePromoTicker heading={tickerHeading} details={tickerDetails} />
+                <HomeHero
+                  products={products}
+                  heroCollection={heroCollection}
+                  cmsHeroSlides={cms.heroSlides}
+                />
+              </div>
+            ) : null}
 
             <CategorySection catalog={catalog} collections={collections} />
-            <TopBrands brands={brands} />
+            {isVisible("brands") ? <TopBrands brands={brands} /> : null}
 
             {showProductSections ? (
               <>
-                {best.length > 0 && (
+                {isVisible("featured_products") && best.length > 0 && (
                   <section data-testid="best-sellers">
                     <SectionHeader
                       title={t("bestSellers")}
@@ -221,7 +236,7 @@ function Index() {
                   </section>
                 )}
 
-                {deals.length > 0 && (
+                {isVisible("featured_products") && deals.length > 0 && (
                   <section id="deals" className="scroll-mt-24" data-testid="deals-section">
                     <SectionHeader
                       title={t("todaysDeals")}
@@ -245,7 +260,7 @@ function Index() {
                   </section>
                 )}
 
-                {newItems.length > 0 && (
+                {isVisible("featured_products") && newItems.length > 0 && (
                   <section data-testid="new-items">
                     <SectionHeader
                       title={t("newItems")}
@@ -264,16 +279,24 @@ function Index() {
                   </section>
                 )}
 
-                <BundleSection collections={collections} />
-                <BrandShowcase catalog={catalog} collections={collections} />
+                {isVisible("featured_products") ? (
+                  <>
+                    <BundleSection collections={collections} />
+                    <BrandShowcase catalog={catalog} collections={collections} />
+                  </>
+                ) : null}
               </>
             ) : (
               <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
             )}
 
             <RecentlyViewed products={products} />
-            <ServicesStrip />
-            <WhyShop />
+            {isVisible("trust") ? (
+              <>
+                <ServicesStrip />
+                <WhyShop />
+              </>
+            ) : null}
           </>
         )}
       </div>
