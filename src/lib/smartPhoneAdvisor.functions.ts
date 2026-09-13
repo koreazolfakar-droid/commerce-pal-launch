@@ -485,7 +485,7 @@ ${JSON.stringify(catalogCandidates)}`;
 
     // First try real Google Search grounding. Importantly, Gemini 2.5 Flash is
     // tried first because search grounding is available on its free tier.
-    for (const model of models) {
+    for (const model of apiKey ? models : []) {
       let response: Response;
       try {
         response = await callGemini({ apiKey, model, prompt, useSearch: true });
