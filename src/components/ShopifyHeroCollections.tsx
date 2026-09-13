@@ -114,7 +114,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
 
   return (
     <>
-      <section className="min-w-0" aria-label="Featured offers">
+      <section className="min-w-0 w-full" aria-label="Featured offers">
         <div className="relative -mx-3 sm:mx-0">
           <div
             ref={sliderRef}
@@ -129,7 +129,7 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
             onPointerLeave={(event) => {
               if (event.pointerType === "mouse") setPaused(false);
             }}
-            className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             data-testid="collection-hero-slider"
           >
             {candidates.map((candidate, index) => {
@@ -147,11 +147,11 @@ export function ShopifyHeroCollections({ collections }: { collections: ShopifyCo
               if (!heroImage?.url) return null;
 
               const visual = (
-                <span className="relative block aspect-video w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card">
+                <span className="relative block w-full overflow-hidden rounded-[clamp(0.9rem,3.4vw,2rem)] border border-border/70 bg-transparent leading-none shadow-card aspect-[16/9] sm:aspect-[2/1] lg:aspect-[12/5] xl:aspect-[8/3]">
                   <img
                     src={cdnImage(heroImage.url, 1800)}
                     srcSet={cdnSrcSet(heroImage.url, 1800)}
-                    sizes="(max-width: 639px) 100vw, (min-width: 1280px) 1280px, 100vw"
+                    sizes="(max-width: 639px) 100vw, (max-width: 1023px) 100vw, (min-width: 1280px) 1344px, 100vw"
                     alt={heroImage.altText ?? resolvedCollection.title}
                     width={1600}
                     height={900}
