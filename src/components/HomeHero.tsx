@@ -64,8 +64,12 @@ export function HomeHero({ products }: { products: ShopifyProduct[] }) {
         ) : null}
 
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-hero/45 md:hidden" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 start-0 hidden w-[59%] bg-hero md:block"
+        />
 
-        <div className="relative z-10 flex min-h-[22rem] w-[76%] flex-col justify-center bg-hero/85 px-5 py-6 backdrop-blur-[2px] sm:min-h-[25rem] sm:w-[62%] sm:px-8 sm:py-8 md:w-[48%] md:bg-hero/95 lg:min-h-[28rem] lg:px-10 lg:py-10">
+        <div className="relative z-10 flex min-h-[22rem] w-[76%] flex-col justify-center bg-hero/85 px-5 py-6 backdrop-blur-[2px] sm:min-h-[25rem] sm:w-[62%] sm:px-8 sm:py-8 md:w-[52%] md:bg-transparent md:backdrop-blur-none lg:min-h-[28rem] lg:w-[50%] lg:px-10 lg:py-10">
           <div className="mb-3 flex flex-wrap items-center gap-2 sm:mb-4">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-hero-border bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-hero-muted backdrop-blur sm:text-[11px]">
               <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
