@@ -71,7 +71,7 @@ export const ProductCard = memo(function ProductCard({
         className,
       )}
     >
-      <div className="relative border-b bg-image-stage">
+      <div className="relative bg-white">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
