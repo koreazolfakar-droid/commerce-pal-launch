@@ -1,6 +1,7 @@
 import {
   Bot,
   CheckCircle2,
+  Cpu,
   ExternalLink,
   Globe2,
   Loader2,
@@ -84,30 +85,30 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      text: `I can research phones on the live web, compare real specifications, and match the best option to the ${STORE_NAME} catalogue.`,
+      text: `I'm powered by NVIDIA AI. I can compare phones and match recommendations to the live ${STORE_NAME} catalogue. Live web verification is not connected yet, so I won't pretend current web facts are verified.`,
     },
   ]);
 
   const quickPrompts = useMemo(() => {
     if (isComparePage && compareHandles.length > 0) {
       return [
-        "Research these phones online and tell me which one is better overall",
+        "Compare these phones and tell me which one is better overall",
         "Compare camera, battery, display and performance",
-        "Which one is the best value for money?",
+        "Which one is the best value for money in the store?",
       ];
     }
     if (context) {
       return [
-        "Research this phone online and tell me its real strengths and weaknesses",
-        "Compare this phone with the best alternative in the same class",
-        "Is this phone a good buy for its price?",
+        "Tell me this phone's main strengths and weaknesses",
+        "Compare this phone with a strong alternative in the same class",
+        "Is this phone good value compared with the live store catalogue?",
       ];
     }
     return [
       "Find the best phone for my budget",
       "Compare two phones for me",
       "Best camera phone for the money",
-      "Best battery phone available now",
+      "Best battery phone in the store",
     ];
   }, [compareHandles.length, context, isComparePage]);
 
@@ -148,7 +149,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
         ...items,
         {
           role: "assistant",
-          text: "I couldn't complete the web research right now. Please try again.",
+          text: "I couldn't complete the NVIDIA AI request right now. Please try again.",
         },
       ]);
     } finally {
@@ -183,7 +184,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-extrabold">{STORE_NAME} Smart Advisor</p>
                 <p className="mt-0.5 flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
-                  <Globe2 className="h-3 w-3" /> Live web phone research
+                  <Cpu className="h-3 w-3" /> NVIDIA AI + live store catalogue
                 </p>
               </div>
             </div>
@@ -214,7 +215,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
 
                 {message.result?.searchedWeb && (
                   <div className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-[10px] font-bold text-primary">
-                    <Search className="h-3 w-3" /> Researched on the live web
+                    <Search className="h-3 w-3" /> Live web verification used
                   </div>
                 )}
 
@@ -363,7 +364,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
             {busy && (
               <div className="flex w-fit items-center gap-2 rounded-2xl bg-surface px-3.5 py-2.5 text-xs font-medium text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Researching the web and checking the store…
+                Comparing devices and checking the live store…
               </div>
             )}
 
