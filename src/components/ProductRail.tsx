@@ -45,7 +45,7 @@ export function ProductRail({
             role="list"
             aria-label="Products"
           >
-            {visible.map((product, index) => (
+            {visible.map((product) => (
               <CompactProductCard
                 key={product.node.id}
                 product={product}
