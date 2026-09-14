@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Columns2, Heart, LayoutGrid, Search, ShoppingBag } from "lucide-react";
+import { Heart, LayoutGrid, Search, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 
 import { SearchOverlay } from "@/components/SearchOverlay";
@@ -99,14 +99,6 @@ export function MobileTopBar({
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="truncate">{t("search")}</span>
           </button>
-          <Link
-            to="/compare"
-            search={{ products: undefined }}
-            aria-label="Compare smartphones"
-            className="press grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border/70 bg-card shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
-          >
-            <Columns2 className="h-5 w-5" strokeWidth={1.9} />
-          </Link>
         </div>
 
         {showCategoryRail && (list.length > 0 || isLoading) && (
