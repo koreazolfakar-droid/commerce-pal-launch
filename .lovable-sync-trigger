@@ -1,6 +1,11 @@
 Lovable sync trigger
-Triggered from ChatGPT on 2026-09-14 after security hardening round 2
-Admin signup removal commit: ad3f7cec0e4079590e9f40c6a63fdb3ce0e0661b
-Privilege-escalation migration commit: d3a3150f7388cab365fcf0311b876c7ba1e9639e
-Earlier RLS hardening commit: 48d980d58c7edeb6cf880ec80272e4bd62489e19
-Reason: force Lovable to pull the latest security fixes, apply the new Supabase migration, rebuild, and refresh the Security scan results.
+Triggered from ChatGPT on 2026-09-14 after security hardening round 3
+
+Production changes now applied:
+- Direct anon/authenticated SELECT access to CMS source tables removed.
+- public-cms is the only public CMS projection and filters publishable/visible content server-side.
+- NVIDIA and Gemini paid provider endpoints retired and no longer spend provider credits.
+- Public product pages no longer invoke on-demand paid OpenAI web research.
+- Supabase Security Advisor reports zero lints after the migration.
+
+Reason: force Lovable to pull the latest GitHub security fixes, rebuild, and refresh the Security scan so previously ignored/stale findings are re-evaluated against the current backend.
