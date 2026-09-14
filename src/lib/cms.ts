@@ -3,7 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 export type CmsJsonValue =
-  string | number | boolean | null | CmsJsonValue[] | { [key: string]: CmsJsonValue };
+  | string
+  | number
+  | boolean
+  | null
+  | CmsJsonValue[]
+  | { [key: string]: CmsJsonValue };
 
 export type CmsSettingValue = CmsJsonValue;
 
@@ -49,18 +54,18 @@ export type CmsSnapshot = {
   navigation: CmsNavigationItem[];
 };
 
-const EMPTY_CMS: CmsSnapshot = {
+export const EMPTY_CMS: CmsSnapshot = {
   settings: {},
   heroSlides: [],
   sections: [],
   navigation: [],
 };
 
-/**
- * Public storefront snapshot. Reads the dashboard tables with the publishable
- * key, so only rows the anon read policies expose (visible content) are served.
- */
-const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
+const CMS_CACHE_TTL_MS = 60_000;
+let cmsCache: { value: CmsSnapshot; expiresAt: number } | null = null;
+let cmsPendingRequest: Promise<CmsSnapshot> | null = null;
+
+async function loadCmsSnapshot(): Promise<CmsSnapshot> {
   const url = process.env["SUPABASE_URL"];
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) return EMPTY_CMS;
@@ -115,6 +120,32 @@ const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
     console.warn("Space Call dashboard content is unavailable; using storefront defaults", error);
     return EMPTY_CMS;
   }
+}
+
+/**
+ * Public storefront snapshot. Reads the dashboard tables with the publishable
+ * key, so only rows the anon read policies expose (visible content) are served.
+ *
+ * A short server-side cache keeps the dashboard from adding four Supabase reads
+ * to every storefront navigation. Concurrent cold requests share one in-flight
+ * fetch instead of creating a request stampede.
+ */
+const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
+  const now = Date.now();
+  if (cmsCache && cmsCache.expiresAt > now) return cmsCache.value;
+  if (cmsPendingRequest) return cmsPendingRequest;
+
+  const request = loadCmsSnapshot()
+    .then((value) => {
+      cmsCache = { value, expiresAt: Date.now() + CMS_CACHE_TTL_MS };
+      return value;
+    })
+    .finally(() => {
+      cmsPendingRequest = null;
+    });
+
+  cmsPendingRequest = request;
+  return request;
 });
 
 export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
