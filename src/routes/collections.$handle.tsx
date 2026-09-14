@@ -46,7 +46,7 @@ export const Route = createFileRoute("/collections/$handle")({
         { title },
         { name: "description", content: description },
         { name: "robots", content: "index, follow, max-image-preview:large" },
-        ...socialMeta({ title, description, path, image: image || undefined }),
+        ...socialMeta({ title, description, path, ...(image ? { image } : {}) }),
       ],
       links: [canonicalLink(path)],
       scripts: [
