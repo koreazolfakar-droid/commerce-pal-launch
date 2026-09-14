@@ -92,7 +92,10 @@ export function ProductRail({
               />
             ))
           ) : (
-            <div className="min-h-96 w-full shrink-0 sm:col-span-3 lg:col-span-4" aria-hidden="true" />
+            <div
+              className="min-h-96 w-full shrink-0 sm:col-span-3 lg:col-span-4"
+              aria-hidden="true"
+            />
           )}
         </div>
       ) : (
