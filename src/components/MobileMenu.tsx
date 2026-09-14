@@ -39,23 +39,20 @@ import { displayCollections } from "@/lib/taxonomy";
 import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 
-const BRAND_DOMAINS: Record<string, string> = {
-  anker: "anker.com",
-  samsung: "samsung.com",
-  apple: "apple.com",
-  lenovo: "lenovo.com",
-  ugreen: "ugreen.com",
-  poco: "po.co",
-  tecno: "tecno-mobile.com",
-  xiaomi: "mi.com",
-  huawei: "huawei.com",
-  honor: "honor.com",
-  oneplus: "oneplus.com",
-  oppo: "oppo.com",
-  realme: "realme.com",
-  sony: "sony.com",
-  nothing: "nothing.tech",
-  google: "google.com",
+const BRAND_LOGOS: Record<string, string> = {
+  anker: "/brand-logos/anker.svg",
+  apple: "/brand-logos/apple.svg",
+  blackshark: "/brand-logos/blackshark.svg",
+  lenovo: "/brand-logos/lenovo.svg",
+  poco: "/brand-logos/poco.png",
+  realme: "/brand-logos/realme.svg",
+  redmagic: "/brand-logos/redmagic.png",
+  redmi: "/brand-logos/redmi.svg",
+  samsung: "/brand-logos/samsung.png",
+  tecno: "/brand-logos/tecno.svg",
+  ugreen: "/brand-logos/ugreen.png",
+  vention: "/brand-logos/vention.png",
+  xiaomi: "/brand-logos/xiaomi.svg",
 };
 
 function categoryIcon(slug: string, label: string): LucideIcon {
@@ -73,24 +70,23 @@ function categoryIcon(slug: string, label: string): LucideIcon {
   return Package;
 }
 
-function brandDomain(slug: string, label: string) {
+function brandLogo(slug: string, label: string) {
   const value = `${slug} ${label}`.toLowerCase();
-  return Object.entries(BRAND_DOMAINS).find(([name]) => value.includes(name))?.[1] ?? null;
+  return Object.entries(BRAND_LOGOS).find(([name]) => value.includes(name))?.[1] ?? null;
 }
 
 function BrandMark({ slug, label }: { slug: string; label: string }) {
-  const domain = brandDomain(slug, label);
+  const logo = brandLogo(slug, label);
   const fallback = label.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "SC";
 
   return (
-    <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border/70 bg-white shadow-sm">
+    <span className="relative grid h-10 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm ring-1 ring-black/[0.025]">
       <span className="text-[10px] font-black tracking-tight text-slate-700">{fallback}</span>
-      {domain ? (
+      {logo ? (
         <img
-          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-contain p-2"
+          src={logo}
+          alt={`${label} logo`}
+          className="absolute inset-0 h-full w-full object-contain px-2 py-1.5"
           loading="lazy"
         />
       ) : null}
