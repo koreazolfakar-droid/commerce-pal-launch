@@ -33,13 +33,61 @@ export function homepageHeroCollections(collections: ShopifyCollection[]): Shopi
     .slice(0, 10);
 }
 
+/**
+ * Storefront merchandising priority. Keep the most recognizable global
+ * electronics companies first, followed by strong accessory/mobile brands.
+ * Unknown Shopify vendors remain supported and fall back to alphabetical order.
+ */
+const BRAND_PRIORITY_GROUPS = [
+  ["apple"],
+  ["samsung"],
+  ["xiaomi"],
+  ["sony"],
+  ["anker"],
+  ["huawei"],
+  ["lenovo"],
+  ["asus"],
+  ["hp"],
+  ["dell"],
+  ["jbl"],
+  ["bose"],
+  ["google"],
+  ["oneplus", "one-plus"],
+  ["honor"],
+  ["oppo"],
+  ["vivo"],
+  ["realme"],
+  ["logitech"],
+  ["ugreen"],
+  ["belkin"],
+  ["baseus"],
+  ["poco"],
+  ["redmi"],
+  ["nothing"],
+  ["motorola"],
+  ["nokia"],
+  ["tecno"],
+  ["infinix"],
+  ["acefast"],
+  ["vention"],
+  ["wiwu"],
+  ["blackshark", "black-shark"],
+  ["redmagic", "red-magic"],
+  ["spigen"],
+] as const;
+
+const BRAND_PRIORITY = new Map<string, number>();
+for (const [rank, aliases] of BRAND_PRIORITY_GROUPS.entries()) {
+  for (const alias of aliases) BRAND_PRIORITY.set(alias, rank);
+}
+
 export function orderedBrands<T extends CatalogFacet>(brands: T[]): T[] {
-  const priority = ["apple", "samsung", "xiaomi"];
-  const rank = (slug: string) => {
-    const index = priority.indexOf(slug);
-    return index === -1 ? priority.length : index;
-  };
-  return [...brands].sort((a, b) => rank(a.slug) - rank(b.slug) || a.label.localeCompare(b.label));
+  const fallbackRank = BRAND_PRIORITY_GROUPS.length;
+  return [...brands].sort((a, b) => {
+    const rankA = BRAND_PRIORITY.get(a.slug) ?? fallbackRank;
+    const rankB = BRAND_PRIORITY.get(b.slug) ?? fallbackRank;
+    return rankA - rankB || a.label.localeCompare(b.label);
+  });
 }
 
 /** Configuration collections stay out of navigation and customer-facing filters. */
