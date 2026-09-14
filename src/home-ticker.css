@@ -56,3 +56,20 @@ html[dir="rtl"] .home-promo-ticker-track {
     will-change: auto;
   }
 }
+
+/*
+ * Skip layout/paint work for product-heavy homepage sections until they approach
+ * the viewport. The intrinsic size keeps scrolling stable while Chromium defers
+ * off-screen rendering; unsupported browsers simply ignore this optimization.
+ */
+@supports (content-visibility: auto) {
+  .home-page > section[data-testid="best-sellers"],
+  .home-page > section[data-testid="deals-section"],
+  .home-page > section[data-testid="new-items"],
+  .home-page > section[aria-labelledby="home-bundles"],
+  .home-page > section[aria-labelledby="recently-viewed"],
+  .home-page [data-testid="brand-showcases"] > section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 24rem;
+  }
+}
