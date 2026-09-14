@@ -3,11 +3,23 @@ import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
 const ORIGINS = new Set(["https://spacecallapp.store", "https://www.spacecallapp.store"]);
 const MAX_BODY = 128 * 1024;
+const PROVIDER_TIMEOUT_MS = 17_000;
+
+type ProviderName = "nvidia" | "openrouter";
+type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+type ProviderAttempt = { provider: ProviderName; status: number; code: string };
+
+type ChatPayload = {
+  model?: string;
+  choices?: Array<{ message?: { content?: unknown } }>;
+  error?: unknown;
+  [key: string]: unknown;
+};
 
 function headers(req: Request) {
   const origin = req.headers.get("origin")?.trim() || "";
   return {
-    ...(ORIGINS.has(origin) ? { "Access-Control-Allow-Origin": origin, "Vary": "Origin" } : {}),
+    ...(ORIGINS.has(origin) ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" } : {}),
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Content-Type": "application/json; charset=utf-8",
@@ -96,6 +108,130 @@ async function rateLimit(req: Request) {
   return 0;
 }
 
+function providerOrder(): ProviderName[] {
+  const configured = (Deno.env.get("AI_PROVIDER_ORDER") || "nvidia,openrouter")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter((value): value is ProviderName => value === "nvidia" || value === "openrouter");
+  return [...new Set(configured.length ? configured : ["nvidia", "openrouter"])] as ProviderName[];
+}
+
+function providerConfig(provider: ProviderName) {
+  if (provider === "nvidia") {
+    return {
+      key: Deno.env.get("NVIDIA_API_KEY")?.trim() || "",
+      model: Deno.env.get("NVIDIA_MODEL")?.trim() || "openai/gpt-oss-20b",
+      url: "https://integrate.api.nvidia.com/v1/chat/completions",
+      headers: {} as Record<string, string>,
+    };
+  }
+
+  return {
+    key: Deno.env.get("OPENROUTER_API_KEY")?.trim() || "",
+    model: Deno.env.get("OPENROUTER_MODEL")?.trim() || "openrouter/auto",
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    headers: {
+      "HTTP-Referer": "https://spacecallapp.store",
+      "X-Title": "Space Call",
+    },
+  };
+}
+
+async function callProvider(
+  provider: ProviderName,
+  messages: ChatMessage[],
+  temperature: number,
+  maxTokens: number,
+) {
+  const config = providerConfig(provider);
+  if (!config.key) {
+    return {
+      ok: false as const,
+      attempt: { provider, status: 0, code: "NOT_CONFIGURED" } satisfies ProviderAttempt,
+    };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+  try {
+    const response = await fetch(config.url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.key}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...config.headers,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages,
+        stream: false,
+        temperature,
+        max_tokens: maxTokens,
+      }),
+      signal: controller.signal,
+    });
+
+    const text = await response.text();
+    let payload: ChatPayload | null = null;
+    try {
+      payload = text ? (JSON.parse(text) as ChatPayload) : null;
+    } catch {}
+
+    if (!response.ok) {
+      console.error("AI provider upstream error", { provider, status: response.status });
+      return {
+        ok: false as const,
+        attempt: {
+          provider,
+          status: response.status,
+          code: "UPSTREAM_ERROR",
+        } satisfies ProviderAttempt,
+      };
+    }
+
+    if (!payload || !Array.isArray(payload.choices) || !payload.choices.length) {
+      console.error("AI provider invalid response", { provider });
+      return {
+        ok: false as const,
+        attempt: { provider, status: 502, code: "INVALID_RESPONSE" } satisfies ProviderAttempt,
+      };
+    }
+
+    const answer = payload.choices?.[0]?.message?.content;
+    if (typeof answer !== "string" || !answer.trim()) {
+      console.error("AI provider empty response", { provider });
+      return {
+        ok: false as const,
+        attempt: { provider, status: 502, code: "EMPTY_RESPONSE" } satisfies ProviderAttempt,
+      };
+    }
+
+    return {
+      ok: true as const,
+      payload,
+      provider,
+      model: typeof payload.model === "string" && payload.model.trim() ? payload.model : config.model,
+    };
+  } catch (error) {
+    const timeout = error instanceof DOMException && error.name === "AbortError";
+    console.error("AI provider request failed", {
+      provider,
+      code: timeout ? "TIMEOUT" : "REQUEST_FAILED",
+    });
+    return {
+      ok: false as const,
+      attempt: {
+        provider,
+        status: timeout ? 504 : 502,
+        code: timeout ? "TIMEOUT" : "REQUEST_FAILED",
+      } satisfies ProviderAttempt,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin")?.trim() || "";
   if (origin && !ORIGINS.has(origin)) return out(req, { ok: false, code: "ORIGIN_NOT_ALLOWED" }, 403);
@@ -104,60 +240,84 @@ Deno.serve(async (req: Request) => {
   if (!validPublicKey(req)) return out(req, { ok: false, code: "INVALID_SUPABASE_KEY" }, 401);
 
   const length = Number(req.headers.get("content-length") || "0");
-  if (Number.isFinite(length) && length > MAX_BODY) return out(req, { ok: false, code: "BODY_TOO_LARGE" }, 413);
+  if (Number.isFinite(length) && length > MAX_BODY) {
+    return out(req, { ok: false, code: "BODY_TOO_LARGE" }, 413);
+  }
   const raw = await req.text().catch(() => "");
-  if (!raw || new TextEncoder().encode(raw).byteLength > MAX_BODY) return out(req, { ok: false, code: "BODY_TOO_LARGE" }, 413);
+  if (!raw || new TextEncoder().encode(raw).byteLength > MAX_BODY) {
+    return out(req, { ok: false, code: "BODY_TOO_LARGE" }, 413);
+  }
 
-  let body: any;
-  try { body = JSON.parse(raw); } catch { return out(req, { ok: false, code: "INVALID_JSON" }, 400); }
-  const messages = (Array.isArray(body?.messages) ? body.messages : [])
-    .filter((m: any) => m && ["system", "user", "assistant"].includes(m.role) && typeof m.content === "string")
+  let body: Record<string, unknown>;
+  try {
+    body = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return out(req, { ok: false, code: "INVALID_JSON" }, 400);
+  }
+
+  const messages = (Array.isArray(body.messages) ? body.messages : [])
+    .filter(
+      (message: any) =>
+        message &&
+        ["system", "user", "assistant"].includes(message.role) &&
+        typeof message.content === "string",
+    )
     .slice(-12)
-    .map((m: any) => ({ role: m.role, content: m.content.trim().slice(0, 12000) }))
-    .filter((m: any) => m.content);
-  if (!messages.length || messages.reduce((n: number, m: any) => n + m.content.length, 0) > 18000) {
+    .map((message: any) => ({
+      role: message.role as ChatMessage["role"],
+      content: message.content.trim().slice(0, 12000),
+    }))
+    .filter((message: ChatMessage) => message.content);
+
+  if (!messages.length || messages.reduce((sum, message) => sum + message.content.length, 0) > 18000) {
     return out(req, { ok: false, code: "MESSAGES_INVALID" }, 400);
   }
 
+  const requestedTemperature = typeof body.temperature === "number" ? body.temperature : 0.2;
+  const temperature = Math.max(0, Math.min(1, requestedTemperature));
+  const requestedMaxTokens = typeof body.max_tokens === "number" ? body.max_tokens : 1800;
+  const maxTokens = Math.max(256, Math.min(2400, Math.floor(requestedMaxTokens)));
+
   try {
     const retryAfter = await rateLimit(req);
-    if (retryAfter) return out(req, { ok: false, code: "AI_RATE_LIMITED" }, 429, { "Retry-After": String(retryAfter) });
+    if (retryAfter) {
+      return out(req, { ok: false, code: "AI_RATE_LIMITED" }, 429, {
+        "Retry-After": String(retryAfter),
+      });
+    }
   } catch (error) {
     console.error("AI rate limit check failed", error instanceof Error ? error.message : String(error));
     return out(req, { ok: false, code: "RATE_LIMIT_UNAVAILABLE" }, 503);
   }
 
-  const key = Deno.env.get("NVIDIA_API_KEY");
-  if (!key) return out(req, { ok: false, code: "NVIDIA_API_KEY_MISSING" }, 503);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 30000);
-  try {
-    const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify({
-        model: Deno.env.get("NVIDIA_MODEL") || "openai/gpt-oss-20b",
-        messages,
-        stream: false,
-        temperature: 0.2,
-        max_tokens: 1800,
-      }),
-      signal: controller.signal,
-    });
-    const text = await response.text();
-    let payload: any = null;
-    try { payload = JSON.parse(text); } catch {}
-    if (!response.ok) {
-      console.error("NVIDIA upstream error", response.status);
-      return out(req, { ok: false, code: "NVIDIA_UPSTREAM_ERROR", upstream_status: response.status }, 502);
+  const attempts: ProviderAttempt[] = [];
+  const order = providerOrder();
+
+  for (const provider of order) {
+    const result = await callProvider(provider, messages, temperature, maxTokens);
+    if (!result.ok) {
+      attempts.push(result.attempt);
+      continue;
     }
-    if (!payload || !Array.isArray(payload.choices)) return out(req, { ok: false, code: "INVALID_NVIDIA_RESPONSE" }, 502);
-    const answer = payload.choices?.[0]?.message?.content ?? "";
-    return out(req, { ...payload, ok: true, answer, content: answer, reply: answer, provider: "nvidia" });
-  } catch (error) {
-    const timeout = error instanceof DOMException && error.name === "AbortError";
-    return out(req, { ok: false, code: timeout ? "NVIDIA_TIMEOUT" : "NVIDIA_REQUEST_FAILED" }, timeout ? 504 : 502);
-  } finally {
-    clearTimeout(timer);
+
+    return out(req, {
+      ...result.payload,
+      ok: true,
+      provider: result.provider,
+      model: result.model,
+      fallback_used: attempts.length > 0,
+    });
   }
+
+  const configuredProviderExists = order.some((provider) => Boolean(providerConfig(provider).key));
+  console.error("All AI providers failed", { attempts });
+  return out(
+    req,
+    {
+      ok: false,
+      code: configuredProviderExists ? "ALL_AI_PROVIDERS_FAILED" : "AI_PROVIDERS_NOT_CONFIGURED",
+      attempts,
+    },
+    503,
+  );
 });
