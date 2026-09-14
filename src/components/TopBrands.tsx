@@ -7,12 +7,9 @@ import type { ShopifyBrand } from "@/lib/brandDirectory";
 import { orderedBrands } from "@/lib/homeMerchandising";
 import { useLanguage } from "@/lib/i18n";
 
-type EdgeState = {
-  left: boolean;
-  right: boolean;
-};
-
 const COMPACT_MARKS = new Set(["apple", "xiaomi"]);
+const AUTO_SCROLL_PX_PER_SECOND = 24;
+const INFINITE_CYCLES = [0, 1, 2] as const;
 
 function brandSlotWidth(brand: ShopifyBrand) {
   if (COMPACT_MARKS.has(brand.slug)) return 78;
@@ -22,22 +19,28 @@ function brandSlotWidth(brand: ShopifyBrand) {
 }
 
 /**
- * Premium, minimal brand strip for the homepage.
+ * Premium infinite brand selector for the homepage.
  *
- * The strongest brand opens in the visual center. The next strongest brands
- * are distributed immediately around it, so ranking is perceived from the
- * center outward while users can still freely swipe in both directions.
+ * Three identical cycles make the rail visually endless. We start inside the
+ * middle cycle and silently recycle the scroll position by one cycle whenever
+ * the user/auto-scroll approaches either outer copy. That keeps native touch
+ * scrolling intact while avoiding a visible jump.
  *
- * Logo scaling happens inside a clipped slot rather than scaling the whole
- * link, which keeps the hover animation premium without ever overlapping the
- * neighboring brand.
+ * Auto-scroll pauses while the user presses, hovers or focuses the rail and
+ * waits briefly after a touch/drag before resuming, making brand selection easy.
  */
 export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   const { t } = useLanguage();
   const railRef = useRef<HTMLDivElement>(null);
-  const visualFrameRef = useRef<number | null>(null);
+  const measureFrameRef = useRef<number | null>(null);
+  const autoFrameRef = useRef<number | null>(null);
+  const interactionRef = useRef({
+    hovered: false,
+    focused: false,
+    pointerHeld: false,
+    resumeAt: 0,
+  });
   const [activeSlug, setActiveSlug] = useState<string>();
-  const [edges, setEdges] = useState<EdgeState>({ left: false, right: false });
 
   const rankedBrands = useMemo(() => orderedBrands(brands), [brands]);
   const railBrands = useMemo(() => {
@@ -59,22 +62,31 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   const strongestSlug = rankedBrands[0]?.slug;
   const brandSignature = railBrands.map((brand) => brand.slug).join("|");
 
+  const cycleWidth = useCallback(() => {
+    const rail = railRef.current;
+    const cycle = rail?.querySelector<HTMLElement>("[data-brand-cycle=\"0\"]");
+    return cycle?.offsetWidth ?? 0;
+  }, []);
+
+  const recycleInfinitePosition = useCallback(() => {
+    const rail = railRef.current;
+    const width = cycleWidth();
+    if (!rail || width <= 0) return;
+
+    // Stay around the middle copy. Moving exactly one cycle is invisible
+    // because all three cycles contain the same ordered brand sequence.
+    if (rail.scrollLeft >= width * 2) {
+      rail.scrollLeft -= width;
+    } else if (rail.scrollLeft < width * 0.5) {
+      rail.scrollLeft += width;
+    }
+  }, [cycleWidth]);
+
   const measureRail = useCallback(() => {
     const rail = railRef.current;
     if (!rail) return;
 
-    const maxScroll = Math.max(0, rail.scrollWidth - rail.clientWidth);
-    const epsilon = 3;
-    const nextEdges = {
-      left: maxScroll > epsilon && rail.scrollLeft > epsilon,
-      right: maxScroll > epsilon && rail.scrollLeft < maxScroll - epsilon,
-    };
-
-    setEdges((current) =>
-      current.left === nextEdges.left && current.right === nextEdges.right
-        ? current
-        : nextEdges,
-    );
+    recycleInfinitePosition();
 
     const railRect = rail.getBoundingClientRect();
     const railCenter = railRect.left + railRect.width / 2;
@@ -93,42 +105,38 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
     if (nearestSlug) {
       setActiveSlug((current) => (current === nearestSlug ? current : nearestSlug));
     }
-  }, []);
+  }, [recycleInfinitePosition]);
 
   const scheduleMeasure = useCallback(() => {
-    if (visualFrameRef.current !== null) return;
+    if (measureFrameRef.current !== null) return;
 
-    visualFrameRef.current = window.requestAnimationFrame(() => {
-      visualFrameRef.current = null;
+    measureFrameRef.current = window.requestAnimationFrame(() => {
+      measureFrameRef.current = null;
       measureRail();
     });
   }, [measureRail]);
 
+  const pauseAfterInteraction = useCallback((delay = 1400) => {
+    interactionRef.current.resumeAt = performance.now() + delay;
+  }, []);
+
   useEffect(() => {
     const rail = railRef.current;
-    if (!rail || !strongestSlug) return;
+    if (!rail || !strongestSlug || railBrands.length === 0) return;
 
     const centerStrongestBrand = () => {
-      const target = rail.querySelector<HTMLElement>(`[data-featured-brand="true"]`);
+      const target = rail.querySelector<HTMLElement>(
+        `[data-brand-cycle="1"] [data-featured-brand="true"]`,
+      );
       if (!target) return;
-
-      const maxScroll = Math.max(0, rail.scrollWidth - rail.clientWidth);
-      if (maxScroll <= 0) {
-        rail.scrollLeft = 0;
-        measureRail();
-        return;
-      }
 
       const railRect = rail.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
       const targetCenterInContent =
         rail.scrollLeft + (targetRect.left - railRect.left) + targetRect.width / 2;
-      const centeredLeft = targetCenterInContent - rail.clientWidth / 2;
 
-      rail.scrollTo({
-        left: Math.min(maxScroll, Math.max(0, centeredLeft)),
-        behavior: "auto",
-      });
+      rail.scrollLeft = Math.max(0, targetCenterInContent - rail.clientWidth / 2);
+      recycleInfinitePosition();
       measureRail();
     };
 
@@ -153,12 +161,56 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
       delete rail.dataset.centerFrame;
       resizeObserver?.disconnect();
       window.removeEventListener("resize", scheduleMeasure);
-      if (visualFrameRef.current !== null) {
-        window.cancelAnimationFrame(visualFrameRef.current);
-        visualFrameRef.current = null;
+    };
+  }, [brandSignature, measureRail, railBrands.length, recycleInfinitePosition, scheduleMeasure, strongestSlug]);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail || railBrands.length < 2) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let previousTime = performance.now();
+
+    const animate = (now: number) => {
+      const elapsed = Math.min(64, now - previousTime);
+      previousTime = now;
+
+      const interaction = interactionRef.current;
+      const paused =
+        reduceMotion.matches ||
+        interaction.hovered ||
+        interaction.focused ||
+        interaction.pointerHeld ||
+        now < interaction.resumeAt;
+
+      if (!paused) {
+        rail.scrollLeft += (AUTO_SCROLL_PX_PER_SECOND * elapsed) / 1000;
+        recycleInfinitePosition();
+        scheduleMeasure();
+      }
+
+      autoFrameRef.current = window.requestAnimationFrame(animate);
+    };
+
+    autoFrameRef.current = window.requestAnimationFrame(animate);
+
+    return () => {
+      if (autoFrameRef.current !== null) {
+        window.cancelAnimationFrame(autoFrameRef.current);
+        autoFrameRef.current = null;
       }
     };
-  }, [brandSignature, measureRail, scheduleMeasure, strongestSlug]);
+  }, [brandSignature, railBrands.length, recycleInfinitePosition, scheduleMeasure]);
+
+  useEffect(
+    () => () => {
+      if (measureFrameRef.current !== null) {
+        window.cancelAnimationFrame(measureFrameRef.current);
+        measureFrameRef.current = null;
+      }
+    },
+    [],
+  );
 
   if (!railBrands.length) return null;
 
@@ -187,62 +239,105 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
           ref={railRef}
           dir="ltr"
           onScroll={scheduleMeasure}
-          className="overflow-x-auto overflow-y-hidden scroll-smooth overscroll-x-contain touch-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onPointerDown={() => {
+            interactionRef.current.pointerHeld = true;
+          }}
+          onPointerUp={() => {
+            interactionRef.current.pointerHeld = false;
+            pauseAfterInteraction();
+          }}
+          onPointerCancel={() => {
+            interactionRef.current.pointerHeld = false;
+            pauseAfterInteraction();
+          }}
+          onPointerEnter={(event) => {
+            if (event.pointerType === "mouse") interactionRef.current.hovered = true;
+          }}
+          onPointerLeave={(event) => {
+            if (event.pointerType === "mouse") {
+              interactionRef.current.hovered = false;
+              pauseAfterInteraction(450);
+            }
+          }}
+          onFocusCapture={() => {
+            interactionRef.current.focused = true;
+          }}
+          onBlurCapture={(event) => {
+            const next = event.relatedTarget;
+            if (!(next instanceof Node) || !event.currentTarget.contains(next)) {
+              interactionRef.current.focused = false;
+              pauseAfterInteraction(650);
+            }
+          }}
+          onWheel={() => pauseAfterInteraction(1200)}
+          className="cursor-grab overflow-x-auto overflow-y-hidden overscroll-x-contain touch-auto active:cursor-grabbing [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="list"
           aria-label={t("topBrands")}
         >
-          <div className="flex w-max min-w-full items-center justify-center gap-1.5 px-3 py-0.5 sm:gap-2.5 sm:px-2 sm:py-1 lg:gap-3">
-            {railBrands.map((brand) => {
-              const isActive = brand.slug === activeSlug;
+          <div className="flex w-max items-center py-0.5 sm:py-1">
+            {INFINITE_CYCLES.map((cycleIndex) => (
+              <div
+                key={cycleIndex}
+                data-brand-cycle={cycleIndex}
+                className="flex shrink-0 items-center gap-1.5 px-1.5 sm:gap-2.5 sm:px-2 lg:gap-3"
+                aria-hidden={cycleIndex === 1 ? undefined : true}
+              >
+                {railBrands.map((brand) => {
+                  const isActive = brand.slug === activeSlug;
+                  const isPrimaryCycle = cycleIndex === 1;
 
-              return (
-                <Link
-                  key={brand.slug}
-                  to="/brand/$slug"
-                  params={{ slug: brand.slug }}
-                  role="listitem"
-                  aria-label={brand.label}
-                  data-brand-slug={brand.slug}
-                  data-featured-brand={brand.slug === strongestSlug ? "true" : undefined}
-                  style={{ width: brandSlotWidth(brand) }}
-                  className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-1 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-14 sm:px-1.5 md:hover:-translate-y-0.5"
-                >
-                  <span
-                    className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity,filter] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.075] group-hover:opacity-100 group-hover:saturate-100 group-hover:drop-shadow-sm ${
-                      isActive
-                        ? "scale-[1.035] opacity-100 saturate-100"
-                        : "scale-100 opacity-[0.88] saturate-[0.94]"
-                    }`}
-                  >
-                    <BrandLogo
-                      slug={brand.slug}
-                      label={brand.label}
-                      size={36}
-                      wordmark
-                      frameless
-                      normalizeForRail
-                      className="max-w-full"
-                      {...(brand.image ? { imageUrl: brand.image } : {})}
-                    />
-                  </span>
-                </Link>
-              );
-            })}
+                  return (
+                    <Link
+                      key={`${cycleIndex}-${brand.slug}`}
+                      to="/brand/$slug"
+                      params={{ slug: brand.slug }}
+                      role={isPrimaryCycle ? "listitem" : undefined}
+                      aria-label={isPrimaryCycle ? brand.label : undefined}
+                      tabIndex={isPrimaryCycle ? undefined : -1}
+                      data-brand-slug={brand.slug}
+                      data-featured-brand={brand.slug === strongestSlug ? "true" : undefined}
+                      style={{ width: brandSlotWidth(brand) }}
+                      onClick={() => {
+                        interactionRef.current.resumeAt = Number.POSITIVE_INFINITY;
+                      }}
+                      className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-1 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-14 sm:px-1.5 md:hover:-translate-y-0.5"
+                    >
+                      <span
+                        className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity,filter] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.08] group-hover:opacity-100 group-hover:saturate-100 group-hover:drop-shadow-sm ${
+                          isActive
+                            ? "scale-[1.04] opacity-100 saturate-100"
+                            : "scale-100 opacity-[0.86] saturate-[0.92]"
+                        }`}
+                      >
+                        <BrandLogo
+                          slug={brand.slug}
+                          label={brand.label}
+                          size={36}
+                          wordmark
+                          frameless
+                          normalizeForRail
+                          className="max-w-full"
+                          {...(brand.image ? { imageUrl: brand.image } : {})}
+                        />
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </div>
 
-        {edges.left ? (
-          <div
-            className="pointer-events-none absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-background/92 via-background/38 to-transparent transition-opacity"
-            aria-hidden="true"
-          />
-        ) : null}
-        {edges.right ? (
-          <div
-            className="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-background/92 via-background/38 to-transparent transition-opacity"
-            aria-hidden="true"
-          />
-        ) : null}
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-9 bg-gradient-to-r from-background via-background/78 to-transparent"
+          style={{ boxShadow: "12px 0 26px -18px rgb(15 23 42 / 0.72)" }}
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-9 bg-gradient-to-l from-background via-background/78 to-transparent"
+          style={{ boxShadow: "-12px 0 26px -18px rgb(15 23 42 / 0.72)" }}
+          aria-hidden="true"
+        />
       </div>
     </section>
   );
