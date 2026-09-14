@@ -58,7 +58,7 @@ function OnDemandAdvisor({ context }: { context?: string }) {
   });
 
   if (Advisor) {
-    return <Advisor context={context} initialOpen initialPrompt={promptRef.current} />;
+    return <Advisor context={context ?? ""} initialOpen initialPrompt={promptRef.current} />;
   }
 
   return (
