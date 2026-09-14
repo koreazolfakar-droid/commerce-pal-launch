@@ -74,7 +74,12 @@ jobs:
             ['mobile', '/tmp/lighthouse-mobile.json'],
             ['desktop', '/tmp/lighthouse-desktop.json'],
           ];
+          const lines = [];
           let failed = false;
+          const emit = (line) => {
+            lines.push(line);
+            console.log(line);
+          };
           for (const [label, file] of files) {
             const report = JSON.parse(fs.readFileSync(file, 'utf8'));
             const audits = report.audits;
@@ -84,31 +89,45 @@ jobs:
             const tbt = audits['total-blocking-time'].numericValue;
             const cls = audits['cumulative-layout-shift'].numericValue;
             const speedIndex = audits['speed-index'].numericValue;
-            console.log(`${label}: performance=${score}, FCP=${Math.round(fcp)}ms, LCP=${Math.round(lcp)}ms, TBT=${Math.round(tbt)}ms, CLS=${cls.toFixed(3)}, SI=${Math.round(speedIndex)}ms`);
+            emit(`${label}: performance=${score}, FCP=${Math.round(fcp)}ms, LCP=${Math.round(lcp)}ms, TBT=${Math.round(tbt)}ms, CLS=${cls.toFixed(3)}, SI=${Math.round(speedIndex)}ms`);
 
             const layoutItems = audits['layout-shifts']?.details?.items ?? [];
             if (layoutItems.length) {
-              console.log(`${label} top layout shifts:`);
-              for (const item of layoutItems.slice(0, 5)) {
-                console.log(JSON.stringify({ score: item.score, node: item.node?.snippet ?? item.node?.selector ?? null }));
+              emit(`${label} top layout shifts:`);
+              for (const item of layoutItems.slice(0, 8)) {
+                emit(JSON.stringify({ score: item.score, node: item.node?.snippet ?? item.node?.selector ?? null }));
               }
             }
             const bootupItems = audits['bootup-time']?.details?.items ?? [];
             if (bootupItems.length) {
-              console.log(`${label} top JS CPU entries:`);
-              for (const item of [...bootupItems].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 5)) {
-                console.log(JSON.stringify({ url: item.url, total: Math.round(item.total ?? 0), scripting: Math.round(item.scripting ?? 0) }));
+              emit(`${label} top JS CPU entries:`);
+              for (const item of [...bootupItems].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 8)) {
+                emit(JSON.stringify({ url: item.url, total: Math.round(item.total ?? 0), scripting: Math.round(item.scripting ?? 0) }));
               }
             }
 
             const green = score >= 90 && fcp <= 1800 && lcp <= 2500 && tbt <= 200 && cls <= 0.1 && speedIndex <= 3400;
             if (!green) failed = true;
           }
+          fs.writeFileSync('/tmp/lighthouse-summary.txt', `${lines.join('\n')}\n`);
           if (failed) {
             console.error('Lighthouse performance gate failed: one or more metrics are outside the green range.');
             process.exit(1);
           }
           NODE
+
+      - name: Upload Lighthouse diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-diagnostics
+          path: |
+            /tmp/lighthouse-mobile.json
+            /tmp/lighthouse-desktop.json
+            /tmp/lighthouse-summary.txt
+            /tmp/lighthouse-server.log
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Stop production storefront
         if: always()
