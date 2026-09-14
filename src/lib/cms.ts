@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 export type CmsJsonValue =
   string | number | boolean | null | CmsJsonValue[] | { [key: string]: CmsJsonValue };
@@ -54,29 +56,63 @@ const EMPTY_CMS: CmsSnapshot = {
   navigation: [],
 };
 
-const PUBLIC_CMS_URL =
-  "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/public-cms";
-
+/**
+ * Public storefront snapshot. Reads the dashboard tables with the publishable
+ * key, so only rows the anon read policies expose (visible content) are served.
+ */
 const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const response = await fetch(PUBLIC_CMS_URL, {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-    });
-    if (!response.ok) throw new Error(`CMS request failed (${response.status})`);
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) return EMPTY_CMS;
 
-    const snapshot = (await response.json()) as Partial<CmsSnapshot>;
+  const client = createClient<Database>(url, key, {
+    auth: { persistSession: false },
+    global: {
+      fetch: (input, init) => {
+        const headers = new Headers(init?.headers);
+        if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
+          headers.delete("Authorization");
+        }
+        headers.set("apikey", key);
+        return fetch(input, { ...init, headers });
+      },
+    },
+  });
+
+  try {
+    const [settings, heroSlides, sections, navigation] = await Promise.all([
+      client.from("cms_settings").select("key, value"),
+      client
+        .from("cms_hero_slides")
+        .select(
+          "id, title, subtitle, image_url, mobile_image_url, button_label, target_type, target_value, sort_order",
+        )
+        .order("sort_order", { ascending: true }),
+      client
+        .from("cms_sections")
+        .select(
+          "id, page_slug, section_key, section_type, title, subtitle, content, sort_order, is_visible",
+        )
+        .order("sort_order", { ascending: true }),
+      client
+        .from("cms_navigation")
+        .select("id, area, label, icon_type, icon_value, href, sort_order, is_visible")
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    const settingsRecord: Record<string, CmsSettingValue> = {};
+    for (const row of settings.data ?? []) {
+      settingsRecord[row.key] = row.value as CmsSettingValue;
+    }
+
     return {
-      settings:
-        snapshot.settings && typeof snapshot.settings === "object"
-          ? snapshot.settings
-          : {},
-      heroSlides: Array.isArray(snapshot.heroSlides) ? snapshot.heroSlides : [],
-      sections: Array.isArray(snapshot.sections) ? snapshot.sections : [],
-      navigation: Array.isArray(snapshot.navigation) ? snapshot.navigation : [],
+      settings: settingsRecord,
+      heroSlides: (heroSlides.data ?? []) as unknown as CmsHeroSlide[],
+      sections: (sections.data ?? []) as unknown as CmsSection[],
+      navigation: (navigation.data ?? []) as unknown as CmsNavigationItem[],
     } satisfies CmsSnapshot;
   } catch (error) {
-    console.warn("Space Call CMS is unavailable; using storefront defaults", error);
+    console.warn("Space Call dashboard content is unavailable; using storefront defaults", error);
     return EMPTY_CMS;
   }
 });
