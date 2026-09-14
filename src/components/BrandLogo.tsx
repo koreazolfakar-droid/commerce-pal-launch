@@ -11,6 +11,7 @@ type BrandLogoProps = {
   imageUrl?: string;
   wordmark?: boolean;
   frameless?: boolean;
+  normalizeForRail?: boolean;
 };
 
 function safeImageSource(value?: string) {
@@ -25,11 +26,37 @@ function safeImageSource(value?: string) {
   return undefined;
 }
 
+function normalizeBrandKey(slug: string, label: string) {
+  return (slug || label)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function railOpticalScale(slug: string, label: string, aspectRatio: number) {
+  const key = normalizeBrandKey(slug, label);
+
+  // ACEFAST's merchant artwork contains unusually generous whitespace around
+  // the visible mark. Crop that whitespace optically inside the fixed rail
+  // viewport instead of letting the logo look much smaller than its peers.
+  if (key === "acefast") return 1.95;
+
+  // Very wide merchant-supplied artwork often carries transparent/white side
+  // padding. Give it a modest optical correction while keeping normal curated
+  // wordmarks (Anker, Samsung, etc.) at their intended scale.
+  if (aspectRatio >= 5) {
+    return Math.min(1.55, Math.max(1, aspectRatio / 4.5));
+  }
+
+  return 1;
+}
+
 export function BrandLogo({ size = 40, ...props }: BrandLogoProps) {
   // Reset loading/error state when a card is reused for a different brand or source.
   return (
     <LogoImage
-      key={`${props.slug}:${props.label}:${props.imageUrl ?? ""}:${size}:${props.wordmark ?? false}:${props.frameless ?? false}`}
+      key={`${props.slug}:${props.label}:${props.imageUrl ?? ""}:${size}:${props.wordmark ?? false}:${props.frameless ?? false}:${props.normalizeForRail ?? false}`}
       {...props}
       size={size}
     />
@@ -44,6 +71,7 @@ function LogoImage({
   imageUrl,
   wordmark = false,
   frameless = false,
+  normalizeForRail = false,
 }: BrandLogoProps) {
   const sources = useMemo(() => {
     const builtIn = brandLogoSources(slug, label, size * 2)
@@ -69,19 +97,18 @@ function LogoImage({
   const source = sources[attempt];
   const loaded = Boolean(source && loadedSource === source);
 
-  // Wide wordmarks used to look much smaller than square marks such as Xiaomi
-  // because they were width-constrained inside the same logo slot. Scale only
-  // genuinely wide marks, preserving their aspect ratio, so every brand has a
-  // comparable optical height without stretching or blurring the artwork.
-  const wordmarkScale = wordmark
-    ? Math.min(1.55, Math.max(1, imageAspectRatio / 2.6))
-    : 1;
-
   const captureNaturalSize = (img: HTMLImageElement) => {
     if (img.naturalWidth > 0 && img.naturalHeight > 0) {
       setImageAspectRatio(img.naturalWidth / img.naturalHeight);
     }
   };
+
+  const opticalScale = normalizeForRail
+    ? railOpticalScale(slug, label, imageAspectRatio)
+    : 1;
+  const frameWidth = wordmark
+    ? size * (normalizeForRail ? 2.05 : 2.6)
+    : size;
 
   // Catch cached loads/errors which happened before hydration attached the handlers.
   useEffect(() => {
@@ -97,14 +124,16 @@ function LogoImage({
 
   return (
     <span
-      style={{ width: wordmark ? size * 2.6 : size, height: size }}
+      style={{ width: frameWidth, height: size }}
       className={cn(
         "relative inline-grid shrink-0 place-items-center",
         frameless
           ? "overflow-visible rounded-none bg-transparent"
-          : wordmark
-            ? "overflow-visible rounded-md bg-white"
-            : "overflow-hidden rounded-md bg-white",
+          : normalizeForRail
+            ? "overflow-hidden rounded-md bg-white"
+            : wordmark
+              ? "overflow-visible rounded-md bg-white"
+              : "overflow-hidden rounded-md bg-white",
         className,
       )}
     >
@@ -135,7 +164,7 @@ function LogoImage({
             width: "100%",
             height: "100%",
             opacity: loaded ? 1 : 0,
-            transform: `scale(${wordmarkScale})`,
+            transform: opticalScale === 1 ? undefined : `scale(${opticalScale})`,
             transformOrigin: "center",
           }}
           onLoad={(event) => {
