@@ -23,6 +23,7 @@ import {
   collectionsQueryOptions,
 } from "@/lib/queries";
 import { productDiscountPercent } from "@/lib/shopify";
+import { buildCatalogIndex } from "@/lib/taxonomy";
 import {
   canonicalLink,
   jsonLd,
@@ -180,10 +181,23 @@ function Index() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const products = catalog.products;
-  const brands = buildShopifyBrands(catalog.brands, collections);
+  // A $0 product inside `homepage-hero` is treated as hero artwork/configuration,
+  // not merchandise. Keep it visible in the hero while preventing the duplicate
+  // product card from leaking into homepage rails, brand sections or recently viewed.
+  const heroOnlyProductIds = new Set(
+    (heroCollection?.products ?? [])
+      .filter((product) => Number(product.node.priceRange.minVariantPrice.amount) <= 0)
+      .map((product) => product.node.id),
+  );
+  const isHomepageMerchandise = (product: (typeof catalog.products)[number]) =>
+    !heroOnlyProductIds.has(product.node.id);
+
+  const products = catalog.products.filter(isHomepageMerchandise);
+  const homepageCatalog = heroOnlyProductIds.size > 0 ? buildCatalogIndex(products) : catalog;
+  const brands = buildShopifyBrands(homepageCatalog.brands, collections);
   const deals = products.filter((product) => productDiscountPercent(product) !== null);
-  const best = bestSellers ?? [];
+  const best = (bestSellers ?? []).filter(isHomepageMerchandise);
+  const latest = newItems.filter(isHomepageMerchandise);
   const isVisible = (key: string) =>
     cms.sections.find((section) => section.section_key === key)?.is_visible ?? true;
 
@@ -201,7 +215,7 @@ function Index() {
   return (
     <StoreLayout>
       <div className="home-page">
-        {products.length === 0 ? (
+        {products.length === 0 && heroOnlyProductIds.size === 0 ? (
           <div className="px-4">
             <div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center">
               <h1 className="text-2xl font-bold">{t("welcomeStore")}</h1>
@@ -221,7 +235,7 @@ function Index() {
               </div>
             ) : null}
 
-            <CategorySection catalog={catalog} collections={collections} />
+            <CategorySection catalog={homepageCatalog} collections={collections} />
             {isVisible("brands") ? <TopBrands brands={brands} /> : null}
 
             {showProductSections ? (
@@ -260,7 +274,7 @@ function Index() {
                   </section>
                 )}
 
-                {isVisible("featured_products") && newItems.length > 0 && (
+                {isVisible("featured_products") && latest.length > 0 && (
                   <section data-testid="new-items">
                     <SectionHeader
                       title={t("newItems")}
@@ -275,14 +289,14 @@ function Index() {
                         </Link>
                       }
                     />
-                    <ProductRail products={newItems} storageKey="space-cell-home-new-items-view" />
+                    <ProductRail products={latest} storageKey="space-cell-home-new-items-view" />
                   </section>
                 )}
 
                 {isVisible("featured_products") ? (
                   <>
                     <BundleSection collections={collections} />
-                    <BrandShowcase catalog={catalog} collections={collections} />
+                    <BrandShowcase catalog={homepageCatalog} collections={collections} />
                   </>
                 ) : null}
               </>
