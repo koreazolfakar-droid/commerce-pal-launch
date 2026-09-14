@@ -33,12 +33,13 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
             className="brand-logo-tile group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             aria-label={brand.label}
           >
-            <span className="grid min-h-12 place-items-center">
+            <span className="grid min-h-12 w-full place-items-center">
               <BrandLogo
                 slug={brand.slug}
                 label={brand.label}
                 size={36}
                 wordmark
+                normalizeForRail
                 {...(brand.image ? { imageUrl: brand.image } : {})}
               />
             </span>
