@@ -54,9 +54,14 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
         return;
       }
 
-      const targetLeft = target.offsetLeft - (rail.clientWidth - target.offsetWidth) / 2;
+      const railRect = rail.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const targetCenterInContent =
+        rail.scrollLeft + (targetRect.left - railRect.left) + targetRect.width / 2;
+      const centeredLeft = targetCenterInContent - rail.clientWidth / 2;
+
       rail.scrollTo({
-        left: Math.min(maxScroll, Math.max(0, targetLeft)),
+        left: Math.min(maxScroll, Math.max(0, centeredLeft)),
         behavior: "auto",
       });
     };
