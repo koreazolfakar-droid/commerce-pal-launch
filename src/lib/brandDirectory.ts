@@ -49,29 +49,50 @@ function looksLikeLogoImage(collection: ShopifyCollection) {
 }
 
 /**
+ * Treat separators as presentation-only so common Shopify naming variations
+ * resolve to the same brand. Examples: `UGREEN`, `U Green`, and `u-green`.
+ */
+function compactBrandIdentity(value: string) {
+  return slugify(value).replace(/-/g, "");
+}
+
+function dedicatedCollectionBrandIdentity(handle: string) {
+  const withoutPrefix = handle.replace(/^(?:brand-logo-|logo-)/, "");
+  return compactBrandIdentity(withoutPrefix);
+}
+
+/**
  * Resolve a merchant logo in priority order:
  * 1) dedicated `logo-*` / `brand-logo-*` collections;
- * 2) an exact brand collection whose image is clearly a logo.
+ * 2) an exact brand collection, preferring artwork explicitly named as a logo.
  *
- * This keeps campaign photography from replacing a company mark while allowing
- * normal Shopify brand collections such as `acefast` + `acefast-logo.jpg` to
- * populate the Brands UI automatically.
+ * Exact matching is separator-insensitive, so a vendor like `UGREEN` can use a
+ * Shopify collection such as `u-green` or `logo-u-green`. The exact collection
+ * image is merchant-controlled and is therefore accepted even when its file
+ * name or alt text does not contain the word "logo".
  */
 export function buildShopifyBrands(
   brands: CatalogFacet[],
   collections: ShopifyCollection[] | undefined,
 ): ShopifyBrand[] {
   return orderedBrands(brands).map((brand) => {
-    const dedicated = [`logo-${brand.slug}`, `brand-logo-${brand.slug}`]
-      .map((handle) => collections?.find((item) => item.handle === handle && item.image?.url))
-      .find(Boolean);
+    const brandIdentity = compactBrandIdentity(brand.slug || brand.label);
+    const availableCollections = collections ?? [];
 
-    const exact = collections?.find(
+    const dedicated = availableCollections.find(
       (item) =>
         Boolean(item.image?.url) &&
-        (item.handle === brand.slug || slugify(item.title) === brand.slug) &&
-        looksLikeLogoImage(item),
+        /^(?:brand-logo-|logo-)/.test(item.handle) &&
+        dedicatedCollectionBrandIdentity(item.handle) === brandIdentity,
     );
+
+    const exactCandidates = availableCollections.filter(
+      (item) =>
+        Boolean(item.image?.url) &&
+        (compactBrandIdentity(item.handle) === brandIdentity ||
+          compactBrandIdentity(item.title) === brandIdentity),
+    );
+    const exact = exactCandidates.find(looksLikeLogoImage) ?? exactCandidates[0];
 
     const collection = dedicated ?? exact;
     const entry: ShopifyBrand = { ...brand };
