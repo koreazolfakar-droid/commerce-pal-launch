@@ -1,7 +1,0 @@
-/* The AI launcher now lives inside the mobile bottom navigation.
-   Keep the existing floating launcher for desktop only. */
-@media (max-width: 1023px) {
-  button[aria-label="Open Space Call AI"] {
-    display: none !important;
-  }
-}
