@@ -109,7 +109,7 @@ function infoPageJsonLd(page: InfoPageName) {
   } as Record<string, unknown>;
 
   if (page === "faq") {
-    base["mainEntity"] = FAQ_ITEMS.map(([question, answer]) => ({
+    base.mainEntity = FAQ_ITEMS.map(([question, answer]) => ({
       "@type": "Question",
       name: translate("en", question),
       acceptedAnswer: {
