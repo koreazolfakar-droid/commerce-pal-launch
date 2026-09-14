@@ -1,9 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Heart, LayoutGrid, Search, ShoppingBag } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
-import { SearchOverlay } from "@/components/SearchOverlay";
 import { MobileMenu } from "@/components/MobileMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
@@ -13,6 +12,10 @@ import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { STORE_NAME } from "@/lib/storeConfig";
+
+const LazySearchOverlay = lazy(() =>
+  import("@/components/SearchOverlay").then((module) => ({ default: module.SearchOverlay })),
+);
 
 function Badge({ value }: { value: number }) {
   if (value <= 0) return null;
@@ -158,7 +161,11 @@ export function MobileTopBar({
         )}
       </div>
 
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {searchOpen ? (
+        <Suspense fallback={null}>
+          <LazySearchOverlay open onClose={() => setSearchOpen(false)} />
+        </Suspense>
+      ) : null}
     </>
   );
 }
