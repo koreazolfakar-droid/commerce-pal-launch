@@ -78,6 +78,7 @@ function collectionLastmod(collection: ShopifyCollection) {
 function buildStaticEntries(): SitemapEntry[] {
   return [
     { path: "/" },
+    { path: "/ar" },
     { path: "/shop" },
     { path: "/categories" },
     { path: "/brands" },
