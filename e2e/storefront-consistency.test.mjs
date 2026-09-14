@@ -29,6 +29,14 @@ test("merchant brand artwork overrides curated local fallbacks and raw SVG marku
   assert.match(brandLogo, /<\\s\*svg\\b/);
   assert.match(brandLogo, /merchant \? \[merchant, \.\.\.builtIn\] : builtIn/);
   assert.doesNotMatch(brandLogo, /builtInIsLocal/);
+  assert.match(brandLogo, /PADDED_SQUARE_WORDMARKS = new Set\(\["ugreen"\]\)/);
+  assert.match(brandLogo, /paddedSquareMerchantWordmark/);
+  assert.match(
+    brandLogo,
+    /paddedSquareMerchantWordmark \? "object-cover" : "object-contain"/,
+  );
+  assert.match(brandLogo, /imageAspectRatio >= 0\.85/);
+  assert.match(brandLogo, /imageAspectRatio <= 1\.15/);
   assert.match(brandDirectory, /compactBrandIdentity/);
   assert.match(brandDirectory, /slugify\(value\)\.replace\(\/-\/g, ""\)/);
   assert.match(brandDirectory, /dedicatedCollectionBrandIdentity/);
