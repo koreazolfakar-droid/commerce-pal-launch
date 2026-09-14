@@ -26,6 +26,7 @@ import { productDiscountPercent } from "@/lib/shopify";
 import {
   canonicalLink,
   jsonLd,
+  languageAlternateLinks,
   organizationJsonLd,
   SITE_NAME,
   socialMeta,
@@ -37,12 +38,16 @@ const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    // Keep only the catalog on the critical path. The CMS, collection metadata,
-    // and hero merchandising all have safe storefront fallbacks and hydrate in
-    // the background after the first useful page is ready.
-    await context.queryClient.ensureQueryData(catalogQueryOptions());
+    const [catalog, heroCollection] = await Promise.all([
+      context.queryClient.ensureQueryData(catalogQueryOptions()),
+      context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
+    ]);
+    const heroImage =
+      heroCollection?.products?.[0]?.node.images.edges[0]?.node.url ??
+      catalog.products[0]?.node.images.edges[0]?.node.url;
+    return { heroImage };
   },
-  head: () => {
+  head: ({ loaderData }) => {
     const title = `${SITE_NAME} Lebanon | Official Online Electronics Store`;
     const description = `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and secure Shopify checkout.`;
     return {
@@ -55,9 +60,14 @@ export const Route = createFileRoute("/")({
           name: "robots",
           content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
         },
-        ...socialMeta({ title, description, path: "/" }),
+        ...socialMeta({
+          title,
+          description,
+          path: "/",
+          ...(loaderData?.heroImage ? { image: loaderData.heroImage } : {}),
+        }),
       ],
-      links: [canonicalLink("/")],
+      links: [canonicalLink("/"), ...languageAlternateLinks({ path: "/", arabicPath: "/ar" })],
       scripts: [jsonLd(websiteJsonLd()), jsonLd(organizationJsonLd())],
     };
   },
