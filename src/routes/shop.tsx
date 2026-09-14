@@ -6,13 +6,7 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { displayCollections } from "@/lib/taxonomy";
-import {
-  breadcrumbJsonLd,
-  canonicalLink,
-  itemListJsonLd,
-  jsonLd,
-  socialMeta,
-} from "@/lib/seo";
+import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/shop")({
