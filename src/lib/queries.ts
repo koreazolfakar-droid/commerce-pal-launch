@@ -20,6 +20,7 @@ import {
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 2 * 60 * 1000;
+const BRAND_COLLECTION_STALE_TIME = 60 * 1000;
 
 async function fetchCatalogIndexSafely() {
   try {
@@ -52,9 +53,10 @@ export const catalogQueryOptions = () =>
 
 export const collectionsQueryOptions = () =>
   queryOptions({
-    queryKey: ["shopify", "collections", "brand-logo-cache-v4", 100],
+    // Version the key so already-hydrated clients cannot keep an older merchant logo.
+    queryKey: ["shopify", "collections", "brand-logo-cache-v5", 100],
     queryFn: () => fetchCollections(100),
-    staleTime: CATALOG_STALE_TIME,
+    staleTime: BRAND_COLLECTION_STALE_TIME,
   });
 
 export const bestSellingQueryOptions = () =>
