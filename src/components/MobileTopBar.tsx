@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { SearchOverlay } from "@/components/SearchOverlay";
 import { MobileMenu } from "@/components/MobileMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { useHydrated } from "@/hooks/useHydrated";
 import { catalogQueryOptions } from "@/lib/queries";
@@ -75,6 +76,7 @@ export function MobileTopBar({
               <Heart className="h-[21px] w-[21px]" strokeWidth={1.9} />
               <Badge value={wishlistCount} />
             </Link>
+            <ThemeToggle className="h-10 w-10" />
             <button
               type="button"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
