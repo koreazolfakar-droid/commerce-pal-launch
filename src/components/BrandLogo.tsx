@@ -14,6 +14,8 @@ type BrandLogoProps = {
   normalizeForRail?: boolean;
 };
 
+const PADDED_SQUARE_WORDMARKS = new Set(["ugreen"]);
+
 function safeImageSource(value?: string) {
   const source = value?.trim();
   if (!source) return undefined;
@@ -78,6 +80,7 @@ function LogoImage({
   frameless = false,
   normalizeForRail = false,
 }: BrandLogoProps) {
+  const merchantSource = safeImageSource(imageUrl);
   const sources = useMemo(() => {
     const builtIn = brandLogoSources(slug, label, size * 2)
       .map(safeImageSource)
@@ -104,12 +107,22 @@ function LogoImage({
     }
   };
 
-  const opticalScale = normalizeForRail ? railOpticalScale(slug, label, imageAspectRatio) : 1;
-  const compactLabelLength = label.replace(/[^a-z0-9]/gi, "").length;
-  const normalizedWordmarkRatio = Math.min(
-    2.8,
-    Math.max(2.05, 1.7 + Math.min(compactLabelLength, 10) * 0.12),
+  const brandKey = normalizeBrandKey(slug, label);
+  const paddedSquareMerchantWordmark = Boolean(
+    normalizeForRail &&
+      wordmark &&
+      merchantSource &&
+      source === merchantSource &&
+      PADDED_SQUARE_WORDMARKS.has(brandKey) &&
+      imageAspectRatio >= 0.85 &&
+      imageAspectRatio <= 1.15,
   );
+  const opticalScale = normalizeForRail ? railOpticalScale(slug, label, imageAspectRatio) : 1;
+  const displayScale = paddedSquareMerchantWordmark ? Math.max(opticalScale, 1.08) : opticalScale;
+  const compactLabelLength = label.replace(/[^a-z0-9]/gi, "").length;
+  const normalizedWordmarkRatio = paddedSquareMerchantWordmark
+    ? 2.8
+    : Math.min(2.8, Math.max(2.05, 1.7 + Math.min(compactLabelLength, 10) * 0.12));
   const frameWidth = wordmark ? size * (normalizeForRail ? normalizedWordmarkRatio : 2.6) : size;
 
   // Catch cached loads/errors which happened before hydration attached the handlers.
@@ -169,7 +182,7 @@ function LogoImage({
             width: "100%",
             height: "100%",
             opacity: loaded ? 1 : 0,
-            transform: opticalScale === 1 ? undefined : `scale(${opticalScale})`,
+            transform: displayScale === 1 ? undefined : `scale(${displayScale})`,
             transformOrigin: "center",
           }}
           onLoad={(event) => {
@@ -177,7 +190,10 @@ function LogoImage({
             setLoadedSource(source);
           }}
           onError={() => setAttempt((value) => value + 1)}
-          className="relative min-h-0 min-w-0 object-contain transition-[opacity,transform] duration-150"
+          className={cn(
+            "relative min-h-0 min-w-0 transition-[opacity,transform] duration-150",
+            paddedSquareMerchantWordmark ? "object-cover" : "object-contain",
+          )}
         />
       )}
     </span>
