@@ -19,7 +19,7 @@ import { generalWhatsAppUrl } from "@/lib/whatsapp";
 const title = `${STORE_NAME} لبنان | متجر هواتف وإلكترونيات أونلاين`;
 const description = `${STORE_NAME} لبنان متجر إلكترونيات للهواتف الذكية والتابلت واللابتوبات والسماعات والإكسسوارات، مع عرض التوفر والأسعار ودعم قبل وبعد الطلب.`;
 
-export const Route = createFileRoute("/ar" as never)({
+export const Route = createFileRoute("/ar")({
   head: () => ({
     meta: [
       { title },
