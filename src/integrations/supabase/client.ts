@@ -27,12 +27,24 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+function getSupabaseEnv() {
+  const viteEnv = import.meta.env as Record<string, string | undefined>;
+  const nodeEnv = typeof process !== 'undefined' ? process.env : undefined;
+
+  return {
+    url: viteEnv['VITE_SUPABASE_URL'] || nodeEnv?.['SUPABASE_URL'],
+    publishableKey:
+      viteEnv['VITE_SUPABASE_PUBLISHABLE_KEY'] || nodeEnv?.['SUPABASE_PUBLISHABLE_KEY'],
+  };
+}
+
+export function isSupabaseClientConfigured(): boolean {
+  const { url, publishableKey } = getSupabaseEnv();
+  return Boolean(url && publishableKey);
+}
 
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env['VITE_SUPABASE_URL'] || process.env['SUPABASE_URL'];
-  const SUPABASE_PUBLISHABLE_KEY = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
+  const { url: SUPABASE_URL, publishableKey: SUPABASE_PUBLISHABLE_KEY } = getSupabaseEnv();
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
@@ -66,4 +78,3 @@ export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>,
     return Reflect.get(_supabase, prop, receiver);
   },
 });
-
