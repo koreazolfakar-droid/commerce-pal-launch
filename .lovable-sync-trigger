@@ -1,4 +1,4 @@
 Lovable sync trigger
-Triggered from ChatGPT on 2026-09-14 after homepage hero visibility repair
-Latest main commit before trigger: 53c1ec908e02250d1a4585681728b8a07c4abfbe
-Reason: force Lovable to pull and rebuild storefront so the homepage hero renders again while hero-only $0 products remain hidden from homepage product rails
+Triggered from ChatGPT on 2026-09-14 after security scan hardening
+Security migration commit: 48d980d58c7edeb6cf880ec80272e4bd62489e19
+Reason: force Lovable to pull the new Supabase RLS hardening migration, rebuild the project, and re-run/apply backend changes so the Security scan warnings can clear.
