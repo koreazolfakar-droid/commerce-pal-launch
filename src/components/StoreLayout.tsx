@@ -6,7 +6,6 @@ import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SmartPhoneAdvisor } from "@/components/SmartPhoneAdvisor";
-import { WhatsAppCTA } from "@/components/WhatsAppCTA";
 import "../dark-black.css";
 import "../ui-overhaul.css";
 import "../design-consistency.css";
@@ -42,7 +41,6 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
         {children}
       </main>
       <SiteFooter />
-      {!onCartPage ? <WhatsAppCTA /> : null}
       <SmartPhoneAdvisor {...(aiContext ? { context: aiContext } : {})} />
       <BottomNav />
     </div>
