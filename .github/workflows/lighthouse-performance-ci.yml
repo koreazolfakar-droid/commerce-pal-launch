@@ -34,9 +34,13 @@ jobs:
       - name: Install Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Start storefront fixture
+      - name: Build production storefront
+        run: NITRO_PRESET=node-server bun run build
+
+      - name: Start production storefront with Shopify fixture
         run: |
-          bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/lighthouse-vite.log 2>&1 &
+          PORT=4173 HOST=0.0.0.0 NODE_OPTIONS="--import ./e2e/shopify-fixture.mjs" \
+            node .output/server/index.mjs > /tmp/lighthouse-server.log 2>&1 &
           echo $! > /tmp/lighthouse-server.pid
           for i in {1..60}; do
             if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
@@ -44,7 +48,7 @@ jobs:
             fi
             sleep 1
           done
-          cat /tmp/lighthouse-vite.log
+          cat /tmp/lighthouse-server.log
           exit 1
 
       - name: Run mobile and desktop Lighthouse
@@ -79,8 +83,25 @@ jobs:
             const lcp = audits['largest-contentful-paint'].numericValue;
             const tbt = audits['total-blocking-time'].numericValue;
             const cls = audits['cumulative-layout-shift'].numericValue;
-            console.log(`${label}: performance=${score}, FCP=${Math.round(fcp)}ms, LCP=${Math.round(lcp)}ms, TBT=${Math.round(tbt)}ms, CLS=${cls.toFixed(3)}`);
-            const green = score >= 90 && fcp <= 1800 && lcp <= 2500 && tbt <= 200 && cls <= 0.1;
+            const speedIndex = audits['speed-index'].numericValue;
+            console.log(`${label}: performance=${score}, FCP=${Math.round(fcp)}ms, LCP=${Math.round(lcp)}ms, TBT=${Math.round(tbt)}ms, CLS=${cls.toFixed(3)}, SI=${Math.round(speedIndex)}ms`);
+
+            const layoutItems = audits['layout-shifts']?.details?.items ?? [];
+            if (layoutItems.length) {
+              console.log(`${label} top layout shifts:`);
+              for (const item of layoutItems.slice(0, 5)) {
+                console.log(JSON.stringify({ score: item.score, node: item.node?.snippet ?? item.node?.selector ?? null }));
+              }
+            }
+            const bootupItems = audits['bootup-time']?.details?.items ?? [];
+            if (bootupItems.length) {
+              console.log(`${label} top JS CPU entries:`);
+              for (const item of [...bootupItems].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 5)) {
+                console.log(JSON.stringify({ url: item.url, total: Math.round(item.total ?? 0), scripting: Math.round(item.scripting ?? 0) }));
+              }
+            }
+
+            const green = score >= 90 && fcp <= 1800 && lcp <= 2500 && tbt <= 200 && cls <= 0.1 && speedIndex <= 3400;
             if (!green) failed = true;
           }
           if (failed) {
@@ -89,7 +110,7 @@ jobs:
           }
           NODE
 
-      - name: Stop storefront fixture
+      - name: Stop production storefront
         if: always()
         run: |
           if [ -f /tmp/lighthouse-server.pid ]; then
