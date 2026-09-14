@@ -76,8 +76,6 @@ function LogoImage({
 
   return (
     <span
-      role="img"
-      aria-label={`${label} logo`}
       style={{ width: wordmark ? size * 2.6 : size, height: size }}
       className={cn(
         "relative inline-grid shrink-0 place-items-center overflow-hidden rounded-md bg-white",
@@ -86,7 +84,6 @@ function LogoImage({
     >
       {!loaded && (
         <span
-          aria-hidden="true"
           style={{
             fontSize: wordmark ? 13 : Math.max(10, size * 0.34),
           }}
@@ -100,8 +97,7 @@ function LogoImage({
           ref={imgRef}
           key={source}
           src={source}
-          alt=""
-          aria-hidden="true"
+          alt={`${label} logo`}
           width={size}
           height={size}
           loading="lazy"
