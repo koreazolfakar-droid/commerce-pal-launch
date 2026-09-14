@@ -24,7 +24,9 @@ function serviceKey() {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       const value = parsed.default ?? Object.values(parsed)[0];
       if (typeof value === "string" && value.trim()) return value.trim();
-    } catch {}
+    } catch {
+      // Fall back to SUPABASE_SERVICE_ROLE_KEY when the optional secret bundle is malformed.
+    }
   }
   return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim() || "";
 }
