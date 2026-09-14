@@ -1,0 +1,41 @@
+name: Brand Logo Validation
+
+on:
+  push:
+    branches:
+      - fix/shopify-brand-logo-refresh
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brand-logo-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-brand-fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: TypeScript
+        run: bun run typecheck
+
+      - name: Unit and regression tests
+        run: bun run test:unit
+
+      - name: Production build
+        run: bun run build
+
+      - name: SSR smoke test
+        run: bun run test:ssr
