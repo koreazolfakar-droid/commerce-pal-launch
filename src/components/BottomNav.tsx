@@ -141,7 +141,10 @@ export function BottomNav() {
   );
   const cmsItems =
     cms?.navigation
-      .filter((item) => item.area === "bottom" && item.is_visible && item.href)
+      .filter(
+        (item) =>
+          item.area === "bottom" && item.is_visible && item.href && item.href !== "/compare",
+      )
       .sort((a, b) => a.sort_order - b.sort_order) ?? [];
 
   const itemClass = (active: boolean) =>
