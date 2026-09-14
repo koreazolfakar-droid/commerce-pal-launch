@@ -1,14 +1,19 @@
-import type { CSSProperties, ReactNode } from "react";
+import { lazy, Suspense, type CSSProperties, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav, MOBILE_NAV_HEIGHT } from "@/components/BottomNav";
 import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { SmartPhoneAdvisor } from "@/components/SmartPhoneAdvisor";
 import "../dark-black.css";
 import "../ui-overhaul.css";
 import "../design-consistency.css";
+
+const SmartPhoneAdvisor = lazy(() =>
+  import("@/components/SmartPhoneAdvisor").then((module) => ({
+    default: module.SmartPhoneAdvisor,
+  })),
+);
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
 export function StoreLayout({ children, aiContext }: { children: ReactNode; aiContext?: string }) {
@@ -41,7 +46,9 @@ export function StoreLayout({ children, aiContext }: { children: ReactNode; aiCo
         {children}
       </main>
       <SiteFooter />
-      <SmartPhoneAdvisor {...(aiContext ? { context: aiContext } : {})} />
+      <Suspense fallback={null}>
+        <SmartPhoneAdvisor {...(aiContext ? { context: aiContext } : {})} />
+      </Suspense>
       <BottomNav />
     </div>
   );
