@@ -26,6 +26,12 @@ export default defineConfig({
     },
   },
   tanstackStart: {
+    // Route files were previously bundled into the startup graph. Explicitly
+    // enable TanStack Router's production route splitting so non-matching page
+    // components are downloaded only when the user navigates to them.
+    router: {
+      autoCodeSplitting: true,
+    },
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
