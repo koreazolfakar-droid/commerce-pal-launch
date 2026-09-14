@@ -81,15 +81,16 @@ function BrandMark({ slug, label }: { slug: string; label: string }) {
 
   return (
     <span className="relative grid h-10 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm ring-1 ring-black/[0.025]">
-      <span className="text-[10px] font-black tracking-tight text-slate-700">{fallback}</span>
       {logo ? (
         <img
           src={logo}
           alt={`${label} logo`}
-          className="absolute inset-0 h-full w-full object-contain px-2 py-1.5"
+          className="h-full w-full object-contain px-2 py-1.5"
           loading="lazy"
         />
-      ) : null}
+      ) : (
+        <span className="text-[10px] font-black tracking-tight text-slate-700">{fallback}</span>
+      )}
     </span>
   );
 }
