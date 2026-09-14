@@ -114,10 +114,11 @@ export const ProductListCard = memo(function ProductListCard({
             <BrandLogo
               slug={brand.slug}
               label={brand.label}
-              size={14}
-              className="shrink-0 rounded"
+              size={18}
+              frameless
+              className="shrink-0"
             />
-            <span className="truncate text-[9px] font-extrabold uppercase tracking-[0.06em] text-muted-foreground sm:text-[10px]">
+            <span className="truncate text-[10px] font-extrabold uppercase tracking-[0.045em] text-muted-foreground sm:text-[11px]">
               {brand.label}
             </span>
           </div>
