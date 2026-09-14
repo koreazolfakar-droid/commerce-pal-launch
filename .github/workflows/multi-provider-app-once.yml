@@ -1,0 +1,126 @@
+name: Multi Provider App Sync Once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/multi-provider-app-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update advisor provider metadata and copy
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/lib/smartPhoneAdvisor.functions.ts")
+          text = path.read_text()
+
+          replacements = {
+              'import { callNvidiaChat, extractJsonObject, NvidiaApiError } from "@/lib/nvidia";': 'import {\n  callNvidiaChat,\n  extractJsonObject,\n  NvidiaApiError,\n  type AiProvider,\n} from "@/lib/nvidia";',
+              '  provider: "nvidia";': '  provider: AiProvider | "multi";',
+              '    provider: "nvidia",\n    errorCode,': '    provider: "multi",\n    errorCode,',
+              '  model?: string,\n): SmartAdvisorResult {': '  model?: string,\n  provider: AiProvider = "nvidia",\n): SmartAdvisorResult {',
+              '    provider: "nvidia",\n    ...(model ? { model } : {}),': '    provider,\n    ...(model ? { model } : {}),',
+              '  model?: string,\n): SmartAdvisorResult | null {': '  model?: string,\n  provider: AiProvider = "nvidia",\n): SmartAdvisorResult | null {',
+              '    return buildResult(parsed, catalog, model);': '    return buildResult(parsed, catalog, model, provider);',
+              '      provider: "nvidia",\n      error,': '      provider,\n      error,',
+              "const prompt = `You are ${STORE_NAME}'s NVIDIA-powered Smart Phone Advisor for a real electronics store in Lebanon.": "const prompt = `You are ${STORE_NAME}'s multi-provider Smart Phone Advisor for a real electronics store in Lebanon.",
+              '      const { text, model } = await callNvidiaChat({': '      const { text, model, provider } = await callNvidiaChat({',
+              '      const result = parseModelResult(text, catalog, model);': '      const result = parseModelResult(text, catalog, model, provider);',
+              '      return nvidiaFailure(\n        new NvidiaApiError("NVIDIA returned invalid JSON", 502, "INVALID_RESPONSE"),\n      );': '      return aiFailure(\n        new NvidiaApiError("AI provider returned invalid JSON", 502, "INVALID_RESPONSE"),\n      );',
+              '      return nvidiaFailure(error);': '      return aiFailure(error);',
+          }
+
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f"Expected pattern not found:\n{old}")
+              text = text.replace(old, new)
+
+          start = text.index('function nvidiaFailure(error: unknown): SmartAdvisorResult {')
+          end = text.index('\n\nexport const askSmartPhoneAdvisor', start)
+          failure_block = '''function aiFailure(error: unknown): SmartAdvisorResult {
+            if (!(error instanceof NvidiaApiError)) {
+              console.error("AI smart advisor error", error);
+              return failure(
+                "The smart advisor could not be reached. Please try again.",
+                "ADVISOR_PROVIDER_ERROR",
+              );
+            }
+
+            let gatewayCode = "";
+            try {
+              gatewayCode = (JSON.parse(error.body) as { code?: string }).code ?? "";
+            } catch {}
+
+            console.error("AI smart advisor provider error", {
+              status: error.status,
+              code: gatewayCode || undefined,
+              message: error.message.slice(0, 500),
+            });
+
+            if (error.body === "SUPABASE_GATEWAY_NOT_CONFIGURED") {
+              return failure(
+                "The smart advisor gateway is not configured yet. Add the Supabase server credentials to the deployment and try again.",
+                "ADVISOR_NOT_CONFIGURED",
+              );
+            }
+            if (gatewayCode === "AI_PROVIDERS_NOT_CONFIGURED") {
+              return failure(
+                "No AI provider is configured for the smart advisor yet.",
+                "ADVISOR_NOT_CONFIGURED",
+              );
+            }
+            if (error.status === 401 || error.status === 403) {
+              return failure(
+                "The secure Supabase AI gateway rejected the request. Check the server-side Supabase credentials.",
+                "ADVISOR_AUTH_ERROR",
+              );
+            }
+            if (error.status === 429) {
+              return failure(
+                "The AI service is temporarily rate-limited. Please try again shortly.",
+                "ADVISOR_QUOTA_ERROR",
+              );
+            }
+            return failure(
+              "The AI service could not complete the request. Please try again.",
+              "ADVISOR_PROVIDER_ERROR",
+            );
+          }'''
+          text = text[:start] + failure_block + text[end:]
+          path.write_text(text)
+
+          ui = Path("src/components/SmartPhoneAdvisor.tsx")
+          ui_text = ui.read_text()
+          old = "NVIDIA AI · live store catalogue"
+          if old not in ui_text:
+              raise SystemExit(f"Expected UI label not found: {old}")
+          ui.write_text(ui_text.replace(old, "Multi-provider AI · live store catalogue"))
+          PY
+
+      - name: Format changed files
+        run: |
+          bun install --frozen-lockfile
+          bunx prettier --write src/lib/smartPhoneAdvisor.functions.ts src/components/SmartPhoneAdvisor.tsx
+
+      - name: Commit app sync
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/smartPhoneAdvisor.functions.ts src/components/SmartPhoneAdvisor.tsx
+          git commit -m "Make shopping advisor provider-aware"
+          git push
