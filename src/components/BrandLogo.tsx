@@ -37,25 +37,22 @@ function normalizeBrandKey(slug: string, label: string) {
 function railOpticalScale(slug: string, label: string, aspectRatio: number) {
   const key = normalizeBrandKey(slug, label);
 
-  // Optical normalization matters more than raw image dimensions in a logo
-  // rail. These small corrections keep icon marks and long wordmarks feeling
-  // equally prominent without stretching or recoloring the artwork.
+  // Keep optical corrections intentionally modest. The rail now reserves width
+  // from the label length and clips inside that invisible slot, so no logo is
+  // allowed to grow into its neighbour even when merchant artwork has padding.
   const knownScale: Record<string, number> = {
-    apple: 0.96,
-    xiaomi: 0.98,
-    samsung: 1.18,
-    anker: 1.08,
-    acefast: 1.82,
+    apple: 0.98,
+    xiaomi: 1,
+    samsung: 1.08,
+    anker: 1.05,
+    acefast: 1.28,
   };
   if (knownScale[key] !== undefined) return knownScale[key];
 
-  // Very wide merchant-supplied artwork often includes generous side padding.
-  // Scale it optically inside the fixed viewport while keeping the correction
-  // conservative enough to avoid collisions with neighboring brands.
   if (aspectRatio >= 5) {
-    return Math.min(1.35, Math.max(1.08, aspectRatio / 5));
+    return Math.min(1.22, Math.max(1.08, aspectRatio / 6));
   }
-  if (aspectRatio >= 3.2) return 1.08;
+  if (aspectRatio >= 3.2) return 1.06;
 
   return 1;
 }
@@ -114,8 +111,13 @@ function LogoImage({
   const opticalScale = normalizeForRail
     ? railOpticalScale(slug, label, imageAspectRatio)
     : 1;
+  const compactLabelLength = label.replace(/[^a-z0-9]/gi, "").length;
+  const normalizedWordmarkRatio = Math.min(
+    2.8,
+    Math.max(2.05, 1.7 + Math.min(compactLabelLength, 10) * 0.12),
+  );
   const frameWidth = wordmark
-    ? size * (normalizeForRail ? 2.05 : 2.6)
+    ? size * (normalizeForRail ? normalizedWordmarkRatio : 2.6)
     : size;
 
   // Catch cached loads/errors which happened before hydration attached the handlers.
@@ -136,7 +138,9 @@ function LogoImage({
       className={cn(
         "relative inline-grid shrink-0 place-items-center",
         frameless
-          ? "overflow-visible rounded-none bg-transparent"
+          ? normalizeForRail
+            ? "overflow-hidden rounded-none bg-transparent"
+            : "overflow-visible rounded-none bg-transparent"
           : normalizeForRail
             ? "overflow-hidden rounded-md bg-white"
             : wordmark
@@ -164,7 +168,7 @@ function LogoImage({
           key={source}
           src={source}
           alt={`${label} logo`}
-          width={size}
+          width={Math.round(frameWidth)}
           height={size}
           loading="lazy"
           decoding="async"
