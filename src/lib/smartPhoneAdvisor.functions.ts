@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { callNvidiaChat, extractJsonObject, NvidiaApiError } from "@/lib/nvidia";
+import { callNvidiaChat, extractJsonObject, NvidiaApiError, type AiProvider } from "@/lib/nvidia";
 import type { ShopifyProduct } from "@/lib/shopify";
 import { STORE_NAME } from "@/lib/storeConfig";
 
@@ -66,7 +66,7 @@ export type SmartAdvisorStoreRecommendation = {
 
 export type SmartAdvisorResult = {
   ok: boolean;
-  provider: "nvidia";
+  provider: AiProvider | "multi";
   model?: string;
   errorCode?: string;
   answer: string;
@@ -105,7 +105,7 @@ function compactProduct(product: ShopifyProduct) {
 function failure(answer: string, errorCode: string): SmartAdvisorResult {
   return {
     ok: false,
-    provider: "nvidia",
+    provider: "multi",
     errorCode,
     answer,
     intent: "general",
@@ -143,6 +143,7 @@ function buildResult(
   parsed: z.infer<typeof modelResultSchema>,
   catalog: ShopifyProduct[],
   model?: string,
+  provider: AiProvider = "nvidia",
 ): SmartAdvisorResult {
   const byHandle = new Map(catalog.map((product) => [product.node.handle, product]));
   const validHandles = new Set(byHandle.keys());
@@ -169,7 +170,7 @@ function buildResult(
 
   return {
     ok: true,
-    provider: "nvidia",
+    provider,
     ...(model ? { model } : {}),
     answer: parsed.answer,
     intent: parsed.intent,
@@ -186,13 +187,14 @@ function parseModelResult(
   text: string,
   catalog: ShopifyProduct[],
   model?: string,
+  provider: AiProvider = "nvidia",
 ): SmartAdvisorResult | null {
   try {
     const parsed = modelResultSchema.parse(JSON.parse(extractJsonObject(text)));
-    return buildResult(parsed, catalog, model);
+    return buildResult(parsed, catalog, model, provider);
   } catch (error) {
     console.error("Smart advisor JSON parse error", {
-      provider: "nvidia",
+      provider,
       error,
       sample: text.slice(0, 1200),
     });
@@ -200,23 +202,35 @@ function parseModelResult(
   }
 }
 
-function nvidiaFailure(error: unknown): SmartAdvisorResult {
+function aiFailure(error: unknown): SmartAdvisorResult {
   if (!(error instanceof NvidiaApiError)) {
-    console.error("NVIDIA smart advisor error", error);
+    console.error("AI smart advisor error", error);
     return failure(
       "The smart advisor could not be reached. Please try again.",
       "ADVISOR_PROVIDER_ERROR",
     );
   }
 
-  console.error("NVIDIA smart advisor provider error", {
+  let gatewayCode = "";
+  try {
+    gatewayCode = (JSON.parse(error.body) as { code?: string }).code ?? "";
+  } catch {}
+
+  console.error("AI smart advisor provider error", {
     status: error.status,
+    code: gatewayCode || undefined,
     message: error.message.slice(0, 500),
   });
 
   if (error.body === "SUPABASE_GATEWAY_NOT_CONFIGURED") {
     return failure(
       "The smart advisor gateway is not configured yet. Add the Supabase server credentials to the deployment and try again.",
+      "ADVISOR_NOT_CONFIGURED",
+    );
+  }
+  if (gatewayCode === "AI_PROVIDERS_NOT_CONFIGURED") {
+    return failure(
+      "No AI provider is configured for the smart advisor yet.",
       "ADVISOR_NOT_CONFIGURED",
     );
   }
@@ -228,12 +242,12 @@ function nvidiaFailure(error: unknown): SmartAdvisorResult {
   }
   if (error.status === 429) {
     return failure(
-      "The NVIDIA AI service is temporarily rate-limited. Please try again shortly.",
+      "The AI service is temporarily rate-limited. Please try again shortly.",
       "ADVISOR_QUOTA_ERROR",
     );
   }
   return failure(
-    "The NVIDIA AI service could not complete the request. Please try again.",
+    "The AI service could not complete the request. Please try again.",
     "ADVISOR_PROVIDER_ERROR",
   );
 }
@@ -259,7 +273,7 @@ export const askSmartPhoneAdvisor = createServerFn({ method: "POST" })
       .map((item) => `${item.role.toUpperCase()}: ${item.text}`)
       .join("\n");
 
-    const prompt = `You are ${STORE_NAME}'s NVIDIA-powered Smart Phone Advisor for a real electronics store in Lebanon.
+    const prompt = `You are ${STORE_NAME}'s multi-provider Smart Phone Advisor for a real electronics store in Lebanon.
 
 YOUR JOB
 - Help shoppers choose, compare and understand smartphones and electronics.
@@ -313,7 +327,7 @@ LIVE ${STORE_NAME} CATALOGUE CANDIDATES
 ${JSON.stringify(catalogCandidates)}`;
 
     try {
-      const { text, model } = await callNvidiaChat({
+      const { text, model, provider } = await callNvidiaChat({
         messages: [
           {
             role: "system",
@@ -323,12 +337,12 @@ ${JSON.stringify(catalogCandidates)}`;
           { role: "user", content: prompt },
         ],
       });
-      const result = parseModelResult(text, catalog, model);
+      const result = parseModelResult(text, catalog, model, provider);
       if (result) return result;
-      return nvidiaFailure(
-        new NvidiaApiError("NVIDIA returned invalid JSON", 502, "INVALID_RESPONSE"),
+      return aiFailure(
+        new NvidiaApiError("AI provider returned invalid JSON", 502, "INVALID_RESPONSE"),
       );
     } catch (error) {
-      return nvidiaFailure(error);
+      return aiFailure(error);
     }
   });
