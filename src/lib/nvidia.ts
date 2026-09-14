@@ -1,5 +1,10 @@
 export const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
 export const DEFAULT_SUPABASE_NVIDIA_FUNCTION = "nvidia-chat";
+// Supabase's legacy anon key is a public client credential, not a service-role/secret key.
+// Keep a built-in fallback so the server-side advisor still works on deployments where
+// Lovable/Cloudflare does not inject SUPABASE_ANON_KEY. NVIDIA_API_KEY remains private
+// inside the protected Supabase Edge Function and is never exposed here.
+export const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0d3lhbmtweHRmZnFxcmFzeXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNzIxOTQsImV4cCI6MjEwNDg0ODE5NH0.VuPOMhdaUolLzkNbjRR59sBOZh351eCp_GebUW8dI08";
 
 export type NvidiaChatMessage = {
   role: "system" | "user" | "assistant";
@@ -33,7 +38,7 @@ export class NvidiaApiError extends Error {
 
 export function getNvidiaGatewayConfig() {
   const supabaseUrl = process.env["SUPABASE_URL"]?.trim() || DEFAULT_SUPABASE_URL;
-  const anonKey = process.env["SUPABASE_ANON_KEY"]?.trim();
+  const anonKey = process.env["SUPABASE_ANON_KEY"]?.trim() || DEFAULT_SUPABASE_ANON_KEY;
   const functionName =
     process.env["SUPABASE_NVIDIA_FUNCTION"]?.trim() || DEFAULT_SUPABASE_NVIDIA_FUNCTION;
   return { supabaseUrl: supabaseUrl.replace(/\/$/, ""), anonKey, functionName };
