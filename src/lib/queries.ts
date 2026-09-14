@@ -52,8 +52,8 @@ export const catalogQueryOptions = () =>
 
 export const collectionsQueryOptions = () =>
   queryOptions({
-    queryKey: ["shopify", "collections"],
-    queryFn: () => fetchCollections(),
+    queryKey: ["shopify", "collections", 100],
+    queryFn: () => fetchCollections(100),
     staleTime: CATALOG_STALE_TIME,
   });
 
