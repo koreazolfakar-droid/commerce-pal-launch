@@ -10,6 +10,7 @@ type BrandLogoProps = {
   className?: string;
   imageUrl?: string;
   wordmark?: boolean;
+  frameless?: boolean;
 };
 
 function safeImageSource(value?: string) {
@@ -28,7 +29,7 @@ export function BrandLogo({ size = 40, ...props }: BrandLogoProps) {
   // Reset loading/error state when a card is reused for a different brand or source.
   return (
     <LogoImage
-      key={`${props.slug}:${props.label}:${props.imageUrl ?? ""}:${size}:${props.wordmark ?? false}`}
+      key={`${props.slug}:${props.label}:${props.imageUrl ?? ""}:${size}:${props.wordmark ?? false}:${props.frameless ?? false}`}
       {...props}
       size={size}
     />
@@ -42,6 +43,7 @@ function LogoImage({
   className,
   imageUrl,
   wordmark = false,
+  frameless = false,
 }: BrandLogoProps) {
   const sources = useMemo(() => {
     const builtIn = brandLogoSources(slug, label, size * 2)
@@ -78,7 +80,10 @@ function LogoImage({
     <span
       style={{ width: wordmark ? size * 2.6 : size, height: size }}
       className={cn(
-        "relative inline-grid shrink-0 place-items-center overflow-hidden rounded-md bg-white",
+        "relative inline-grid shrink-0 place-items-center",
+        frameless
+          ? "overflow-visible rounded-none bg-transparent"
+          : "overflow-hidden rounded-md bg-white",
         className,
       )}
     >
@@ -87,7 +92,10 @@ function LogoImage({
           style={{
             fontSize: wordmark ? 13 : Math.max(10, size * 0.34),
           }}
-          className="absolute inset-0 grid place-items-center bg-white text-center font-semibold leading-tight text-black"
+          className={cn(
+            "absolute inset-0 grid place-items-center text-center font-semibold leading-tight text-black",
+            frameless ? "bg-transparent" : "bg-white",
+          )}
         >
           {wordmark ? label : brandMonogram(label)}
         </span>
