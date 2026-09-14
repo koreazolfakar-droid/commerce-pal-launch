@@ -3,7 +3,7 @@ import { DealSpotlight } from "@/components/DealSpotlight";
 import { useEffect, useState } from "react";
 import { ProductRail } from "@/components/ProductRail";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
 import { RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
@@ -38,13 +38,12 @@ const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    const [catalog, heroCollection] = await Promise.all([
-      context.queryClient.ensureQueryData(catalogQueryOptions()),
-      context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
-    ]);
-    const heroImage =
-      heroCollection?.products?.[0]?.node.images.edges[0]?.node.url ??
-      catalog.products[0]?.node.images.edges[0]?.node.url;
+    // Keep the first render lightweight: only the tiny hero collection is required
+    // before HTML can stream. The larger catalog is fetched without suspending the page.
+    const heroCollection = await context.queryClient.ensureQueryData(
+      collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
+    );
+    const heroImage = heroCollection?.products?.[0]?.node.images.edges[0]?.node.url;
     return { heroImage };
   },
   head: ({ loaderData }) => {
@@ -167,24 +166,19 @@ function HomePromoTicker({ heading, details }: { heading: string; details: strin
 
 function Index() {
   const { t, language } = useLanguage();
-  const [showProductSections, setShowProductSections] = useState(false);
   const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
-  const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
+  const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: collections = [] } = useQuery(collectionsQueryOptions());
   const { data: heroCollection } = useQuery(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4));
+  const catalogReady = Boolean(catalog);
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
-    enabled: showProductSections,
+    enabled: catalogReady,
   });
   const { data: bestSellers = [] } = useQuery({
     ...bestSellingQueryOptions(),
-    enabled: showProductSections,
+    enabled: catalogReady,
   });
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setShowProductSections(true), 350);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   // Products priced at $0 inside `homepage-hero` are presentation-only entries.
   // Crucially, keep the original catalog intact for HomeHero so changing homepage
@@ -194,13 +188,13 @@ function Index() {
       .filter((product) => Number(product.node.priceRange.minVariantPrice.amount) <= 0)
       .map((product) => product.node.id),
   );
-  const isHomepageMerchandise = (product: (typeof catalog.products)[number]) =>
+  const isHomepageMerchandise = (product: NonNullable<typeof catalog>["products"][number]) =>
     !heroOnlyProductIds.has(product.node.id);
 
-  const products = catalog.products;
+  const products = catalog?.products ?? [];
   const merchandiseProducts = products.filter(isHomepageMerchandise);
-  const homepageCatalog = { ...catalog, products: merchandiseProducts };
-  const brands = buildShopifyBrands(catalog.brands, collections);
+  const homepageCatalog = catalog ? { ...catalog, products: merchandiseProducts } : null;
+  const brands = catalog ? buildShopifyBrands(catalog.brands, collections) : [];
   const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
   const best = (bestSellers ?? []).filter(isHomepageMerchandise);
   const latest = newItems.filter(isHomepageMerchandise);
@@ -232,10 +226,20 @@ function Index() {
           </div>
         ) : null}
 
-        <CategorySection catalog={catalog} collections={collections} />
-        {isVisible("brands") ? <TopBrands brands={brands} /> : null}
+        {catalog ? (
+          <CategorySection catalog={catalog} collections={collections} />
+        ) : (
+          <div className="h-28 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+        )}
+        {isVisible("brands") ? (
+          catalog ? (
+            <TopBrands brands={brands} />
+          ) : (
+            <div className="h-24 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+          )
+        ) : null}
 
-        {showProductSections ? (
+        {catalogReady ? (
           <>
             {isVisible("featured_products") && best.length > 0 && (
               <section data-testid="best-sellers">
@@ -293,7 +297,9 @@ function Index() {
             {isVisible("featured_products") ? (
               <>
                 <BundleSection collections={collections} />
-                <BrandShowcase catalog={homepageCatalog} collections={collections} />
+                {homepageCatalog ? (
+                  <BrandShowcase catalog={homepageCatalog} collections={collections} />
+                ) : null}
               </>
             ) : null}
           </>
