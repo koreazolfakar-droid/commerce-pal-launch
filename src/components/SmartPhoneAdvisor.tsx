@@ -221,7 +221,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
           />
 
           <section
-            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-card shadow-2xl lg:inset-auto lg:bottom-6 lg:right-6 lg:h-[calc(100dvh-3rem)] lg:max-h-[760px] lg:w-[480px] lg:rounded-[2rem] lg:border lg:border-border/80"
+            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-card shadow-2xl lg:inset-auto lg:bottom-6 lg:right-6 lg:h-[calc(100dvh-3rem)] lg:max-h-[760px] lg:w-[480px] lg:rounded-[var(--sc-card-radius)] lg:border lg:border-border/80"
             role="dialog"
             aria-modal="true"
             aria-label="Smart phone advisor"
@@ -229,7 +229,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
             <header className="relative border-b border-border/70 bg-card/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl sm:px-5 lg:pt-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+                  <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-[var(--sc-control-radius)] bg-primary text-primary-foreground shadow-card">
                     <Sparkles className="h-5 w-5" />
                     <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-success" />
                   </div>
@@ -253,7 +253,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-xl text-muted-foreground"
+                    className="h-11 w-11 rounded-[var(--sc-control-radius)] text-muted-foreground"
                     aria-label="Start a new conversation"
                     onClick={resetConversation}
                     disabled={busy}
@@ -264,7 +264,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-xl"
+                    className="h-11 w-11 rounded-[var(--sc-control-radius)]"
                     aria-label="Close smart advisor"
                     onClick={() => setOpen(false)}
                   >
@@ -274,7 +274,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
               </div>
 
               {effectiveContext && (
-                <div className="mt-3 flex items-center gap-2 rounded-xl border border-primary/10 bg-primary/[0.04] px-3 py-2 text-[10px] font-semibold text-muted-foreground">
+                <div className="mt-3 flex items-center gap-2 rounded-[var(--sc-control-radius)] border border-primary/10 bg-primary/[0.04] px-3 py-2 text-[11px] font-semibold text-muted-foreground">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                   {isComparePage
                     ? "Using the phones currently in your comparison"
@@ -283,10 +283,10 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
               )}
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-surface/35 via-background to-background px-3 py-4 sm:px-4">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background px-[var(--sc-gutter-mobile)] py-4 sm:px-[var(--sc-gutter-tablet)]">
               {isWelcome && (
                 <div className="mx-auto flex max-w-sm flex-col items-center px-2 pb-4 pt-3 text-center sm:pt-5">
-                  <div className="grid h-16 w-16 place-items-center rounded-[1.4rem] border border-primary/10 bg-primary/[0.06] text-primary shadow-sm">
+                  <div className="grid h-16 w-16 place-items-center rounded-[var(--sc-card-radius)] border border-primary/10 bg-primary/[0.06] text-primary shadow-card">
                     <Bot className="h-8 w-8" />
                   </div>
                   <h3 className="mt-4 text-xl font-black tracking-tight text-foreground">
@@ -318,8 +318,8 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                         className={cn(
                           "max-w-[86%] whitespace-pre-wrap break-words px-3.5 py-2.5 text-[13px] leading-[1.55] shadow-sm",
                           message.role === "user"
-                            ? "rounded-[1.2rem] rounded-br-md bg-primary text-primary-foreground"
-                            : "rounded-[1.2rem] rounded-bl-md border bg-card text-foreground",
+                            ? "rounded-[var(--sc-card-radius)] rounded-br-md bg-primary text-primary-foreground"
+                            : "rounded-[var(--sc-card-radius)] rounded-bl-md border bg-card text-foreground",
                           message.failed &&
                             "border-destructive/25 bg-destructive/5 text-foreground",
                         )}
@@ -331,12 +331,12 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                     {message.role === "assistant" && message.result && (
                       <div className="ml-9 space-y-2.5">
                         {message.result.bestPick && (
-                          <div className="flex items-start gap-2.5 rounded-2xl border border-primary/15 bg-primary/[0.05] p-3">
+                          <div className="flex items-start gap-2.5 rounded-[var(--sc-card-radius)] border border-primary/15 bg-primary/[0.05] p-3">
                             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                               <Star className="h-4 w-4" />
                             </span>
                             <div className="min-w-0">
-                              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary">
                                 Best pick
                               </p>
                               <p className="mt-0.5 text-xs font-extrabold text-foreground">
@@ -357,7 +357,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                             {message.result.comparison.map((phone) => (
                               <article
                                 key={phone.name}
-                                className="overflow-hidden rounded-2xl border bg-card shadow-sm"
+                                className="overflow-hidden rounded-[var(--sc-card-radius)] border bg-card shadow-card"
                               >
                                 <div className="flex items-start justify-between gap-3 p-3.5">
                                   <div className="min-w-0">
@@ -368,7 +368,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                       {phone.verdict}
                                     </p>
                                   </div>
-                                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-black text-primary">
+                                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-black text-primary">
                                     <Star className="h-3 w-3" /> {Math.round(phone.score)}
                                   </span>
                                 </div>
@@ -385,10 +385,10 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                           specIndex >= 2 && "border-t",
                                         )}
                                       >
-                                        <dt className="text-[8px] font-black uppercase tracking-[0.12em] text-muted-foreground">
+                                        <dt className="text-[9px] font-black uppercase tracking-[0.1em] text-muted-foreground">
                                           {label}
                                         </dt>
-                                        <dd className="mt-1 break-words font-semibold leading-snug text-foreground">
+                                        <dd className="mt-1 break-words text-[11px] font-semibold leading-snug text-foreground">
                                           {value}
                                         </dd>
                                       </div>
@@ -398,11 +398,11 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                 {(phone.pros.length > 0 || phone.cons.length > 0) && (
                                   <div className="grid gap-2.5 p-3 sm:grid-cols-2">
                                     {phone.pros.length > 0 && (
-                                      <div className="rounded-xl border border-success/20 bg-success/5 p-2.5">
-                                        <p className="text-[9px] font-black uppercase tracking-wide text-success">
+                                      <div className="rounded-[var(--sc-control-radius)] border border-success/20 bg-success/5 p-2.5">
+                                        <p className="text-[10px] font-black uppercase tracking-wide text-success">
                                           Strengths
                                         </p>
-                                        <ul className="mt-1.5 space-y-1 text-[10px] leading-relaxed">
+                                        <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed">
                                           {phone.pros.slice(0, 3).map((item) => (
                                             <li key={item} className="flex gap-1.5">
                                               <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-success" />
@@ -413,11 +413,11 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                       </div>
                                     )}
                                     {phone.cons.length > 0 && (
-                                      <div className="rounded-xl border bg-surface/70 p-2.5">
-                                        <p className="text-[9px] font-black uppercase tracking-wide text-muted-foreground">
+                                      <div className="rounded-[var(--sc-control-radius)] border bg-surface/70 p-2.5">
+                                        <p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
                                           Trade-offs
                                         </p>
-                                        <ul className="mt-1.5 space-y-1 text-[10px] leading-relaxed text-muted-foreground">
+                                        <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed text-muted-foreground">
                                           {phone.cons.slice(0, 3).map((item) => (
                                             <li key={item}>• {item}</li>
                                           ))}
@@ -444,9 +444,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                         )}
 
                         {message.result.storeRecommendations?.length > 0 && (
-                          <div className="rounded-2xl border bg-card p-3 shadow-sm">
+                          <div className="rounded-[var(--sc-card-radius)] border bg-card p-3 shadow-card">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+                              <p className="text-[10px] font-black uppercase tracking-[0.13em] text-muted-foreground">
                                 Recommended in {STORE_NAME}
                               </p>
                               <ShoppingBag className="h-3.5 w-3.5 text-primary" />
@@ -456,23 +456,23 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                 <a
                                   key={item.handle}
                                   href={`/product/${item.handle}`}
-                                  className="group flex items-start justify-between gap-3 rounded-xl border bg-background p-3 transition-colors hover:border-primary/40 hover:bg-primary/[0.025]"
+                                  className="group flex items-start justify-between gap-3 rounded-[var(--sc-control-radius)] border bg-background p-3 transition-colors hover:border-primary/40 hover:bg-primary/[0.025]"
                                 >
                                   <div className="min-w-0">
-                                    <p className="truncate text-[11px] font-black text-foreground group-hover:text-primary">
+                                    <p className="truncate text-xs font-black text-foreground group-hover:text-primary">
                                       {item.title}
                                     </p>
-                                    <p className="mt-1 line-clamp-2 text-[9px] leading-relaxed text-muted-foreground">
+                                    <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-muted-foreground">
                                       {item.reason}
                                     </p>
                                   </div>
                                   <div className="shrink-0 text-right">
-                                    <p className="text-[11px] font-black text-primary">
+                                    <p className="text-xs font-black text-primary">
                                       {formatStorePrice(item.price, item.currency)}
                                     </p>
                                     <p
                                       className={cn(
-                                        "mt-1 text-[8px] font-black uppercase tracking-wide",
+                                        "mt-1 text-[9px] font-black uppercase tracking-wide",
                                         item.available ? "text-success" : "text-muted-foreground",
                                       )}
                                     >
@@ -486,8 +486,8 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                         )}
 
                         {message.result.sources?.length > 0 && (
-                          <div className="rounded-2xl border bg-card p-3 shadow-sm">
-                            <p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+                          <div className="rounded-[var(--sc-card-radius)] border bg-card p-3 shadow-card">
+                            <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.13em] text-muted-foreground">
                               <Globe2 className="h-3 w-3" /> Sources
                             </p>
                             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -497,7 +497,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                   href={source.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex max-w-full items-center gap-1 rounded-full border bg-background px-2.5 py-1 text-[9px] font-semibold text-muted-foreground hover:border-primary hover:text-primary"
+                                  className="inline-flex max-w-full items-center gap-1 rounded-full border bg-background px-2.5 py-1 text-[10px] font-semibold text-muted-foreground hover:border-primary hover:text-primary"
                                 >
                                   <span className="max-w-[220px] truncate">{source.title}</span>
                                   <ExternalLink className="h-2.5 w-2.5 shrink-0" />
@@ -515,7 +515,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                 type="button"
                                 onClick={() => void send(question)}
                                 disabled={busy}
-                                className="shrink-0 rounded-full border bg-card px-3 py-1.5 text-[9px] font-bold text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                                className="shrink-0 rounded-full border bg-card px-3 py-1.5 text-[10px] font-bold text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
                               >
                                 {question}
                               </button>
@@ -532,7 +532,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                     <span className="mb-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-xl border bg-card text-primary shadow-sm">
                       <Sparkles className="h-3.5 w-3.5" />
                     </span>
-                    <div className="flex items-center gap-2 rounded-[1.2rem] rounded-bl-md border bg-card px-3.5 py-2.5 text-[11px] font-semibold text-muted-foreground shadow-sm">
+                    <div className="flex items-center gap-2 rounded-[var(--sc-card-radius)] rounded-bl-md border bg-card px-3.5 py-2.5 text-[11px] font-semibold text-muted-foreground shadow-sm">
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                       Thinking and checking the store…
                     </div>
@@ -546,7 +546,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                         key={item}
                         type="button"
                         onClick={() => void send(item)}
-                        className="group flex min-h-14 items-center justify-between gap-3 rounded-2xl border bg-card px-3.5 py-3 text-left shadow-sm transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/[0.025]"
+                        className="group flex min-h-14 items-center justify-between gap-3 rounded-[var(--sc-card-radius)] border bg-card px-3.5 py-3 text-left shadow-card transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/[0.025]"
                       >
                         <span className="text-[11px] font-extrabold leading-snug text-foreground">
                           {item}
@@ -568,7 +568,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
               }}
               className="border-t border-border/70 bg-card/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl sm:px-4 lg:pb-4"
             >
-              <div className="rounded-[1.3rem] border bg-background p-1.5 shadow-sm transition-[border-color,box-shadow] focus-within:border-primary/60 focus-within:shadow-[0_0_0_3px_hsl(var(--primary)/0.08)]">
+              <div className="rounded-[var(--sc-card-radius)] border bg-background p-1.5 shadow-card transition-[border-color,box-shadow] focus-within:border-primary/60 focus-within:shadow-[0_0_0_3px_hsl(var(--primary)/0.08)]">
                 <div className="flex items-end gap-2">
                   <MessageCircle className="mb-3 ml-2 h-4 w-4 shrink-0 text-muted-foreground" />
                   <textarea
@@ -590,7 +590,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                   <Button
                     type="submit"
                     size="icon"
-                    className="h-10 w-10 shrink-0 rounded-2xl"
+                    className="h-11 w-11 shrink-0 rounded-[var(--sc-control-radius)]"
                     aria-label="Send question"
                     disabled={!input.trim() || busy}
                   >
@@ -602,7 +602,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                   </Button>
                 </div>
               </div>
-              <p className="mt-2 text-center text-[8px] font-medium text-muted-foreground/80">
+              <p className="mt-2 text-center text-[10px] font-medium text-muted-foreground/80">
                 AI can make mistakes. Verify important specs before buying.
               </p>
             </form>
