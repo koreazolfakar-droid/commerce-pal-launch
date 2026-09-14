@@ -22,13 +22,13 @@ import {
   RotateCcw,
   Search,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Truck,
   User,
 } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
-import { CartDrawer } from "@/components/CartDrawer";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -37,6 +37,7 @@ import { useHydrated } from "@/hooks/useHydrated";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { displayCollections, type CatalogFacet } from "@/lib/taxonomy";
+import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
 const LazySearchOverlay = lazy(() =>
@@ -88,6 +89,9 @@ export function SiteHeader() {
   const { t, direction, language } = useLanguage();
   const hydrated = useHydrated();
   const wishlistCount = useWishlistStore((state) => state.handles.length);
+  const cartCount = useCartStore((state) =>
+    state.items.reduce((total, item) => total + item.quantity, 0),
+  );
 
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
@@ -180,7 +184,19 @@ export function SiteHeader() {
                 </span>
               )}
             </Link>
-            <CartDrawer />
+            <button
+              type="button"
+              onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
+              aria-label={`${t("openBag")}, ${cartCount}`}
+              className="press relative grid h-10 w-10 place-items-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-surface"
+            >
+              <ShoppingBag className="h-5 w-5" strokeWidth={1.8} />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground ring-2 ring-background">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
