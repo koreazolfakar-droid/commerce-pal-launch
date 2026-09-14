@@ -104,14 +104,20 @@ export const CompactProductCard = memo(function CompactProductCard({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1 px-2.5 pb-2.5 pt-1 sm:px-3 sm:pb-3 sm:pt-1.5">
-        {brand && (
-          <div className="flex min-w-0 items-center gap-1.5">
-            <BrandLogo slug={brand.slug} label={brand.label} size={16} className="rounded" />
-            <p className="truncate text-[10px] font-bold uppercase tracking-[0.055em] text-primary/90 sm:text-[11px]">
-              {brand.label}
-            </p>
-          </div>
-        )}
+        <div className="flex min-h-4 min-w-0 items-center gap-1.5">
+          {brand ? (
+            <>
+              <BrandLogo slug={brand.slug} label={brand.label} size={16} className="rounded" />
+              <p className="truncate text-[10px] font-bold uppercase tracking-[0.055em] text-primary/90 sm:text-[11px]">
+                {brand.label}
+              </p>
+            </>
+          ) : (
+            <span className="invisible text-[10px]" aria-hidden="true">
+              Brand
+            </span>
+          )}
+        </div>
 
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
           <h3 className="line-clamp-2 min-h-[2.35rem] break-words text-[0.82rem] font-semibold leading-[1.35] transition-colors group-hover:text-primary sm:text-sm">
@@ -119,7 +125,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           </h3>
         </Link>
 
-        <div className="mt-auto flex min-w-0 items-center justify-between gap-2 pt-0.5">
+        <div className="mt-auto flex min-h-9 min-w-0 items-center justify-between gap-2 pt-0.5">
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
               <bdi className="text-[0.95rem] font-extrabold tracking-tight sm:text-base">
@@ -148,11 +154,15 @@ export const CompactProductCard = memo(function CompactProductCard({
           </button>
         </div>
 
-        {summary && (
-          <p className="truncate text-[10px] leading-4 text-muted-foreground sm:text-xs">
-            {summary}
-          </p>
-        )}
+        <p
+          className={cn(
+            "min-h-4 truncate text-[10px] leading-4 text-muted-foreground sm:text-xs",
+            !summary && "invisible",
+          )}
+          aria-hidden={!summary ? "true" : undefined}
+        >
+          {summary || "\u00a0"}
+        </p>
       </div>
     </article>
   );
