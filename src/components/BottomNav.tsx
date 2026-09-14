@@ -9,7 +9,6 @@ import {
   Search,
   ShoppingBag,
   Smartphone,
-  Sparkles,
   User,
   type LucideIcon,
 } from "lucide-react";
@@ -22,8 +21,6 @@ import { useCartStore } from "@/stores/cartStore";
 import "../mobile-bottom-nav.css";
 
 export const MOBILE_NAV_HEIGHT = "calc(4rem + env(safe-area-inset-bottom, 0px))";
-
-const OPEN_SMART_ADVISOR_EVENT = "spacecall:open-ai";
 
 type NavItem = {
   id: "home" | "categories" | "search" | "cart";
@@ -85,7 +82,6 @@ const CMS_ICONS: Record<string, LucideIcon> = {
   Search,
   ShoppingBag,
   Smartphone,
-  Sparkles,
   User,
 };
 
@@ -167,29 +163,8 @@ export function BottomNav() {
     return fallback;
   };
 
-  const openAi = () => {
-    window.dispatchEvent(new CustomEvent(OPEN_SMART_ADVISOR_EVENT));
-  };
-
   const actionIconClass =
     "relative grid h-8 w-10 place-items-center rounded-xl transition-[background-color,color] duration-200 ease-out";
-
-  const aiButton = (
-    <button
-      key="ai"
-      type="button"
-      data-nav-id="ai"
-      data-active="false"
-      className={cn(itemClass(false), "text-primary hover:text-primary")}
-      aria-label="Space Call AI"
-      onClick={openAi}
-    >
-      <span className={cn(actionIconClass, "bg-primary/10 text-primary dark:bg-primary/15")}>
-        <Sparkles aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
-      </span>
-      <span className="max-w-full truncate whitespace-nowrap px-0.5">AI</span>
-    </button>
-  );
 
   return (
     <nav
@@ -201,7 +176,7 @@ export function BottomNav() {
         {cmsItems.length > 0 ? (
           <div
             className="mx-auto grid h-16 max-w-[560px] px-1 sm:px-3"
-            style={{ gridTemplateColumns: `repeat(${cmsItems.length + 1}, minmax(0, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(${cmsItems.length}, minmax(0, 1fr))` }}
           >
             {cmsItems.map((item) => {
               const active = routeActive(pathname, item.href);
@@ -230,11 +205,10 @@ export function BottomNav() {
                 </a>
               );
             })}
-            {aiButton}
           </div>
         ) : (
-          <div className="mx-auto grid h-16 max-w-[560px] grid-cols-5 px-1 sm:px-3">
-            {NAV_ITEMS.slice(0, 3).map((item) => {
+          <div className="mx-auto grid h-16 max-w-[560px] grid-cols-4 px-1 sm:px-3">
+            {NAV_ITEMS.map((item) => {
               const active = item.matches(pathname);
               const label = t(item.labelKey);
               const Icon = item.icon;
@@ -256,35 +230,7 @@ export function BottomNav() {
                     )}
                   >
                     <Icon aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
-                  </span>
-                  <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
-                </Link>
-              );
-            })}
-            {aiButton}
-            {NAV_ITEMS.slice(3).map((item) => {
-              const active = item.matches(pathname);
-              const label = t(item.labelKey);
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.id}
-                  to={item.to}
-                  data-nav-id={item.id}
-                  data-active={active ? "true" : "false"}
-                  className={itemClass(active)}
-                  aria-label={label}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <span
-                    className={cn(
-                      actionIconClass,
-                      active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
-                    )}
-                  >
-                    <Icon aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
-                    <CartBadge value={cartCount} />
+                    {item.badge === "cart" ? <CartBadge value={cartCount} /> : null}
                   </span>
                   <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
                 </Link>

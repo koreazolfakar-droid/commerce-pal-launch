@@ -33,14 +33,9 @@ function syncRuntimeEnv(env: unknown) {
   for (const key of [
     "SHOPIFY_STOREFRONT_TOKEN",
     "SHOPIFY_STOREFRONT_ACCESS_TOKEN",
-    "OPENAI_API_KEY",
-    "OPENAI_MODEL",
-    "GEMINI_API_KEY",
-    "GOOGLE_API_KEY",
-    "GEMINI_MODEL",
     "SUPABASE_URL",
     "SUPABASE_ANON_KEY",
-    "SUPABASE_NVIDIA_FUNCTION",
+    "SUPABASE_PUBLISHABLE_KEY",
   ]) {
     const value = runtime[key];
     if (typeof value === "string" && value && !process.env[key]) {

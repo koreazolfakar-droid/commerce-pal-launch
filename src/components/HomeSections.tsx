@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import {
   Bike,
   CreditCard,
-  Grid2x2,
   Heart,
   MessageCircle,
   RotateCcw,
@@ -68,13 +67,6 @@ export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
 
 const SERVICES = [
   {
-    icon: Grid2x2,
-    title: "serviceComparePhones",
-    detail: "serviceCompareDetail",
-    cta: "serviceCompareAction",
-    to: "/compare" as const,
-  },
-  {
     icon: Heart,
     title: "serviceSavedFavorites",
     detail: "serviceSavedDetail",
@@ -101,7 +93,7 @@ export function ServicesStrip() {
   const { t } = useLanguage();
   return (
     <section aria-label={t("storeServices")}>
-      <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3">
         {SERVICES.map((service) => {
           const className =
             "group flex min-w-0 flex-col items-start gap-3 rounded-2xl border bg-card p-4 shadow-card transition hover:border-primary/50 sm:flex-row";

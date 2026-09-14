@@ -21,7 +21,6 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { OfficialProductResearch } from "@/components/product/OfficialProductResearch";
-import { GeminiShoppingAdvisor } from "@/components/GeminiShoppingAdvisor";
 import { ProseSections } from "@/components/product/ProseSection";
 import { SpecSheet } from "@/components/product/SpecSheet";
 import { VariantPicker } from "@/components/product/VariantPicker";
@@ -272,9 +271,7 @@ function ProductPage() {
         : "shipping";
 
   return (
-    <StoreLayout
-      aiContext={`Product: ${node.title}. Brand: ${node.vendor ?? ""}. Type: ${node.productType ?? ""}. Price: ${selectedVariant ? formatPrice(selectedVariant.price.amount, currency) : ""}. Availability: ${inStock ? "in stock" : "out of stock"}. Description: ${(node.description ?? "").slice(0, 2800)}`}
-    >
+    <StoreLayout>
       <div className="mx-auto max-w-7xl px-4 py-5 pb-32 lg:py-10 lg:pb-14">
         <nav
           aria-label="Breadcrumb"
@@ -482,13 +479,6 @@ function ProductPage() {
             </ul>
           </div>
         </div>
-
-        <section className="mt-6" aria-label="Smart accessory recommendations">
-          <GeminiShoppingAdvisor
-            product={product}
-            catalog={{ products: [...(recommended ?? []), ...(vendorProducts ?? [])] }}
-          />
-        </section>
 
         {(hasOverview || hasSpecs || hasBox || hasShipping) && (
           <section
