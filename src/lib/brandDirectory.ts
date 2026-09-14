@@ -41,15 +41,39 @@ export function mergeVendorBrands(brands: CatalogFacet[], vendors: string[]): Ca
   return orderedBrands([...merged.values()]);
 }
 
-/** Separate logo collections prevent campaign photography from replacing a company mark. */
+function looksLikeLogoImage(collection: ShopifyCollection) {
+  const image = collection.image;
+  if (!image?.url) return false;
+  const evidence = `${image.altText ?? ""} ${image.url}`.toLowerCase();
+  return /(?:^|[\s_\-/.])logo(?:[\s_\-/.]|$)/.test(evidence);
+}
+
+/**
+ * Resolve a merchant logo in priority order:
+ * 1) dedicated `logo-*` / `brand-logo-*` collections;
+ * 2) an exact brand collection whose image is clearly a logo.
+ *
+ * This keeps campaign photography from replacing a company mark while allowing
+ * normal Shopify brand collections such as `acefast` + `acefast-logo.jpg` to
+ * populate the Brands UI automatically.
+ */
 export function buildShopifyBrands(
   brands: CatalogFacet[],
   collections: ShopifyCollection[] | undefined,
 ): ShopifyBrand[] {
   return orderedBrands(brands).map((brand) => {
-    const collection = [`logo-${brand.slug}`, `brand-logo-${brand.slug}`]
+    const dedicated = [`logo-${brand.slug}`, `brand-logo-${brand.slug}`]
       .map((handle) => collections?.find((item) => item.handle === handle && item.image?.url))
       .find(Boolean);
+
+    const exact = collections?.find(
+      (item) =>
+        Boolean(item.image?.url) &&
+        (item.handle === brand.slug || slugify(item.title) === brand.slug) &&
+        looksLikeLogoImage(item),
+    );
+
+    const collection = dedicated ?? exact;
     const entry: ShopifyBrand = { ...brand };
     if (collection?.image) {
       entry.image = collection.image.url;
