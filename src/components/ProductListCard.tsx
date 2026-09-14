@@ -2,7 +2,7 @@ import { productCompareAt, productPrimaryVariant } from "@/lib/productPricing";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, ShoppingBag } from "lucide-react";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/BrandLogo";
@@ -29,7 +29,7 @@ export const ProductListCard = memo(function ProductListCard({
 }) {
   const { t } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
-  const isLoading = useCartStore((state) => state.isLoading);
+  const [isAdding, setIsAdding] = useState(false);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
   const toggleWishlist = useWishlistToggle();
 
@@ -44,20 +44,25 @@ export const ProductListCard = memo(function ProductListCard({
   const brand = resolveBrand(product);
 
   const add = async () => {
-    if (!variant) return;
-    const success = await addItem({
-      product,
-      variantId: variant.id,
-      variantTitle: variant.title,
-      price: variant.price,
-      quantity: 1,
-      selectedOptions: variant.selectedOptions ?? [],
-    });
+    if (!variant || isAdding) return;
+    setIsAdding(true);
+    try {
+      const success = await addItem({
+        product,
+        variantId: variant.id,
+        variantTitle: variant.title,
+        price: variant.price,
+        quantity: 1,
+        selectedOptions: variant.selectedOptions ?? [],
+      });
 
-    if (success) {
-      toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
-    } else {
-      toast.error(t("addToCartFailed"), { position: "top-center" });
+      if (success) {
+        toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
+      } else {
+        toast.error(t("addToCartFailed"), { position: "top-center" });
+      }
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -164,12 +169,12 @@ export const ProductListCard = memo(function ProductListCard({
 
           <Button
             onClick={add}
-            disabled={isLoading || !variant || !inStock}
+            disabled={isAdding || !variant || !inStock}
             size="sm"
             aria-label={t(inStock ? "addToCart" : "outOfStock")}
             className="press h-11 w-11 shrink-0 rounded-full p-0 shadow-sm sm:w-auto sm:min-w-[7.25rem] sm:px-3 sm:text-xs"
           >
-            {isLoading ? (
+            {isAdding ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
