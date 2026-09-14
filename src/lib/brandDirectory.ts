@@ -1,11 +1,44 @@
 import type { ShopifyCollection } from "@/lib/shopify";
 import type { CatalogFacet } from "@/lib/taxonomy";
+import { slugify } from "@/lib/taxonomy";
 import { orderedBrands } from "@/lib/homeMerchandising";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 export interface ShopifyBrand extends CatalogFacet {
   image?: string;
   imageAlt?: string;
   collectionHandle?: string;
+}
+
+const GENERIC_VENDOR_LABELS = new Set([
+  STORE_NAME.toLowerCase(),
+  STORE_NAME.toLowerCase().replace(/\s+/g, ""),
+  "default",
+  "generic",
+  "unknown",
+]);
+
+/**
+ * Extend the bounded catalogue brand index with every explicit Shopify vendor.
+ * The vendor discovery query is intentionally tiny (vendor only), so brands from
+ * products outside the homepage's first catalogue page still appear without
+ * making the homepage fetch every product card payload.
+ */
+export function mergeVendorBrands(brands: CatalogFacet[], vendors: string[]): CatalogFacet[] {
+  const merged = new Map(brands.map((brand) => [brand.slug, { ...brand }]));
+
+  for (const rawVendor of vendors) {
+    const label = rawVendor.trim();
+    if (!label) continue;
+    const normalized = label.toLowerCase();
+    if (GENERIC_VENDOR_LABELS.has(normalized)) continue;
+
+    const slug = slugify(label);
+    if (!slug || merged.has(slug)) continue;
+    merged.set(slug, { slug, label, count: 1 });
+  }
+
+  return orderedBrands([...merged.values()]);
 }
 
 /** Separate logo collections prevent campaign photography from replacing a company mark. */
