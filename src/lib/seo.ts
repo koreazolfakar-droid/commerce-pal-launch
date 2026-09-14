@@ -71,6 +71,11 @@ export function organizationJsonLd() {
     STORE_CONFIG.socialX,
     STORE_CONFIG.socialYoutube,
   ].filter(Boolean);
+  const telephone = STORE_CONFIG.whatsappNumber ? `+${STORE_CONFIG.whatsappNumber}` : undefined;
+  const detailedAddress =
+    STORE_CONFIG.invoiceAddress && STORE_CONFIG.invoiceAddress.toLowerCase() !== "lebanon"
+      ? STORE_CONFIG.invoiceAddress
+      : undefined;
 
   return {
     "@context": "https://schema.org",
@@ -85,10 +90,29 @@ export function organizationJsonLd() {
     },
     image: DEFAULT_OG_IMAGE,
     description: `${SITE_NAME} is an electronics store in Lebanon for smartphones, tablets, laptops, audio, wearables and accessories.`,
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "LB",
+      ...(detailedAddress ? { streetAddress: detailedAddress } : {}),
+    },
     areaServed: {
       "@type": "Country",
       name: "Lebanon",
     },
+    ...(telephone
+      ? {
+          telephone,
+          contactPoint: [
+            {
+              "@type": "ContactPoint",
+              telephone,
+              contactType: "customer service",
+              areaServed: "LB",
+              availableLanguage: ["en", "ar"],
+            },
+          ],
+        }
+      : {}),
     ...(sameAs.length ? { sameAs } : {}),
   };
 }
@@ -153,7 +177,8 @@ export function productJsonLd(product: ShopifyProduct) {
     "@type": "Product",
     "@id": `${absoluteUrl(`/product/${node.handle}`)}#product`,
     name: node.title,
-    description: node.description || undefined,
+    description:
+      node.description?.trim() || `${node.title} available in Lebanon from ${SITE_NAME}.`,
     image: images.length ? images : undefined,
     sku,
     ...gtinJsonLd(variant?.barcode),
@@ -168,6 +193,10 @@ export function productJsonLd(product: ShopifyProduct) {
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
+      areaServed: {
+        "@type": "Country",
+        name: "Lebanon",
+      },
       seller: { "@id": `${SITE_URL}/#organization` },
     },
   };

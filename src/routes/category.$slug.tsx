@@ -18,7 +18,11 @@ export const Route = createFileRoute("/category/$slug")({
       catalog.categories.find((item) => item.slug === params.slug) ??
       categoryDefinition(params.slug);
     if (!definition) throw notFound();
-    await context.queryClient.ensureQueryData(collectionsQueryOptions());
+
+    // Collections power optional filters only. Do not block the server response on
+    // this secondary request: faster category HTML gives crawlers useful content sooner.
+    void context.queryClient.prefetchQuery(collectionsQueryOptions());
+
     return { label: definition.label, products: productsInCategory(catalog, params.slug) };
   },
   head: ({ params, loaderData }) => {

@@ -6,40 +6,48 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { displayCollections } from "@/lib/taxonomy";
-import { absoluteUrl, canonicalLink, itemListJsonLd, jsonLd } from "@/lib/seo";
+import {
+  breadcrumbJsonLd,
+  canonicalLink,
+  itemListJsonLd,
+  jsonLd,
+  socialMeta,
+} from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/shop")({
   validateSearch: parseProductSearch,
   loader: async ({ context }) => {
     const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
-    context.queryClient.prefetchQuery(collectionsQueryOptions());
+    void context.queryClient.prefetchQuery(collectionsQueryOptions());
     return { products: catalog.products };
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `Phones & Tech in Lebanon | ${STORE_NAME}` },
-      {
-        name: "description",
-        content: `Shop smartphones, tablets, audio, wearables, chargers and accessories in Lebanon from ${STORE_NAME}, with live pricing and stock from Shopify.`,
-      },
-      { property: "og:title", content: `Phones & Tech in Lebanon | ${STORE_NAME}` },
-      {
-        property: "og:description",
-        content: `Browse ${STORE_NAME} phones, tablets and accessories in Lebanon with live pricing and stock.`,
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/shop") },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: `Phones & Tech in Lebanon | ${STORE_NAME}` },
-      {
-        name: "twitter:description",
-        content: `Browse ${STORE_NAME} phones, tablets and accessories in Lebanon with live pricing and stock.`,
-      },
-    ],
-    links: [canonicalLink("/shop")],
-    scripts: loaderData ? [jsonLd(itemListJsonLd("Shop all products", loaderData.products))] : [],
-  }),
+  head: ({ loaderData }) => {
+    const title = `Phones & Tech in Lebanon | ${STORE_NAME}`;
+    const description = `Shop smartphones, tablets, laptops, audio, wearables, chargers and accessories in Lebanon at ${STORE_NAME} with live pricing and stock.`;
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        {
+          name: "robots",
+          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        },
+        ...socialMeta({ title, description, path: "/shop" }),
+      ],
+      links: [canonicalLink("/shop")],
+      scripts: [
+        jsonLd(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Shop", path: "/shop" },
+          ]),
+        ),
+        ...(loaderData ? [jsonLd(itemListJsonLd("Shop all products", loaderData.products))] : []),
+      ],
+    };
+  },
   component: ShopPage,
 });
 
