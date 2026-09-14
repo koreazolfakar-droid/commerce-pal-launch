@@ -108,9 +108,9 @@ export const ProductListCard = memo(function ProductListCard({
         />
       </button>
 
-      <div className="flex min-w-0 flex-col gap-1 pe-12">
+      <div className="flex min-w-0 flex-col gap-1">
         {brand && (
-          <div className="flex min-w-0 items-center gap-1.5">
+          <div className="flex min-w-0 items-center gap-1.5 pe-12">
             <BrandLogo
               slug={brand.slug}
               label={brand.label}
@@ -123,22 +123,26 @@ export const ProductListCard = memo(function ProductListCard({
           </div>
         )}
 
-        <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
+        <Link
+          to="/product/$handle"
+          params={{ handle: node.handle }}
+          className="min-w-0 pe-12"
+        >
           <h3 className="line-clamp-2 break-words text-[0.8rem] font-extrabold leading-[1.2] tracking-[-0.018em] transition-colors group-hover:text-primary sm:text-[0.9rem]">
             {node.title}
           </h3>
         </Link>
 
         {summary && (
-          <p className="truncate text-[10px] leading-[0.95rem] text-muted-foreground sm:text-[11px]">
+          <p className="truncate pe-12 text-[10px] leading-[0.95rem] text-muted-foreground sm:text-[11px]">
             {summary}
           </p>
         )}
 
-        <div className="mt-0.5 flex min-w-0 items-end justify-between gap-2">
-          <div className="min-w-0 flex-1">
+        <div className="mt-0.5 grid min-w-0 grid-cols-[minmax(0,1fr)_2.75rem] items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-              <bdi className="text-[0.94rem] font-extrabold leading-tight tracking-tight sm:text-base">
+              <bdi className="truncate text-[0.94rem] font-extrabold leading-tight tracking-tight sm:text-base">
                 {formatPrice(price.amount, price.currencyCode)}
               </bdi>
               {discount !== null && compareAt && (
@@ -161,14 +165,17 @@ export const ProductListCard = memo(function ProductListCard({
             onClick={add}
             disabled={isLoading || !variant || !inStock}
             size="sm"
-            className="press h-11 min-w-[6.6rem] shrink-0 rounded-full px-2.5 text-[11px] font-bold shadow-sm sm:min-w-[7.25rem] sm:px-3 sm:text-xs"
+            aria-label={t(inStock ? "addToCart" : "outOfStock")}
+            className="press h-11 w-11 shrink-0 rounded-full p-0 shadow-sm sm:w-auto sm:min-w-[7.25rem] sm:px-3 sm:text-xs"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
                 <ShoppingBag className="h-4 w-4" />
-                <span>{t(inStock ? "addToCart" : "outOfStock")}</span>
+                <span className="hidden sm:inline">
+                  {t(inStock ? "addToCart" : "outOfStock")}
+                </span>
               </>
             )}
           </Button>
