@@ -32,7 +32,10 @@ jobs:
         run: bun run typecheck
 
       - name: Unit and regression tests
-        run: bun run test:unit
+        shell: bash
+        run: |
+          mapfile -d '' tests < <(find e2e -name '*.test.mjs' ! -name 'ci-config.test.mjs' -print0)
+          node --test "${tests[@]}"
 
       - name: Production build
         run: bun run build
