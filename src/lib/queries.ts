@@ -18,11 +18,23 @@ import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 2 * 60 * 1000;
 
+async function fetchCatalogIndexSafely() {
+  try {
+    return buildCatalogIndex(await fetchCatalogProducts(60));
+  } catch (error) {
+    console.error(
+      "Shopify catalog fetch failed; rendering the storefront update state instead of the global error page.",
+      error,
+    );
+    return buildCatalogIndex([]);
+  }
+}
+
 /** Bounded discovery index. Route-specific product data uses dedicated queries. */
 export const catalogQueryOptions = () =>
   queryOptions({
     queryKey: ["shopify", "catalog"],
-    queryFn: async () => buildCatalogIndex(await fetchCatalogProducts(60)),
+    queryFn: fetchCatalogIndexSafely,
     staleTime: CATALOG_STALE_TIME,
   });
 
