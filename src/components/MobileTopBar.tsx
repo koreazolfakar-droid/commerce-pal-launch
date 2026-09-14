@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Hydrate } from "@tanstack/react-start";
+import { interaction } from "@tanstack/react-start/hydration";
 import { Heart, LayoutGrid, Search, ShoppingBag } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
@@ -50,7 +52,15 @@ export function MobileTopBar({
       {/* Only the main header row stays sticky. */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-3 py-2.5">
-          <MobileMenu />
+          {/*
+           * The full mobile drawer is expensive (Radix Sheet, taxonomy, icons,
+           * refresh helpers) but the closed trigger is all users need at first
+           * paint. Keep its SSR button visible and hydrate/download the drawer
+           * only when the user actually reaches for it.
+           */}
+          <Hydrate when={interaction({ events: ["pointerdown", "focusin", "click"] })}>
+            <MobileMenu />
+          </Hydrate>
           <Link
             to="/"
             aria-label={`${STORE_NAME} home`}
