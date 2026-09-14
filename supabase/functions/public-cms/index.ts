@@ -1,44 +1,61 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 'no-store, max-age=0',
-};
+const ALLOWED_ORIGINS = new Set([
+  'https://spacecallapp.store',
+  'https://www.spacecallapp.store',
+]);
 
-function getPublicKey() {
-  const publishable = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS');
-  if (publishable) {
+function headers(req: Request) {
+  const origin = req.headers.get('origin')?.trim() || '';
+  return {
+    ...(origin && ALLOWED_ORIGINS.has(origin) ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {}),
+    'Access-Control-Allow-Headers': 'content-type, apikey, authorization',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=120',
+    'X-Content-Type-Options': 'nosniff',
+  };
+}
+
+function serviceKey() {
+  const raw = Deno.env.get('SUPABASE_SECRET_KEYS');
+  if (raw) {
     try {
-      const parsed = JSON.parse(publishable) as Record<string, unknown>;
-      for (const value of Object.values(parsed)) {
-        if (typeof value === 'string' && value.trim()) return value.trim();
-      }
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const value = parsed.default ?? Object.values(parsed)[0];
+      if (typeof value === 'string' && value.trim()) return value.trim();
     } catch {}
   }
-  return Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  return Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim() || '';
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+  const origin = req.headers.get('origin')?.trim() || '';
+  if (origin && !ALLOWED_ORIGINS.has(origin)) {
+    return new Response(JSON.stringify({ error: 'origin_not_allowed' }), { status: 403, headers: headers(req) });
+  }
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: headers(req) });
   if (req.method !== 'GET') {
-    return new Response(JSON.stringify({ error: 'method_not_allowed' }), { status: 405, headers: cors });
+    return new Response(JSON.stringify({ error: 'method_not_allowed' }), { status: 405, headers: headers(req) });
   }
 
-  const url = Deno.env.get('SUPABASE_URL');
-  const publicKey = getPublicKey();
-  if (!url || !publicKey) {
-    return new Response(JSON.stringify({ error: 'server_not_configured' }), { status: 500, headers: cors });
+  const url = Deno.env.get('SUPABASE_URL')?.trim() || '';
+  const secret = serviceKey();
+  if (!url || !secret) {
+    return new Response(JSON.stringify({ error: 'server_not_configured' }), { status: 500, headers: headers(req) });
   }
 
-  // Never bypass RLS for a public content endpoint.
-  const db = createClient(url, publicKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  // Direct PostgREST reads of CMS source tables are disabled. This server-only
+  // gateway is the sole public projection and exposes only publishable fields.
+  const db = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
   const nowIso = new Date().toISOString();
+
   const [settingsResult, heroesResult, sectionsResult, navigationResult] = await Promise.all([
-    db.from('cms_site_settings').select('key,value_text,value_json,value_type').eq('is_public', true).order('key'),
+    db.from('cms_site_settings')
+      .select('key,value_text,value_json,value_type')
+      .eq('is_public', true)
+      .order('key'),
     db.from('cms_hero_slides')
       .select('id,title,subtitle,image_url,mobile_image_url,button_label,target_type,target_value,sort_order,starts_at,ends_at')
       .eq('is_published', true)
@@ -60,11 +77,11 @@ Deno.serve(async (req: Request) => {
   const firstError = settingsResult.error || heroesResult.error || sectionsResult.error || navigationResult.error;
   if (firstError) {
     console.error('public-cms query failed', firstError.message);
-    return new Response(JSON.stringify({ error: 'cms_query_failed' }), { status: 500, headers: cors });
+    return new Response(JSON.stringify({ error: 'cms_query_failed' }), { status: 500, headers: headers(req) });
   }
 
   const heroSlides = (heroesResult.data ?? [])
-    .filter((row) => row.image_url?.trim())
+    .filter((row) => typeof row.image_url === 'string' && row.image_url.trim())
     .map(({ starts_at: _startsAt, ends_at: _endsAt, ...slide }) => slide);
 
   const settings = Object.fromEntries((settingsResult.data ?? []).map((row) => {
@@ -81,7 +98,7 @@ Deno.serve(async (req: Request) => {
   return new Response(JSON.stringify({
     settings,
     heroSlides,
-    sections: sectionsResult.data ?? [],
-    navigation: navigationResult.data ?? [],
-  }), { status: 200, headers: cors });
+    sections: (sectionsResult.data ?? []).map((row) => ({ ...row, is_visible: true })),
+    navigation: (navigationResult.data ?? []).map((row) => ({ ...row, is_visible: true })),
+  }), { status: 200, headers: headers(req) });
 });
