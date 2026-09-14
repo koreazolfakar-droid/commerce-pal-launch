@@ -7,7 +7,7 @@ export function useCartSync() {
 
   useEffect(() => {
     let cancelled = false;
-    let timeoutId: number | undefined;
+    let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
     let idleId: number | undefined;
 
     const runInitialSync = () => {
@@ -16,10 +16,10 @@ export function useCartSync() {
 
     // The persisted cart is already available immediately. Defer the network
     // reconciliation so it does not compete with hero/catalog requests on first load.
-    if ("requestIdleCallback" in window) {
+    if (typeof window.requestIdleCallback === "function") {
       idleId = window.requestIdleCallback(runInitialSync, { timeout: 1200 });
     } else {
-      timeoutId = window.setTimeout(runInitialSync, 450);
+      timeoutId = globalThis.setTimeout(runInitialSync, 450);
     }
 
     const handleVisibilityChange = () => {
@@ -29,10 +29,10 @@ export function useCartSync() {
 
     return () => {
       cancelled = true;
-      if (idleId !== undefined && "cancelIdleCallback" in window) {
+      if (idleId !== undefined && typeof window.cancelIdleCallback === "function") {
         window.cancelIdleCallback(idleId);
       }
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      if (timeoutId !== undefined) globalThis.clearTimeout(timeoutId);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [syncCart]);
