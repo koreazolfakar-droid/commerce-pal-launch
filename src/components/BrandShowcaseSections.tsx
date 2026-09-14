@@ -10,7 +10,9 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
 import { buildShopifyBrands } from "@/lib/brandDirectory";
+import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { findFacetMerchandising } from "@/lib/homeMerchandising";
+import { cdnImage } from "@/lib/image";
 import { productsInCategory, productsOfBrand } from "@/lib/taxonomy";
 import { useProductViewMode } from "@/hooks/useProductViewMode";
 
@@ -66,6 +68,7 @@ function Header({
 
 export function CategorySection({
   catalog,
+  collections,
 }: {
   catalog: CatalogIndex;
   collections: ShopifyCollection[];
@@ -89,6 +92,13 @@ export function CategorySection({
         >
           {catalog.categories.map((category) => {
             const label = categoryLabel(category, language);
+            const artwork = findCategoryArtworkCollection(
+              collections,
+              category.slug,
+              category.label,
+            );
+            const imageUrl = cdnImage(artwork?.image?.url, 240);
+
             return (
               <Link
                 key={category.slug}
@@ -104,10 +114,20 @@ export function CategorySection({
                 >
                   <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white via-white to-slate-50 dark:from-card dark:via-card dark:to-surface" />
                   <span className="pointer-events-none absolute inset-x-3 top-1 h-px bg-white/80 dark:bg-white/10" />
-                  <CategoryGlyph
-                    slug={category.slug}
-                    className="relative h-[4.15rem] w-[4.15rem] transition-transform duration-300 ease-out group-hover:scale-[1.06] sm:h-[4.65rem] sm:w-[4.65rem] lg:h-[5rem] lg:w-[5rem]"
-                  />
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="relative h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.06]"
+                    />
+                  ) : (
+                    <CategoryGlyph
+                      slug={category.slug}
+                      className="relative h-[4.15rem] w-[4.15rem] transition-transform duration-300 ease-out group-hover:scale-[1.06] sm:h-[4.65rem] sm:w-[4.65rem] lg:h-[5rem] lg:w-[5rem]"
+                    />
+                  )}
                 </span>
                 <h3 className="line-clamp-2 min-h-[2rem] max-w-full text-center text-[11px] font-extrabold leading-[1.15] tracking-[-0.015em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.1rem] sm:text-xs">
                   {label}
