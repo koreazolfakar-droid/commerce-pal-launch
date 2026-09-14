@@ -52,6 +52,7 @@ const PRIORITY_OPTIONS = [
   "Camera",
   "Gaming",
   "Battery",
+  "Performance",
   "Social Media",
   "Work",
   "All-rounder",
