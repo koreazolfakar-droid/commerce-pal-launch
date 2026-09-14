@@ -107,9 +107,12 @@ test("hero uses Shopify collection artwork and routes to the matching collection
   assert.match(home, /products=\{products\}/);
   assert.match(home, /heroCollection=\{heroCollection\}/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
-  assert.match(hero, /const image = activeSlide\?\.image/);
+  assert.match(hero, /const shopifyImage = shopifySlide\?\.image/);
   assert.match(hero, /to="\/collections\/\$handle"/);
-  assert.match(hero, /params=\{\{ handle: activeSlide\.handle \}\}/);
-  assert.match(hero, /alt=\{image\.altText \?\? activeSlide\.title \?\? "Space Call"\}/);
+  assert.match(hero, /params=\{\{ handle: shopifySlide\.handle \}\}/);
+  assert.match(
+    hero,
+    /alt=\{shopifyImage\.altText \?\? shopifySlide\.title \?\? "Space Call"\}/,
+  );
   assert.doesNotMatch(hero, /products\[0\]|featuredProduct|featuredNode|Latest arrival|أحدث وصول/);
 });
