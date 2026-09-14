@@ -2,7 +2,10 @@ import { fetchShopPolicies } from "@/lib/policies";
 import { fetchShowcaseCollections } from "@/lib/merchandising";
 import { queryOptions } from "@tanstack/react-query";
 
+import { mergeVendorBrands } from "@/lib/brandDirectory";
 import {
+  fetchAllProductsByVendor,
+  fetchBrandVendors,
   fetchCatalogProducts,
   fetchBestSellingProducts,
   fetchProducts,
@@ -20,7 +23,16 @@ const CATALOG_STALE_TIME = 2 * 60 * 1000;
 
 async function fetchCatalogIndexSafely() {
   try {
-    return buildCatalogIndex(await fetchCatalogProducts(60));
+    const vendorPromise = fetchBrandVendors().catch((error) => {
+      console.error("Shopify vendor discovery failed; using brands from the bounded catalog.", error);
+      return [] as string[];
+    });
+    const [products, vendors] = await Promise.all([fetchCatalogProducts(60), vendorPromise]);
+    const catalog = buildCatalogIndex(products);
+    return {
+      ...catalog,
+      brands: vendors.length ? mergeVendorBrands(catalog.brands, vendors) : catalog.brands,
+    };
   } catch (error) {
     console.error(
       "Shopify catalog fetch failed; rendering the storefront update state instead of the global error page.",
@@ -86,6 +98,15 @@ export const vendorProductsQueryOptions = (vendor: string) =>
   queryOptions({
     queryKey: ["shopify", "vendor-products", vendor],
     queryFn: () => fetchProductsByVendor(vendor, 9),
+    enabled: Boolean(vendor.trim()),
+    staleTime: CATALOG_STALE_TIME,
+  });
+
+/** Complete product list for a brand page; fetched only when that route is opened. */
+export const allVendorProductsQueryOptions = (vendor: string) =>
+  queryOptions({
+    queryKey: ["shopify", "vendor-products-all", vendor],
+    queryFn: () => fetchAllProductsByVendor(vendor),
     enabled: Boolean(vendor.trim()),
     staleTime: CATALOG_STALE_TIME,
   });
