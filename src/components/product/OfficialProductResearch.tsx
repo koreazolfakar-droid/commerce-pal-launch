@@ -3,7 +3,13 @@ import { ExternalLink, Globe2, Loader2, Sparkles } from "lucide-react";
 
 import { enrichProductFromOfficialSource } from "@/lib/productResearch.functions";
 
-function ProductContext({ title, vendor }: { title: string; vendor?: string | null }) {
+function ProductContext({
+  title,
+  vendor,
+}: {
+  title: string;
+  vendor: string | null | undefined;
+}) {
   return (
     <div>
       <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
