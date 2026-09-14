@@ -74,7 +74,10 @@ test("hero uses Shopify collection artwork and routes to the matching collection
   assert.doesNotMatch(home, /ensureQueryData\(newestQueryOptions\(\)\)/);
   assert.doesNotMatch(home, /Newsletter/);
   assert.match(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
-  assert.match(home, /<HomeHero products=\{products\} heroCollection=\{heroCollection\} \/>/);
+  assert.match(
+    home,
+    /<HomeHero\s+products=\{products\}\s+heroCollection=\{heroCollection\}\s+cmsHeroSlides=\{cms\.heroSlides\}\s+\/>/,
+  );
   assert.match(hero, /const image = activeSlide\?\.image/);
   assert.match(hero, /to="\/collections\/\$handle"/);
   assert.match(hero, /params=\{\{ handle: activeSlide\.handle \}\}/);
