@@ -235,7 +235,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h2 className="truncate text-[15px] font-black tracking-tight">{STORE_NAME} AI Advisor</h2>
+                      <h2 className="truncate text-[15px] font-black tracking-tight">
+                        {STORE_NAME} AI Advisor
+                      </h2>
                       <span className="hidden rounded-full border border-primary/15 bg-primary/5 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-primary sm:inline-flex">
                         Beta
                       </span>
@@ -274,7 +276,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
               {effectiveContext && (
                 <div className="mt-3 flex items-center gap-2 rounded-xl border border-primary/10 bg-primary/[0.04] px-3 py-2 text-[10px] font-semibold text-muted-foreground">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                  {isComparePage ? "Using the phones currently in your comparison" : "Using this product as conversation context"}
+                  {isComparePage
+                    ? "Using the phones currently in your comparison"
+                    : "Using this product as conversation context"}
                 </div>
               )}
             </header>
@@ -285,9 +289,12 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                   <div className="grid h-16 w-16 place-items-center rounded-[1.4rem] border border-primary/10 bg-primary/[0.06] text-primary shadow-sm">
                     <Bot className="h-8 w-8" />
                   </div>
-                  <h3 className="mt-4 text-xl font-black tracking-tight text-foreground">Find the right phone faster</h3>
+                  <h3 className="mt-4 text-xl font-black tracking-tight text-foreground">
+                    Find the right phone faster
+                  </h3>
                   <p className="mt-2 max-w-[330px] text-xs leading-relaxed text-muted-foreground">
-                    Tell me your budget and what matters most — camera, battery, gaming, display, or value.
+                    Tell me your budget and what matters most — camera, battery, gaming, display, or
+                    value.
                   </p>
                 </div>
               )}
@@ -313,7 +320,8 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                           message.role === "user"
                             ? "rounded-[1.2rem] rounded-br-md bg-primary text-primary-foreground"
                             : "rounded-[1.2rem] rounded-bl-md border bg-card text-foreground",
-                          message.failed && "border-destructive/25 bg-destructive/5 text-foreground",
+                          message.failed &&
+                            "border-destructive/25 bg-destructive/5 text-foreground",
                         )}
                       >
                         {message.text}
@@ -328,8 +336,12 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                               <Star className="h-4 w-4" />
                             </span>
                             <div className="min-w-0">
-                              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">Best pick</p>
-                              <p className="mt-0.5 text-xs font-extrabold text-foreground">{message.result.bestPick}</p>
+                              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                                Best pick
+                              </p>
+                              <p className="mt-0.5 text-xs font-extrabold text-foreground">
+                                {message.result.bestPick}
+                              </p>
                             </div>
                           </div>
                         )}
@@ -343,11 +355,18 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                         {message.result.comparison?.length > 0 && (
                           <div className="grid gap-2.5">
                             {message.result.comparison.map((phone) => (
-                              <article key={phone.name} className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                              <article
+                                key={phone.name}
+                                className="overflow-hidden rounded-2xl border bg-card shadow-sm"
+                              >
                                 <div className="flex items-start justify-between gap-3 p-3.5">
                                   <div className="min-w-0">
-                                    <h3 className="truncate text-sm font-black tracking-tight">{phone.name}</h3>
-                                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{phone.verdict}</p>
+                                    <h3 className="truncate text-sm font-black tracking-tight">
+                                      {phone.name}
+                                    </h3>
+                                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                                      {phone.verdict}
+                                    </p>
                                   </div>
                                   <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-black text-primary">
                                     <Star className="h-3 w-3" /> {Math.round(phone.score)}
@@ -366,8 +385,12 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                           specIndex >= 2 && "border-t",
                                         )}
                                       >
-                                        <dt className="text-[8px] font-black uppercase tracking-[0.12em] text-muted-foreground">{label}</dt>
-                                        <dd className="mt-1 break-words font-semibold leading-snug text-foreground">{value}</dd>
+                                        <dt className="text-[8px] font-black uppercase tracking-[0.12em] text-muted-foreground">
+                                          {label}
+                                        </dt>
+                                        <dd className="mt-1 break-words font-semibold leading-snug text-foreground">
+                                          {value}
+                                        </dd>
                                       </div>
                                     ))}
                                 </dl>
@@ -376,7 +399,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                   <div className="grid gap-2.5 p-3 sm:grid-cols-2">
                                     {phone.pros.length > 0 && (
                                       <div className="rounded-xl border border-success/20 bg-success/5 p-2.5">
-                                        <p className="text-[9px] font-black uppercase tracking-wide text-success">Strengths</p>
+                                        <p className="text-[9px] font-black uppercase tracking-wide text-success">
+                                          Strengths
+                                        </p>
                                         <ul className="mt-1.5 space-y-1 text-[10px] leading-relaxed">
                                           {phone.pros.slice(0, 3).map((item) => (
                                             <li key={item} className="flex gap-1.5">
@@ -389,7 +414,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                     )}
                                     {phone.cons.length > 0 && (
                                       <div className="rounded-xl border bg-surface/70 p-2.5">
-                                        <p className="text-[9px] font-black uppercase tracking-wide text-muted-foreground">Trade-offs</p>
+                                        <p className="text-[9px] font-black uppercase tracking-wide text-muted-foreground">
+                                          Trade-offs
+                                        </p>
                                         <ul className="mt-1.5 space-y-1 text-[10px] leading-relaxed text-muted-foreground">
                                           {phone.cons.slice(0, 3).map((item) => (
                                             <li key={item}>• {item}</li>
@@ -419,7 +446,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                         {message.result.storeRecommendations?.length > 0 && (
                           <div className="rounded-2xl border bg-card p-3 shadow-sm">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">Recommended in {STORE_NAME}</p>
+                              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground">
+                                Recommended in {STORE_NAME}
+                              </p>
                               <ShoppingBag className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <div className="mt-2.5 space-y-2">
@@ -430,12 +459,23 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                   className="group flex items-start justify-between gap-3 rounded-xl border bg-background p-3 transition-colors hover:border-primary/40 hover:bg-primary/[0.025]"
                                 >
                                   <div className="min-w-0">
-                                    <p className="truncate text-[11px] font-black text-foreground group-hover:text-primary">{item.title}</p>
-                                    <p className="mt-1 line-clamp-2 text-[9px] leading-relaxed text-muted-foreground">{item.reason}</p>
+                                    <p className="truncate text-[11px] font-black text-foreground group-hover:text-primary">
+                                      {item.title}
+                                    </p>
+                                    <p className="mt-1 line-clamp-2 text-[9px] leading-relaxed text-muted-foreground">
+                                      {item.reason}
+                                    </p>
                                   </div>
                                   <div className="shrink-0 text-right">
-                                    <p className="text-[11px] font-black text-primary">{formatStorePrice(item.price, item.currency)}</p>
-                                    <p className={cn("mt-1 text-[8px] font-black uppercase tracking-wide", item.available ? "text-success" : "text-muted-foreground")}>
+                                    <p className="text-[11px] font-black text-primary">
+                                      {formatStorePrice(item.price, item.currency)}
+                                    </p>
+                                    <p
+                                      className={cn(
+                                        "mt-1 text-[8px] font-black uppercase tracking-wide",
+                                        item.available ? "text-success" : "text-muted-foreground",
+                                      )}
+                                    >
                                       {item.available ? "In stock" : "Out of stock"}
                                     </p>
                                   </div>
@@ -508,7 +548,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                         onClick={() => void send(item)}
                         className="group flex min-h-14 items-center justify-between gap-3 rounded-2xl border bg-card px-3.5 py-3 text-left shadow-sm transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/[0.025]"
                       >
-                        <span className="text-[11px] font-extrabold leading-snug text-foreground">{item}</span>
+                        <span className="text-[11px] font-extrabold leading-snug text-foreground">
+                          {item}
+                        </span>
                         <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
                       </button>
                     ))}
@@ -552,7 +594,11 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                     aria-label="Send question"
                     disabled={!input.trim() || busy}
                   >
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {busy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
