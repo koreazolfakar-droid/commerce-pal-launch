@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
@@ -8,7 +7,6 @@ import {
   LayoutGrid,
   Menu,
   Search,
-  Settings2,
   ShoppingBag,
   Smartphone,
   Sparkles,
@@ -16,15 +14,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { LanguageToggle } from "@/components/LanguageToggle";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import type { CmsNavigationItem } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
@@ -94,7 +83,6 @@ const CMS_ICONS: Record<string, LucideIcon> = {
   LayoutGrid,
   Menu,
   Search,
-  Settings2,
   ShoppingBag,
   Smartphone,
   Sparkles,
@@ -150,8 +138,7 @@ function CmsIcon({ item }: { item: CmsNavigationItem }) {
 
 /** Premium mobile-only primary navigation for the Space Call storefront. */
 export function BottomNav() {
-  const [preferencesOpen, setPreferencesOpen] = useState(false);
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { data: cms } = useQuery(cmsQueryOptions());
   const cartCount = useCartStore((state) =>
@@ -204,155 +191,108 @@ export function BottomNav() {
     </button>
   );
 
-  const preferencesButton = (
-    <button
-      key="preferences"
-      type="button"
-      data-nav-id="preferences"
-      data-active={preferencesOpen ? "true" : "false"}
-      className={itemClass(preferencesOpen)}
-      aria-label={t("preferences")}
-      aria-expanded={preferencesOpen}
-      onClick={() => setPreferencesOpen(true)}
-    >
-      <span
-        className={cn(
-          actionIconClass,
-          preferencesOpen ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
-        )}
-      >
-        <Settings2 aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
-      </span>
-      <span className="max-w-full truncate whitespace-nowrap px-0.5">{t("preferences")}</span>
-    </button>
-  );
-
   return (
-    <>
-      <nav
-        data-testid="bottom-nav"
-        aria-label="Primary mobile navigation"
-        className="fixed inset-x-0 bottom-0 z-50 lg:hidden"
-      >
-        <div className="border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_18px_-16px_rgba(15,23,42,.55)] supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md">
-          {cmsItems.length > 0 ? (
-            <div
-              className="mx-auto grid h-16 max-w-[560px] px-1 sm:px-3"
-              style={{ gridTemplateColumns: `repeat(${cmsItems.length + 2}, minmax(0, 1fr))` }}
-            >
-              {cmsItems.map((item) => {
-                const active = routeActive(pathname, item.href);
-                const label = knownLabel(item.href, item.label);
-                const isCart = item.href === "/cart";
-                return (
-                  <a
-                    key={item.id}
-                    href={item.href ?? "/"}
-                    data-nav-id={item.id}
-                    data-active={active ? "true" : "false"}
-                    className={itemClass(active)}
-                    aria-label={label}
-                    aria-current={active ? "page" : undefined}
+    <nav
+      data-testid="bottom-nav"
+      aria-label="Primary mobile navigation"
+      className="fixed inset-x-0 bottom-0 z-50 lg:hidden"
+    >
+      <div className="border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_18px_-16px_rgba(15,23,42,.55)] supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md">
+        {cmsItems.length > 0 ? (
+          <div
+            className="mx-auto grid h-16 max-w-[560px] px-1 sm:px-3"
+            style={{ gridTemplateColumns: `repeat(${cmsItems.length + 1}, minmax(0, 1fr))` }}
+          >
+            {cmsItems.map((item) => {
+              const active = routeActive(pathname, item.href);
+              const label = knownLabel(item.href, item.label);
+              const isCart = item.href === "/cart";
+              return (
+                <a
+                  key={item.id}
+                  href={item.href ?? "/"}
+                  data-nav-id={item.id}
+                  data-active={active ? "true" : "false"}
+                  className={itemClass(active)}
+                  aria-label={label}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span
+                    className={cn(
+                      actionIconClass,
+                      active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
+                    )}
                   >
-                    <span
-                      className={cn(
-                        actionIconClass,
-                        active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
-                      )}
-                    >
-                      <CmsIcon item={item} />
-                      {isCart ? <CartBadge value={cartCount} /> : null}
-                    </span>
-                    <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
-                  </a>
-                );
-              })}
-              {aiButton}
-              {preferencesButton}
-            </div>
-          ) : (
-            <div className="mx-auto grid h-16 max-w-[560px] grid-cols-6 px-1 sm:px-3">
-              {NAV_ITEMS.slice(0, 3).map((item) => {
-                const active = item.matches(pathname);
-                const label = t(item.labelKey);
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.id}
-                    to={item.to}
-                    data-nav-id={item.id}
-                    data-active={active ? "true" : "false"}
-                    className={itemClass(active)}
-                    aria-label={label}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    <span
-                      className={cn(
-                        actionIconClass,
-                        active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
-                      )}
-                    >
-                      <Icon aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
-                    </span>
-                    <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
-                  </Link>
-                );
-              })}
-              {aiButton}
-              {preferencesButton}
-              {NAV_ITEMS.slice(3).map((item) => {
-                const active = item.matches(pathname);
-                const label = t(item.labelKey);
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.id}
-                    to={item.to}
-                    data-nav-id={item.id}
-                    data-active={active ? "true" : "false"}
-                    className={itemClass(active)}
-                    aria-label={label}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    <span
-                      className={cn(
-                        actionIconClass,
-                        active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
-                      )}
-                    >
-                      <Icon aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
-                      <CartBadge value={cartCount} />
-                    </span>
-                    <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </nav>
-
-      <Sheet open={preferencesOpen} onOpenChange={setPreferencesOpen}>
-        <SheetContent
-          side="bottom"
-          className="rounded-t-[1.75rem] border-x-0 border-b-0 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 lg:hidden"
-        >
-          <SheetHeader className="text-start">
-            <SheetTitle>{t("preferences")}</SheetTitle>
-            <SheetDescription>
-              {language === "ar"
-                ? "غيّر مظهر المتجر واللغة بسرعة."
-                : "Quickly change the store appearance and language."}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-5 flex items-center gap-3">
-            <ThemeToggle />
-            <LanguageToggle />
+                    <CmsIcon item={item} />
+                    {isCart ? <CartBadge value={cartCount} /> : null}
+                  </span>
+                  <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
+                </a>
+              );
+            })}
+            {aiButton}
           </div>
-        </SheetContent>
-      </Sheet>
-    </>
+        ) : (
+          <div className="mx-auto grid h-16 max-w-[560px] grid-cols-5 px-1 sm:px-3">
+            {NAV_ITEMS.slice(0, 3).map((item) => {
+              const active = item.matches(pathname);
+              const label = t(item.labelKey);
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.id}
+                  to={item.to}
+                  data-nav-id={item.id}
+                  data-active={active ? "true" : "false"}
+                  className={itemClass(active)}
+                  aria-label={label}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span
+                    className={cn(
+                      actionIconClass,
+                      active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
+                    )}
+                  >
+                    <Icon aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
+                  </span>
+                  <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
+                </Link>
+              );
+            })}
+            {aiButton}
+            {NAV_ITEMS.slice(3).map((item) => {
+              const active = item.matches(pathname);
+              const label = t(item.labelKey);
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.id}
+                  to={item.to}
+                  data-nav-id={item.id}
+                  data-active={active ? "true" : "false"}
+                  className={itemClass(active)}
+                  aria-label={label}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span
+                    className={cn(
+                      actionIconClass,
+                      active ? "bg-primary/10 text-primary dark:bg-primary/15" : "text-current",
+                    )}
+                  >
+                    <Icon aria-hidden="true" className="h-[23px] w-[23px]" strokeWidth={1.9} />
+                    <CartBadge value={cartCount} />
+                  </span>
+                  <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </nav>
   );
 }
