@@ -7,7 +7,13 @@ import { buildCatalogIndex } from "@/lib/taxonomy";
 import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchCollectionByHandle } from "@/lib/shopify";
-import { absoluteUrl, breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd } from "@/lib/seo";
+import {
+  breadcrumbJsonLd,
+  canonicalLink,
+  itemListJsonLd,
+  jsonLd,
+  socialMeta,
+} from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/collections/$handle")({
@@ -26,29 +32,21 @@ export const Route = createFileRoute("/collections/$handle")({
         ],
       };
     }
-    const title = `${loaderData.collection.title} in Lebanon | ${STORE_NAME}`;
+    const collectionName = loaderData.collection.title;
+    const title = `${collectionName} in Lebanon | ${STORE_NAME}`;
+    const rawDescription = loaderData.collection.description?.trim() ?? "";
     const description =
-      loaderData.collection.description?.slice(0, 145) ||
-      `Shop ${loaderData.collection.title} in Lebanon from ${STORE_NAME} with live pricing and secure checkout.`;
+      rawDescription.length >= 90
+        ? rawDescription.slice(0, 155)
+        : `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and secure Shopify checkout.`;
     const image = loaderData.collection.image?.url;
     const path = `/collections/${params.handle}`;
     return {
       meta: [
         { title },
         { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "website" },
-        { property: "og:url", content: absoluteUrl(path) },
-        { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: title },
-        { name: "twitter:description", content: description },
-        ...(image
-          ? [
-              { property: "og:image", content: image },
-              { name: "twitter:image", content: image },
-            ]
-          : []),
+        { name: "robots", content: "index, follow, max-image-preview:large" },
+        ...socialMeta({ title, description, path, image: image || undefined }),
       ],
       links: [canonicalLink(path)],
       scripts: [
@@ -56,10 +54,10 @@ export const Route = createFileRoute("/collections/$handle")({
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             { name: "Collections", path: "/collections" },
-            { name: loaderData.collection.title, path },
+            { name: collectionName, path },
           ]),
         ),
-        jsonLd(itemListJsonLd(loaderData.collection.title, loaderData.products)),
+        jsonLd(itemListJsonLd(collectionName, loaderData.products)),
       ],
     };
   },
