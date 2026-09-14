@@ -58,7 +58,8 @@ function isBlockedHostname(host: string) {
 
   const octets = normalized.split(".").map(Number);
   if (octets.length === 4 && octets.every((n) => Number.isInteger(n) && n >= 0 && n <= 255)) {
-    const [a, b = 0] = octets;
+    const a = octets[0] ?? -1;
+    const b = octets[1] ?? -1;
     return (
       a === 0 ||
       a === 10 ||
