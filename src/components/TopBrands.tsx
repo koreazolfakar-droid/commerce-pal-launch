@@ -10,6 +10,7 @@ import { useLanguage } from "@/lib/i18n";
 const COMPACT_MARKS = new Set(["apple", "xiaomi"]);
 const AUTO_SCROLL_PX_PER_SECOND = 24;
 const ACTIVE_MEASURE_INTERVAL_MS = 160;
+const AUTO_SCROLL_START_DELAY_MS = 4500;
 const INFINITE_CYCLES = [0, 1, 2] as const;
 
 function brandSlotWidth(brand: ShopifyBrand) {
@@ -24,6 +25,7 @@ function brandSlotWidth(brand: ShopifyBrand) {
  *
  * Performance notes:
  * - auto-scroll only mutates scrollLeft inside requestAnimationFrame;
+ * - cosmetic auto-scroll starts after the critical startup window;
  * - cycle width is cached instead of forcing layout every frame;
  * - active-brand detection is throttled and uses elementFromPoint instead of
  *   measuring every duplicated logo on every scroll frame;
@@ -252,9 +254,16 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
       autoFrameRef.current = window.requestAnimationFrame(animate);
     };
 
-    autoFrameRef.current = window.requestAnimationFrame(animate);
+    // Auto-scroll is decorative, so keep it out of the startup/interaction
+    // critical window. Touch/mouse scrolling remains fully available immediately.
+    const startTimer = window.setTimeout(() => {
+      previousTime = performance.now();
+      lastActiveMeasure = previousTime;
+      autoFrameRef.current = window.requestAnimationFrame(animate);
+    }, AUTO_SCROLL_START_DELAY_MS);
 
     return () => {
+      window.clearTimeout(startTimer);
       if (autoFrameRef.current !== null) {
         window.cancelAnimationFrame(autoFrameRef.current);
         autoFrameRef.current = null;
