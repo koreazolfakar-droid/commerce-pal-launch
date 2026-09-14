@@ -30,13 +30,7 @@ async function request(path) {
 
 const home = await request("/");
 assert.equal((home.body.match(/<h1\b/g) ?? []).length, 1, "Homepage keeps exactly one H1");
-for (const testId of [
-  "homepage-promo-ticker",
-  "home-hero",
-  "trust-benefits-rail",
-  "category-section",
-  "top-brands",
-]) {
+for (const testId of ["homepage-promo-ticker", "home-hero", "trust-benefits-rail"]) {
   assert.equal(
     (home.body.match(new RegExp(`data-testid="${testId}"`, "g")) ?? []).length,
     1,
@@ -44,13 +38,7 @@ for (const testId of [
   );
 }
 
-const orderedSections = [
-  "homepage-promo-ticker",
-  "home-hero",
-  "trust-benefits-rail",
-  "category-section",
-  "top-brands",
-];
+const orderedSections = ["homepage-promo-ticker", "home-hero", "trust-benefits-rail"];
 for (let i = 1; i < orderedSections.length; i++) {
   assert.ok(
     home.body.indexOf(`data-testid="${orderedSections[i - 1]}"`) <
@@ -59,8 +47,15 @@ for (let i = 1; i < orderedSections.length; i++) {
   );
 }
 
-// Product-heavy rails are intentionally enabled after hydration so initial SSR stays lean.
-for (const delayedTestId of ["best-sellers", "new-items", "brand-showcases", "deals-section"]) {
+// Catalog-backed sections intentionally resolve after hydration so initial SSR stays lean.
+for (const delayedTestId of [
+  "category-section",
+  "top-brands",
+  "best-sellers",
+  "new-items",
+  "brand-showcases",
+  "deals-section",
+]) {
   assert.ok(
     !home.body.includes(`data-testid="${delayedTestId}"`),
     `${delayedTestId} remains hydration-delayed`,
