@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/i18n";
 
 const COMPACT_MARKS = new Set(["apple", "xiaomi"]);
 const AUTO_SCROLL_PX_PER_SECOND = 24;
+const ACTIVE_MEASURE_INTERVAL_MS = 160;
 const INFINITE_CYCLES = [0, 1, 2] as const;
 
 function brandSlotWidth(brand: ShopifyBrand) {
@@ -21,19 +22,22 @@ function brandSlotWidth(brand: ShopifyBrand) {
 /**
  * Premium infinite brand selector for the homepage.
  *
- * Three identical cycles make the rail visually endless. We start inside the
- * middle cycle and silently recycle the scroll position by one cycle whenever
- * the user/auto-scroll approaches either outer copy. That keeps native touch
- * scrolling intact while avoiding a visible jump.
- *
- * Auto-scroll pauses while the user presses, hovers or focuses the rail and
- * waits briefly after a touch/drag before resuming, making brand selection easy.
+ * Performance notes:
+ * - auto-scroll only mutates scrollLeft inside requestAnimationFrame;
+ * - cycle width is cached instead of forcing layout every frame;
+ * - active-brand detection is throttled and uses elementFromPoint instead of
+ *   measuring every duplicated logo on every scroll frame;
+ * - animation pauses while the rail is outside the viewport or while the user
+ *   interacts with it.
  */
 export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   const { t } = useLanguage();
   const railRef = useRef<HTMLDivElement>(null);
-  const measureFrameRef = useRef<number | null>(null);
   const autoFrameRef = useRef<number | null>(null);
+  const measureTimerRef = useRef<number | null>(null);
+  const cycleWidthRef = useRef(0);
+  const autoPositionRef = useRef(0);
+  const inViewportRef = useRef(true);
   const interactionRef = useRef({
     hovered: false,
     focused: false,
@@ -62,69 +66,80 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   const strongestSlug = rankedBrands[0]?.slug;
   const brandSignature = railBrands.map((brand) => brand.slug).join("|");
 
-  const cycleWidth = useCallback(() => {
+  const refreshCycleWidth = useCallback(() => {
     const rail = railRef.current;
     const cycle = rail?.querySelector<HTMLElement>("[data-brand-cycle=\"0\"]");
-    return cycle?.offsetWidth ?? 0;
+    cycleWidthRef.current = cycle?.offsetWidth ?? 0;
+    return cycleWidthRef.current;
   }, []);
 
-  const recycleInfinitePosition = useCallback(() => {
+  const recycleInfinitePosition = useCallback((candidate?: number) => {
     const rail = railRef.current;
-    const width = cycleWidth();
-    if (!rail || width <= 0) return;
+    const width = cycleWidthRef.current;
+    if (!rail || width <= 0) return candidate ?? rail?.scrollLeft ?? 0;
 
-    // Stay around the middle copy. Moving exactly one cycle is invisible
-    // because all three cycles contain the same ordered brand sequence.
-    if (rail.scrollLeft >= width * 2) {
-      rail.scrollLeft -= width;
-    } else if (rail.scrollLeft < width * 0.5) {
-      rail.scrollLeft += width;
-    }
-  }, [cycleWidth]);
+    let next = candidate ?? rail.scrollLeft;
 
-  const measureRail = useCallback(() => {
+    // Keep the viewport around the middle copy. Moving by exactly one complete
+    // cycle is visually identical, so the recycle is imperceptible.
+    if (next >= width * 2) next -= width;
+    else if (next < width * 0.5) next += width;
+
+    if (Math.abs(rail.scrollLeft - next) > 0.01) rail.scrollLeft = next;
+    return next;
+  }, []);
+
+  const measureActiveBrand = useCallback(() => {
     const rail = railRef.current;
     if (!rail) return;
 
-    recycleInfinitePosition();
-
     const railRect = rail.getBoundingClientRect();
-    const railCenter = railRect.left + railRect.width / 2;
-    let nearestSlug: string | undefined;
-    let nearestDistance = Number.POSITIVE_INFINITY;
+    const centerX = railRect.left + railRect.width / 2;
+    const centerY = railRect.top + railRect.height / 2;
+    const samples = [0, -10, 10, -20, 20];
 
-    rail.querySelectorAll<HTMLElement>("[data-brand-slug]").forEach((item) => {
-      const rect = item.getBoundingClientRect();
-      const distance = Math.abs(rect.left + rect.width / 2 - railCenter);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestSlug = item.dataset.brandSlug;
+    let active: HTMLElement | null = null;
+    for (const offset of samples) {
+      const hit = document.elementFromPoint(centerX + offset, centerY);
+      const candidate = hit instanceof Element ? hit.closest<HTMLElement>("[data-brand-slug]") : null;
+      if (candidate && rail.contains(candidate)) {
+        active = candidate;
+        break;
       }
-    });
-
-    if (nearestSlug) {
-      setActiveSlug((current) => (current === nearestSlug ? current : nearestSlug));
     }
-  }, [recycleInfinitePosition]);
 
-  const scheduleMeasure = useCallback(() => {
-    if (measureFrameRef.current !== null) return;
+    const slug = active?.dataset.brandSlug;
+    if (slug) setActiveSlug((current) => (current === slug ? current : slug));
+  }, []);
 
-    measureFrameRef.current = window.requestAnimationFrame(() => {
-      measureFrameRef.current = null;
-      measureRail();
-    });
-  }, [measureRail]);
+  const scheduleMeasure = useCallback((delay = ACTIVE_MEASURE_INTERVAL_MS) => {
+    if (measureTimerRef.current !== null) return;
+
+    measureTimerRef.current = window.setTimeout(() => {
+      measureTimerRef.current = null;
+      measureActiveBrand();
+    }, delay);
+  }, [measureActiveBrand]);
 
   const pauseAfterInteraction = useCallback((delay = 1400) => {
     interactionRef.current.resumeAt = performance.now() + delay;
   }, []);
+
+  const handleRailScroll = useCallback(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+
+    autoPositionRef.current = recycleInfinitePosition();
+    scheduleMeasure();
+  }, [recycleInfinitePosition, scheduleMeasure]);
 
   useEffect(() => {
     const rail = railRef.current;
     if (!rail || !strongestSlug || railBrands.length === 0) return;
 
     const centerStrongestBrand = () => {
+      refreshCycleWidth();
+
       const target = rail.querySelector<HTMLElement>(
         `[data-brand-cycle="1"] [data-featured-brand="true"]`,
       );
@@ -135,9 +150,10 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
       const targetCenterInContent =
         rail.scrollLeft + (targetRect.left - railRect.left) + targetRect.width / 2;
 
-      rail.scrollLeft = Math.max(0, targetCenterInContent - rail.clientWidth / 2);
-      recycleInfinitePosition();
-      measureRail();
+      const centered = Math.max(0, targetCenterInContent - rail.clientWidth / 2);
+      rail.scrollLeft = centered;
+      autoPositionRef.current = recycleInfinitePosition(centered);
+      measureActiveBrand();
     };
 
     const firstFrame = window.requestAnimationFrame(() => {
@@ -147,12 +163,32 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
     const resizeObserver =
       typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => scheduleMeasure())
+        ? new ResizeObserver(() => {
+            refreshCycleWidth();
+            autoPositionRef.current = recycleInfinitePosition();
+            scheduleMeasure(40);
+          })
         : undefined;
     resizeObserver?.observe(rail);
     const track = rail.firstElementChild;
     if (track instanceof HTMLElement) resizeObserver?.observe(track);
-    window.addEventListener("resize", scheduleMeasure, { passive: true });
+
+    const visibilityObserver =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            ([entry]) => {
+              inViewportRef.current = entry?.isIntersecting ?? true;
+            },
+            { rootMargin: "100px 0px" },
+          )
+        : undefined;
+    visibilityObserver?.observe(rail);
+
+    const handleResize = () => {
+      refreshCycleWidth();
+      scheduleMeasure(40);
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
 
     return () => {
       window.cancelAnimationFrame(firstFrame);
@@ -160,9 +196,18 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
       if (Number.isFinite(secondFrame)) window.cancelAnimationFrame(secondFrame);
       delete rail.dataset.centerFrame;
       resizeObserver?.disconnect();
-      window.removeEventListener("resize", scheduleMeasure);
+      visibilityObserver?.disconnect();
+      window.removeEventListener("resize", handleResize);
     };
-  }, [brandSignature, measureRail, railBrands.length, recycleInfinitePosition, scheduleMeasure, strongestSlug]);
+  }, [
+    brandSignature,
+    measureActiveBrand,
+    railBrands.length,
+    recycleInfinitePosition,
+    refreshCycleWidth,
+    scheduleMeasure,
+    strongestSlug,
+  ]);
 
   useEffect(() => {
     const rail = railRef.current;
@@ -170,23 +215,38 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let previousTime = performance.now();
+    let lastActiveMeasure = previousTime;
+
+    autoPositionRef.current = rail.scrollLeft;
 
     const animate = (now: number) => {
-      const elapsed = Math.min(64, now - previousTime);
+      const elapsed = Math.min(40, now - previousTime);
       previousTime = now;
 
       const interaction = interactionRef.current;
       const paused =
         reduceMotion.matches ||
+        !inViewportRef.current ||
         interaction.hovered ||
         interaction.focused ||
         interaction.pointerHeld ||
         now < interaction.resumeAt;
 
-      if (!paused) {
-        rail.scrollLeft += (AUTO_SCROLL_PX_PER_SECOND * elapsed) / 1000;
-        recycleInfinitePosition();
-        scheduleMeasure();
+      if (paused) {
+        // Keep the fractional accumulator synchronized with any manual swipe so
+        // resuming never jumps back to an old auto-scroll position.
+        autoPositionRef.current = rail.scrollLeft;
+      } else {
+        autoPositionRef.current += (AUTO_SCROLL_PX_PER_SECOND * elapsed) / 1000;
+        autoPositionRef.current = recycleInfinitePosition(autoPositionRef.current);
+
+        // Keep React/layout work far below the animation frame rate. The rail
+        // movement stays 60fps, while active-logo detection runs only a few
+        // times per second.
+        if (now - lastActiveMeasure >= ACTIVE_MEASURE_INTERVAL_MS) {
+          lastActiveMeasure = now;
+          scheduleMeasure(0);
+        }
       }
 
       autoFrameRef.current = window.requestAnimationFrame(animate);
@@ -204,9 +264,9 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
   useEffect(
     () => () => {
-      if (measureFrameRef.current !== null) {
-        window.cancelAnimationFrame(measureFrameRef.current);
-        measureFrameRef.current = null;
+      if (measureTimerRef.current !== null) {
+        window.clearTimeout(measureTimerRef.current);
+        measureTimerRef.current = null;
       }
     },
     [],
@@ -238,7 +298,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
         <div
           ref={railRef}
           dir="ltr"
-          onScroll={scheduleMeasure}
+          onScroll={handleRailScroll}
           onPointerDown={() => {
             interactionRef.current.pointerHeld = true;
           }}
@@ -280,6 +340,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
                 key={cycleIndex}
                 data-brand-cycle={cycleIndex}
                 className="flex shrink-0 items-center gap-1 px-1 sm:gap-2 sm:px-1.5 lg:gap-2.5"
+                style={{ contain: "layout paint" }}
                 aria-hidden={cycleIndex === 1 ? undefined : true}
               >
                 {railBrands.map((brand) => {
@@ -303,10 +364,8 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
                       className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-0.5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-14 sm:px-1 md:hover:-translate-y-0.5"
                     >
                       <span
-                        className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity,filter] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.08] group-hover:opacity-100 group-hover:saturate-100 group-hover:drop-shadow-sm ${
-                          isActive
-                            ? "scale-[1.04] opacity-100 saturate-100"
-                            : "scale-100 opacity-[0.86] saturate-[0.92]"
+                        className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.08] group-hover:opacity-100 ${
+                          isActive ? "scale-[1.04] opacity-100" : "scale-100 opacity-[0.88]"
                         }`}
                       >
                         <BrandLogo
