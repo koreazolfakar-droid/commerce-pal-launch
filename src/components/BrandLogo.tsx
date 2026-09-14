@@ -64,16 +64,35 @@ function LogoImage({
   }, [imageUrl, slug, label, size]);
   const [attempt, setAttempt] = useState(0);
   const [loadedSource, setLoadedSource] = useState<string>();
+  const [imageAspectRatio, setImageAspectRatio] = useState(1);
   const imgRef = useRef<HTMLImageElement>(null);
   const source = sources[attempt];
   const loaded = Boolean(source && loadedSource === source);
+
+  // Wide wordmarks used to look much smaller than square marks such as Xiaomi
+  // because they were width-constrained inside the same logo slot. Scale only
+  // genuinely wide marks, preserving their aspect ratio, so every brand has a
+  // comparable optical height without stretching or blurring the artwork.
+  const wordmarkScale = wordmark
+    ? Math.min(1.55, Math.max(1, imageAspectRatio / 2.6))
+    : 1;
+
+  const captureNaturalSize = (img: HTMLImageElement) => {
+    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+      setImageAspectRatio(img.naturalWidth / img.naturalHeight);
+    }
+  };
 
   // Catch cached loads/errors which happened before hydration attached the handlers.
   useEffect(() => {
     const img = imgRef.current;
     if (!img || !source || !img.complete) return;
-    if (img.naturalWidth > 0) setLoadedSource(source);
-    else setAttempt((value) => value + 1);
+    if (img.naturalWidth > 0) {
+      captureNaturalSize(img);
+      setLoadedSource(source);
+    } else {
+      setAttempt((value) => value + 1);
+    }
   }, [source]);
 
   return (
@@ -83,7 +102,9 @@ function LogoImage({
         "relative inline-grid shrink-0 place-items-center",
         frameless
           ? "overflow-visible rounded-none bg-transparent"
-          : "overflow-hidden rounded-md bg-white",
+          : wordmark
+            ? "overflow-visible rounded-md bg-white"
+            : "overflow-hidden rounded-md bg-white",
         className,
       )}
     >
@@ -110,10 +131,19 @@ function LogoImage({
           height={size}
           loading="lazy"
           decoding="async"
-          style={{ width: "100%", height: "100%", opacity: loaded ? 1 : 0 }}
-          onLoad={() => setLoadedSource(source)}
+          style={{
+            width: "100%",
+            height: "100%",
+            opacity: loaded ? 1 : 0,
+            transform: `scale(${wordmarkScale})`,
+            transformOrigin: "center",
+          }}
+          onLoad={(event) => {
+            captureNaturalSize(event.currentTarget);
+            setLoadedSource(source);
+          }}
           onError={() => setAttempt((value) => value + 1)}
-          className="relative min-h-0 min-w-0 object-contain transition-opacity"
+          className="relative min-h-0 min-w-0 object-contain transition-[opacity,transform] duration-150"
         />
       )}
     </span>
