@@ -31,12 +31,7 @@ import { Button } from "@/components/ui/button";
 import { productCompareAt, productPrimaryVariant } from "@/lib/productPricing";
 import { productsByHandlesQueryOptions } from "@/lib/queries";
 import { askSmartPhoneAdvisor, type SmartAdvisorResult } from "@/lib/smartPhoneAdvisor.functions";
-import {
-  discountPercent,
-  formatPrice,
-  variantSummary,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { discountPercent, formatPrice, variantSummary, type ShopifyProduct } from "@/lib/shopify";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
@@ -130,9 +125,13 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
 
   const recommendationHandles = useMemo(
     () =>
-      [...new Set(messages.flatMap((message) => message.result?.storeRecommendations.map((item) => item.handle) ?? []))].slice(
-        -16,
-      ),
+      [
+        ...new Set(
+          messages.flatMap(
+            (message) => message.result?.storeRecommendations.map((item) => item.handle) ?? [],
+          ),
+        ),
+      ].slice(-16),
     [messages],
   );
   const { data: recommendedProducts = [] } = useQuery(
@@ -189,12 +188,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
       ];
     }
     if (context) {
-      return [
-        "شو أهم نقاط قوته؟",
-        "شو أبرز عيوبه؟",
-        "قارنه مع بديل قوي",
-        "هل سعره مستاهل؟",
-      ];
+      return ["شو أهم نقاط قوته؟", "شو أبرز عيوبه؟", "قارنه مع بديل قوي", "هل سعره مستاهل؟"];
     }
     return [
       "أفضل هاتف تحت $300",
@@ -474,9 +468,12 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                     <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-success" />
                   </div>
                   <div className="min-w-0">
-                    <h2 className="truncate text-[15px] font-black tracking-tight">Space Call AI</h2>
+                    <h2 className="truncate text-[15px] font-black tracking-tight">
+                      Space Call AI
+                    </h2>
                     <p className="mt-0.5 flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
-                      <span className="h-1.5 w-1.5 rounded-full bg-success" /> Online · shopping assistant
+                      <span className="h-1.5 w-1.5 rounded-full bg-success" /> Online · shopping
+                      assistant
                     </p>
                   </div>
                 </div>
@@ -560,7 +557,8 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                             message.role === "user"
                               ? "rounded-[var(--sc-card-radius)] rounded-br-md bg-primary text-primary-foreground"
                               : "rounded-[var(--sc-card-radius)] rounded-bl-md border bg-card text-foreground",
-                            message.failed && "border-destructive/25 bg-destructive/5 text-foreground",
+                            message.failed &&
+                              "border-destructive/25 bg-destructive/5 text-foreground",
                           )}
                         >
                           {message.text}
@@ -666,7 +664,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                   <div className="grid gap-2.5 p-3 sm:grid-cols-2">
                                     {phone.pros.length > 0 && (
                                       <div className="rounded-[var(--sc-control-radius)] border border-success/20 bg-success/5 p-2.5">
-                                        <p className="text-[9px] font-black uppercase tracking-wide text-success">Strengths</p>
+                                        <p className="text-[9px] font-black uppercase tracking-wide text-success">
+                                          Strengths
+                                        </p>
                                         <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed">
                                           {phone.pros.slice(0, 3).map((item) => (
                                             <li key={item} className="flex gap-1.5">
@@ -679,7 +679,9 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                     )}
                                     {phone.cons.length > 0 && (
                                       <div className="rounded-[var(--sc-control-radius)] border bg-surface/70 p-2.5">
-                                        <p className="text-[9px] font-black uppercase tracking-wide text-muted-foreground">Trade-offs</p>
+                                        <p className="text-[9px] font-black uppercase tracking-wide text-muted-foreground">
+                                          Trade-offs
+                                        </p>
                                         <ul className="mt-1.5 space-y-1 text-[11px] leading-relaxed text-muted-foreground">
                                           {phone.cons.slice(0, 3).map((item) => (
                                             <li key={item}>• {item}</li>
@@ -731,10 +733,21 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                       className="w-[78%] max-w-[300px] shrink-0 snap-start rounded-[var(--sc-card-radius)] border bg-card p-3 shadow-card"
                                     >
                                       <p className="truncate text-xs font-black">{item.title}</p>
-                                      <p className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-muted-foreground">{item.reason}</p>
+                                      <p className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-muted-foreground">
+                                        {item.reason}
+                                      </p>
                                       <div className="mt-3 flex items-center justify-between">
-                                        <bdi className="text-sm font-black text-primary">{formatStorePrice(item.price, item.currency)}</bdi>
-                                        <span className={cn("text-[9px] font-black uppercase", item.available ? "text-success" : "text-muted-foreground")}>
+                                        <bdi className="text-sm font-black text-primary">
+                                          {formatStorePrice(item.price, item.currency)}
+                                        </bdi>
+                                        <span
+                                          className={cn(
+                                            "text-[9px] font-black uppercase",
+                                            item.available
+                                              ? "text-success"
+                                              : "text-muted-foreground",
+                                          )}
+                                        >
                                           {item.available ? "In stock" : "Out of stock"}
                                         </span>
                                       </div>
@@ -773,19 +786,36 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                     </div>
                                     <div className="p-3">
                                       <a href={`/product/${item.handle}`} className="block">
-                                        <h3 className="line-clamp-2 text-[13px] font-black leading-snug">{node.title}</h3>
+                                        <h3 className="line-clamp-2 text-[13px] font-black leading-snug">
+                                          {node.title}
+                                        </h3>
                                       </a>
-                                      {summary && <p className="mt-1 truncate text-[10px] text-muted-foreground">{summary}</p>}
-                                      <p className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-muted-foreground">{item.reason}</p>
+                                      {summary && (
+                                        <p className="mt-1 truncate text-[10px] text-muted-foreground">
+                                          {summary}
+                                        </p>
+                                      )}
+                                      <p className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-muted-foreground">
+                                        {item.reason}
+                                      </p>
                                       <div className="mt-2.5 flex items-end justify-between gap-2">
                                         <div>
                                           <div className="flex items-baseline gap-1.5">
-                                            <bdi className="text-sm font-black text-primary">{formatPrice(price.amount, price.currencyCode)}</bdi>
+                                            <bdi className="text-sm font-black text-primary">
+                                              {formatPrice(price.amount, price.currencyCode)}
+                                            </bdi>
                                             {discount !== null && compareAt && (
-                                              <bdi className="text-[9px] text-muted-foreground line-through">{formatPrice(compareAt, price.currencyCode)}</bdi>
+                                              <bdi className="text-[9px] text-muted-foreground line-through">
+                                                {formatPrice(compareAt, price.currencyCode)}
+                                              </bdi>
                                             )}
                                           </div>
-                                          <p className={cn("mt-0.5 text-[9px] font-black uppercase", inStock ? "text-success" : "text-muted-foreground")}>
+                                          <p
+                                            className={cn(
+                                              "mt-0.5 text-[9px] font-black uppercase",
+                                              inStock ? "text-success" : "text-muted-foreground",
+                                            )}
+                                          >
                                             {inStock ? "In stock" : "Out of stock"}
                                           </p>
                                         </div>
@@ -810,7 +840,11 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                                           disabled={cartLoading || !variant || !inStock}
                                           className="flex h-9 items-center justify-center gap-1 rounded-xl bg-primary text-[9px] font-extrabold text-primary-foreground disabled:opacity-40"
                                         >
-                                          {cartLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShoppingCart className="h-3 w-3" />}
+                                          {cartLoading ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                          ) : (
+                                            <ShoppingCart className="h-3 w-3" />
+                                          )}
                                           Add
                                         </button>
                                       </div>
@@ -942,7 +976,11 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                       value={input}
                       onChange={(event) => setInput(event.target.value)}
                       onKeyDown={(event) => {
-                        if (event.key === "Enter" && !event.shiftKey && window.matchMedia("(min-width: 640px)").matches) {
+                        if (
+                          event.key === "Enter" &&
+                          !event.shiftKey &&
+                          window.matchMedia("(min-width: 640px)").matches
+                        ) {
                           event.preventDefault();
                           void send();
                         }

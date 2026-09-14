@@ -551,7 +551,9 @@ function ProductPage() {
                 </p>
               </div>
               <div className="rounded-2xl bg-surface p-4">
-                <h3 className="font-bold">{language === "ar" ? "السعر والتوفر" : "Price & availability"}</h3>
+                <h3 className="font-bold">
+                  {language === "ar" ? "السعر والتوفر" : "Price & availability"}
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {language === "ar"
                     ? `يعرض المتجر السعر الحالي وحالة المخزون المباشرة. الحالة الحالية: ${inStock ? "متوفر" : "غير متوفر"}.`
@@ -559,7 +561,9 @@ function ProductPage() {
                 </p>
               </div>
               <div className="rounded-2xl bg-surface p-4">
-                <h3 className="font-bold">{language === "ar" ? "التوصيل والضمان" : "Delivery & warranty"}</h3>
+                <h3 className="font-bold">
+                  {language === "ar" ? "التوصيل والضمان" : "Delivery & warranty"}
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {language === "ar"
                     ? "راجع صفحات الشحن والضمان والإرجاع أو تواصل مع الدعم قبل الطلب إذا كنت تحتاج تفاصيل إضافية."
@@ -568,9 +572,15 @@ function ProductPage() {
               </div>
             </div>
             <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
-              <Link to="/shipping" className="text-primary hover:underline">{t("shippingTitle")}</Link>
-              <Link to="/warranty" className="text-primary hover:underline">{t("warrantyTitle")}</Link>
-              <Link to="/returns" className="text-primary hover:underline">{t("returnsTitle")}</Link>
+              <Link to="/shipping" className="text-primary hover:underline">
+                {t("shippingTitle")}
+              </Link>
+              <Link to="/warranty" className="text-primary hover:underline">
+                {t("warrantyTitle")}
+              </Link>
+              <Link to="/returns" className="text-primary hover:underline">
+                {t("returnsTitle")}
+              </Link>
             </div>
           </section>
         )}

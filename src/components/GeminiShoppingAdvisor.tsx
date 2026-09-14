@@ -38,7 +38,8 @@ export function GeminiShoppingAdvisor({
               </span>
             </div>
             <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              اسأل عن {title}، قارنه ببدائل مناسبة، أو خلّي المساعد يحدد إذا كان الأنسب لميزانيتك واستخدامك.
+              اسأل عن {title}، قارنه ببدائل مناسبة، أو خلّي المساعد يحدد إذا كان الأنسب لميزانيتك
+              واستخدامك.
             </p>
           </div>
         </div>
