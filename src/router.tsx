@@ -18,7 +18,10 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
+    // Avoid re-running the same route preload immediately when a user taps a link
+    // right after hover/touch intent. Product/query freshness is still governed by
+    // React Query's shorter data stale times.
+    defaultPreloadStaleTime: 30_000,
   });
 
   return router;
