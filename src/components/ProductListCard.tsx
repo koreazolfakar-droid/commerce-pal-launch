@@ -62,7 +62,7 @@ export const ProductListCard = memo(function ProductListCard({
   };
 
   return (
-    <article className="product-list-card group !grid !grid-cols-[7.75rem_minmax(0,1fr)] !items-center !gap-2.5 !overflow-hidden !rounded-[1.25rem] !border !border-border/75 !bg-card !p-2.5 !shadow-card transition-[border-color,box-shadow,transform] hover:!border-primary/30 hover:!shadow-card-hover sm:!grid-cols-[8.25rem_minmax(0,1fr)] sm:!gap-3 sm:!p-3">
+    <article className="product-list-card group relative !grid !grid-cols-[7.75rem_minmax(0,1fr)] !items-center !gap-2.5 !overflow-hidden !rounded-[1.25rem] !border !border-border/75 !bg-card !p-2.5 !shadow-card transition-[border-color,box-shadow,transform] hover:!border-primary/30 hover:!shadow-card-hover sm:!grid-cols-[8.25rem_minmax(0,1fr)] sm:!gap-3 sm:!p-3">
       <div className="relative flex min-w-0 self-center items-center justify-center">
         <Link
           to="/product/$handle"
@@ -81,20 +81,6 @@ export const ProductListCard = memo(function ProductListCard({
           />
         </Link>
 
-        <button
-          type="button"
-          onClick={() => toggleWishlist(node.handle)}
-          aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
-          aria-pressed={wishlisted}
-          className="press absolute end-1.5 top-1.5 z-30 grid h-11 w-11 place-items-center rounded-full border border-border/65 bg-background/92 text-muted-foreground shadow-sm backdrop-blur transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Heart
-            aria-hidden
-            className={cn("h-[17px] w-[17px]", wishlisted && "fill-primary text-primary")}
-            strokeWidth={1.9}
-          />
-        </button>
-
         {discount !== null && (
           <span className="absolute start-1.5 top-1.5 z-20 rounded-full bg-destructive px-1.5 py-0.5 text-[9px] font-extrabold leading-none text-destructive-foreground shadow-sm">
             -{discount}%
@@ -108,7 +94,21 @@ export const ProductListCard = memo(function ProductListCard({
         )}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-1">
+      <button
+        type="button"
+        onClick={() => toggleWishlist(node.handle)}
+        aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
+        aria-pressed={wishlisted}
+        className="press absolute end-2.5 top-2.5 z-30 grid h-11 w-11 place-items-center rounded-full border border-border/65 bg-background/95 text-muted-foreground shadow-sm transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:end-3 sm:top-3"
+      >
+        <Heart
+          aria-hidden
+          className={cn("h-[17px] w-[17px]", wishlisted && "fill-primary text-primary")}
+          strokeWidth={1.9}
+        />
+      </button>
+
+      <div className="flex min-w-0 flex-col gap-1 pe-12">
         {brand && (
           <div className="flex min-w-0 items-center gap-1.5">
             <BrandLogo
