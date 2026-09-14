@@ -110,12 +110,12 @@ function LogoImage({
   const brandKey = normalizeBrandKey(slug, label);
   const paddedSquareMerchantWordmark = Boolean(
     normalizeForRail &&
-      wordmark &&
-      merchantSource &&
-      source === merchantSource &&
-      PADDED_SQUARE_WORDMARKS.has(brandKey) &&
-      imageAspectRatio >= 0.85 &&
-      imageAspectRatio <= 1.15,
+    wordmark &&
+    merchantSource &&
+    source === merchantSource &&
+    PADDED_SQUARE_WORDMARKS.has(brandKey) &&
+    imageAspectRatio >= 0.85 &&
+    imageAspectRatio <= 1.15,
   );
   const opticalScale = normalizeForRail ? railOpticalScale(slug, label, imageAspectRatio) : 1;
   const displayScale = paddedSquareMerchantWordmark ? Math.max(opticalScale, 1.08) : opticalScale;
