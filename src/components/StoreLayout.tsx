@@ -37,16 +37,16 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       </a>
 
       {/*
-       * Keep the desktop header's final 136px footprint reserved before the
-       * media-gated client shell hydrates. Without this reservation the main
-       * content starts at y=0 and is pushed down to y=136 after hydration,
-       * which is the entire desktop CLS event reported by Lighthouse.
+       * Both shells remain server-rendered so responsive HTML and layout are
+       * present immediately. On the client TanStack hydrates only the shell
+       * that matches the current media query, avoiding an entire hidden UI
+       * tree and its JavaScript on startup.
        */}
-      <div className="hidden min-h-[136px] lg:block">
-        <Hydrate when={media("(min-width: 1024px)")}>
+      <Hydrate when={media("(min-width: 1024px)")}>
+        <div className="hidden lg:block">
           <SiteHeader />
-        </Hydrate>
-      </div>
+        </div>
+      </Hydrate>
       <Hydrate when={media("(max-width: 1023px)")}>
         <MobileTopBar showCategoryRail={!onHomePage && !onCartPage} />
       </Hydrate>
