@@ -21,7 +21,12 @@ const BENEFITS = [
   { icon: Bike, title: "benefitFreeDelivery", detail: "benefitEligibleOrders", fastDelivery: true },
   { icon: ShieldCheck, title: "benefitWarranty", detail: "benefitAuthentic", fastDelivery: false },
   { icon: RotateCcw, title: "benefitReturns", detail: "benefitReturnsPolicy", fastDelivery: false },
-  { icon: CreditCard, title: "benefitSecurePayment", detail: "benefitEncryptedCheckout", fastDelivery: false },
+  {
+    icon: CreditCard,
+    title: "benefitSecurePayment",
+    detail: "benefitEncryptedCheckout",
+    fastDelivery: false,
+  },
 ] as const;
 
 export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {

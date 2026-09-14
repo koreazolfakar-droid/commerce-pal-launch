@@ -1,21 +1,21 @@
-import { productCompareAt, productPrimaryVariant } from "@/lib/productPricing";
+import { useProductQuickAdd } from "@/hooks/useProductQuickAdd";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
+import {
+  discountPercent,
+  formatPrice,
+  productCompareAt,
+  productPrimaryVariant,
+  variantSummary,
+} from "@/lib/productPricing";
+import type { ShopifyProduct } from "@/lib/shopify";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, ShoppingBag } from "lucide-react";
-import { memo, useState } from "react";
-import { toast } from "sonner";
+import { memo } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
 import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
-import {
-  discountPercent,
-  formatPrice,
-  variantSummary,
-  type ShopifyProduct,
-} from "@/lib/shopify";
 import { cn } from "@/lib/utils";
-import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { resolveBrand } from "@/lib/taxonomy";
 import { useLanguage } from "@/lib/i18n";
@@ -28,8 +28,6 @@ export const ProductListCard = memo(function ProductListCard({
   eager?: boolean;
 }) {
   const { t } = useLanguage();
-  const addItem = useCartStore((state) => state.addItem);
-  const [isAdding, setIsAdding] = useState(false);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
   const toggleWishlist = useWishlistToggle();
 
@@ -37,34 +35,12 @@ export const ProductListCard = memo(function ProductListCard({
   const variant = productPrimaryVariant(product);
   const image = node.images.edges[0]?.node;
   const price = variant?.price ?? node.priceRange.minVariantPrice;
-  const compareAt = productCompareAt(product);
+  const compareAt = productCompareAt(product, variant);
   const discount = discountPercent(price.amount, compareAt);
   const summary = variantSummary(variant?.selectedOptions);
   const inStock = variant?.availableForSale ?? node.availableForSale ?? true;
   const brand = resolveBrand(product);
-
-  const add = async () => {
-    if (!variant || isAdding) return;
-    setIsAdding(true);
-    try {
-      const success = await addItem({
-        product,
-        variantId: variant.id,
-        variantTitle: variant.title,
-        price: variant.price,
-        quantity: 1,
-        selectedOptions: variant.selectedOptions ?? [],
-      });
-
-      if (success) {
-        toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
-      } else {
-        toast.error(t("addToCartFailed"), { position: "top-center" });
-      }
-    } finally {
-      setIsAdding(false);
-    }
-  };
+  const { add, isAdding } = useProductQuickAdd(product, variant, t);
 
   return (
     <article className="product-list-card group relative !grid !grid-cols-[7.75rem_minmax(0,1fr)] !items-center !gap-2.5 !overflow-hidden !rounded-[1.25rem] !border !border-border/75 !bg-card !p-2.5 !shadow-card transition-[border-color,box-shadow,transform] hover:!border-primary/30 hover:!shadow-card-hover sm:!grid-cols-[8.25rem_minmax(0,1fr)] sm:!gap-3 sm:!p-3">
@@ -129,11 +105,7 @@ export const ProductListCard = memo(function ProductListCard({
           </div>
         )}
 
-        <Link
-          to="/product/$handle"
-          params={{ handle: node.handle }}
-          className="min-w-0 pe-12"
-        >
+        <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0 pe-12">
           <h3 className="line-clamp-2 break-words text-[0.8rem] font-extrabold leading-[1.2] tracking-[-0.018em] transition-colors group-hover:text-primary sm:text-[0.9rem]">
             {node.title}
           </h3>
@@ -179,9 +151,7 @@ export const ProductListCard = memo(function ProductListCard({
             ) : (
               <>
                 <ShoppingBag className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {t(inStock ? "addToCart" : "outOfStock")}
-                </span>
+                <span className="hidden sm:inline">{t(inStock ? "addToCart" : "outOfStock")}</span>
               </>
             )}
           </Button>

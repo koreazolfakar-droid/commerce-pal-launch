@@ -44,6 +44,9 @@ jobs:
       - name: TypeScript
         run: bun run typecheck
 
+      - name: Full regression suite
+        run: bun run test:unit
+
       - name: Smart bot regression tests
         run: node --test e2e/nvidia-advisor.test.mjs
 

@@ -57,16 +57,19 @@ const BRAND_LOGOS: Record<string, string> = {
 
 function categoryIcon(slug: string, label: string): LucideIcon {
   const value = `${slug} ${label}`.toLowerCase();
-  if (value.includes("smartphone") || value.includes("phone") || value.includes("mobile")) return Smartphone;
+  if (value.includes("smartphone") || value.includes("phone") || value.includes("mobile"))
+    return Smartphone;
   if (value.includes("laptop") || value.includes("computer")) return Laptop;
-  if (value.includes("headphone") || value.includes("earbud") || value.includes("audio")) return Headphones;
+  if (value.includes("headphone") || value.includes("earbud") || value.includes("audio"))
+    return Headphones;
   if (value.includes("charger")) return PlugZap;
   if (value.includes("power bank") || value.includes("powerbank")) return BatteryCharging;
   if (value.includes("cable")) return Cable;
   if (value.includes("watch") || value.includes("wearable")) return Watch;
   if (value.includes("gaming") || value.includes("playstation")) return Gamepad2;
   if (value.includes("camera")) return Camera;
-  if (value.includes("monitor") || value.includes("display") || value.includes("tv")) return Monitor;
+  if (value.includes("monitor") || value.includes("display") || value.includes("tv"))
+    return Monitor;
   return Package;
 }
 
@@ -77,7 +80,11 @@ function brandLogo(slug: string, label: string) {
 
 function BrandMark({ slug, label }: { slug: string; label: string }) {
   const logo = brandLogo(slug, label);
-  const fallback = label.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "SC";
+  const fallback =
+    label
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(0, 2)
+      .toUpperCase() || "SC";
 
   return (
     <span className="relative grid h-10 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm ring-1 ring-black/[0.025]">
@@ -165,7 +172,9 @@ export function MobileMenu() {
               <Sparkles aria-hidden="true" className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-[10px] font-black uppercase tracking-[0.2em] text-primary">Space Call</p>
+              <p className="truncate text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                Space Call
+              </p>
               <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
                 {language === "ar" ? "تقنية أذكى، اختيار أسهل" : "Smarter tech, easier shopping"}
               </p>
@@ -173,7 +182,9 @@ export function MobileMenu() {
           </div>
 
           <SheetHeader className="pe-10 text-start sm:text-start">
-            <SheetTitle className="text-[1.7rem] font-black tracking-[-0.035em]">{t("menuTitle")}</SheetTitle>
+            <SheetTitle className="text-[1.7rem] font-black tracking-[-0.035em]">
+              {t("menuTitle")}
+            </SheetTitle>
             <SheetDescription className="mt-1 max-w-[22rem] text-[13px] leading-relaxed">
               {t("menuDescription")}
             </SheetDescription>
@@ -204,7 +215,9 @@ export function MobileMenu() {
                     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary ring-1 ring-primary/10 transition-transform group-hover:scale-[1.04]">
                       <Icon aria-hidden="true" className="h-[19px] w-[19px]" strokeWidth={2} />
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-foreground">{label}</span>
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-foreground">
+                      {label}
+                    </span>
                     <ChevronRight
                       aria-hidden="true"
                       className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
@@ -218,8 +231,13 @@ export function MobileMenu() {
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary">
                     <Boxes aria-hidden="true" className="h-[19px] w-[19px]" />
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{t("browseProducts")}</span>
-                  <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
+                  <span className="min-w-0 flex-1 truncate text-[14px] font-bold">
+                    {t("browseProducts")}
+                  </span>
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="h-4 w-4 text-muted-foreground rtl:rotate-180"
+                  />
                 </Link>
               )}
             </div>
@@ -227,7 +245,13 @@ export function MobileMenu() {
 
           {!!catalog?.brands.length && (
             <section className="border-t border-border/60 pt-5">
-              <SectionHeading icon={Tags} title={t("brands")} action={seeAll} to="/brands" onClick={close} />
+              <SectionHeading
+                icon={Tags}
+                title={t("brands")}
+                action={seeAll}
+                to="/brands"
+                onClick={close}
+              />
               <div className="grid gap-2">
                 {catalog.brands.slice(0, 10).map((item) => (
                   <Link
@@ -238,7 +262,9 @@ export function MobileMenu() {
                     onClick={close}
                   >
                     <BrandMark slug={item.slug} label={item.label} />
-                    <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-foreground">{item.label}</span>
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-foreground">
+                      {item.label}
+                    </span>
                     <ChevronRight
                       aria-hidden="true"
                       className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
@@ -251,7 +277,13 @@ export function MobileMenu() {
 
           {visibleCollections.length > 0 && (
             <section className="border-t border-border/60 pt-5">
-              <SectionHeading icon={Boxes} title={t("collections")} action={seeAll} to="/shop" onClick={close} />
+              <SectionHeading
+                icon={Boxes}
+                title={t("collections")}
+                action={seeAll}
+                to="/shop"
+                onClick={close}
+              />
               <div className="grid grid-cols-2 gap-2">
                 {visibleCollections.map((item) => (
                   <Link
@@ -264,7 +296,9 @@ export function MobileMenu() {
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/[0.08] text-primary">
                       <Package aria-hidden="true" className="h-4 w-4" />
                     </span>
-                    <span className="line-clamp-2 text-[12px] font-extrabold leading-snug">{item.title}</span>
+                    <span className="line-clamp-2 text-[12px] font-extrabold leading-snug">
+                      {item.title}
+                    </span>
                   </Link>
                 ))}
               </div>
@@ -278,24 +312,44 @@ export function MobileMenu() {
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary">
                   <LifeBuoy aria-hidden="true" className="h-[18px] w-[18px]" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{t("helpTitle")}</span>
-                <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
+                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">
+                  {t("helpTitle")}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-4 w-4 text-muted-foreground rtl:rotate-180"
+                />
               </Link>
 
               <Link to="/wishlist" onClick={close} className={rowClass}>
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary">
                   <Heart aria-hidden="true" className="h-[18px] w-[18px]" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{t("wishlistTitle")}</span>
-                <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
+                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">
+                  {t("wishlistTitle")}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-4 w-4 text-muted-foreground rtl:rotate-180"
+                />
               </Link>
 
-              <a href={SHOP_ACCOUNT_URL} target="_blank" rel="noopener noreferrer" className={rowClass}>
+              <a
+                href={SHOP_ACCOUNT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={rowClass}
+              >
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary">
                   <CircleUserRound aria-hidden="true" className="h-[18px] w-[18px]" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{t("openAccount")}</span>
-                <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
+                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">
+                  {t("openAccount")}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-4 w-4 text-muted-foreground rtl:rotate-180"
+                />
               </a>
             </div>
           </section>

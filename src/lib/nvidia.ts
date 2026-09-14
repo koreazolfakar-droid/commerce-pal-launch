@@ -4,7 +4,8 @@ export const DEFAULT_SUPABASE_NVIDIA_FUNCTION = "nvidia-chat";
 // Keep a built-in fallback so the server-side advisor still works on deployments where
 // Lovable/Cloudflare does not inject SUPABASE_ANON_KEY. Provider API keys remain private
 // inside the protected Supabase Edge Function and are never exposed here.
-export const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJ0d3lhbmtweHRmZnFxcmFzeXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNzIxOTQsImV4cCI6MjEwNDg0ODE5NH0.VuPOMhdaUolLzkNbjRR59sBOZh351eCp_GebUW8dI08";
+export const DEFAULT_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJ0d3lhbmtweHRmZnFxcmFzeXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNzIxOTQsImV4cCI6MjEwNDg0ODE5NH0.VuPOMhdaUolLzkNbjRR59sBOZh351eCp_GebUW8dI08";
 
 export type AiProvider = "nvidia" | "openrouter";
 

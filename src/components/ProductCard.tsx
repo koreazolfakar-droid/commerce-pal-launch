@@ -1,18 +1,23 @@
-import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
 import { QuickViewButton } from "@/components/product/QuickViewButton";
+import { useProductQuickAdd } from "@/hooks/useProductQuickAdd";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
+import {
+  discountPercent,
+  formatPrice,
+  productCompareAt,
+  productPrimaryVariant,
+  variantSummary,
+} from "@/lib/productPricing";
+import type { ShopifyProduct } from "@/lib/shopify";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, ShoppingBag } from "lucide-react";
-import { memo, useState } from "react";
-import { toast } from "sonner";
+import { memo } from "react";
 
 import { ProductImage } from "@/components/ProductImage";
 import { CompareButton } from "@/components/CompareButton";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { discountPercent, formatPrice, variantSummary, type ShopifyProduct } from "@/lib/shopify";
-import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { useLanguage } from "@/lib/i18n";
@@ -30,8 +35,6 @@ export const ProductCard = memo(function ProductCard({
   eager?: boolean;
 }) {
   const { t } = useLanguage();
-  const addItem = useCartStore((state) => state.addItem);
-  const [isAdding, setIsAdding] = useState(false);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
   const toggleWishlist = useWishlistToggle();
 
@@ -39,31 +42,13 @@ export const ProductCard = memo(function ProductCard({
   const selectedVariant = productPrimaryVariant(product);
   const image = node.images.edges[0]?.node;
   const price = selectedVariant?.price ?? node.priceRange.minVariantPrice;
-  const compareAt = productCompareAt(product);
+  const compareAt = productCompareAt(product, selectedVariant);
   const discount = discountPercent(price.amount, compareAt);
   const summary = variantSummary(selectedVariant?.selectedOptions);
   const inStock = selectedVariant?.availableForSale ?? node.availableForSale ?? true;
   const brand = resolveBrand(product);
   const isPhone = primaryCategory(product)?.slug === "smartphones";
-
-  const handleAddToCart = async () => {
-    if (!selectedVariant || isAdding) return;
-    setIsAdding(true);
-    try {
-      const success = await addItem({
-        product,
-        variantId: selectedVariant.id,
-        variantTitle: selectedVariant.title,
-        price: selectedVariant.price,
-        quantity: 1,
-        selectedOptions: selectedVariant.selectedOptions ?? [],
-      });
-      if (success) toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
-      else toast.error(t("addToCartFailed"), { position: "top-center" });
-    } finally {
-      setIsAdding(false);
-    }
-  };
+  const { add: handleAddToCart, isAdding } = useProductQuickAdd(product, selectedVariant, t);
 
   const handleWishlist = () => {
     toggleWishlist(node.handle);
