@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BatteryCharging,
@@ -135,6 +135,7 @@ export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { t, direction, language } = useLanguage();
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: collections = [] } = useQuery(collectionsQueryOptions());
@@ -148,12 +149,12 @@ export function MobileMenu() {
     setRefreshing(true);
 
     try {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["shopify"], refetchType: "active" }),
-        queryClient.invalidateQueries({ queryKey: ["cms"], refetchType: "active" }),
+      await Promise.allSettled([
+        router.invalidate(),
+        queryClient.refetchQueries({ type: "active" }),
       ]);
     } finally {
-      window.setTimeout(() => setRefreshing(false), 2500);
+      window.setTimeout(() => setRefreshing(false), 600);
     }
   };
 
