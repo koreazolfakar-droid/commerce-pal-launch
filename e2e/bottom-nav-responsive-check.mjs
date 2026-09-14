@@ -10,7 +10,7 @@ const cases = [
   { width: 412, height: 915 },
   { width: 430, height: 932 },
 ];
-const expectedIds = ["home", "categories", "search", "ai", "cart"];
+const expectedIds = ["home", "categories", "search", "cart"];
 
 const browser = await chromium.launch({ headless: true });
 
@@ -61,7 +61,7 @@ try {
     );
 
     const items = nav.locator("[data-nav-id]");
-    assert.equal(await items.count(), 5, `${testCase.width}px: expected five navigation items`);
+    assert.equal(await items.count(), 4, `${testCase.width}px: expected four navigation items`);
 
     for (let index = 0; index < expectedIds.length; index += 1) {
       const item = items.nth(index);
