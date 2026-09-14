@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+  Bike,
   CreditCard,
   Grid2x2,
   Heart,
@@ -7,7 +8,6 @@ import {
   RotateCcw,
   ShieldCheck,
   Tag,
-  Truck,
 } from "lucide-react";
 import { ArrowRight } from "lucide-react";
 
@@ -18,14 +18,14 @@ import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import type { ShopifyProduct } from "@/lib/shopify";
 
 const BENEFITS = [
-  { icon: Truck, title: "benefitFreeDelivery", detail: "benefitEligibleOrders" },
-  { icon: ShieldCheck, title: "benefitWarranty", detail: "benefitAuthentic" },
-  { icon: RotateCcw, title: "benefitReturns", detail: "benefitReturnsPolicy" },
-  { icon: CreditCard, title: "benefitSecurePayment", detail: "benefitEncryptedCheckout" },
+  { icon: Bike, title: "benefitFreeDelivery", detail: "benefitEligibleOrders", fastDelivery: true },
+  { icon: ShieldCheck, title: "benefitWarranty", detail: "benefitAuthentic", fastDelivery: false },
+  { icon: RotateCcw, title: "benefitReturns", detail: "benefitReturnsPolicy", fastDelivery: false },
+  { icon: CreditCard, title: "benefitSecurePayment", detail: "benefitEncryptedCheckout", fastDelivery: false },
 ] as const;
 
 export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <section
@@ -49,7 +49,11 @@ export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
             </span>
             <div className="min-w-0 pt-0.5">
               <p className="break-words text-[11px] font-extrabold leading-snug tracking-[-0.01em] sm:text-xs">
-                {t(benefit.title)}
+                {benefit.fastDelivery
+                  ? language === "ar"
+                    ? "توصيل سريع"
+                    : "Fast delivery"
+                  : t(benefit.title)}
               </p>
               <p className="mt-1 break-words text-[10px] leading-snug text-muted-foreground sm:text-[11px]">
                 {t(benefit.detail)}
