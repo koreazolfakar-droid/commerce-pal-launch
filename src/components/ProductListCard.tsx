@@ -155,7 +155,7 @@ export const ProductListCard = memo(function ProductListCard({
           onClick={add}
           disabled={isLoading || !variant || !inStock}
           size="sm"
-          className="product-list-add press h-11 w-full rounded-xl"
+          className="product-list-add press h-11 w-full rounded-xl md:ms-auto md:w-[200px] lg:w-[220px]"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
