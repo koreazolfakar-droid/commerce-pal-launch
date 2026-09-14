@@ -103,6 +103,8 @@ export function HomeHero({
                 key={cmsSlide.id}
                 src={cmsSlide.image_url}
                 alt={cmsSlide.title ?? "Space Call"}
+                width={1600}
+                height={900}
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
@@ -125,6 +127,8 @@ export function HomeHero({
               srcSet={cdnSrcSet(shopifyImage.url, 1800)}
               sizes="(max-width: 639px) calc(100vw - 1.5rem), (min-width: 1280px) 1280px, 100vw"
               alt={shopifyImage.altText ?? shopifySlide.title ?? "Space Call"}
+              width={1600}
+              height={900}
               loading="eager"
               fetchPriority="high"
               decoding="async"
