@@ -18,6 +18,7 @@ import {
   Monitor,
   Package,
   PlugZap,
+  RefreshCw,
   Smartphone,
   Sparkles,
   Tags,
@@ -138,6 +139,7 @@ export function MobileMenu() {
   const close = () => setOpen(false);
   const visibleCollections = displayCollections(collections).slice(0, 4);
   const seeAll = language === "ar" ? "عرض الكل" : "See all";
+  const refreshLabel = language === "ar" ? "تحديث الصفحة" : "Refresh page";
 
   const rowClass =
     "group flex min-h-[58px] w-full items-center gap-3 rounded-2xl border border-border/65 bg-card/70 px-3 py-2.5 text-start shadow-[0_8px_24px_-22px_rgba(15,23,42,.9)] transition-[border-color,background-color,transform,box-shadow] duration-200 hover:-translate-y-px hover:border-primary/30 hover:bg-accent/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35";
@@ -170,6 +172,15 @@ export function MobileMenu() {
                 {language === "ar" ? "تقنية أذكى، اختيار أسهل" : "Smarter tech, easier shopping"}
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              aria-label={refreshLabel}
+              title={refreshLabel}
+              className="press ms-auto grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border/70 bg-background text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+            >
+              <RefreshCw aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
+            </button>
           </div>
 
           <SheetHeader className="pe-10 text-start sm:text-start">
