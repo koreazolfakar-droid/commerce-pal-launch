@@ -1,0 +1,97 @@
+name: Lighthouse Performance CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-performance-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Start storefront fixture
+        run: |
+          bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/lighthouse-vite.log 2>&1 &
+          echo $! > /tmp/lighthouse-server.pid
+          for i in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/lighthouse-vite.log
+          exit 1
+
+      - name: Run mobile and desktop Lighthouse
+        run: |
+          export CHROME_PATH="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          bunx lighthouse@13.4.1 http://127.0.0.1:4173/ \
+            --output=json \
+            --output-path=/tmp/lighthouse-mobile.json \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --quiet
+          bunx lighthouse@13.4.1 http://127.0.0.1:4173/ \
+            --preset=desktop \
+            --output=json \
+            --output-path=/tmp/lighthouse-desktop.json \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --quiet
+
+      - name: Enforce green Core Web Vitals lab targets
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const files = [
+            ['mobile', '/tmp/lighthouse-mobile.json'],
+            ['desktop', '/tmp/lighthouse-desktop.json'],
+          ];
+          let failed = false;
+          for (const [label, file] of files) {
+            const report = JSON.parse(fs.readFileSync(file, 'utf8'));
+            const audits = report.audits;
+            const score = Math.round((report.categories.performance.score ?? 0) * 100);
+            const fcp = audits['first-contentful-paint'].numericValue;
+            const lcp = audits['largest-contentful-paint'].numericValue;
+            const tbt = audits['total-blocking-time'].numericValue;
+            const cls = audits['cumulative-layout-shift'].numericValue;
+            console.log(`${label}: performance=${score}, FCP=${Math.round(fcp)}ms, LCP=${Math.round(lcp)}ms, TBT=${Math.round(tbt)}ms, CLS=${cls.toFixed(3)}`);
+            const green = score >= 90 && fcp <= 1800 && lcp <= 2500 && tbt <= 200 && cls <= 0.1;
+            if (!green) failed = true;
+          }
+          if (failed) {
+            console.error('Lighthouse performance gate failed: one or more metrics are outside the green range.');
+            process.exit(1);
+          }
+          NODE
+
+      - name: Stop storefront fixture
+        if: always()
+        run: |
+          if [ -f /tmp/lighthouse-server.pid ]; then
+            kill "$(cat /tmp/lighthouse-server.pid)" 2>/dev/null || true
+          fi
