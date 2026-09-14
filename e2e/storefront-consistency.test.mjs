@@ -32,7 +32,10 @@ test("merchant brand artwork overrides curated local fallbacks and raw SVG marku
   assert.match(brandDirectory, /compactBrandIdentity/);
   assert.match(brandDirectory, /slugify\(value\)\.replace\(\/-\/g, ""\)/);
   assert.match(brandDirectory, /dedicatedCollectionBrandIdentity/);
-  assert.match(brandDirectory, /exactCandidates\.find\(looksLikeLogoImage\) \?\? exactCandidates\[0\]/);
+  assert.match(
+    brandDirectory,
+    /exactCandidates\.find\(looksLikeLogoImage\) \?\? exactCandidates\[0\]/,
+  );
 
   for (const name of ["apple", "xiaomi", "anker", "poco", "tecno"]) {
     assert.match(brands, new RegExp(`/${name}\\.(?:svg|png)`));
@@ -95,7 +98,10 @@ test("hero uses Shopify collection artwork and routes to the matching collection
   assert.doesNotMatch(home, /ensureQueryData\(newestQueryOptions\(\)\)/);
   assert.doesNotMatch(home, /Newsletter/);
   assert.match(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
-  assert.match(home, /<HomeHero products=\{products\} heroCollection=\{heroCollection\} \/>/);
+  assert.match(home, /<HomeHero/);
+  assert.match(home, /products=\{products\}/);
+  assert.match(home, /heroCollection=\{heroCollection\}/);
+  assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
   assert.match(hero, /const image = activeSlide\?\.image/);
   assert.match(hero, /to="\/collections\/\$handle"/);
   assert.match(hero, /params=\{\{ handle: activeSlide\.handle \}\}/);
