@@ -8,12 +8,7 @@ const requestSchema = z.object({
   message: z.string().trim().min(1).max(1800),
   productContext: z.string().trim().max(6000).optional(),
   history: z
-    .array(
-      z.object({
-        role: z.enum(["user", "assistant"]),
-        text: z.string().trim().min(1).max(1800),
-      }),
-    )
+    .array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().trim().min(1).max(1800) }))
     .max(10)
     .optional(),
 });
@@ -22,14 +17,7 @@ export type SmartAdvisorComparison = {
   name: string;
   verdict: string;
   score: number;
-  specs: {
-    display: string;
-    chipset: string;
-    camera: string;
-    battery: string;
-    charging: string;
-    software: string;
-  };
+  specs: { display: string; chipset: string; camera: string; battery: string; charging: string; software: string };
   pros: string[];
   cons: string[];
   storeHandle?: string | null;
@@ -61,6 +49,53 @@ export type SmartAdvisorResult = {
 
 type Budget = { min?: number; max?: number };
 type Priority = "camera" | "gaming" | "battery" | "performance" | "social" | "work" | "student" | "value" | "deals" | "new" | null;
+type SortMode = "normal" | "cheaper" | "premium";
+
+const MODEL = "spacecall-smart-bot-v2";
+const BRAND_RULES: Array<[RegExp, string]> = [
+  [/iphone|apple|ايفون|آيفون|ابل|أبل/i, "apple"],
+  [/samsung|galaxy|سامسونج/i, "samsung"],
+  [/xiaomi|شاومي/i, "xiaomi"],
+  [/redmi|ريدمي/i, "redmi"],
+  [/poco|بوكو/i, "poco"],
+  [/honor|هونر/i, "honor"],
+  [/oppo|اوبو|أوبو/i, "oppo"],
+  [/realme|ريلمي/i, "realme"],
+  [/oneplus|ون بلس/i, "oneplus"],
+  [/google|pixel|بيكسل/i, "google"],
+  [/nothing/i, "nothing"],
+];
+
+const normalize = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[إأآ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/[ًٌٍَُِّْـ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const productText = (product: ShopifyProduct) =>
+  [
+    product.node.title,
+    product.node.vendor,
+    product.node.productType,
+    product.node.description,
+    ...(product.node.tags ?? []),
+    ...(product.node.collections?.edges ?? []).flatMap((edge) => [edge.node.title, edge.node.handle]),
+    ...product.node.variants.edges.flatMap((edge) => [
+      edge.node.title,
+      ...(edge.node.selectedOptions ?? []).flatMap((option) => [option.name, option.value]),
+    ]),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+const isPhone = (product: ShopifyProduct) =>
+  /(phone|smartphone|mobile|iphone|galaxy|pixel|redmi|poco|honor|oppo|realme|oneplus|nothing|هاتف|موبايل)/i.test(productText(product));
 
 function numericPrice(product: ShopifyProduct) {
   const value = Number(product.node.priceRange?.minVariantPrice?.amount ?? "");
@@ -84,228 +119,208 @@ function salePercent(product: ShopifyProduct) {
   return Math.round(((compareAt - price) / compareAt) * 100);
 }
 
-function productText(product: ShopifyProduct) {
-  const node = product.node;
-  return [
-    node.title,
-    node.vendor,
-    node.productType,
-    node.description,
-    ...(node.tags ?? []),
-    ...(node.collections?.edges ?? []).flatMap((edge) => [edge.node.title, edge.node.handle]),
-    ...node.variants.edges.flatMap((edge) => [
-      edge.node.title,
-      ...(edge.node.selectedOptions ?? []).flatMap((option) => [option.name, option.value]),
-    ]),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-}
-
-function isPhone(product: ShopifyProduct) {
-  const text = productText(product);
-  return /(phone|smartphone|mobile|iphone|galaxy|pixel|redmi|poco|honor|oppo|realme|oneplus|nothing|هاتف|موبايل)/i.test(text);
-}
-
 function extractBudget(text: string): Budget | null {
-  const value = text.toLowerCase().replace(/,/g, "");
-  if (/مش مهم السعر|no budget|any price|price doesn.?t matter/i.test(value)) return null;
-
-  const range = value.match(/(?:\$|usd\s*)?(\d{2,4})\s*(?:-|–|—|to|الى|إلى)\s*(?:\$|usd\s*)?(\d{2,4})/i);
+  const value = normalize(text).replace(/,/g, "");
+  if (/مش مهم السعر|no budget|any price|price doesnt matter/i.test(value)) return null;
+  const range = value.match(/(?:\$|usd\s*)?(\d{2,4})\s*(?:-|–|—|to|الى)\s*(?:\$|usd\s*)?(\d{2,4})/i);
   if (range) {
-    const first = Number(range[1]);
-    const second = Number(range[2]);
-    return { min: Math.min(first, second), max: Math.max(first, second) };
+    const a = Number(range[1]);
+    const b = Number(range[2]);
+    return { min: Math.min(a, b), max: Math.max(a, b) };
   }
-
-  const under = value.match(/(?:under|below|less than|تحت|اقل من|أقل من|حدود)\s*(?:\$|usd\s*)?(\d{2,4})|(?:budget|ميزاني(?:ة|تي))[^\d]{0,15}(?:\$|usd\s*)?(\d{2,4})/i);
-  if (under) {
-    const max = Number(under[1] ?? under[2]);
-    if (Number.isFinite(max)) return { max };
-  }
-
+  const under = value.match(/(?:under|below|less than|تحت|اقل من|حدود)\s*(?:\$|usd\s*)?(\d{2,4})|(?:budget|ميزاني(?:ه|تي))[^0-9]{0,15}(?:\$|usd\s*)?(\d{2,4})/i);
+  if (under) return { max: Number(under[1] ?? under[2]) };
   const plus = value.match(/(?:\$|usd\s*)?(\d{2,4})\s*\+/i);
-  if (plus) return { min: Number(plus[1]) };
-
-  return null;
+  return plus ? { min: Number(plus[1]) } : null;
 }
 
-function inferBrand(text: string) {
-  const value = text.toLowerCase();
-  const brands: Array<[RegExp, string]> = [
-    [/iphone|apple|ايفون|آيفون|ابل|أبل/i, "apple"],
-    [/samsung|galaxy|سامسونج/i, "samsung"],
-    [/xiaomi|redmi|poco|شاومي|ريدمي|بوكو/i, "xiaomi"],
-    [/honor|هونر/i, "honor"],
-    [/oppo|اوبو|أوبو/i, "oppo"],
-    [/realme|ريلمي/i, "realme"],
-    [/oneplus|ون بلس/i, "oneplus"],
-    [/google|pixel|بيكسل/i, "google"],
-  ];
-  return brands.find(([pattern]) => pattern.test(value))?.[1] ?? null;
-}
+const inferBrands = (text: string) => {
+  const value = normalize(text);
+  return [...new Set(BRAND_RULES.filter(([rule]) => rule.test(value)).map(([, brand]) => brand))];
+};
 
 function inferPriority(text: string): Priority {
-  const value = text.toLowerCase();
+  const value = normalize(text);
   if (/deal|offer|discount|sale|عرض|عروض|خصم/i.test(value)) return "deals";
-  if (/new phone|newest|latest|احدث|أحدث|جديد/i.test(value)) return "new";
+  if (/newest|latest|احدث|جديد/i.test(value)) return "new";
   if (/camera|photo|video|تصوير|كاميرا|فيديو/i.test(value)) return "camera";
-  if (/gaming|game|games|العاب|ألعاب|لعب/i.test(value)) return "gaming";
-  if (/battery|بطارية|شحن طويل/i.test(value)) return "battery";
-  if (/performance|speed|fast|اداء|أداء|سريع/i.test(value)) return "performance";
+  if (/gaming|game|العاب|لعب/i.test(value)) return "gaming";
+  if (/battery|بطاري|شحن طويل/i.test(value)) return "battery";
+  if (/performance|speed|fast|اداء|سريع/i.test(value)) return "performance";
   if (/social|instagram|tiktok|انستغرام|تيكتوك|سوشال/i.test(value)) return "social";
-  if (/university|college|student|جامعة|طالب|دراسة/i.test(value)) return "student";
+  if (/university|college|student|جامع|طالب|دراس/i.test(value)) return "student";
   if (/work|business|شغل|عمل/i.test(value)) return "work";
-  if (/value|money|budget|ميزانية|قيمة|سعر/i.test(value)) return "value";
+  if (/value|money|budget|ميزاني|قيم|سعر/i.test(value)) return "value";
   return null;
 }
 
 function inferIntent(text: string): SmartAdvisorResult["intent"] {
-  if (/compare|comparison|vs\.?|مقارن|قارن|الفرق بين/i.test(text)) return "compare";
-  if (/stock|available|availability|متوفر|مخزون/i.test(text)) return "search";
-  if (/spec|مواصف|camera|battery|chipset|display|كاميرا|بطارية|شاشة/i.test(text)) return "specs";
-  if (/recommend|best|choose|اختار|انصح|أنصح|افضل|أفضل|بدي/i.test(text)) return "recommend";
+  const value = normalize(text);
+  if (/compare|comparison|vs\.?|مقارن|قارن|الفرق بين/i.test(value)) return "compare";
+  if (/stock|available|availability|متوفر|مخزون/i.test(value)) return "search";
+  if (/spec|مواصف|camera|battery|chipset|display|كاميرا|بطاري|شاش/i.test(value)) return "specs";
+  if (/recommend|best|choose|اختار|انصح|افضل|بدي|اريد/i.test(value)) return "recommend";
   return "general";
 }
 
+function inferSortMode(text: string): SortMode {
+  const value = normalize(text);
+  if (/cheaper|cheap|lowest price|ارخص|اقل سعر/i.test(value)) return "cheaper";
+  if (/premium|flagship|اغلى|افخم|اقوى فئ/i.test(value)) return "premium";
+  return "normal";
+}
+
+const historyText = (history: z.infer<typeof requestSchema>["history"]) =>
+  (history ?? []).map((item) => `${item.role}: ${item.text}`).join("\n");
+
 function prioritySignals(priority: Priority) {
-  switch (priority) {
-    case "camera":
-      return ["camera", "photo", "video", "pro max", "ultra", "كاميرا", "تصوير"];
-    case "gaming":
-      return ["gaming", "game", "snapdragon", "dimensity", "poco f", "rog", "redmagic", "ألعاب"];
-    case "battery":
-      return ["battery", "mah", "battery life", "fast charge", "بطارية"];
-    case "performance":
-      return ["performance", "snapdragon", "dimensity", "pro", "ultra", "max", "أداء"];
-    case "social":
-      return ["camera", "video", "selfie", "social", "instagram", "tiktok"];
-    case "student":
-      return ["value", "battery", "128gb", "256gb", "student"];
-    case "work":
-      return ["battery", "256gb", "512gb", "pro", "productivity"];
-    default:
-      return [];
-  }
+  if (priority === "camera") return ["camera", "photo", "video", "pro max", "ultra", "كاميرا", "تصوير"];
+  if (priority === "gaming") return ["gaming", "snapdragon", "dimensity", "poco f", "rog", "redmagic"];
+  if (priority === "battery") return ["battery", "mah", "fast charge", "بطارية"];
+  if (priority === "performance") return ["performance", "snapdragon", "dimensity", "pro", "ultra", "max"];
+  if (priority === "student") return ["value", "battery", "128gb", "256gb"];
+  if (priority === "work") return ["battery", "256gb", "512gb", "pro"];
+  if (priority === "social") return ["camera", "video", "selfie", "instagram", "tiktok"];
+  return [];
 }
 
-function normalizedTerms(text: string) {
-  return [...new Set(text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((term) => term.length >= 3))].slice(0, 18);
+function terms(text: string) {
+  const ignored = new Set(["assistant", "user", "phone", "mobile", "هاتف", "تلفون", "موبايل", "store", "shopper", "budget", "priority", "best", "option", "product"]);
+  return [...new Set(normalize(text).split(/[^\p{L}\p{N}]+/u).filter((term) => term.length >= 3 && !ignored.has(term)))].slice(0, 22);
 }
 
-function scoreProduct(product: ShopifyProduct, query: string, budget: Budget | null, brand: string | null, priority: Priority) {
-  const text = productText(product);
+function scoreProduct(product: ShopifyProduct, message: string, conversation: string, budget: Budget | null, brands: string[], priority: Priority, sortMode: SortMode) {
+  const haystack = productText(product);
   const price = numericPrice(product);
-  let score = product.node.availableForSale ? 20 : -30;
-
-  const queryTerms = normalizedTerms(query);
-  for (const term of queryTerms) if (text.includes(term)) score += 4;
-
-  if (brand) {
-    if (text.includes(brand)) score += 24;
-    else score -= 8;
+  let score = product.node.availableForSale ? 26 : -45;
+  for (const term of terms(conversation)) if (haystack.includes(term)) score += 2;
+  for (const term of terms(message)) if (haystack.includes(term)) score += 8;
+  if (brands.length) score += brands.some((brand) => haystack.includes(brand)) ? 26 : -12;
+  if (budget?.max !== undefined && Number.isFinite(price)) {
+    score += price <= budget.max ? 34 : -Math.min(55, Math.max(12, ((price - budget.max) / Math.max(budget.max, 1)) * 60));
   }
-
-  if (budget && Number.isFinite(price)) {
-    if (budget.max !== undefined) {
-      if (price <= budget.max) score += 28;
-      else score -= Math.min(40, Math.max(8, ((price - budget.max) / Math.max(budget.max, 1)) * 45));
-    }
-    if (budget.min !== undefined) {
-      if (price >= budget.min) score += 8;
-      else score -= 3;
-    }
-  }
-
-  for (const signal of prioritySignals(priority)) if (text.includes(signal)) score += 5;
-
-  if (priority === "deals") score += salePercent(product) * 1.8;
-  if (priority === "value" && Number.isFinite(price)) score += Math.max(0, 14 - price / 75);
-  if (priority === "student" && Number.isFinite(price)) score += Math.max(0, 12 - price / 90);
+  if (budget?.min !== undefined && Number.isFinite(price)) score += price >= budget.min ? 7 : -4;
+  for (const signal of prioritySignals(priority)) if (haystack.includes(signal)) score += 6;
+  if (priority === "deals") score += salePercent(product) * 2.2;
+  if (priority === "value" && Number.isFinite(price)) score += Math.max(0, 18 - price / 55);
+  if (priority === "student" && Number.isFinite(price)) score += Math.max(0, 16 - price / 70);
   if (priority === "new" && product.node.createdAt) {
     const ageDays = (Date.now() - Date.parse(product.node.createdAt)) / 86_400_000;
-    if (Number.isFinite(ageDays)) score += Math.max(0, 24 - ageDays / 30);
+    if (Number.isFinite(ageDays)) score += Math.max(0, 28 - ageDays / 24);
   }
-
+  if (sortMode === "cheaper" && Number.isFinite(price)) score += Math.max(0, 42 - price / 12);
+  if (sortMode === "premium" && Number.isFinite(price)) score += Math.min(35, price / 35);
   return score;
 }
 
-function money(product: ShopifyProduct) {
+const money = (product: ShopifyProduct) => {
   const price = product.node.priceRange?.minVariantPrice;
-  if (!price?.amount) return "";
-  return `${price.amount} ${price.currencyCode}`;
-}
+  return price?.amount ? `${price.amount} ${price.currencyCode}` : "";
+};
 
-function recommendationReason(product: ShopifyProduct, budget: Budget | null, priority: Priority, arabic: boolean) {
-  const reasons: string[] = [];
-  const price = numericPrice(product);
-  const discount = salePercent(product);
-
-  if (product.node.availableForSale) reasons.push(arabic ? "متوفر حالياً" : "Currently in stock");
-  if (budget?.max !== undefined && price <= budget.max) reasons.push(arabic ? "ضمن ميزانيتك" : "Fits your budget");
-  if (discount > 0) reasons.push(arabic ? `عليه خصم حوالي ${discount}%` : `About ${discount}% off`);
-
-  const labels: Partial<Record<NonNullable<Priority>, [string, string]>> = {
-    camera: ["مناسب أكثر لطلبك المتعلق بالتصوير", "Matches your camera-focused request"],
-    gaming: ["مطابق أكثر لطلبك المتعلق بالألعاب", "Matches your gaming-focused request"],
-    battery: ["مطابق أكثر لطلبك المتعلق بالبطارية", "Matches your battery-focused request"],
-    performance: ["مطابق أكثر لطلبك المتعلق بالأداء", "Matches your performance-focused request"],
-    social: ["مناسب أكثر لاستخدام السوشال", "Matches your social-media use"],
-    student: ["خيار متوازن للدراسة والقيمة", "Balanced for study and value"],
-    work: ["مناسب أكثر لاستخدام العمل", "Matches your work-focused use"],
-    value: ["قيمة جيدة مقارنة بالسعر", "Strong value for the price"],
-    deals: ["من أفضل العروض الحالية", "One of the strongest current deals"],
-    new: ["من الإضافات الأحدث في الكتالوج", "One of the newer catalogue additions"],
+function reason(product: ShopifyProduct, budget: Budget | null, priority: Priority, arabic: boolean) {
+  const list: string[] = [];
+  if (product.node.availableForSale) list.push(arabic ? "متوفر حالياً" : "In stock");
+  if (budget?.max !== undefined && numericPrice(product) <= budget.max) list.push(arabic ? "ضمن ميزانيتك" : "Fits your budget");
+  if (salePercent(product)) list.push(arabic ? `خصم ${salePercent(product)}% تقريباً` : `About ${salePercent(product)}% off`);
+  const label: Partial<Record<NonNullable<Priority>, [string, string]>> = {
+    camera: ["مناسب للتصوير", "Camera-focused match"],
+    gaming: ["مناسب للألعاب", "Gaming-focused match"],
+    battery: ["مناسب للبطارية", "Battery-focused match"],
+    performance: ["مناسب للأداء", "Performance-focused match"],
+    social: ["مناسب للسوشال", "Social-media match"],
+    work: ["مناسب للعمل", "Work-focused match"],
+    student: ["متوازن للدراسة والسعر", "Balanced for study"],
+    value: ["قيمة جيدة مقابل السعر", "Strong value"],
+    deals: ["من أقوى العروض", "Strong current deal"],
+    new: ["من الأحدث في المتجر", "Newer catalogue item"],
   };
-  if (priority && labels[priority]) reasons.push(labels[priority]![arabic ? 0 : 1]);
-
-  return reasons.slice(0, 3).join(" · ") || (arabic ? "مطابق جيد لطلبك من المنتجات المتوفرة" : "A strong match from the available catalogue");
+  if (priority && label[priority]) list.push(label[priority]![arabic ? 0 : 1]);
+  return list.slice(0, 3).join(" · ") || (arabic ? "تطابق جيد مع طلبك" : "Strong match for your request");
 }
 
-function productPros(product: ShopifyProduct, budget: Budget | null, arabic: boolean) {
-  const list: string[] = [];
-  const price = numericPrice(product);
-  const discount = salePercent(product);
-  if (product.node.availableForSale) list.push(arabic ? "متوفر في المتجر" : "In stock at the store");
-  if (budget?.max !== undefined && price <= budget.max) list.push(arabic ? "ضمن الميزانية" : "Within budget");
-  if (discount > 0) list.push(arabic ? `خصم ${discount}% تقريباً` : `About ${discount}% off`);
-  const variant = product.node.variants.edges[0]?.node;
-  const options = variant?.selectedOptions?.filter((option) => option.value !== "Default Title") ?? [];
-  if (options.length) list.push(options.map((option) => option.value).join(" · "));
-  return list.slice(0, 3);
+const clean = (value?: string) => value?.replace(/\s+/g, " ").trim().slice(0, 90) ?? "";
+
+function extractSpecFacts(product: ShopifyProduct) {
+  const text = [product.node.title, product.node.description, ...(product.node.tags ?? [])].filter(Boolean).join(" ");
+  return {
+    display: clean(text.match(/\b\d(?:\.\d{1,2})?\s*(?:inch|inches|["”])[^.;\n]{0,55}(?:oled|amoled|lcd|hz)?/i)?.[0]),
+    chipset: clean(text.match(/(snapdragon\s?[\w+ -]{2,28}|dimensity\s?\d{3,5}[\w+ -]*|apple\s+a\d{1,2}\s*(?:pro|max|bionic)?|a\d{2}\s*bionic|exynos\s?\d{3,5})/i)?.[0]),
+    camera: clean(text.match(/\b\d{1,3}\s*mp\b[^.;\n]{0,45}/i)?.[0]),
+    battery: clean(text.match(/\b\d{4,5}\s*mah\b/i)?.[0]),
+    charging: clean(text.match(/\b\d{2,3}\s*w\b[^.;\n]{0,28}(?:charge|charging|شحن)?/i)?.[0]),
+    software: clean(text.match(/(android\s?\d{1,2}|ios\s?\d{1,2}|one ui\s?\d(?:\.\d)?|hyperos\s?\d(?:\.\d)?)/i)?.[0]),
+  };
 }
 
-function productCons(product: ShopifyProduct, budget: Budget | null, arabic: boolean) {
-  const list: string[] = [];
-  const price = numericPrice(product);
-  if (!product.node.availableForSale) list.push(arabic ? "غير متوفر حالياً" : "Currently out of stock");
-  if (budget?.max !== undefined && price > budget.max) list.push(arabic ? "أعلى من الميزانية" : "Above budget");
-  return list;
-}
-
-function emptySpecs() {
-  return { display: "", chipset: "", camera: "", battery: "", charging: "", software: "" };
+function botReply(answer: string, followUps: string[], intent: SmartAdvisorResult["intent"] = "general"): SmartAdvisorResult {
+  return { ok: true, provider: "local", model: MODEL, answer, intent, searchedWeb: false, comparison: [], bestPick: null, storeRecommendations: [], sources: [], followUps };
 }
 
 function localAdvisor(catalog: ShopifyProduct[], data: z.infer<typeof requestSchema>): SmartAdvisorResult {
-  const query = [data.productContext ?? "", data.message].filter(Boolean).join("\n");
   const arabic = /[\u0600-\u06ff]/.test(data.message);
-  const budget = extractBudget(query);
-  const brand = inferBrand(query);
-  const priority = inferPriority(query);
+  const message = normalize(data.message);
+  const conversation = [data.productContext ?? "", historyText(data.history), data.message].filter(Boolean).join("\n");
+  const flexible = /مش مهم السعر|no budget|any price/i.test(message);
+  const budget = flexible ? null : extractBudget(data.message) ?? extractBudget(conversation);
+  const currentBrands = inferBrands(data.message);
+  const brands = currentBrands.length ? currentBrands : inferBrands(conversation);
+  const priority = inferPriority(data.message) ?? inferPriority(conversation);
   const intent = inferIntent(data.message);
+  const sortMode = inferSortMode(data.message);
 
-  const phoneProducts = catalog.filter(isPhone);
-  const pool = phoneProducts.length >= 3 ? phoneProducts : catalog;
-  const ranked = pool
-    .map((product) => ({ product, score: scoreProduct(product, query, budget, brand, priority) }))
+  if (/^(hi|hello|hey|مرحبا|اهلا|اهلين|السلام عليكم|سلام|هاي)[!. ]*$/i.test(message)) {
+    return botReply(
+      arabic ? "أهلاً 👋 أنا بوت Space Call الذكي. خبرني ميزانيتك أو استخدامك وأنا بفلتر منتجات المتجر وبختار الأنسب." : "Hi 👋 I'm the Space Call smart shopping bot. Tell me your budget or main use and I'll filter the live store catalogue.",
+      arabic ? ["أفضل هاتف تحت $300", "بدي هاتف للتصوير", "أفضل هاتف للألعاب", "شو أفضل عرض؟"] : ["Best phone under $300", "Camera phone", "Gaming phone", "Best deal"],
+    );
+  }
+  if (/^(thanks|thank you|thx|شكرا|يسلمو|مشكور|تمام شكرا)[!. ]*$/i.test(message)) {
+    return botReply(arabic ? "على راسي 🙌 فيني كمان أضيّق لك الخيارات لخيار واحد." : "Anytime 🙌 I can narrow the choices down to one final pick.", arabic ? ["اختارلي واحد", "أرني خيار أرخص", "قارن أفضل خيارين"] : ["Pick one", "Show cheaper", "Compare top two"]);
+  }
+  if (/(شو بتقدر تعمل|ماذا تستطيع|كيف بتساعد|what can you do|help me)/i.test(message)) {
+    return botReply(
+      arabic ? "بقدر أختار من منتجات Space Call، أفلتر حسب الميزانية والاستخدام، أقارن، أرتب أفضل قيمة وعروض، وأتحقق من السعر والتوفر. المواصفات أعرضها فقط إذا كانت موجودة ببيانات المنتج." : "I can recommend from Space Call products, filter by budget/use, compare choices, rank value/deals, and check current price and availability. I only show specs present in product data.",
+      arabic ? ["لاقيلِي هاتف مناسب", "قارن iPhone و Samsung", "أفضل عرض"] : ["Find me a phone", "Compare iPhone and Samsung", "Best deal"],
+    );
+  }
+
+  const vague = /(بدي|اريد|need|want|looking for).*(تلفون|هاتف|phone|mobile).*(منيح|جيد|مناسب)?$|^(تلفون|هاتف|phone|mobile)\s*(منيح|جيد|good|best)?$/i.test(message);
+  if (vague && !budget && !flexible && !priority && brands.length === 0) {
+    return botReply(
+      arabic ? "أكيد. حتى ما أعطيك جواب عام، شو ميزانيتك تقريباً؟ وإذا السعر مش مهم اختار شو أهم شيء: كاميرا، ألعاب، بطارية أو أداء." : "Sure. To avoid a generic answer, what's your budget? If price doesn't matter, choose camera, gaming, battery, or performance.",
+      arabic ? ["تحت $200", "$200–$400", "$400–$700", "مش مهم السعر"] : ["Under $200", "$200–$400", "$400–$700", "Price doesn't matter"],
+      "recommend",
+    );
+  }
+
+  const pool = catalog.filter(isPhone);
+  const products = pool.length >= 3 ? pool : catalog;
+  const ranked = products
+    .map((product) => ({ product, score: scoreProduct(product, data.message, conversation, budget, brands, priority, sortMode) }))
     .sort((a, b) => b.score - a.score || numericPrice(a.product) - numericPrice(b.product));
 
-  const selected = ranked.slice(0, intent === "compare" ? 4 : 3);
+  let selected = ranked.slice(0, intent === "compare" ? 4 : 3);
+  if (intent === "compare" && currentBrands.length >= 2) {
+    const picks: typeof selected = [];
+    const used = new Set<string>();
+    for (const brand of currentBrands.slice(0, 4)) {
+      const hit = ranked.find(({ product }) => productText(product).includes(brand) && !used.has(product.node.handle));
+      if (hit) { picks.push(hit); used.add(hit.product.node.handle); }
+    }
+    for (const item of ranked) {
+      if (picks.length >= 4) break;
+      if (!used.has(item.product.node.handle)) { picks.push(item); used.add(item.product.node.handle); }
+    }
+    selected = picks;
+  }
+  if (/(second option|option 2|الخيار الثاني|تاني خيار|ثاني خيار)/i.test(message) && intent !== "compare") {
+    selected = ranked.slice(1, 4);
+  }
+
   const recommendations = selected.map(({ product }) => ({
     handle: product.node.handle,
-    reason: recommendationReason(product, budget, priority, arabic),
+    reason: reason(product, budget, priority, arabic),
     title: product.node.title,
     price: product.node.priceRange?.minVariantPrice?.amount ?? null,
     currency: product.node.priceRange?.minVariantPrice?.currencyCode ?? null,
@@ -313,71 +328,43 @@ function localAdvisor(catalog: ShopifyProduct[], data: z.infer<typeof requestSch
   }));
 
   const comparison = intent === "compare"
-    ? selected.slice(0, 4).map(({ product, score }, index) => ({
+    ? selected.map(({ product, score }, index) => ({
         name: product.node.title,
-        verdict: arabic
-          ? `${money(product)} · ${product.node.availableForSale ? "متوفر" : "غير متوفر"}. الترتيب مبني على بيانات المتجر وطلبك فقط.`
-          : `${money(product)} · ${product.node.availableForSale ? "In stock" : "Out of stock"}. Ranked from store data and your request only.`,
-        score: Math.max(55, Math.min(96, Math.round(88 + Math.min(8, score / 10) - index * 5))),
-        specs: emptySpecs(),
-        pros: productPros(product, budget, arabic),
-        cons: productCons(product, budget, arabic),
+        verdict: arabic ? `${money(product)} · ${product.node.availableForSale ? "متوفر" : "غير متوفر"} · مبني على بيانات المتجر.` : `${money(product)} · ${product.node.availableForSale ? "In stock" : "Out of stock"} · Based on store data.`,
+        score: Math.max(58, Math.min(97, Math.round(90 + Math.min(7, score / 18) - index * 5))),
+        specs: extractSpecFacts(product),
+        pros: [product.node.availableForSale ? (arabic ? "متوفر" : "In stock") : "", budget?.max !== undefined && numericPrice(product) <= budget.max ? (arabic ? "ضمن الميزانية" : "Within budget") : ""].filter(Boolean),
+        cons: [!product.node.availableForSale ? (arabic ? "غير متوفر حالياً" : "Out of stock") : "", budget?.max !== undefined && numericPrice(product) > budget.max ? (arabic ? "أعلى من الميزانية" : "Above budget") : ""].filter(Boolean),
         storeHandle: product.node.handle,
       }))
     : [];
 
-  const best = selected[0]?.product ?? null;
+  const best = selected[0]?.product;
+  if (!best) return botReply(arabic ? "ما لقيت تطابق مناسب حالياً. جرّب تغيّر الميزانية أو البراند." : "No suitable match right now. Try changing the budget or brand.", arabic ? ["وسع الميزانية", "بدون براند", "أفضل العروض"] : ["Increase budget", "Any brand", "Best deals"], intent);
+
   let answer: string;
-  if (!best) {
-    answer = arabic ? "ما لقيت منتجات مناسبة حالياً في الكتالوج." : "I couldn't find a matching product in the current catalogue.";
+  if (sortMode === "cheaper") {
+    answer = arabic ? `أرخص خيار مناسب لنفس طلبك هو ${best.node.title} بسعر ${money(best)}.` : `A cheaper option that still matches is ${best.node.title} at ${money(best)}.`;
   } else if (priority === "deals") {
-    answer = arabic
-      ? `أفضل تطابق للعروض الحالية هو ${best.node.title} بسعر ${money(best)}. عرضت لك أيضاً أقرب البدائل المتوفرة.`
-      : `The strongest current deal match is ${best.node.title} at ${money(best)}. I also included the closest available alternatives.`;
+    answer = arabic ? `أقوى عرض مطابق لطلبك هو ${best.node.title} بسعر ${money(best)}${salePercent(best) ? ` وخصم حوالي ${salePercent(best)}%` : ""}.` : `The strongest deal match is ${best.node.title} at ${money(best)}${salePercent(best) ? ` with about ${salePercent(best)}% off` : ""}.`;
   } else if (intent === "compare") {
-    answer = arabic
-      ? `بناءً على بيانات متجر ${STORE_NAME} وطلبك، ${best.node.title} هو أفضل تطابق حالياً. المقارنة هنا تعتمد على السعر والتوفر وبيانات المنتج الموجودة في المتجر، بدون اختراع مواصفات خارجية.`
-      : `Based on ${STORE_NAME}'s live catalogue and your request, ${best.node.title} is the strongest match right now. This comparison uses store price, availability and listed product data only.`;
+    answer = arabic ? `قارنت الخيارات الموجودة فعلياً في ${STORE_NAME}. الأفضل حسب طلبك حالياً هو ${best.node.title}.` : `I compared the live-store choices in ${STORE_NAME}. The best fit for your request is ${best.node.title}.`;
+  } else if (intent === "specs") {
+    const facts = Object.values(extractSpecFacts(best)).filter(Boolean).slice(0, 3).join(" · ");
+    answer = arabic ? `${best.node.title} هو الأقرب لسؤالك. ${facts ? `المواصفات المكتوبة بالمتجر: ${facts}. ` : ""}السعر الحالي ${money(best)}.` : `${best.node.title} is the closest match. ${facts ? `Store-listed specs: ${facts}. ` : ""}Current price: ${money(best)}.`;
   } else {
-    answer = arabic
-      ? `حسب طلبك وبيانات متجر ${STORE_NAME}، أنسب خيار حالياً هو ${best.node.title} بسعر ${money(best)}. تحت بتلاقي أفضل البدائل المتوفرة.`
-      : `Based on your request and ${STORE_NAME}'s live catalogue, the best current match is ${best.node.title} at ${money(best)}. The strongest available alternatives are shown below.`;
+    answer = arabic ? `حسب طلبك وسياق المحادثة، أنسب خيار حالياً هو ${best.node.title} بسعر ${money(best)}. تحت بتلاقي أقوى البدائل من كتالوج ${STORE_NAME}.` : `Based on your request and conversation context, the best current match is ${best.node.title} at ${money(best)}. Strong alternatives are below.`;
   }
 
   const followUps = arabic
-    ? ["قارنه مع الخيار الثاني", "أرني خيار أرخص", "شو الأفضل ضمن ميزانيتي؟", "أرني أفضل العروض"]
-    : ["Compare it with the second option", "Show me a cheaper option", "What's best within my budget?", "Show me the best deals"];
+    ? intent === "compare" ? ["مين الأفضل بشكل عام؟", "مين أفضل للكاميرا؟", "مين أفضل للبطارية؟", "أرني الأرخص"] : ["قارنه مع الخيار الثاني", "أرني خيار أرخص", "شو الأفضل ضمن ميزانيتي؟", "أرني أفضل العروض"]
+    : intent === "compare" ? ["Best overall?", "Best camera?", "Best battery?", "Show cheaper"] : ["Compare option two", "Show cheaper", "Best within budget?", "Show deals"];
 
-  return {
-    ok: true,
-    provider: "local",
-    model: "spacecall-local-v1",
-    answer,
-    intent,
-    searchedWeb: false,
-    comparison,
-    bestPick: best?.node.title ?? null,
-    storeRecommendations: recommendations,
-    sources: [],
-    followUps,
-  };
+  return { ok: true, provider: "local", model: MODEL, answer, intent, searchedWeb: false, comparison, bestPick: best.node.title, storeRecommendations: recommendations, sources: [], followUps };
 }
 
 function failure(answer: string, errorCode: string): SmartAdvisorResult {
-  return {
-    ok: false,
-    provider: "local",
-    model: "spacecall-local-v1",
-    errorCode,
-    answer,
-    intent: "general",
-    searchedWeb: false,
-    comparison: [],
-    bestPick: null,
-    storeRecommendations: [],
-    sources: [],
-    followUps: [],
-  };
+  return { ok: false, provider: "local", model: MODEL, errorCode, answer, intent: "general", searchedWeb: false, comparison: [], bestPick: null, storeRecommendations: [], sources: [], followUps: [] };
 }
 
 export const askSmartPhoneAdvisor = createServerFn({ method: "POST" })
@@ -385,13 +372,9 @@ export const askSmartPhoneAdvisor = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<SmartAdvisorResult> => {
     try {
       const { fetchCatalogProducts } = await import("@/lib/shopify");
-      const catalog = await fetchCatalogProducts(100);
-      return localAdvisor(catalog, data);
+      return localAdvisor(await fetchCatalogProducts(100), data);
     } catch (error) {
-      console.error("Space Call local advisor catalogue error", error);
-      return failure(
-        "I couldn't load the live store catalogue right now. Please try again.",
-        "CATALOG_ERROR",
-      );
+      console.error("Space Call smart bot catalogue error", error);
+      return failure("I couldn't load the live store catalogue right now. Please try again.", "CATALOG_ERROR");
     }
   });
