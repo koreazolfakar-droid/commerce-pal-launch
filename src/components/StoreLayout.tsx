@@ -43,7 +43,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
-      <SiteFooter />
+      <SiteFooter compactTopSpacing={onCartPage} />
       <BottomNav />
     </div>
   );
