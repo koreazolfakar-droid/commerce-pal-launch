@@ -60,9 +60,9 @@ function ArabicLandingPage() {
   }, [setLanguage]);
 
   const categories = [
-    { label: "الهواتف الذكية", to: "/category/smartphones" as const, icon: Smartphone },
-    { label: "اللابتوبات", to: "/category/laptops" as const, icon: Laptop },
-    { label: "السماعات والصوتيات", to: "/category/headphones" as const, icon: Headphones },
+    { label: "الهواتف الذكية", slug: "smartphones", icon: Smartphone },
+    { label: "اللابتوبات", slug: "laptops", icon: Laptop },
+    { label: "السماعات والصوتيات", slug: "headphones", icon: Headphones },
   ];
 
   return (
@@ -97,10 +97,11 @@ function ArabicLandingPage() {
         <section className="mt-8" aria-labelledby="arabic-categories">
           <h2 id="arabic-categories" className="text-2xl font-black">تسوّق حسب الفئة</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            {categories.map(({ label, to, icon: Icon }) => (
+            {categories.map(({ label, slug, icon: Icon }) => (
               <Link
-                key={to}
-                to={to}
+                key={slug}
+                to="/category/$slug"
+                params={{ slug }}
                 className="group flex items-center gap-4 rounded-2xl border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-accent/50"
               >
                 <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
