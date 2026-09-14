@@ -35,7 +35,18 @@ jobs:
         run: bun run typecheck
 
       - name: ESLint
-        run: bun run lint
+        run: |
+          set -o pipefail
+          bun run lint 2>&1 | tee /tmp/eslint.log
+
+      - name: Upload ESLint diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-diagnostics
+          path: /tmp/eslint.log
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Unit and architecture tests
         run: bun run test:unit
