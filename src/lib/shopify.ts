@@ -97,6 +97,8 @@ type StorefrontJsonValue = Awaited<ReturnType<Response["json"]>>;
 type StorefrontCacheEntry = { expiresAt: number; value: StorefrontJsonValue };
 const STOREFRONT_CACHE_TTL_MS = 60_000;
 const STOREFRONT_CACHE_MAX_ENTRIES = 100;
+const PERSISTENT_STOREFRONT_CACHE_NAME = "space-call-storefront-v2";
+const PERSISTENT_STOREFRONT_CACHE_TIMESTAMP_HEADER = "x-space-call-cached-at";
 const storefrontResponseCache = new Map<string, StorefrontCacheEntry>();
 const storefrontPendingRequests = new Map<string, Promise<StorefrontJsonValue>>();
 
@@ -130,9 +132,19 @@ async function readPersistentStorefrontCache(
 ): Promise<StorefrontJsonValue | undefined> {
   if (typeof caches === "undefined") return undefined;
   try {
-    const cache = await caches.open("space-call-storefront-v1");
-    const response = await cache.match(persistentStorefrontRequest(key));
-    return response ? response.json() : undefined;
+    const cache = await caches.open(PERSISTENT_STOREFRONT_CACHE_NAME);
+    const request = persistentStorefrontRequest(key);
+    const response = await cache.match(request);
+    if (!response) return undefined;
+
+    const cachedAt = Number(response.headers.get(PERSISTENT_STOREFRONT_CACHE_TIMESTAMP_HEADER));
+    const expired = !Number.isFinite(cachedAt) || Date.now() - cachedAt >= STOREFRONT_CACHE_TTL_MS;
+    if (expired) {
+      await cache.delete(request);
+      return undefined;
+    }
+
+    return response.json();
   } catch {
     return undefined;
   }
@@ -141,13 +153,14 @@ async function readPersistentStorefrontCache(
 async function writePersistentStorefrontCache(key: string, value: StorefrontJsonValue) {
   if (typeof caches === "undefined") return;
   try {
-    const cache = await caches.open("space-call-storefront-v1");
+    const cache = await caches.open(PERSISTENT_STOREFRONT_CACHE_NAME);
     await cache.put(
       persistentStorefrontRequest(key),
       new Response(JSON.stringify(value), {
         headers: {
           "content-type": "application/json; charset=utf-8",
           "cache-control": "public, max-age=60",
+          [PERSISTENT_STOREFRONT_CACHE_TIMESTAMP_HEADER]: String(Date.now()),
         },
       }),
     );
