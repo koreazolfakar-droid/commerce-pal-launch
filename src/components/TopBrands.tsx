@@ -279,7 +279,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
               <div
                 key={cycleIndex}
                 data-brand-cycle={cycleIndex}
-                className="flex shrink-0 items-center gap-1.5 px-1.5 sm:gap-2.5 sm:px-2 lg:gap-3"
+                className="flex shrink-0 items-center gap-1 px-1 sm:gap-2 sm:px-1.5 lg:gap-2.5"
                 aria-hidden={cycleIndex === 1 ? undefined : true}
               >
                 {railBrands.map((brand) => {
@@ -300,7 +300,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
                       onClick={() => {
                         interactionRef.current.resumeAt = Number.POSITIVE_INFINITY;
                       }}
-                      className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-1 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-14 sm:px-1.5 md:hover:-translate-y-0.5"
+                      className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-0.5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-14 sm:px-1 md:hover:-translate-y-0.5"
                     >
                       <span
                         className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity,filter] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.08] group-hover:opacity-100 group-hover:saturate-100 group-hover:drop-shadow-sm ${
