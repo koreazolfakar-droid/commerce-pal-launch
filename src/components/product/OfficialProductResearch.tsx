@@ -3,6 +3,23 @@ import { ExternalLink, Globe2, Loader2, Sparkles } from "lucide-react";
 
 import { enrichProductFromOfficialSource } from "@/lib/productResearch.functions";
 
+function ProductContext({ title, vendor }: { title: string; vendor?: string | null }) {
+  return (
+    <div>
+      <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        {title} in Lebanon
+      </h3>
+      <p className="mt-3 text-sm leading-7 text-foreground/80">
+        {vendor ? `${title} by ${vendor}` : title} is listed in the live Space Call catalogue for
+        shoppers in Lebanon. Product options, pricing and availability are kept with the storefront
+        listing so you can check the exact configuration before ordering. Review the specifications,
+        selected variant and current stock status on this page, then complete checkout securely or
+        contact Space Call for order support.
+      </p>
+    </div>
+  );
+}
+
 export function OfficialProductResearch({
   title,
   vendor,
@@ -24,24 +41,32 @@ export function OfficialProductResearch({
         className="rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-6"
         aria-live="polite"
       >
-        <div className="flex items-center gap-3 text-sm font-semibold">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <div>
-            <p>Verifying official product information</p>
-            <p className="mt-0.5 text-xs font-normal text-muted-foreground">
-              Checking the manufacturer&apos;s official source…
-            </p>
+        <div className="grid gap-5 lg:grid-cols-[1.05fr_.95fr] lg:items-start">
+          <ProductContext title={title} vendor={vendor} />
+          <div className="flex items-center gap-3 rounded-2xl border bg-muted/20 p-4 text-sm font-semibold">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <div>
+              <p>Verifying official product information</p>
+              <p className="mt-0.5 text-xs font-normal text-muted-foreground">
+                Checking the manufacturer&apos;s official source…
+              </p>
+            </div>
+            <Loader2 className="ml-auto h-4 w-4 animate-spin text-muted-foreground" aria-hidden />
           </div>
-          <Loader2 className="ml-auto h-4 w-4 animate-spin text-muted-foreground" aria-hidden />
         </div>
       </section>
     );
   }
 
-  if (!data || (!data.summary && !data.promotionalImages.length && !data.specifications.length))
-    return null;
+  if (!data || (!data.summary && !data.promotionalImages.length && !data.specifications.length)) {
+    return (
+      <section className="rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-6">
+        <ProductContext title={title} vendor={vendor} />
+      </section>
+    );
+  }
 
   return (
     <section className="overflow-hidden rounded-[1.5rem] border bg-card shadow-card">
@@ -99,26 +124,29 @@ export function OfficialProductResearch({
       )}
 
       <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[1.05fr_.95fr]">
-        {data.summary && (
-          <div>
-            <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              About this product
-            </h3>
-            <p className="mt-3 text-sm leading-7 text-foreground/80">{data.summary}</p>
-            {data.highlights.length > 0 && (
-              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                {data.highlights.slice(0, 8).map((item) => (
-                  <li
-                    key={item}
-                    className="rounded-xl border bg-muted/20 px-3 py-2 text-xs font-medium leading-5"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
+        <div className="space-y-6">
+          <ProductContext title={title} vendor={vendor} />
+          {data.summary && (
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                About this product
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-foreground/80">{data.summary}</p>
+              {data.highlights.length > 0 && (
+                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {data.highlights.slice(0, 8).map((item) => (
+                    <li
+                      key={item}
+                      className="rounded-xl border bg-muted/20 px-3 py-2 text-xs font-medium leading-5"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
 
         {data.specifications.length > 0 && (
           <div>
