@@ -93,7 +93,11 @@ export function brandLogoSources(slug: string, label: string, _size = 128): stri
   const key = brandKey(slug, label);
   const local = LOCAL_LOGOS[key];
   if (local) return [local];
-  const icon = BRAND_META[key]?.icon;
+
+  // Known aliases stay authoritative, but for any new Shopify vendor we also
+  // try its normalized slug on Simple Icons. Unsupported slugs simply 404 and
+  // BrandLogo advances to the merchant image/text fallback without breaking UI.
+  const icon = BRAND_META[key]?.icon ?? key;
   if (icon) sources.push(`https://cdn.simpleicons.org/${icon}`);
   return sources;
 }
