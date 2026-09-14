@@ -3,13 +3,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { StoreLayout } from "@/components/StoreLayout";
+import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
-import { catalogQueryOptions } from "@/lib/queries";
+import { cdnImage } from "@/lib/image";
+import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/categories")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(catalogQueryOptions()),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(catalogQueryOptions()),
+      context.queryClient.ensureQueryData(collectionsQueryOptions()),
+    ]);
+  },
   head: () => ({
     meta: [
       { title: `Categories — ${STORE_NAME}` },
@@ -28,6 +35,7 @@ export const Route = createFileRoute("/categories")({
 
 function CategoriesPage() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
+  const { data: collections = [] } = useSuspenseQuery(collectionsQueryOptions());
   const { language } = useLanguage();
 
   return (
@@ -51,6 +59,12 @@ function CategoriesPage() {
         >
           {catalog.categories.map((category) => {
             const label = categoryLabel(category, language);
+            const artwork = findCategoryArtworkCollection(
+              collections,
+              category.slug,
+              category.label,
+            );
+            const imageUrl = cdnImage(artwork?.image?.url, 240);
 
             return (
               <Link
@@ -67,10 +81,20 @@ function CategoriesPage() {
                 >
                   <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white via-white to-slate-50 dark:from-card dark:via-card dark:to-surface" />
                   <span className="pointer-events-none absolute inset-x-3 top-1 h-px bg-white/80 dark:bg-white/10" />
-                  <CategoryGlyph
-                    slug={category.slug}
-                    className="relative h-[4.1rem] w-[4.1rem] transition-transform duration-300 ease-out group-hover:scale-[1.06] sm:h-[4.75rem] sm:w-[4.75rem]"
-                  />
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="relative h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.06]"
+                    />
+                  ) : (
+                    <CategoryGlyph
+                      slug={category.slug}
+                      className="relative h-[4.1rem] w-[4.1rem] transition-transform duration-300 ease-out group-hover:scale-[1.06] sm:h-[4.75rem] sm:w-[4.75rem]"
+                    />
+                  )}
                 </span>
 
                 <h2 className="line-clamp-2 min-h-[2rem] max-w-full text-[11px] font-extrabold leading-[1.15] tracking-[-0.015em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.15rem] sm:text-xs">
