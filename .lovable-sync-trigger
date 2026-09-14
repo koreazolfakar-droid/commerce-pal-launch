@@ -1,4 +1,4 @@
 Lovable sync trigger
-Triggered from ChatGPT on 2026-09-13 after public CMS endpoint integration
-Latest main commit before trigger: 4e4b13bc4fc2c33362192071a9695d5121873c15
-Reason: force Lovable to rebuild storefront so dashboard changes appear without SUPABASE_ANON_KEY environment dependency
+Triggered from ChatGPT on 2026-09-14 after homepage hero visibility repair
+Latest main commit before trigger: 53c1ec908e02250d1a4585681728b8a07c4abfbe
+Reason: force Lovable to pull and rebuild storefront so the homepage hero renders again while hero-only $0 products remain hidden from homepage product rails
