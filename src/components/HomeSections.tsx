@@ -1,13 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  Bike,
-  CreditCard,
-  Heart,
-  MessageCircle,
-  RotateCcw,
-  ShieldCheck,
-  Tag,
-} from "lucide-react";
+import { Bike, CreditCard, Heart, MessageCircle, RotateCcw, ShieldCheck, Tag } from "lucide-react";
 import { ArrowRight } from "lucide-react";
 
 import { cdnImage } from "@/lib/image";
