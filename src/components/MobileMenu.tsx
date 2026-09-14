@@ -1,7 +1,29 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Menu } from "lucide-react";
+import {
+  BatteryCharging,
+  Boxes,
+  Cable,
+  Camera,
+  ChevronRight,
+  CircleUserRound,
+  Gamepad2,
+  Grid2X2,
+  Headphones,
+  Heart,
+  Laptop,
+  LifeBuoy,
+  Menu,
+  Monitor,
+  Package,
+  PlugZap,
+  Smartphone,
+  Sparkles,
+  Tags,
+  Watch,
+  type LucideIcon,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -17,14 +39,112 @@ import { displayCollections } from "@/lib/taxonomy";
 import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 
+const BRAND_DOMAINS: Record<string, string> = {
+  anker: "anker.com",
+  samsung: "samsung.com",
+  apple: "apple.com",
+  lenovo: "lenovo.com",
+  ugreen: "ugreen.com",
+  poco: "po.co",
+  tecno: "tecno-mobile.com",
+  xiaomi: "mi.com",
+  huawei: "huawei.com",
+  honor: "honor.com",
+  oneplus: "oneplus.com",
+  oppo: "oppo.com",
+  realme: "realme.com",
+  sony: "sony.com",
+  nothing: "nothing.tech",
+  google: "google.com",
+};
+
+function categoryIcon(slug: string, label: string): LucideIcon {
+  const value = `${slug} ${label}`.toLowerCase();
+  if (value.includes("smartphone") || value.includes("phone") || value.includes("mobile")) return Smartphone;
+  if (value.includes("laptop") || value.includes("computer")) return Laptop;
+  if (value.includes("headphone") || value.includes("earbud") || value.includes("audio")) return Headphones;
+  if (value.includes("charger")) return PlugZap;
+  if (value.includes("power bank") || value.includes("powerbank")) return BatteryCharging;
+  if (value.includes("cable")) return Cable;
+  if (value.includes("watch") || value.includes("wearable")) return Watch;
+  if (value.includes("gaming") || value.includes("playstation")) return Gamepad2;
+  if (value.includes("camera")) return Camera;
+  if (value.includes("monitor") || value.includes("display") || value.includes("tv")) return Monitor;
+  return Package;
+}
+
+function brandDomain(slug: string, label: string) {
+  const value = `${slug} ${label}`.toLowerCase();
+  return Object.entries(BRAND_DOMAINS).find(([name]) => value.includes(name))?.[1] ?? null;
+}
+
+function BrandMark({ slug, label }: { slug: string; label: string }) {
+  const domain = brandDomain(slug, label);
+  const fallback = label.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "SC";
+
+  return (
+    <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border/70 bg-white shadow-sm">
+      <span className="text-[10px] font-black tracking-tight text-slate-700">{fallback}</span>
+      {domain ? (
+        <img
+          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-contain p-2"
+          loading="lazy"
+        />
+      ) : null}
+    </span>
+  );
+}
+
+function SectionHeading({
+  icon: Icon,
+  title,
+  action,
+  to,
+  onClick,
+}: {
+  icon: LucideIcon;
+  title: string;
+  action?: string;
+  to?: "/categories" | "/brands" | "/shop";
+  onClick: () => void;
+}) {
+  return (
+    <div className="mb-2.5 flex items-center justify-between gap-3 px-1">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+          <Icon aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
+        </span>
+        <h2 className="truncate text-sm font-black tracking-tight text-foreground">{title}</h2>
+      </div>
+      {action && to ? (
+        <Link
+          to={to}
+          onClick={onClick}
+          className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full px-2.5 text-[11px] font-extrabold text-primary transition-colors hover:bg-primary/10"
+        >
+          {action}
+          <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 rtl:rotate-180" />
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const { t, direction, language } = useLanguage();
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: collections = [] } = useQuery(collectionsQueryOptions());
   const close = () => setOpen(false);
-  const linkClass =
-    "block min-h-11 rounded-xl px-3 py-3 text-sm hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring";
+  const visibleCollections = displayCollections(collections).slice(0, 4);
+  const seeAll = language === "ar" ? "عرض الكل" : "See all";
+
+  const rowClass =
+    "group flex min-h-[58px] w-full items-center gap-3 rounded-2xl border border-border/65 bg-card/70 px-3 py-2.5 text-start shadow-[0_8px_24px_-22px_rgba(15,23,42,.9)] transition-[border-color,background-color,transform,box-shadow] duration-200 hover:-translate-y-px hover:border-primary/30 hover:bg-accent/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35";
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -36,96 +156,166 @@ export function MobileMenu() {
           <Menu aria-hidden className="h-5 w-5" />
         </button>
       </SheetTrigger>
+
       <SheetContent
         side={direction === "rtl" ? "right" : "left"}
         dir={direction}
-        className="flex w-[min(90vw,24rem)] flex-col gap-5 overflow-y-auto p-5"
+        className="flex w-[min(92vw,27rem)] flex-col gap-0 overflow-y-auto border-border/70 bg-background/98 p-0 supports-[backdrop-filter]:bg-background/95 supports-[backdrop-filter]:backdrop-blur-2xl"
       >
-        <SheetHeader className="pe-7 text-start sm:text-start">
-          <SheetTitle>{t("menuTitle")}</SheetTitle>
-          <SheetDescription>{t("menuDescription")}</SheetDescription>
-        </SheetHeader>
-        <nav aria-label={t("menuTitle")} className="grid gap-5">
+        <div className="sticky top-0 z-10 border-b border-border/60 bg-background/95 px-5 pb-4 pt-5 backdrop-blur-xl">
+          <div className="mb-4 flex items-center gap-3 pe-12">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary ring-1 ring-primary/15">
+              <Sparkles aria-hidden="true" className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-[10px] font-black uppercase tracking-[0.2em] text-primary">Space Call</p>
+              <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
+                {language === "ar" ? "تقنية أذكى، اختيار أسهل" : "Smarter tech, easier shopping"}
+              </p>
+            </div>
+          </div>
+
+          <SheetHeader className="pe-10 text-start sm:text-start">
+            <SheetTitle className="text-[1.7rem] font-black tracking-[-0.035em]">{t("menuTitle")}</SheetTitle>
+            <SheetDescription className="mt-1 max-w-[22rem] text-[13px] leading-relaxed">
+              {t("menuDescription")}
+            </SheetDescription>
+          </SheetHeader>
+        </div>
+
+        <nav aria-label={t("menuTitle")} className="grid gap-6 px-4 py-5">
           <section>
-            <h2 className="mb-1 px-3 text-sm font-bold">{t("categoriesTitle")}</h2>
-            {(catalog?.categories ?? []).map((item) => (
-              <Link
-                key={item.slug}
-                to="/category/$slug"
-                params={{ slug: item.slug }}
-                className={linkClass}
-                onClick={close}
-              >
-                {categoryLabel(item, language)}
-              </Link>
-            ))}
-            {!catalog?.categories.length && (
-              <Link to="/shop" onClick={close} className={linkClass}>
-                {t("browseProducts")}
-              </Link>
-            )}
+            <SectionHeading
+              icon={Grid2X2}
+              title={t("categoriesTitle")}
+              action={seeAll}
+              to="/categories"
+              onClick={close}
+            />
+            <div className="grid gap-2">
+              {(catalog?.categories ?? []).slice(0, 7).map((item) => {
+                const label = categoryLabel(item, language);
+                const Icon = categoryIcon(item.slug, label);
+                return (
+                  <Link
+                    key={item.slug}
+                    to="/category/$slug"
+                    params={{ slug: item.slug }}
+                    className={rowClass}
+                    onClick={close}
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary ring-1 ring-primary/10 transition-transform group-hover:scale-[1.04]">
+                      <Icon aria-hidden="true" className="h-[19px] w-[19px]" strokeWidth={2} />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-foreground">{label}</span>
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+                    />
+                  </Link>
+                );
+              })}
+
+              {!catalog?.categories.length && (
+                <Link to="/shop" onClick={close} className={rowClass}>
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary">
+                    <Boxes aria-hidden="true" className="h-[19px] w-[19px]" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{t("browseProducts")}</span>
+                  <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
+                </Link>
+              )}
+            </div>
           </section>
+
           {!!catalog?.brands.length && (
-            <section>
-              <h2 className="mb-1 px-3 text-sm font-bold">{t("brands")}</h2>
-              {catalog.brands.slice(0, 10).map((item) => (
-                <Link
-                  key={item.slug}
-                  to="/brand/$slug"
-                  params={{ slug: item.slug }}
-                  className={linkClass}
-                  onClick={close}
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <section className="border-t border-border/60 pt-5">
+              <SectionHeading icon={Tags} title={t("brands")} action={seeAll} to="/brands" onClick={close} />
+              <div className="grid gap-2">
+                {catalog.brands.slice(0, 10).map((item) => (
+                  <Link
+                    key={item.slug}
+                    to="/brand/$slug"
+                    params={{ slug: item.slug }}
+                    className={rowClass}
+                    onClick={close}
+                  >
+                    <BrandMark slug={item.slug} label={item.label} />
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-foreground">{item.label}</span>
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+                    />
+                  </Link>
+                ))}
+              </div>
             </section>
           )}
-          {displayCollections(collections).length > 0 && (
-            <section>
-              <h2 className="mb-1 px-3 text-sm font-bold">{t("collections")}</h2>
-              {displayCollections(collections).map((item) => (
-                <Link
-                  key={item.handle}
-                  to="/collections/$handle"
-                  params={{ handle: item.handle }}
-                  className={linkClass}
-                  onClick={close}
-                >
-                  {item.title}
-                </Link>
-              ))}
+
+          {visibleCollections.length > 0 && (
+            <section className="border-t border-border/60 pt-5">
+              <SectionHeading icon={Boxes} title={t("collections")} action={seeAll} to="/shop" onClick={close} />
+              <div className="grid grid-cols-2 gap-2">
+                {visibleCollections.map((item) => (
+                  <Link
+                    key={item.handle}
+                    to="/collections/$handle"
+                    params={{ handle: item.handle }}
+                    onClick={close}
+                    className="group flex min-h-[64px] items-center gap-2.5 rounded-2xl border border-border/65 bg-card/70 px-3 py-2 text-start transition-colors hover:border-primary/30 hover:bg-accent/60"
+                  >
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/[0.08] text-primary">
+                      <Package aria-hidden="true" className="h-4 w-4" />
+                    </span>
+                    <span className="line-clamp-2 text-[12px] font-extrabold leading-snug">{item.title}</span>
+                  </Link>
+                ))}
+              </div>
             </section>
           )}
-          <section>
-            <h2 className="mb-1 px-3 text-sm font-bold">{t("help")}</h2>
-            <Link to="/help" onClick={close} className={linkClass}>
-              {t("helpTitle")}
-            </Link>
-            <Link to="/contact" onClick={close} className={linkClass}>
-              {t("contactTitle")}
-            </Link>
-          </section>
-          <section>
-            <h2 className="mb-1 px-3 text-sm font-bold">{t("accountOrders")}</h2>
-            <Link to="/wishlist" onClick={close} className={linkClass}>
-              {t("wishlistTitle")}
-            </Link>
-            <a
-              href={SHOP_ACCOUNT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={linkClass}
-            >
-              {t("openAccount")}
-            </a>
+
+          <section className="border-t border-border/60 pt-5">
+            <SectionHeading icon={LifeBuoy} title={t("help")} onClick={close} />
+            <div className="grid gap-2">
+              <Link to="/help" onClick={close} className={rowClass}>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary">
+                  <LifeBuoy aria-hidden="true" className="h-[18px] w-[18px]" />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{t("helpTitle")}</span>
+                <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
+              </Link>
+
+              <Link to="/wishlist" onClick={close} className={rowClass}>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary">
+                  <Heart aria-hidden="true" className="h-[18px] w-[18px]" />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{t("wishlistTitle")}</span>
+                <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
+              </Link>
+
+              <a href={SHOP_ACCOUNT_URL} target="_blank" rel="noopener noreferrer" className={rowClass}>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/[0.08] text-primary">
+                  <CircleUserRound aria-hidden="true" className="h-[18px] w-[18px]" />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{t("openAccount")}</span>
+                <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
+              </a>
+            </div>
           </section>
         </nav>
-        <div className="mt-auto border-t pt-4">
-          <h2 className="mb-3 text-sm font-bold">{t("preferences")}</h2>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <LanguageToggle />
+
+        <div className="mt-auto border-t border-border/60 bg-surface/40 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black text-foreground">{t("preferences")}</p>
+              <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                {language === "ar" ? "المظهر واللغة" : "Appearance & language"}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <ThemeToggle />
+              <LanguageToggle />
+            </div>
           </div>
         </div>
       </SheetContent>
