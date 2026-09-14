@@ -100,6 +100,15 @@ export function SiteFooter() {
           </div>
 
           <FooterColumn title={isAr ? "المتجر" : "Shop"}>
+            <li>
+              <Link
+                to="/collections/$handle"
+                params={{ handle: "apple-iphone" }}
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                {isAr ? "آيفون" : "iPhone"}
+              </Link>
+            </li>
             {FOOTER_SHOP_LINKS.map((entry) => (
               <li key={entry.slug}>
                 <Link
