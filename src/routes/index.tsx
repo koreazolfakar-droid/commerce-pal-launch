@@ -13,7 +13,7 @@ import { TopBrands } from "@/components/TopBrands";
 import { WhyShop } from "@/components/WhyShop";
 import { BrandShowcase, BundleSection, CategorySection } from "@/components/BrandShowcaseSections";
 import { buildShopifyBrands } from "@/lib/brandDirectory";
-import { cmsText } from "@/lib/cms";
+import { cmsText, EMPTY_CMS } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import {
   bestSellingQueryOptions,
@@ -37,12 +37,10 @@ const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    await Promise.all([
-      context.queryClient.ensureQueryData(catalogQueryOptions()),
-      context.queryClient.ensureQueryData(collectionsQueryOptions()),
-      context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
-      context.queryClient.ensureQueryData(cmsQueryOptions()),
-    ]);
+    // Keep only the catalog on the critical path. The CMS, collection metadata,
+    // and hero merchandising all have safe storefront fallbacks and hydrate in
+    // the background after the first useful page is ready.
+    await context.queryClient.ensureQueryData(catalogQueryOptions());
   },
   head: () => {
     const title = `${SITE_NAME} Lebanon | Official Online Electronics Store`;
@@ -160,10 +158,10 @@ function HomePromoTicker({ heading, details }: { heading: string; details: strin
 function Index() {
   const { t, language } = useLanguage();
   const [showProductSections, setShowProductSections] = useState(false);
-  const { data: cms } = useSuspenseQuery(cmsQueryOptions());
+  const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
-  const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
-  const { data: heroCollection } = useSuspenseQuery(
+  const { data: collections = [] } = useQuery(collectionsQueryOptions());
+  const { data: heroCollection } = useQuery(
     collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
   );
   const { data: newItems = [] } = useQuery({
