@@ -1,27 +1,44 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { CatalogView } from "@/components/CatalogView";
-import { buildShopifyBrands } from "@/lib/brandDirectory";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
-import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { allVendorProductsQueryOptions, catalogQueryOptions } from "@/lib/queries";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { buildCatalogIndex } from "@/lib/taxonomy";
+import type { ShopifyProduct } from "@/lib/shopify";
 
 export const Route = createFileRoute("/brand/$slug")({
   validateSearch: parseProductSearch,
   loader: async ({ context, params }) => {
     const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
-    await context.queryClient.ensureQueryData(collectionsQueryOptions());
     const brand = catalog.brands.find((entry) => entry.slug === params.slug);
     if (!brand) throw notFound();
+
+    const indexedProducts = catalog.products.filter(
+      (product) => catalog.brandOf.get(product.node.handle)?.slug === params.slug,
+    );
+
+    let vendorProducts: ShopifyProduct[] = [];
+    try {
+      vendorProducts = await context.queryClient.ensureQueryData(
+        allVendorProductsQueryOptions(brand.label),
+      );
+    } catch (error) {
+      console.error(`Failed to fetch the complete ${brand.label} brand catalogue.`, error);
+    }
+
+    const uniqueProducts = new Map<string, ShopifyProduct>();
+    for (const product of [...indexedProducts, ...vendorProducts]) {
+      uniqueProducts.set(product.node.id, product);
+    }
+    const brandCatalog = buildCatalogIndex([...uniqueProducts.values()]);
+
     return {
       label: brand.label,
-      products: catalog.products.filter(
-        (product) => catalog.brandOf.get(product.node.handle)?.slug === params.slug,
-      ),
+      catalog: brandCatalog,
     };
   },
   head: ({ params, loaderData }) => {
@@ -53,7 +70,7 @@ export const Route = createFileRoute("/brand/$slug")({
             { name: label, path },
           ]),
         ),
-        jsonLd(itemListJsonLd(`${label} products`, loaderData.products)),
+        jsonLd(itemListJsonLd(`${label} products`, loaderData.catalog.products)),
       ],
     };
   },
@@ -62,16 +79,11 @@ export const Route = createFileRoute("/brand/$slug")({
 
 function BrandPage() {
   const { language } = useLanguage();
-  const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
   const { slug } = Route.useParams();
-  const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
+  const { label: brandLabel, catalog } = Route.useLoaderData();
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
-  const brand = buildShopifyBrands(catalog.brands, collections).find(
-    (entry) => entry.slug === slug,
-  );
-  const brandLabel = brand?.label ?? slug.replace(/-/g, " ");
   const inBrand = catalog.products.filter(
     (product) => catalog.brandOf.get(product.node.handle)?.slug === slug,
   );
