@@ -24,9 +24,24 @@ import { formatPrice } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { useLanguage } from "@/lib/i18n";
 
-export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) => {
+type CartDrawerProps = {
+  hideTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+export const CartDrawer = ({
+  hideTrigger = false,
+  open: controlledOpen,
+  onOpenChange,
+}: CartDrawerProps) => {
   const { t, language } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen ?? internalOpen;
+  const setIsOpen = (nextOpen: boolean) => {
+    if (controlledOpen === undefined) setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
   const {
     items,
     total,
@@ -49,11 +64,12 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
   }, [isOpen, syncCart]);
 
   // Lets the mobile top bar / bottom nav open the same drawer instance.
+  // Kept for backwards compatibility with any existing event-driven callers.
   useEffect(() => {
     const open = () => setIsOpen(true);
     document.addEventListener("space-cell:open-cart", open);
     return () => document.removeEventListener("space-cell:open-cart", open);
-  }, []);
+  }, [controlledOpen, onOpenChange]);
 
   const handleCheckout = () => {
     const checkoutUrl = getCheckoutUrl();

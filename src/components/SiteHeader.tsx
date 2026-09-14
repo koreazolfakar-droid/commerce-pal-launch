@@ -4,12 +4,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronDown,
-  BatteryCharging,
-  Cable,
   Grid2x2,
   Headphones,
   Laptop,
@@ -24,15 +24,14 @@ import {
   RotateCcw,
   Search,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Truck,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
-import { CartDrawer } from "@/components/CartDrawer";
 import { BrandLogo } from "@/components/BrandLogo";
-import { SearchOverlay } from "@/components/SearchOverlay";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
@@ -40,7 +39,12 @@ import { useHydrated } from "@/hooks/useHydrated";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { displayCollections, type CatalogFacet } from "@/lib/taxonomy";
+import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+
+const LazySearchOverlay = lazy(() =>
+  import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({ default: SearchOverlay })),
+);
 
 const UTILITY = [
   { icon: Truck, key: "freeDelivery" as const },
@@ -87,6 +91,9 @@ export function SiteHeader() {
   const { t, direction, language } = useLanguage();
   const hydrated = useHydrated();
   const wishlistCount = useWishlistStore((state) => state.handles.length);
+  const cartCount = useCartStore((state) =>
+    state.items.reduce((total, item) => total + item.quantity, 0),
+  );
 
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
@@ -179,7 +186,20 @@ export function SiteHeader() {
                 </span>
               )}
             </Link>
-            <CartDrawer />
+            <Button
+              variant="outline"
+              size="icon"
+              className="press relative rounded-full"
+              onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
+              aria-label={`${t("openBag")}, ${cartCount}`}
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {cartCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs">
+                  {cartCount}
+                </Badge>
+              )}
+            </Button>
           </div>
         </div>
 
@@ -327,7 +347,11 @@ export function SiteHeader() {
         </nav>
       </header>
 
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {searchOpen ? (
+        <Suspense fallback={null}>
+          <LazySearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+        </Suspense>
+      ) : null}
     </>
   );
 }
