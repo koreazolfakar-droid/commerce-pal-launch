@@ -147,9 +147,10 @@ export async function callNvidiaChat({
 
   const text = messageText(payload.choices?.[0]?.message?.content);
   if (!text) throw new NvidiaApiError("AI gateway returned an empty response", 502, body);
+  const provider: AiProvider = payload.provider === "openrouter" ? "openrouter" : "nvidia";
   return {
     text,
     model: payload.model?.trim() || undefined,
-    provider: payload.provider === "openrouter" ? "openrouter" : "nvidia",
+    provider,
   };
 }
