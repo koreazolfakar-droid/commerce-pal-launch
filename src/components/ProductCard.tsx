@@ -3,7 +3,7 @@ import { QuickViewButton } from "@/components/product/QuickViewButton";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, ShoppingBag } from "lucide-react";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
@@ -31,7 +31,7 @@ export const ProductCard = memo(function ProductCard({
 }) {
   const { t } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
-  const isLoading = useCartStore((state) => state.isLoading);
+  const [isAdding, setIsAdding] = useState(false);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
   const toggleWishlist = useWishlistToggle();
 
@@ -47,17 +47,22 @@ export const ProductCard = memo(function ProductCard({
   const isPhone = primaryCategory(product)?.slug === "smartphones";
 
   const handleAddToCart = async () => {
-    if (!selectedVariant) return;
-    const success = await addItem({
-      product,
-      variantId: selectedVariant.id,
-      variantTitle: selectedVariant.title,
-      price: selectedVariant.price,
-      quantity: 1,
-      selectedOptions: selectedVariant.selectedOptions ?? [],
-    });
-    if (success) toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
-    else toast.error(t("addToCartFailed"), { position: "top-center" });
+    if (!selectedVariant || isAdding) return;
+    setIsAdding(true);
+    try {
+      const success = await addItem({
+        product,
+        variantId: selectedVariant.id,
+        variantTitle: selectedVariant.title,
+        price: selectedVariant.price,
+        quantity: 1,
+        selectedOptions: selectedVariant.selectedOptions ?? [],
+      });
+      if (success) toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
+      else toast.error(t("addToCartFailed"), { position: "top-center" });
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleWishlist = () => {
@@ -175,11 +180,11 @@ export const ProductCard = memo(function ProductCard({
         <div className="mt-auto pt-2">
           <Button
             onClick={handleAddToCart}
-            disabled={isLoading || !selectedVariant || !inStock}
+            disabled={isAdding || !selectedVariant || !inStock}
             className="press h-11 w-full rounded-xl"
             size="sm"
           >
-            {isLoading ? (
+            {isAdding ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
