@@ -16,8 +16,6 @@ import { useLanguage } from "@/lib/i18n";
 export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   const { t } = useLanguage();
   const railRef = useRef<HTMLDivElement>(null);
-  if (!brands.length) return null;
-
   const showEdgeHint = brands.length > 4;
   const brandSignature = brands.map((brand) => brand.slug).join("|");
 
@@ -34,6 +32,8 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
     const frame = window.requestAnimationFrame(centerRail);
     return () => window.cancelAnimationFrame(frame);
   }, [brandSignature]);
+
+  if (!brands.length) return null;
 
   return (
     <section
@@ -58,7 +58,12 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
       <div className="relative -mx-4 overflow-hidden sm:mx-0 sm:overflow-visible">
         <div
           ref={railRef}
-          className="flex touch-pan-x snap-x snap-proximity items-center gap-3 overflow-x-auto px-[calc(50%-3rem)] py-2 scroll-smooth overscroll-x-contain [scroll-padding-inline:calc(50%-3rem)] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 sm:px-[calc(50%-3.5rem)] sm:py-2.5 sm:[scroll-padding-inline:calc(50%-3.5rem)] lg:gap-7 lg:px-[calc(50%-4rem)] lg:[scroll-padding-inline:calc(50%-4rem)]"
+          dir="ltr"
+          style={{
+            paddingInline: "max(1rem, calc(50% - 3rem))",
+            scrollPaddingInline: "max(1rem, calc(50% - 3rem))",
+          }}
+          className="flex touch-pan-x snap-x snap-proximity items-center gap-3 overflow-x-auto py-2 scroll-smooth overscroll-x-contain [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-5 sm:py-2.5 lg:gap-7"
           role="list"
           aria-label={t("topBrands")}
         >
