@@ -1,4 +1,6 @@
 Lovable sync trigger
-Triggered from ChatGPT on 2026-09-14 after security scan hardening
-Security migration commit: 48d980d58c7edeb6cf880ec80272e4bd62489e19
-Reason: force Lovable to pull the new Supabase RLS hardening migration, rebuild the project, and re-run/apply backend changes so the Security scan warnings can clear.
+Triggered from ChatGPT on 2026-09-14 after security hardening round 2
+Admin signup removal commit: ad3f7cec0e4079590e9f40c6a63fdb3ce0e0661b
+Privilege-escalation migration commit: d3a3150f7388cab365fcf0311b876c7ba1e9639e
+Earlier RLS hardening commit: 48d980d58c7edeb6cf880ec80272e4bd62489e19
+Reason: force Lovable to pull the latest security fixes, apply the new Supabase migration, rebuild, and refresh the Security scan results.
