@@ -1,4 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Hydrate } from "@tanstack/react-start";
+import { idle } from "@tanstack/react-start/hydration";
 import {
   Outlet,
   Link,
@@ -149,7 +151,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <Toaster />
+      {/* Toast UI is non-critical to first paint; keep it out of the startup bundle. */}
+      <Hydrate when={idle({ timeout: 3000 })}>
+        <Toaster />
+      </Hydrate>
     </QueryClientProvider>
   );
 }
