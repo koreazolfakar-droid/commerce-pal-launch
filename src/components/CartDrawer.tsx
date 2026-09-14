@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ExternalLink,
   Loader2,
@@ -38,10 +38,13 @@ export const CartDrawer = ({
   const { t, language } = useLanguage();
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = controlledOpen ?? internalOpen;
-  const setIsOpen = (nextOpen: boolean) => {
-    if (controlledOpen === undefined) setInternalOpen(nextOpen);
-    onOpenChange?.(nextOpen);
-  };
+  const setIsOpen = useCallback(
+    (nextOpen: boolean) => {
+      if (controlledOpen === undefined) setInternalOpen(nextOpen);
+      onOpenChange?.(nextOpen);
+    },
+    [controlledOpen, onOpenChange],
+  );
   const {
     items,
     total,
@@ -69,7 +72,7 @@ export const CartDrawer = ({
     const open = () => setIsOpen(true);
     document.addEventListener("space-cell:open-cart", open);
     return () => document.removeEventListener("space-cell:open-cart", open);
-  }, [controlledOpen, onOpenChange]);
+  }, [setIsOpen]);
 
   const handleCheckout = () => {
     const checkoutUrl = getCheckoutUrl();
