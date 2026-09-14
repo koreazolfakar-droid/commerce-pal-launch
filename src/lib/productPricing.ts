@@ -55,8 +55,10 @@ export function productCurrency(product: ShopifyProduct) {
   );
 }
 
-export function productCompareAt(product: ShopifyProduct) {
-  const variant = productPrimaryVariant(product);
+export function productCompareAt(
+  product: ShopifyProduct,
+  variant = productPrimaryVariant(product),
+) {
   return variant
     ? (variant.compareAtPrice?.amount ?? null)
     : (product.node.compareAtPriceRange?.minVariantPrice.amount ?? null);
