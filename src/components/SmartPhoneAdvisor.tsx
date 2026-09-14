@@ -105,9 +105,17 @@ function isBroadPhoneRequest(value: string) {
   );
 }
 
-export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState("");
+export function SmartPhoneAdvisor({
+  context = "",
+  initialOpen = false,
+  initialPrompt = "",
+}: {
+  context?: string;
+  initialOpen?: boolean;
+  initialPrompt?: string;
+}) {
+  const [open, setOpen] = useState(initialOpen);
+  const [input, setInput] = useState(initialPrompt);
   const [busy, setBusy] = useState(false);
   const [statusStage, setStatusStage] = useState(0);
   const [messages, setMessages] = useState<ChatMessage[]>([welcomeMessage()]);
