@@ -31,10 +31,7 @@ test("merchant brand artwork overrides curated local fallbacks and raw SVG marku
   assert.doesNotMatch(brandLogo, /builtInIsLocal/);
   assert.match(brandLogo, /PADDED_SQUARE_WORDMARKS = new Set\(\["ugreen"\]\)/);
   assert.match(brandLogo, /paddedSquareMerchantWordmark/);
-  assert.match(
-    brandLogo,
-    /paddedSquareMerchantWordmark \? "object-cover" : "object-contain"/,
-  );
+  assert.match(brandLogo, /paddedSquareMerchantWordmark \? "object-cover" : "object-contain"/);
   assert.match(brandLogo, /imageAspectRatio >= 0\.85/);
   assert.match(brandLogo, /imageAspectRatio <= 1\.15/);
   assert.match(brandDirectory, /compactBrandIdentity/);
@@ -118,9 +115,6 @@ test("hero uses Shopify collection artwork and routes to the matching collection
   assert.match(hero, /const shopifyImage = shopifySlide\?\.image/);
   assert.match(hero, /to="\/collections\/\$handle"/);
   assert.match(hero, /params=\{\{ handle: shopifySlide\.handle \}\}/);
-  assert.match(
-    hero,
-    /alt=\{shopifyImage\.altText \?\? shopifySlide\.title \?\? "Space Call"\}/,
-  );
+  assert.match(hero, /alt=\{shopifyImage\.altText \?\? shopifySlide\.title \?\? "Space Call"\}/);
   assert.doesNotMatch(hero, /products\[0\]|featuredProduct|featuredNode|Latest arrival|أحدث وصول/);
 });
