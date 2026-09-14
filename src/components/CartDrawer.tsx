@@ -24,9 +24,15 @@ import { formatPrice } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { useLanguage } from "@/lib/i18n";
 
-export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) => {
+export const CartDrawer = ({
+  hideTrigger = false,
+  initialOpen = false,
+}: {
+  hideTrigger?: boolean;
+  initialOpen?: boolean;
+}) => {
   const { t, language } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialOpen);
   const {
     items,
     total,
@@ -48,7 +54,7 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
     if (isOpen) syncCart();
   }, [isOpen, syncCart]);
 
-  // Lets the mobile top bar / bottom nav open the same drawer instance.
+  // Lets lightweight mobile/desktop cart buttons open the single global drawer.
   useEffect(() => {
     const open = () => setIsOpen(true);
     document.addEventListener("space-cell:open-cart", open);
@@ -108,8 +114,11 @@ export const CartDrawer = ({ hideTrigger = false }: { hideTrigger?: boolean }) =
                           <img
                             src={cdnImage(item.product.node.images.edges[0].node.url, 128)}
                             alt={item.product.node.title}
+                            width={64}
+                            height={64}
                             className="h-full w-full object-cover"
                             loading="lazy"
+                            decoding="async"
                           />
                         )}
                       </div>
