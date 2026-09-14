@@ -19,6 +19,21 @@ import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { STORE_NAME } from "@/lib/storeConfig";
 
+const FONT_STYLESHEET_URL =
+  "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap";
+
+const FONT_LOAD_SCRIPT = `(function(){
+  var href=${JSON.stringify(FONT_STYLESHEET_URL)};
+  if(document.querySelector('link[data-space-call-fonts="stylesheet"]')) return;
+  var link=document.createElement("link");
+  link.rel="stylesheet";
+  link.href=href;
+  link.media="print";
+  link.dataset.spaceCallFonts="stylesheet";
+  link.onload=function(){this.media="all";};
+  document.head.appendChild(link);
+})();`;
+
 function NotFoundComponent() {
   const { t } = useLanguage();
   return (
@@ -115,8 +130,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "preconnect", href: "https://cdn.shopify.com" },
       {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+        rel: "preload",
+        href: FONT_STYLESHEET_URL,
+        as: "style",
       },
       { rel: "icon", href: "/logo.svg", type: "image/svg+xml" },
     ],
@@ -134,6 +150,10 @@ function RootShell({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: LANGUAGE_INIT_SCRIPT }} />
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: FONT_LOAD_SCRIPT }} />
+        <noscript>
+          <link rel="stylesheet" href={FONT_STYLESHEET_URL} />
+        </noscript>
       </head>
       <body>
         <LanguageProvider>
