@@ -1,18 +1,28 @@
-name: NVIDIA Advisor CI
+name: Smart Bot CI
 
 on:
   push:
     branches:
-      - feature/nvidia-smart-advisor-v2
+      - main
+    paths:
+      - src/lib/smartPhoneAdvisor.functions.ts
+      - src/components/SmartPhoneAdvisor.tsx
+      - e2e/nvidia-advisor.test.mjs
+      - .github/workflows/nvidia-advisor-ci.yml
   pull_request:
     branches:
       - main
+    paths:
+      - src/lib/smartPhoneAdvisor.functions.ts
+      - src/components/SmartPhoneAdvisor.tsx
+      - e2e/nvidia-advisor.test.mjs
+      - .github/workflows/nvidia-advisor-ci.yml
 
 permissions:
   contents: read
 
 concurrency:
-  group: nvidia-advisor-${{ github.workflow }}-${{ github.ref }}
+  group: smart-bot-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -31,11 +41,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: NVIDIA advisor regression tests
-        run: node --test e2e/nvidia-advisor.test.mjs
+      - name: TypeScript
+        run: bun run typecheck
 
-      - name: Full repository unit suite
-        run: bun run test:unit
+      - name: Smart bot regression tests
+        run: node --test e2e/nvidia-advisor.test.mjs
 
       - name: Production build
         run: bun run build
