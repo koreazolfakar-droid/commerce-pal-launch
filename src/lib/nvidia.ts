@@ -2,9 +2,11 @@ export const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
 export const DEFAULT_SUPABASE_NVIDIA_FUNCTION = "nvidia-chat";
 // Supabase's legacy anon key is a public client credential, not a service-role/secret key.
 // Keep a built-in fallback so the server-side advisor still works on deployments where
-// Lovable/Cloudflare does not inject SUPABASE_ANON_KEY. NVIDIA_API_KEY remains private
-// inside the protected Supabase Edge Function and is never exposed here.
-export const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0d3lhbmtweHRmZnFxcmFzeXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNzIxOTQsImV4cCI6MjEwNDg0ODE5NH0.VuPOMhdaUolLzkNbjRR59sBOZh351eCp_GebUW8dI08";
+// Lovable/Cloudflare does not inject SUPABASE_ANON_KEY. Provider API keys remain private
+// inside the protected Supabase Edge Function and are never exposed here.
+export const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJ0d3lhbmtweHRmZnFxcmFzeXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNzIxOTQsImV4cCI6MjEwNDg0ODE5NH0.VuPOMhdaUolLzkNbjRR59sBOZh351eCp_GebUW8dI08";
+
+export type AiProvider = "nvidia" | "openrouter";
 
 export type NvidiaChatMessage = {
   role: "system" | "user" | "assistant";
@@ -14,11 +16,13 @@ export type NvidiaChatMessage = {
 type NvidiaMessageContent = string | Array<{ type?: string; text?: string }> | undefined;
 
 type NvidiaChatPayload = {
+  provider?: AiProvider;
   model?: string;
   choices?: Array<{
     message?: { content?: NvidiaMessageContent };
   }>;
   error?: string | { message?: string; type?: string; code?: string };
+  code?: string;
   status?: number;
   title?: string;
   detail?: string;
@@ -60,6 +64,7 @@ function providerErrorMessage(payload: NvidiaChatPayload, fallback: string) {
   }
   if (payload.detail?.trim()) return payload.detail.trim();
   if (payload.title?.trim()) return payload.title.trim();
+  if (payload.code?.trim()) return payload.code.trim();
   return fallback;
 }
 
@@ -112,7 +117,7 @@ export async function callNvidiaChat({
     });
   } catch (error) {
     throw new NvidiaApiError(
-      error instanceof Error ? error.message : "Supabase NVIDIA gateway request failed",
+      error instanceof Error ? error.message : "Supabase AI gateway request failed",
       0,
       "NETWORK_ERROR",
     );
@@ -134,13 +139,17 @@ export async function callNvidiaChat({
         ? payload.status
         : response.status;
     throw new NvidiaApiError(
-      providerErrorMessage(payload, body || `Supabase NVIDIA gateway error ${response.status}`),
+      providerErrorMessage(payload, body || `Supabase AI gateway error ${response.status}`),
       upstreamStatus,
       body,
     );
   }
 
   const text = messageText(payload.choices?.[0]?.message?.content);
-  if (!text) throw new NvidiaApiError("NVIDIA returned an empty response", 502, body);
-  return { text, model: payload.model?.trim() || undefined };
+  if (!text) throw new NvidiaApiError("AI gateway returned an empty response", 502, body);
+  return {
+    text,
+    model: payload.model?.trim() || undefined,
+    provider: payload.provider === "openrouter" ? "openrouter" : "nvidia",
+  };
 }
