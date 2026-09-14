@@ -41,7 +41,15 @@ import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
 import { productWhatsAppUrl } from "@/lib/whatsapp";
-import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, productJsonLd } from "@/lib/seo";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  canonicalLink,
+  jsonLd,
+  productJsonLd,
+  productMetaDescription,
+  socialMeta,
+} from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { useCartStore } from "@/stores/cartStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
@@ -62,51 +70,46 @@ export const Route = createFileRoute("/product/$handle")({
         ],
       };
     }
-    const title = loaderData?.product.node.title ?? "Product";
-    const description =
-      loaderData?.product.node.description?.slice(0, 150) ||
-      `Shop phones, tablets and accessories at ${STORE_NAME}.`;
-    const image = loaderData?.product.node.images.edges[0]?.node.url;
+    const product = loaderData.product;
+    const title = product.node.title || "Product";
+    const fullTitle = `${title} — ${STORE_NAME}`;
+    const description = productMetaDescription(product);
+    const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
-    const product = loaderData?.product;
     return {
       meta: [
-        { title: `${title} — ${STORE_NAME}` },
+        { title: fullTitle },
         { name: "description", content: description },
-        { property: "og:title", content: `${title} — ${STORE_NAME}` },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "product" },
-        { property: "og:url", content: absoluteUrl(path) },
-        { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: `${title} — ${STORE_NAME}` },
-        { name: "twitter:description", content: description },
-        ...(image
-          ? [
-              { property: "og:image", content: image },
-              { name: "twitter:image", content: image },
-            ]
-          : []),
+        {
+          name: "robots",
+          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        },
+        ...socialMeta({
+          title: fullTitle,
+          description,
+          path,
+          type: "product",
+          ...(image ? { image } : {}),
+        }),
       ],
       links: [canonicalLink(path)],
-      scripts: product
-        ? [
-            jsonLd(productJsonLd(product)),
-            jsonLd(
-              breadcrumbJsonLd([
-                { name: "Home", path: "/" },
-                { name: "Shop", path: "/shop" },
-                { name: title, path },
-              ]),
-            ),
-          ]
-        : [],
+      scripts: [
+        jsonLd(productJsonLd(product)),
+        jsonLd(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Shop", path: "/shop" },
+            { name: title, path },
+          ]),
+        ),
+      ],
     };
   },
   component: ProductPage,
 });
 
 function ProductPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { product } = Route.useLoaderData() as { product: ShopifyProduct };
   const node = product.node;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
@@ -259,6 +262,7 @@ function ProductPage() {
   const hasBox = content.box.length > 0;
   const hasShipping = content.shipping.length > 0;
   const hasSpecs = specGroups.length > 0;
+  const needsSeoOverview = (node.description ?? "").replace(/\s+/g, " ").trim().length < 180;
   const defaultTab = hasOverview
     ? "overview"
     : hasSpecs
@@ -519,6 +523,55 @@ function ProductPage() {
                 </TabsContent>
               )}
             </Tabs>
+          </section>
+        )}
+
+        {needsSeoOverview && (
+          <section
+            className="mt-8 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7"
+            aria-labelledby="product-buying-guide"
+          >
+            <h2 id="product-buying-guide" className="text-xl font-bold tracking-tight">
+              {language === "ar" ? `معلومات عن ${node.title}` : `About ${node.title}`}
+            </h2>
+            <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground sm:text-base">
+              {language === "ar"
+                ? `${node.title}${brand?.label ? ` من ${brand.label}` : ""} متوفر عبر ${STORE_NAME}. راجع السعر الحالي والتوفر والخيارات والمواصفات في هذه الصفحة قبل إتمام الطلب.`
+                : `${node.title}${brand?.label ? ` by ${brand.label}` : ""} is available through ${STORE_NAME}. Review the current price, availability, options and specifications on this page before ordering.`}
+            </p>
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl bg-surface p-4">
+                <h3 className="font-bold">
+                  {language === "ar" ? "المواصفات والخيارات" : "Specifications & options"}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {language === "ar"
+                    ? `يمكنك مراجعة ${category?.label ?? node.productType ?? "فئة المنتج"} وخيارات النسخة المتاحة مثل السعة أو اللون عندما تكون مدرجة.`
+                    : `Review the ${category?.label ?? node.productType ?? "product category"} details and available variant options such as storage or colour when listed.`}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-surface p-4">
+                <h3 className="font-bold">{language === "ar" ? "السعر والتوفر" : "Price & availability"}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {language === "ar"
+                    ? `يعرض المتجر السعر الحالي وحالة المخزون المباشرة. الحالة الحالية: ${inStock ? "متوفر" : "غير متوفر"}.`
+                    : `The store shows the current price and live stock status. Current status: ${inStock ? "in stock" : "out of stock"}.`}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-surface p-4">
+                <h3 className="font-bold">{language === "ar" ? "التوصيل والضمان" : "Delivery & warranty"}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {language === "ar"
+                    ? "راجع صفحات الشحن والضمان والإرجاع أو تواصل مع الدعم قبل الطلب إذا كنت تحتاج تفاصيل إضافية."
+                    : "Check the shipping, warranty and returns pages, or contact support before ordering if you need additional details."}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
+              <Link to="/shipping" className="text-primary hover:underline">{t("shippingTitle")}</Link>
+              <Link to="/warranty" className="text-primary hover:underline">{t("warrantyTitle")}</Link>
+              <Link to="/returns" className="text-primary hover:underline">{t("returnsTitle")}</Link>
+            </div>
           </section>
         )}
 
