@@ -1,0 +1,4 @@
+-- Production migration history marker.
+-- The required public SELECT grants are already included in
+-- 20260914035830_remove_legacy_cms_admin_token_and_add_ai_rate_limit.sql
+-- so a fresh database reaches the same final least-privilege state.
