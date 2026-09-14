@@ -7,13 +7,7 @@ import { buildCatalogIndex } from "@/lib/taxonomy";
 import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchCollectionByHandle } from "@/lib/shopify";
-import {
-  breadcrumbJsonLd,
-  canonicalLink,
-  itemListJsonLd,
-  jsonLd,
-  socialMeta,
-} from "@/lib/seo";
+import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/collections/$handle")({
