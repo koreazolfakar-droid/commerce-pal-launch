@@ -26,7 +26,10 @@ const POLICY_STALE_TIME = 30 * 60 * 1000;
 async function fetchCatalogIndexSafely() {
   try {
     const vendorPromise = fetchBrandVendors().catch((error) => {
-      console.error("Shopify vendor discovery failed; using brands from the bounded catalog.", error);
+      console.error(
+        "Shopify vendor discovery failed; using brands from the bounded catalog.",
+        error,
+      );
       return [] as string[];
     });
     const [products, vendors] = await Promise.all([fetchCatalogProducts(60), vendorPromise]);
