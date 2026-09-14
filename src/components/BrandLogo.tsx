@@ -104,17 +104,13 @@ function LogoImage({
     }
   };
 
-  const opticalScale = normalizeForRail
-    ? railOpticalScale(slug, label, imageAspectRatio)
-    : 1;
+  const opticalScale = normalizeForRail ? railOpticalScale(slug, label, imageAspectRatio) : 1;
   const compactLabelLength = label.replace(/[^a-z0-9]/gi, "").length;
   const normalizedWordmarkRatio = Math.min(
     2.8,
     Math.max(2.05, 1.7 + Math.min(compactLabelLength, 10) * 0.12),
   );
-  const frameWidth = wordmark
-    ? size * (normalizeForRail ? normalizedWordmarkRatio : 2.6)
-    : size;
+  const frameWidth = wordmark ? size * (normalizeForRail ? normalizedWordmarkRatio : 2.6) : size;
 
   // Catch cached loads/errors which happened before hydration attached the handlers.
   useEffect(() => {
