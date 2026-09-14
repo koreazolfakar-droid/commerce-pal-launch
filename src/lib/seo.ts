@@ -4,7 +4,8 @@ import { SITE_URL as CONFIG_SITE_URL, STORE_CONFIG, STORE_NAME, storeUrl } from 
 
 export const SITE_URL = CONFIG_SITE_URL;
 export const SITE_NAME = STORE_NAME;
-export const DEFAULT_OG_IMAGE = storeUrl("/logo.svg");
+// PNG is more widely supported by social crawlers than SVG for Open Graph previews.
+export const DEFAULT_OG_IMAGE = storeUrl("/logo.png");
 
 export function absoluteUrl(path = "/") {
   return storeUrl(path);
@@ -14,11 +15,55 @@ export function canonicalLink(path: string) {
   return { rel: "canonical", href: absoluteUrl(path) };
 }
 
+export function languageAlternateLinks({
+  path,
+  arabicPath = "/ar",
+}: {
+  path: string;
+  arabicPath?: string;
+}) {
+  return [
+    { rel: "alternate", hrefLang: "en-LB", href: absoluteUrl(path) },
+    { rel: "alternate", hrefLang: "ar-LB", href: absoluteUrl(arabicPath) },
+    { rel: "alternate", hrefLang: "x-default", href: absoluteUrl(path) },
+  ];
+}
+
 export function jsonLd(data: Record<string, unknown>) {
   return {
     type: "application/ld+json",
     children: JSON.stringify(data).replace(/</g, "\\u003c"),
   };
+}
+
+export function cleanMetaDescription(value: string | null | undefined, fallback: string, maxLength = 155) {
+  const plain = (value ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+  const source = plain || fallback;
+  if (source.length <= maxLength) return source;
+  const clipped = source.slice(0, maxLength - 1);
+  const lastSpace = clipped.lastIndexOf(" ");
+  const safe = lastSpace > Math.floor(maxLength * 0.72) ? clipped.slice(0, lastSpace) : clipped;
+  return `${safe.replace(/[\s,;:.-]+$/g, "")}…`;
+}
+
+export function productMetaDescription(product: ShopifyProduct) {
+  const node = product.node;
+  const brand = node.vendor?.trim();
+  const type = node.productType?.trim();
+  const fallback = `Shop ${node.title}${brand ? ` by ${brand}` : ""} in Lebanon at ${SITE_NAME}. View price, availability, specifications, delivery and warranty information.`;
+
+  // Very short merchant descriptions are not useful snippets. Use a complete,
+  // purchase-oriented fallback instead of cutting a sentence mid-way.
+  const source = (node.description ?? "").replace(/\s+/g, " ").trim();
+  if (source.length < 90) return cleanMetaDescription(fallback, fallback);
+
+  const contextual = `${source}${type ? ` ${type}.` : ""}`;
+  return cleanMetaDescription(contextual, fallback);
 }
 
 export function socialMeta({
@@ -27,12 +72,16 @@ export function socialMeta({
   path,
   image = DEFAULT_OG_IMAGE,
   type = "website",
+  imageWidth,
+  imageHeight,
 }: {
   title: string;
   description: string;
   path: string;
   image?: string;
   type?: "website" | "product";
+  imageWidth?: number;
+  imageHeight?: number;
 }) {
   return [
     { property: "og:title", content: title },
@@ -40,6 +89,8 @@ export function socialMeta({
     { property: "og:type", content: type },
     { property: "og:url", content: absoluteUrl(path) },
     { property: "og:image", content: image },
+    ...(imageWidth ? [{ property: "og:image:width", content: String(imageWidth) }] : []),
+    ...(imageHeight ? [{ property: "og:image:height", content: String(imageHeight) }] : []),
     { property: "og:image:alt", content: title },
     { property: "og:site_name", content: SITE_NAME },
     { property: "og:locale", content: "en_LB" },
@@ -177,13 +228,15 @@ export function productJsonLd(product: ShopifyProduct) {
     "@type": "Product",
     "@id": `${absoluteUrl(`/product/${node.handle}`)}#product`,
     name: node.title,
-    description:
-      node.description?.trim() || `${node.title} available in Lebanon from ${SITE_NAME}.`,
+    description: productMetaDescription(product),
     image: images.length ? images : undefined,
     sku,
+    mpn: sku,
     ...gtinJsonLd(variant?.barcode),
     brand: brand ? { "@type": "Brand", name: brand } : undefined,
+    category: node.productType?.trim() || undefined,
     url: absoluteUrl(`/product/${node.handle}`),
+    mainEntityOfPage: absoluteUrl(`/product/${node.handle}`),
     offers: {
       "@type": "Offer",
       url: absoluteUrl(`/product/${node.handle}`),
