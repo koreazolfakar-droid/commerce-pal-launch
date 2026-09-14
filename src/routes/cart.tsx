@@ -55,7 +55,7 @@ function CartPage() {
 
   return (
     <StoreLayout>
-      <div className="mx-auto max-w-3xl px-4 pb-28 pt-6 sm:pt-8 lg:pb-10">
+      <div className="mx-auto max-w-3xl px-4 pb-4 pt-6 sm:pb-6 sm:pt-8 lg:pb-10">
         <h1 className="text-2xl font-extrabold tracking-tight lg:text-3xl">{t("yourBag")}</h1>
 
         {items.length === 0 ? (
