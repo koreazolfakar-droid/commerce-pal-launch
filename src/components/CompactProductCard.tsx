@@ -2,7 +2,7 @@ import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, ShoppingCart } from "lucide-react";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
@@ -24,7 +24,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 }) {
   const { t } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
-  const isLoading = useCartStore((state) => state.isLoading);
+  const [isAdding, setIsAdding] = useState(false);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
   const toggleWishlist = useWishlistToggle();
 
@@ -39,17 +39,22 @@ export const CompactProductCard = memo(function CompactProductCard({
   const brand = resolveBrand(product);
 
   const handleAdd = async () => {
-    if (!variant) return;
-    const success = await addItem({
-      product,
-      variantId: variant.id,
-      variantTitle: variant.title,
-      price: variant.price,
-      quantity: 1,
-      selectedOptions: variant.selectedOptions ?? [],
-    });
-    if (success) toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
-    else toast.error(t("addToCartFailed"), { position: "top-center" });
+    if (!variant || isAdding) return;
+    setIsAdding(true);
+    try {
+      const success = await addItem({
+        product,
+        variantId: variant.id,
+        variantTitle: variant.title,
+        price: variant.price,
+        quantity: 1,
+        selectedOptions: variant.selectedOptions ?? [],
+      });
+      if (success) toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
+      else toast.error(t("addToCartFailed"), { position: "top-center" });
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   return (
@@ -142,11 +147,11 @@ export const CompactProductCard = memo(function CompactProductCard({
           <button
             type="button"
             onClick={handleAdd}
-            disabled={isLoading || !variant || !inStock}
+            disabled={isAdding || !variant || !inStock}
             aria-label={`Add ${node.title} to bag`}
             className="press grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition-[opacity,transform,box-shadow] hover:scale-[1.03] hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:scale-100 disabled:opacity-40"
           >
-            {isLoading ? (
+            {isAdding ? (
               <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
             ) : (
               <ShoppingCart aria-hidden className="h-4 w-4" strokeWidth={2} />
