@@ -15,11 +15,7 @@ function ProductContext({ title, vendor }: { title: string; vendor: string | nul
   );
 }
 
-/**
- * Public product pages intentionally avoid on-demand paid AI/web-search calls.
- * Verified copy should be added to the product catalogue/CMS during publishing,
- * where it can be reviewed once instead of creating an abuseable billing endpoint.
- */
+/** Static catalogue context rendered only from storefront product data. */
 export function OfficialProductResearch({
   title,
   vendor,
