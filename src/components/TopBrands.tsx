@@ -7,17 +7,9 @@ import type { ShopifyBrand } from "@/lib/brandDirectory";
 import { orderedBrands } from "@/lib/homeMerchandising";
 import { useLanguage } from "@/lib/i18n";
 
-const COMPACT_MARKS = new Set(["apple", "xiaomi"]);
 const AUTO_SCROLL_PX_PER_SECOND = 24;
 const ACTIVE_MEASURE_INTERVAL_MS = 160;
 const INFINITE_CYCLES = [0, 1, 2] as const;
-
-function brandSlotWidth(brand: ShopifyBrand) {
-  if (COMPACT_MARKS.has(brand.slug)) return 78;
-
-  const compactLength = brand.label.replace(/[^a-z0-9]/gi, "").length;
-  return Math.min(122, Math.max(88, 72 + compactLength * 5));
-}
 
 /**
  * Premium infinite brand selector for the homepage.
@@ -278,7 +270,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
     <section
       aria-labelledby="top-brands"
       data-testid="top-brands"
-      className="-mt-2 -mb-4 sm:-mb-5"
+      className="min-w-0 max-w-full -mt-2 -mb-2 sm:-mb-3"
     >
       <div className="home-section-header !mb-0 flex-nowrap items-end">
         <div className="min-w-0 flex-1">
@@ -294,7 +286,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
         </Link>
       </div>
 
-      <div className="relative -mx-3 overflow-hidden sm:mx-0">
+      <div className="relative min-w-0 max-w-full overflow-hidden">
         <div
           ref={railRef}
           dir="ltr"
@@ -334,12 +326,12 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
           role="list"
           aria-label={t("topBrands")}
         >
-          <div className="flex w-max items-center py-0.5 sm:py-1">
+          <div className="flex w-max min-w-full items-center py-2">
             {INFINITE_CYCLES.map((cycleIndex) => (
               <div
                 key={cycleIndex}
                 data-brand-cycle={cycleIndex}
-                className="flex shrink-0 items-center gap-1 px-1 sm:gap-2 sm:px-1.5 lg:gap-2.5"
+                className="flex shrink-0 items-center gap-2 px-1 sm:gap-4 sm:px-2"
                 style={{ contain: "layout paint" }}
                 aria-hidden={cycleIndex === 1 ? undefined : true}
               >
@@ -357,11 +349,11 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
                       tabIndex={isPrimaryCycle ? undefined : -1}
                       data-brand-slug={brand.slug}
                       data-featured-brand={brand.slug === strongestSlug ? "true" : undefined}
-                      style={{ width: brandSlotWidth(brand) }}
+                      style={{ width: "clamp(72px, 19vw, 128px)" }}
                       onClick={() => {
                         interactionRef.current.resumeAt = Number.POSITIVE_INFINITY;
                       }}
-                      className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-0.5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-14 sm:px-1 md:hover:-translate-y-0.5"
+                      className="group flex h-14 shrink-0 select-none items-center justify-center px-2 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-16 sm:px-3 md:hover:-translate-y-0.5"
                     >
                       <span
                         className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.08] group-hover:opacity-100 ${
@@ -388,7 +380,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
         </div>
 
         <div
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-9 bg-gradient-to-r from-background via-background/78 to-transparent"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-3 sm:w-5 bg-gradient-to-r from-background via-background/78 to-transparent"
           style={{ boxShadow: "12px 0 26px -18px rgb(15 23 42 / 0.72)" }}
           aria-hidden="true"
         />

@@ -144,7 +144,7 @@ function LogoImage({
         "relative inline-grid shrink-0 place-items-center",
         frameless
           ? normalizeForRail
-            ? "overflow-hidden rounded-none bg-transparent"
+            ? "overflow-visible rounded-none bg-transparent"
             : "overflow-visible rounded-none bg-transparent"
           : normalizeForRail
             ? "overflow-hidden rounded-md bg-white"
@@ -179,8 +179,8 @@ function LogoImage({
           decoding="async"
           draggable={false}
           style={{
-            width: "100%",
-            height: "100%",
+            width: normalizeForRail ? `${100 / displayScale}%` : "100%",
+            height: normalizeForRail && !paddedSquareMerchantWordmark ? `${100 / displayScale}%` : "100%",
             opacity: loaded ? 1 : 0,
             transform: displayScale === 1 ? undefined : `scale(${displayScale})`,
             transformOrigin: "center",
