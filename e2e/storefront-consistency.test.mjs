@@ -7,7 +7,7 @@ const source = (path) => readFile(new URL(path, root), "utf8");
 const withoutComments = (text) =>
   text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/.*$/gm, "$1");
 
-test("curated broken-brand assets are static local URLs and raw SVG markup is rejected", async () => {
+test("merchant brand artwork overrides curated local fallbacks and raw SVG markup is rejected", async () => {
   for (const asset of [
     "public/brand-logos/apple.svg",
     "public/brand-logos/xiaomi.svg",
@@ -23,10 +23,17 @@ test("curated broken-brand assets are static local URLs and raw SVG markup is re
 
   const brandLogo = await source("src/components/BrandLogo.tsx");
   const brands = await source("src/lib/brands.ts");
+  const brandDirectory = await source("src/lib/brandDirectory.ts");
 
   assert.match(brandLogo, /safeImageSource/);
   assert.match(brandLogo, /<\\s\*svg\\b/);
-  assert.match(brandLogo, /builtInIsLocal/);
+  assert.match(brandLogo, /merchant \? \[merchant, \.\.\.builtIn\] : builtIn/);
+  assert.doesNotMatch(brandLogo, /builtInIsLocal/);
+  assert.match(brandDirectory, /compactBrandIdentity/);
+  assert.match(brandDirectory, /replace\(\/^-\|-$\/g/);
+  assert.match(brandDirectory, /replace\(\/-\/g, ""\)/);
+  assert.match(brandDirectory, /exactCandidates\.find\(looksLikeLogoImage\) \?\? exactCandidates\[0\]/);
+
   for (const name of ["apple", "xiaomi", "anker", "poco", "tecno"]) {
     assert.match(brands, new RegExp(`/${name}\\.(?:svg|png)`));
   }
