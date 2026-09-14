@@ -12,10 +12,7 @@ function openAdvisor(prompt: string) {
   );
 }
 
-/**
- * Product-page entry point for the global Smart Phone Advisor.
- * The legacy component name is kept so the product route API stays stable.
- */
+/** Product-page entry point for the global Space Call AI shopping assistant. */
 export function GeminiShoppingAdvisor({
   product,
 }: {
@@ -29,19 +26,19 @@ export function GeminiShoppingAdvisor({
     <div className="overflow-hidden rounded-[1.5rem] border bg-card shadow-card">
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+          <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
             <Sparkles className="h-5 w-5" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-success" />
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-extrabold tracking-tight">Smart phone advisor</h2>
+              <h2 className="text-base font-extrabold tracking-tight">Space Call AI</h2>
               <span className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-primary">
-                <Cpu className="h-3 w-3" /> NVIDIA AI
+                <Cpu className="h-3 w-3" /> Shopping assistant
               </span>
             </div>
             <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Compare {title}, understand its strengths and trade-offs, and match it against
-              products currently available from {STORE_NAME}.
+              اسأل عن {title}، قارنه ببدائل مناسبة، أو خلّي المساعد يحدد إذا كان الأنسب لميزانيتك واستخدامك.
             </p>
           </div>
         </div>
@@ -55,11 +52,11 @@ export function GeminiShoppingAdvisor({
           }
           className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground transition-transform hover:scale-[1.02]"
         >
-          <Search className="h-4 w-4" /> Ask NVIDIA advisor
+          <Search className="h-4 w-4" /> Ask Space Call AI
         </button>
       </div>
 
-      <div className="grid border-t sm:grid-cols-3">
+      <div className="flex gap-2 overflow-x-auto border-t p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-3 sm:gap-0 sm:p-0">
         {[
           {
             label: "Compare alternatives",
@@ -78,7 +75,7 @@ export function GeminiShoppingAdvisor({
             key={action.label}
             type="button"
             onClick={() => openAdvisor(action.prompt)}
-            className="border-b px-4 py-3 text-left text-xs font-bold transition-colors hover:bg-surface hover:text-primary sm:border-b-0 sm:border-r last:border-r-0"
+            className="shrink-0 rounded-full border bg-background px-3 py-2 text-[11px] font-bold transition-colors hover:border-primary/40 hover:text-primary sm:rounded-none sm:border-0 sm:border-r sm:bg-transparent sm:px-4 sm:py-3 sm:text-left sm:last:border-r-0 sm:hover:bg-surface"
           >
             {action.label}
           </button>
