@@ -161,9 +161,7 @@ function Index() {
   const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: collections = [] } = useQuery(collectionsQueryOptions());
-  const { data: heroCollection } = useQuery(
-    collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
-  );
+  const { data: heroCollection } = useQuery(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4));
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
     enabled: showProductSections,
