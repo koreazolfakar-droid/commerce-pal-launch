@@ -126,7 +126,10 @@
 
 /* Keep the AI advisor as a floating card on mobile/tablet instead of a full-screen sheet. */
 @media (max-width: 1023px) {
-  section[role="dialog"][aria-label="Smart phone advisor"] {
+  section[role="dialog"]:is(
+      [aria-label="Smart phone advisor"],
+      [aria-label="Space Call AI smart shopping assistant"]
+    ) {
     top: auto !important;
     right: var(--sc-gutter-mobile) !important;
     bottom: calc(var(--mobile-nav-height) + 0.75rem) !important;
@@ -141,7 +144,10 @@
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {
-  section[role="dialog"][aria-label="Smart phone advisor"] {
+  section[role="dialog"]:is(
+      [aria-label="Smart phone advisor"],
+      [aria-label="Space Call AI smart shopping assistant"]
+    ) {
     right: 1.25rem !important;
     left: auto !important;
     width: min(26.25rem, calc(100vw - 2.5rem)) !important;
