@@ -12,6 +12,7 @@ concurrency:
   group: brand-logo-validation-${{ github.ref }}
   cancel-in-progress: true
 
+# Verification pass 2: application source is intentionally unchanged.
 jobs:
   validate-brand-fix:
     runs-on: ubuntu-latest
