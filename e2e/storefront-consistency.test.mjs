@@ -30,14 +30,28 @@ test("merchant brand artwork overrides curated local fallbacks and raw SVG marku
   assert.match(brandLogo, /merchant \? \[merchant, \.\.\.builtIn\] : builtIn/);
   assert.doesNotMatch(brandLogo, /builtInIsLocal/);
   assert.match(brandDirectory, /compactBrandIdentity/);
-  assert.match(brandDirectory, /replace\(\/^-\|-$\/g/);
-  assert.match(brandDirectory, /replace\(\/-\/g, ""\)/);
+  assert.match(brandDirectory, /slugify\(value\)\.replace\(\/-\/g, ""\)/);
+  assert.match(brandDirectory, /dedicatedCollectionBrandIdentity/);
   assert.match(brandDirectory, /exactCandidates\.find\(looksLikeLogoImage\) \?\? exactCandidates\[0\]/);
 
   for (const name of ["apple", "xiaomi", "anker", "poco", "tecno"]) {
     assert.match(brands, new RegExp(`/${name}\\.(?:svg|png)`));
   }
   assert.doesNotMatch(brands, /from "@\/assets\/brands\//);
+});
+
+test("persistent Shopify cache expires and old cache namespace cannot pin stale brand artwork", async () => {
+  const shopify = await source("src/lib/shopify.ts");
+
+  assert.match(shopify, /PERSISTENT_STOREFRONT_CACHE_NAME = "space-call-storefront-v2"/);
+  assert.match(shopify, /PERSISTENT_STOREFRONT_CACHE_TIMESTAMP_HEADER = "x-space-call-cached-at"/);
+  assert.match(shopify, /Date\.now\(\) - cachedAt >= STOREFRONT_CACHE_TTL_MS/);
+  assert.match(shopify, /await cache\.delete\(request\)/);
+  assert.match(
+    shopify,
+    /\[PERSISTENT_STOREFRONT_CACHE_TIMESTAMP_HEADER\]: String\(Date\.now\(\)\)/,
+  );
+  assert.doesNotMatch(shopify, /caches\.open\("space-call-storefront-v1"\)/);
 });
 
 test("shared footer is deterministic and hides technical build data", async () => {
