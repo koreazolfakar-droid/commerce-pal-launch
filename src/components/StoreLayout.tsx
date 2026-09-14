@@ -2,6 +2,7 @@ import { type CSSProperties, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav, MOBILE_NAV_HEIGHT } from "@/components/BottomNav";
+import { DeferredCartDrawer } from "@/components/DeferredCartDrawer";
 import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -45,6 +46,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       </main>
       <SiteFooter compactTopSpacing={onCartPage} />
       <BottomNav />
+      <DeferredCartDrawer />
     </div>
   );
 }
