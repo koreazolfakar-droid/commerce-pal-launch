@@ -2,13 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-export type CmsJsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | CmsJsonValue[]
-  | { [key: string]: CmsJsonValue };
+export type CmsJsonValue = string | number | boolean | null | CmsJsonValue[] | { [key: string]: CmsJsonValue };
 
 export type CmsSettingValue = CmsJsonValue;
 
