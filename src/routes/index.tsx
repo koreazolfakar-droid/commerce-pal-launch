@@ -23,7 +23,6 @@ import {
   collectionsQueryOptions,
 } from "@/lib/queries";
 import { productDiscountPercent } from "@/lib/shopify";
-import { buildCatalogIndex } from "@/lib/taxonomy";
 import {
   canonicalLink,
   jsonLd,
@@ -181,9 +180,9 @@ function Index() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  // A $0 product inside `homepage-hero` is treated as hero artwork/configuration,
-  // not merchandise. Keep it visible in the hero while preventing the duplicate
-  // product card from leaking into homepage rails, brand sections or recently viewed.
+  // Products priced at $0 inside `homepage-hero` are presentation-only entries.
+  // Crucially, keep the original catalog intact for HomeHero so changing homepage
+  // merchandising can never remove the hero itself.
   const heroOnlyProductIds = new Set(
     (heroCollection?.products ?? [])
       .filter((product) => Number(product.node.priceRange.minVariantPrice.amount) <= 0)
@@ -192,10 +191,11 @@ function Index() {
   const isHomepageMerchandise = (product: (typeof catalog.products)[number]) =>
     !heroOnlyProductIds.has(product.node.id);
 
-  const products = catalog.products.filter(isHomepageMerchandise);
-  const homepageCatalog = heroOnlyProductIds.size > 0 ? buildCatalogIndex(products) : catalog;
-  const brands = buildShopifyBrands(homepageCatalog.brands, collections);
-  const deals = products.filter((product) => productDiscountPercent(product) !== null);
+  const products = catalog.products;
+  const merchandiseProducts = products.filter(isHomepageMerchandise);
+  const homepageCatalog = { ...catalog, products: merchandiseProducts };
+  const brands = buildShopifyBrands(catalog.brands, collections);
+  const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
   const best = (bestSellers ?? []).filter(isHomepageMerchandise);
   const latest = newItems.filter(isHomepageMerchandise);
   const isVisible = (key: string) =>
@@ -215,7 +215,7 @@ function Index() {
   return (
     <StoreLayout>
       <div className="home-page">
-        {products.length === 0 && heroOnlyProductIds.size === 0 ? (
+        {products.length === 0 ? (
           <div className="px-4">
             <div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center">
               <h1 className="text-2xl font-bold">{t("welcomeStore")}</h1>
@@ -235,7 +235,7 @@ function Index() {
               </div>
             ) : null}
 
-            <CategorySection catalog={homepageCatalog} collections={collections} />
+            <CategorySection catalog={catalog} collections={collections} />
             {isVisible("brands") ? <TopBrands brands={brands} /> : null}
 
             {showProductSections ? (
@@ -304,7 +304,7 @@ function Index() {
               <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
             )}
 
-            <RecentlyViewed products={products} />
+            <RecentlyViewed products={merchandiseProducts} />
             {isVisible("trust") ? (
               <>
                 <ServicesStrip />
