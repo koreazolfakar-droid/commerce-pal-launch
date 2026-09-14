@@ -26,15 +26,15 @@ test("storefront CI protects both pull requests and main pushes", async () => {
   assert.match(workflow, /bun run build/);
 });
 
-test("specialized CI jobs cannot silently ignore regressions", async () => {
-  const [hero, nvidia] = await Promise.all([
+test("specialized responsive CI cannot silently ignore regressions", async () => {
+  const [hero, bottomNav] = await Promise.all([
     read(".github/workflows/hero-responsive-ci.yml"),
-    read(".github/workflows/nvidia-advisor-ci.yml"),
+    read(".github/workflows/bottom-nav-responsive-ci.yml"),
   ]);
 
   assert.match(hero, /push:\s*[\s\S]*- main/);
   assert.match(hero, /bun run dev:e2e/);
   assert.doesNotMatch(hero, /npm install --global pnpm/);
-  assert.doesNotMatch(nvidia, /continue-on-error:\s*true/);
-  assert.match(nvidia, /bun run test:unit/);
+  assert.doesNotMatch(hero, /continue-on-error:\s*true/);
+  assert.doesNotMatch(bottomNav, /continue-on-error:\s*true/);
 });
