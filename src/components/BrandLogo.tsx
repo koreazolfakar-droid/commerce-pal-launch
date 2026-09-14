@@ -83,15 +83,11 @@ function LogoImage({
       .map(safeImageSource)
       .filter(Boolean) as string[];
     const merchant = safeImageSource(imageUrl);
-    const firstBuiltIn = builtIn[0];
-    const builtInIsLocal = Boolean(firstBuiltIn && !/^https?:\/\//i.test(firstBuiltIn));
 
-    // Curated local assets always win for the brands we explicitly ship with.
-    // For brands without a local asset, a merchant-provided Shopify image wins
-    // over remote fallbacks so CSP/CDN failures never create empty logo tiles.
-    const ordered = builtInIsLocal
-      ? [...builtIn, ...(merchant ? [merchant] : [])]
-      : [...(merchant ? [merchant] : []), ...builtIn];
+    // Shopify is the merchant-controlled source of truth. A curated local logo
+    // remains a resilient fallback when Shopify has no image or the remote image
+    // fails to load, but it must never prevent a merchant logo update from showing.
+    const ordered = merchant ? [merchant, ...builtIn] : builtIn;
 
     return [...new Set(ordered)];
   }, [imageUrl, slug, label, size]);
