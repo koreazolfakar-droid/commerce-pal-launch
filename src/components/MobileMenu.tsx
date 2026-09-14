@@ -131,8 +131,23 @@ function SectionHeading({
   );
 }
 
-export function MobileMenu() {
-  const [open, setOpen] = useState(false);
+type MobileMenuProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+};
+
+export function MobileMenu({
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
+}: MobileMenuProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (nextOpen: boolean) => {
+    if (controlledOpen === undefined) setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
   const [refreshing, setRefreshing] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -163,15 +178,17 @@ export function MobileMenu() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label={t("openMenu")}
-          className="press grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-surface"
-        >
-          <Menu aria-hidden className="h-5 w-5" />
-        </button>
-      </SheetTrigger>
+      {!hideTrigger ? (
+        <SheetTrigger asChild>
+          <button
+            type="button"
+            aria-label={t("openMenu")}
+            className="press grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-surface"
+          >
+            <Menu aria-hidden className="h-5 w-5" />
+          </button>
+        </SheetTrigger>
+      ) : null}
 
       <SheetContent
         side={direction === "rtl" ? "right" : "left"}

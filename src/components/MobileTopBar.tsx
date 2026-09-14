@@ -1,11 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Hydrate } from "@tanstack/react-start";
-import { interaction } from "@tanstack/react-start/hydration";
-import { Heart, LayoutGrid, Search, ShoppingBag } from "lucide-react";
+import { Heart, LayoutGrid, Menu, Search, ShoppingBag } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
-import { MobileMenu } from "@/components/MobileMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -16,7 +13,10 @@ import { useWishlistStore } from "@/stores/wishlistStore";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 const LazySearchOverlay = lazy(() =>
-  import("@/components/SearchOverlay").then((module) => ({ default: module.SearchOverlay })),
+  import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({ default: SearchOverlay })),
+);
+const LazyMobileMenu = lazy(() =>
+  import("@/components/MobileMenu").then(({ MobileMenu }) => ({ default: MobileMenu })),
 );
 
 function Badge({ value }: { value: number }) {
@@ -36,6 +36,7 @@ export function MobileTopBar({
   activeSlug?: string;
   showCategoryRail?: boolean;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { t, language } = useLanguage();
   const hydrated = useHydrated();
@@ -44,7 +45,10 @@ export function MobileTopBar({
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
 
-  const { data: catalog, isLoading } = useQuery(catalogQueryOptions());
+  const { data: catalog, isLoading } = useQuery({
+    ...catalogQueryOptions(),
+    enabled: showCategoryRail,
+  });
   const list = hydrated ? (catalog?.categories ?? []) : [];
 
   return (
@@ -52,15 +56,14 @@ export function MobileTopBar({
       {/* Only the main header row stays sticky. */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-3 py-2.5">
-          {/*
-           * The full mobile drawer is expensive (Radix Sheet, taxonomy, icons,
-           * refresh helpers) but the closed trigger is all users need at first
-           * paint. Keep its SSR button visible and hydrate/download the drawer
-           * only when the user actually reaches for it.
-           */}
-          <Hydrate when={interaction({ events: ["pointerdown", "focusin", "click"] })}>
-            <MobileMenu />
-          </Hydrate>
+          <button
+            type="button"
+            aria-label={t("openMenu")}
+            onClick={() => setMenuOpen(true)}
+            className="press grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-surface"
+          >
+            <Menu aria-hidden className="h-5 w-5" />
+          </button>
           <Link
             to="/"
             aria-label={`${STORE_NAME} home`}
@@ -171,9 +174,14 @@ export function MobileTopBar({
         )}
       </div>
 
+      {menuOpen ? (
+        <Suspense fallback={null}>
+          <LazyMobileMenu open={menuOpen} onOpenChange={setMenuOpen} hideTrigger />
+        </Suspense>
+      ) : null}
       {searchOpen ? (
         <Suspense fallback={null}>
-          <LazySearchOverlay open onClose={() => setSearchOpen(false)} />
+          <LazySearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
         </Suspense>
       ) : null}
     </>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ExternalLink,
   Loader2,
@@ -24,15 +24,27 @@ import { formatPrice } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { useLanguage } from "@/lib/i18n";
 
+type CartDrawerProps = {
+  hideTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
 export const CartDrawer = ({
   hideTrigger = false,
-  initialOpen = false,
-}: {
-  hideTrigger?: boolean;
-  initialOpen?: boolean;
-}) => {
+  open: controlledOpen,
+  onOpenChange,
+}: CartDrawerProps) => {
   const { t, language } = useLanguage();
-  const [isOpen, setIsOpen] = useState(initialOpen);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen ?? internalOpen;
+  const setIsOpen = useCallback(
+    (nextOpen: boolean) => {
+      if (controlledOpen === undefined) setInternalOpen(nextOpen);
+      onOpenChange?.(nextOpen);
+    },
+    [controlledOpen, onOpenChange],
+  );
   const {
     items,
     total,
@@ -54,12 +66,13 @@ export const CartDrawer = ({
     if (isOpen) syncCart();
   }, [isOpen, syncCart]);
 
-  // Lets lightweight mobile/desktop cart buttons open the single global drawer.
+  // Lets the mobile top bar / bottom nav open the same drawer instance.
+  // Kept for backwards compatibility with any existing event-driven callers.
   useEffect(() => {
     const open = () => setIsOpen(true);
     document.addEventListener("space-cell:open-cart", open);
     return () => document.removeEventListener("space-cell:open-cart", open);
-  }, []);
+  }, [setIsOpen]);
 
   const handleCheckout = () => {
     const checkoutUrl = getCheckoutUrl();
@@ -114,11 +127,8 @@ export const CartDrawer = ({
                           <img
                             src={cdnImage(item.product.node.images.edges[0].node.url, 128)}
                             alt={item.product.node.title}
-                            width={64}
-                            height={64}
                             className="h-full w-full object-cover"
                             loading="lazy"
-                            decoding="async"
                           />
                         )}
                       </div>

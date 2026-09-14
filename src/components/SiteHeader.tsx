@@ -4,6 +4,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -41,7 +43,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
 const LazySearchOverlay = lazy(() =>
-  import("@/components/SearchOverlay").then((module) => ({ default: module.SearchOverlay })),
+  import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({ default: SearchOverlay })),
 );
 
 const UTILITY = [
@@ -184,19 +186,20 @@ export function SiteHeader() {
                 </span>
               )}
             </Link>
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="icon"
+              className="press relative rounded-full"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
               aria-label={`${t("openBag")}, ${cartCount}`}
-              className="press relative grid h-10 w-10 place-items-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-surface"
             >
-              <ShoppingBag className="h-5 w-5" strokeWidth={1.8} />
+              <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground ring-2 ring-background">
-                  {cartCount > 99 ? "99+" : cartCount}
-                </span>
+                <Badge className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs">
+                  {cartCount}
+                </Badge>
               )}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -346,7 +349,7 @@ export function SiteHeader() {
 
       {searchOpen ? (
         <Suspense fallback={null}>
-          <LazySearchOverlay open onClose={() => setSearchOpen(false)} />
+          <LazySearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
         </Suspense>
       ) : null}
     </>

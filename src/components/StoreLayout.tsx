@@ -4,7 +4,7 @@ import { media, visible } from "@tanstack/react-start/hydration";
 import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav, MOBILE_NAV_HEIGHT } from "@/components/BottomNav";
-import { GlobalCartDrawer } from "@/components/GlobalCartDrawer";
+import { DeferredCartDrawer } from "@/components/DeferredCartDrawer";
 import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -36,12 +36,6 @@ export function StoreLayout({ children }: { children: ReactNode }) {
         Skip to content
       </a>
 
-      {/*
-       * Both shells remain server-rendered so responsive HTML and layout are
-       * present immediately. On the client TanStack hydrates only the shell
-       * that matches the current media query, avoiding an entire hidden UI
-       * tree and its JavaScript on startup.
-       */}
       <Hydrate when={media("(min-width: 1024px)")}>
         <div className="hidden lg:block">
           <SiteHeader />
@@ -61,8 +55,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       <Hydrate when={media("(max-width: 1023px)")}>
         <BottomNav />
       </Hydrate>
-
-      <GlobalCartDrawer />
+      <DeferredCartDrawer />
     </div>
   );
 }
