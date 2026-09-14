@@ -1,5 +1,6 @@
 import { SHOWCASE_COLLECTIONS_QUERY, SHOP_POLICIES_QUERY } from "@/lib/storefrontDocuments";
 import {
+  BRAND_VENDORS_QUERY,
   CART_CREATE_MUTATION,
   CART_LINES_ADD_MUTATION,
   CART_LINES_REMOVE_MUTATION,
@@ -188,6 +189,7 @@ const PUBLIC_STOREFRONT_QUERY_NAMES = new Set([
   SHOWCASE_COLLECTIONS_QUERY,
   SHOP_POLICIES_QUERY,
   PRODUCTS_QUERY,
+  BRAND_VENDORS_QUERY,
   PRODUCT_BY_HANDLE_QUERY,
   COLLECTIONS_QUERY,
   COLLECTION_BY_HANDLE_QUERY,
@@ -320,6 +322,28 @@ export async function fetchCatalogProducts(first = 60): Promise<ShopifyProduct[]
   return fetchProducts(Math.min(Math.max(first, 1), 100));
 }
 
+/**
+ * Fetch every explicit Shopify vendor using a vendor-only payload. This keeps
+ * brand discovery complete while the homepage catalogue remains intentionally bounded.
+ */
+export async function fetchBrandVendors(pageSize = 100): Promise<string[]> {
+  const vendors: string[] = [];
+  const first = Math.min(Math.max(pageSize, 1), 100);
+  let after: string | undefined;
+
+  do {
+    const data = await storefrontApiRequest(BRAND_VENDORS_QUERY, { first, after });
+    const connection = data?.data?.products;
+    for (const edge of connection?.edges ?? []) {
+      const vendor = edge?.node?.vendor;
+      if (typeof vendor === "string" && vendor.trim()) vendors.push(vendor);
+    }
+    after = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : undefined;
+  } while (after);
+
+  return vendors;
+}
+
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
   const data = await storefrontApiRequest(PRODUCT_BY_HANDLE_QUERY, { handle });
   const node = data?.data?.product;
@@ -327,7 +351,7 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
 }
 
 /**
- * Shopify's own "You may also like" recommendations for a product. Returns an
+ * Shopify's own "You may also like" recommendations for the product detail page. Returns an
  * empty list (never throws) so the product page degrades gracefully.
  */
 export async function fetchProductRecommendations(handle: string): Promise<ShopifyProduct[]> {
@@ -389,6 +413,29 @@ function quoteSearchValue(value: string) {
 
 export function fetchProductsByVendor(vendor: string, first = 8) {
   return fetchProducts(Math.min(first, 20), `vendor:${quoteSearchValue(vendor)}`);
+}
+
+/** Full brand route payload, paginated only when a customer opens that brand. */
+export async function fetchAllProductsByVendor(
+  vendor: string,
+  pageSize = 100,
+): Promise<ShopifyProduct[]> {
+  const trimmed = vendor.trim();
+  if (!trimmed) return [];
+
+  const products: ShopifyProduct[] = [];
+  const first = Math.min(Math.max(pageSize, 1), 100);
+  const query = `vendor:${quoteSearchValue(trimmed)}`;
+  let after: string | undefined;
+
+  do {
+    const data = await storefrontApiRequest(PRODUCTS_QUERY, { first, after, query });
+    const connection = data?.data?.products;
+    products.push(...(connection?.edges ?? []));
+    after = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : undefined;
+  } while (after);
+
+  return products;
 }
 
 export function fetchProductsByHandles(handles: string[], first = 20) {
