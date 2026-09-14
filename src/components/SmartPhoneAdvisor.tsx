@@ -134,14 +134,11 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
-    const previousOverflow = document.body.style.overflow;
-    if (window.innerWidth < 1024) document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKeyDown);
     window.setTimeout(() => inputRef.current?.focus(), 180);
 
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
     };
   }, [open]);
 
@@ -221,12 +218,12 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
           />
 
           <section
-            className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-card shadow-2xl lg:inset-auto lg:bottom-6 lg:right-6 lg:h-[calc(100dvh-3rem)] lg:max-h-[760px] lg:w-[480px] lg:rounded-[var(--sc-card-radius)] lg:border lg:border-border/80"
+            className="fixed bottom-[calc(var(--mobile-nav-height)+0.75rem)] left-3 right-3 z-50 flex h-[min(68dvh,620px)] max-h-[620px] flex-col overflow-hidden rounded-[var(--sc-card-radius)] border border-border/80 bg-card shadow-2xl sm:left-auto sm:right-5 sm:w-[420px] lg:bottom-6 lg:right-6 lg:h-[calc(100dvh-3rem)] lg:max-h-[760px] lg:w-[480px]"
             role="dialog"
             aria-modal="true"
             aria-label="Smart phone advisor"
           >
-            <header className="relative border-b border-border/70 bg-card/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-xl sm:px-5 lg:pt-4">
+            <header className="relative border-b border-border/70 bg-card/95 px-4 pb-3 pt-3 backdrop-blur-xl sm:px-5 lg:pt-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="relative grid h-11 w-11 shrink-0 place-items-center rounded-[var(--sc-control-radius)] bg-primary text-primary-foreground shadow-card">
@@ -566,7 +563,7 @@ export function SmartPhoneAdvisor({ context = "" }: { context?: string }) {
                 event.preventDefault();
                 void send();
               }}
-              className="border-t border-border/70 bg-card/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl sm:px-4 lg:pb-4"
+              className="border-t border-border/70 bg-card/95 px-3 pb-3 pt-3 backdrop-blur-xl sm:px-4 lg:pb-4"
             >
               <div className="rounded-[var(--sc-card-radius)] border bg-background p-1.5 shadow-card transition-[border-color,box-shadow] focus-within:border-primary/60 focus-within:shadow-[0_0_0_3px_hsl(var(--primary)/0.08)]">
                 <div className="flex items-end gap-2">
