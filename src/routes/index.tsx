@@ -221,104 +221,93 @@ function Index() {
   return (
     <StoreLayout>
       <div className="home-page">
-        {products.length === 0 ? (
-          <div className="px-4">
-            <div className="rounded-3xl border border-dashed bg-card px-6 py-16 text-center">
-              <h1 className="text-2xl font-bold">{t("welcomeStore")}</h1>
-              <p className="mt-2 text-sm text-muted-foreground">{t("catalogUpdating")}</p>
-            </div>
+        {isVisible("hero") ? (
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
+            <HomePromoTicker heading={tickerHeading} details={tickerDetails} />
+            <HomeHero
+              products={products}
+              heroCollection={heroCollection}
+              cmsHeroSlides={cms.heroSlides}
+            />
           </div>
-        ) : (
+        ) : null}
+
+        <CategorySection catalog={catalog} collections={collections} />
+        {isVisible("brands") ? <TopBrands brands={brands} /> : null}
+
+        {showProductSections ? (
           <>
-            {isVisible("hero") ? (
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
-                <HomePromoTicker heading={tickerHeading} details={tickerDetails} />
-                <HomeHero
-                  products={products}
-                  heroCollection={heroCollection}
-                  cmsHeroSlides={cms.heroSlides}
+            {isVisible("featured_products") && best.length > 0 && (
+              <section data-testid="best-sellers">
+                <SectionHeader
+                  title={t("bestSellers")}
+                  subtitle={t("bestSellersDescription")}
                 />
-              </div>
-            ) : null}
-
-            <CategorySection catalog={catalog} collections={collections} />
-            {isVisible("brands") ? <TopBrands brands={brands} /> : null}
-
-            {showProductSections ? (
-              <>
-                {isVisible("featured_products") && best.length > 0 && (
-                  <section data-testid="best-sellers">
-                    <SectionHeader
-                      title={t("bestSellers")}
-                      subtitle={t("bestSellersDescription")}
-                    />
-                    <ProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
-                  </section>
-                )}
-
-                {isVisible("featured_products") && deals.length > 0 && (
-                  <section id="deals" className="scroll-mt-24" data-testid="deals-section">
-                    <SectionHeader
-                      title={t("todaysDeals")}
-                      subtitle={t("dealsDescription")}
-                      action={<DealsCountdown />}
-                    />
-                    {deals.length <= 2 ? (
-                      <DealSpotlight products={deals} />
-                    ) : (
-                      <ProductRail products={deals} storageKey="space-cell-home-deals-view" />
-                    )}
-                    <div className="mt-4">
-                      <Link
-                        to="/shop"
-                        search={{ availability: "on-sale" }}
-                        className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary"
-                      >
-                        {t("allDeals")} <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </div>
-                  </section>
-                )}
-
-                {isVisible("featured_products") && latest.length > 0 && (
-                  <section data-testid="new-items">
-                    <SectionHeader
-                      title={t("newItems")}
-                      subtitle={t("newItemsDescription")}
-                      action={
-                        <Link
-                          to="/shop"
-                          search={{ sort: "newest" }}
-                          className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline"
-                        >
-                          {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
-                        </Link>
-                      }
-                    />
-                    <ProductRail products={latest} storageKey="space-cell-home-new-items-view" />
-                  </section>
-                )}
-
-                {isVisible("featured_products") ? (
-                  <>
-                    <BundleSection collections={collections} />
-                    <BrandShowcase catalog={homepageCatalog} collections={collections} />
-                  </>
-                ) : null}
-              </>
-            ) : (
-              <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+                <ProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
+              </section>
             )}
 
-            <RecentlyViewed products={merchandiseProducts} />
-            {isVisible("trust") ? (
+            {isVisible("featured_products") && deals.length > 0 && (
+              <section id="deals" className="scroll-mt-24" data-testid="deals-section">
+                <SectionHeader
+                  title={t("todaysDeals")}
+                  subtitle={t("dealsDescription")}
+                  action={<DealsCountdown />}
+                />
+                {deals.length <= 2 ? (
+                  <DealSpotlight products={deals} />
+                ) : (
+                  <ProductRail products={deals} storageKey="space-cell-home-deals-view" />
+                )}
+                <div className="mt-4">
+                  <Link
+                    to="/shop"
+                    search={{ availability: "on-sale" }}
+                    className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary"
+                  >
+                    {t("allDeals")} <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </section>
+            )}
+
+            {isVisible("featured_products") && latest.length > 0 && (
+              <section data-testid="new-items">
+                <SectionHeader
+                  title={t("newItems")}
+                  subtitle={t("newItemsDescription")}
+                  action={
+                    <Link
+                      to="/shop"
+                      search={{ sort: "newest" }}
+                      className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline"
+                    >
+                      {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
+                    </Link>
+                  }
+                />
+                <ProductRail products={latest} storageKey="space-cell-home-new-items-view" />
+              </section>
+            )}
+
+            {isVisible("featured_products") ? (
               <>
-                <ServicesStrip />
-                <WhyShop />
+                <BundleSection collections={collections} />
+                <BrandShowcase catalog={homepageCatalog} collections={collections} />
               </>
             ) : null}
           </>
+        ) : (
+          <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
         )}
+
+        <RecentlyViewed products={merchandiseProducts} />
+        {isVisible("trust") ? (
+          <>
+            <ServicesStrip />
+            <WhyShop />
+          </>
+        ) : null}
       </div>
     </StoreLayout>
   );
