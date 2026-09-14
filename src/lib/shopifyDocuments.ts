@@ -46,6 +46,16 @@ export const PRODUCTS_QUERY = `
   }
 `;
 
+/** Vendor-only discovery keeps the brand directory complete without downloading product card payloads. */
+export const BRAND_VENDORS_QUERY = `
+  query GetBrandVendors($first: Int!, $after: String) {
+    products(first: $first, after: $after, sortKey: TITLE) {
+      pageInfo { hasNextPage endCursor }
+      edges { node { vendor } }
+    }
+  }
+`;
+
 export const PRODUCT_BY_HANDLE_QUERY = `
   query GetProduct($handle: String!) {
     product(handle: $handle) { ${PRODUCT_DETAIL_FIELDS} }
