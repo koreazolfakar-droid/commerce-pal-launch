@@ -37,17 +37,25 @@ function normalizeBrandKey(slug: string, label: string) {
 function railOpticalScale(slug: string, label: string, aspectRatio: number) {
   const key = normalizeBrandKey(slug, label);
 
-  // ACEFAST's merchant artwork contains unusually generous whitespace around
-  // the visible mark. Crop that whitespace optically inside the fixed rail
-  // viewport instead of letting the logo look much smaller than its peers.
-  if (key === "acefast") return 1.95;
+  // Optical normalization matters more than raw image dimensions in a logo
+  // rail. These small corrections keep icon marks and long wordmarks feeling
+  // equally prominent without stretching or recoloring the artwork.
+  const knownScale: Record<string, number> = {
+    apple: 0.96,
+    xiaomi: 0.98,
+    samsung: 1.18,
+    anker: 1.08,
+    acefast: 1.82,
+  };
+  if (knownScale[key] !== undefined) return knownScale[key];
 
-  // Very wide merchant-supplied artwork often carries transparent/white side
-  // padding. Give it a modest optical correction while keeping normal curated
-  // wordmarks (Anker, Samsung, etc.) at their intended scale.
+  // Very wide merchant-supplied artwork often includes generous side padding.
+  // Scale it optically inside the fixed viewport while keeping the correction
+  // conservative enough to avoid collisions with neighboring brands.
   if (aspectRatio >= 5) {
-    return Math.min(1.55, Math.max(1, aspectRatio / 4.5));
+    return Math.min(1.35, Math.max(1.08, aspectRatio / 5));
   }
+  if (aspectRatio >= 3.2) return 1.08;
 
   return 1;
 }
@@ -160,6 +168,7 @@ function LogoImage({
           height={size}
           loading="lazy"
           decoding="async"
+          draggable={false}
           style={{
             width: "100%",
             height: "100%",
