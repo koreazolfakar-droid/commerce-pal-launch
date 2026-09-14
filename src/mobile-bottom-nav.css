@@ -4,4 +4,8 @@
   button[aria-label="Open Space Call AI"] {
     display: none !important;
   }
+
+  body:has(section[aria-label="Space Call AI smart shopping assistant"]) [data-testid="bottom-nav"] {
+    display: none !important;
+  }
 }
