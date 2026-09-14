@@ -83,7 +83,10 @@ test("hero keeps CMS slides with Shopify collection artwork as the fallback", as
   assert.match(hero, /const cmsSlide = useCmsSlides/);
   assert.match(hero, /const shopifySlide = !useCmsSlides/);
   assert.match(hero, /const shopifyImage = shopifySlide\?\.image/);
-  assert.match(hero, /data-hero-source=\{cmsSlide \? "cms" : shopifySlide \? "shopify-collection" : "placeholder"\}/);
+  assert.match(
+    hero,
+    /data-hero-source=\{cmsSlide \? "cms" : shopifySlide \? "shopify-collection" : "placeholder"\}/,
+  );
   assert.match(hero, /to="\/collections\/\$handle"/);
   assert.match(hero, /params=\{\{ handle: shopifySlide\.handle \}\}/);
   assert.match(hero, /alt=\{shopifyImage\.altText \?\? shopifySlide\.title \?\? "Space Call"\}/);
