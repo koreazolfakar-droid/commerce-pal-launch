@@ -52,7 +52,7 @@ export const catalogQueryOptions = () =>
 
 export const collectionsQueryOptions = () =>
   queryOptions({
-    queryKey: ["shopify", "collections", 100],
+    queryKey: ["shopify", "collections", "brand-logo-cache-v4", 100],
     queryFn: () => fetchCollections(100),
     staleTime: CATALOG_STALE_TIME,
   });
