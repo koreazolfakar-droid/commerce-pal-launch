@@ -108,7 +108,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
       }
     }
 
-    const slug = active?.dataset.brandSlug;
+    const slug = active?.dataset["brandSlug"];
     if (slug) setActiveSlug((current) => (current === slug ? current : slug));
   }, []);
 
@@ -158,7 +158,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
     const firstFrame = window.requestAnimationFrame(() => {
       const secondFrame = window.requestAnimationFrame(centerStrongestBrand);
-      rail.dataset.centerFrame = String(secondFrame);
+      rail.dataset["centerFrame"] = String(secondFrame);
     });
 
     const resizeObserver =
@@ -192,9 +192,9 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
     return () => {
       window.cancelAnimationFrame(firstFrame);
-      const secondFrame = Number(rail.dataset.centerFrame);
+      const secondFrame = Number(rail.dataset["centerFrame"]);
       if (Number.isFinite(secondFrame)) window.cancelAnimationFrame(secondFrame);
-      delete rail.dataset.centerFrame;
+      delete rail.dataset["centerFrame"];
       resizeObserver?.disconnect();
       visibilityObserver?.disconnect();
       window.removeEventListener("resize", handleResize);
