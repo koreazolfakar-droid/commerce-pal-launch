@@ -8,8 +8,6 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronDown,
-  BatteryCharging,
-  Cable,
   Grid2x2,
   Headphones,
   Laptop,
@@ -28,11 +26,10 @@ import {
   Truck,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
 import { CartDrawer } from "@/components/CartDrawer";
 import { BrandLogo } from "@/components/BrandLogo";
-import { SearchOverlay } from "@/components/SearchOverlay";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
@@ -41,6 +38,10 @@ import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { displayCollections, type CatalogFacet } from "@/lib/taxonomy";
 import { useWishlistStore } from "@/stores/wishlistStore";
+
+const LazySearchOverlay = lazy(() =>
+  import("@/components/SearchOverlay").then((module) => ({ default: module.SearchOverlay })),
+);
 
 const UTILITY = [
   { icon: Truck, key: "freeDelivery" as const },
@@ -327,7 +328,11 @@ export function SiteHeader() {
         </nav>
       </header>
 
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {searchOpen ? (
+        <Suspense fallback={null}>
+          <LazySearchOverlay open onClose={() => setSearchOpen(false)} />
+        </Suspense>
+      ) : null}
     </>
   );
 }
