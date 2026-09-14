@@ -1,9 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
 
 export type CmsJsonValue =
-  string | number | boolean | null | CmsJsonValue[] | { [key: string]: CmsJsonValue };
+  | string
+  | number
+  | boolean
+  | null
+  | CmsJsonValue[]
+  | { [key: string]: CmsJsonValue };
 
 export type CmsSettingValue = CmsJsonValue;
 
@@ -60,57 +63,36 @@ const CMS_CACHE_TTL_MS = 60_000;
 let cmsCache: { value: CmsSnapshot; expiresAt: number } | null = null;
 let cmsPendingRequest: Promise<CmsSnapshot> | null = null;
 
-async function loadCmsSnapshot(): Promise<CmsSnapshot> {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) return EMPTY_CMS;
+function isCmsSnapshot(value: unknown): value is CmsSnapshot {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const record = value as Partial<CmsSnapshot>;
+  return (
+    !!record.settings &&
+    typeof record.settings === "object" &&
+    Array.isArray(record.heroSlides) &&
+    Array.isArray(record.sections) &&
+    Array.isArray(record.navigation)
+  );
+}
 
-  const client = createClient<Database>(url, key, {
-    auth: { persistSession: false },
-    global: {
-      fetch: (input, init) => {
-        const headers = new Headers(init?.headers);
-        if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
-          headers.delete("Authorization");
-        }
-        headers.set("apikey", key);
-        return fetch(input, { ...init, headers });
-      },
-    },
-  });
+async function loadCmsSnapshot(): Promise<CmsSnapshot> {
+  const baseUrl = process.env["SUPABASE_URL"]?.replace(/\/$/, "");
+  const publishableKey = process.env["SUPABASE_PUBLISHABLE_KEY"]?.trim();
+  if (!baseUrl) return EMPTY_CMS;
 
   try {
-    const [settings, heroSlides, sections, navigation] = await Promise.all([
-      client.from("cms_settings").select("key, value"),
-      client
-        .from("cms_hero_slides")
-        .select(
-          "id, title, subtitle, image_url, mobile_image_url, button_label, target_type, target_value, sort_order",
-        )
-        .order("sort_order", { ascending: true }),
-      client
-        .from("cms_sections")
-        .select(
-          "id, page_slug, section_key, section_type, title, subtitle, content, sort_order, is_visible",
-        )
-        .order("sort_order", { ascending: true }),
-      client
-        .from("cms_navigation")
-        .select("id, area, label, icon_type, icon_value, href, sort_order, is_visible")
-        .order("sort_order", { ascending: true }),
-    ]);
+    const headers = new Headers({ Accept: "application/json" });
+    if (publishableKey) headers.set("apikey", publishableKey);
 
-    const settingsRecord: Record<string, CmsSettingValue> = {};
-    for (const row of settings.data ?? []) {
-      settingsRecord[row.key] = row.value as CmsSettingValue;
-    }
+    const response = await fetch(`${baseUrl}/functions/v1/public-cms`, {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) throw new Error(`public-cms returned ${response.status}`);
 
-    return {
-      settings: settingsRecord,
-      heroSlides: (heroSlides.data ?? []) as unknown as CmsHeroSlide[],
-      sections: (sections.data ?? []) as unknown as CmsSection[],
-      navigation: (navigation.data ?? []) as unknown as CmsNavigationItem[],
-    } satisfies CmsSnapshot;
+    const payload: unknown = await response.json();
+    return isCmsSnapshot(payload) ? payload : EMPTY_CMS;
   } catch (error) {
     console.warn("Space Call dashboard content is unavailable; using storefront defaults", error);
     return EMPTY_CMS;
@@ -118,12 +100,8 @@ async function loadCmsSnapshot(): Promise<CmsSnapshot> {
 }
 
 /**
- * Public storefront snapshot. Reads the dashboard tables with the publishable
- * key, so only rows the anon read policies expose (visible content) are served.
- *
- * A short server-side cache keeps the dashboard from adding four Supabase reads
- * to every storefront navigation. Concurrent cold requests share one in-flight
- * fetch instead of creating a request stampede.
+ * Public storefront snapshot. The browser never receives direct CMS table access;
+ * this server function reads only the curated public-cms Edge Function projection.
  */
 const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
   const now = Date.now();
