@@ -1,10 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
-import { fetchCmsSnapshot } from "@/lib/cms";
+import { EMPTY_CMS, fetchCmsSnapshot } from "@/lib/cms";
 
 export const cmsQueryOptions = () =>
   queryOptions({
     queryKey: ["cms", "snapshot"],
     queryFn: fetchCmsSnapshot,
-    staleTime: 30_000,
+    initialData: EMPTY_CMS,
+    initialDataUpdatedAt: 0,
+    staleTime: 60_000,
+    refetchOnMount: true,
     retry: false,
   });
