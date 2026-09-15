@@ -5,13 +5,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { collectionsQueryOptions } from "@/lib/queries";
-import {
-  absoluteUrl,
-  breadcrumbJsonLd,
-  canonicalLink,
-  jsonLd,
-  socialMeta,
-} from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/collections/")({
