@@ -1,5 +1,9 @@
 import { categoryLabel, useLanguage } from "@/lib/i18n";
-import { collectionQueryOptions, showcaseCollectionsQueryOptions } from "@/lib/queries";
+import {
+  collectionQueryOptions,
+  homeVendorProductsQueryOptions,
+  showcaseCollectionsQueryOptions,
+} from "@/lib/queries";
 import type { ShowcaseCollection } from "@/lib/merchandising";
 import { ProductRail } from "@/components/ProductRail";
 import { ProductViewToggle } from "@/components/ProductViewToggle";
@@ -7,7 +11,7 @@ import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { buildShopifyBrands } from "@/lib/brandDirectory";
 import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
@@ -22,6 +26,52 @@ import {
   type ShopifyProduct,
 } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
+
+const HOME_BRAND_PRODUCT_TARGET = 4;
+
+function mergeUniqueProducts(...groups: ShopifyProduct[][]) {
+  const seen = new Set<string>();
+  const merged: ShopifyProduct[] = [];
+  for (const product of groups.flat()) {
+    if (seen.has(product.node.id)) continue;
+    seen.add(product.node.id);
+    merged.push(product);
+  }
+  return merged;
+}
+
+function useNearViewport(enabled: boolean) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [nearby, setNearby] = useState(!enabled);
+
+  useEffect(() => {
+    if (!enabled || nearby) return;
+    const node = ref.current;
+    if (!node) return;
+
+    if (!("IntersectionObserver" in window)) {
+      setNearby(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        setNearby(true);
+        observer.disconnect();
+      },
+      {
+        rootMargin: "1000px 0px",
+        threshold: 0.01,
+      },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [enabled, nearby]);
+
+  return { ref, nearby };
+}
 
 function Header({
   id,
@@ -226,11 +276,11 @@ export function BrandShowcase({
         const products = productsOfBrand(catalog, brand.slug);
         const merchandising = findFacetMerchandising(collections, "brand", brand.slug);
         return (
-          <FacetSection
+          <BrandFacetSection
             key={brand.slug}
             id={`brand-${brand.slug}`}
-            kind="brand"
             slug={brand.slug}
+            vendorLabel={brand.label}
             title={merchandising?.title || brand.label}
             description={merchandising?.description || t("brandSelection")}
             href={`/brand/${brand.slug}`}
@@ -259,6 +309,61 @@ export function BrandShowcase({
   );
 }
 
+function BrandFacetSection({
+  id,
+  slug,
+  vendorLabel,
+  title,
+  description,
+  href,
+  products: indexedProducts,
+}: {
+  id: string;
+  slug: string;
+  vendorLabel: string;
+  title: string;
+  description?: string | null;
+  href: string;
+  products: ShopifyProduct[];
+}) {
+  const needsBackfill = indexedProducts.length < HOME_BRAND_PRODUCT_TARGET;
+  const { ref, nearby } = useNearViewport(needsBackfill);
+  const exactVendor =
+    indexedProducts.find((product) => product.node.vendor?.trim())?.node.vendor?.trim() || vendorLabel;
+  const vendorQuery = homeVendorProductsQueryOptions(exactVendor);
+  const {
+    data: vendorProducts = [],
+    isPending,
+    isError,
+  } = useQuery({
+    ...vendorQuery,
+    enabled: Boolean(exactVendor) && needsBackfill && nearby,
+  });
+  const products = needsBackfill
+    ? mergeUniqueProducts(indexedProducts, vendorProducts).slice(0, HOME_BRAND_PRODUCT_TARGET)
+    : indexedProducts;
+  const loading = needsBackfill && products.length === 0 && (!nearby || isPending);
+  const resolvedEmpty =
+    needsBackfill && nearby && products.length === 0 && !isPending && (vendorProducts.length === 0 || isError);
+
+  if (resolvedEmpty) return null;
+
+  return (
+    <div ref={ref} data-home-brand-shell={slug}>
+      <FacetSection
+        id={id}
+        kind="brand"
+        slug={slug}
+        title={title}
+        description={description}
+        href={href}
+        products={products}
+        loading={loading}
+      />
+    </div>
+  );
+}
+
 function FacetSection({
   id,
   title,
@@ -267,6 +372,7 @@ function FacetSection({
   products,
   kind,
   slug,
+  loading = false,
 }: {
   id: string;
   title: string;
@@ -275,6 +381,7 @@ function FacetSection({
   products: ShopifyProduct[];
   kind: "brand" | "category";
   slug: string;
+  loading?: boolean;
 }) {
   const storageKey = `space-cell-${kind}-${slug}-view`;
   const [viewMode, setViewMode] = useProductViewMode("grid", storageKey);
@@ -297,14 +404,18 @@ function FacetSection({
         />
       </div>
       <div className="px-3.5 pb-3.5 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
-        <ProductRail
-          products={products.slice(0, 8)}
-          storageKey={storageKey}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          showViewToggle={false}
-          compactGrid
-        />
+        {loading && products.length === 0 ? (
+          <div className="shimmer min-h-96 rounded-2xl bg-surface" aria-hidden="true" />
+        ) : (
+          <ProductRail
+            products={products.slice(0, 8)}
+            storageKey={storageKey}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            showViewToggle={false}
+            compactGrid
+          />
+        )}
       </div>
     </section>
   );
