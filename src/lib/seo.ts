@@ -1,6 +1,11 @@
 import { cdnImage } from "@/lib/image";
-import { productInStock, type ShopifyProduct } from "@/lib/shopify";
-import { SITE_URL as CONFIG_SITE_URL, STORE_CONFIG, STORE_NAME, storeUrl } from "@/lib/storeConfig";
+import type { ShopifyProduct } from "@/lib/shopify";
+import {
+  SITE_URL as CONFIG_SITE_URL,
+  STORE_CONFIG,
+  STORE_NAME,
+  storeUrl,
+} from "@/lib/storeConfig";
 
 export const SITE_URL = CONFIG_SITE_URL;
 export const SITE_NAME = STORE_NAME;
@@ -36,7 +41,11 @@ export function jsonLd(data: Record<string, unknown>) {
   };
 }
 
-export function cleanMetaDescription(value: string | null | undefined, fallback: string, maxLength = 155) {
+export function cleanMetaDescription(
+  value: string | null | undefined,
+  fallback: string,
+  maxLength = 155,
+) {
   const plain = (value ?? "")
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/gi, " ")
@@ -51,11 +60,33 @@ export function cleanMetaDescription(value: string | null | undefined, fallback:
   return `${safe.replace(/[\s,;:.-]+$/g, "")}…`;
 }
 
+type ShopifySeoMetadata = {
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+  } | null;
+};
+
+function productSeo(product: ShopifyProduct) {
+  return (product.node as ShopifyProduct["node"] & ShopifySeoMetadata).seo;
+}
+
+export function productSeoTitle(product: ShopifyProduct) {
+  return productSeo(product)?.title?.replace(/\s+/g, " ").trim() || product.node.title;
+}
+
 export function productMetaDescription(product: ShopifyProduct) {
   const node = product.node;
   const brand = node.vendor?.trim();
   const type = node.productType?.trim();
   const fallback = `Shop ${node.title}${brand ? ` by ${brand}` : ""} in Lebanon at ${SITE_NAME}. View price, availability, specifications, delivery and warranty information.`;
+  const merchantSeoDescription = productSeo(product)?.description?.trim();
+
+  // Shopify's dedicated SEO description is merchant-authored specifically for
+  // search snippets, so it takes priority over the general product body copy.
+  if (merchantSeoDescription) {
+    return cleanMetaDescription(merchantSeoDescription, fallback);
+  }
 
   // Very short merchant descriptions are not useful snippets. Use a complete,
   // purchase-oriented fallback instead of cutting a sentence mid-way.
@@ -74,6 +105,8 @@ export function socialMeta({
   type = "website",
   imageWidth,
   imageHeight,
+  locale = "en_LB",
+  alternateLocale = locale === "ar_LB" ? "en_LB" : "ar_LB",
 }: {
   title: string;
   description: string;
@@ -82,6 +115,8 @@ export function socialMeta({
   type?: "website" | "product";
   imageWidth?: number;
   imageHeight?: number;
+  locale?: "en_LB" | "ar_LB";
+  alternateLocale?: "en_LB" | "ar_LB";
 }) {
   return [
     { property: "og:title", content: title },
@@ -93,8 +128,8 @@ export function socialMeta({
     ...(imageHeight ? [{ property: "og:image:height", content: String(imageHeight) }] : []),
     { property: "og:image:alt", content: title },
     { property: "og:site_name", content: SITE_NAME },
-    { property: "og:locale", content: "en_LB" },
-    { property: "og:locale:alternate", content: "ar_LB" },
+    { property: "og:locale", content: locale },
+    { property: "og:locale:alternate", content: alternateLocale },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
@@ -217,40 +252,42 @@ function gtinJsonLd(barcode?: string | null): Record<string, string> {
 
 export function productJsonLd(product: ShopifyProduct) {
   const node = product.node;
-  const variant = node.variants.edges[0]?.node;
-  const price = variant?.price ?? node.priceRange.minVariantPrice;
+  const variants = node.variants.edges.map((entry) => entry.node);
+  const primaryVariant = variants[0];
   const images = node.images.edges.slice(0, 10).map((entry) => cdnImage(entry.node.url, 1200));
-  const sku = variant?.sku || undefined;
+  const sku = primaryVariant?.sku || undefined;
   const brand = node.vendor?.trim() || undefined;
+  const productUrl = absoluteUrl(`/product/${node.handle}`);
+  const offers = variants.map((variant) => ({
+    "@type": "Offer",
+    url: productUrl,
+    priceCurrency: variant.price.currencyCode,
+    price: variant.price.amount,
+    availability: variant.availableForSale
+      ? "https://schema.org/InStock"
+      : "https://schema.org/OutOfStock",
+    itemCondition: "https://schema.org/NewCondition",
+    seller: { "@id": `${SITE_URL}/#organization` },
+    areaServed: {
+      "@type": "Country",
+      name: "Lebanon",
+    },
+  }));
 
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    "@id": `${absoluteUrl(`/product/${node.handle}`)}#product`,
+    "@id": `${productUrl}#product`,
     name: node.title,
     description: productMetaDescription(product),
     image: images.length ? images : undefined,
     sku,
     mpn: sku,
-    ...gtinJsonLd(variant?.barcode),
+    ...gtinJsonLd(primaryVariant?.barcode),
     brand: brand ? { "@type": "Brand", name: brand } : undefined,
     category: node.productType?.trim() || undefined,
-    url: absoluteUrl(`/product/${node.handle}`),
-    mainEntityOfPage: absoluteUrl(`/product/${node.handle}`),
-    offers: {
-      "@type": "Offer",
-      url: absoluteUrl(`/product/${node.handle}`),
-      priceCurrency: price.currencyCode,
-      price: price.amount,
-      availability: productInStock(product)
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
-      areaServed: {
-        "@type": "Country",
-        name: "Lebanon",
-      },
-      seller: { "@id": `${SITE_URL}/#organization` },
-    },
+    url: productUrl,
+    mainEntityOfPage: productUrl,
+    offers: offers.length ? offers : undefined,
   };
 }

@@ -7,29 +7,65 @@ import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { cdnImage } from "@/lib/image";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
-import { absoluteUrl, canonicalLink } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/categories")({
   loader: async ({ context }) => {
-    await Promise.all([
+    const [catalog] = await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
     ]);
+
+    return {
+      categories: catalog.categories.map((category) => ({
+        slug: category.slug,
+        label: category.label,
+      })),
+    };
   },
-  head: () => ({
-    meta: [
-      { title: `Categories — ${STORE_NAME}` },
-      {
-        name: "description",
-        content: `Browse all product categories available at ${STORE_NAME}.`,
-      },
-      { property: "og:title", content: `Categories — ${STORE_NAME}` },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/categories") },
-    ],
-    links: [canonicalLink("/categories")],
-  }),
+  head: ({ loaderData }) => {
+    const title = `Phone & Electronics Categories in Lebanon | ${STORE_NAME}`;
+    const description = `Browse smartphones, tablets, laptops, audio, wearables, chargers and accessories categories available in Lebanon at ${STORE_NAME}.`;
+    const path = "/categories";
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        {
+          name: "robots",
+          content: "index, follow, max-image-preview:large, max-snippet:-1",
+        },
+        ...socialMeta({ title, description, path }),
+      ],
+      links: [canonicalLink(path)],
+      scripts: [
+        jsonLd(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Categories", path },
+          ]),
+        ),
+        ...(loaderData
+          ? [
+              jsonLd({
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                name: "Electronics categories available at Space Call",
+                numberOfItems: loaderData.categories.length,
+                itemListElement: loaderData.categories.slice(0, 100).map((category, index) => ({
+                  "@type": "ListItem",
+                  position: index + 1,
+                  name: category.label,
+                  url: absoluteUrl(`/category/${encodeURIComponent(category.slug)}`),
+                })),
+              }),
+            ]
+          : []),
+      ],
+    };
+  },
   component: CategoriesPage,
 });
 
@@ -84,7 +120,7 @@ function CategoriesPage() {
                   {imageUrl ? (
                     <img
                       src={imageUrl}
-                      alt=""
+                      alt={label}
                       loading="lazy"
                       decoding="async"
                       className="relative h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.06]"

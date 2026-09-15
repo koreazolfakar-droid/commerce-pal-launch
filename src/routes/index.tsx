@@ -48,7 +48,7 @@ export const Route = createFileRoute("/")({
   },
   head: ({ loaderData }) => {
     const title = `${SITE_NAME} Lebanon | Official Online Electronics Store`;
-    const description = `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and secure Shopify checkout.`;
+    const description = `${SITE_NAME} Lebanon: shop smartphones, tablets, laptops, audio, smartwatches and accessories with live stock and secure Shopify checkout.`;
     return {
       meta: [
         { title },
@@ -243,10 +243,7 @@ function Index() {
           <>
             {isVisible("featured_products") && best.length > 0 && (
               <section data-testid="best-sellers">
-                <SectionHeader
-                  title={t("bestSellers")}
-                  subtitle={t("bestSellersDescription")}
-                />
+                <SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} />
                 <ProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
               </section>
             )}

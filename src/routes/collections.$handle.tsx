@@ -7,8 +7,22 @@ import { buildCatalogIndex } from "@/lib/taxonomy";
 import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchCollectionByHandle } from "@/lib/shopify";
-import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
+import {
+  breadcrumbJsonLd,
+  canonicalLink,
+  cleanMetaDescription,
+  itemListJsonLd,
+  jsonLd,
+  socialMeta,
+} from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
+
+type CollectionSeoMetadata = {
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+  } | null;
+};
 
 export const Route = createFileRoute("/collections/$handle")({
   validateSearch: parseProductSearch,
@@ -26,14 +40,23 @@ export const Route = createFileRoute("/collections/$handle")({
         ],
       };
     }
-    const collectionName = loaderData.collection.title;
-    const title = `${collectionName} in Lebanon | ${STORE_NAME}`;
-    const rawDescription = loaderData.collection.description?.trim() ?? "";
-    const description =
-      rawDescription.length >= 90
-        ? rawDescription.slice(0, 155)
-        : `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and secure Shopify checkout.`;
-    const image = loaderData.collection.image?.url;
+    const collection = loaderData.collection as typeof loaderData.collection &
+      CollectionSeoMetadata;
+    const collectionName = collection.title;
+    const merchantSeoTitle = collection.seo?.title?.replace(/\s+/g, " ").trim();
+    const title = merchantSeoTitle
+      ? merchantSeoTitle.includes(STORE_NAME)
+        ? merchantSeoTitle
+        : `${merchantSeoTitle} | ${STORE_NAME}`
+      : `${collectionName} in Lebanon | ${STORE_NAME}`;
+    const rawDescription = collection.description?.trim() ?? "";
+    const fallbackDescription = `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and secure Shopify checkout.`;
+    const description = cleanMetaDescription(
+      collection.seo?.description?.trim() ||
+        (rawDescription.length >= 90 ? rawDescription : undefined),
+      fallbackDescription,
+    );
+    const image = collection.image?.url;
     const path = `/collections/${params.handle}`;
     return {
       meta: [

@@ -14,7 +14,12 @@ test("sitemap paginates Shopify and uses meaningful lastmod data", async () => {
 
   assert.match(sitemap, /storefrontApiRequest\(PRODUCTS_QUERY/);
   assert.match(sitemap, /pageInfo\?\.hasNextPage/);
+  assert.match(sitemap, /isIndexableProduct/);
+  assert.match(sitemap, /price > 0/);
   assert.match(sitemap, /productLastmod/);
+  assert.match(sitemap, /categoryLastmods/);
+  assert.match(sitemap, /brandLastmods/);
+  assert.match(sitemap, /catalogLastmod/);
   assert.match(documents, /createdAt updatedAt tags/);
   assert.match(documents, /description updatedAt image/);
   assert.doesNotMatch(sitemap, /<changefreq>|<priority>/);
@@ -28,16 +33,46 @@ test("global crawler metadata stays indexable without fake hreflang alternates",
   assert.doesNotMatch(root, /hrefLang:/);
 });
 
-test("product structured data exposes Google product and offer fields", async () => {
+test("Arabic landing emits a single Arabic Open Graph locale", async () => {
+  const [arabic, seo] = await Promise.all([
+    source("src/routes/ar.tsx"),
+    source("src/lib/seo.ts"),
+  ]);
+
+  assert.match(arabic, /locale: "ar_LB"/);
+  assert.doesNotMatch(arabic, /property: "og:locale"/);
+  assert.match(seo, /locale = "en_LB"/);
+  assert.match(seo, /locale === "ar_LB" \? "en_LB" : "ar_LB"/);
+});
+
+test("Shopify SEO metadata is fetched and preferred for search snippets", async () => {
+  const [documents, seo, collection, productRoute] = await Promise.all([
+    source("src/lib/shopifyDocuments.ts"),
+    source("src/lib/seo.ts"),
+    source("src/routes/collections.$handle.tsx"),
+    source("src/routes/product.$handle.tsx"),
+  ]);
+
+  assert.match(documents, /const SEO = `title description`/);
+  assert.match(documents, /seo \{ \$\{SEO\} \}/);
+  assert.match(seo, /merchantSeoDescription/);
+  assert.match(seo, /productSeo\(product\)\?\.description/);
+  assert.match(productRoute, /productSeoTitle\(product\)/);
+  assert.match(collection, /collection\.seo\?\.title/);
+  assert.match(collection, /collection\.seo\?\.description/);
+});
+
+test("product structured data exposes Google product and variant-accurate offer fields", async () => {
   const [seo, productRoute] = await Promise.all([
     source("src/lib/seo.ts"),
     source("src/routes/product.$handle.tsx"),
   ]);
 
   assert.match(seo, /"@type": "Product"/);
+  assert.match(seo, /variants\.map/);
   assert.match(seo, /"@type": "Offer"/);
   assert.match(seo, /priceCurrency:/);
-  assert.match(seo, /availability:/);
+  assert.match(seo, /variant\.availableForSale/);
   assert.match(seo, /seller:/);
   assert.match(seo, /gtin8/);
   assert.match(seo, /gtin12/);
@@ -46,6 +81,26 @@ test("product structured data exposes Google product and offer fields", async ()
   assert.match(seo, /areaServed/);
   assert.match(seo, /name: "Lebanon"/);
   assert.match(productRoute, /jsonLd\(productJsonLd\(product\)\)/);
+});
+
+test("brand, category and collection directories expose crawlable list metadata", async () => {
+  const [brands, categories, collections] = await Promise.all([
+    source("src/routes/brands.tsx"),
+    source("src/routes/categories.tsx"),
+    source("src/routes/collections.index.tsx"),
+  ]);
+
+  for (const page of [brands, categories, collections]) {
+    assert.match(page, /max-image-preview:large/);
+    assert.match(page, /socialMeta/);
+    assert.match(page, /breadcrumbJsonLd/);
+    assert.match(page, /"@type": "ItemList"/);
+    assert.match(page, /canonicalLink/);
+  }
+
+  assert.match(brands, /Phone & Electronics Brands in Lebanon/);
+  assert.match(categories, /Phone & Electronics Categories in Lebanon/);
+  assert.match(collections, /Electronics Collections in Lebanon/);
 });
 
 test("header account and tracking links stay first-party", async () => {

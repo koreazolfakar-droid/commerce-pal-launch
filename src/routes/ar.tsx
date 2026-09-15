@@ -1,6 +1,14 @@
 import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Headphones, Laptop, MessageCircle, ShieldCheck, Smartphone, Truck } from "lucide-react";
+import {
+  ArrowLeft,
+  Headphones,
+  Laptop,
+  MessageCircle,
+  ShieldCheck,
+  Smartphone,
+  Truck,
+} from "lucide-react";
 
 import { StoreLayout } from "@/components/StoreLayout";
 import { useLanguage } from "@/lib/i18n";
@@ -25,8 +33,7 @@ export const Route = createFileRoute("/ar")({
       { title },
       { name: "description", content: description },
       { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1" },
-      ...socialMeta({ title, description, path: "/ar" }),
-      { property: "og:locale", content: "ar_LB" },
+      ...socialMeta({ title, description, path: "/ar", locale: "ar_LB" }),
     ],
     links: [canonicalLink("/ar"), ...languageAlternateLinks({ path: "/", arabicPath: "/ar" })],
     scripts: [
@@ -67,14 +74,20 @@ function ArabicLandingPage() {
 
   return (
     <StoreLayout>
-      <main dir="rtl" lang="ar" className="mx-auto w-full max-w-6xl px-4 py-8 pb-28 sm:py-12">
+      <main
+        dir="rtl"
+        lang="ar"
+        className="mx-auto w-full max-w-6xl px-4 py-8 pb-28 sm:py-12"
+      >
         <section className="overflow-hidden rounded-[2rem] border bg-card p-6 shadow-card sm:p-10">
           <p className="text-sm font-bold text-primary">Space Call لبنان</p>
           <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-5xl">
             هواتف وإلكترونيات مع معلومات واضحة واختيار أسهل
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
-            تصفّح الهواتف الذكية والتابلت واللابتوبات والسماعات والشواحن والإكسسوارات في {STORE_NAME}. راجع السعر والتوفر والمواصفات، واحصل على دعم مباشر قبل الطلب وبعده.
+            تصفّح الهواتف الذكية والتابلت واللابتوبات والسماعات والشواحن والإكسسوارات في{
+            " "}
+            {STORE_NAME}. راجع السعر والتوفر والمواصفات، واحصل على دعم مباشر قبل الطلب وبعده.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
@@ -95,7 +108,9 @@ function ArabicLandingPage() {
         </section>
 
         <section className="mt-8" aria-labelledby="arabic-categories">
-          <h2 id="arabic-categories" className="text-2xl font-black">تسوّق حسب الفئة</h2>
+          <h2 id="arabic-categories" className="text-2xl font-black">
+            تسوّق حسب الفئة
+          </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             {categories.map(({ label, slug, icon: Icon }) => (
               <Link
@@ -120,7 +135,12 @@ function ArabicLandingPage() {
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
               راجع تفاصيل الشحن والتوصيل قبل الطلب وتواصل معنا إذا احتجت تأكيداً لمنطقتك.
             </p>
-            <Link to="/shipping" className="mt-4 inline-block text-sm font-bold text-primary hover:underline">تفاصيل الشحن</Link>
+            <Link
+              to="/shipping"
+              className="mt-4 inline-block text-sm font-bold text-primary hover:underline"
+            >
+              تفاصيل الشحن
+            </Link>
           </article>
           <article className="rounded-2xl border bg-card p-5">
             <ShieldCheck className="h-6 w-6 text-primary" />
@@ -128,7 +148,12 @@ function ArabicLandingPage() {
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
               تجد معلومات الضمان والإرجاع وخطوات التواصل مع الدعم ضمن صفحات السياسات.
             </p>
-            <Link to="/warranty" className="mt-4 inline-block text-sm font-bold text-primary hover:underline">معلومات الضمان</Link>
+            <Link
+              to="/warranty"
+              className="mt-4 inline-block text-sm font-bold text-primary hover:underline"
+            >
+              معلومات الضمان
+            </Link>
           </article>
           <article className="rounded-2xl border bg-card p-5">
             <MessageCircle className="h-6 w-6 text-primary" />
@@ -136,7 +161,12 @@ function ArabicLandingPage() {
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
               اسأل عن المواصفات والتوافق والتوفر وأفضل خيار ضمن ميزانيتك قبل إتمام الطلب.
             </p>
-            <Link to="/help" className="mt-4 inline-block text-sm font-bold text-primary hover:underline">مركز المساعدة</Link>
+            <Link
+              to="/help"
+              className="mt-4 inline-block text-sm font-bold text-primary hover:underline"
+            >
+              مركز المساعدة
+            </Link>
           </article>
         </section>
       </main>
