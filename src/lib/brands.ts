@@ -4,8 +4,9 @@
  * Every curated logo is served from /public/brand-logos as a normal static
  * asset URL. This deliberately avoids bundler-specific SVG import behaviour
  * that can turn an SVG file into escaped markup instead of an <img> source.
- * Shopify collection imagery remains a fallback for brands without a curated
- * local logo, followed by Simple Icons where available.
+ * Merchant-controlled Shopify artwork is supplied separately by BrandLogo.
+ * Unknown brands deliberately fall back to the local text/monogram treatment
+ * instead of making third-party logo requests that can violate CSP or slow LCP.
  */
 
 const LOCAL_LOGOS: Record<string, string> = {
@@ -15,6 +16,7 @@ const LOCAL_LOGOS: Record<string, string> = {
   anker: "/brand-logos/anker.svg",
   blackshark: "/brand-logos/blackshark.svg",
   "black-shark": "/brand-logos/blackshark.svg",
+  lenovo: "/brand-logos/lenovo.svg",
   poco: "/brand-logos/poco.png",
   realme: "/brand-logos/realme.svg",
   redmagic: "/brand-logos/redmagic.png",
@@ -26,7 +28,7 @@ const LOCAL_LOGOS: Record<string, string> = {
 };
 
 export interface BrandMeta {
-  /** simple-icons slug (https://cdn.simpleicons.org/<slug>) */
+  /** Legacy Simple Icons slug retained as metadata; never fetched at runtime. */
   icon?: string;
   /** official domain, used by Logo.dev when a key is configured */
   domain?: string;
@@ -87,19 +89,11 @@ function brandKey(slug: string, label: string) {
   return key;
 }
 
-/** Local curated assets win; remote sources are fallback-only. */
+/** Curated local fallbacks only; merchant Shopify artwork is handled by BrandLogo. */
 export function brandLogoSources(slug: string, label: string, _size = 128): string[] {
-  const sources: string[] = [];
   const key = brandKey(slug, label);
   const local = LOCAL_LOGOS[key];
-  if (local) return [local];
-
-  // Known aliases stay authoritative, but for any new Shopify vendor we also
-  // try its normalized slug on Simple Icons. Unsupported slugs simply 404 and
-  // BrandLogo advances to the merchant image/text fallback without breaking UI.
-  const icon = BRAND_META[key]?.icon ?? key;
-  if (icon) sources.push(`https://cdn.simpleicons.org/${icon}`);
-  return sources;
+  return local ? [local] : [];
 }
 
 /** 1–2 letter monogram used by the fallback tile. */

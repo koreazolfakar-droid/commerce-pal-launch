@@ -38,6 +38,10 @@ export const useCompareStore = create<CompareState>()(
       clear: () => set({ handles: [] }),
       replace: (handles) => set({ handles: [...new Set(handles)].slice(0, MAX_COMPARE_PRODUCTS) }),
     }),
-    { name: "space-cell-compare", storage: createJSONStorage(() => localStorage) },
+    {
+      name: "space-cell-compare",
+      storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
+    },
   ),
 );

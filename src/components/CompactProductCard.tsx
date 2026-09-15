@@ -18,9 +18,11 @@ import { useLanguage } from "@/lib/i18n";
 export const CompactProductCard = memo(function CompactProductCard({
   product,
   className,
+  listItem = false,
 }: {
   product: ShopifyProduct;
   className?: string;
+  listItem?: boolean;
 }) {
   const { t } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
@@ -59,6 +61,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
   return (
     <article
+      role={listItem ? "listitem" : undefined}
       className={cn(
         "group relative flex h-full min-w-0 w-full flex-col overflow-hidden rounded-[1.15rem] border border-border/75 bg-card shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card-hover",
         className,
@@ -74,8 +77,8 @@ export const CompactProductCard = memo(function CompactProductCard({
           <ProductImage
             url={image?.url}
             alt={image?.altText ?? node.title}
-            size={360}
-            sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 46vw"
+            size={280}
+            sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 44vw"
             imageClassName="group-hover:scale-[1.045]"
           />
         </Link>
@@ -113,7 +116,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           {brand ? (
             <>
               <BrandLogo slug={brand.slug} label={brand.label} size={16} className="rounded" />
-              <p className="truncate text-[10px] font-bold uppercase tracking-[0.055em] text-primary/90 sm:text-[11px]">
+              <p className="truncate text-[10px] font-bold uppercase tracking-[0.055em] text-foreground sm:text-[11px]">
                 {brand.label}
               </p>
             </>

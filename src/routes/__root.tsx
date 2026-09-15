@@ -15,6 +15,7 @@ import { absoluteUrl } from "@/lib/seo";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { useCartSync } from "@/hooks/useCartSync";
+import { usePersistedStoreHydration } from "@/hooks/usePersistedStoreHydration";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { STORE_NAME } from "@/lib/storeConfig";
@@ -168,6 +169,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  usePersistedStoreHydration();
   useCartSync();
 
   return (

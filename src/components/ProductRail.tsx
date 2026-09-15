@@ -88,11 +88,13 @@ export function ProductRail({
               <CompactProductCard
                 key={product.node.id}
                 product={product}
+                listItem
                 className="homepage-product-card w-[72%] shrink-0 snap-start transition-transform duration-150 ease-out active:scale-[0.99] sm:w-auto sm:shrink sm:snap-none sm:hover:-translate-y-0.5"
               />
             ))
           ) : (
             <div
+              role="listitem"
               className="min-h-96 w-full shrink-0 sm:col-span-3 lg:col-span-4"
               aria-hidden="true"
             />

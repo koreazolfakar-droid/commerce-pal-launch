@@ -20,6 +20,7 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>()(
     {
       name: "space-cell-recently-viewed",
       storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
     },
   ),
 );

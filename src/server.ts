@@ -196,7 +196,10 @@ export default {
       const response = await handler.fetch(request, env, ctx);
       return withDocumentCache(
         request,
-        withSecurityHeaders(await normalizeCatastrophicSsrResponse(response)),
+        withStaticAssetCache(
+          request,
+          withSecurityHeaders(await normalizeCatastrophicSsrResponse(response)),
+        ),
       );
     } catch (error) {
       console.error(error);
@@ -233,6 +236,41 @@ function withDocumentCache(request: Request, response: Response): Response {
     });
   }
   return response;
+}
+
+/**
+ * Static first-party artwork was previously served without an explicit browser
+ * lifetime. Hashed Vite output can be immutable; stable public artwork uses a
+ * bounded browser lifetime so merchant asset replacements still propagate.
+ */
+function withStaticAssetCache(request: Request, response: Response): Response {
+  if (request.method !== "GET" || !response.ok || response.headers.has("set-cookie")) {
+    return response;
+  }
+
+  const pathname = new URL(request.url).pathname;
+  let cacheControl: string | null = null;
+
+  if (pathname.startsWith("/assets/")) {
+    cacheControl = "public, max-age=31536000, immutable";
+  } else if (
+    pathname.startsWith("/brand-logos/") ||
+    pathname.startsWith("/category-icons/") ||
+    pathname === "/logo.svg" ||
+    pathname === "/logo.png"
+  ) {
+    cacheControl = "public, max-age=604800";
+  }
+
+  if (!cacheControl) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", cacheControl);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 export function withSecurityHeaders(response: Response): Response {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { brandLogoSources, brandMonogram } from "@/lib/brands";
+import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { cn } from "@/lib/utils";
 
 type BrandLogoProps = {
@@ -82,9 +83,15 @@ function LogoImage({
 }: BrandLogoProps) {
   const merchantSource = safeImageSource(imageUrl);
   const sources = useMemo(() => {
-    const builtIn = brandLogoSources(slug, label, size * 2)
-      .map(safeImageSource)
-      .filter(Boolean) as string[];
+    // Tiny card badges already display the brand name beside this mark. Avoid
+    // downloading a 500–1600px raster logo merely to paint a 16px decoration;
+    // the monogram fallback is crisp, local and hydration-stable at that size.
+    const builtIn =
+      size <= 20 && !wordmark
+        ? []
+        : (brandLogoSources(slug, label, size * 2)
+            .map(safeImageSource)
+            .filter(Boolean) as string[]);
     const merchant = safeImageSource(imageUrl);
 
     // Shopify is the merchant-controlled source of truth. A curated local logo
@@ -93,7 +100,7 @@ function LogoImage({
     const ordered = merchant ? [merchant, ...builtIn] : builtIn;
 
     return [...new Set(ordered)];
-  }, [imageUrl, slug, label, size]);
+  }, [imageUrl, slug, label, size, wordmark]);
   const [attempt, setAttempt] = useState(0);
   const [loadedSource, setLoadedSource] = useState<string>();
   const [imageAspectRatio, setImageAspectRatio] = useState(1);
@@ -124,6 +131,9 @@ function LogoImage({
     ? 2.8
     : Math.min(2.8, Math.max(2.05, 1.7 + Math.min(compactLabelLength, 10) * 0.12));
   const frameWidth = wordmark ? size * (normalizeForRail ? normalizedWordmarkRatio : 2.6) : size;
+  const requestedWidth = Math.max(64, Math.ceil(frameWidth * 2));
+  const renderedSource = source ? (cdnImage(source, requestedWidth) ?? source) : undefined;
+  const renderedSrcSet = source ? cdnSrcSet(source, requestedWidth) : undefined;
 
   // Catch cached loads/errors which happened before hydration attached the handlers.
   useEffect(() => {
@@ -167,11 +177,13 @@ function LogoImage({
           {wordmark ? label : brandMonogram(label)}
         </span>
       )}
-      {source && (
+      {source && renderedSource && (
         <img
           ref={imgRef}
           key={source}
-          src={source}
+          src={renderedSource}
+          srcSet={renderedSrcSet}
+          sizes={`${Math.round(frameWidth)}px`}
           alt={`${label} logo`}
           width={Math.round(frameWidth)}
           height={size}
