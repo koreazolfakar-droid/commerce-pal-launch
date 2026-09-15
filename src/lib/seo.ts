@@ -1,6 +1,11 @@
 import { cdnImage } from "@/lib/image";
 import type { ShopifyProduct } from "@/lib/shopify";
-import { SITE_URL as CONFIG_SITE_URL, STORE_CONFIG, STORE_NAME, storeUrl } from "@/lib/storeConfig";
+import {
+  SITE_URL as CONFIG_SITE_URL,
+  STORE_CONFIG,
+  STORE_NAME,
+  storeUrl,
+} from "@/lib/storeConfig";
 
 export const SITE_URL = CONFIG_SITE_URL;
 export const SITE_NAME = STORE_NAME;
@@ -100,6 +105,8 @@ export function socialMeta({
   type = "website",
   imageWidth,
   imageHeight,
+  locale = "en_LB",
+  alternateLocale = locale === "ar_LB" ? "en_LB" : "ar_LB",
 }: {
   title: string;
   description: string;
@@ -108,6 +115,8 @@ export function socialMeta({
   type?: "website" | "product";
   imageWidth?: number;
   imageHeight?: number;
+  locale?: "en_LB" | "ar_LB";
+  alternateLocale?: "en_LB" | "ar_LB";
 }) {
   return [
     { property: "og:title", content: title },
@@ -119,8 +128,8 @@ export function socialMeta({
     ...(imageHeight ? [{ property: "og:image:height", content: String(imageHeight) }] : []),
     { property: "og:image:alt", content: title },
     { property: "og:site_name", content: SITE_NAME },
-    { property: "og:locale", content: "en_LB" },
-    { property: "og:locale:alternate", content: "ar_LB" },
+    { property: "og:locale", content: locale },
+    { property: "og:locale:alternate", content: alternateLocale },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
