@@ -39,6 +39,9 @@ jobs:
       - name: Format
         run: cargo fmt --check
 
+      - name: Clippy
+        run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
+
       - name: Check WebAssembly target
         run: cargo check --target wasm32-unknown-unknown
 
