@@ -1,3 +1,6 @@
+mod product;
+mod shopify;
+
 use serde::Serialize;
 use worker::{event, Context, Env, Request, Response, Result, Router};
 
@@ -21,6 +24,10 @@ fn health() -> Result<Response> {
 pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     Router::new()
         .get("/health", |_req, _ctx| health())
+        .get_async("/products/:handle", |_req, ctx| async move {
+            let handle = ctx.param("handle").cloned().unwrap_or_default();
+            shopify::product_by_handle(handle, ctx).await
+        })
         .run(req, env)
         .await
 }
