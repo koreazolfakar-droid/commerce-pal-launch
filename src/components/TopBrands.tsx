@@ -9,6 +9,7 @@ import { useLanguage } from "@/lib/i18n";
 
 const COMPACT_MARKS = new Set(["apple", "xiaomi"]);
 const AUTO_SCROLL_PX_PER_SECOND = 24;
+const AUTO_SCROLL_START_DELAY_MS = 5000;
 const ACTIVE_MEASURE_INTERVAL_MS = 160;
 const INFINITE_CYCLES = [0, 1, 2] as const;
 
@@ -23,6 +24,7 @@ function brandSlotWidth(brand: ShopifyBrand) {
  * Premium infinite brand selector for the homepage.
  *
  * Performance notes:
+ * - auto-scroll waits until the critical startup window has passed;
  * - auto-scroll only mutates scrollLeft inside requestAnimationFrame;
  * - cycle width is cached instead of forcing layout every frame;
  * - active-brand detection is throttled and uses elementFromPoint instead of
@@ -68,7 +70,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
   const refreshCycleWidth = useCallback(() => {
     const rail = railRef.current;
-    const cycle = rail?.querySelector<HTMLElement>("[data-brand-cycle=\"0\"]");
+    const cycle = rail?.querySelector<HTMLElement>('[data-brand-cycle="0"]');
     cycleWidthRef.current = cycle?.offsetWidth ?? 0;
     return cycleWidthRef.current;
   }, []);
@@ -112,14 +114,17 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
     if (slug) setActiveSlug((current) => (current === slug ? current : slug));
   }, []);
 
-  const scheduleMeasure = useCallback((delay = ACTIVE_MEASURE_INTERVAL_MS) => {
-    if (measureTimerRef.current !== null) return;
+  const scheduleMeasure = useCallback(
+    (delay = ACTIVE_MEASURE_INTERVAL_MS) => {
+      if (measureTimerRef.current !== null) return;
 
-    measureTimerRef.current = window.setTimeout(() => {
-      measureTimerRef.current = null;
-      measureActiveBrand();
-    }, delay);
-  }, [measureActiveBrand]);
+      measureTimerRef.current = window.setTimeout(() => {
+        measureTimerRef.current = null;
+        measureActiveBrand();
+      }, delay);
+    },
+    [measureActiveBrand],
+  );
 
   const pauseAfterInteraction = useCallback((delay = 1400) => {
     interactionRef.current.resumeAt = performance.now() + delay;
@@ -152,8 +157,12 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
       const centered = Math.max(0, targetCenterInContent - rail.clientWidth / 2);
       rail.scrollLeft = centered;
-      autoPositionRef.current = recycleInfinitePosition(centered);
-      measureActiveBrand();
+      autoPositionRef.current = centered;
+
+      // Do not immediately read layout after writing scrollLeft. Lighthouse was
+      // correctly flagging this pattern as forced reflow. The active-logo read is
+      // delayed until the browser has had time to commit the new scroll position.
+      scheduleMeasure(48);
     };
 
     const firstFrame = window.requestAnimationFrame(() => {
@@ -216,6 +225,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let previousTime = performance.now();
     let lastActiveMeasure = previousTime;
+    let startTimer: number | null = null;
 
     autoPositionRef.current = rail.scrollLeft;
 
@@ -252,9 +262,20 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
       autoFrameRef.current = window.requestAnimationFrame(animate);
     };
 
-    autoFrameRef.current = window.requestAnimationFrame(animate);
+    const startAnimation = () => {
+      if (reduceMotion.matches) return;
+      previousTime = performance.now();
+      lastActiveMeasure = previousTime;
+      autoPositionRef.current = rail.scrollLeft;
+      autoFrameRef.current = window.requestAnimationFrame(animate);
+    };
+
+    // The animation is purely decorative. Keep its continuous 60fps work out of
+    // the initial load/TBT window, then restore the same movement automatically.
+    startTimer = window.setTimeout(startAnimation, AUTO_SCROLL_START_DELAY_MS);
 
     return () => {
+      if (startTimer !== null) window.clearTimeout(startTimer);
       if (autoFrameRef.current !== null) {
         window.cancelAnimationFrame(autoFrameRef.current);
         autoFrameRef.current = null;
@@ -275,11 +296,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   if (!railBrands.length) return null;
 
   return (
-    <section
-      aria-labelledby="top-brands"
-      data-testid="top-brands"
-      className="-mt-2 -mb-4 sm:-mb-5"
-    >
+    <section aria-labelledby="top-brands" data-testid="top-brands" className="-mt-2 -mb-4 sm:-mb-5">
       <div className="home-section-header !mb-0 flex-nowrap items-end">
         <div className="min-w-0 flex-1">
           <h2 id="top-brands" className="text-xl font-black tracking-tight">

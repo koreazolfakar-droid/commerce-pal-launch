@@ -13,7 +13,7 @@ import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n"
 import { absoluteUrl } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
-import { Toaster } from "@/components/ui/sonner";
+import { DeferredToaster } from "@/components/DeferredToaster";
 import { useCartSync } from "@/hooks/useCartSync";
 import { usePersistedStoreHydration } from "@/hooks/usePersistedStoreHydration";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -176,7 +176,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <Toaster />
+      <DeferredToaster />
     </QueryClientProvider>
   );
 }

@@ -26,6 +26,13 @@ export default defineConfig({
     },
   },
   tanstackStart: {
+    // Let TanStack split route UI into on-demand chunks instead of shipping every
+    // page component with the first storefront visit. The Lovable wrapper already
+    // owns the Start/Router plugins, so configure its existing plugin rather than
+    // registering a duplicate @tanstack/router-plugin instance.
+    router: {
+      autoCodeSplitting: true,
+    },
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },

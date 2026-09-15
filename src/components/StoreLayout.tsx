@@ -3,9 +3,9 @@ import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav, MOBILE_NAV_HEIGHT } from "@/components/BottomNav";
 import { DeferredCartDrawer } from "@/components/DeferredCartDrawer";
+import { DeferredDesktopHeader } from "@/components/DeferredDesktopHeader";
 import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import "../dark-black.css";
 import "../ui-overhaul.css";
 import "../design-consistency.css";
@@ -33,9 +33,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       >
         Skip to content
       </a>
-      <div className="hidden lg:block">
-        <SiteHeader />
-      </div>
+      <DeferredDesktopHeader />
       <MobileTopBar showCategoryRail={!onHomePage && !onCartPage} />
       <main
         id="main-content"

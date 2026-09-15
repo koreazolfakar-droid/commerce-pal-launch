@@ -120,11 +120,7 @@ export function HomeHero({
             className="absolute inset-0 z-[1] block overflow-hidden"
           >
             <picture>
-              <source
-                media="(max-width: 639px)"
-                srcSet={`${cdnImage(shopifyImage.url, 480)} 480w, ${cdnImage(shopifyImage.url, 640)} 640w`}
-                sizes="calc(100vw - 1.5rem)"
-              />
+              <source media="(max-width: 639px)" srcSet={cdnImage(shopifyImage.url, 480)} />
               <img
                 key={shopifySlide.id}
                 src={cdnImage(shopifyImage.url, 1440)}
