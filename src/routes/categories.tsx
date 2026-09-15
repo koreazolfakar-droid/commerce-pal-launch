@@ -7,13 +7,7 @@ import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { cdnImage } from "@/lib/image";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
-import {
-  absoluteUrl,
-  breadcrumbJsonLd,
-  canonicalLink,
-  jsonLd,
-  socialMeta,
-} from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/categories")({
