@@ -34,9 +34,6 @@ jobs:
       - name: TypeScript
         run: bun run typecheck
 
-      - name: ESLint
-        run: bun run lint
-
       - name: Unit and architecture tests
         run: bun run test:unit
 
@@ -45,3 +42,8 @@ jobs:
 
       - name: SSR smoke test
         run: bun run test:ssr
+
+      # Keep lint last temporarily on this PR so the pre-existing repository-wide
+      # formatting debt cannot prevent regression tests and production build checks.
+      - name: ESLint
+        run: bun run lint
