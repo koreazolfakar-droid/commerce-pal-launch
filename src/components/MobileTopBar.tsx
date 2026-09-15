@@ -48,7 +48,7 @@ export function MobileTopBar({
   return (
     <>
       {/* Only the main header row stays sticky. */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
+      <header className="mobile-top-bar sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-card backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-3 py-2.5">
           <button
             type="button"
