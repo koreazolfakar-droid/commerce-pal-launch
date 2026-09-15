@@ -63,20 +63,24 @@ try {
     const items = nav.locator("[data-nav-id]");
     assert.equal(await items.count(), 4, `${testCase.width}px: expected four navigation items`);
 
-    for (let index = 0; index < expectedIds.length; index += 1) {
-      const item = items.nth(index);
-      assert.equal(
-        await item.getAttribute("data-nav-id"),
-        expectedIds[index],
-        `${testCase.width}px: navigation order changed`,
-      );
+    const renderedOrder = await items.evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("data-nav-id")),
+    );
+    assert.deepEqual(renderedOrder, expectedIds, `${testCase.width}px: navigation order changed`);
+
+    // CMS navigation can resolve immediately after first paint and replace the
+    // fallback links. Resolve each target by its stable id and wait for the
+    // current node to be visible instead of holding a stale nth() element.
+    for (const id of expectedIds) {
+      const item = nav.locator(`[data-nav-id="${id}"]`);
+      await item.waitFor({ state: "visible" });
       const box = await item.boundingBox();
-      assert.ok(box, `${testCase.width}px: missing touch target for ${expectedIds[index]}`);
-      assert.ok(box.width >= 44, `${testCase.width}px: ${expectedIds[index]} target is too narrow`);
-      assert.ok(box.height >= 44, `${testCase.width}px: ${expectedIds[index]} target is too short`);
+      assert.ok(box, `${testCase.width}px: missing touch target for ${id}`);
+      assert.ok(box.width >= 44, `${testCase.width}px: ${id} target is too narrow`);
+      assert.ok(box.height >= 44, `${testCase.width}px: ${id} target is too short`);
       assert.ok(
         (await item.getAttribute("aria-label"))?.trim(),
-        `${testCase.width}px: ${expectedIds[index]} is missing aria-label`,
+        `${testCase.width}px: ${id} is missing aria-label`,
       );
     }
 
