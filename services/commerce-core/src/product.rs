@@ -74,13 +74,21 @@ pub struct ProductData {
 pub struct Product {
     pub id: String,
     pub title: String,
+    pub description: String,
+    pub description_html: String,
     pub handle: String,
-    pub vendor: Option<String>,
-    pub product_type: Option<String>,
+    pub vendor: String,
+    pub product_type: String,
     pub available_for_sale: bool,
+    pub created_at: String,
+    pub updated_at: String,
+    pub tags: Vec<String>,
     pub price_range: PriceRange,
+    pub compare_at_price_range: PriceRange,
     pub images: ImageConnection,
+    pub collections: CollectionConnection,
     pub variants: VariantConnection,
+    pub options: Vec<ProductOption>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -114,6 +122,22 @@ pub struct ProductImage {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct CollectionConnection {
+    pub edges: Vec<CollectionEdge>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct CollectionEdge {
+    pub node: ProductCollection,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct ProductCollection {
+    pub handle: String,
+    pub title: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct VariantConnection {
     pub edges: Vec<VariantEdge>,
 }
@@ -130,13 +154,25 @@ pub struct ProductVariant {
     pub title: String,
     pub available_for_sale: bool,
     pub price: Money,
+    pub compare_at_price: Option<Money>,
+    pub image: Option<ProductImage>,
     pub selected_options: Vec<SelectedOption>,
+    pub sku: Option<String>,
+    pub barcode: Option<String>,
+    pub weight: Option<f64>,
+    pub weight_unit: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct SelectedOption {
     pub name: String,
     pub value: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct ProductOption {
+    pub name: String,
+    pub values: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -169,19 +205,62 @@ mod tests {
         "product": {
           "id": "gid://shopify/Product/1",
           "title": "iPhone Test",
+          "description": "Test phone",
+          "descriptionHtml": "<p>Test phone</p>",
           "handle": "iphone-test",
           "vendor": "Apple",
           "productType": "Phones",
           "availableForSale": true,
+          "createdAt": "2026-09-01T10:00:00Z",
+          "updatedAt": "2026-09-15T10:00:00Z",
+          "tags": ["phone", "apple"],
           "priceRange": {"minVariantPrice": {"amount": "999.00", "currencyCode": "USD"}},
-          "images": {"edges": [{"node": {"url": "https://cdn.shopify.com/test.jpg", "altText": "iPhone"}}]},
-          "variants": {"edges": [{"node": {
-            "id": "gid://shopify/ProductVariant/1",
-            "title": "Default Title",
-            "availableForSale": true,
-            "price": {"amount": "999.00", "currencyCode": "USD"},
-            "selectedOptions": [{"name": "Title", "value": "Default Title"}]
-          }}]}
+          "compareAtPriceRange": {"minVariantPrice": {"amount": "1099.00", "currencyCode": "USD"}},
+          "images": {"edges": [
+            {"node": {"url": "https://cdn.shopify.com/front.jpg", "altText": "Front"}},
+            {"node": {"url": "https://cdn.shopify.com/back.jpg", "altText": null}}
+          ]},
+          "collections": {"edges": [
+            {"node": {"handle": "iphone", "title": "iPhone"}}
+          ]},
+          "variants": {"edges": [
+            {"node": {
+              "id": "gid://shopify/ProductVariant/1",
+              "title": "Black / 256GB",
+              "availableForSale": true,
+              "price": {"amount": "999.00", "currencyCode": "USD"},
+              "compareAtPrice": {"amount": "1099.00", "currencyCode": "USD"},
+              "image": {"url": "https://cdn.shopify.com/black.jpg", "altText": "Black"},
+              "selectedOptions": [
+                {"name": "Color", "value": "Black"},
+                {"name": "Storage", "value": "256GB"}
+              ],
+              "sku": "IPHONE-TEST-BLK-256",
+              "barcode": "1234567890123",
+              "weight": 0.221,
+              "weightUnit": "KILOGRAMS"
+            }},
+            {"node": {
+              "id": "gid://shopify/ProductVariant/2",
+              "title": "White / 256GB",
+              "availableForSale": false,
+              "price": {"amount": "999.00", "currencyCode": "USD"},
+              "compareAtPrice": null,
+              "image": null,
+              "selectedOptions": [
+                {"name": "Color", "value": "White"},
+                {"name": "Storage", "value": "256GB"}
+              ],
+              "sku": null,
+              "barcode": null,
+              "weight": null,
+              "weightUnit": "KILOGRAMS"
+            }}
+          ]},
+          "options": [
+            {"name": "Color", "values": ["Black", "White"]},
+            {"name": "Storage", "values": ["256GB"]}
+          ]
         }
       }
     }"#;
@@ -213,6 +292,15 @@ mod tests {
     }
 
     #[test]
+    fn rejects_handles_over_the_contract_limit() {
+        let too_long = "a".repeat(MAX_PRODUCT_HANDLE_LEN + 1);
+        assert_eq!(
+            validate_product_handle(&too_long),
+            Err(ProductHandleError::TooLong)
+        );
+    }
+
+    #[test]
     fn validates_shopify_configuration_values() {
         assert!(valid_shopify_domain("dj6qeq-j9.myshopify.com"));
         assert!(!valid_shopify_domain("example.com"));
@@ -222,11 +310,59 @@ mod tests {
     }
 
     #[test]
-    fn parses_a_valid_product_response() {
+    fn parses_full_product_detail_contract() {
         let product = parse_product_payload(PRODUCT_JSON).expect("valid product response");
         assert_eq!(product.handle, "iphone-test");
+        assert_eq!(product.description_html, "<p>Test phone</p>");
         assert_eq!(product.price_range.min_variant_price.amount, "999.00");
-        assert_eq!(product.variants.edges.len(), 1);
+        assert_eq!(
+            product.compare_at_price_range.min_variant_price.amount,
+            "1099.00"
+        );
+        assert_eq!(product.images.edges.len(), 2);
+        assert_eq!(product.collections.edges.len(), 1);
+        assert_eq!(product.variants.edges.len(), 2);
+        assert_eq!(product.options.len(), 2);
+        assert_eq!(
+            product.variants.edges[0].node.sku.as_deref(),
+            Some("IPHONE-TEST-BLK-256")
+        );
+        assert_eq!(product.variants.edges[0].node.weight, Some(0.221));
+        assert!(product.variants.edges[1].node.compare_at_price.is_none());
+        assert!(product.variants.edges[1].node.image.is_none());
+    }
+
+    #[test]
+    fn serializes_with_storefront_compatible_camel_case_keys() {
+        let product = parse_product_payload(PRODUCT_JSON).expect("valid product response");
+        let value = serde_json::to_value(product).expect("serializable product");
+        assert!(value.get("descriptionHtml").is_some());
+        assert!(value.get("productType").is_some());
+        assert!(value.get("availableForSale").is_some());
+        assert!(value.get("compareAtPriceRange").is_some());
+        assert!(value["variants"]["edges"][0]["node"]
+            .get("selectedOptions")
+            .is_some());
+        assert!(value["variants"]["edges"][0]["node"]
+            .get("weightUnit")
+            .is_some());
+    }
+
+    #[test]
+    fn rejects_incomplete_product_detail_contract() {
+        let incomplete = r#"{
+          "data": {
+            "product": {
+              "id": "gid://shopify/Product/1",
+              "title": "Incomplete",
+              "handle": "incomplete"
+            }
+          }
+        }"#;
+        assert_eq!(
+            parse_product_payload(incomplete),
+            Err(ProductPayloadError::InvalidJson)
+        );
     }
 
     #[test]
