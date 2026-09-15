@@ -272,7 +272,10 @@ mod tests {
             "weightUnit",
             "options { name values }",
         ] {
-            assert!(PRODUCT_QUERY.contains(field), "missing contract field: {field}");
+            assert!(
+                PRODUCT_QUERY.contains(field),
+                "missing contract field: {field}"
+            );
         }
     }
 
@@ -298,6 +301,9 @@ mod tests {
 
         assert_eq!(body["variables"]["handle"], "iphone-test");
         assert_eq!(body["query"], PRODUCT_QUERY);
-        assert_eq!(body["variables"].as_object().map(|value| value.len()), Some(1));
+        assert_eq!(
+            body["variables"].as_object().map(|value| value.len()),
+            Some(1)
+        );
     }
 }
