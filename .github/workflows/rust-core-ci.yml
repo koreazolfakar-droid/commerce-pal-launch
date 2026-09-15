@@ -1,0 +1,49 @@
+name: Rust Core CI
+
+on:
+  push:
+    paths:
+      - "services/commerce-core/**"
+      - ".github/workflows/rust-core-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "services/commerce-core/**"
+      - ".github/workflows/rust-core-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-core-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services/commerce-core
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Check WebAssembly target
+        run: cargo check --target wasm32-unknown-unknown
+
+      - name: Install worker-build
+        run: cargo install "worker-build@^0.8"
+
+      - name: Build release Worker
+        run: worker-build --release
