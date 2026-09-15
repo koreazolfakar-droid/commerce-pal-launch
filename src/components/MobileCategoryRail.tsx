@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  * category rail, so it should not pay the parse/evaluation cost of the catalog,
  * Shopify query helpers and taxonomy code merely because the top bar is present.
  */
-export function MobileCategoryRail({ activeSlug }: { activeSlug?: string }) {
+export function MobileCategoryRail({ activeSlug }: { activeSlug?: string | undefined }) {
   const { t, language } = useLanguage();
   const hydrated = useHydrated();
   const { data: catalog, isLoading } = useQuery(catalogQueryOptions());
