@@ -28,16 +28,32 @@ test("global crawler metadata stays indexable without fake hreflang alternates",
   assert.doesNotMatch(root, /hrefLang:/);
 });
 
-test("product structured data exposes Google product and offer fields", async () => {
+test("Shopify SEO metadata is fetched and preferred for search snippets", async () => {
+  const [documents, seo, collection] = await Promise.all([
+    source("src/lib/shopifyDocuments.ts"),
+    source("src/lib/seo.ts"),
+    source("src/routes/collections.$handle.tsx"),
+  ]);
+
+  assert.match(documents, /const SEO = `title description`/);
+  assert.match(documents, /seo \{ \$\{SEO\} \}/);
+  assert.match(seo, /merchantSeoDescription/);
+  assert.match(seo, /productSeo\(product\)\?\.description/);
+  assert.match(collection, /collection\.seo\?\.title/);
+  assert.match(collection, /collection\.seo\?\.description/);
+});
+
+test("product structured data exposes Google product and variant-accurate offer fields", async () => {
   const [seo, productRoute] = await Promise.all([
     source("src/lib/seo.ts"),
     source("src/routes/product.$handle.tsx"),
   ]);
 
   assert.match(seo, /"@type": "Product"/);
+  assert.match(seo, /variants\.map/);
   assert.match(seo, /"@type": "Offer"/);
   assert.match(seo, /priceCurrency:/);
-  assert.match(seo, /availability:/);
+  assert.match(seo, /variant\.availableForSale/);
   assert.match(seo, /seller:/);
   assert.match(seo, /gtin8/);
   assert.match(seo, /gtin12/);
