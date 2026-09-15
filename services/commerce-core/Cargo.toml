@@ -1,15 +1,17 @@
 [package]
 name = "space-call-commerce-core"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Isolated Rust data-core foundation for Space Call"
+description = "Isolated Rust data core for Space Call"
 publish = false
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+wasm-bindgen = "0.2"
 worker = "0.8.5"
 
 [profile.release]

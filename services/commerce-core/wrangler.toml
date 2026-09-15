@@ -3,5 +3,9 @@ main = "build/index.js"
 compatibility_date = "2026-09-15"
 workers_dev = true
 
+[vars]
+SHOPIFY_STORE_DOMAIN = "dj6qeq-j9.myshopify.com"
+SHOPIFY_API_VERSION = "2026-07"
+
 [build]
 command = "cargo install \"worker-build@^0.8\" && worker-build --release"
