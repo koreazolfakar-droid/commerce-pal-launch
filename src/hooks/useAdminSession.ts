@@ -1,62 +1,93 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
-
-export type AdminRole = "admin" | "editor" | null;
+import { fetchDashboardAccess } from "@/lib/cmsAdmin.functions";
+import type { DashboardRole } from "@/lib/cmsAdmin.server";
 
 export type AdminSessionState = {
   loading: boolean;
   session: Session | null;
-  role: AdminRole;
+  role: DashboardRole | null;
+  email: string | null;
+  setupRequired: boolean;
+  error: string | null;
   refresh: () => Promise<void>;
 };
 
-/** Session plus server-verified staff role for the dashboard shell. */
+/** Browser session plus a server-verified dashboard role. */
 export function useAdminSession(): AdminSessionState {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
-  const [role, setRole] = useState<AdminRole>(null);
+  const [role, setRole] = useState<DashboardRole | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [setupRequired, setSetupRequired] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadRole = async (current: Session | null) => {
+  const load = useCallback(async (current: Session | null) => {
+    setSession(current);
+    setError(null);
+
     if (!current) {
       setRole(null);
+      setEmail(null);
+      setSetupRequired(false);
+      setLoading(false);
       return;
     }
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", current.user.id);
-    const roles = (data ?? []).map((row) => row.role);
-    setRole(roles.includes("admin") ? "admin" : roles.includes("editor") ? "editor" : null);
-  };
 
-  const refresh = async () => {
-    const { data } = await supabase.auth.getSession();
-    setSession(data.session);
-    await loadRole(data.session);
-  };
+    try {
+      const access = await fetchDashboardAccess();
+      setRole(access.role);
+      setEmail(access.email ?? current.user.email ?? null);
+      setSetupRequired(access.setupRequired);
+    } catch (accessError) {
+      setRole(null);
+      setEmail(current.user.email ?? null);
+      setSetupRequired(false);
+      setError(accessError instanceof Error ? accessError.message : "تعذر التحقق من صلاحية لوحة التحكم");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    const { data, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      setError(sessionError.message);
+      setLoading(false);
+      return;
+    }
+    await load(data.session);
+  }, [load]);
 
   useEffect(() => {
     let active = true;
-    void (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!active) return;
-      setSession(data.session);
-      await loadRole(data.session);
-      if (active) setLoading(false);
-    })();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
-      void loadRole(next);
+    void supabase.auth.getSession().then(({ data, error: sessionError }) => {
+      if (!active) return;
+      if (sessionError) {
+        setError(sessionError.message);
+        setLoading(false);
+        return;
+      }
+      void load(data.session);
+    });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange(() => {
+      // Run outside Supabase's auth callback so the server-function middleware can
+      // safely read the newly persisted session without re-entering the auth lock.
+      window.setTimeout(() => {
+        if (active) void refresh();
+      }, 0);
     });
 
     return () => {
       active = false;
       subscription.subscription.unsubscribe();
     };
-  }, []);
+  }, [load, refresh]);
 
-  return { loading, session, role, refresh };
+  return { loading, session, role, email, setupRequired, error, refresh };
 }

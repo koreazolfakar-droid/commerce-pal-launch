@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 
 export type CmsJsonValue =
-  string | number | boolean | null | CmsJsonValue[] | { [key: string]: CmsJsonValue };
+  | string
+  | number
+  | boolean
+  | null
+  | CmsJsonValue[]
+  | { [key: string]: CmsJsonValue };
 
 export type CmsSettingValue = CmsJsonValue;
 
@@ -57,6 +62,11 @@ export const EMPTY_CMS: CmsSnapshot = {
 const CMS_CACHE_TTL_MS = 60_000;
 let cmsCache: { value: CmsSnapshot; expiresAt: number } | null = null;
 let cmsPendingRequest: Promise<CmsSnapshot> | null = null;
+
+export function invalidateCmsCache() {
+  cmsCache = null;
+  cmsPendingRequest = null;
+}
 
 function isCmsSnapshot(value: unknown): value is CmsSnapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;

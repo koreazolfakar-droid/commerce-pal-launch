@@ -1,23 +1,47 @@
-import { supabase } from "@/integrations/supabase/client";
+import { uploadCmsMedia, type DashboardUploadMime } from "@/lib/cmsAdmin.functions";
 
-const BUCKET = "cms-media";
-const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365 * 5;
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set<DashboardUploadMime>([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+]);
 
-/** Uploads an image to the dashboard media library and returns a durable URL. */
-export async function uploadMedia(file: File, folder = "general"): Promise<string> {
-  const extension = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const path = `${folder}/${crypto.randomUUID()}.${extension}`;
-
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    cacheControl: "31536000",
-    upsert: false,
-    ...(file.type ? { contentType: file.type } : {}),
+function readBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error("Could not read image"));
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      const comma = result.indexOf(",");
+      if (comma < 0) reject(new Error("Could not encode image"));
+      else resolve(result.slice(comma + 1));
+    };
+    reader.readAsDataURL(file);
   });
-  if (error) throw error;
+}
 
-  const signed = await supabase.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
-  if (signed.error || !signed.data?.signedUrl) {
-    throw signed.error ?? new Error("Could not create a media link");
+/** Upload through the authenticated server boundary; no storage write key reaches the browser. */
+export async function uploadMedia(file: File, folder = "general"): Promise<string> {
+  if (file.size <= 0) throw new Error("الصورة فارغة");
+  if (file.size > MAX_UPLOAD_BYTES) throw new Error("حجم الصورة يجب أن يكون أقل من 5 MB");
+
+  const mimeType = file.type as DashboardUploadMime;
+  if (!ALLOWED_IMAGE_TYPES.has(mimeType)) {
+    throw new Error("الصيغة غير مدعومة. استخدم JPG أو PNG أو WebP أو AVIF");
   }
-  return signed.data.signedUrl;
+
+  const safeFolder = folder
+    .toLowerCase()
+    .replace(/[^a-z0-9/_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const base64 = await readBase64(file);
+  const result = await uploadCmsMedia({
+    fileName: file.name,
+    mimeType,
+    base64,
+    folder: safeFolder || "general",
+  });
+  return result.url;
 }
