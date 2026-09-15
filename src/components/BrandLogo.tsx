@@ -83,9 +83,15 @@ function LogoImage({
 }: BrandLogoProps) {
   const merchantSource = safeImageSource(imageUrl);
   const sources = useMemo(() => {
-    const builtIn = brandLogoSources(slug, label, size * 2)
-      .map(safeImageSource)
-      .filter(Boolean) as string[];
+    // Tiny card badges already display the brand name beside this mark. Avoid
+    // downloading a 500–1600px raster logo merely to paint a 16px decoration;
+    // the monogram fallback is crisp, local and hydration-stable at that size.
+    const builtIn =
+      size <= 20 && !wordmark
+        ? []
+        : (brandLogoSources(slug, label, size * 2)
+            .map(safeImageSource)
+            .filter(Boolean) as string[]);
     const merchant = safeImageSource(imageUrl);
 
     // Shopify is the merchant-controlled source of truth. A curated local logo
@@ -94,7 +100,7 @@ function LogoImage({
     const ordered = merchant ? [merchant, ...builtIn] : builtIn;
 
     return [...new Set(ordered)];
-  }, [imageUrl, slug, label, size]);
+  }, [imageUrl, slug, label, size, wordmark]);
   const [attempt, setAttempt] = useState(0);
   const [loadedSource, setLoadedSource] = useState<string>();
   const [imageAspectRatio, setImageAspectRatio] = useState(1);
