@@ -240,8 +240,8 @@ function withDocumentCache(request: Request, response: Response): Response {
 
 /**
  * Static first-party artwork was previously served without an explicit browser
- * lifetime. Hashed Vite output can be immutable; stable public artwork keeps a
- * shorter revalidation window so merchant asset replacements still propagate.
+ * lifetime. Hashed Vite output can be immutable; stable public artwork uses a
+ * bounded browser lifetime so merchant asset replacements still propagate.
  */
 function withStaticAssetCache(request: Request, response: Response): Response {
   if (request.method !== "GET" || !response.ok || response.headers.has("set-cookie")) {
@@ -259,7 +259,7 @@ function withStaticAssetCache(request: Request, response: Response): Response {
     pathname === "/logo.svg" ||
     pathname === "/logo.png"
   ) {
-    cacheControl = "public, max-age=604800, stale-while-revalidate=86400";
+    cacheControl = "public, max-age=604800";
   }
 
   if (!cacheControl) return response;
