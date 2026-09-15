@@ -8,7 +8,7 @@ import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";
 
 interface SitemapEntry {
   path: string;
-  lastmod?: string;
+  lastmod?: string | undefined;
 }
 
 const PAGE_SIZE = 100;
