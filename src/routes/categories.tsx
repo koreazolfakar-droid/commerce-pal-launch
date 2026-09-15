@@ -126,7 +126,7 @@ function CategoriesPage() {
                   {imageUrl ? (
                     <img
                       src={imageUrl}
-                      alt=""
+                      alt={label}
                       loading="lazy"
                       decoding="async"
                       className="relative h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.06]"
