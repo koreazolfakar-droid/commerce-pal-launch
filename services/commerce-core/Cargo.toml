@@ -1,0 +1,19 @@
+[package]
+name = "space-call-commerce-core"
+version = "0.1.0"
+edition = "2021"
+description = "Isolated Rust data-core foundation for Space Call"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+worker = "0.8.5"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
