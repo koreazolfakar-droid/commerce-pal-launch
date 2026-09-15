@@ -32,6 +32,21 @@ test("Shopify operations are bounded and product pages avoid the catalog query",
   assert.match(productRoute, /vendorProductsQueryOptions/);
 });
 
+test("homepage brand shelves backfill missing products without expanding the global catalog", async () => {
+  const [queries, shelves] = await Promise.all([
+    read("src/lib/queries.ts"),
+    read("src/components/BrandShowcaseSections.tsx"),
+  ]);
+  assert.match(queries, /fetchCatalogProducts\(60\)/);
+  assert.match(queries, /homeVendorProductsQueryOptions/);
+  assert.match(queries, /fetchProductsByVendor\(normalizedVendor, 4\)/);
+  assert.match(shelves, /homeVendorProductsQueryOptions/);
+  assert.match(shelves, /HOME_BRAND_PRODUCT_TARGET = 4/);
+  assert.match(shelves, /IntersectionObserver/);
+  assert.match(shelves, /rootMargin:\s*"1000px 0px"/);
+  assert.match(shelves, /mergeUniqueProducts\(indexedProducts, vendorProducts\)/);
+});
+
 test("Shopify cart responses contain authoritative merchandise prices and totals", async () => {
   const [documents, store] = await Promise.all([
     read("src/lib/shopifyDocuments.ts"),
