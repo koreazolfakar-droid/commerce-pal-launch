@@ -15,6 +15,9 @@ test("sitemap paginates Shopify and uses meaningful lastmod data", async () => {
   assert.match(sitemap, /storefrontApiRequest\(PRODUCTS_QUERY/);
   assert.match(sitemap, /pageInfo\?\.hasNextPage/);
   assert.match(sitemap, /productLastmod/);
+  assert.match(sitemap, /categoryLastmods/);
+  assert.match(sitemap, /brandLastmods/);
+  assert.match(sitemap, /catalogLastmod/);
   assert.match(documents, /createdAt updatedAt tags/);
   assert.match(documents, /description updatedAt image/);
   assert.doesNotMatch(sitemap, /<changefreq>|<priority>/);
@@ -62,6 +65,24 @@ test("product structured data exposes Google product and variant-accurate offer 
   assert.match(seo, /areaServed/);
   assert.match(seo, /name: "Lebanon"/);
   assert.match(productRoute, /jsonLd\(productJsonLd\(product\)\)/);
+});
+
+test("brand and category directories expose crawlable social and list metadata", async () => {
+  const [brands, categories] = await Promise.all([
+    source("src/routes/brands.tsx"),
+    source("src/routes/categories.tsx"),
+  ]);
+
+  for (const page of [brands, categories]) {
+    assert.match(page, /max-image-preview:large/);
+    assert.match(page, /socialMeta/);
+    assert.match(page, /breadcrumbJsonLd/);
+    assert.match(page, /"@type": "ItemList"/);
+    assert.match(page, /canonicalLink/);
+  }
+
+  assert.match(brands, /Phone & Electronics Brands in Lebanon/);
+  assert.match(categories, /Phone & Electronics Categories in Lebanon/);
 });
 
 test("header account and tracking links stay first-party", async () => {
