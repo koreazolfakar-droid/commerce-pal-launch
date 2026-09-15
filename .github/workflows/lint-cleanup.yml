@@ -59,10 +59,27 @@ jobs:
             'src/routes/product.$handle.tsx' \
             supabase/functions/public-cms/index.ts
 
-      - name: Commit formatting changes
+      - name: Apply remaining safe lint fixes
+        run: |
+          bunx eslint --fix src/integrations/supabase/previewAuthStorage.ts
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("supabase/functions/public-cms/index.ts")
+          text = path.read_text()
+          old = "    } catch {}\n"
+          new = "    } catch {\n      // Ignore malformed secret JSON and fall back to SUPABASE_SERVICE_ROLE_KEY.\n    }\n"
+          if old not in text:
+              raise SystemExit("Expected empty catch block was not found")
+          path.write_text(text.replace(old, new, 1))
+          PY
+          bunx prettier --write \
+            src/integrations/supabase/previewAuthStorage.ts \
+            supabase/functions/public-cms/index.ts
+
+      - name: Commit cleanup changes
         run: |
           if git diff --quiet; then
-            echo "No formatting changes needed"
+            echo "No cleanup changes needed"
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -91,7 +108,7 @@ jobs:
               src/routes/index.tsx \
               'src/routes/product.$handle.tsx' \
               supabase/functions/public-cms/index.ts
-            git commit -m "style: format files failing storefront lint"
+            git commit -m "style: resolve storefront lint errors"
             git push origin HEAD:lint-cleanup-phase1
           fi
 
