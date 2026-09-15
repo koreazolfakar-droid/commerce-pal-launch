@@ -1,8 +1,6 @@
 use serde::Serialize;
 use wasm_bindgen::JsValue;
-use worker::{
-    Fetch, Headers, Method, Request, RequestInit, Response, Result, RouteContext,
-};
+use worker::{Fetch, Headers, Method, Request, RequestInit, Response, Result, RouteContext};
 
 use crate::product::{
     parse_product_payload, valid_shopify_api_version, valid_shopify_domain,
