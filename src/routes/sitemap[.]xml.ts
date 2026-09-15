@@ -66,6 +66,13 @@ async function fetchAllCollectionsForSitemap(): Promise<ShopifyCollection[]> {
   return collections;
 }
 
+function isIndexableProduct(product: ShopifyProduct) {
+  const title = product.node.title?.trim();
+  const handle = product.node.handle?.trim();
+  const price = Number(product.node.priceRange?.minVariantPrice?.amount);
+  return Boolean(title && handle && Number.isFinite(price) && price > 0);
+}
+
 function productLastmod(product: ShopifyProduct) {
   const node = product.node as ShopifyProduct["node"] & { updatedAt?: string };
   return (node.updatedAt || node.createdAt)?.slice(0, 10);
@@ -113,17 +120,18 @@ export const Route = createFileRoute("/sitemap.xml")({
 
         const products = productsResult.status === "fulfilled" ? productsResult.value : [];
         const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+        const indexableProducts = products.filter(isIndexableProduct);
 
         let dynamicEntries: SitemapEntry[] = [];
         let catalogLastmod: string | undefined;
         let collectionsLastmod: string | undefined;
 
         try {
-          const catalog = buildCatalogIndex(products);
+          const catalog = buildCatalogIndex(indexableProducts);
           const categoryLastmods = new Map<string, string>();
           const brandLastmods = new Map<string, string>();
 
-          for (const product of products) {
+          for (const product of indexableProducts) {
             const lastmod = productLastmod(product);
             if (!lastmod) continue;
 
@@ -139,7 +147,7 @@ export const Route = createFileRoute("/sitemap.xml")({
             }
           }
 
-          catalogLastmod = latestLastmod(products.map(productLastmod));
+          catalogLastmod = latestLastmod(indexableProducts.map(productLastmod));
           collectionsLastmod = latestLastmod(collections.map(collectionLastmod));
 
           dynamicEntries = [
@@ -159,7 +167,7 @@ export const Route = createFileRoute("/sitemap.xml")({
               path: `/collections/${encodeURIComponent(collection.handle)}`,
               lastmod: collectionLastmod(collection),
             })),
-            ...products.map((product) => ({
+            ...indexableProducts.map((product) => ({
               path: `/product/${encodeURIComponent(product.node.handle)}`,
               lastmod: productLastmod(product),
             })),
