@@ -15,11 +15,12 @@ export function cdnImage(url: string | undefined, width: number): string | undef
   try {
     const parsed = new URL(url);
     parsed.searchParams.set("width", String(Math.round(width)));
-    // Keep the rendered pixel dimensions while asking Shopify CDN for a modern
-    // compressed representation. WebP is broadly supported and substantially
-    // smaller than JPEG/PNG for product photography.
+    // Keep thumbnails and compact product imagery at the existing quality while
+    // compressing large display assets a little more. Large hero/LCP candidates
+    // benefit most from the byte reduction without changing layout or dimensions.
+    const quality = width >= 960 ? 70 : 76;
     parsed.searchParams.set("format", "webp");
-    parsed.searchParams.set("quality", "76");
+    parsed.searchParams.set("quality", String(quality));
     return parsed.toString();
   } catch {
     return url;
