@@ -1,6 +1,7 @@
 const MONEY = `amount currencyCode`;
 const IMAGE = `url altText`;
 const COLLECTION_IMAGE = `url altText width height`;
+const SEO = `title description`;
 const VARIANT = `
   id title availableForSale
   price { ${MONEY} }
@@ -11,7 +12,7 @@ const VARIANT = `
 
 /** Lightweight product shape used by cards, rails, search and taxonomy. */
 export const PRODUCT_LIST_FIELDS = `
-  id title handle vendor productType availableForSale createdAt tags
+  id title handle vendor productType availableForSale createdAt updatedAt tags
   priceRange { minVariantPrice { ${MONEY} } }
   compareAtPriceRange { minVariantPrice { ${MONEY} } }
   images(first: 1) { edges { node { ${IMAGE} } } }
@@ -22,6 +23,7 @@ export const PRODUCT_LIST_FIELDS = `
 /** Rich shape fetched only for a single product detail page. */
 export const PRODUCT_DETAIL_FIELDS = `
   id title description descriptionHtml handle vendor productType availableForSale createdAt updatedAt tags
+  seo { ${SEO} }
   priceRange { minVariantPrice { ${MONEY} } }
   compareAtPriceRange { minVariantPrice { ${MONEY} } }
   images(first: 20) { edges { node { ${IMAGE} } } }
@@ -35,6 +37,7 @@ export const PRODUCT_DETAIL_FIELDS = `
 export const COLLECTION_FIELDS = `
   # brand-logo-cache-v4-2026-09-14
   id handle title description updatedAt image { ${COLLECTION_IMAGE} }
+  seo { ${SEO} }
 `;
 
 export const PRODUCTS_QUERY = `
