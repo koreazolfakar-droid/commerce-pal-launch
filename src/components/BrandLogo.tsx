@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { brandLogoSources, brandMonogram } from "@/lib/brands";
+import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { cn } from "@/lib/utils";
 
 type BrandLogoProps = {
@@ -124,6 +125,9 @@ function LogoImage({
     ? 2.8
     : Math.min(2.8, Math.max(2.05, 1.7 + Math.min(compactLabelLength, 10) * 0.12));
   const frameWidth = wordmark ? size * (normalizeForRail ? normalizedWordmarkRatio : 2.6) : size;
+  const requestedWidth = Math.max(64, Math.ceil(frameWidth * 2));
+  const renderedSource = source ? (cdnImage(source, requestedWidth) ?? source) : undefined;
+  const renderedSrcSet = source ? cdnSrcSet(source, requestedWidth) : undefined;
 
   // Catch cached loads/errors which happened before hydration attached the handlers.
   useEffect(() => {
@@ -167,11 +171,13 @@ function LogoImage({
           {wordmark ? label : brandMonogram(label)}
         </span>
       )}
-      {source && (
+      {source && renderedSource && (
         <img
           ref={imgRef}
           key={source}
-          src={source}
+          src={renderedSource}
+          srcSet={renderedSrcSet}
+          sizes={`${Math.round(frameWidth)}px`}
           alt={`${label} logo`}
           width={Math.round(frameWidth)}
           height={size}
