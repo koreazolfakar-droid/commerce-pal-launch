@@ -7,32 +7,51 @@ use crate::product::{
     validate_product_handle, Product, ProductPayloadError,
 };
 
+const PRODUCT_CONTRACT_VERSION: &str = "product-detail-v1";
 const PRODUCT_QUERY: &str = r#"
-query SpaceCallProduct($handle: String!) {
+query SpaceCallProductDetail($handle: String!) {
   product(handle: $handle) {
     id
     title
+    description
+    descriptionHtml
     handle
     vendor
     productType
     availableForSale
+    createdAt
+    updatedAt
+    tags
     priceRange {
       minVariantPrice { amount currencyCode }
     }
-    images(first: 1) {
+    compareAtPriceRange {
+      minVariantPrice { amount currencyCode }
+    }
+    images(first: 20) {
       edges { node { url altText } }
     }
-    variants(first: 1) {
+    collections(first: 20) {
+      edges { node { handle title } }
+    }
+    variants(first: 100) {
       edges {
         node {
           id
           title
           availableForSale
           price { amount currencyCode }
+          compareAtPrice { amount currencyCode }
+          image { url altText }
           selectedOptions { name value }
+          sku
+          barcode
+          weight
+          weightUnit
         }
       }
     }
+    options { name values }
   }
 }
 "#;
@@ -53,6 +72,7 @@ struct StorefrontRequest<'a> {
 struct ProductResponse {
     ok: bool,
     source: &'static str,
+    contract_version: &'static str,
     product: Product,
 }
 
@@ -74,6 +94,9 @@ fn json_response<T: Serialize>(body: &T, status: u16) -> Result<Response> {
     response
         .headers_mut()
         .set("X-Content-Type-Options", "nosniff")?;
+    response
+        .headers_mut()
+        .set("X-Space-Call-Contract", PRODUCT_CONTRACT_VERSION)?;
     Ok(response)
 }
 
@@ -207,6 +230,7 @@ pub async fn product_by_handle(raw_handle: String, ctx: RouteContext<()>) -> Res
             &ProductResponse {
                 ok: true,
                 source: "shopify",
+                contract_version: PRODUCT_CONTRACT_VERSION,
                 product,
             },
             200,
@@ -223,5 +247,57 @@ pub async fn product_by_handle(raw_handle: String, ctx: RouteContext<()>) -> Res
             "shopify_invalid_response",
             "Shopify returned an invalid product response.",
         ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn product_query_matches_bounded_detail_contract() {
+        for field in [
+            "descriptionHtml",
+            "compareAtPriceRange",
+            "createdAt",
+            "updatedAt",
+            "collections(first: 20)",
+            "images(first: 20)",
+            "variants(first: 100)",
+            "compareAtPrice",
+            "selectedOptions",
+            "sku",
+            "barcode",
+            "weight",
+            "weightUnit",
+            "options { name values }",
+        ] {
+            assert!(PRODUCT_QUERY.contains(field), "missing contract field: {field}");
+        }
+    }
+
+    #[test]
+    fn product_query_remains_read_only() {
+        let lower = PRODUCT_QUERY.to_ascii_lowercase();
+        assert!(lower.contains("query spacecallproductdetail"));
+        assert!(!lower.contains("mutation"));
+        assert!(!lower.contains("cartcreate"));
+        assert!(!lower.contains("cartlines"));
+        assert!(!lower.contains("customercreate"));
+    }
+
+    #[test]
+    fn request_body_contains_only_fixed_query_and_handle_variable() {
+        let body = serde_json::to_value(StorefrontRequest {
+            query: PRODUCT_QUERY,
+            variables: ProductVariables {
+                handle: "iphone-test",
+            },
+        })
+        .expect("serializable storefront request");
+
+        assert_eq!(body["variables"]["handle"], "iphone-test");
+        assert_eq!(body["query"], PRODUCT_QUERY);
+        assert_eq!(body["variables"].as_object().map(|value| value.len()), Some(1));
     }
 }
