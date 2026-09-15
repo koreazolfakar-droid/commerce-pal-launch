@@ -39,7 +39,9 @@ for (const theme of ["dark", "light"] as const) {
   });
 }
 
-test("legacy theme key migrates before hydration without resetting preference", async ({ page }) => {
+test("legacy theme key migrates before hydration without resetting preference", async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     localStorage.setItem("space-cell-language", "en");
     localStorage.removeItem("space-call:theme");
@@ -72,7 +74,9 @@ test("system preference follows OS scheme live", async ({ page }) => {
   await expectRenderedTheme(page, "system", "dark");
 });
 
-test("mobile and menu theme toggles stay synchronized with no network refetch", async ({ page }) => {
+test("mobile and menu theme toggles stay synchronized with no network refetch", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await seedTheme(page, "light");
   await page.goto("/");
@@ -116,7 +120,9 @@ test("dark theme is already correct at DOMContentLoaded and stays stable", async
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expectRenderedTheme(page, "dark", "dark");
 
-  const initialBackground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const initialBackground = await page.evaluate(
+    () => getComputedStyle(document.body).backgroundColor,
+  );
   await page.waitForLoadState("networkidle");
   await expectRenderedTheme(page, "dark", "dark");
   expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
