@@ -20,6 +20,7 @@ import {
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 2 * 60 * 1000;
+const BRAND_COLLECTION_STALE_TIME = 60 * 1000;
 const MERCHANDISING_STALE_TIME = 10 * 60 * 1000;
 const POLICY_STALE_TIME = 30 * 60 * 1000;
 
@@ -57,10 +58,11 @@ export const catalogQueryOptions = () =>
 
 export const collectionsQueryOptions = () =>
   queryOptions({
-    // Version the key so already-hydrated clients cannot keep an older merchant logo.
+    // Brand artwork is merchant-controlled and should refresh quickly after Shopify edits.
+    // Keep this shorter than general merchandising so an old logo cannot remain pinned.
     queryKey: ["shopify", "collections", "brand-logo-cache-v5", 100],
     queryFn: () => fetchCollections(100),
-    staleTime: MERCHANDISING_STALE_TIME,
+    staleTime: BRAND_COLLECTION_STALE_TIME,
   });
 
 export const bestSellingQueryOptions = () =>
