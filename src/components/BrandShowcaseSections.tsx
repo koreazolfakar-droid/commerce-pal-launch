@@ -344,7 +344,11 @@ function BrandFacetSection({
     : indexedProducts;
   const loading = needsBackfill && products.length === 0 && (!nearby || isPending);
   const resolvedEmpty =
-    needsBackfill && nearby && products.length === 0 && !isPending && (vendorProducts.length === 0 || isError);
+    needsBackfill &&
+    nearby &&
+    products.length === 0 &&
+    !isPending &&
+    (vendorProducts.length === 0 || isError);
 
   if (resolvedEmpty) return null;
 
@@ -376,7 +380,7 @@ function FacetSection({
 }: {
   id: string;
   title: string;
-  description?: string | null;
+  description?: string | null | undefined;
   href: string;
   products: ShopifyProduct[];
   kind: "brand" | "category";
