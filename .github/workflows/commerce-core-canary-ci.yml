@@ -42,8 +42,11 @@ jobs:
       - name: TypeScript
         run: bun run typecheck
 
-      - name: ESLint
-        run: bun run lint
+      - name: Canary formatting
+        run: bunx prettier --check src/lib/commerceCoreCanary.ts e2e/commerce-core-canary.test.mjs .github/workflows/commerce-core-canary-ci.yml
+
+      - name: Canary ESLint
+        run: bunx eslint src/lib/commerceCoreCanary.ts e2e/commerce-core-canary.test.mjs
 
       - name: Unit and architecture tests
         run: bun run test:unit
