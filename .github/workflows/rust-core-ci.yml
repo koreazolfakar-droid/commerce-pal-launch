@@ -6,8 +6,6 @@ on:
       - "services/commerce-core/**"
       - ".github/workflows/rust-core-ci.yml"
   pull_request:
-    branches:
-      - main
     paths:
       - "services/commerce-core/**"
       - ".github/workflows/rust-core-ci.yml"
@@ -39,6 +37,9 @@ jobs:
       - name: Format
         run: cargo fmt --check
 
+      - name: Unit tests
+        run: cargo test --lib
+
       - name: Clippy
         run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
 
@@ -46,7 +47,12 @@ jobs:
         run: cargo check --target wasm32-unknown-unknown
 
       - name: Install worker-build
-        run: cargo install "worker-build@^0.8"
+        run: cargo install --locked "worker-build@^0.8"
 
       - name: Build release Worker
         run: worker-build --release
+
+      - name: Verify Worker artifacts
+        run: |
+          test -f build/index.js
+          test -n "$(find build -type f -name '*.wasm' -print -quit)"
