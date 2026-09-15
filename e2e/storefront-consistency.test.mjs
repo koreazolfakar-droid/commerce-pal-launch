@@ -50,17 +50,22 @@ test("merchant brand artwork overrides curated local fallbacks and raw SVG marku
 
 test("Shopify brand artwork cache refreshes quickly and cannot pin stale logos", async () => {
   const shopify = await source("src/lib/shopify.ts");
+  const shopifyTransport = await source("src/lib/shopifyTransport.ts");
   const queries = await source("src/lib/queries.ts");
 
-  assert.match(shopify, /PERSISTENT_STOREFRONT_CACHE_NAME = "space-call-storefront-v2"/);
-  assert.match(shopify, /PERSISTENT_STOREFRONT_CACHE_TIMESTAMP_HEADER = "x-space-call-cached-at"/);
-  assert.match(shopify, /Date\.now\(\) - cachedAt >= STOREFRONT_CACHE_TTL_MS/);
-  assert.match(shopify, /await cache\.delete\(request\)/);
+  assert.match(shopify, /from "@\/lib\/shopifyTransport"/);
+  assert.match(shopifyTransport, /PERSISTENT_STOREFRONT_CACHE_NAME = "space-call-storefront-v2"/);
   assert.match(
-    shopify,
+    shopifyTransport,
+    /PERSISTENT_STOREFRONT_CACHE_TIMESTAMP_HEADER = "x-space-call-cached-at"/,
+  );
+  assert.match(shopifyTransport, /Date\.now\(\) - cachedAt >= STOREFRONT_CACHE_TTL_MS/);
+  assert.match(shopifyTransport, /await cache\.delete\(request\)/);
+  assert.match(
+    shopifyTransport,
     /\[PERSISTENT_STOREFRONT_CACHE_TIMESTAMP_HEADER\]: String\(Date\.now\(\)\)/,
   );
-  assert.doesNotMatch(shopify, /caches\.open\("space-call-storefront-v1"\)/);
+  assert.doesNotMatch(shopifyTransport, /caches\.open\("space-call-storefront-v1"\)/);
   assert.match(queries, /BRAND_COLLECTION_STALE_TIME = 60 \* 1000/);
   assert.match(queries, /brand-logo-cache-v5/);
   assert.match(queries, /staleTime: BRAND_COLLECTION_STALE_TIME/);

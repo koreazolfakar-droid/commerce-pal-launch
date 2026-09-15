@@ -1,0 +1,58 @@
+name: Backend Refactor CI
+
+on:
+  push:
+    branches:
+      - backend-refactor-phase1
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/lib/shopify*.ts"
+      - "e2e/storefront-consistency.test.mjs"
+      - ".github/workflows/backend-refactor-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-refactor-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: TypeScript
+        run: bun run typecheck
+
+      - name: Backend lint
+        shell: bash
+        run: |
+          files=(src/lib/shopify.ts)
+          if [ -f src/lib/shopifyTransport.ts ]; then
+            files+=(src/lib/shopifyTransport.ts)
+          fi
+          bunx eslint "${files[@]}"
+          bunx prettier --check "${files[@]}"
+
+      - name: Unit and architecture tests
+        run: bun run test:unit
+
+      - name: Production build
+        run: bun run build
+
+      - name: SSR smoke test
+        run: bun run test:ssr
