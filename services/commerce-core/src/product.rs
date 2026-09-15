@@ -323,7 +323,10 @@ mod tests {
         assert_eq!(product.collections.edges.len(), 1);
         assert_eq!(product.variants.edges.len(), 2);
         assert_eq!(product.options.len(), 2);
-        assert_eq!(product.variants.edges[0].node.sku.as_deref(), Some("IPHONE-TEST-BLK-256"));
+        assert_eq!(
+            product.variants.edges[0].node.sku.as_deref(),
+            Some("IPHONE-TEST-BLK-256")
+        );
         assert_eq!(product.variants.edges[0].node.weight, Some(0.221));
         assert!(product.variants.edges[1].node.compare_at_price.is_none());
         assert!(product.variants.edges[1].node.image.is_none());
