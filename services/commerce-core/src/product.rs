@@ -38,10 +38,7 @@ pub fn valid_shopify_domain(domain: &str) -> bool {
         && !domain.contains('/')
         && !domain.contains(':')
         && domain.bytes().all(|byte| {
-            byte.is_ascii_lowercase()
-                || byte.is_ascii_digit()
-                || byte == b'-'
-                || byte == b'.'
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-' || byte == b'.'
         })
 }
 
@@ -191,7 +188,10 @@ mod tests {
 
     #[test]
     fn accepts_normal_shopify_handles() {
-        assert_eq!(validate_product_handle("iphone-18-pro"), Ok("iphone-18-pro"));
+        assert_eq!(
+            validate_product_handle("iphone-18-pro"),
+            Ok("iphone-18-pro")
+        );
         assert_eq!(validate_product_handle("poco-f7"), Ok("poco-f7"));
     }
 
