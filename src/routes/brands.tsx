@@ -7,29 +7,71 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { buildShopifyBrands } from "@/lib/brandDirectory";
 import { useLanguage } from "@/lib/i18n";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
-import { absoluteUrl, canonicalLink } from "@/lib/seo";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  canonicalLink,
+  jsonLd,
+  socialMeta,
+} from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/brands")({
   loader: async ({ context }) => {
-    await Promise.all([
+    const [catalog, collections] = await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       context.queryClient.ensureQueryData(collectionsQueryOptions()),
     ]);
+
+    return {
+      brands: buildShopifyBrands(catalog.brands, collections).map((brand) => ({
+        slug: brand.slug,
+        label: brand.label,
+      })),
+    };
   },
-  head: () => ({
-    meta: [
-      { title: `Brands — ${STORE_NAME}` },
-      {
-        name: "description",
-        content: `Browse all brands available at ${STORE_NAME}.`,
-      },
-      { property: "og:title", content: `Brands — ${STORE_NAME}` },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/brands") },
-    ],
-    links: [canonicalLink("/brands")],
-  }),
+  head: ({ loaderData }) => {
+    const title = `Phone & Electronics Brands in Lebanon | ${STORE_NAME}`;
+    const description = `Browse phone, tablet, laptop, audio and accessories brands available in Lebanon at ${STORE_NAME}, with direct links to live products and stock.`;
+    const path = "/brands";
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        {
+          name: "robots",
+          content: "index, follow, max-image-preview:large, max-snippet:-1",
+        },
+        ...socialMeta({ title, description, path }),
+      ],
+      links: [canonicalLink(path)],
+      scripts: [
+        jsonLd(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Brands", path },
+          ]),
+        ),
+        ...(loaderData
+          ? [
+              jsonLd({
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                name: "Electronics brands available at Space Call",
+                numberOfItems: loaderData.brands.length,
+                itemListElement: loaderData.brands.slice(0, 100).map((brand, index) => ({
+                  "@type": "ListItem",
+                  position: index + 1,
+                  name: brand.label,
+                  url: absoluteUrl(`/brand/${encodeURIComponent(brand.slug)}`),
+                })),
+              }),
+            ]
+          : []),
+      ],
+    };
+  },
   component: BrandsPage,
 });
 
