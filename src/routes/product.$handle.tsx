@@ -47,6 +47,7 @@ import {
   jsonLd,
   productJsonLd,
   productMetaDescription,
+  productSeoTitle,
   socialMeta,
 } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
@@ -70,8 +71,9 @@ export const Route = createFileRoute("/product/$handle")({
       };
     }
     const product = loaderData.product;
-    const title = product.node.title || "Product";
-    const fullTitle = `${title} — ${STORE_NAME}`;
+    const productTitle = product.node.title || "Product";
+    const seoTitle = productSeoTitle(product) || productTitle;
+    const fullTitle = seoTitle.includes(STORE_NAME) ? seoTitle : `${seoTitle} | ${STORE_NAME}`;
     const description = productMetaDescription(product);
     const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
@@ -98,7 +100,7 @@ export const Route = createFileRoute("/product/$handle")({
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             { name: "Shop", path: "/shop" },
-            { name: title, path },
+            { name: productTitle, path },
           ]),
         ),
       ],
@@ -541,7 +543,9 @@ function ProductPage() {
                 </p>
               </div>
               <div className="rounded-2xl bg-surface p-4">
-                <h3 className="font-bold">{language === "ar" ? "السعر والتوفر" : "Price & availability"}</h3>
+                <h3 className="font-bold">
+                  {language === "ar" ? "السعر والتوفر" : "Price & availability"}
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {language === "ar"
                     ? `يعرض المتجر السعر الحالي وحالة المخزون المباشرة. الحالة الحالية: ${inStock ? "متوفر" : "غير متوفر"}.`
@@ -549,7 +553,9 @@ function ProductPage() {
                 </p>
               </div>
               <div className="rounded-2xl bg-surface p-4">
-                <h3 className="font-bold">{language === "ar" ? "التوصيل والضمان" : "Delivery & warranty"}</h3>
+                <h3 className="font-bold">
+                  {language === "ar" ? "التوصيل والضمان" : "Delivery & warranty"}
+                </h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {language === "ar"
                     ? "راجع صفحات الشحن والضمان والإرجاع أو تواصل مع الدعم قبل الطلب إذا كنت تحتاج تفاصيل إضافية."
@@ -558,9 +564,15 @@ function ProductPage() {
               </div>
             </div>
             <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
-              <Link to="/shipping" className="text-primary hover:underline">{t("shippingTitle")}</Link>
-              <Link to="/warranty" className="text-primary hover:underline">{t("warrantyTitle")}</Link>
-              <Link to="/returns" className="text-primary hover:underline">{t("returnsTitle")}</Link>
+              <Link to="/shipping" className="text-primary hover:underline">
+                {t("shippingTitle")}
+              </Link>
+              <Link to="/warranty" className="text-primary hover:underline">
+                {t("warrantyTitle")}
+              </Link>
+              <Link to="/returns" className="text-primary hover:underline">
+                {t("returnsTitle")}
+              </Link>
             </div>
           </section>
         )}
