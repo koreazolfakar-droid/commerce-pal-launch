@@ -329,7 +329,8 @@ function BrandFacetSection({
   const needsBackfill = indexedProducts.length < HOME_BRAND_PRODUCT_TARGET;
   const { ref, nearby } = useNearViewport(needsBackfill);
   const exactVendor =
-    indexedProducts.find((product) => product.node.vendor?.trim())?.node.vendor?.trim() || vendorLabel;
+    indexedProducts.find((product) => product.node.vendor?.trim())?.node.vendor?.trim() ||
+    vendorLabel;
   const vendorQuery = homeVendorProductsQueryOptions(exactVendor);
   const {
     data: vendorProducts = [],
