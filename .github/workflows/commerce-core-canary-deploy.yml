@@ -1,0 +1,132 @@
+name: Commerce Core Canary Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commerce-core-canary-deploy
+  cancel-in-progress: false
+
+env:
+  WORKER_NAME: space-call-commerce-core-canary
+
+jobs:
+  deploy-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: services/commerce-core
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate required deployment secrets
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SHOPIFY_STOREFRONT_TOKEN: ${{ secrets.SHOPIFY_STOREFRONT_TOKEN }}
+        run: |
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing CLOUDFLARE_API_TOKEN"; exit 1; }
+          test -n "$SHOPIFY_STOREFRONT_TOKEN" || { echo "Missing SHOPIFY_STOREFRONT_TOKEN"; exit 1; }
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Verify Rust source
+        run: |
+          cargo fmt --check
+          cargo test --lib
+          cargo clippy --target wasm32-unknown-unknown -- -D warnings
+          cargo check --target wasm32-unknown-unknown
+
+      - name: Install worker-build
+        run: cargo install --locked "worker-build@^0.8"
+
+      - name: Build release Worker
+        run: worker-build --release
+
+      - name: Prepare ephemeral Worker secrets file
+        env:
+          SHOPIFY_STOREFRONT_TOKEN: ${{ secrets.SHOPIFY_STOREFRONT_TOKEN }}
+        run: |
+          node -e 'const fs=require("fs"); fs.writeFileSync(".secrets.json", JSON.stringify({SHOPIFY_STOREFRONT_TOKEN: process.env.SHOPIFY_STOREFRONT_TOKEN}))'
+          chmod 600 .secrets.json
+
+      - name: Deploy isolated canary Worker
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@4.131.2 deploy --name "$WORKER_NAME" --secrets-file .secrets.json
+
+      - name: Remove ephemeral secret file
+        if: always()
+        run: rm -f .secrets.json
+
+      - name: Resolve workers.dev URL
+        id: worker-url
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          SUBDOMAIN=$(curl --fail --silent --show-error \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | jq -r '.result.subdomain // empty')
+          test -n "$SUBDOMAIN" || { echo "Could not resolve workers.dev subdomain"; exit 1; }
+          WORKER_URL="https://${WORKER_NAME}.${SUBDOMAIN}.workers.dev"
+          echo "worker_url=$WORKER_URL" >> "$GITHUB_OUTPUT"
+          echo "Canary Worker URL: $WORKER_URL"
+
+      - name: Health check
+        env:
+          WORKER_URL: ${{ steps.worker-url.outputs.worker_url }}
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 2 "$WORKER_URL/health" | tee /tmp/health.json
+          jq -e '.ok == true' /tmp/health.json >/dev/null
+
+      - name: Resolve a live Shopify product handle
+        id: product
+        env:
+          SHOPIFY_STOREFRONT_TOKEN: ${{ secrets.SHOPIFY_STOREFRONT_TOKEN }}
+        run: |
+          BODY=$(jq -nc '{query:"query CanaryProduct { products(first: 1) { edges { node { handle title } } } }"}')
+          RESPONSE=$(curl --fail --silent --show-error \
+            "https://dj6qeq-j9.myshopify.com/api/2026-07/graphql.json" \
+            -H "Content-Type: application/json" \
+            -H "X-Shopify-Storefront-Access-Token: $SHOPIFY_STOREFRONT_TOKEN" \
+            --data "$BODY")
+          HANDLE=$(printf '%s' "$RESPONSE" | jq -r '.data.products.edges[0].node.handle // empty')
+          test -n "$HANDLE" || { echo "No live Shopify product handle available for parity check"; exit 1; }
+          echo "handle=$HANDLE" >> "$GITHUB_OUTPUT"
+
+      - name: Live product contract parity smoke test
+        env:
+          WORKER_URL: ${{ steps.worker-url.outputs.worker_url }}
+          HANDLE: ${{ steps.product.outputs.handle }}
+        run: |
+          curl --fail --silent --show-error --retry 3 --retry-all-errors \
+            "$WORKER_URL/products/$HANDLE" \
+            -D /tmp/product.headers \
+            -o /tmp/product.json
+          grep -qi '^x-space-call-contract: product-detail-v1' /tmp/product.headers
+          jq -e --arg handle "$HANDLE" \
+            '.ok == true and .source == "shopify" and .contractVersion == "product-detail-v1" and .product.handle == $handle and (.product.title | length > 0)' \
+            /tmp/product.json >/dev/null
+
+      - name: Deployment summary
+        env:
+          WORKER_URL: ${{ steps.worker-url.outputs.worker_url }}
+        run: |
+          echo "## Commerce Core Canary" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Worker: \`$WORKER_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: $WORKER_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Health: passed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Live Shopify product contract: passed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Storefront traffic routed to Rust: no" >> "$GITHUB_STEP_SUMMARY"
