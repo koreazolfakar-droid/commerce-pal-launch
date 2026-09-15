@@ -225,7 +225,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let previousTime = performance.now();
     let lastActiveMeasure = previousTime;
-    let startTimer: ReturnType<typeof window.setTimeout> | null = null;
+    let startTimer: number | null = null;
 
     autoPositionRef.current = rail.scrollLeft;
 
