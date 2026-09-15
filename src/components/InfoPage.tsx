@@ -323,12 +323,19 @@ function GuideSection({ guide, language }: { guide: PageGuide; language: Languag
         {guide.cards.map((card) => {
           const Icon = card.icon;
           return (
-            <article key={card.title.en} className="rounded-2xl border bg-card p-5 shadow-card sm:p-6">
+            <article
+              key={card.title.en}
+              className="rounded-2xl border bg-card p-5 shadow-card sm:p-6"
+            >
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
-              <h2 className="mt-4 text-lg font-black tracking-tight">{copy(language, card.title)}</h2>
-              <p className="mt-2 text-sm leading-7 text-muted-foreground">{copy(language, card.body)}</p>
+              <h2 className="mt-4 text-lg font-black tracking-tight">
+                {copy(language, card.title)}
+              </h2>
+              <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                {copy(language, card.body)}
+              </p>
               {card.bullets?.[language]?.length ? (
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
                   {card.bullets[language].map((item) => (
@@ -395,7 +402,9 @@ export function InfoPage({ page }: { page: InfoPageName }) {
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
             <PageIcon className="h-6 w-6" aria-hidden="true" />
           </span>
-          <h1 className="mt-5 text-3xl font-black tracking-[-0.035em] sm:text-4xl">{t(INFO_PAGES[page])}</h1>
+          <h1 className="mt-5 text-3xl font-black tracking-[-0.035em] sm:text-4xl">
+            {t(INFO_PAGES[page])}
+          </h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8">
             {guide
               ? copy(language, guide.intro)
@@ -411,7 +420,9 @@ export function InfoPage({ page }: { page: InfoPageName }) {
           <div className="grid gap-5 md:grid-cols-2">
             <section className="rounded-2xl border bg-card p-6 shadow-card">
               <h2 className="text-xl font-black">{t("contactTitle")}</h2>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">{t("immediateSupport")}</p>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {t("immediateSupport")}
+              </p>
               <a
                 href={generalWhatsAppUrl()}
                 target="_blank"
@@ -422,10 +433,19 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 {t("contactWhatsApp")}
               </a>
             </section>
-            <section id="account-orders" className="relative scroll-mt-28 rounded-2xl border bg-card p-6 shadow-card">
-              <span id="track-order" className="pointer-events-none absolute -top-28 start-0" aria-hidden="true" />
+            <section
+              id="account-orders"
+              className="relative scroll-mt-28 rounded-2xl border bg-card p-6 shadow-card"
+            >
+              <span
+                id="track-order"
+                className="pointer-events-none absolute -top-28 start-0"
+                aria-hidden="true"
+              />
               <h2 className="text-xl font-black">{t("accountOrders")}</h2>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">{t("accountDescription")}</p>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                {t("accountDescription")}
+              </p>
               <p className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm leading-6 text-muted-foreground">
                 {language === "ar"
                   ? "عند المتابعة سيتم تحويلك إلى صفحة حساب Shopify الآمنة لإدارة الطلبات. هذا التحويل تابع لمزوّد الدفع والمتجر ولا يغيّر بيانات طلبك."
@@ -445,17 +465,29 @@ export function InfoPage({ page }: { page: InfoPageName }) {
         )}
 
         {page === "faq" && (
-          <Accordion type="single" collapsible className="rounded-2xl border bg-card px-5 shadow-card">
+          <Accordion
+            type="single"
+            collapsible
+            className="rounded-2xl border bg-card px-5 shadow-card"
+          >
             {faqs.map(([question, answer]) => (
               <AccordionItem key={question} value={question}>
-                <AccordionTrigger className="text-start text-base leading-relaxed">{t(question)}</AccordionTrigger>
-                <AccordionContent className="text-base leading-8 text-muted-foreground">{t(answer)}</AccordionContent>
+                <AccordionTrigger className="text-start text-base leading-relaxed">
+                  {t(question)}
+                </AccordionTrigger>
+                <AccordionContent className="text-base leading-8 text-muted-foreground">
+                  {t(answer)}
+                </AccordionContent>
               </AccordionItem>
             ))}
             {extraFaqs.map((item, index) => (
               <AccordionItem key={item.q.en} value={`extra-${index}`}>
-                <AccordionTrigger className="text-start text-base leading-relaxed">{copy(language, item.q)}</AccordionTrigger>
-                <AccordionContent className="text-base leading-8 text-muted-foreground">{copy(language, item.a)}</AccordionContent>
+                <AccordionTrigger className="text-start text-base leading-relaxed">
+                  {copy(language, item.q)}
+                </AccordionTrigger>
+                <AccordionContent className="text-base leading-8 text-muted-foreground">
+                  {copy(language, item.a)}
+                </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
@@ -514,7 +546,9 @@ export function InfoPage({ page }: { page: InfoPageName }) {
 
         {page === "warranty" ? (
           <section className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-5 sm:p-6">
-            <h2 className="text-lg font-black">{language === "ar" ? "هل تحتاج تأكيد الضمان؟" : "Need warranty confirmation?"}</h2>
+            <h2 className="text-lg font-black">
+              {language === "ar" ? "هل تحتاج تأكيد الضمان؟" : "Need warranty confirmation?"}
+            </h2>
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
               {language === "ar"
                 ? "أرسل اسم المنتج أو رابط صفحته إلى الدعم، وسنساعدك في معرفة معلومات الضمان المتاحة لهذا المنتج قبل الشراء أو عند طلب الخدمة."
@@ -536,7 +570,11 @@ export function InfoPage({ page }: { page: InfoPageName }) {
             <h2 className="text-xl font-black">{t("policiesTitle")}</h2>
             <div className="mt-4 flex flex-wrap gap-3">
               {POLICY_LINKS.map((name) => (
-                <Link key={name} to={`/${name}`} className="rounded-xl border bg-card px-4 py-3 text-sm font-semibold hover:bg-accent">
+                <Link
+                  key={name}
+                  to={`/${name}`}
+                  className="rounded-xl border bg-card px-4 py-3 text-sm font-semibold hover:bg-accent"
+                >
                   {t(INFO_PAGES[name])}
                 </Link>
               ))}

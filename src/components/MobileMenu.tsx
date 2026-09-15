@@ -46,16 +46,19 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 
 function categoryIcon(slug: string, label: string): LucideIcon {
   const value = `${slug} ${label}`.toLowerCase();
-  if (value.includes("smartphone") || value.includes("phone") || value.includes("mobile")) return Smartphone;
+  if (value.includes("smartphone") || value.includes("phone") || value.includes("mobile"))
+    return Smartphone;
   if (value.includes("laptop") || value.includes("computer")) return Laptop;
-  if (value.includes("headphone") || value.includes("earbud") || value.includes("audio")) return Headphones;
+  if (value.includes("headphone") || value.includes("earbud") || value.includes("audio"))
+    return Headphones;
   if (value.includes("charger")) return PlugZap;
   if (value.includes("power bank") || value.includes("powerbank")) return BatteryCharging;
   if (value.includes("cable")) return Cable;
   if (value.includes("watch") || value.includes("wearable")) return Watch;
   if (value.includes("gaming") || value.includes("playstation")) return Gamepad2;
   if (value.includes("camera")) return Camera;
-  if (value.includes("monitor") || value.includes("display") || value.includes("tv")) return Monitor;
+  if (value.includes("monitor") || value.includes("display") || value.includes("tv"))
+    return Monitor;
   return Package;
 }
 
@@ -174,7 +177,9 @@ export function MobileMenu({
             <Sparkles aria-hidden="true" className="h-[18px] w-[18px]" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-primary">Space Call</p>
+            <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-primary">
+              Space Call
+            </p>
             <p className="truncate text-[10px] font-medium text-muted-foreground">
               {language === "ar" ? "تصفح بسرعة" : "Quick browse"}
             </p>
@@ -220,8 +225,13 @@ export function MobileMenu({
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/[0.07] text-primary">
                       <Icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-foreground">{label}</span>
-                    <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-foreground">
+                      {label}
+                    </span>
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180"
+                    />
                   </Link>
                 );
               })}
@@ -231,8 +241,13 @@ export function MobileMenu({
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/[0.07] text-primary">
                     <Boxes aria-hidden="true" className="h-4 w-4" />
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold">{t("browseProducts")}</span>
-                  <ChevronRight aria-hidden="true" className="h-4 w-4 text-muted-foreground rtl:rotate-180" />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold">
+                    {t("browseProducts")}
+                  </span>
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="h-4 w-4 text-muted-foreground rtl:rotate-180"
+                  />
                 </Link>
               )}
             </div>
@@ -241,11 +256,21 @@ export function MobileMenu({
           <section>
             <SectionHeading icon={Compass} title={discoverLabel} onClick={close} />
             <div className="grid grid-cols-2 gap-1.5">
-              <Link to="/shop" search={{ sort: "newest" } as never} onClick={close} className={quickLinkClass}>
+              <Link
+                to="/shop"
+                search={{ sort: "newest" } as never}
+                onClick={close}
+                className={quickLinkClass}
+              >
                 <Sparkles aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
                 <span className="truncate text-[11px] font-extrabold">{newArrivalsLabel}</span>
               </Link>
-              <Link to="/shop" search={{ sort: "featured" } as never} onClick={close} className={quickLinkClass}>
+              <Link
+                to="/shop"
+                search={{ sort: "featured" } as never}
+                onClick={close}
+                className={quickLinkClass}
+              >
                 <Flame aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
                 <span className="truncate text-[11px] font-extrabold">{bestSellersLabel}</span>
               </Link>
@@ -277,7 +302,13 @@ export function MobileMenu({
 
           {visibleCollections.length > 0 && (
             <section>
-              <SectionHeading icon={Boxes} title={t("collections")} action={seeAll} to="/shop" onClick={close} />
+              <SectionHeading
+                icon={Boxes}
+                title={t("collections")}
+                action={seeAll}
+                to="/shop"
+                onClick={close}
+              />
               <div className="grid grid-cols-2 gap-1.5">
                 {visibleCollections.map((item) => (
                   <Link
@@ -299,18 +330,38 @@ export function MobileMenu({
             <div className="overflow-hidden rounded-2xl border border-border/55 bg-card/35 divide-y divide-border/50">
               <Link to="/help" onClick={close} className={compactRowClass}>
                 <LifeBuoy aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate text-[12px] font-bold">{t("helpTitle")}</span>
-                <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground rtl:rotate-180" />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-bold">
+                  {t("helpTitle")}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-muted-foreground rtl:rotate-180"
+                />
               </Link>
               <Link to="/wishlist" onClick={close} className={compactRowClass}>
                 <Heart aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate text-[12px] font-bold">{t("wishlistTitle")}</span>
-                <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground rtl:rotate-180" />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-bold">
+                  {t("wishlistTitle")}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-muted-foreground rtl:rotate-180"
+                />
               </Link>
-              <a href={SHOP_ACCOUNT_URL} target="_blank" rel="noopener noreferrer" className={compactRowClass}>
+              <a
+                href={SHOP_ACCOUNT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={compactRowClass}
+              >
                 <CircleUserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate text-[12px] font-bold">{t("openAccount")}</span>
-                <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground rtl:rotate-180" />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-bold">
+                  {t("openAccount")}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-muted-foreground rtl:rotate-180"
+                />
               </a>
             </div>
           </section>
@@ -318,7 +369,9 @@ export function MobileMenu({
 
         <div className="mt-auto border-t border-border/55 px-3 pb-[max(.65rem,env(safe-area-inset-bottom))] pt-2.5">
           <div className="flex min-h-9 items-center justify-between gap-2">
-            <p className="truncate text-[10px] font-bold text-muted-foreground">{t("preferences")}</p>
+            <p className="truncate text-[10px] font-bold text-muted-foreground">
+              {t("preferences")}
+            </p>
             <div className="flex shrink-0 items-center gap-1.5">
               <ThemeToggle />
               <LanguageToggle />

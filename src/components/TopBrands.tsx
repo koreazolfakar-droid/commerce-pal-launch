@@ -103,7 +103,8 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
     let active: HTMLElement | null = null;
     for (const offset of samples) {
       const hit = document.elementFromPoint(centerX + offset, centerY);
-      const candidate = hit instanceof Element ? hit.closest<HTMLElement>("[data-brand-slug]") : null;
+      const candidate =
+        hit instanceof Element ? hit.closest<HTMLElement>("[data-brand-slug]") : null;
       if (candidate && rail.contains(candidate)) {
         active = candidate;
         break;

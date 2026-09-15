@@ -36,7 +36,11 @@ export function jsonLd(data: Record<string, unknown>) {
   };
 }
 
-export function cleanMetaDescription(value: string | null | undefined, fallback: string, maxLength = 155) {
+export function cleanMetaDescription(
+  value: string | null | undefined,
+  fallback: string,
+  maxLength = 155,
+) {
   const plain = (value ?? "")
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/gi, " ")
