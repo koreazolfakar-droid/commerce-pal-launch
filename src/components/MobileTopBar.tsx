@@ -1,13 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Heart, LayoutGrid, Menu, Search, ShoppingBag } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { categoryLabel, useLanguage } from "@/lib/i18n";
-import { useHydrated } from "@/hooks/useHydrated";
-import { catalogQueryOptions } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { STORE_NAME } from "@/lib/storeConfig";
@@ -17,6 +13,11 @@ const LazySearchOverlay = lazy(() =>
 );
 const LazyMobileMenu = lazy(() =>
   import("@/components/MobileMenu").then(({ MobileMenu }) => ({ default: MobileMenu })),
+);
+const LazyMobileCategoryRail = lazy(() =>
+  import("@/components/MobileCategoryRail").then(({ MobileCategoryRail }) => ({
+    default: MobileCategoryRail,
+  })),
 );
 
 function Badge({ value }: { value: number }) {
@@ -38,18 +39,11 @@ export function MobileTopBar({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const { t, language } = useLanguage();
-  const hydrated = useHydrated();
+  const { t } = useLanguage();
   const wishlistCount = useWishlistStore((state) => state.handles.length);
   const cartCount = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
-
-  const { data: catalog, isLoading } = useQuery({
-    ...catalogQueryOptions(),
-    enabled: showCategoryRail,
-  });
-  const list = hydrated ? (catalog?.categories ?? []) : [];
 
   return (
     <>
@@ -119,59 +113,19 @@ export function MobileTopBar({
           </button>
         </div>
 
-        {showCategoryRail && (list.length > 0 || isLoading) && (
-          <nav aria-label="Product categories" className="scroll-rail flex gap-2 px-4 pb-2">
-            {isLoading && list.length === 0
-              ? Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="shimmer h-8 w-20 shrink-0 rounded-full bg-surface"
-                    aria-hidden
-                  />
-                ))
-              : null}
-            {list.length > 0 && (
-              <Link
-                to="/shop"
-                className={cn(
-                  "press flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
-                  !activeSlug
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "bg-surface text-muted-foreground hover:bg-accent",
-                )}
-              >
-                <LayoutGrid className="h-4 w-4 shrink-0" strokeWidth={1.9} />
-                {t("all")}
-              </Link>
-            )}
-            <Link
-              to="/used-phones"
-              className="press flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-accent px-3 text-[12px] font-semibold text-accent-foreground"
-            >
-              {t("usedPhones")}
-            </Link>
-            {list.map((category) => {
-              const Icon = category.icon;
-              const active = activeSlug === category.slug;
-              return (
-                <Link
-                  key={category.slug}
-                  to="/category/$slug"
-                  params={{ slug: category.slug }}
-                  className={cn(
-                    "press flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
-                    active
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "bg-surface text-muted-foreground hover:bg-accent",
-                  )}
-                >
-                  {Icon ? <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} /> : null}
-                  <span className="max-w-28 truncate">{categoryLabel(category, language)}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        )}
+        {showCategoryRail ? (
+          <Suspense
+            fallback={
+              <div className="scroll-rail flex gap-2 px-4 pb-2" aria-hidden="true">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="shimmer h-8 w-20 shrink-0 rounded-full bg-surface" />
+                ))}
+              </div>
+            }
+          >
+            <LazyMobileCategoryRail activeSlug={activeSlug} />
+          </Suspense>
+        ) : null}
       </div>
 
       {menuOpen ? (
