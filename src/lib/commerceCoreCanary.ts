@@ -80,7 +80,10 @@ function hasProductConnection(value: unknown) {
   return isRecord(value) && Array.isArray(value["edges"]);
 }
 
-function isCompatibleProductNode(value: unknown, expectedHandle: string): value is ShopifyProductNode {
+function isCompatibleProductNode(
+  value: unknown,
+  expectedHandle: string,
+): value is ShopifyProductNode {
   if (!isRecord(value)) return false;
   return (
     value["handle"] === expectedHandle &&
@@ -94,7 +97,10 @@ function isCompatibleProductNode(value: unknown, expectedHandle: string): value 
   );
 }
 
-function parseCommerceCoreResponse(value: unknown, expectedHandle: string): CommerceCoreProductResponse | null {
+function parseCommerceCoreResponse(
+  value: unknown,
+  expectedHandle: string,
+): CommerceCoreProductResponse | null {
   if (!isRecord(value)) return null;
   if (value["ok"] !== true) return null;
   if (value["source"] !== "shopify") return null;
