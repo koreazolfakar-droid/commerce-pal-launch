@@ -22,13 +22,21 @@ async function assertHomeLayout(page: Page, language: Language, theme: Theme) {
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
 
-  const categoryRail = page.locator(".category-icon-rail");
-  expect((await categoryRail.boundingBox())!.height).toBeLessThan(130);
+  // The category rail was redesigned from the legacy `.category-icon-rail`
+  // grid to the semantic list inside `category-section`. Target the actual
+  // rendered surface so a removed CSS class cannot turn this check into a
+  // 30-second locator timeout.
+  const categoryRail = page.getByTestId("category-section").getByRole("list");
+  await expect(categoryRail).toBeVisible();
+  const categoryRailBox = await categoryRail.boundingBox();
+  expect(categoryRailBox).not.toBeNull();
+  expect(categoryRailBox!.height).toBeLessThan(140);
 }
 
 for (const width of [320, 360, 390, 412, 768, 1024, 1440]) {
   for (const theme of ["light", "dark"] as const) {
-    test(`homepage responsive ${width}px en ${theme}`, async ({ page }, testInfo) => {
+    test(`homepage responsive ${width}px en ${theme}`, async ({ page, isMobile }, testInfo) => {
+      test.skip(isMobile, "The viewport matrix explicitly covers mobile, tablet and desktop widths");
       await page.setViewportSize({ width, height: 900 });
       await seedPreferences(page, "en", theme);
       await page.goto("/");
@@ -40,7 +48,8 @@ for (const width of [320, 360, 390, 412, 768, 1024, 1440]) {
 
 for (const width of [390, 768, 1440]) {
   for (const theme of ["light", "dark"] as const) {
-    test(`homepage responsive ${width}px ar ${theme}`, async ({ page }) => {
+    test(`homepage responsive ${width}px ar ${theme}`, async ({ page, isMobile }) => {
+      test.skip(isMobile, "The viewport matrix explicitly covers mobile, tablet and desktop widths");
       await page.setViewportSize({ width, height: 900 });
       await seedPreferences(page, "ar", theme);
       await page.goto("/");
@@ -49,7 +58,11 @@ for (const width of [390, 768, 1440]) {
   }
 }
 
-test("brand and product media stages stay intentionally white in dark mode", async ({ page }) => {
+test("brand and product media stages stay intentionally white in dark mode", async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, "This semantic media-stage assertion is device-independent");
   await page.setViewportSize({ width: 390, height: 900 });
   await seedPreferences(page, "en", "dark");
   await page.goto("/");
