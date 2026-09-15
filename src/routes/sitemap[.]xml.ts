@@ -83,7 +83,10 @@ function collectionLastmod(collection: ShopifyCollection) {
 }
 
 function latestLastmod(values: Array<string | undefined>) {
-  return values.filter((value): value is string => Boolean(value)).sort().at(-1);
+  return values
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1);
 }
 
 function buildStaticEntries(): SitemapEntry[] {
