@@ -18,9 +18,32 @@ Adds one isolated, read-only Shopify path:
 - Validates the configured Shopify domain and API version.
 - Reads the Storefront token only from the `SHOPIFY_STOREFRONT_TOKEN` Worker secret.
 - Normalizes Shopify/GraphQL failures into safe error responses without exposing the token or raw upstream errors.
-- Returns `Cache-Control: no-store` for now. Caching and webhook invalidation are intentionally deferred to a later step.
+- Returns `Cache-Control: no-store` for now.
 
-This step does **not** connect React/TanStack to Rust yet and does not modify cart, checkout, Supabase, SEO, or the production storefront.
+## Step 3 — Product detail contract parity
+
+Step 3 keeps the same isolated read-only endpoint but expands its typed Rust contract to match the product-detail data already requested by the TypeScript storefront:
+
+- Description and HTML description.
+- Vendor, product type, availability, created/updated timestamps and tags.
+- Current and compare-at price ranges.
+- Up to 20 product images.
+- Up to 20 collections.
+- Up to 100 variants with current/compare-at price, variant image, selected options, SKU, barcode, weight and weight unit.
+- Product options used by the existing variant picker.
+- Responses are tagged with `product-detail-v1` through both `contractVersion` and `X-Space-Call-Contract`.
+
+The Shopify GraphQL document remains fixed and read-only. Contract tests verify the bounded limits, required fields, camelCase serialization, optional variant fields, malformed payload handling and that no mutation/cart/customer operations are present.
+
+Step 3 still does **not**:
+
+- Route React/TanStack production traffic through Rust.
+- Modify cart, checkout, Shopify data, Supabase, SEO or storefront UI.
+- Add Rust caching or webhook invalidation.
+- Add any Shopify mutation or Admin API call.
+- Deploy or switch the production storefront to the Rust endpoint.
+
+The next routing/canary step must be reviewed separately after this parity contract is accepted.
 
 ## Configuration
 
@@ -42,6 +65,7 @@ Requirements: recent Rust, `wasm32-unknown-unknown`, Node/npm and Wrangler.
 ```bash
 rustup target add wasm32-unknown-unknown
 cd services/commerce-core
+cargo fmt --check
 cargo test --lib
 cargo clippy --target wasm32-unknown-unknown -- -D warnings
 cargo check --target wasm32-unknown-unknown
@@ -55,7 +79,7 @@ Health check:
 GET http://localhost:8787/health
 ```
 
-Product read after configuring the secret:
+Product-detail read after configuring the secret:
 
 ```text
 GET http://localhost:8787/products/<shopify-product-handle>
