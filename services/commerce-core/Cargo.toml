@@ -16,4 +16,4 @@ worker = "0.8.5"
 codegen-units = 1
 lto = true
 opt-level = "s"
-strip = true
+strip = false
