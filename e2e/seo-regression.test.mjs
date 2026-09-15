@@ -34,16 +34,18 @@ test("global crawler metadata stays indexable without fake hreflang alternates",
 });
 
 test("Shopify SEO metadata is fetched and preferred for search snippets", async () => {
-  const [documents, seo, collection] = await Promise.all([
+  const [documents, seo, collection, productRoute] = await Promise.all([
     source("src/lib/shopifyDocuments.ts"),
     source("src/lib/seo.ts"),
     source("src/routes/collections.$handle.tsx"),
+    source("src/routes/product.$handle.tsx"),
   ]);
 
   assert.match(documents, /const SEO = `title description`/);
   assert.match(documents, /seo \{ \$\{SEO\} \}/);
   assert.match(seo, /merchantSeoDescription/);
   assert.match(seo, /productSeo\(product\)\?\.description/);
+  assert.match(productRoute, /productSeoTitle\(product\)/);
   assert.match(collection, /collection\.seo\?\.title/);
   assert.match(collection, /collection\.seo\?\.description/);
 });
