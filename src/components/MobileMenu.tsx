@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  BadgePercent,
   BatteryCharging,
   Boxes,
   Cable,
   Camera,
   ChevronRight,
   CircleUserRound,
+  Compass,
+  Flame,
   Gamepad2,
   Grid2X2,
   Headphones,
@@ -19,6 +22,7 @@ import {
   Package,
   PlugZap,
   RefreshCw,
+  ShoppingBag,
   Smartphone,
   Sparkles,
   Tags,
@@ -40,22 +44,6 @@ import { displayCollections } from "@/lib/taxonomy";
 import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 
-const BRAND_LOGOS: Record<string, string> = {
-  anker: "/brand-logos/anker.svg",
-  apple: "/brand-logos/apple.svg",
-  blackshark: "/brand-logos/blackshark.svg",
-  lenovo: "/brand-logos/lenovo.svg",
-  poco: "/brand-logos/poco.png",
-  realme: "/brand-logos/realme.svg",
-  redmagic: "/brand-logos/redmagic.png",
-  redmi: "/brand-logos/redmi.svg",
-  samsung: "/brand-logos/samsung.png",
-  tecno: "/brand-logos/tecno.svg",
-  ugreen: "/brand-logos/ugreen.png",
-  vention: "/brand-logos/vention.png",
-  xiaomi: "/brand-logos/xiaomi.svg",
-};
-
 function categoryIcon(slug: string, label: string): LucideIcon {
   const value = `${slug} ${label}`.toLowerCase();
   if (value.includes("smartphone") || value.includes("phone") || value.includes("mobile")) return Smartphone;
@@ -69,31 +57,6 @@ function categoryIcon(slug: string, label: string): LucideIcon {
   if (value.includes("camera")) return Camera;
   if (value.includes("monitor") || value.includes("display") || value.includes("tv")) return Monitor;
   return Package;
-}
-
-function brandLogo(slug: string, label: string) {
-  const value = `${slug} ${label}`.toLowerCase();
-  return Object.entries(BRAND_LOGOS).find(([name]) => value.includes(name))?.[1] ?? null;
-}
-
-function BrandMark({ slug, label }: { slug: string; label: string }) {
-  const logo = brandLogo(slug, label);
-  const fallback = label.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase() || "SC";
-
-  return (
-    <span className="relative grid h-10 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-border/70 bg-white shadow-sm ring-1 ring-black/[0.025]">
-      {logo ? (
-        <img
-          src={logo}
-          alt={`${label} logo`}
-          className="h-full w-full object-contain px-2 py-1.5"
-          loading="lazy"
-        />
-      ) : (
-        <span className="text-[10px] font-black tracking-tight text-slate-700">{fallback}</span>
-      )}
-    </span>
-  );
 }
 
 function SectionHeading({
@@ -158,6 +121,14 @@ export function MobileMenu({
   const visibleCollections = displayCollections(collections).slice(0, 4);
   const seeAll = language === "ar" ? "عرض الكل" : "See all";
   const refreshLabel = language === "ar" ? "تحديث الصفحة" : "Refresh page";
+  const discoverLabel = language === "ar" ? "اكتشف" : "Discover";
+  const newArrivalsLabel = language === "ar" ? "وصل حديثًا" : "New arrivals";
+  const bestSellersLabel = language === "ar" ? "الأكثر مبيعًا" : "Best sellers";
+  const offersLabel = language === "ar" ? "العروض" : "Offers";
+  const allProductsLabel = language === "ar" ? "كل المنتجات" : "All products";
+  const exploreBrandsLabel = language === "ar" ? "استكشف كل العلامات التجارية" : "Explore all brands";
+  const exploreBrandsDetail =
+    language === "ar" ? "تصفح جميع العلامات التجارية في مكان واحد" : "Browse every brand in one place";
 
   const refreshStorefront = async () => {
     if (refreshing) return;
@@ -174,7 +145,9 @@ export function MobileMenu({
   };
 
   const rowClass =
-    "group flex min-h-[58px] w-full items-center gap-3 rounded-2xl border border-border/65 bg-card/70 px-3 py-2.5 text-start shadow-[0_8px_24px_-22px_rgba(15,23,42,.9)] transition-[border-color,background-color,transform,box-shadow] duration-200 hover:-translate-y-px hover:border-primary/30 hover:bg-accent/60 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35";
+    "group flex min-h-[58px] w-full items-center gap-3 rounded-2xl border border-border/65 bg-card/80 px-3 py-2.5 text-start transition-[border-color,background-color,transform] duration-200 hover:-translate-y-px hover:border-primary/30 hover:bg-accent/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35";
+  const discoverCardClass =
+    "group flex min-h-[84px] flex-col justify-between rounded-2xl border border-border/60 bg-card/80 p-3 text-start transition-[border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-accent/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35";
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -193,9 +166,9 @@ export function MobileMenu({
       <SheetContent
         side={direction === "rtl" ? "right" : "left"}
         dir={direction}
-        className="flex w-[min(92vw,27rem)] flex-col gap-0 overflow-y-auto border-border/70 bg-background/98 p-0 supports-[backdrop-filter]:bg-background/95 supports-[backdrop-filter]:backdrop-blur-2xl"
+        className="flex w-[min(92vw,27rem)] flex-col gap-0 overflow-y-auto border-border/70 bg-background p-0"
       >
-        <div className="sticky top-0 z-10 border-b border-border/60 bg-background/95 px-5 pb-4 pt-5 backdrop-blur-xl">
+        <div className="sticky top-0 z-10 border-b border-border/60 bg-background px-5 pb-4 pt-5">
           <div className="mb-4 flex items-center gap-3 pe-12">
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary ring-1 ring-primary/15">
               <Sparkles aria-hidden="true" className="h-5 w-5" />
@@ -213,7 +186,7 @@ export function MobileMenu({
               aria-busy={refreshing}
               aria-label={refreshLabel}
               title={refreshLabel}
-              className="press ms-auto grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border/70 bg-background text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 disabled:cursor-wait disabled:opacity-70"
+              className="press ms-auto grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border/70 bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 disabled:cursor-wait disabled:opacity-70"
             >
               <RefreshCw
                 aria-hidden="true"
@@ -276,29 +249,71 @@ export function MobileMenu({
             </div>
           </section>
 
-          {!!catalog?.brands.length && (
-            <section className="border-t border-border/60 pt-5">
-              <SectionHeading icon={Tags} title={t("brands")} action={seeAll} to="/brands" onClick={close} />
-              <div className="grid gap-2">
-                {catalog.brands.slice(0, 10).map((item) => (
-                  <Link
-                    key={item.slug}
-                    to="/brand/$slug"
-                    params={{ slug: item.slug }}
-                    className={rowClass}
-                    onClick={close}
-                  >
-                    <BrandMark slug={item.slug} label={item.label} />
-                    <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-foreground">{item.label}</span>
-                    <ChevronRight
-                      aria-hidden="true"
-                      className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
-                    />
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
+          <section className="border-t border-border/60 pt-5">
+            <SectionHeading icon={Compass} title={discoverLabel} onClick={close} />
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                to="/shop"
+                search={{ sort: "newest" } as never}
+                onClick={close}
+                className={discoverCardClass}
+              >
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/[0.08] text-primary ring-1 ring-primary/10 transition-transform group-hover:scale-[1.05]">
+                  <Sparkles aria-hidden="true" className="h-[18px] w-[18px]" />
+                </span>
+                <span className="mt-3 text-[12px] font-extrabold leading-tight text-foreground">{newArrivalsLabel}</span>
+              </Link>
+
+              <Link
+                to="/shop"
+                search={{ sort: "featured" } as never}
+                onClick={close}
+                className={discoverCardClass}
+              >
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/[0.08] text-primary ring-1 ring-primary/10 transition-transform group-hover:scale-[1.05]">
+                  <Flame aria-hidden="true" className="h-[18px] w-[18px]" />
+                </span>
+                <span className="mt-3 text-[12px] font-extrabold leading-tight text-foreground">{bestSellersLabel}</span>
+              </Link>
+
+              <Link
+                to="/shop"
+                search={{ availability: "on-sale", sort: "discount" } as never}
+                onClick={close}
+                className={discoverCardClass}
+              >
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/[0.08] text-primary ring-1 ring-primary/10 transition-transform group-hover:scale-[1.05]">
+                  <BadgePercent aria-hidden="true" className="h-[18px] w-[18px]" />
+                </span>
+                <span className="mt-3 text-[12px] font-extrabold leading-tight text-foreground">{offersLabel}</span>
+              </Link>
+
+              <Link to="/shop" onClick={close} className={discoverCardClass}>
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/[0.08] text-primary ring-1 ring-primary/10 transition-transform group-hover:scale-[1.05]">
+                  <ShoppingBag aria-hidden="true" className="h-[18px] w-[18px]" />
+                </span>
+                <span className="mt-3 text-[12px] font-extrabold leading-tight text-foreground">{allProductsLabel}</span>
+              </Link>
+            </div>
+
+            <Link
+              to="/brands"
+              onClick={close}
+              className="group mt-2.5 flex min-h-[58px] items-center gap-3 rounded-2xl border border-border/60 bg-primary/[0.045] px-3.5 py-2.5 text-start transition-[border-color,background-color,transform] duration-200 hover:-translate-y-px hover:border-primary/30 hover:bg-primary/[0.075] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10">
+                <Tags aria-hidden="true" className="h-[18px] w-[18px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-black text-foreground">{exploreBrandsLabel}</span>
+                <span className="mt-0.5 block truncate text-[10px] font-medium text-muted-foreground">{exploreBrandsDetail}</span>
+              </span>
+              <ChevronRight
+                aria-hidden="true"
+                className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+              />
+            </Link>
+          </section>
 
           {visibleCollections.length > 0 && (
             <section className="border-t border-border/60 pt-5">
@@ -310,7 +325,7 @@ export function MobileMenu({
                     to="/collections/$handle"
                     params={{ handle: item.handle }}
                     onClick={close}
-                    className="group flex min-h-[64px] items-center gap-2.5 rounded-2xl border border-border/65 bg-card/70 px-3 py-2 text-start transition-colors hover:border-primary/30 hover:bg-accent/60"
+                    className="group flex min-h-[64px] items-center gap-2.5 rounded-2xl border border-border/65 bg-card/80 px-3 py-2 text-start transition-[border-color,background-color] hover:border-primary/30 hover:bg-accent/55"
                   >
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/[0.08] text-primary">
                       <Package aria-hidden="true" className="h-4 w-4" />
