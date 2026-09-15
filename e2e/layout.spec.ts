@@ -18,7 +18,9 @@ async function assertHomeLayout(page: Page, language: Language, theme: Theme) {
   await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
   await expect(page.locator("html")).toHaveClass(theme === "dark" ? /dark/ : /^(?!.*\bdark\b)/);
   await expect(page.locator("h1")).toHaveCount(1);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBeTruthy();
 
   const categoryRail = page.locator(".category-icon-rail");
   expect((await categoryRail.boundingBox())!.height).toBeLessThan(130);
@@ -60,9 +62,7 @@ test("brand and product media stages stay intentionally white in dark mode", asy
     );
   }
 
-  const apple = page
-    .getByTestId("top-brands")
-    .getByRole("link", { name: "Apple", exact: true });
+  const apple = page.getByTestId("top-brands").getByRole("link", { name: "Apple", exact: true });
   await expect(apple.locator("img")).toBeVisible();
   await expect
     .poll(() => apple.locator("img").evaluate((image) => (image as HTMLImageElement).naturalWidth))
