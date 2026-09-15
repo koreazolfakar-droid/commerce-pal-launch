@@ -33,7 +33,11 @@ export const SHOP_ACCOUNT_URL = CONFIG_ACCOUNT_URL;
 
 const INFO_PAGE_SEO: Record<
   InfoPageName,
-  { title: string; description: string; schemaType: "WebPage" | "AboutPage" | "ContactPage" | "FAQPage" }
+  {
+    title: string;
+    description: string;
+    schemaType: "WebPage" | "AboutPage" | "ContactPage" | "FAQPage";
+  }
 > = {
   about: {
     title: `About ${STORE_NAME} | Electronics Store in Lebanon`,

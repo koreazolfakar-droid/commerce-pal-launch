@@ -8,12 +8,7 @@ import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
-import {
-  discountPercent,
-  formatPrice,
-  variantSummary,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { discountPercent, formatPrice, variantSummary, type ShopifyProduct } from "@/lib/shopify";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -129,11 +124,7 @@ export const ProductListCard = memo(function ProductListCard({
           </div>
         )}
 
-        <Link
-          to="/product/$handle"
-          params={{ handle: node.handle }}
-          className="min-w-0 pe-12"
-        >
+        <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0 pe-12">
           <h3 className="line-clamp-2 break-words text-[0.8rem] font-extrabold leading-[1.2] tracking-[-0.018em] transition-colors group-hover:text-primary sm:text-[0.9rem]">
             {node.title}
           </h3>
@@ -179,9 +170,7 @@ export const ProductListCard = memo(function ProductListCard({
             ) : (
               <>
                 <ShoppingBag className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {t(inStock ? "addToCart" : "outOfStock")}
-                </span>
+                <span className="hidden sm:inline">{t(inStock ? "addToCart" : "outOfStock")}</span>
               </>
             )}
           </Button>

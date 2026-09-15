@@ -243,10 +243,7 @@ function Index() {
           <>
             {isVisible("featured_products") && best.length > 0 && (
               <section data-testid="best-sellers">
-                <SectionHeader
-                  title={t("bestSellers")}
-                  subtitle={t("bestSellersDescription")}
-                />
+                <SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} />
                 <ProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
               </section>
             )}

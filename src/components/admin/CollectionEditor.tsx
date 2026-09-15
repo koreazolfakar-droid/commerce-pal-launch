@@ -135,9 +135,7 @@ export function CollectionEditor({
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-          {description ? (
-            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-          ) : null}
+          {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
         </div>
         <Button onClick={() => void addRow()} size="sm">
           <Plus className="me-1 size-4" /> إضافة
