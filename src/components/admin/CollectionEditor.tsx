@@ -14,7 +14,11 @@ import {
   listCmsResource,
   updateCmsResource,
 } from "@/lib/cmsAdmin.functions";
-import type { CmsAdminResource, CmsAdminRow } from "@/lib/cmsAdmin.server";
+import type {
+  CmsAdminResource,
+  CmsAdminRow,
+  CmsAdminValue,
+} from "@/lib/cmsAdmin.server";
 
 export type EditorFieldType =
   | "text"
@@ -49,7 +53,7 @@ export type CollectionEditorProps = {
   allowDelete?: boolean;
 };
 
-function jsonForEditor(value: unknown) {
+function jsonForEditor(value: CmsAdminValue | undefined) {
   if (typeof value === "string") return value;
   if (value === undefined || value === null) return "";
   try {
@@ -59,7 +63,7 @@ function jsonForEditor(value: unknown) {
   }
 }
 
-function dateForEditor(value: unknown) {
+function dateForEditor(value: CmsAdminValue | undefined) {
   if (typeof value !== "string" || !value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -68,7 +72,7 @@ function dateForEditor(value: unknown) {
 }
 
 function normalizeRow(row: Row, fields: EditorField[]) {
-  const normalized = { ...row };
+  const normalized: Row = { ...row };
   for (const field of fields) {
     if (field.type === "json") normalized[field.key] = jsonForEditor(row[field.key]);
     if (field.type === "datetime") normalized[field.key] = dateForEditor(row[field.key]);
@@ -87,7 +91,7 @@ function payloadFromRow(row: Row, fields: EditorField[]) {
         payload[field.key] = null;
       } else {
         try {
-          payload[field.key] = JSON.parse(source) as unknown;
+          payload[field.key] = JSON.parse(source) as CmsAdminValue;
         } catch {
           throw new Error(`JSON غير صالح في حقل «${field.label}»`);
         }
@@ -100,7 +104,9 @@ function payloadFromRow(row: Row, fields: EditorField[]) {
       if (!source) payload[field.key] = null;
       else {
         const date = new Date(source);
-        if (Number.isNaN(date.getTime())) throw new Error(`تاريخ غير صالح في «${field.label}»`);
+        if (Number.isNaN(date.getTime())) {
+          throw new Error(`تاريخ غير صالح في «${field.label}»`);
+        }
         payload[field.key] = date.toISOString();
       }
       continue;
@@ -153,15 +159,20 @@ export function CollectionEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource]);
 
-  const setValue = (identity: string, key: string, value: unknown) => {
+  const setValue = (identity: string, key: string, value: CmsAdminValue) => {
     setRows((current) =>
-      current.map((row) => (String(row[identityKey]) === identity ? { ...row, [key]: value } : row)),
+      current.map((row) =>
+        String(row[identityKey]) === identity ? { ...row, [key]: value } : row,
+      ),
     );
   };
 
   const saveRow = async (row: Row) => {
     const identity = String(row[identityKey] ?? "");
-    if (!identity) return toast.error("تعذر تحديد العنصر للحفظ");
+    if (!identity) {
+      toast.error("تعذر تحديد العنصر للحفظ");
+      return;
+    }
 
     setSavingId(identity);
     try {
@@ -243,7 +254,10 @@ export function CollectionEditor({
           {rows.map((row) => {
             const identity = String(row[identityKey] ?? "");
             return (
-              <article key={identity} className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <article
+                key={identity}
+                className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
+              >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h2 className="min-w-0 truncate text-sm font-bold text-foreground">
                     {String(row[labelKey] ?? identity ?? "بدون عنوان")}
@@ -263,7 +277,12 @@ export function CollectionEditor({
                       حفظ
                     </Button>
                     {allowDelete ? (
-                      <Button size="sm" variant="ghost" onClick={() => void deleteRow(row)} aria-label="حذف">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => void deleteRow(row)}
+                        aria-label="حذف"
+                      >
                         <Trash2 className="size-4 text-destructive" />
                       </Button>
                     ) : null}
@@ -274,7 +293,11 @@ export function CollectionEditor({
                   {fields.map((field) => {
                     const value = row[field.key];
                     const inputId = `${resource}-${identity}-${field.key}`;
-                    const fullWidth = field.fullWidth || field.type === "textarea" || field.type === "json" || field.type === "image";
+                    const fullWidth =
+                      field.fullWidth ||
+                      field.type === "textarea" ||
+                      field.type === "json" ||
+                      field.type === "image";
                     return (
                       <div key={field.key} className={fullWidth ? "sm:col-span-2" : undefined}>
                         <Label htmlFor={inputId} className="text-xs text-muted-foreground">
@@ -297,7 +320,9 @@ export function CollectionEditor({
                             required={field.required}
                             value={String(value ?? "")}
                             placeholder={field.placeholder}
-                            onChange={(event) => setValue(identity, field.key, event.target.value)}
+                            onChange={(event) =>
+                              setValue(identity, field.key, event.target.value)
+                            }
                           />
                         ) : field.type === "select" ? (
                           <select
@@ -305,7 +330,9 @@ export function CollectionEditor({
                             className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
                             value={String(value ?? "")}
                             required={field.required}
-                            onChange={(event) => setValue(identity, field.key, event.target.value)}
+                            onChange={(event) =>
+                              setValue(identity, field.key, event.target.value)
+                            }
                           >
                             {(field.options ?? []).map((option) => (
                               <option key={option.value} value={option.value}>
@@ -321,7 +348,9 @@ export function CollectionEditor({
                                 value={String(value ?? "")}
                                 placeholder={field.placeholder ?? "رابط الصورة"}
                                 required={field.required}
-                                onChange={(event) => setValue(identity, field.key, event.target.value)}
+                                onChange={(event) =>
+                                  setValue(identity, field.key, event.target.value)
+                                }
                               />
                               <label className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent">
                                 {uploadingKey === `${identity}:${field.key}` ? (
@@ -332,7 +361,7 @@ export function CollectionEditor({
                                 رفع
                                 <input
                                   type="file"
-                                  accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+                                  accept="image/jpeg,image/png,image/webp,image/avif"
                                   className="hidden"
                                   onChange={(event) => {
                                     const file = event.target.files?.[0];
@@ -354,7 +383,13 @@ export function CollectionEditor({
                           <Input
                             id={inputId}
                             className="mt-1"
-                            type={field.type === "number" ? "number" : field.type === "datetime" ? "datetime-local" : "text"}
+                            type={
+                              field.type === "number"
+                                ? "number"
+                                : field.type === "datetime"
+                                  ? "datetime-local"
+                                  : "text"
+                            }
                             required={field.required}
                             value={String(value ?? "")}
                             placeholder={field.placeholder}
@@ -362,7 +397,9 @@ export function CollectionEditor({
                               setValue(
                                 identity,
                                 field.key,
-                                field.type === "number" ? Number(event.target.value) : event.target.value,
+                                field.type === "number"
+                                  ? Number(event.target.value)
+                                  : event.target.value,
                               )
                             }
                           />

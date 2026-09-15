@@ -75,7 +75,8 @@ export function DashboardShell({
           <div className="overflow-x-auto px-3 py-3 lg:sticky lg:top-16 lg:overflow-visible lg:p-4">
             <nav className="flex min-w-max gap-1 lg:min-w-0 lg:flex-col">
               {items.map((item) => {
-                const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+                const exact = "exact" in item && item.exact;
+                const active = exact ? pathname === item.href : pathname.startsWith(item.href);
                 const Icon = item.icon;
                 return (
                   <a

@@ -14,15 +14,16 @@ import {
   listCmsResource,
   updateCmsResource,
 } from "@/lib/cmsAdmin.functions";
-import type { CmsAdminRow } from "@/lib/cmsAdmin.server";
+import type { CmsAdminRow, CmsAdminValue } from "@/lib/cmsAdmin.server";
 
-type SettingRow = CmsAdminRow & {
+type SettingRow = {
+  [key: string]: CmsAdminValue | undefined;
   key?: string;
   label?: string | null;
   group_name?: string;
   value_type?: string;
   value_text?: string | null;
-  value_json?: unknown;
+  value_json?: CmsAdminValue;
   is_public?: boolean;
 };
 
@@ -39,11 +40,11 @@ function normalize(row: CmsAdminRow): SettingRow {
   return setting;
 }
 
-function payload(row: SettingRow) {
-  let valueJson = row.value_json ?? null;
+function payload(row: SettingRow): CmsAdminRow {
+  let valueJson: CmsAdminValue = row.value_json ?? null;
   if (row.value_type === "json" && typeof valueJson === "string") {
     try {
-      valueJson = valueJson.trim() ? JSON.parse(valueJson) : {};
+      valueJson = valueJson.trim() ? (JSON.parse(valueJson) as CmsAdminValue) : {};
     } catch {
       throw new Error(`JSON غير صالح في الإعداد ${row.key ?? ""}`);
     }
@@ -82,7 +83,7 @@ export function SettingsEditor() {
     void load();
   }, []);
 
-  const patch = (key: string, field: string, value: unknown) => {
+  const patch = (key: string, field: string, value: CmsAdminValue) => {
     setRows((current) =>
       current.map((row) => (row.key === key ? { ...row, [field]: value } : row)),
     );
@@ -94,7 +95,9 @@ export function SettingsEditor() {
     setSavingKey(key);
     try {
       const updated = await updateCmsResource("settings", key, payload(row));
-      setRows((current) => current.map((item) => (item.key === key ? normalize(updated) : item)));
+      setRows((current) =>
+        current.map((item) => (item.key === key ? normalize(updated) : item)),
+      );
       toast.success("تم حفظ الإعداد");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تعذر الحفظ");
@@ -104,8 +107,15 @@ export function SettingsEditor() {
   };
 
   const add = async () => {
-    const key = newKey.trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
-    if (!key) return toast.error("أدخل مفتاحاً صالحاً للإعداد");
+    const key = newKey
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    if (!key) {
+      toast.error("أدخل مفتاحاً صالحاً للإعداد");
+      return;
+    }
     try {
       const created = await createCmsResource("settings", {
         key,
@@ -179,7 +189,10 @@ export function SettingsEditor() {
           {rows.map((row) => {
             const key = row.key ?? "";
             return (
-              <article key={key} className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <article
+                key={key}
+                className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
+              >
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-bold">{row.label || key}</h2>
@@ -199,7 +212,12 @@ export function SettingsEditor() {
                       )}
                       حفظ
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => void remove(key)} aria-label="حذف">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => void remove(key)}
+                      aria-label="حذف"
+                    >
                       <Trash2 className="size-4 text-destructive" />
                     </Button>
                   </div>
@@ -266,7 +284,9 @@ export function SettingsEditor() {
                       <div className="mt-2 flex items-center gap-3">
                         <Switch
                           checked={String(row.value_text) === "true"}
-                          onCheckedChange={(checked) => patch(key, "value_text", checked ? "true" : "false")}
+                          onCheckedChange={(checked) =>
+                            patch(key, "value_text", checked ? "true" : "false")
+                          }
                         />
                         <span className="text-sm text-muted-foreground">
                           {String(row.value_text) === "true" ? "مفعّل" : "متوقف"}
@@ -293,7 +313,7 @@ export function SettingsEditor() {
                             رفع
                             <input
                               type="file"
-                              accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+                              accept="image/jpeg,image/png,image/webp,image/avif"
                               className="hidden"
                               onChange={(event) => {
                                 const file = event.target.files?.[0];

@@ -8,7 +8,14 @@ export type CmsAdminResource =
   | "navigation"
   | "brands"
   | "seo";
-export type CmsAdminRow = Record<string, unknown>;
+export type CmsAdminValue =
+  | string
+  | number
+  | boolean
+  | null
+  | CmsAdminValue[]
+  | { [key: string]: CmsAdminValue };
+export type CmsAdminRow = Record<string, CmsAdminValue>;
 
 export const CMS_RESOURCE_CONFIG = {
   settings: { table: "cms_site_settings", identity: "key", orderBy: ["group_name", "key"] },
@@ -53,7 +60,10 @@ export async function listCmsRows(resource: CmsAdminResource): Promise<CmsAdminR
   return (data ?? []) as unknown as CmsAdminRow[];
 }
 
-export async function createCmsRow(resource: CmsAdminResource, payload: CmsAdminRow) {
+export async function createCmsRow(
+  resource: CmsAdminResource,
+  payload: CmsAdminRow,
+): Promise<CmsAdminRow> {
   const config = CMS_RESOURCE_CONFIG[resource];
   const { data, error } = await supabaseAdmin
     .from(config.table as never)
@@ -68,7 +78,7 @@ export async function updateCmsRow(
   resource: CmsAdminResource,
   identity: string,
   payload: CmsAdminRow,
-) {
+): Promise<CmsAdminRow> {
   const config = CMS_RESOURCE_CONFIG[resource];
   const { data, error } = await supabaseAdmin
     .from(config.table as never)
@@ -94,7 +104,7 @@ export async function writeCmsAudit(input: {
   action: string;
   resource: CmsAdminResource | "media";
   entityId?: string | null;
-  details?: Record<string, unknown>;
+  details?: Record<string, CmsAdminValue>;
 }) {
   const { error } = await supabaseAdmin.from("cms_audit_log" as never).insert({
     actor_email: input.email ?? null,

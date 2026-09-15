@@ -2,7 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { CmsAdminResource, CmsAdminRow, DashboardRole } from "@/lib/cmsAdmin.server";
+import type {
+  CmsAdminResource,
+  CmsAdminRow,
+  CmsAdminValue,
+  DashboardRole,
+} from "@/lib/cmsAdmin.server";
 
 const resourceSchema = z.enum(["settings", "hero", "sections", "navigation", "brands", "seo"]);
 const payloadSchema = z.record(z.unknown());
@@ -66,7 +71,7 @@ function sanitizePayload(resource: CmsAdminResource, input: Record<string, unkno
   const allowed = allowedPayloadKeys[resource];
   const clean: CmsAdminRow = {};
   for (const [key, value] of Object.entries(input)) {
-    if (allowed.has(key)) clean[key] = value;
+    if (allowed.has(key)) clean[key] = value as CmsAdminValue;
   }
   return clean;
 }
