@@ -36,7 +36,10 @@ async function assertHomeLayout(page: Page, language: Language, theme: Theme) {
 for (const width of [320, 360, 390, 412, 768, 1024, 1440]) {
   for (const theme of ["light", "dark"] as const) {
     test(`homepage responsive ${width}px en ${theme}`, async ({ page, isMobile }, testInfo) => {
-      test.skip(isMobile, "The viewport matrix explicitly covers mobile, tablet and desktop widths");
+      test.skip(
+        isMobile,
+        "The viewport matrix explicitly covers mobile, tablet and desktop widths",
+      );
       await page.setViewportSize({ width, height: 900 });
       await seedPreferences(page, "en", theme);
       await page.goto("/");
@@ -49,7 +52,10 @@ for (const width of [320, 360, 390, 412, 768, 1024, 1440]) {
 for (const width of [390, 768, 1440]) {
   for (const theme of ["light", "dark"] as const) {
     test(`homepage responsive ${width}px ar ${theme}`, async ({ page, isMobile }) => {
-      test.skip(isMobile, "The viewport matrix explicitly covers mobile, tablet and desktop widths");
+      test.skip(
+        isMobile,
+        "The viewport matrix explicitly covers mobile, tablet and desktop widths",
+      );
       await page.setViewportSize({ width, height: 900 });
       await seedPreferences(page, "ar", theme);
       await page.goto("/");
