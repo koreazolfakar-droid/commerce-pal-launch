@@ -33,6 +33,18 @@ test("global crawler metadata stays indexable without fake hreflang alternates",
   assert.doesNotMatch(root, /hrefLang:/);
 });
 
+test("Arabic landing emits a single Arabic Open Graph locale", async () => {
+  const [arabic, seo] = await Promise.all([
+    source("src/routes/ar.tsx"),
+    source("src/lib/seo.ts"),
+  ]);
+
+  assert.match(arabic, /locale: "ar_LB"/);
+  assert.doesNotMatch(arabic, /property: "og:locale"/);
+  assert.match(seo, /locale = "en_LB"/);
+  assert.match(seo, /locale === "ar_LB" \? "en_LB" : "ar_LB"/);
+});
+
 test("Shopify SEO metadata is fetched and preferred for search snippets", async () => {
   const [documents, seo, collection, productRoute] = await Promise.all([
     source("src/lib/shopifyDocuments.ts"),
