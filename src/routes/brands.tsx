@@ -7,13 +7,7 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { buildShopifyBrands } from "@/lib/brandDirectory";
 import { useLanguage } from "@/lib/i18n";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
-import {
-  absoluteUrl,
-  breadcrumbJsonLd,
-  canonicalLink,
-  jsonLd,
-  socialMeta,
-} from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/brands")({
