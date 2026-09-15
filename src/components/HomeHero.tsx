@@ -119,18 +119,25 @@ export function HomeHero({
             data-testid="home-hero-media"
             className="absolute inset-0 z-[1] block overflow-hidden"
           >
-            <img
-              key={shopifySlide.id}
-              src={cdnImage(shopifyImage.url, 1800)}
-              srcSet={cdnSrcSet(shopifyImage.url, 1800)}
-              sizes="(max-width: 639px) calc(100vw - 1.5rem), (min-width: 1280px) 1280px, 100vw"
-              alt={shopifyImage.altText ?? shopifySlide.title ?? "Space Call"}
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-              draggable={false}
-              className="absolute inset-0 h-full w-full object-cover object-center"
-            />
+            <picture>
+              <source
+                media="(max-width: 639px)"
+                srcSet={`${cdnImage(shopifyImage.url, 480)} 480w, ${cdnImage(shopifyImage.url, 640)} 640w`}
+                sizes="calc(100vw - 1.5rem)"
+              />
+              <img
+                key={shopifySlide.id}
+                src={cdnImage(shopifyImage.url, 1440)}
+                srcSet={cdnSrcSet(shopifyImage.url, 1440)}
+                sizes="(min-width: 1280px) 1280px, 100vw"
+                alt={shopifyImage.altText ?? shopifySlide.title ?? "Space Call"}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                draggable={false}
+                className="absolute inset-0 h-full w-full object-cover object-center"
+              />
+            </picture>
           </Link>
         ) : (
           <div
