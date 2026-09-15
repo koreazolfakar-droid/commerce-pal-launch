@@ -97,7 +97,7 @@ export function CategorySection({
               category.slug,
               category.label,
             );
-            const imageUrl = cdnImage(artwork?.image?.url, 240);
+            const imageUrl = cdnImage(artwork?.image?.url, 128);
 
             return (
               <Link
