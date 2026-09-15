@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { fixtureRequests } from "./shopify-fixture.mjs";
+import { fixtureRequests } from "./shopify-fixture-runtime.mjs";
 
 // Run after `bun run build`. Calls the actual production SSR entry with isolated Shopify fixtures.
 const { default: handler } = await import("../.output/server/index.mjs");
