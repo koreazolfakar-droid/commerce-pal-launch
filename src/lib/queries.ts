@@ -110,6 +110,21 @@ export const vendorProductsQueryOptions = (vendor: string) =>
     staleTime: CATALOG_STALE_TIME,
   });
 
+/**
+ * Small homepage-only vendor payload. Brand shelves use this only when the
+ * bounded discovery catalog does not already contain four products, so the
+ * homepage stays fast without leaving valid Shopify brands empty.
+ */
+export const homeVendorProductsQueryOptions = (vendor: string) => {
+  const normalizedVendor = vendor.trim();
+  return queryOptions({
+    queryKey: ["shopify", "home-vendor-products", normalizedVendor],
+    queryFn: () => fetchProductsByVendor(normalizedVendor, 4),
+    enabled: Boolean(normalizedVendor),
+    staleTime: CATALOG_STALE_TIME,
+  });
+};
+
 /** Complete product list for a brand page; fetched only when that route is opened. */
 export const allVendorProductsQueryOptions = (vendor: string) =>
   queryOptions({
