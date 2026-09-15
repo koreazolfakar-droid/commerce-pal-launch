@@ -40,7 +40,8 @@ export const Route = createFileRoute("/collections/$handle")({
         ],
       };
     }
-    const collection = loaderData.collection as typeof loaderData.collection & CollectionSeoMetadata;
+    const collection = loaderData.collection as typeof loaderData.collection &
+      CollectionSeoMetadata;
     const collectionName = collection.title;
     const merchantSeoTitle = collection.seo?.title?.replace(/\s+/g, " ").trim();
     const title = merchantSeoTitle
@@ -51,7 +52,8 @@ export const Route = createFileRoute("/collections/$handle")({
     const rawDescription = collection.description?.trim() ?? "";
     const fallbackDescription = `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and secure Shopify checkout.`;
     const description = cleanMetaDescription(
-      collection.seo?.description?.trim() || (rawDescription.length >= 90 ? rawDescription : undefined),
+      collection.seo?.description?.trim() ||
+        (rawDescription.length >= 90 ? rawDescription : undefined),
       fallbackDescription,
     );
     const image = collection.image?.url;
