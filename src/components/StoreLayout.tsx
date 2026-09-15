@@ -6,7 +6,6 @@ import { DeferredCartDrawer } from "@/components/DeferredCartDrawer";
 import { DeferredDesktopHeader } from "@/components/DeferredDesktopHeader";
 import { MobileTopBar } from "@/components/MobileTopBar";
 import { SiteFooter } from "@/components/SiteFooter";
-import "../dark-black.css";
 import "../ui-overhaul.css";
 import "../design-consistency.css";
 
