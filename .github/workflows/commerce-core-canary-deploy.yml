@@ -2,12 +2,6 @@ name: Commerce Core Canary Deploy
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - rust-core-step-4b-cloudflare
-    paths:
-      - "services/commerce-core/**"
-      - ".github/workflows/commerce-core-canary-deploy.yml"
 
 permissions:
   contents: read
