@@ -41,7 +41,7 @@ jobs:
       - name: Backend lint
         shell: bash
         run: |
-          files=(src/lib/shopify.ts)
+          files=(src/lib/shopify.ts e2e/storefront-consistency.test.mjs)
           if [ -f src/lib/shopifyTransport.ts ]; then
             files+=(src/lib/shopifyTransport.ts)
           fi
