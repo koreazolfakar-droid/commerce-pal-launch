@@ -14,6 +14,8 @@ test("sitemap paginates Shopify and uses meaningful lastmod data", async () => {
 
   assert.match(sitemap, /storefrontApiRequest\(PRODUCTS_QUERY/);
   assert.match(sitemap, /pageInfo\?\.hasNextPage/);
+  assert.match(sitemap, /isIndexableProduct/);
+  assert.match(sitemap, /price > 0/);
   assert.match(sitemap, /productLastmod/);
   assert.match(sitemap, /categoryLastmods/);
   assert.match(sitemap, /brandLastmods/);
@@ -67,13 +69,14 @@ test("product structured data exposes Google product and variant-accurate offer 
   assert.match(productRoute, /jsonLd\(productJsonLd\(product\)\)/);
 });
 
-test("brand and category directories expose crawlable social and list metadata", async () => {
-  const [brands, categories] = await Promise.all([
+test("brand, category and collection directories expose crawlable list metadata", async () => {
+  const [brands, categories, collections] = await Promise.all([
     source("src/routes/brands.tsx"),
     source("src/routes/categories.tsx"),
+    source("src/routes/collections.index.tsx"),
   ]);
 
-  for (const page of [brands, categories]) {
+  for (const page of [brands, categories, collections]) {
     assert.match(page, /max-image-preview:large/);
     assert.match(page, /socialMeta/);
     assert.match(page, /breadcrumbJsonLd/);
@@ -83,6 +86,7 @@ test("brand and category directories expose crawlable social and list metadata",
 
   assert.match(brands, /Phone & Electronics Brands in Lebanon/);
   assert.match(categories, /Phone & Electronics Categories in Lebanon/);
+  assert.match(collections, /Electronics Collections in Lebanon/);
 });
 
 test("header account and tracking links stay first-party", async () => {
