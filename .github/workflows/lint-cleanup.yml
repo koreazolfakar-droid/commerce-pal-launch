@@ -61,16 +61,26 @@ jobs:
 
       - name: Apply remaining safe lint fixes
         run: |
-          bunx eslint --fix src/integrations/supabase/previewAuthStorage.ts
           python3 - <<'PY'
           from pathlib import Path
-          path = Path("supabase/functions/public-cms/index.ts")
-          text = path.read_text()
+
+          preview = Path("src/integrations/supabase/previewAuthStorage.ts")
+          text = preview.read_text()
+          declaration = "      let timer: ReturnType<typeof setTimeout>;\n"
+          assignment = "      timer = setTimeout(() => finish(null), TIMEOUT);\n"
+          if declaration not in text or assignment not in text:
+              raise SystemExit("Expected timer pattern was not found")
+          text = text.replace(declaration, "", 1)
+          text = text.replace(assignment, "      const timer = setTimeout(() => finish(null), TIMEOUT);\n", 1)
+          preview.write_text(text)
+
+          public_cms = Path("supabase/functions/public-cms/index.ts")
+          text = public_cms.read_text()
           old = "    } catch {}\n"
           new = "    } catch {\n      // Ignore malformed secret JSON and fall back to SUPABASE_SERVICE_ROLE_KEY.\n    }\n"
           if old not in text:
               raise SystemExit("Expected empty catch block was not found")
-          path.write_text(text.replace(old, new, 1))
+          public_cms.write_text(text.replace(old, new, 1))
           PY
           bunx prettier --write \
             src/integrations/supabase/previewAuthStorage.ts \
