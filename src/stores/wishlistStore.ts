@@ -22,6 +22,7 @@ export const useWishlistStore = create<WishlistState>()(
     {
       name: "space-cell-wishlist",
       storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
     },
   ),
 );
