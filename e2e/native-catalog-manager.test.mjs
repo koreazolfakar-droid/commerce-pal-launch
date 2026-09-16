@@ -28,10 +28,15 @@ test("native catalog manager never writes to Shopify", () => {
 test("existing products are archived instead of permanently deleted", () => {
   assert.match(manager, /status:\s*"archived"/);
   const archiveStart = manager.indexOf("const archiveProduct");
-  const archiveFunction = manager.slice(archiveStart);
   assert.ok(archiveStart >= 0);
-  assert.doesNotMatch(archiveFunction, /\.delete\(\)/);
-  assert.match(archiveFunction, /\.update\(/);
+  const archiveEnd = manager.indexOf("const addVariant", archiveStart);
+  const archiveFunction = manager.slice(archiveStart, archiveEnd >= 0 ? archiveEnd : undefined);
+  assert.match(archiveFunction, /\.from\("store_products" as never\)/);
+  assert.match(archiveFunction, /\.update\(\{ status: "archived", published_at: null \} as never\)/);
+  assert.doesNotMatch(
+    manager,
+    /\.from\("store_products" as never\)[\s\S]{0,160}\.delete\(\)/,
+  );
 });
 
 test("catalog audit migration is additive and staff-readable", () => {
