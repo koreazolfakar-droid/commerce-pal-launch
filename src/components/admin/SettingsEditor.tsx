@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { uploadMedia } from "@/lib/adminMedia";
+import { useDashboardLanguage } from "@/lib/dashboardI18n";
 
 const SUGGESTED_KEYS = [
   "site_name",
@@ -43,6 +44,7 @@ function settingValue(row: { value_type: string; value_text: string | null; valu
 
 /** Editor for the live cms_site_settings schema used by public-cms. */
 export function SettingsEditor() {
+  const { text } = useDashboardLanguage();
   const [rows, setRows] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export function SettingsEditor() {
   const save = async (row: Setting, index: number) => {
     const key = row.key.trim();
     if (!key) {
-      toast.error("أدخل اسم الإعداد");
+      toast.error(text("أدخل اسم الإعداد", "Enter a setting key"));
       return;
     }
 
@@ -98,7 +100,7 @@ export function SettingsEditor() {
       try {
         valueJson = JSON.parse(row.value || "{}") as Json;
       } catch {
-        toast.error("تحقق من صيغة JSON قبل الحفظ");
+        toast.error(text("تحقق من صيغة JSON قبل الحفظ", "Check the JSON format before saving"));
         return;
       }
     }
@@ -127,7 +129,7 @@ export function SettingsEditor() {
 
     patchRow(index, { originalKey: key, key });
     await refreshCms();
-    toast.success("تم الحفظ");
+    toast.success(text("تم الحفظ", "Saved"));
   };
 
   const remove = async (row: Setting) => {
@@ -136,7 +138,7 @@ export function SettingsEditor() {
       setRows((current) => current.filter((item) => item !== row));
       return;
     }
-    if (!window.confirm("حذف هذا الإعداد؟")) return;
+    if (!window.confirm(text("حذف هذا الإعداد؟", "Delete this setting?"))) return;
     const { error } = await supabase.from("cms_site_settings").delete().eq("key", key);
     if (error) {
       toast.error(error.message);
@@ -144,7 +146,7 @@ export function SettingsEditor() {
     }
     setRows((current) => current.filter((item) => item !== row));
     await refreshCms();
-    toast.success("تم الحذف");
+    toast.success(text("تم الحذف", "Deleted"));
   };
 
   const upload = async (row: Setting, index: number, file: File) => {
@@ -153,9 +155,13 @@ export function SettingsEditor() {
     try {
       const url = await uploadMedia(file, "settings");
       patchRow(index, { value: url, valueType: "text" });
-      toast.success("تم الرفع، اضغط حفظ");
+      toast.success(text("تم الرفع، اضغط حفظ", "Uploaded. Click Save."));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذّر رفع الصورة");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : text("تعذّر رفع الصورة", "Image upload failed"),
+      );
     } finally {
       setUploadingKey(null);
     }
@@ -165,12 +171,17 @@ export function SettingsEditor() {
     <section className="space-y-5">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold text-muted-foreground">Store Settings</p>
+          <p className="text-[11px] font-semibold text-muted-foreground">
+            {text("إعدادات المتجر", "Store Settings")}
+          </p>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">
-            إعدادات الموقع
+            {text("إعدادات الموقع", "Site settings")}
           </h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
-            إعدادات الواجهة العامة، واتساب، الإعلانات، ومحتوى الصفحة الرئيسية.
+            {text(
+              "إعدادات الواجهة العامة، واتساب، الإعلانات، ومحتوى الصفحة الرئيسية.",
+              "Public storefront, WhatsApp, announcements and homepage settings.",
+            )}
           </p>
         </div>
         <Button
@@ -191,18 +202,22 @@ export function SettingsEditor() {
             ])
           }
         >
-          <Plus className="me-1.5 size-4" /> إضافة إعداد
+          <Plus className="me-1.5 size-4" /> {text("إضافة إعداد", "Add setting")}
         </Button>
       </header>
 
       {loading ? (
         <div className="flex min-h-32 items-center justify-center gap-2 rounded-2xl border border-border/70 bg-card text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> جاري التحميل…
+          <Loader2 className="size-4 animate-spin" /> {text("جاري التحميل…", "Loading…")}
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-          <p className="text-sm font-bold text-foreground">لا توجد إعدادات بعد</p>
-          <p className="mt-1 text-xs text-muted-foreground">أضف أول إعداد للبدء.</p>
+          <p className="text-sm font-bold text-foreground">
+            {text("لا توجد إعدادات بعد", "No settings yet")}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {text("أضف أول إعداد للبدء.", "Add your first setting to get started.")}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -215,9 +230,11 @@ export function SettingsEditor() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold text-muted-foreground">Setting</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground">
+                      {text("إعداد", "Setting")}
+                    </p>
                     <h2 className="mt-0.5 truncate text-sm font-black text-foreground">
-                      {row.label || row.key || "إعداد جديد"}
+                      {row.label || row.key || text("إعداد جديد", "New setting")}
                     </h2>
                   </div>
                   <div className="flex items-center gap-2">
@@ -233,14 +250,14 @@ export function SettingsEditor() {
                       ) : (
                         <Save className="me-1.5 size-3.5" />
                       )}
-                      حفظ
+                      {text("حفظ", "Save")}
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="size-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => void remove(row)}
-                      aria-label="حذف الإعداد"
+                      aria-label={text("حذف الإعداد", "Delete setting")}
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -250,7 +267,7 @@ export function SettingsEditor() {
                 <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-4">
                   <div>
                     <Label className="text-[11px] font-semibold text-muted-foreground">
-                      المفتاح
+                      {text("المفتاح", "Key")}
                     </Label>
                     <Input
                       className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
@@ -261,7 +278,7 @@ export function SettingsEditor() {
                   </div>
                   <div>
                     <Label className="text-[11px] font-semibold text-muted-foreground">
-                      الاسم الظاهر
+                      {text("الاسم الظاهر", "Display label")}
                     </Label>
                     <Input
                       className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
@@ -271,7 +288,7 @@ export function SettingsEditor() {
                   </div>
                   <div>
                     <Label className="text-[11px] font-semibold text-muted-foreground">
-                      المجموعة
+                      {text("المجموعة", "Group")}
                     </Label>
                     <Input
                       className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
@@ -281,7 +298,7 @@ export function SettingsEditor() {
                   </div>
                   <div>
                     <Label className="text-[11px] font-semibold text-muted-foreground">
-                      نوع القيمة
+                      {text("نوع القيمة", "Value type")}
                     </Label>
                     <select
                       className="mt-1.5 h-11 w-full rounded-xl border border-border/70 bg-muted/20 px-3 text-xs font-medium outline-none"
@@ -299,12 +316,16 @@ export function SettingsEditor() {
 
                   <div className="sm:col-span-2 xl:col-span-4">
                     <Label className="text-[11px] font-semibold text-muted-foreground">
-                      القيمة
+                      {text("القيمة", "Value")}
                     </Label>
                     <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-center">
                       {row.valueType === "boolean" ? (
                         <label className="flex min-h-11 flex-1 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-medium">
-                          <span>{row.value === "true" ? "مفعّل" : "غير مفعّل"}</span>
+                          <span>
+                            {row.value === "true"
+                              ? text("مفعّل", "Enabled")
+                              : text("غير مفعّل", "Disabled")}
+                          </span>
                           <Switch
                             checked={row.value === "true"}
                             onCheckedChange={(checked) =>
@@ -332,7 +353,7 @@ export function SettingsEditor() {
                         ) : (
                           <Upload className="size-4" />
                         )}
-                        رفع ملف
+                        {text("رفع ملف", "Upload file")}
                         <input
                           type="file"
                           accept="image/*"
@@ -350,9 +371,9 @@ export function SettingsEditor() {
                   <div className="sm:col-span-2 xl:col-span-4">
                     <label className="flex min-h-11 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-medium text-foreground">
                       <span>
-                        متاح للواجهة العامة
+                        {text("متاح للواجهة العامة", "Available to storefront")}
                         <span className="ms-2 text-[10px] font-normal text-muted-foreground">
-                          يظهر عبر public CMS
+                          {text("يظهر عبر public CMS", "Exposed through public CMS")}
                         </span>
                       </span>
                       <Switch
