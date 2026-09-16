@@ -33,12 +33,21 @@ declare
 begin
   if tg_table_name = 'store_products' then
     v_entity_type := 'product';
-    v_product_id := coalesce(new.id, old.id);
+    if tg_op = 'DELETE' then
+      v_product_id := old.id;
+    else
+      v_product_id := new.id;
+    end if;
     v_variant_id := null;
   else
     v_entity_type := 'variant';
-    v_product_id := coalesce(new.product_id, old.product_id);
-    v_variant_id := coalesce(new.id, old.id);
+    if tg_op = 'DELETE' then
+      v_product_id := old.product_id;
+      v_variant_id := old.id;
+    else
+      v_product_id := new.product_id;
+      v_variant_id := new.id;
+    end if;
   end if;
 
   if tg_op = 'UPDATE' and to_jsonb(old) = to_jsonb(new) then
@@ -63,7 +72,10 @@ begin
     auth.uid()
   );
 
-  return coalesce(new, old);
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
 end;
 $$;
 
