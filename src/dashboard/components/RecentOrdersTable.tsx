@@ -23,9 +23,20 @@ const STATUS_LABELS: Record<DashboardOrderStatus, { en: string; ar: string }> = 
   pending: { en: "Pending", ar: "قيد الانتظار" },
 };
 
-export function OrderStatusBadge({ status, language }: { status: DashboardOrderStatus; language: "ar" | "en" }) {
+export function OrderStatusBadge({
+  status,
+  language,
+}: {
+  status: DashboardOrderStatus;
+  language: "ar" | "en";
+}) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold", STATUS_STYLES[status])}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold",
+        STATUS_STYLES[status],
+      )}
+    >
       <span className="size-1.5 rounded-full bg-current opacity-80" />
       {STATUS_LABELS[status][language]}
     </span>
@@ -33,12 +44,14 @@ export function OrderStatusBadge({ status, language }: { status: DashboardOrderS
 }
 
 function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "SC";
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "SC"
+  );
 }
 
 function dateLabel(value: string, language: "ar" | "en") {
@@ -61,14 +74,21 @@ export function RecentOrdersTable({
   return (
     <DashboardCard className="overflow-hidden">
       <div className="flex items-center justify-between gap-4 border-b border-border/60 px-4 py-4 sm:px-5">
-        <h2 className="text-[14px] font-black">{language === "ar" ? "أحدث الطلبات" : "Recent Orders"}</h2>
-        <Link to="/dashboard/orders" className="text-[11px] font-bold text-primary hover:underline">
+        <h2 className="text-[14px] font-black">
+          {language === "ar" ? "أحدث الطلبات" : "Recent Orders"}
+        </h2>
+        <Link
+          to="/dashboard/orders"
+          className="text-[11px] font-bold text-primary hover:underline"
+        >
           {language === "ar" ? "عرض الكل ←" : "View All →"}
         </Link>
       </div>
 
       {orders.length === 0 ? (
-        <div className="grid min-h-52 place-items-center p-6 text-center text-xs text-muted-foreground">{emptyLabel}</div>
+        <div className="admin-empty-state m-4 grid place-items-center px-6 text-center text-xs text-muted-foreground sm:m-5">
+          {emptyLabel}
+        </div>
       ) : (
         <>
           <div className="hidden overflow-x-auto md:block">
@@ -76,27 +96,49 @@ export function RecentOrdersTable({
               <thead className="bg-muted/25 text-[10px] uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 text-start font-bold">#</th>
-                  <th className="px-4 py-3 text-start font-bold">{language === "ar" ? "العميل" : "Customer"}</th>
-                  <th className="px-4 py-3 text-start font-bold">{language === "ar" ? "المنتج" : "Items"}</th>
-                  <th className="px-4 py-3 text-start font-bold">{language === "ar" ? "الإجمالي" : "Total"}</th>
-                  <th className="px-4 py-3 text-start font-bold">{language === "ar" ? "الحالة" : "Status"}</th>
-                  <th className="px-4 py-3 text-start font-bold">{language === "ar" ? "التاريخ" : "Date"}</th>
+                  <th className="px-4 py-3 text-start font-bold">
+                    {language === "ar" ? "العميل" : "Customer"}
+                  </th>
+                  <th className="px-4 py-3 text-start font-bold">
+                    {language === "ar" ? "المنتج" : "Items"}
+                  </th>
+                  <th className="px-4 py-3 text-start font-bold">
+                    {language === "ar" ? "الإجمالي" : "Total"}
+                  </th>
+                  <th className="px-4 py-3 text-start font-bold">
+                    {language === "ar" ? "الحالة" : "Status"}
+                  </th>
+                  <th className="px-4 py-3 text-start font-bold">
+                    {language === "ar" ? "التاريخ" : "Date"}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
                 {orders.map((order) => (
                   <tr key={order.id} className="transition-colors hover:bg-muted/15">
-                    <td className="px-4 py-3 font-bold text-muted-foreground">#SC{order.orderNumber}</td>
+                    <td className="px-4 py-3 font-bold text-muted-foreground">
+                      #SC{order.orderNumber}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[9px] font-black text-primary">{initials(order.customer)}</span>
+                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-[9px] font-black text-primary">
+                          {initials(order.customer)}
+                        </span>
                         <span className="max-w-40 truncate font-semibold">{order.customer}</span>
                       </div>
                     </td>
-                    <td className="max-w-[230px] truncate px-4 py-3 text-muted-foreground">{order.item}</td>
-                    <td className="px-4 py-3 font-black">{formatPrice(order.total, order.currency)}</td>
-                    <td className="px-4 py-3"><OrderStatusBadge status={order.status} language={language} /></td>
-                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{dateLabel(order.date, language)}</td>
+                    <td className="max-w-[230px] truncate px-4 py-3 text-muted-foreground">
+                      {order.item}
+                    </td>
+                    <td className="px-4 py-3 font-black">
+                      {formatPrice(order.total, order.currency)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <OrderStatusBadge status={order.status} language={language} />
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                      {dateLabel(order.date, language)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -108,10 +150,14 @@ export function RecentOrdersTable({
               <div key={order.id} className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-[9px] font-black text-primary">{initials(order.customer)}</span>
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-[9px] font-black text-primary">
+                      {initials(order.customer)}
+                    </span>
                     <div className="min-w-0">
                       <p className="truncate text-xs font-bold">{order.customer}</p>
-                      <p className="mt-0.5 text-[10px] text-muted-foreground">#SC{order.orderNumber}</p>
+                      <p className="mt-0.5 text-[10px] text-muted-foreground">
+                        #SC{order.orderNumber}
+                      </p>
                     </div>
                   </div>
                   <OrderStatusBadge status={order.status} language={language} />
