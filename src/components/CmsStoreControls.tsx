@@ -14,10 +14,7 @@ import {
 } from "lucide-react";
 
 import type { CmsNavigationItem } from "@/lib/cms";
-import {
-  cmsLocalizedSetting,
-  localizeNavigationItem,
-} from "@/lib/cms";
+import { cmsLocalizedSetting, localizeNavigationItem } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -109,15 +106,13 @@ export function CmsTrustStrip() {
       .map((item) => localizeNavigationItem(item, language))
       .filter((item): item is CmsNavigationItem => Boolean(item))
       .sort((a, b) => a.sort_order - b.sort_order) ?? [];
-  const freeShipping = cms
-    ? cmsLocalizedSetting(cms, "free_shipping_note", language)
-    : undefined;
+  const freeShipping = cms ? cmsLocalizedSetting(cms, "free_shipping_note", language) : undefined;
   const supportHours = cms ? cmsLocalizedSetting(cms, "support_hours", language) : undefined;
   const whatsapp = cms?.settings["whatsapp_number"];
   const whatsappDigits = typeof whatsapp === "string" ? whatsapp.replace(/\D/g, "") : "";
 
-  const utilityNotes = [freeShipping, supportHours].filter(
-    (value): value is string => Boolean(value),
+  const utilityNotes = [freeShipping, supportHours].filter((value): value is string =>
+    Boolean(value),
   );
 
   if (!items.length && !utilityNotes.length && !whatsappDigits) return null;
