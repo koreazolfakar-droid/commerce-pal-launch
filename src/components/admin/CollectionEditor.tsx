@@ -11,7 +11,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadMedia } from "@/lib/adminMedia";
 
 export type EditorFieldType =
-  "text" | "textarea" | "number" | "boolean" | "select" | "image" | "json";
+  | "text"
+  | "textarea"
+  | "number"
+  | "boolean"
+  | "select"
+  | "image"
+  | "json";
 
 export type EditorField = {
   key: string;
@@ -24,6 +30,7 @@ export type EditorField = {
 
 type Row = Record<string, unknown>;
 const EDITOR_KEY = "__editorKey";
+const IS_DRAFT = "__isDraft";
 
 export type CollectionEditorProps = {
   table: string;
@@ -45,10 +52,12 @@ function displayJson(value: unknown) {
   }
 }
 
-/**
- * Reusable dashboard editor: lists, creates, updates and deletes rows for one
- * content table. Access is enforced by the database policies, not the UI.
- */
+function missingRequired(field: EditorField, value: unknown) {
+  if (!field.required) return false;
+  if (value === null || value === undefined) return true;
+  return typeof value === "string" ? value.trim().length === 0 : false;
+}
+
 export function CollectionEditor({
   table,
   title,
@@ -63,7 +72,6 @@ export function CollectionEditor({
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
-
   const client = useMemo(() => supabase, []);
 
   const load = async () => {
@@ -72,11 +80,18 @@ export function CollectionEditor({
       .from(table as never)
       .select("*")
       .order(orderBy, { ascending: true });
-    if (error) toast.error(error.message);
+
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+
     setRows(
       ((data ?? []) as Row[]).map((row) => ({
         ...row,
         [EDITOR_KEY]: String(row[idKey] ?? ""),
+        [IS_DRAFT]: false,
       })),
     );
     setLoading(false);
@@ -95,62 +110,95 @@ export function CollectionEditor({
     );
   };
 
-  const saveRow = async (row: Row) => {
-    const editorKey = String(row[EDITOR_KEY]);
+  const addRow = () => {
+    const editorKey = `draft-${crypto.randomUUID()}`;
+    setRows((current) => [
+      { ...newRow, [EDITOR_KEY]: editorKey, [IS_DRAFT]: true },
+      ...current,
+    ]);
+  };
+
+  const buildPayload = (row: Row) => {
     const payload: Row = {};
 
-    try {
-      for (const field of fields) {
-        const value = row[field.key] ?? null;
-        payload[field.key] =
-          field.type === "json" && typeof value === "string" ? JSON.parse(value || "{}") : value;
+    for (const field of fields) {
+      const value = row[field.key] ?? null;
+      if (missingRequired(field, value)) {
+        throw new Error(`required:${field.label}`);
       }
-    } catch {
-      toast.error("تحقق من صيغة JSON قبل الحفظ");
+
+      if (field.type === "json" && typeof value === "string") {
+        payload[field.key] = JSON.parse(value || "{}");
+      } else {
+        payload[field.key] = value;
+      }
+    }
+
+    return payload;
+  };
+
+  const saveRow = async (row: Row) => {
+    const editorKey = String(row[EDITOR_KEY]);
+    let payload: Row;
+
+    try {
+      payload = buildPayload(row);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      if (message.startsWith("required:")) {
+        toast.error(`الحقل مطلوب: ${message.slice("required:".length)}`);
+      } else {
+        toast.error("تحقق من صيغة JSON قبل الحفظ");
+      }
       return;
     }
 
     setSavingId(editorKey);
-    const { error } = await client
-      .from(table as never)
-      .update(payload as never)
-      .eq(idKey, editorKey);
+    const isDraft = Boolean(row[IS_DRAFT]);
+
+    const result = isDraft
+      ? await client.from(table as never).insert(payload as never).select("*").single()
+      : await client
+          .from(table as never)
+          .update(payload as never)
+          .eq(idKey, editorKey)
+          .select("*")
+          .single();
+
     setSavingId(null);
-    if (error) {
-      toast.error(error.message);
+
+    if (result.error) {
+      toast.error(result.error.message);
       return;
     }
 
-    const nextKey = String(row[idKey] ?? editorKey);
+    const saved = result.data as Row;
+    const nextEditorKey = String(saved[idKey] ?? row[idKey] ?? editorKey);
     setRows((current) =>
       current.map((item) =>
-        String(item[EDITOR_KEY]) === editorKey ? { ...item, [EDITOR_KEY]: nextKey } : item,
+        String(item[EDITOR_KEY]) === editorKey
+          ? { ...saved, [EDITOR_KEY]: nextEditorKey, [IS_DRAFT]: false }
+          : item,
       ),
     );
-    toast.success("تم الحفظ");
-  };
-
-  const addRow = async () => {
-    const { error } = await client.from(table as never).insert(newRow as never);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("تمت الإضافة");
-    await load();
+    toast.success(isDraft ? "تمت الإضافة والحفظ" : "تم الحفظ");
   };
 
   const deleteRow = async (row: Row) => {
-    if (!window.confirm("هل تريد الحذف نهائياً؟")) return;
     const editorKey = String(row[EDITOR_KEY]);
-    const { error } = await client
-      .from(table as never)
-      .delete()
-      .eq(idKey, editorKey);
+
+    if (row[IS_DRAFT]) {
+      setRows((current) => current.filter((item) => String(item[EDITOR_KEY]) !== editorKey));
+      return;
+    }
+
+    if (!window.confirm("هل تريد الحذف نهائياً؟")) return;
+    const { error } = await client.from(table as never).delete().eq(idKey, editorKey);
     if (error) {
       toast.error(error.message);
       return;
     }
+
     setRows((current) => current.filter((item) => String(item[EDITOR_KEY]) !== editorKey));
     toast.success("تم الحذف");
   };
@@ -181,7 +229,7 @@ export function CollectionEditor({
           ) : null}
         </div>
         <Button
-          onClick={() => void addRow()}
+          onClick={addRow}
           size="sm"
           className="min-h-10 rounded-xl bg-foreground px-4 text-background hover:bg-foreground/90"
         >
@@ -202,6 +250,7 @@ export function CollectionEditor({
         <div className="space-y-4">
           {rows.map((row, index) => {
             const editorKey = String(row[EDITOR_KEY]);
+            const draft = Boolean(row[IS_DRAFT]);
             return (
               <article
                 key={editorKey}
@@ -209,9 +258,11 @@ export function CollectionEditor({
               >
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold text-muted-foreground">Item {index + 1}</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground">
+                      {draft ? "Draft" : `Item ${index + 1}`}
+                    </p>
                     <h2 className="mt-0.5 truncate text-sm font-black text-foreground">
-                      {String(row[labelKey] ?? "بدون عنوان")}
+                      {String(row[labelKey] || "بدون عنوان")}
                     </h2>
                   </div>
                   <div className="flex items-center gap-2">
@@ -234,7 +285,7 @@ export function CollectionEditor({
                       variant="ghost"
                       className="size-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => void deleteRow(row)}
-                      aria-label="حذف العنصر"
+                      aria-label={draft ? "إلغاء العنصر الجديد" : "حذف العنصر"}
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -249,7 +300,7 @@ export function CollectionEditor({
                     return (
                       <div key={field.key} className={wide ? "lg:col-span-2" : undefined}>
                         <Label htmlFor={inputId} className="text-[11px] font-semibold text-muted-foreground">
-                          {field.label}
+                          {field.label}{field.required ? " *" : ""}
                         </Label>
 
                         {field.type === "boolean" ? (
@@ -279,9 +330,7 @@ export function CollectionEditor({
                             onChange={(event) => setValue(editorKey, field.key, event.target.value)}
                           >
                             {(field.options ?? []).map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
+                              <option key={option.value} value={option.value}>{option.label}</option>
                             ))}
                           </select>
                         ) : field.type === "image" ? (
@@ -295,11 +344,7 @@ export function CollectionEditor({
                                 onChange={(event) => setValue(editorKey, field.key, event.target.value)}
                               />
                               <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-bold transition hover:bg-muted">
-                                {uploadingKey === `${editorKey}:${field.key}` ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Upload className="size-4" />
-                                )}
+                                {uploadingKey === `${editorKey}:${field.key}` ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
                                 رفع صورة
                                 <input
                                   type="file"
@@ -315,11 +360,7 @@ export function CollectionEditor({
                             </div>
                             {value ? (
                               <div className="mt-3 overflow-hidden rounded-xl border border-border/60 bg-white p-2">
-                                <img
-                                  src={String(value)}
-                                  alt=""
-                                  className="h-28 w-full object-contain"
-                                />
+                                <img src={String(value)} alt="" className="h-28 w-full object-contain" />
                               </div>
                             ) : null}
                           </div>
@@ -334,9 +375,7 @@ export function CollectionEditor({
                               setValue(
                                 editorKey,
                                 field.key,
-                                field.type === "number"
-                                  ? Number(event.target.value)
-                                  : event.target.value,
+                                field.type === "number" ? Number(event.target.value) : event.target.value,
                               )
                             }
                           />
