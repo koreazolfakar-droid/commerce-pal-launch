@@ -23,16 +23,23 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/dashboard` },
         });
         if (error) throw error;
-        toast.success("تم إنشاء الحساب. سجّل الدخول لإكمال إعداد الإدارة.");
-        setMode("signin");
+
+        if (data.session) {
+          toast.success("تم إنشاء الحساب. أكمل إعداد صلاحية المدير.");
+          await onSignedIn();
+        } else {
+          toast.success("تم إنشاء الحساب. افحص بريدك لتأكيد الحساب ثم سجّل الدخول.");
+          setMode("signin");
+        }
         return;
       }
+
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       await onSignedIn();
