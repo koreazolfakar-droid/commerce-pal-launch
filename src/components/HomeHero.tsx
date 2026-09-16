@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
-import type { CmsHeroSlide } from "@/lib/cms";
+import { localizeHeroSlide, type CmsHeroSlide } from "@/lib/cms";
 import { homepageHeroCollections } from "@/lib/homeMerchandising";
 import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { useLanguage } from "@/lib/i18n";
@@ -54,8 +54,12 @@ export function HomeHero({
     () => homepageHeroCollections(configuredCollections),
     [configuredCollections],
   );
-  const useCmsSlides = cmsHeroSlides.length > 0;
-  const slideCount = useCmsSlides ? cmsHeroSlides.length : shopifySlides.length;
+  const localizedCmsSlides = useMemo(
+    () => cmsHeroSlides.map((slide) => localizeHeroSlide(slide, language)),
+    [cmsHeroSlides, language],
+  );
+  const useCmsSlides = localizedCmsSlides.length > 0;
+  const slideCount = useCmsSlides ? localizedCmsSlides.length : shopifySlides.length;
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -73,7 +77,9 @@ export function HomeHero({
     return () => window.clearInterval(timer);
   }, [slideCount]);
 
-  const cmsSlide = useCmsSlides ? (cmsHeroSlides[activeIndex] ?? cmsHeroSlides[0]) : undefined;
+  const cmsSlide = useCmsSlides
+    ? (localizedCmsSlides[activeIndex] ?? localizedCmsSlides[0])
+    : undefined;
   const shopifySlide = !useCmsSlides ? (shopifySlides[activeIndex] ?? shopifySlides[0]) : undefined;
   const shopifyImage = shopifySlide?.image;
   const cmsHref = cmsSlide ? cmsSlideHref(cmsSlide) : null;
