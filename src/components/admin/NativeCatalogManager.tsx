@@ -46,6 +46,11 @@ type ProductRow = {
   updated_at: string;
 };
 
+type VariantOptions = Record<string, unknown> & {
+  color?: string;
+  storage?: string;
+};
+
 type VariantRow = {
   id: string;
   product_id: string;
@@ -57,7 +62,7 @@ type VariantRow = {
   stock_quantity: number;
   track_inventory: boolean;
   allow_backorder: boolean;
-  options: Record<string, unknown>;
+  options: VariantOptions;
   image_url: string | null;
   sort_order: number;
   is_active: boolean;
@@ -154,8 +159,8 @@ function statusClasses(status: ProductStatus) {
   return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
 }
 
-function optionText(options: Record<string, unknown>, key: string) {
-  const value = options?.[key];
+function optionText(options: VariantOptions, key: "color" | "storage") {
+  const value = options[key];
   return typeof value === "string" ? value : "";
 }
 
@@ -341,10 +346,7 @@ export function NativeCatalogManager() {
         toast.error(text("السعر غير صالح", "Price is invalid"));
         return;
       }
-      if (
-        form.seedCompareAtPrice.trim() &&
-        seedCompareAtPrice === null
-      ) {
+      if (form.seedCompareAtPrice.trim() && seedCompareAtPrice === null) {
         toast.error(text("السعر قبل الخصم غير صالح", "Compare-at price is invalid"));
         return;
       }
@@ -358,7 +360,12 @@ export function NativeCatalogManager() {
         return;
       }
       if (!Number.isInteger(rawStock) || rawStock < 0) {
-        toast.error(text("المخزون يجب أن يكون رقماً صحيحاً موجباً", "Stock must be a non-negative integer"));
+        toast.error(
+          text(
+            "المخزون يجب أن يكون رقماً صحيحاً موجباً",
+            "Stock must be a non-negative integer",
+          ),
+        );
         return;
       }
       seedStock = rawStock;
@@ -537,7 +544,7 @@ export function NativeCatalogManager() {
       return;
     }
 
-    const options = { ...(variant.options ?? {}) };
+    const options: VariantOptions = { ...(variant.options ?? {}) };
     if (variant.colorText.trim()) options.color = variant.colorText.trim();
     else delete options.color;
     if (variant.storageText.trim()) options.storage = variant.storageText.trim();
@@ -590,7 +597,9 @@ export function NativeCatalogManager() {
 
   const uploadProductImage = async (file: File) => {
     if (!form.id) {
-      toast.error(text("احفظ المنتج أولاً ثم ارفع الصور", "Save the product before uploading images"));
+      toast.error(
+        text("احفظ المنتج أولاً ثم ارفع الصور", "Save the product before uploading images"),
+      );
       return;
     }
 
@@ -646,7 +655,10 @@ export function NativeCatalogManager() {
 
   const removeImage = async (image: ProductImage) => {
     if (!form.id) return;
-    if (!window.confirm(text("إزالة هذه الصورة من المنتج؟", "Remove this image from the product?"))) return;
+    if (
+      !window.confirm(text("إزالة هذه الصورة من المنتج؟", "Remove this image from the product?"))
+    )
+      return;
 
     const result = await supabase
       .from("store_product_images" as never)
@@ -683,7 +695,11 @@ export function NativeCatalogManager() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="rounded-xl" onClick={() => void loadCatalog(form.id)}>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            onClick={() => void loadCatalog(form.id)}
+          >
             <RefreshCcw className="me-2 size-4" />
             {text("تحديث", "Refresh")}
           </Button>
@@ -701,7 +717,9 @@ export function NativeCatalogManager() {
               <ShieldCheck className="size-5" />
             </span>
             <div>
-              <p className="text-xs font-black">{text("مستقل عن Shopify", "Independent from Shopify")}</p>
+              <p className="text-xs font-black">
+                {text("مستقل عن Shopify", "Independent from Shopify")}
+              </p>
               <p className="mt-1 text-[10px] text-muted-foreground">
                 {text("لا توجد أي كتابة على Shopify", "No writes are sent to Shopify")}
               </p>
@@ -758,20 +776,28 @@ export function NativeCatalogManager() {
                   type="button"
                   onClick={() => void loadProduct(product)}
                   className={`mb-1 w-full rounded-xl p-3 text-start transition ${
-                    form.id === product.id ? "bg-primary/10 ring-1 ring-primary/20" : "hover:bg-muted"
+                    form.id === product.id
+                      ? "bg-primary/10 ring-1 ring-primary/20"
+                      : "hover:bg-muted"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-xs font-black">{product.title}</p>
-                      <p className="mt-1 truncate text-[10px] text-muted-foreground">{product.handle}</p>
+                      <p className="mt-1 truncate text-[10px] text-muted-foreground">
+                        {product.handle}
+                      </p>
                     </div>
-                    <span className={`rounded-full px-2 py-1 text-[9px] font-bold ${statusClasses(product.status)}`}>
+                    <span
+                      className={`rounded-full px-2 py-1 text-[9px] font-bold ${statusClasses(product.status)}`}
+                    >
                       {product.status}
                     </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between text-[10px]">
-                    <span className="font-black">{formatMoney(product.base_price, product.currency)}</span>
+                    <span className="font-black">
+                      {formatMoney(product.base_price, product.currency)}
+                    </span>
                     <span className="text-muted-foreground">
                       {product.stock_quantity} {text("مخزون", "stock")}
                     </span>
@@ -802,13 +828,21 @@ export function NativeCatalogManager() {
               </div>
               <div className="flex gap-2">
                 {form.id && form.status !== "archived" ? (
-                  <Button variant="outline" className="rounded-xl" onClick={() => void archiveProduct()}>
+                  <Button
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => void archiveProduct()}
+                  >
                     <Archive className="me-2 size-4" />
                     {text("أرشفة", "Archive")}
                   </Button>
                 ) : null}
                 <Button className="rounded-xl" disabled={saving} onClick={() => void saveProduct()}>
-                  {saving ? <Loader2 className="me-2 size-4 animate-spin" /> : <Save className="me-2 size-4" />}
+                  {saving ? (
+                    <Loader2 className="me-2 size-4 animate-spin" />
+                  ) : (
+                    <Save className="me-2 size-4" />
+                  )}
                   {text("حفظ المنتج", "Save product")}
                 </Button>
               </div>
@@ -863,7 +897,10 @@ export function NativeCatalogManager() {
                     </option>
                   ))}
                 </select>
-                <a href="/dashboard/brands" className="mt-1.5 inline-block text-[10px] font-bold text-primary hover:underline">
+                <a
+                  href="/dashboard/brands"
+                  className="mt-1.5 inline-block text-[10px] font-bold text-primary hover:underline"
+                >
                   {text("إدارة البراندات", "Manage brands")}
                 </a>
               </Field>
@@ -880,7 +917,10 @@ export function NativeCatalogManager() {
                     </option>
                   ))}
                 </select>
-                <a href="/dashboard/categories" className="mt-1.5 inline-block text-[10px] font-bold text-primary hover:underline">
+                <a
+                  href="/dashboard/categories"
+                  className="mt-1.5 inline-block text-[10px] font-bold text-primary hover:underline"
+                >
                   {text("إدارة التصنيفات", "Manage categories")}
                 </a>
               </Field>
@@ -918,19 +958,37 @@ export function NativeCatalogManager() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   <Field label={text("السعر", "Price")}>
-                    <Input inputMode="decimal" value={form.seedPrice} onChange={(event) => patchForm({ seedPrice: event.target.value })} />
+                    <Input
+                      inputMode="decimal"
+                      value={form.seedPrice}
+                      onChange={(event) => patchForm({ seedPrice: event.target.value })}
+                    />
                   </Field>
                   <Field label={text("السعر قبل الخصم", "Compare-at price")}>
-                    <Input inputMode="decimal" value={form.seedCompareAtPrice} onChange={(event) => patchForm({ seedCompareAtPrice: event.target.value })} />
+                    <Input
+                      inputMode="decimal"
+                      value={form.seedCompareAtPrice}
+                      onChange={(event) => patchForm({ seedCompareAtPrice: event.target.value })}
+                    />
                   </Field>
                   <Field label={text("المخزون", "Stock")}>
-                    <Input inputMode="numeric" value={form.seedStock} onChange={(event) => patchForm({ seedStock: event.target.value })} />
+                    <Input
+                      inputMode="numeric"
+                      value={form.seedStock}
+                      onChange={(event) => patchForm({ seedStock: event.target.value })}
+                    />
                   </Field>
                   <Field label="SKU">
-                    <Input value={form.seedSku} onChange={(event) => patchForm({ seedSku: event.target.value })} />
+                    <Input
+                      value={form.seedSku}
+                      onChange={(event) => patchForm({ seedSku: event.target.value })}
+                    />
                   </Field>
                   <Field label="Barcode">
-                    <Input value={form.seedBarcode} onChange={(event) => patchForm({ seedBarcode: event.target.value })} />
+                    <Input
+                      value={form.seedBarcode}
+                      onChange={(event) => patchForm({ seedBarcode: event.target.value })}
+                    />
                   </Field>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -956,10 +1014,7 @@ export function NativeCatalogManager() {
                   label={text("إجمالي المخزون", "Total stock")}
                   value={String(currentProduct.stock_quantity)}
                 />
-                <Metric
-                  label={text("عدد الصور", "Images")}
-                  value={String(images.length)}
-                />
+                <Metric label={text("عدد الصور", "Images")} value={String(images.length)} />
               </div>
             ) : null}
           </article>
@@ -993,7 +1048,10 @@ export function NativeCatalogManager() {
                   </div>
                 ) : (
                   variants.map((variant, index) => (
-                    <div key={variant.id} className="rounded-2xl border border-border/70 p-3 sm:p-4">
+                    <div
+                      key={variant.id}
+                      className="rounded-2xl border border-border/70 p-3 sm:p-4"
+                    >
                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="text-xs font-black">
@@ -1009,7 +1067,11 @@ export function NativeCatalogManager() {
                         </div>
                         <div className="flex gap-2">
                           {variant.isDraft ? (
-                            <Button size="sm" variant="ghost" onClick={() => discardDraftVariant(variant.id)}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => discardDraftVariant(variant.id)}
+                            >
                               {text("إلغاء", "Cancel")}
                             </Button>
                           ) : null}
@@ -1034,33 +1096,43 @@ export function NativeCatalogManager() {
                           <Input
                             value={variant.title}
                             placeholder="Blue / 256GB"
-                            onChange={(event) => patchVariant(variant.id, { title: event.target.value })}
+                            onChange={(event) =>
+                              patchVariant(variant.id, { title: event.target.value })
+                            }
                           />
                         </Field>
                         <Field label={text("اللون", "Color")}>
                           <Input
                             value={variant.colorText}
                             placeholder="Blue"
-                            onChange={(event) => patchVariant(variant.id, { colorText: event.target.value })}
+                            onChange={(event) =>
+                              patchVariant(variant.id, { colorText: event.target.value })
+                            }
                           />
                         </Field>
                         <Field label={text("السعة", "Storage / capacity")}>
                           <Input
                             value={variant.storageText}
                             placeholder="256GB"
-                            onChange={(event) => patchVariant(variant.id, { storageText: event.target.value })}
+                            onChange={(event) =>
+                              patchVariant(variant.id, { storageText: event.target.value })
+                            }
                           />
                         </Field>
                         <Field label="SKU">
                           <Input
                             value={variant.sku ?? ""}
-                            onChange={(event) => patchVariant(variant.id, { sku: event.target.value })}
+                            onChange={(event) =>
+                              patchVariant(variant.id, { sku: event.target.value })
+                            }
                           />
                         </Field>
                         <Field label="Barcode">
                           <Input
                             value={variant.barcode ?? ""}
-                            onChange={(event) => patchVariant(variant.id, { barcode: event.target.value })}
+                            onChange={(event) =>
+                              patchVariant(variant.id, { barcode: event.target.value })
+                            }
                           />
                         </Field>
                         <Field label={text("السعر", "Price")}>
@@ -1069,7 +1141,9 @@ export function NativeCatalogManager() {
                             min="0"
                             step="0.01"
                             value={variant.price}
-                            onChange={(event) => patchVariant(variant.id, { price: Number(event.target.value) })}
+                            onChange={(event) =>
+                              patchVariant(variant.id, { price: Number(event.target.value) })
+                            }
                           />
                         </Field>
                         <Field label={text("السعر قبل الخصم", "Compare-at price")}>
@@ -1080,7 +1154,9 @@ export function NativeCatalogManager() {
                             value={variant.compare_at_price ?? ""}
                             onChange={(event) =>
                               patchVariant(variant.id, {
-                                compare_at_price: event.target.value ? Number(event.target.value) : null,
+                                compare_at_price: event.target.value
+                                  ? Number(event.target.value)
+                                  : null,
                               })
                             }
                           />
@@ -1092,14 +1168,18 @@ export function NativeCatalogManager() {
                             step="1"
                             value={variant.stock_quantity}
                             onChange={(event) =>
-                              patchVariant(variant.id, { stock_quantity: Number(event.target.value) })
+                              patchVariant(variant.id, {
+                                stock_quantity: Number(event.target.value),
+                              })
                             }
                           />
                         </Field>
                         <Field label={text("صورة Variant", "Variant image")}>
                           <select
                             value={variant.image_url ?? ""}
-                            onChange={(event) => patchVariant(variant.id, { image_url: event.target.value || null })}
+                            onChange={(event) =>
+                              patchVariant(variant.id, { image_url: event.target.value || null })
+                            }
                             className="h-10 w-full rounded-md border border-input bg-background px-3 text-xs"
                           >
                             <option value="">{text("بدون صورة مخصصة", "Use product image")}</option>
@@ -1115,7 +1195,9 @@ export function NativeCatalogManager() {
                           <Input
                             type="number"
                             value={variant.sort_order}
-                            onChange={(event) => patchVariant(variant.id, { sort_order: Number(event.target.value) })}
+                            onChange={(event) =>
+                              patchVariant(variant.id, { sort_order: Number(event.target.value) })
+                            }
                           />
                         </Field>
                         <CheckField
@@ -1126,12 +1208,16 @@ export function NativeCatalogManager() {
                         <CheckField
                           label={text("تتبع المخزون", "Track inventory")}
                           checked={variant.track_inventory}
-                          onChange={(checked) => patchVariant(variant.id, { track_inventory: checked })}
+                          onChange={(checked) =>
+                            patchVariant(variant.id, { track_inventory: checked })
+                          }
                         />
                         <CheckField
                           label={text("السماح بالطلب عند النفاد", "Allow backorder")}
                           checked={variant.allow_backorder}
-                          onChange={(checked) => patchVariant(variant.id, { allow_backorder: checked })}
+                          onChange={(checked) =>
+                            patchVariant(variant.id, { allow_backorder: checked })
+                          }
                         />
                       </div>
                     </div>
@@ -1189,7 +1275,9 @@ export function NativeCatalogManager() {
                     <div
                       key={image.id}
                       className={`overflow-hidden rounded-2xl border ${
-                        image.is_primary ? "border-primary ring-1 ring-primary/20" : "border-border/70"
+                        image.is_primary
+                          ? "border-primary ring-1 ring-primary/20"
+                          : "border-border/70"
                       }`}
                     >
                       <div className="aspect-square bg-white p-2">
