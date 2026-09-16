@@ -11,13 +11,15 @@ function SectionsEditorPage() {
     <CollectionEditor
       table="cms_sections"
       title="أقسام الصفحة"
-      description="عناوين الأقسام وترتيبها ومحتواها وإظهارها."
+      description="عناوين ومحتوى الأقسام بالعربية والإنجليزية مع ترتيبها وإظهارها."
       labelKey="section_key"
       newRow={{
         page_slug: "home",
         section_key: "",
         section_type: "custom",
         content: {},
+        content_en: {},
+        content_ar: {},
         sort_order: 0,
         is_visible: true,
       }}
@@ -25,9 +27,12 @@ function SectionsEditorPage() {
         { key: "page_slug", label: "الصفحة", type: "text", placeholder: "home" },
         { key: "section_key", label: "معرّف القسم", type: "text", required: true },
         { key: "section_type", label: "نوع القسم", type: "text" },
-        { key: "title", label: "العنوان", type: "text" },
-        { key: "subtitle", label: "العنوان الفرعي", type: "textarea" },
-        { key: "content", label: "محتوى القسم (JSON)", type: "json" },
+        { key: "title_en", label: "العنوان بالإنجليزية", type: "text" },
+        { key: "title_ar", label: "العنوان بالعربية", type: "text" },
+        { key: "subtitle_en", label: "العنوان الفرعي بالإنجليزية", type: "textarea" },
+        { key: "subtitle_ar", label: "العنوان الفرعي بالعربية", type: "textarea" },
+        { key: "content_en", label: "المحتوى بالإنجليزية (JSON)", type: "json" },
+        { key: "content_ar", label: "المحتوى بالعربية (JSON)", type: "json" },
         { key: "sort_order", label: "الترتيب", type: "number" },
         { key: "is_visible", label: "ظاهر", type: "boolean" },
       ]}

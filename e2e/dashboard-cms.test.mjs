@@ -6,6 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 const repairMigration = "supabase/migrations/20260916064000_restore_dashboard_admin_cms.sql";
 const hardeningMigration = "supabase/migrations/20260916074000_harden_dashboard_access.sql";
+const bilingualMigration = "supabase/migrations/20260916134642_add_bilingual_cms_fields.sql";
 
 test("public CMS gateway stays aligned with the live production schema", async () => {
   const source = await read("supabase/functions/public-cms/index.ts");
@@ -24,32 +25,70 @@ test("public CMS gateway stays aligned with the live production schema", async (
   assert.match(source, /eq\("is_published", true\)/);
   assert.match(source, /starts_at/);
   assert.match(source, /ends_at/);
-  assert.match(source, /sections:\s*sectionsResult\.data/);
-  assert.match(source, /navigation:\s*navigationResult\.data/);
+  assert.match(source, /title_en/);
+  assert.match(source, /title_ar/);
+  assert.match(source, /label_en/);
+  assert.match(source, /label_ar/);
+  assert.match(source, /description_en/);
+  assert.match(source, /description_ar/);
+  assert.match(source, /sections,\s*navigation,/);
   assert.doesNotMatch(source, /from\("cms_sections"\)[\s\S]*?eq\("is_visible", true\)/);
   assert.doesNotMatch(source, /from\("cms_navigation_items"\)[\s\S]*?eq\("is_visible", true\)/);
   assert.match(source, /brands:\s*brandsResult\.data/);
-  assert.match(source, /seoPages:\s*seoResult\.data/);
+  assert.match(source, /seoPages,/);
 });
 
-test("dashboard routes edit the same CMS tables and fields as production", async () => {
-  const [hero, navigation, brands, seo, settings] = await Promise.all([
+test("dashboard routes edit the same CMS tables and bilingual fields as production", async () => {
+  const [hero, sections, navigation, brands, seo, settings, migration] = await Promise.all([
     read("src/routes/dashboard.hero.tsx"),
+    read("src/routes/dashboard.sections.tsx"),
     read("src/routes/dashboard.navigation.tsx"),
     read("src/routes/dashboard.brands.tsx"),
     read("src/routes/dashboard.seo.tsx"),
     read("src/components/admin/SettingsEditor.tsx"),
+    read(bilingualMigration),
   ]);
 
   assert.match(hero, /table="cms_hero_slides"/);
+  assert.match(hero, /title_en/);
+  assert.match(hero, /title_ar/);
+  assert.match(hero, /button_label_en/);
+  assert.match(hero, /button_label_ar/);
   assert.match(hero, /is_published/);
+
+  assert.match(sections, /table="cms_sections"/);
+  assert.match(sections, /content_en/);
+  assert.match(sections, /content_ar/);
+
   assert.match(navigation, /table="cms_navigation_items"/);
+  assert.match(navigation, /label_en/);
+  assert.match(navigation, /label_ar/);
+
   assert.match(brands, /key: "href"/);
   assert.doesNotMatch(brands, /collection_handle/);
+
   assert.match(seo, /idKey="page_slug"/);
+  assert.match(seo, /title_en/);
+  assert.match(seo, /title_ar/);
+  assert.match(seo, /description_en/);
+  assert.match(seo, /description_ar/);
   assert.match(seo, /json_ld/);
+
   assert.match(settings, /from\("cms_site_settings"\)/);
   assert.match(settings, /value_type/);
+
+  for (const column of [
+    "title_en",
+    "title_ar",
+    "subtitle_en",
+    "subtitle_ar",
+    "label_en",
+    "label_ar",
+    "description_en",
+    "description_ar",
+  ]) {
+    assert.match(migration, new RegExp(column));
+  }
 });
 
 test("generic CMS editor creates drafts before database inserts", async () => {
@@ -65,14 +104,16 @@ test("generic CMS editor creates drafts before database inserts", async () => {
   );
 });
 
-test("storefront consumes dashboard brands SEO navigation and settings", async () => {
-  const [home, brandsPage, layout, controls, directory, media] = await Promise.all([
+test("storefront consumes localized dashboard content safely", async () => {
+  const [home, hero, brandsPage, layout, controls, directory, media, cms] = await Promise.all([
     read("src/routes/index.tsx"),
+    read("src/components/HomeHero.tsx"),
     read("src/routes/brands.tsx"),
     read("src/components/StoreLayout.tsx"),
     read("src/components/CmsStoreControls.tsx"),
     read("src/lib/brandDirectory.ts"),
     read("src/lib/adminMedia.ts"),
+    read("src/lib/cms.ts"),
   ]);
 
   assert.match(home, /applyCmsBrands/);
@@ -84,8 +125,11 @@ test("storefront consumes dashboard brands SEO navigation and settings", async (
   assert.match(layout, /area="mobile_menu"/);
   assert.match(layout, /area="footer"/);
   assert.match(layout, /<CmsTrustStrip/);
-  assert.match(controls, /announcement_enabled/);
-  assert.match(controls, /whatsapp_number/);
+  assert.match(hero, /localizeHeroSlide/);
+  assert.match(controls, /localizeNavigationItem/);
+  assert.match(controls, /cmsLocalizedSetting/);
+  assert.match(cms, /localizedCmsText/);
+  assert.match(cms, /ARABIC_SCRIPT/);
   assert.match(media, /getPublicUrl/);
   assert.doesNotMatch(media, /createSignedUrl/);
 });

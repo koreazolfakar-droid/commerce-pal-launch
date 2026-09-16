@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 
 import type { CmsNavigationItem } from "@/lib/cms";
+import { cmsLocalizedSetting, localizeNavigationItem } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const CMS_ICONS: Record<string, LucideIcon> = {
@@ -43,13 +45,14 @@ function ItemIcon({ item }: { item: CmsNavigationItem }) {
 
 export function CmsAnnouncementBar() {
   const { data: cms } = useQuery(cmsQueryOptions());
+  const { language } = useLanguage();
   const enabled = cms?.settings["announcement_enabled"] === true;
-  const text = cms?.settings["announcement_text"];
-  if (!enabled || typeof text !== "string" || !text.trim()) return null;
+  const text = cms ? cmsLocalizedSetting(cms, "announcement_text", language) : undefined;
+  if (!enabled || !text) return null;
 
   return (
     <div className="border-b border-border/50 bg-foreground px-4 py-2 text-center text-[11px] font-bold text-background sm:text-xs">
-      {text.trim()}
+      {text}
     </div>
   );
 }
@@ -62,16 +65,19 @@ export function CmsNavigationStrip({
   className?: string;
 }) {
   const { data: cms } = useQuery(cmsQueryOptions());
+  const { language } = useLanguage();
   const items =
     cms?.navigation
       .filter((item) => item.area === area && item.is_visible && item.href)
+      .map((item) => localizeNavigationItem(item, language))
+      .filter((item): item is CmsNavigationItem => Boolean(item))
       .sort((a, b) => a.sort_order - b.sort_order) ?? [];
 
   if (!items.length) return null;
 
   return (
     <nav
-      aria-label={`${area} managed navigation`}
+      aria-label={language === "ar" ? "تنقل مُدار" : "Managed navigation"}
       className={cn("border-b border-border/55 bg-background/95", className)}
       data-cms-navigation-area={area}
     >
@@ -93,17 +99,20 @@ export function CmsNavigationStrip({
 
 export function CmsTrustStrip() {
   const { data: cms } = useQuery(cmsQueryOptions());
+  const { language } = useLanguage();
   const items =
     cms?.navigation
       .filter((item) => item.area === "trust" && item.is_visible)
+      .map((item) => localizeNavigationItem(item, language))
+      .filter((item): item is CmsNavigationItem => Boolean(item))
       .sort((a, b) => a.sort_order - b.sort_order) ?? [];
-  const freeShipping = cms?.settings["free_shipping_note"];
-  const supportHours = cms?.settings["support_hours"];
+  const freeShipping = cms ? cmsLocalizedSetting(cms, "free_shipping_note", language) : undefined;
+  const supportHours = cms ? cmsLocalizedSetting(cms, "support_hours", language) : undefined;
   const whatsapp = cms?.settings["whatsapp_number"];
   const whatsappDigits = typeof whatsapp === "string" ? whatsapp.replace(/\D/g, "") : "";
 
-  const utilityNotes = [freeShipping, supportHours].filter(
-    (value): value is string => typeof value === "string" && Boolean(value.trim()),
+  const utilityNotes = [freeShipping, supportHours].filter((value): value is string =>
+    Boolean(value),
   );
 
   if (!items.length && !utilityNotes.length && !whatsappDigits) return null;

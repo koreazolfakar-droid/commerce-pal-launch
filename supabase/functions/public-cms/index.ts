@@ -63,6 +63,9 @@ Deno.serve(async (req: Request) => {
   });
   const nowIso = new Date().toISOString();
 
+  // Use select("*") for the localized content tables so this function stays
+  // deploy-safe both immediately before and after the bilingual migration runs.
+  // The response below still explicitly projects only storefront-safe fields.
   const [settingsResult, heroesResult, sectionsResult, navigationResult, brandsResult, seoResult] =
     await Promise.all([
       db
@@ -72,35 +75,19 @@ Deno.serve(async (req: Request) => {
         .order("key"),
       db
         .from("cms_hero_slides")
-        .select(
-          "id,title,subtitle,image_url,mobile_image_url,button_label,target_type,target_value,sort_order,starts_at,ends_at",
-        )
+        .select("*")
         .eq("is_published", true)
         .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
         .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
         .order("sort_order"),
-      db
-        .from("cms_sections")
-        .select(
-          "id,page_slug,section_key,section_type,title,subtitle,content,sort_order,is_visible",
-        )
-        .order("page_slug")
-        .order("sort_order"),
-      db
-        .from("cms_navigation_items")
-        .select("id,area,label,icon_type,icon_value,href,sort_order,is_visible")
-        .order("area")
-        .order("sort_order"),
+      db.from("cms_sections").select("*").order("page_slug").order("sort_order"),
+      db.from("cms_navigation_items").select("*").order("area").order("sort_order"),
       db
         .from("cms_brands")
         .select("id,name,slug,logo_url,href,sort_order,is_visible")
         .order("sort_order")
         .order("name"),
-      db
-        .from("cms_seo_pages")
-        .select("page_slug,title,description,og_image_url,canonical_url,robots,json_ld,is_public")
-        .eq("is_public", true)
-        .order("page_slug"),
+      db.from("cms_seo_pages").select("*").eq("is_public", true).order("page_slug"),
     ]);
 
   const firstError =
@@ -121,7 +108,69 @@ Deno.serve(async (req: Request) => {
 
   const heroSlides = (heroesResult.data ?? [])
     .filter((row) => typeof row.image_url === "string" && row.image_url.trim())
-    .map(({ starts_at: _startsAt, ends_at: _endsAt, ...slide }) => slide);
+    .map((row) => ({
+      id: row.id,
+      title: row.title ?? null,
+      title_en: row.title_en ?? null,
+      title_ar: row.title_ar ?? null,
+      subtitle: row.subtitle ?? null,
+      subtitle_en: row.subtitle_en ?? null,
+      subtitle_ar: row.subtitle_ar ?? null,
+      image_url: row.image_url,
+      mobile_image_url: row.mobile_image_url ?? null,
+      button_label: row.button_label ?? null,
+      button_label_en: row.button_label_en ?? null,
+      button_label_ar: row.button_label_ar ?? null,
+      target_type: row.target_type,
+      target_value: row.target_value ?? null,
+      sort_order: row.sort_order,
+    }));
+
+  const sections = (sectionsResult.data ?? []).map((row) => ({
+    id: row.id,
+    page_slug: row.page_slug,
+    section_key: row.section_key,
+    section_type: row.section_type,
+    title: row.title ?? null,
+    title_en: row.title_en ?? null,
+    title_ar: row.title_ar ?? null,
+    subtitle: row.subtitle ?? null,
+    subtitle_en: row.subtitle_en ?? null,
+    subtitle_ar: row.subtitle_ar ?? null,
+    content: row.content ?? {},
+    content_en: row.content_en ?? null,
+    content_ar: row.content_ar ?? null,
+    sort_order: row.sort_order,
+    is_visible: row.is_visible,
+  }));
+
+  const navigation = (navigationResult.data ?? []).map((row) => ({
+    id: row.id,
+    area: row.area,
+    label: row.label,
+    label_en: row.label_en ?? null,
+    label_ar: row.label_ar ?? null,
+    icon_type: row.icon_type,
+    icon_value: row.icon_value ?? null,
+    href: row.href ?? null,
+    sort_order: row.sort_order,
+    is_visible: row.is_visible,
+  }));
+
+  const seoPages = (seoResult.data ?? []).map((row) => ({
+    page_slug: row.page_slug,
+    title: row.title ?? null,
+    title_en: row.title_en ?? null,
+    title_ar: row.title_ar ?? null,
+    description: row.description ?? null,
+    description_en: row.description_en ?? null,
+    description_ar: row.description_ar ?? null,
+    og_image_url: row.og_image_url ?? null,
+    canonical_url: row.canonical_url ?? null,
+    robots: row.robots,
+    json_ld: row.json_ld ?? {},
+    is_public: row.is_public,
+  }));
 
   const settings = Object.fromEntries(
     (settingsResult.data ?? []).map((row) => {
@@ -140,10 +189,10 @@ Deno.serve(async (req: Request) => {
     JSON.stringify({
       settings,
       heroSlides,
-      sections: sectionsResult.data ?? [],
-      navigation: navigationResult.data ?? [],
+      sections,
+      navigation,
       brands: brandsResult.data ?? [],
-      seoPages: seoResult.data ?? [],
+      seoPages,
     }),
     { status: 200, headers: headers(req) },
   );
