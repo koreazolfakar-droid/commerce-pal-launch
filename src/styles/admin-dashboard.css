@@ -1,0 +1,319 @@
+/* Space Call Admin — scoped visual system inspired by the supplied ecommerce dashboard reference.
+   This file is intentionally visual-only: no business logic, data flow or permissions live here. */
+
+.spacecall-admin-dashboard {
+  --admin-page-bg: #f6f8fb;
+  --admin-panel-bg: hsl(var(--card));
+  --admin-panel-border: color-mix(in srgb, hsl(var(--border)) 78%, transparent);
+  --admin-panel-shadow: 0 1px 2px rgb(15 23 42 / 0.025), 0 12px 34px -28px rgb(15 23 42 / 0.34);
+  --admin-panel-shadow-hover: 0 10px 28px -24px rgb(15 23 42 / 0.28);
+  --admin-radius: 12px;
+  --admin-radius-sm: 9px;
+  --admin-blue-soft: color-mix(in srgb, hsl(var(--primary)) 9%, transparent);
+  --admin-blue-border: color-mix(in srgb, hsl(var(--primary)) 22%, transparent);
+  background:
+    radial-gradient(circle at 84% 0%, color-mix(in srgb, hsl(var(--primary)) 4%, transparent), transparent 30rem),
+    var(--admin-page-bg);
+}
+
+.dark .spacecall-admin-dashboard {
+  --admin-page-bg: hsl(var(--background));
+  --admin-panel-border: color-mix(in srgb, hsl(var(--border)) 88%, transparent);
+  --admin-panel-shadow: 0 1px 2px rgb(0 0 0 / 0.18), 0 18px 44px -34px rgb(0 0 0 / 0.62);
+  --admin-panel-shadow-hover: 0 14px 34px -30px rgb(0 0 0 / 0.68);
+  background: hsl(var(--background));
+}
+
+/* Main desktop canvas */
+.spacecall-admin-dashboard .spacecall-admin-content {
+  padding-block: 22px 30px;
+}
+
+.spacecall-admin-dashboard .admin-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1360px;
+}
+
+.spacecall-admin-dashboard .admin-page-header {
+  min-height: 74px;
+  padding: 2px 2px 14px;
+  border-bottom: 1px solid color-mix(in srgb, hsl(var(--border)) 46%, transparent);
+}
+
+.spacecall-admin-dashboard .admin-page-header > div:first-child > p:first-child {
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  font-size: 9px;
+  font-weight: 800;
+  color: hsl(var(--muted-foreground) / 0.72);
+}
+
+.spacecall-admin-dashboard .admin-page-header h1 {
+  font-size: clamp(1.35rem, 2vw, 1.72rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.spacecall-admin-dashboard .admin-page-header h1 + p,
+.spacecall-admin-dashboard .admin-page-header > div:first-child > p:last-child:not(:first-child) {
+  max-width: 720px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Reference-like cards: light, compact and low-shadow. */
+.spacecall-admin-dashboard .admin-page article,
+.spacecall-admin-dashboard .admin-page > div > section,
+.spacecall-admin-dashboard .admin-page > section,
+.spacecall-admin-dashboard .admin-panel,
+.spacecall-admin-dashboard .admin-list-panel {
+  border-color: var(--admin-panel-border) !important;
+  border-radius: var(--admin-radius) !important;
+  box-shadow: var(--admin-panel-shadow);
+}
+
+.spacecall-admin-dashboard .admin-page article {
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+@media (hover: hover) {
+  .spacecall-admin-dashboard .admin-page article:hover {
+    border-color: color-mix(in srgb, hsl(var(--border)) 94%, transparent) !important;
+    box-shadow: var(--admin-panel-shadow-hover);
+  }
+}
+
+/* Page actions */
+.spacecall-admin-dashboard .admin-page-header button,
+.spacecall-admin-dashboard .admin-page-header a {
+  min-height: 38px;
+  border-radius: var(--admin-radius-sm) !important;
+}
+
+.spacecall-admin-dashboard .admin-page-header .bg-foreground {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  box-shadow: 0 6px 16px -10px color-mix(in srgb, hsl(var(--primary)) 75%, transparent);
+}
+
+/* Search/list rail used by Products, Orders and Customers */
+.spacecall-admin-dashboard .admin-list-panel {
+  background: hsl(var(--card));
+  padding: 10px !important;
+}
+
+.spacecall-admin-dashboard .admin-list-panel > input,
+.spacecall-admin-dashboard .admin-list-panel > div:first-child input {
+  height: 38px !important;
+  border-radius: 9px !important;
+  background: hsl(var(--muted) / 0.28) !important;
+  border-color: color-mix(in srgb, hsl(var(--border)) 72%, transparent) !important;
+}
+
+.spacecall-admin-dashboard .admin-list-panel button {
+  border: 1px solid transparent;
+  border-radius: 9px !important;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.spacecall-admin-dashboard .admin-list-panel button:hover {
+  border-color: color-mix(in srgb, hsl(var(--border)) 72%, transparent);
+  background: hsl(var(--muted) / 0.44) !important;
+}
+
+.spacecall-admin-dashboard .admin-list-panel button.bg-foreground {
+  border-color: var(--admin-blue-border) !important;
+  background: var(--admin-blue-soft) !important;
+  color: hsl(var(--primary)) !important;
+  box-shadow: inset 3px 0 0 hsl(var(--primary));
+}
+
+[dir="rtl"] .spacecall-admin-dashboard .admin-list-panel button.bg-foreground {
+  box-shadow: inset -3px 0 0 hsl(var(--primary));
+}
+
+/* Main editor panels */
+.spacecall-admin-dashboard .admin-page article > div:first-child.border-b,
+.spacecall-admin-dashboard .admin-page section > div:first-child.border-b {
+  min-height: 54px;
+  background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted) / 0.12));
+  border-color: color-mix(in srgb, hsl(var(--border)) 58%, transparent) !important;
+}
+
+.spacecall-admin-dashboard .admin-page article h2,
+.spacecall-admin-dashboard .admin-page article h3 {
+  letter-spacing: -0.015em;
+}
+
+/* Form controls */
+.spacecall-admin-dashboard .admin-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.spacecall-admin-dashboard .admin-page textarea,
+.spacecall-admin-dashboard .admin-page select {
+  border-radius: 9px !important;
+  border-color: color-mix(in srgb, hsl(var(--border)) 80%, transparent) !important;
+  background: hsl(var(--background)) !important;
+  box-shadow: 0 1px 1px rgb(15 23 42 / 0.015);
+  transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.spacecall-admin-dashboard .admin-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+.spacecall-admin-dashboard .admin-page textarea:focus,
+.spacecall-admin-dashboard .admin-page select:focus {
+  border-color: color-mix(in srgb, hsl(var(--primary)) 48%, hsl(var(--border))) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, hsl(var(--primary)) 9%, transparent) !important;
+  outline: none;
+}
+
+.spacecall-admin-dashboard .admin-page textarea {
+  line-height: 1.55;
+}
+
+.spacecall-admin-dashboard .admin-page label {
+  letter-spacing: 0.005em;
+}
+
+/* Buttons inside editor cards */
+.spacecall-admin-dashboard .admin-page article button,
+.spacecall-admin-dashboard .admin-page section button {
+  border-radius: 9px !important;
+}
+
+.spacecall-admin-dashboard .admin-page article button[class*="border"],
+.spacecall-admin-dashboard .admin-page section button[class*="border"] {
+  background: hsl(var(--background));
+}
+
+/* Compact modern data tables */
+.spacecall-admin-dashboard .admin-page table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.spacecall-admin-dashboard .admin-page thead {
+  background: hsl(var(--muted) / 0.27) !important;
+}
+
+.spacecall-admin-dashboard .admin-page thead th {
+  height: 38px;
+  padding-block: 9px !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.035em;
+  color: hsl(var(--muted-foreground) / 0.82) !important;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.spacecall-admin-dashboard .admin-page tbody tr {
+  transition: background-color 120ms ease;
+}
+
+.spacecall-admin-dashboard .admin-page tbody tr:hover {
+  background: hsl(var(--muted) / 0.18);
+}
+
+.spacecall-admin-dashboard .admin-page tbody td {
+  border-color: color-mix(in srgb, hsl(var(--border)) 48%, transparent) !important;
+}
+
+/* CMS collection editor cards — visually closer to rows/cards in the reference. */
+.spacecall-admin-dashboard .admin-page > .space-y-4 > article {
+  overflow: clip;
+}
+
+.spacecall-admin-dashboard .admin-page > .space-y-4 > article > div:last-child {
+  background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted) / 0.055));
+}
+
+.spacecall-admin-dashboard .admin-page [class*="border-dashed"] {
+  border-style: dashed !important;
+  border-color: color-mix(in srgb, hsl(var(--border)) 82%, transparent) !important;
+  background: hsl(var(--muted) / 0.1);
+}
+
+/* Image preview / upload surfaces */
+.spacecall-admin-dashboard .admin-page img {
+  image-rendering: auto;
+}
+
+.spacecall-admin-dashboard .admin-page label:has(input[type="file"]) {
+  border-radius: 9px !important;
+  border-color: color-mix(in srgb, hsl(var(--border)) 78%, transparent) !important;
+  background: hsl(var(--background));
+}
+
+/* Scrollbars stay discreet on large admin lists. */
+.spacecall-admin-dashboard .admin-list-panel,
+.spacecall-admin-dashboard main {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+/* The reference is intentionally compact on desktop. */
+@media (min-width: 1280px) {
+  .spacecall-admin-dashboard .admin-page {
+    gap: 16px;
+  }
+
+  .spacecall-admin-dashboard .admin-page .xl\:grid-cols-\[300px_minmax\(0\2c 1fr\)\],
+  .spacecall-admin-dashboard .admin-page .xl\:grid-cols-\[330px_minmax\(0\2c 1fr\)\],
+  .spacecall-admin-dashboard .admin-page .xl\:grid-cols-\[340px_minmax\(0\2c 1fr\)\] {
+    gap: 16px;
+  }
+}
+
+/* Tablet/mobile keeps hierarchy while dropping sticky rails. */
+@media (max-width: 1279px) {
+  .spacecall-admin-dashboard .admin-list-panel {
+    position: static !important;
+    height: auto !important;
+    max-height: 390px;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .spacecall-admin-dashboard .spacecall-admin-content {
+    padding-block: 16px 24px;
+  }
+
+  .spacecall-admin-dashboard .admin-page {
+    gap: 14px;
+  }
+
+  .spacecall-admin-dashboard .admin-page-header {
+    min-height: 0;
+    padding-bottom: 12px;
+  }
+
+  .spacecall-admin-dashboard .admin-page-header h1 {
+    font-size: 1.35rem;
+  }
+
+  .spacecall-admin-dashboard .admin-page article,
+  .spacecall-admin-dashboard .admin-panel,
+  .spacecall-admin-dashboard .admin-list-panel {
+    border-radius: 11px !important;
+  }
+
+  .spacecall-admin-dashboard .admin-page article > div[class*="p-5"],
+  .spacecall-admin-dashboard .admin-page section > div[class*="p-5"] {
+    padding: 14px !important;
+  }
+
+  .spacecall-admin-dashboard .admin-page table {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spacecall-admin-dashboard *,
+  .spacecall-admin-dashboard *::before,
+  .spacecall-admin-dashboard *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
