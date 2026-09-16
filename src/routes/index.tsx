@@ -35,6 +35,47 @@ import {
 import "../home-ticker.css";
 
 const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
+const HOME_SECONDARY_IDLE_TIMEOUT_MS = 1400;
+const HOME_SECONDARY_FALLBACK_DELAY_MS = 350;
+
+/**
+ * Best sellers/new-arrivals are useful, but they are below the critical hero,
+ * categories and brand navigation. Start those extra Shopify requests during an
+ * idle window so they do not compete with the first meaningful/LCP content.
+ */
+function useDeferredHomepageQueries(enabled: boolean) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) {
+      setReady(false);
+      return;
+    }
+
+    let cancelled = false;
+    let idleRequestId: number | null = null;
+    let fallbackTimer: number | null = null;
+    const activate = () => {
+      if (!cancelled) setReady(true);
+    };
+
+    if ("requestIdleCallback" in window) {
+      idleRequestId = window.requestIdleCallback(activate, {
+        timeout: HOME_SECONDARY_IDLE_TIMEOUT_MS,
+      });
+    } else {
+      fallbackTimer = window.setTimeout(activate, HOME_SECONDARY_FALLBACK_DELAY_MS);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleRequestId !== null) window.cancelIdleCallback(idleRequestId);
+      if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
+    };
+  }, [enabled]);
+
+  return ready;
+}
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
@@ -187,13 +228,14 @@ function Index() {
   const { data: collections = [] } = useQuery(collectionsQueryOptions());
   const { data: heroCollection } = useQuery(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4));
   const catalogReady = Boolean(catalog);
+  const secondaryQueriesReady = useDeferredHomepageQueries(catalogReady);
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
-    enabled: catalogReady,
+    enabled: secondaryQueriesReady,
   });
   const { data: bestSellers = [] } = useQuery({
     ...bestSellingQueryOptions(),
-    enabled: catalogReady,
+    enabled: secondaryQueriesReady,
   });
 
   const heroOnlyProductIds = new Set(
