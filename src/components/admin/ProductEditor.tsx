@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadMedia } from "@/lib/adminMedia";
+import { useDashboardLanguage } from "@/lib/dashboardI18n";
 
 type ProductStatus = "draft" | "active" | "archived";
 
@@ -120,6 +121,7 @@ function numberOrNull(value: string) {
 }
 
 export function ProductEditor() {
+  const { text } = useDashboardLanguage();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -212,7 +214,7 @@ export function ProductEditor() {
     const title = editing.title.trim();
     const handle = editing.handle.trim() || slugify(title);
     if (!title || !handle) {
-      toast.error("الاسم والـ handle مطلوبان");
+      toast.error(text("الاسم والـ handle مطلوبان", "Product name and handle are required"));
       return;
     }
 
@@ -222,7 +224,9 @@ export function ProductEditor() {
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
       specifications = parsed;
     } catch {
-      toast.error("صيغة Specifications JSON غير صحيحة");
+      toast.error(
+        text("صيغة Specifications JSON غير صحيحة", "Specifications JSON is invalid"),
+      );
       return;
     }
 
@@ -277,7 +281,11 @@ export function ProductEditor() {
 
     const saved = result.data as ProductRow;
     setEditing(toEditing(saved));
-    toast.success(editing.isDraft ? "تم إنشاء المنتج" : "تم حفظ المنتج");
+    toast.success(
+      editing.isDraft
+        ? text("تم إنشاء المنتج", "Product created")
+        : text("تم حفظ المنتج", "Product saved"),
+    );
     await loadBase();
     if (editing.isDraft) await loadRelations(saved.id);
   };
@@ -288,7 +296,12 @@ export function ProductEditor() {
       setEditing(null);
       return;
     }
-    if (!window.confirm(`حذف ${editing.title} نهائياً؟`)) return;
+    if (
+      !window.confirm(
+        text(`حذف ${editing.title} نهائياً؟`, `Delete ${editing.title} permanently?`),
+      )
+    )
+      return;
     const { error } = await supabase
       .from("store_products" as never)
       .delete()
@@ -297,7 +310,7 @@ export function ProductEditor() {
       toast.error(error.message);
       return;
     }
-    toast.success("تم حذف المنتج");
+    toast.success(text("تم حذف المنتج", "Product deleted"));
     setEditing(null);
     setVariants([]);
     setImages([]);
@@ -306,7 +319,9 @@ export function ProductEditor() {
 
   const addVariant = async () => {
     if (!editing || editing.isDraft) {
-      toast.error("احفظ المنتج أولاً ثم أضف Variants");
+      toast.error(
+        text("احفظ المنتج أولاً ثم أضف Variants", "Save the product before adding variants"),
+      );
       return;
     }
     const { data, error } = await supabase
@@ -326,7 +341,7 @@ export function ProductEditor() {
       return;
     }
     setVariants((current) => [...current, data as Variant]);
-    toast.success("تمت إضافة Variant");
+    toast.success(text("تمت إضافة Variant", "Variant added"));
   };
 
   const patchVariant = (id: string, patch: Partial<Variant>) => {
@@ -355,7 +370,7 @@ export function ProductEditor() {
       toast.error(error.message);
       return;
     }
-    toast.success("تم حفظ Variant والمخزون");
+    toast.success(text("تم حفظ Variant والمخزون", "Variant and stock saved"));
     const refreshed = (await supabase
       .from("store_products" as never)
       .select("*")
@@ -365,7 +380,7 @@ export function ProductEditor() {
   };
 
   const deleteVariant = async (id: string) => {
-    if (!window.confirm("حذف الـ Variant؟")) return;
+    if (!window.confirm(text("حذف الـ Variant؟", "Delete this variant?"))) return;
     const { error } = await supabase
       .from("store_product_variants" as never)
       .delete()
@@ -375,12 +390,12 @@ export function ProductEditor() {
       return;
     }
     setVariants((current) => current.filter((variant) => variant.id !== id));
-    toast.success("تم حذف Variant");
+    toast.success(text("تم حذف Variant", "Variant deleted"));
   };
 
   const uploadProductImage = async (file: File) => {
     if (!editing || editing.isDraft) {
-      toast.error("احفظ المنتج أولاً ثم ارفع الصور");
+      toast.error(text("احفظ المنتج أولاً ثم ارفع الصور", "Save the product before uploading images"));
       return;
     }
     setUploading(true);
@@ -399,9 +414,13 @@ export function ProductEditor() {
         .single();
       if (error) throw error;
       setImages((current) => [...current, data as ImageRow]);
-      toast.success("تم رفع الصورة");
+      toast.success(text("تم رفع الصورة", "Image uploaded"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذّر رفع الصورة");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : text("تعذّر رفع الصورة", "Image upload failed"),
+      );
     } finally {
       setUploading(false);
     }
@@ -426,7 +445,7 @@ export function ProductEditor() {
       return;
     }
     setImages((current) => current.map((image) => ({ ...image, is_primary: image.id === id })));
-    toast.success("تم تعيين الصورة الرئيسية");
+    toast.success(text("تم تعيين الصورة الرئيسية", "Primary image set"));
   };
 
   const deleteImage = async (id: string) => {
@@ -439,13 +458,13 @@ export function ProductEditor() {
       return;
     }
     setImages((current) => current.filter((image) => image.id !== id));
-    toast.success("تم حذف الصورة من المنتج");
+    toast.success(text("تم حذف الصورة من المنتج", "Image removed from product"));
   };
 
   if (loading) {
     return (
       <div className="flex min-h-56 items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> جاري تحميل المنتجات…
+        <Loader2 className="size-4 animate-spin" /> {text("جاري تحميل المنتجات…", "Loading products…")}
       </div>
     );
   }
@@ -455,16 +474,21 @@ export function ProductEditor() {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold text-muted-foreground">Native Commerce</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight">المنتجات والمخزون</h1>
+          <h1 className="mt-1 text-2xl font-black tracking-tight">
+            {text("المنتجات والمخزون", "Products & inventory")}
+          </h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
-            إدارة المنتجات والأسعار والـ Variants والصور والمخزون مباشرة من Supabase بدون Shopify.
+            {text(
+              "إدارة المنتجات والأسعار والـ Variants والصور والمخزون مباشرة من Supabase بدون Shopify.",
+              "Manage products, prices, variants, images and inventory directly in Supabase without Shopify.",
+            )}
           </p>
         </div>
         <Button
           onClick={startDraft}
           className="rounded-xl bg-foreground text-background hover:bg-foreground/90"
         >
-          <PackagePlus className="me-2 size-4" /> منتج جديد
+          <PackagePlus className="me-2 size-4" /> {text("منتج جديد", "New product")}
         </Button>
       </header>
 
@@ -473,13 +497,13 @@ export function ProductEditor() {
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="بحث بالاسم أو handle…"
+            placeholder={text("بحث بالاسم أو handle…", "Search by name or handle…")}
             className="h-10 rounded-xl"
           />
           <div className="mt-3 space-y-1.5">
             {filteredProducts.length === 0 ? (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                لا توجد منتجات بعد.
+                {text("لا توجد منتجات بعد.", "No products yet.")}
               </p>
             ) : (
               filteredProducts.map((product) => (
@@ -502,15 +526,19 @@ export function ProductEditor() {
 
         {!editing ? (
           <div className="grid min-h-80 place-items-center rounded-2xl border border-dashed border-border bg-card text-sm text-muted-foreground">
-            اختر منتجاً أو أنشئ منتجاً جديداً.
+            {text("اختر منتجاً أو أنشئ منتجاً جديداً.", "Select a product or create a new one.")}
           </div>
         ) : (
           <div className="space-y-5">
             <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">Product</p>
-                  <h2 className="text-sm font-black">{editing.title || "منتج جديد"}</h2>
+                  <p className="text-[10px] font-semibold text-muted-foreground">
+                    {text("منتج", "Product")}
+                  </p>
+                  <h2 className="text-sm font-black">
+                    {editing.title || text("منتج جديد", "New product")}
+                  </h2>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -525,13 +553,14 @@ export function ProductEditor() {
                     ) : (
                       <Save className="me-1.5 size-3.5" />
                     )}{" "}
-                    حفظ
+                    {text("حفظ", "Save")}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="rounded-xl text-destructive"
                     onClick={() => void deleteProduct()}
+                    aria-label={text("حذف المنتج", "Delete product")}
                   >
                     <Trash2 className="size-4" />
                   </Button>
@@ -539,7 +568,7 @@ export function ProductEditor() {
               </div>
 
               <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-2">
-                <Field label="اسم المنتج *">
+                <Field label={text("اسم المنتج *", "Product name *")}>
                   <Input
                     value={editing.title}
                     onChange={(e) =>
@@ -558,26 +587,26 @@ export function ProductEditor() {
                     onChange={(e) => patchProduct({ handle: slugify(e.target.value) })}
                   />
                 </Field>
-                <Field label="الاسم بالعربي">
+                <Field label={text("الاسم بالعربي", "Arabic name")}>
                   <Input
                     value={editing.title_ar ?? ""}
                     onChange={(e) => patchProduct({ title_ar: e.target.value })}
                   />
                 </Field>
-                <Field label="نوع المنتج">
+                <Field label={text("نوع المنتج", "Product type")}>
                   <Input
                     value={editing.product_type ?? ""}
                     onChange={(e) => patchProduct({ product_type: e.target.value })}
                     placeholder="Smartphone"
                   />
                 </Field>
-                <Field label="البراند">
+                <Field label={text("البراند", "Brand")}>
                   <select
                     value={editing.brand_id ?? ""}
                     onChange={(e) => patchProduct({ brand_id: e.target.value || null })}
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   >
-                    <option value="">بدون براند</option>
+                    <option value="">{text("بدون براند", "No brand")}</option>
                     {brands.map((brand) => (
                       <option key={brand.id} value={brand.id}>
                         {brand.name}
@@ -585,13 +614,13 @@ export function ProductEditor() {
                     ))}
                   </select>
                 </Field>
-                <Field label="التصنيف">
+                <Field label={text("التصنيف", "Category")}>
                   <select
                     value={editing.category_id ?? ""}
                     onChange={(e) => patchProduct({ category_id: e.target.value || null })}
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   >
-                    <option value="">بدون تصنيف</option>
+                    <option value="">{text("بدون تصنيف", "No category")}</option>
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -599,25 +628,25 @@ export function ProductEditor() {
                     ))}
                   </select>
                 </Field>
-                <Field label="الحالة">
+                <Field label={text("الحالة", "Status")}>
                   <select
                     value={editing.status}
                     onChange={(e) => patchProduct({ status: e.target.value as ProductStatus })}
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   >
-                    <option value="draft">Draft</option>
-                    <option value="active">Active</option>
-                    <option value="archived">Archived</option>
+                    <option value="draft">{text("مسودة", "Draft")}</option>
+                    <option value="active">{text("نشط", "Active")}</option>
+                    <option value="archived">{text("مؤرشف", "Archived")}</option>
                   </select>
                 </Field>
-                <Field label="العملة">
+                <Field label={text("العملة", "Currency")}>
                   <Input
                     value={editing.currency}
                     maxLength={3}
                     onChange={(e) => patchProduct({ currency: e.target.value.toUpperCase() })}
                   />
                 </Field>
-                <Field label="السعر الأساسي">
+                <Field label={text("السعر الأساسي", "Base price")}>
                   <Input
                     type="number"
                     step="0.01"
@@ -625,7 +654,7 @@ export function ProductEditor() {
                     onChange={(e) => patchProduct({ base_price: Number(e.target.value) })}
                   />
                 </Field>
-                <Field label="Compare at">
+                <Field label={text("السعر قبل الخصم", "Compare at price")}>
                   <Input
                     type="number"
                     step="0.01"
@@ -635,10 +664,10 @@ export function ProductEditor() {
                     }
                   />
                 </Field>
-                <Field label="المخزون الحالي">
+                <Field label={text("المخزون الحالي", "Current stock")}>
                   <Input value={editing.stock_quantity} readOnly className="bg-muted/40" />
                 </Field>
-                <Field label="الترتيب">
+                <Field label={text("الترتيب", "Sort order")}>
                   <Input
                     type="number"
                     value={editing.sort_order}
@@ -646,7 +675,7 @@ export function ProductEditor() {
                   />
                 </Field>
                 <div className="md:col-span-2">
-                  <Field label="الوصف">
+                  <Field label={text("الوصف", "Description")}>
                     <Textarea
                       rows={5}
                       value={editing.description}
@@ -655,7 +684,7 @@ export function ProductEditor() {
                   </Field>
                 </div>
                 <div className="md:col-span-2">
-                  <Field label="الوصف بالعربي">
+                  <Field label={text("الوصف بالعربي", "Arabic description")}>
                     <Textarea
                       rows={4}
                       value={editing.description_ar ?? ""}
@@ -664,7 +693,7 @@ export function ProductEditor() {
                   </Field>
                 </div>
                 <div className="md:col-span-2">
-                  <Field label="Tags (مفصولة بفواصل)">
+                  <Field label={text("Tags (مفصولة بفواصل)", "Tags (comma separated)")}>
                     <Input
                       value={editing.tagsText}
                       onChange={(e) => patchProduct({ tagsText: e.target.value })}
@@ -694,12 +723,12 @@ export function ProductEditor() {
                   />
                 </Field>
                 <ToggleField
-                  label="Featured"
+                  label={text("مميز", "Featured")}
                   checked={editing.featured}
                   onChange={(checked) => patchProduct({ featured: checked })}
                 />
                 <ToggleField
-                  label="Best seller"
+                  label={text("الأكثر مبيعاً", "Best seller")}
                   checked={editing.best_seller}
                   onChange={(checked) => patchProduct({ best_seller: checked })}
                 />
@@ -709,9 +738,14 @@ export function ProductEditor() {
             <article className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-black">Variants والمخزون</h3>
+                  <h3 className="text-sm font-black">
+                    {text("Variants والمخزون", "Variants & inventory")}
+                  </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    السعر والمخزون الحقيقيان يُحسبان من الـVariants.
+                    {text(
+                      "السعر والمخزون الحقيقيان يُحسبان من الـVariants.",
+                      "The actual price and stock are calculated from variants.",
+                    )}
                   </p>
                 </div>
                 <Button
@@ -720,19 +754,19 @@ export function ProductEditor() {
                   className="rounded-xl"
                   onClick={() => void addVariant()}
                 >
-                  <Plus className="me-1.5 size-4" /> Variant
+                  <Plus className="me-1.5 size-4" /> {text("Variant جديد", "Add variant")}
                 </Button>
               </div>
               <div className="mt-4 space-y-3">
                 {variants.length === 0 ? (
                   <p className="rounded-xl border border-dashed p-5 text-center text-xs text-muted-foreground">
-                    لا يوجد Variants بعد.
+                    {text("لا يوجد Variants بعد.", "No variants yet.")}
                   </p>
                 ) : (
                   variants.map((variant) => (
                     <div key={variant.id} className="rounded-xl border border-border/70 p-3">
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        <Field label="Title">
+                        <Field label={text("العنوان", "Title")}>
                           <Input
                             value={variant.title}
                             onChange={(e) => patchVariant(variant.id, { title: e.target.value })}
@@ -750,7 +784,7 @@ export function ProductEditor() {
                             onChange={(e) => patchVariant(variant.id, { barcode: e.target.value })}
                           />
                         </Field>
-                        <Field label="Price">
+                        <Field label={text("السعر", "Price")}>
                           <Input
                             type="number"
                             step="0.01"
@@ -760,7 +794,7 @@ export function ProductEditor() {
                             }
                           />
                         </Field>
-                        <Field label="Compare at">
+                        <Field label={text("السعر قبل الخصم", "Compare at price")}>
                           <Input
                             type="number"
                             step="0.01"
@@ -772,7 +806,7 @@ export function ProductEditor() {
                             }
                           />
                         </Field>
-                        <Field label="Stock">
+                        <Field label={text("المخزون", "Stock")}>
                           <Input
                             type="number"
                             value={variant.stock_quantity}
@@ -798,7 +832,7 @@ export function ProductEditor() {
                           />
                         </Field>
                         <ToggleField
-                          label="Active"
+                          label={text("نشط", "Active")}
                           checked={variant.is_active}
                           onChange={(checked) => patchVariant(variant.id, { is_active: checked })}
                         />
@@ -809,13 +843,14 @@ export function ProductEditor() {
                           variant="outline"
                           onClick={() => void saveVariant(variant)}
                         >
-                          <Save className="me-1.5 size-3.5" /> حفظ
+                          <Save className="me-1.5 size-3.5" /> {text("حفظ", "Save")}
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
                           className="text-destructive"
                           onClick={() => void deleteVariant(variant.id)}
+                          aria-label={text("حذف Variant", "Delete variant")}
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -829,9 +864,12 @@ export function ProductEditor() {
             <article className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-black">صور المنتج</h3>
+                  <h3 className="text-sm font-black">{text("صور المنتج", "Product images")}</h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    الصور تُحفظ مباشرة في Supabase Storage.
+                    {text(
+                      "الصور تُحفظ مباشرة في Supabase Storage.",
+                      "Images are saved directly to Supabase Storage.",
+                    )}
                   </p>
                 </div>
                 <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-xl border border-border px-3 text-xs font-bold hover:bg-muted">
@@ -840,7 +878,7 @@ export function ProductEditor() {
                   ) : (
                     <ImagePlus className="size-4" />
                   )}{" "}
-                  رفع صورة
+                  {text("رفع صورة", "Upload image")}
                   <input
                     type="file"
                     accept="image/*"
@@ -873,12 +911,15 @@ export function ProductEditor() {
                         onClick={() => void setPrimaryImage(image.id)}
                         className="truncate text-[10px] font-bold"
                       >
-                        {image.is_primary ? "الرئيسية" : "اجعلها رئيسية"}
+                        {image.is_primary
+                          ? text("الرئيسية", "Primary")
+                          : text("اجعلها رئيسية", "Make primary")}
                       </button>
                       <button
                         type="button"
                         className="text-destructive"
                         onClick={() => void deleteImage(image.id)}
+                        aria-label={text("حذف الصورة", "Delete image")}
                       >
                         <Trash2 className="size-3.5" />
                       </button>
