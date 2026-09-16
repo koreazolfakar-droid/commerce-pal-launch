@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   Boxes,
   CreditCard,
@@ -6,6 +7,8 @@ import {
   SlidersHorizontal,
   Tags,
 } from "lucide-react";
+
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 const REASONS = [
@@ -42,11 +45,19 @@ const REASONS = [
 ] as const;
 
 export function WhyShop() {
+  const { data: cms } = useQuery(cmsQueryOptions());
+  const section = cms?.sections.find(
+    (item) => item.page_slug === "home" && item.section_key === "trust",
+  );
+  const title = section?.title?.trim() || `Why shop with ${STORE_NAME}`;
+  const subtitle = section?.subtitle?.trim();
+
   return (
-    <section className="" aria-labelledby="why-shop">
+    <section aria-labelledby="why-shop">
       <h2 id="why-shop" className="text-lg font-semibold tracking-tight sm:text-xl">
-        Why shop with {STORE_NAME}
+        {title}
       </h2>
+      {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {REASONS.map((reason) => (
           <div
