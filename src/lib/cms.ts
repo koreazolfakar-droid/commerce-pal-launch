@@ -240,7 +240,8 @@ export function localizeSection(section: CmsSection, language: CmsLocale): CmsSe
 
   return {
     ...section,
-    title: localizedCmsText(language, section.title_en, section.title_ar, section.title) ?? null,
+    title:
+      localizedCmsText(language, section.title_en, section.title_ar, section.title) ?? null,
     subtitle:
       localizedCmsText(language, section.subtitle_en, section.subtitle_ar, section.subtitle) ?? null,
     content: localizedContent ?? (legacyContentMatchesLanguage ? section.content : {}),
@@ -252,13 +253,21 @@ export function cmsText(snapshot: CmsSnapshot, key: string) {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
-export function cmsLocalizedSetting(snapshot: CmsSnapshot, key: string, language: CmsLocale) {
+export function cmsLocalizedSetting(
+  snapshot: CmsSnapshot,
+  key: string,
+  language: CmsLocale,
+) {
   const explicit = cmsText(snapshot, `${key}_${language}`);
   if (explicit) return explicit;
   return localizedCmsText(language, undefined, undefined, cmsText(snapshot, key));
 }
 
-export function cmsSeoPage(snapshot: CmsSnapshot, pageSlug: string, language: CmsLocale = "en") {
+export function cmsSeoPage(
+  snapshot: CmsSnapshot,
+  pageSlug: string,
+  language: CmsLocale = "en",
+) {
   const normalized = pageSlug.replace(/^\/+|\/+$/g, "") || "home";
   const page = snapshot.seoPages.find(
     (candidate) => candidate.is_public && candidate.page_slug === normalized,
