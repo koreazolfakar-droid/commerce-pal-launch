@@ -17,7 +17,13 @@ function SeoEditorPage() {
       orderBy="page_slug"
       newRow={{ page_slug: "new-page", robots: "index,follow", json_ld: {}, is_public: true }}
       fields={[
-        { key: "page_slug", label: "معرّف الصفحة", type: "text", required: true, placeholder: "shop" },
+        {
+          key: "page_slug",
+          label: "معرّف الصفحة",
+          type: "text",
+          required: true,
+          placeholder: "shop",
+        },
         { key: "title", label: "العنوان", type: "text" },
         { key: "description", label: "الوصف", type: "textarea" },
         { key: "og_image_url", label: "صورة المشاركة", type: "image" },
