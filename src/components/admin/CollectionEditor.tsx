@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadMedia } from "@/lib/adminMedia";
 
-export type EditorFieldType = "text" | "textarea" | "number" | "boolean" | "select" | "image" | "json";
+export type EditorFieldType =
+  "text" | "textarea" | "number" | "boolean" | "select" | "image" | "json";
 
 export type EditorField = {
   key: string;
@@ -101,7 +102,8 @@ export function CollectionEditor({
     try {
       for (const field of fields) {
         const value = row[field.key] ?? null;
-        payload[field.key] = field.type === "json" && typeof value === "string" ? JSON.parse(value || "{}") : value;
+        payload[field.key] =
+          field.type === "json" && typeof value === "string" ? JSON.parse(value || "{}") : value;
       }
     } catch {
       toast.error("تحقق من صيغة JSON قبل الحفظ");
@@ -268,7 +270,9 @@ export function CollectionEditor({
                                 id={inputId}
                                 value={String(value ?? "")}
                                 placeholder="رابط الصورة"
-                                onChange={(event) => setValue(editorKey, field.key, event.target.value)}
+                                onChange={(event) =>
+                                  setValue(editorKey, field.key, event.target.value)
+                                }
                               />
                               <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-input px-2 py-2 text-xs">
                                 {uploadingKey === `${editorKey}:${field.key}` ? (
