@@ -10,13 +10,26 @@ const hardeningMigration = "supabase/migrations/20260916074000_harden_dashboard_
 test("public CMS gateway stays aligned with the live production schema", async () => {
   const source = await read("supabase/functions/public-cms/index.ts");
 
-  assert.match(source, /from\("cms_site_settings"\)/);
-  assert.match(source, /from\("cms_hero_slides"\)/);
-  assert.match(source, /from\("cms_sections"\)/);
-  assert.match(source, /from\("cms_navigation_items"\)/);
+  for (const table of [
+    "cms_site_settings",
+    "cms_hero_slides",
+    "cms_sections",
+    "cms_navigation_items",
+    "cms_brands",
+    "cms_seo_pages",
+  ]) {
+    assert.match(source, new RegExp(`from\\("${table}"\\)`));
+  }
+
   assert.match(source, /eq\("is_published", true\)/);
   assert.match(source, /starts_at/);
   assert.match(source, /ends_at/);
+  assert.match(source, /sections:\s*sectionsResult\.data/);
+  assert.match(source, /navigation:\s*navigationResult\.data/);
+  assert.doesNotMatch(source, /from\("cms_sections"\)[\s\S]*?eq\("is_visible", true\)/);
+  assert.doesNotMatch(source, /from\("cms_navigation_items"\)[\s\S]*?eq\("is_visible", true\)/);
+  assert.match(source, /brands:\s*brandsResult\.data/);
+  assert.match(source, /seoPages:\s*seoResult\.data/);
 });
 
 test("dashboard routes edit the same CMS tables and fields as production", async () => {
@@ -37,6 +50,41 @@ test("dashboard routes edit the same CMS tables and fields as production", async
   assert.match(seo, /json_ld/);
   assert.match(settings, /from\("cms_site_settings"\)/);
   assert.match(settings, /value_type/);
+});
+
+test("generic CMS editor creates drafts before database inserts", async () => {
+  const editor = await read("src/components/admin/CollectionEditor.tsx");
+
+  assert.match(editor, /const IS_DRAFT/);
+  assert.match(editor, /draft-\$\{crypto\.randomUUID\(\)\}/);
+  assert.match(editor, /insert\(payload as never\)\.select\("\*"\)\.single\(\)/);
+  assert.match(editor, /field\.required/);
+  assert.doesNotMatch(editor, /const addRow = async \(\) => \{\s*const \{ error \} = await client\.from/);
+});
+
+test("storefront consumes dashboard brands SEO navigation and settings", async () => {
+  const [home, brandsPage, layout, controls, directory, media] = await Promise.all([
+    read("src/routes/index.tsx"),
+    read("src/routes/brands.tsx"),
+    read("src/components/StoreLayout.tsx"),
+    read("src/components/CmsStoreControls.tsx"),
+    read("src/lib/brandDirectory.ts"),
+    read("src/lib/adminMedia.ts"),
+  ]);
+
+  assert.match(home, /applyCmsBrands/);
+  assert.match(home, /cmsSeoPage\(cms, "home"\)/);
+  assert.match(brandsPage, /applyCmsBrands/);
+  assert.match(directory, /export function applyCmsBrands/);
+  assert.match(layout, /<CmsAnnouncementBar/);
+  assert.match(layout, /area="header"/);
+  assert.match(layout, /area="mobile_menu"/);
+  assert.match(layout, /area="footer"/);
+  assert.match(layout, /<CmsTrustStrip/);
+  assert.match(controls, /announcement_enabled/);
+  assert.match(controls, /whatsapp_number/);
+  assert.match(media, /getPublicUrl/);
+  assert.doesNotMatch(media, /createSignedUrl/);
 });
 
 test("dashboard CMS CRUD stays role-gated through RLS", async () => {
