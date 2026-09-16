@@ -29,6 +29,7 @@
     "exactOptionalPropertyTypes": true,
     "noUncheckedSideEffectImports": true,
     "paths": {
+      "@/lib/shopify": ["./src/lib/storefrontFacade.ts"],
       "@/*": ["./src/*"]
     }
   }
