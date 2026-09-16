@@ -10,7 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadMedia } from "@/lib/adminMedia";
 
-export type EditorFieldType = "text" | "textarea" | "number" | "boolean" | "select" | "image";
+export type EditorFieldType =
+  | "text"
+  | "textarea"
+  | "number"
+  | "boolean"
+  | "select"
+  | "image"
+  | "json";
 
 export type EditorField = {
   key: string;
@@ -22,6 +29,7 @@ export type EditorField = {
 };
 
 type Row = Record<string, unknown>;
+const EDITOR_KEY = "__editorKey";
 
 export type CollectionEditorProps = {
   table: string;
@@ -31,7 +39,17 @@ export type CollectionEditorProps = {
   newRow: Row;
   orderBy?: string;
   labelKey: string;
+  idKey?: string;
 };
+
+function displayJson(value: unknown) {
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value ?? {}, null, 2);
+  } catch {
+    return "{}";
+  }
+}
 
 /**
  * Reusable dashboard editor: lists, creates, updates and deletes rows for one
@@ -45,6 +63,7 @@ export function CollectionEditor({
   newRow,
   orderBy = "sort_order",
   labelKey,
+  idKey = "id",
 }: CollectionEditorProps) {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,35 +79,62 @@ export function CollectionEditor({
       .select("*")
       .order(orderBy, { ascending: true });
     if (error) toast.error(error.message);
-    setRows(((data ?? []) as Row[]).map((row) => ({ ...row })));
+    setRows(
+      ((data ?? []) as Row[]).map((row) => ({
+        ...row,
+        [EDITOR_KEY]: String(row[idKey] ?? ""),
+      })),
+    );
     setLoading(false);
   };
 
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [table]);
+  }, [table, idKey]);
 
-  const setValue = (id: string, key: string, value: unknown) => {
+  const setValue = (editorKey: string, key: string, value: unknown) => {
     setRows((current) =>
-      current.map((row) => (String(row["id"]) === id ? { ...row, [key]: value } : row)),
+      current.map((row) =>
+        String(row[EDITOR_KEY]) === editorKey ? { ...row, [key]: value } : row,
+      ),
     );
   };
 
   const saveRow = async (row: Row) => {
-    const id = String(row["id"]);
-    setSavingId(id);
+    const editorKey = String(row[EDITOR_KEY]);
     const payload: Row = {};
-    for (const field of fields) payload[field.key] = row[field.key] ?? null;
+
+    try {
+      for (const field of fields) {
+        const value = row[field.key] ?? null;
+        payload[field.key] =
+          field.type === "json" && typeof value === "string"
+            ? JSON.parse(value || "{}")
+            : value;
+      }
+    } catch {
+      toast.error("تحقق من صيغة JSON قبل الحفظ");
+      return;
+    }
+
+    setSavingId(editorKey);
     const { error } = await client
       .from(table as never)
       .update(payload as never)
-      .eq("id", id);
+      .eq(idKey, editorKey);
     setSavingId(null);
     if (error) {
       toast.error(error.message);
       return;
     }
+
+    const nextKey = String(row[idKey] ?? editorKey);
+    setRows((current) =>
+      current.map((item) =>
+        String(item[EDITOR_KEY]) === editorKey ? { ...item, [EDITOR_KEY]: nextKey } : item,
+      ),
+    );
     toast.success("تم الحفظ");
   };
 
@@ -104,24 +150,25 @@ export function CollectionEditor({
 
   const deleteRow = async (row: Row) => {
     if (!window.confirm("هل تريد الحذف نهائياً؟")) return;
-    const { error } = await client
-      .from(table as never)
-      .delete()
-      .eq("id", String(row["id"]));
+    const editorKey = String(row[EDITOR_KEY]);
+    const { error } = await client.from(table as never).delete().eq(idKey, editorKey);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setRows((current) => current.filter((item) => item["id"] !== row["id"]));
+    setRows((current) =>
+      current.filter((item) => String(item[EDITOR_KEY]) !== editorKey),
+    );
     toast.success("تم الحذف");
   };
 
   const handleUpload = async (row: Row, field: EditorField, file: File) => {
-    const uploadKey = `${String(row["id"])}:${field.key}`;
+    const editorKey = String(row[EDITOR_KEY]);
+    const uploadKey = `${editorKey}:${field.key}`;
     setUploadingKey(uploadKey);
     try {
       const url = await uploadMedia(file, table);
-      setValue(String(row["id"]), field.key, url);
+      setValue(editorKey, field.key, url);
       toast.success("تم رفع الصورة، اضغط حفظ");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تعذّر رفع الصورة");
@@ -153,9 +200,12 @@ export function CollectionEditor({
       ) : (
         <div className="space-y-4">
           {rows.map((row) => {
-            const id = String(row["id"]);
+            const editorKey = String(row[EDITOR_KEY]);
             return (
-              <article key={id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <article
+                key={editorKey}
+                className="rounded-xl border border-border bg-card p-4 shadow-sm"
+              >
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <h2 className="truncate text-sm font-semibold text-foreground">
                     {String(row[labelKey] ?? "بدون عنوان")}
@@ -165,9 +215,9 @@ export function CollectionEditor({
                       size="sm"
                       variant="outline"
                       onClick={() => void saveRow(row)}
-                      disabled={savingId === id}
+                      disabled={savingId === editorKey}
                     >
-                      {savingId === id ? (
+                      {savingId === editorKey ? (
                         <Loader2 className="me-1 size-4 animate-spin" />
                       ) : (
                         <Save className="me-1 size-4" />
@@ -183,12 +233,10 @@ export function CollectionEditor({
                 <div className="grid gap-4 sm:grid-cols-2">
                   {fields.map((field) => {
                     const value = row[field.key];
-                    const inputId = `${id}-${field.key}`;
+                    const inputId = `${editorKey}-${field.key}`;
+                    const wide = field.type === "textarea" || field.type === "json";
                     return (
-                      <div
-                        key={field.key}
-                        className={field.type === "textarea" ? "sm:col-span-2" : undefined}
-                      >
+                      <div key={field.key} className={wide ? "sm:col-span-2" : undefined}>
                         <Label htmlFor={inputId} className="text-xs text-muted-foreground">
                           {field.label}
                         </Label>
@@ -198,23 +246,33 @@ export function CollectionEditor({
                             <Switch
                               id={inputId}
                               checked={Boolean(value)}
-                              onCheckedChange={(checked) => setValue(id, field.key, checked)}
+                              onCheckedChange={(checked) =>
+                                setValue(editorKey, field.key, checked)
+                              }
                             />
                           </div>
-                        ) : field.type === "textarea" ? (
+                        ) : field.type === "textarea" || field.type === "json" ? (
                           <Textarea
                             id={inputId}
-                            className="mt-1"
-                            rows={3}
-                            value={String(value ?? "")}
-                            onChange={(event) => setValue(id, field.key, event.target.value)}
+                            className="mt-1 font-mono"
+                            rows={field.type === "json" ? 6 : 3}
+                            value={
+                              field.type === "json"
+                                ? displayJson(value)
+                                : String(value ?? "")
+                            }
+                            onChange={(event) =>
+                              setValue(editorKey, field.key, event.target.value)
+                            }
                           />
                         ) : field.type === "select" ? (
                           <select
                             id={inputId}
                             className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                             value={String(value ?? "")}
-                            onChange={(event) => setValue(id, field.key, event.target.value)}
+                            onChange={(event) =>
+                              setValue(editorKey, field.key, event.target.value)
+                            }
                           >
                             {(field.options ?? []).map((option) => (
                               <option key={option.value} value={option.value}>
@@ -229,10 +287,12 @@ export function CollectionEditor({
                                 id={inputId}
                                 value={String(value ?? "")}
                                 placeholder="رابط الصورة"
-                                onChange={(event) => setValue(id, field.key, event.target.value)}
+                                onChange={(event) =>
+                                  setValue(editorKey, field.key, event.target.value)
+                                }
                               />
                               <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-input px-2 py-2 text-xs">
-                                {uploadingKey === `${id}:${field.key}` ? (
+                                {uploadingKey === `${editorKey}:${field.key}` ? (
                                   <Loader2 className="size-4 animate-spin" />
                                 ) : (
                                   <Upload className="size-4" />
@@ -266,7 +326,7 @@ export function CollectionEditor({
                             placeholder={field.placeholder ?? ""}
                             onChange={(event) =>
                               setValue(
-                                id,
+                                editorKey,
                                 field.key,
                                 field.type === "number"
                                   ? Number(event.target.value)
