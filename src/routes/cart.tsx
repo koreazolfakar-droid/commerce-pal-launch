@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ExternalLink, Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 import { CheckoutDetailsForm } from "@/components/CheckoutDetailsForm";
 import { StoreLayout } from "@/components/StoreLayout";
 import { cdnImage } from "@/lib/image";
+import { formatPrice, variantSummary } from "@/lib/productPricing";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
-import { formatPrice, variantSummary } from "@/lib/shopify";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { useLanguage } from "@/lib/i18n";
 import { useCartStore } from "@/stores/cartStore";
@@ -16,16 +16,16 @@ export const Route = createFileRoute("/cart")({
       { title: `Your bag — ${STORE_NAME}` },
       {
         name: "description",
-        content: `Review your ${STORE_NAME} bag and continue to secure Shopify checkout.`,
+        content: `Review your ${STORE_NAME} bag and complete your order directly with the store.`,
       },
       { property: "og:title", content: `Your bag — ${STORE_NAME}` },
-      { property: "og:description", content: "Review your bag and check out securely." },
+      { property: "og:description", content: "Review your bag and complete your order directly." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/cart") },
       { name: "robots", content: "noindex, follow" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: `Your bag — ${STORE_NAME}` },
-      { name: "twitter:description", content: "Review your bag and check out securely." },
+      { name: "twitter:description", content: "Review your bag and complete your order directly." },
     ],
     links: [canonicalLink("/cart")],
   }),
@@ -34,24 +34,11 @@ export const Route = createFileRoute("/cart")({
 
 function CartPage() {
   const { t, language } = useLanguage();
-  const {
-    items,
-    total: shopifyTotal,
-    isLoading,
-    isSyncing,
-    updateQuantity,
-    removeItem,
-    getCheckoutUrl,
-  } = useCartStore();
-  const currency = shopifyTotal?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
-  const total = shopifyTotal
-    ? Number(shopifyTotal.amount)
+  const { items, total: cartTotal, isLoading, updateQuantity, removeItem } = useCartStore();
+  const currency = cartTotal?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
+  const total = cartTotal
+    ? Number(cartTotal.amount)
     : items.reduce((sum, item) => sum + Number(item.price.amount) * item.quantity, 0);
-
-  const checkout = () => {
-    const url = getCheckoutUrl();
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
-  };
 
   return (
     <StoreLayout>
@@ -111,7 +98,7 @@ function CartPage() {
                     <div className="flex flex-col items-end justify-between gap-2">
                       <button
                         type="button"
-                        onClick={() => removeItem(item.variantId)}
+                        onClick={() => void removeItem(item.variantId)}
                         aria-label={t("removeItem")}
                         className="text-muted-foreground transition-colors hover:text-destructive"
                       >
@@ -121,7 +108,7 @@ function CartPage() {
                         <button
                           type="button"
                           aria-label={t("decreaseQuantity")}
-                          onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
+                          onClick={() => void updateQuantity(item.variantId, item.quantity - 1)}
                           className="grid h-7 w-7 place-items-center rounded-full hover:bg-surface"
                         >
                           <Minus className="h-3 w-3" />
@@ -130,7 +117,7 @@ function CartPage() {
                         <button
                           type="button"
                           aria-label={t("increaseQuantity")}
-                          onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                          onClick={() => void updateQuantity(item.variantId, item.quantity + 1)}
                           className="grid h-7 w-7 place-items-center rounded-full hover:bg-surface"
                         >
                           <Plus className="h-3 w-3" />
@@ -151,8 +138,8 @@ function CartPage() {
               </div>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 {language === "ar"
-                  ? "أكمل بيانات التوصيل وأرسل الطلب عبر واتساب، أو استخدم Shopify للدفع الإلكتروني."
-                  : "Complete delivery details and send the order on WhatsApp, or use Shopify for online checkout."}
+                  ? "أكمل بيانات التوصيل واختر طريقة الدفع لإرسال طلبك مباشرة إلى Space Call."
+                  : "Complete your delivery details and choose a payment method to send your order directly to Space Call."}
               </p>
             </div>
 
@@ -160,32 +147,8 @@ function CartPage() {
               items={items}
               total={total}
               currency={currency}
-              disabled={isLoading || isSyncing}
+              disabled={isLoading}
             />
-
-            <div className="mt-3 rounded-2xl border bg-card p-4 shadow-card sm:p-5">
-              <p className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {language === "ar" ? "أو ادفع أونلاين" : "or pay online"}
-              </p>
-              <p className="mt-1.5 text-center text-xs text-muted-foreground">
-                {t("taxesShippingCheckout")}
-              </p>
-              <button
-                type="button"
-                onClick={checkout}
-                disabled={isLoading || isSyncing}
-                className="press mt-3 flex w-full items-center justify-center gap-2 rounded-xl border bg-background px-6 py-3.5 text-sm font-bold text-foreground transition-colors hover:border-primary/40 hover:bg-surface disabled:opacity-60"
-              >
-                {isLoading || isSyncing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <ExternalLink className="h-4 w-4" />
-                    {t("checkoutShopify")}
-                  </>
-                )}
-              </button>
-            </div>
           </>
         )}
       </div>
