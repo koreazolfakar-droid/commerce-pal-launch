@@ -16,7 +16,7 @@ import {
   fetchProductsByHandles,
   fetchProductsByVendor,
   searchStorefront,
-} from "@/lib/shopify";
+} from "@/lib/hybridStore";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 2 * 60 * 1000;
@@ -28,7 +28,7 @@ async function fetchCatalogIndexSafely() {
   try {
     const vendorPromise = fetchBrandVendors().catch((error) => {
       console.error(
-        "Shopify vendor discovery failed; using brands from the bounded catalog.",
+        "Storefront vendor discovery failed; using brands from the bounded catalog.",
         error,
       );
       return [] as string[];
@@ -41,7 +41,7 @@ async function fetchCatalogIndexSafely() {
     };
   } catch (error) {
     console.error(
-      "Shopify catalog fetch failed; rendering the storefront update state instead of the global error page.",
+      "Storefront catalog fetch failed; rendering the update state instead of the global error page.",
       error,
     );
     return buildCatalogIndex([]);
@@ -58,8 +58,7 @@ export const catalogQueryOptions = () =>
 
 export const collectionsQueryOptions = () =>
   queryOptions({
-    // Brand artwork is merchant-controlled and should refresh quickly after Shopify edits.
-    // Keep this shorter than general merchandising so an old logo cannot remain pinned.
+    // Keep collection/brand artwork fresh while preserving the established cache key.
     queryKey: ["shopify", "collections", "brand-logo-cache-v5", 100],
     queryFn: () => fetchCollections(100),
     staleTime: BRAND_COLLECTION_STALE_TIME,
@@ -79,7 +78,7 @@ export const collectionQueryOptions = (handle: string, pageSize = 48) =>
     staleTime: CATALOG_STALE_TIME,
   });
 
-/** Native creation order, not the cached catalog order or an assumed "new" tag. */
+/** Creation order across both storefront sources. */
 export const newestQueryOptions = () =>
   queryOptions({
     queryKey: ["shopify", "newest"],
@@ -94,7 +93,7 @@ export const productQueryOptions = (handle: string) =>
     staleTime: CATALOG_STALE_TIME,
   });
 
-/** Shopify-native recommendations for the product detail page. */
+/** Recommendations can now include both native Space Call and Shopify products. */
 export const recommendationsQueryOptions = (handle: string) =>
   queryOptions({
     queryKey: ["shopify", "recommendations", handle],
@@ -111,9 +110,8 @@ export const vendorProductsQueryOptions = (vendor: string) =>
   });
 
 /**
- * Small homepage-only vendor payload. Brand shelves use this only when the
- * bounded discovery catalog does not already contain four products, so the
- * homepage stays fast without leaving valid Shopify brands empty.
+ * Small homepage-only vendor payload. The hybrid layer keeps this bounded and
+ * can backfill a brand shelf from either storefront source.
  */
 export const homeVendorProductsQueryOptions = (vendor: string) => {
   const normalizedVendor = vendor.trim();
