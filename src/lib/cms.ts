@@ -40,11 +40,34 @@ export type CmsNavigationItem = {
   is_visible: boolean;
 };
 
+export type CmsBrand = {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  href: string | null;
+  sort_order: number;
+  is_visible: boolean;
+};
+
+export type CmsSeoPage = {
+  page_slug: string;
+  title: string | null;
+  description: string | null;
+  og_image_url: string | null;
+  canonical_url: string | null;
+  robots: string;
+  json_ld: { [key: string]: CmsJsonValue };
+  is_public: boolean;
+};
+
 export type CmsSnapshot = {
   settings: Record<string, CmsSettingValue>;
   heroSlides: CmsHeroSlide[];
   sections: CmsSection[];
   navigation: CmsNavigationItem[];
+  brands: CmsBrand[];
+  seoPages: CmsSeoPage[];
 };
 
 export const EMPTY_CMS: CmsSnapshot = {
@@ -52,6 +75,8 @@ export const EMPTY_CMS: CmsSnapshot = {
   heroSlides: [],
   sections: [],
   navigation: [],
+  brands: [],
+  seoPages: [],
 };
 
 const LIVE_SUPABASE_PROJECT_REF = "rtwyankpxtffqqrasyzw";
@@ -68,7 +93,9 @@ function isCmsSnapshot(value: unknown): value is CmsSnapshot {
     typeof record.settings === "object" &&
     Array.isArray(record.heroSlides) &&
     Array.isArray(record.sections) &&
-    Array.isArray(record.navigation)
+    Array.isArray(record.navigation) &&
+    Array.isArray(record.brands) &&
+    Array.isArray(record.seoPages)
   );
 }
 
@@ -134,4 +161,9 @@ export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
 export function cmsText(snapshot: CmsSnapshot, key: string) {
   const value = snapshot.settings[key];
   return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+export function cmsSeoPage(snapshot: CmsSnapshot, pageSlug: string) {
+  const normalized = pageSlug.replace(/^\/+|\/+$/g, "") || "home";
+  return snapshot.seoPages.find((page) => page.is_public && page.page_slug === normalized);
 }
