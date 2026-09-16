@@ -84,8 +84,8 @@ function NavItem({
 }: {
   item: (typeof DASHBOARD_NAVIGATION)[number] | (typeof DASHBOARD_CONTENT_NAVIGATION)[number];
   collapsed: boolean;
-  badge?: number;
-  onNavigate?: () => void;
+  badge?: number | undefined;
+  onNavigate?: (() => void) | undefined;
 }) {
   const { language } = useDashboardLanguage();
   const Icon = item.icon;

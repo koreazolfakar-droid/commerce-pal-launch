@@ -9,18 +9,18 @@ type StatCardProps = {
   title: string;
   value: string;
   icon: ReactNode;
-  trend?: DashboardTrend;
-  comparisonLabel?: string;
-  warningIncrease?: boolean;
-  loading?: boolean;
+  trend?: DashboardTrend | undefined;
+  comparisonLabel?: string | undefined;
+  warningIncrease?: boolean | undefined;
+  loading?: boolean | undefined;
 };
 
 function TrendBadge({
   trend,
   warningIncrease,
 }: {
-  trend?: DashboardTrend;
-  warningIncrease?: boolean;
+  trend?: DashboardTrend | undefined;
+  warningIncrease?: boolean | undefined;
 }) {
   if (!trend || trend.value === null) {
     return <span className="text-[11px] font-semibold text-muted-foreground">—</span>;
