@@ -148,16 +148,18 @@ export function SettingsEditor() {
   };
 
   return (
-    <section className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <section className="space-y-5">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">إعدادات الموقع</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-[11px] font-semibold text-muted-foreground">Store Settings</p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">إعدادات الموقع</h1>
+          <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
             اسم المتجر، واتساب، الشعار، الشريط الإعلاني والإعدادات العامة.
           </p>
         </div>
         <Button
           size="sm"
+          className="min-h-10 rounded-xl bg-foreground px-4 text-background hover:bg-foreground/90"
           onClick={() =>
             setRows((current) => [
               {
@@ -173,57 +175,92 @@ export function SettingsEditor() {
             ])
           }
         >
-          <Plus className="me-1 size-4" /> إضافة إعداد
+          <Plus className="me-1.5 size-4" /> إضافة إعداد
         </Button>
       </header>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex min-h-32 items-center justify-center gap-2 rounded-2xl border border-border/70 bg-card text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" /> جاري التحميل…
         </div>
       ) : rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          لا توجد إعدادات بعد.
-        </p>
+        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+          <p className="text-sm font-bold text-foreground">لا توجد إعدادات بعد</p>
+          <p className="mt-1 text-xs text-muted-foreground">أضف أول إعداد للبدء.</p>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {rows.map((row, index) => {
             const rowKey = row.originalKey || row.key || `new-${index}`;
             return (
               <article
                 key={`${rowKey}-${index}`}
-                className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-sm"
+                className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgb(0_0_0/0.02)]"
               >
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold text-muted-foreground">Setting</p>
+                    <h2 className="mt-0.5 truncate text-sm font-black text-foreground">
+                      {row.label || row.key || "إعداد جديد"}
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="min-h-9 rounded-xl"
+                      onClick={() => void save(row, index)}
+                      disabled={savingKey === rowKey}
+                    >
+                      {savingKey === rowKey ? (
+                        <Loader2 className="me-1.5 size-3.5 animate-spin" />
+                      ) : (
+                        <Save className="me-1.5 size-3.5" />
+                      )}
+                      حفظ
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => void remove(row)}
+                      aria-label="حذف الإعداد"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-4">
                   <div>
-                    <Label className="text-xs text-muted-foreground">المفتاح</Label>
+                    <Label className="text-[11px] font-semibold text-muted-foreground">المفتاح</Label>
                     <Input
-                      className="mt-1"
+                      className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
                       list="cms-setting-keys"
                       value={row.key}
                       onChange={(event) => patchRow(index, { key: event.target.value })}
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">الاسم الظاهر</Label>
+                    <Label className="text-[11px] font-semibold text-muted-foreground">الاسم الظاهر</Label>
                     <Input
-                      className="mt-1"
+                      className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
                       value={row.label}
                       onChange={(event) => patchRow(index, { label: event.target.value })}
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">المجموعة</Label>
+                    <Label className="text-[11px] font-semibold text-muted-foreground">المجموعة</Label>
                     <Input
-                      className="mt-1"
+                      className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
                       value={row.groupName}
                       onChange={(event) => patchRow(index, { groupName: event.target.value })}
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">نوع القيمة</Label>
+                    <Label className="text-[11px] font-semibold text-muted-foreground">نوع القيمة</Label>
                     <select
-                      className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-border/70 bg-muted/20 px-3 text-xs font-medium outline-none"
                       value={row.valueType}
                       onChange={(event) =>
                         patchRow(index, { valueType: event.target.value as Setting["valueType"] })
@@ -235,60 +272,47 @@ export function SettingsEditor() {
                       <option value="json">JSON</option>
                     </select>
                   </div>
-                </div>
 
-                <div>
-                  <Label className="text-xs text-muted-foreground">القيمة</Label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Input
-                      value={row.value}
-                      onChange={(event) => patchRow(index, { value: event.target.value })}
-                    />
-                    <label className="inline-flex cursor-pointer items-center rounded-md border border-input px-2 py-2">
-                      {uploadingKey === rowKey ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Upload className="size-4" />
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          if (file) void upload(row, index, file);
-                          event.target.value = "";
-                        }}
+                  <div className="sm:col-span-2 xl:col-span-4">
+                    <Label className="text-[11px] font-semibold text-muted-foreground">القيمة</Label>
+                    <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Input
+                        className="h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
+                        value={row.value}
+                        onChange={(event) => patchRow(index, { value: event.target.value })}
+                      />
+                      <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-bold transition hover:bg-muted">
+                        {uploadingKey === rowKey ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Upload className="size-4" />
+                        )}
+                        رفع ملف
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) void upload(row, index, file);
+                            event.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-2 xl:col-span-4">
+                    <label className="flex min-h-11 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-medium text-foreground">
+                      <span>
+                        متاح للواجهة العامة
+                        <span className="ms-2 text-[10px] font-normal text-muted-foreground">يظهر عبر public CMS</span>
+                      </span>
+                      <Switch
+                        checked={row.isPublic}
+                        onCheckedChange={(checked) => patchRow(index, { isPublic: checked })}
                       />
                     </label>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Switch
-                      checked={row.isPublic}
-                      onCheckedChange={(checked) => patchRow(index, { isPublic: checked })}
-                    />
-                    متاح للواجهة العامة
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void save(row, index)}
-                      disabled={savingKey === rowKey}
-                    >
-                      {savingKey === rowKey ? (
-                        <Loader2 className="me-1 size-4 animate-spin" />
-                      ) : (
-                        <Save className="me-1 size-4" />
-                      )}
-                      حفظ
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => void remove(row)}>
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
                   </div>
                 </div>
               </article>
