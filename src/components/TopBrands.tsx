@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 
 import { BrandLogo } from "@/components/BrandLogo";
 import type { ShopifyBrand } from "@/lib/brandDirectory";
 import { orderedBrands } from "@/lib/homeMerchandising";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 
 const COMPACT_MARKS = new Set(["apple", "xiaomi"]);
@@ -34,6 +36,9 @@ function brandSlotWidth(brand: ShopifyBrand) {
  */
 export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   const { t } = useLanguage();
+  const { data: cms } = useQuery(cmsQueryOptions());
+  const cmsTitle = cms?.sections.find((section) => section.section_key === "brands")?.title?.trim();
+  const sectionTitle = cmsTitle || t("topBrands");
   const railRef = useRef<HTMLDivElement>(null);
   const autoFrameRef = useRef<number | null>(null);
   const measureTimerRef = useRef<number | null>(null);
@@ -301,7 +306,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
       <div className="home-section-header !mb-0 flex-nowrap items-end">
         <div className="min-w-0 flex-1">
           <h2 id="top-brands" className="text-xl font-black tracking-tight">
-            {t("topBrands")}
+            {sectionTitle}
           </h2>
         </div>
         <Link
@@ -350,7 +355,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
           onWheel={() => pauseAfterInteraction(1200)}
           className="cursor-grab overflow-x-auto overflow-y-hidden overscroll-x-contain touch-auto active:cursor-grabbing [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="list"
-          aria-label={t("topBrands")}
+          aria-label={sectionTitle}
         >
           <div className="flex w-max items-center py-0.5 sm:py-1">
             {INFINITE_CYCLES.map((cycleIndex) => (
