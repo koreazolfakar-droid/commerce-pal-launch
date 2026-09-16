@@ -336,8 +336,12 @@ export function ProductEditor() {
       return;
     }
     toast.success("تم حفظ Variant والمخزون");
-    const refreshed = await supabase.from("store_products" as never).select("*").eq("id", variant.product_id).single();
-    if (refreshed.data) setEditing(toEditing(refreshed.data as ProductRow));
+    const refreshed = (await supabase
+      .from("store_products" as never)
+      .select("*")
+      .eq("id", variant.product_id)
+      .single()) as unknown as { data: ProductRow | null };
+    if (refreshed.data) setEditing(toEditing(refreshed.data));
   };
 
   const deleteVariant = async (id: string) => {
