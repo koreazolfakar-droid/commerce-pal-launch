@@ -3,6 +3,7 @@ import { Loader2, LogOut, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect } from "react";
 
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { AdminLogin } from "@/components/admin/AdminLogin";
 import { Button } from "@/components/ui/button";
 import { useAdminSession } from "@/hooks/useAdminSession";
@@ -55,7 +56,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground transition-colors duration-300">
         <div className="space-y-3 text-center">
           <Loader2 className="mx-auto size-6 animate-spin text-primary" />
           <p className="text-xs text-muted-foreground">جارٍ التحقق من جلسة الإدارة…</p>
@@ -68,8 +69,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (!role) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4" dir="rtl">
-        <div className="w-full max-w-md space-y-4 rounded-[1.75rem] border border-border/70 bg-card p-6 text-center shadow-card">
+      <div className="relative flex min-h-screen items-center justify-center bg-background px-4 text-foreground transition-colors duration-300" dir="rtl">
+        <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
+          <ThemeToggle className="border border-border/70 bg-card/95 shadow-sm backdrop-blur hover:bg-muted" />
+        </div>
+
+        <div className="w-full max-w-md space-y-4 rounded-[1.75rem] border border-border/70 bg-card p-6 text-center shadow-card transition-colors duration-300">
           <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-destructive/10 text-destructive">
             <ShieldCheck className="size-6" />
           </span>
@@ -96,8 +101,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300" dir="rtl">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur transition-colors duration-300">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div>
             <div className="flex items-center gap-2">
@@ -110,13 +115,17 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               {session.user.email} · {role === "admin" ? "مدير" : "محرّر"}
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void supabase.auth.signOut().then(refresh)}
-          >
-            <LogOut className="me-1 size-4" /> خروج
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle className="border border-border/70 bg-background/70 shadow-sm hover:bg-muted" />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void supabase.auth.signOut().then(refresh)}
+            >
+              <LogOut className="me-1 size-4" /> خروج
+            </Button>
+          </div>
         </div>
         <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2 text-sm">
           {NAV.map((item) => (
@@ -125,7 +134,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               to={item.to}
               activeOptions={{ exact: item.to === "/dashboard" }}
               activeProps={{ className: "bg-primary text-primary-foreground" }}
-              className="whitespace-nowrap rounded-full px-3 py-1.5 text-muted-foreground hover:bg-muted"
+              className="whitespace-nowrap rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:bg-muted"
             >
               {item.label}
             </Link>
