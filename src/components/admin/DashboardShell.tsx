@@ -57,7 +57,9 @@ const NAV_GROUPS = [
   },
 ] as const;
 
-const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items);
+type DashboardNavItem = (typeof NAV_GROUPS)[number]["items"][number];
+
+const NAV_ITEMS = NAV_GROUPS.flatMap<DashboardNavItem>((group) => group.items);
 
 function DashboardNavigation({ onNavigate }: { onNavigate?: () => void }) {
   return (
@@ -197,7 +199,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const userInitial = (session.user.email?.trim().charAt(0) || "S").toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#f7f7f5] text-foreground transition-colors duration-300 dark:bg-background" dir="rtl">
+    <div
+      className="min-h-screen bg-[#f7f7f5] text-foreground transition-colors duration-300 dark:bg-background"
+      dir="rtl"
+    >
       <aside className="fixed inset-y-0 right-0 z-40 hidden w-64 flex-col border-l border-border/70 bg-card lg:flex">
         <div className="px-5 pb-4 pt-5">
           <div className="flex items-center gap-3">
