@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck, Store, Wifi } from "lucide-react";
 import { toast } from "sonner";
 
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,9 +110,13 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
   };
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
+    <div className="relative min-h-screen bg-background text-foreground transition-colors duration-300" dir="rtl">
+      <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
+        <ThemeToggle className="border border-border/70 bg-card/95 shadow-sm backdrop-blur hover:bg-muted" />
+      </div>
+
       <div className="mx-auto grid min-h-screen w-full max-w-5xl items-center gap-6 px-4 py-8 lg:grid-cols-[0.92fr_1.08fr] lg:px-6">
-        <aside className="hidden rounded-[2rem] border border-border/70 bg-card p-8 shadow-card lg:block">
+        <aside className="hidden rounded-[2rem] border border-border/70 bg-card p-8 shadow-card transition-colors duration-300 lg:block">
           <div className="mb-8 inline-flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3">
             <span className="grid size-11 place-items-center rounded-xl bg-primary text-primary-foreground">
               <ShieldCheck className="size-5" />
@@ -130,14 +135,14 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
           </p>
 
           <div className="mt-8 space-y-3 text-sm">
-            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-background/50 p-4">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-background/50 p-4 transition-colors duration-300">
               <LockKeyhole className="size-5 shrink-0 text-primary" />
               <div>
                 <p className="font-bold text-foreground">صلاحيات RLS محمية</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">لا يمكن للمستخدم منح نفسه Admin أو Editor.</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-background/50 p-4">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-background/50 p-4 transition-colors duration-300">
               <Wifi className="size-5 shrink-0 text-primary" />
               <div>
                 <p className="font-bold text-foreground">اتصال Supabase آمن</p>
@@ -150,7 +155,7 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
         <main className="mx-auto w-full max-w-md">
           <form
             onSubmit={submit}
-            className="space-y-5 rounded-[1.75rem] border border-border/70 bg-card p-5 shadow-card sm:p-7"
+            className="space-y-5 rounded-[1.75rem] border border-border/70 bg-card p-5 shadow-card transition-colors duration-300 sm:p-7"
           >
             <div className="flex items-start gap-3">
               <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
