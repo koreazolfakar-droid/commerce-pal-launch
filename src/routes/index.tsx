@@ -1,17 +1,12 @@
 import { useLanguage } from "@/lib/i18n";
-import { DealSpotlight } from "@/components/DealSpotlight";
-import { useEffect, useState } from "react";
-import { ProductRail } from "@/components/ProductRail";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Timer } from "lucide-react";
 
-import { RecentlyViewed, ServicesStrip } from "@/components/HomeSections";
+import { HomeCategorySection } from "@/components/HomeCategorySection";
 import { HomeHero } from "@/components/HomeHero";
 import { StoreLayout } from "@/components/StoreLayout";
-import { TopBrands } from "@/components/TopBrands";
-import { WhyShop } from "@/components/WhyShop";
-import { BrandShowcase, BundleSection, CategorySection } from "@/components/BrandShowcaseSections";
 import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, cmsText, EMPTY_CMS, fetchCmsSnapshot } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
@@ -34,7 +29,81 @@ import {
 } from "@/lib/seo";
 import "../home-ticker.css";
 
+const LazyDealSpotlight = lazy(() =>
+  import("@/components/DealSpotlight").then((module) => ({ default: module.DealSpotlight })),
+);
+const LazyProductRail = lazy(() =>
+  import("@/components/ProductRail").then((module) => ({ default: module.ProductRail })),
+);
+const LazyRecentlyViewed = lazy(() =>
+  import("@/components/HomeSections").then((module) => ({ default: module.RecentlyViewed })),
+);
+const LazyServicesStrip = lazy(() =>
+  import("@/components/HomeSections").then((module) => ({ default: module.ServicesStrip })),
+);
+const LazyTopBrands = lazy(() =>
+  import("@/components/TopBrands").then((module) => ({ default: module.TopBrands })),
+);
+const LazyWhyShop = lazy(() =>
+  import("@/components/WhyShop").then((module) => ({ default: module.WhyShop })),
+);
+const LazyBundleSection = lazy(() =>
+  import("@/components/BrandShowcaseSections").then((module) => ({
+    default: module.BundleSection,
+  })),
+);
+const LazyBrandShowcase = lazy(() =>
+  import("@/components/BrandShowcaseSections").then((module) => ({
+    default: module.BrandShowcase,
+  })),
+);
+
 const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
+const HOME_SECONDARY_IDLE_TIMEOUT_MS = 1400;
+const HOME_SECONDARY_FALLBACK_DELAY_MS = 350;
+
+type IdleCapableWindow = Window & {
+  requestIdleCallback?: (
+    callback: IdleRequestCallback,
+    options?: IdleRequestOptions,
+  ) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
+
+/**
+ * Keep below-the-fold JavaScript and secondary Shopify requests out of the
+ * startup critical path. They become available as soon as the browser reaches
+ * an idle window, with a short fallback for browsers without requestIdleCallback.
+ */
+function useDeferredHomepageWork() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let idleRequestId: number | null = null;
+    let fallbackTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
+    const idleWindow = window as IdleCapableWindow;
+    const activate = () => {
+      if (!cancelled) setReady(true);
+    };
+
+    if (typeof idleWindow.requestIdleCallback === "function") {
+      idleRequestId = idleWindow.requestIdleCallback(activate, {
+        timeout: HOME_SECONDARY_IDLE_TIMEOUT_MS,
+      });
+    } else {
+      fallbackTimer = globalThis.setTimeout(activate, HOME_SECONDARY_FALLBACK_DELAY_MS);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleRequestId !== null) idleWindow.cancelIdleCallback?.(idleRequestId);
+      if (fallbackTimer !== null) globalThis.clearTimeout(fallbackTimer);
+    };
+  }, []);
+
+  return ready;
+}
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
@@ -119,6 +188,10 @@ function SectionHeader({
   );
 }
 
+function SectionFallback({ className = "h-52" }: { className?: string }) {
+  return <div className={`${className} rounded-3xl bg-surface`} aria-hidden="true" />;
+}
+
 function DealsCountdown() {
   const { t } = useLanguage();
   const [left, setLeft] = useState<number | null>(null);
@@ -182,18 +255,20 @@ function HomePromoTicker({ heading, details }: { heading: string; details: strin
 
 function Index() {
   const { t, language } = useLanguage();
+  const deferredWorkReady = useDeferredHomepageWork();
   const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: collections = [] } = useQuery(collectionsQueryOptions());
   const { data: heroCollection } = useQuery(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4));
   const catalogReady = Boolean(catalog);
+  const secondaryQueriesReady = catalogReady && deferredWorkReady;
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
-    enabled: catalogReady,
+    enabled: secondaryQueriesReady,
   });
   const { data: bestSellers = [] } = useQuery({
     ...bestSellingQueryOptions(),
-    enabled: catalogReady,
+    enabled: secondaryQueriesReady,
   });
 
   const heroOnlyProductIds = new Set(
@@ -242,13 +317,15 @@ function Index() {
         ) : null}
 
         {catalog ? (
-          <CategorySection catalog={catalog} collections={collections} />
+          <HomeCategorySection catalog={catalog} collections={collections} />
         ) : (
           <div className="h-28 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
         )}
         {isVisible("brands") ? (
           catalog ? (
-            <TopBrands brands={brands} />
+            <Suspense fallback={<SectionFallback className="h-24" />}>
+              <LazyTopBrands brands={brands} />
+            </Suspense>
           ) : (
             <div className="h-24 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
           )
@@ -259,7 +336,9 @@ function Index() {
             {isVisible("featured_products") && best.length > 0 && (
               <section data-testid="best-sellers">
                 <SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} />
-                <ProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
+                <Suspense fallback={<SectionFallback />}>
+                  <LazyProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
+                </Suspense>
               </section>
             )}
 
@@ -270,11 +349,13 @@ function Index() {
                   subtitle={t("dealsDescription")}
                   action={<DealsCountdown />}
                 />
-                {deals.length <= 2 ? (
-                  <DealSpotlight products={deals} />
-                ) : (
-                  <ProductRail products={deals} storageKey="space-cell-home-deals-view" />
-                )}
+                <Suspense fallback={<SectionFallback className="h-72" />}>
+                  {deals.length <= 2 ? (
+                    <LazyDealSpotlight products={deals} />
+                  ) : (
+                    <LazyProductRail products={deals} storageKey="space-cell-home-deals-view" />
+                  )}
+                </Suspense>
                 <div className="mt-4">
                   <Link
                     to="/shop"
@@ -302,29 +383,35 @@ function Index() {
                     </Link>
                   }
                 />
-                <ProductRail products={latest} storageKey="space-cell-home-new-items-view" />
+                <Suspense fallback={<SectionFallback />}>
+                  <LazyProductRail products={latest} storageKey="space-cell-home-new-items-view" />
+                </Suspense>
               </section>
             )}
 
-            {isVisible("featured_products") ? (
-              <>
-                <BundleSection collections={collections} />
+            {isVisible("featured_products") && deferredWorkReady ? (
+              <Suspense fallback={<SectionFallback className="h-64" />}>
+                <LazyBundleSection collections={collections} />
                 {homepageCatalog ? (
-                  <BrandShowcase catalog={homepageCatalog} collections={collections} />
+                  <LazyBrandShowcase catalog={homepageCatalog} collections={collections} />
                 ) : null}
-              </>
+              </Suspense>
             ) : null}
           </>
         ) : (
           <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
         )}
 
-        <RecentlyViewed products={merchandiseProducts} />
-        {isVisible("trust") ? (
-          <>
-            <ServicesStrip />
-            <WhyShop />
-          </>
+        {deferredWorkReady ? (
+          <Suspense fallback={null}>
+            <LazyRecentlyViewed products={merchandiseProducts} />
+            {isVisible("trust") ? (
+              <>
+                <LazyServicesStrip />
+                <LazyWhyShop />
+              </>
+            ) : null}
+          </Suspense>
         ) : null}
       </div>
     </StoreLayout>

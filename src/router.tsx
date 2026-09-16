@@ -18,6 +18,10 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // Preload route chunks/data only when the user signals navigation intent
+    // (hover/focus/touch). This keeps initial loading lean while making the next
+    // page feel immediate once a user starts interacting with a link.
+    defaultPreload: "intent",
     // Avoid re-running the same route preload immediately when a user taps a link
     // right after hover/touch intent. Product/query freshness is still governed by
     // React Query's shorter data stale times.
