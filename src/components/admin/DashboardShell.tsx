@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Loader2, LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AdminLogin } from "@/components/admin/AdminLogin";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,45 @@ const NAV = [
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { loading, session, role, refresh } = useAdminSession();
   const [claiming, setClaiming] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const attemptedBootstrapFor = useRef<string | null>(null);
+
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (loading || !userId || role || attemptedBootstrapFor.current === userId) return;
+
+    attemptedBootstrapFor.current = userId;
+    let active = true;
+    setClaiming(true);
+    setBootstrapError(null);
+
+    void (async () => {
+      const { error } = await supabase.from("user_roles").insert({
+        user_id: userId,
+        role: "admin",
+      });
+
+      if (!active) return;
+
+      if (error) {
+        setClaiming(false);
+        if (error.message.includes("dashboard_bootstrap_closed")) {
+          setBootstrapError("تم إعداد لوحة الإدارة مسبقاً. استخدم حساب مدير معتمد.");
+        } else {
+          setBootstrapError(error.message);
+        }
+        return;
+      }
+
+      setClaiming(false);
+      await refresh();
+      if (active) toast.success("تم إعداد أول حساب مدير تلقائياً");
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [loading, refresh, role, session?.user.id]);
 
   if (loading) {
     return (
@@ -34,39 +73,37 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   if (!session) return <AdminLogin onSignedIn={refresh} />;
 
   if (!role) {
-    const claim = async () => {
-      setClaiming(true);
-      const { error } = await supabase.from("user_roles").insert({
-        user_id: session.user.id,
-        role: "admin",
-      });
-      setClaiming(false);
-
-      if (error) {
-        if (error.message.includes("dashboard_bootstrap_closed")) {
-          toast.error("تم إعداد لوحة الإدارة مسبقاً. استخدم حساب مدير معتمد.");
-        } else {
-          toast.error(error.message);
-        }
-        return;
-      }
-
-      await refresh();
-      toast.success("تم منحك صلاحية المدير");
-    };
+    if (claiming) {
+      return (
+        <div className="flex min-h-screen items-center justify-center px-4" dir="rtl">
+          <div className="w-full max-w-sm space-y-3 rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+            <Loader2 className="mx-auto size-6 animate-spin text-primary" />
+            <h1 className="text-lg font-semibold text-foreground">جارٍ إعداد حساب المدير</h1>
+            <p className="text-sm text-muted-foreground">يتم الآن التحقق من أول حساب وربطه بلوحة التحكم.</p>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="flex min-h-screen items-center justify-center px-4" dir="rtl">
         <div className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
           <h1 className="text-lg font-semibold text-foreground">لا توجد صلاحية إدارية</h1>
           <p className="text-sm text-muted-foreground">
-            إن كان هذا أول حساب في لوحة التحكم يمكنك المطالبة بصلاحية المدير مرة واحدة. بعد التهيئة،
-            يمنح المدير الحالي الصلاحيات للحسابات الأخرى.
+            {bootstrapError ?? "تعذّر إكمال إعداد صلاحية المدير تلقائياً."}
           </p>
-          <Button className="w-full" onClick={() => void claim()} disabled={claiming}>
-            {claiming ? <Loader2 className="me-1 size-4 animate-spin" /> : null}
-            المطالبة بصلاحية المدير
-          </Button>
+          {bootstrapError && !bootstrapError.includes("تم إعداد لوحة الإدارة مسبقاً") ? (
+            <Button
+              className="w-full"
+              onClick={() => {
+                attemptedBootstrapFor.current = null;
+                setBootstrapError(null);
+                void refresh();
+              }}
+            >
+              إعادة المحاولة
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             className="w-full"
