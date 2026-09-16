@@ -47,14 +47,14 @@ test("homepage brand shelves backfill missing products without expanding the glo
   assert.match(shelves, /mergeUniqueProducts\(indexedProducts, vendorProducts\)/);
 });
 
-test("Shopify cart responses contain authoritative merchandise prices and totals", async () => {
-  const [documents, store] = await Promise.all([
-    read("src/lib/shopifyDocuments.ts"),
-    read("src/stores/cartStore.ts"),
-  ]);
-  assert.match(documents, /cost\s*\{/);
-  assert.match(documents, /merchandise\s*\{/);
-  assert.match(store, /set\(remoteState\(result\.cart\)\)/);
+test("native cart keeps local totals and defers authoritative validation to checkout", async () => {
+  const store = await read("src/stores/cartStore.ts");
+
+  assert.match(store, /function localCartState/);
+  assert.match(store, /set\(localCartState\(next\)\)/);
+  assert.match(store, /syncCart:\s*async \(\) => undefined/);
+  assert.match(store, /getCheckoutUrl:\s*\(\) => null/);
+  assert.doesNotMatch(store, /remoteState\(result\.cart\)/);
   assert.doesNotMatch(store, /quantity:\s*i\.quantity\s*\+/);
 });
 
