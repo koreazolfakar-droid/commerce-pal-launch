@@ -1,7 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Facebook, Instagram, MessageCircle, Youtube, Twitter } from "lucide-react";
 
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import { STORE_CONFIG, STORE_NAME } from "@/lib/storeConfig";
 
@@ -12,11 +14,6 @@ const SOCIALS = [
   { label: "YouTube", Icon: Youtube, href: STORE_CONFIG.socialYoutube },
 ];
 
-/**
- * Footer navigation is intentionally deterministic. It must not depend on a
- * page-specific catalog query, otherwise cached/SSR pages can render different
- * footers or transient "No brands yet" placeholders.
- */
 const FOOTER_SHOP_LINKS = [
   { slug: "smartphones", en: "Smartphones", ar: "الهواتف الذكية" },
   { slug: "tablets", en: "Tablets", ar: "الأجهزة اللوحية" },
@@ -36,7 +33,18 @@ const FOOTER_BRAND_LINKS = [
 
 export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: boolean }) {
   const { language, t } = useLanguage();
+  const { data: cms } = useQuery(cmsQueryOptions());
   const isAr = language === "ar";
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsLogoUrl = cms?.settings["logo_url"];
+  const cmsWhatsApp = cms?.settings["whatsapp_number"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const logoUrl =
+    typeof cmsLogoUrl === "string" && cmsLogoUrl.trim() ? cmsLogoUrl.trim() : "/logo.svg";
+  const whatsappDigits =
+    typeof cmsWhatsApp === "string" ? cmsWhatsApp.replace(/\D/g, "") : "";
+  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : generalWhatsAppUrl();
 
   const support = [
     ["Help", "/help"],
@@ -59,23 +67,23 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
           <div className="min-w-0 lg:col-span-2">
             <div className="flex items-center gap-2.5">
               <img
-                src="/logo.svg"
-                alt={STORE_NAME}
+                src={logoUrl}
+                alt={storeName}
                 width={54}
                 height={36}
                 loading="lazy"
                 decoding="async"
                 className="h-9 w-auto shrink-0 object-contain"
               />
-              <span className="text-lg font-semibold tracking-tight">{STORE_NAME}</span>
+              <span className="text-lg font-semibold tracking-tight">{storeName}</span>
             </div>
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
               {isAr
                 ? "هواتف وأجهزة تقنية أصلية مع تجربة شراء آمنة ودعم مباشر."
-                : `Phones and technology from the connected ${STORE_NAME} catalogue, with secure checkout and direct support.`}
+                : `Phones and technology from the connected ${storeName} catalogue, with secure checkout and direct support.`}
             </p>
             <a
-              href={generalWhatsAppUrl()}
+              href={whatsappUrl}
               target="_blank"
               rel="noreferrer"
               className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
@@ -189,7 +197,7 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
 
         <div className="mt-10 border-t pt-6 text-center text-sm text-muted-foreground">
           <p>
-            © {new Date().getFullYear()} {STORE_NAME}.{" "}
+            © {new Date().getFullYear()} {storeName}.{" "}
             {isAr ? "الدفع الآمن عبر Shopify." : "Secure checkout powered by Shopify."}
           </p>
         </div>
