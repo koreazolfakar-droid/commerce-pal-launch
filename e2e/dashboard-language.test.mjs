@@ -26,7 +26,7 @@ test("dashboard shell and login expose the language switch and directional UI", 
   assert.match(shell, /useDashboardLanguage/);
   assert.match(shell, /dir=\{direction\}/);
   assert.match(shell, /Overview/);
-  assert.match(shell, /نظرة عامة/);
+  assert.match(shell, /الرئيسية/);
   assert.match(login, /useDashboardLanguage/);
   assert.match(login, /Change dashboard language/);
   assert.match(login, /تغيير لغة لوحة التحكم/);
