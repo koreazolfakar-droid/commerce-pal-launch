@@ -54,8 +54,6 @@ export const EMPTY_CMS: CmsSnapshot = {
   navigation: [],
 };
 
-const CMS_CACHE_TTL_MS = 60_000;
-let cmsCache: { value: CmsSnapshot; expiresAt: number } | null = null;
 let cmsPendingRequest: Promise<CmsSnapshot> | null = null;
 
 function isCmsSnapshot(value: unknown): value is CmsSnapshot {
@@ -76,12 +74,17 @@ async function loadCmsSnapshot(): Promise<CmsSnapshot> {
   if (!baseUrl) return EMPTY_CMS;
 
   try {
-    const headers = new Headers({ Accept: "application/json" });
+    const headers = new Headers({
+      Accept: "application/json",
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    });
     if (publishableKey) headers.set("apikey", publishableKey);
 
-    const response = await fetch(`${baseUrl}/functions/v1/public-cms`, {
+    const response = await fetch(`${baseUrl}/functions/v1/public-cms?fresh=${Date.now()}`, {
       method: "GET",
       headers,
+      cache: "no-store",
       signal: AbortSignal.timeout(8_000),
     });
     if (!response.ok) throw new Error(`public-cms returned ${response.status}`);
@@ -97,20 +100,14 @@ async function loadCmsSnapshot(): Promise<CmsSnapshot> {
 /**
  * Public storefront snapshot. The browser never receives direct CMS table access;
  * this server function reads only the curated public-cms Edge Function projection.
+ * Requests are intentionally uncached so Dashboard publishes become visible immediately.
  */
 const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
-  const now = Date.now();
-  if (cmsCache && cmsCache.expiresAt > now) return cmsCache.value;
   if (cmsPendingRequest) return cmsPendingRequest;
 
-  const request = loadCmsSnapshot()
-    .then((value) => {
-      cmsCache = { value, expiresAt: Date.now() + CMS_CACHE_TTL_MS };
-      return value;
-    })
-    .finally(() => {
-      cmsPendingRequest = null;
-    });
+  const request = loadCmsSnapshot().finally(() => {
+    cmsPendingRequest = null;
+  });
 
   cmsPendingRequest = request;
   return request;
