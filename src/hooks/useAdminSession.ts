@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -18,24 +18,25 @@ export function useAdminSession(): AdminSessionState {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AdminRole>(null);
 
-  const loadRole = async (current: Session | null) => {
+  const loadRole = useCallback(async (current: Session | null) => {
     if (!current) {
       setRole(null);
       return;
     }
+
     const { data } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", current.user.id);
     const roles = (data ?? []).map((row) => row.role);
     setRole(roles.includes("admin") ? "admin" : roles.includes("editor") ? "editor" : null);
-  };
+  }, []);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
     setSession(data.session);
     await loadRole(data.session);
-  };
+  }, [loadRole]);
 
   useEffect(() => {
     let active = true;
@@ -56,7 +57,7 @@ export function useAdminSession(): AdminSessionState {
       active = false;
       subscription.subscription.unsubscribe();
     };
-  }, []);
+  }, [loadRole]);
 
   return { loading, session, role, refresh };
 }
