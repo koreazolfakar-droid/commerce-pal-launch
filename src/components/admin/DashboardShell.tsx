@@ -60,8 +60,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
           <h1 className="text-lg font-semibold text-foreground">لا توجد صلاحية إدارية</h1>
           <p className="text-sm text-muted-foreground">
-            إن كان هذا أول حساب في لوحة التحكم يمكنك المطالبة بصلاحية المدير مرة واحدة. بعد
-            التهيئة، يمنح المدير الحالي الصلاحيات للحسابات الأخرى.
+            إن كان هذا أول حساب في لوحة التحكم يمكنك المطالبة بصلاحية المدير مرة واحدة. بعد التهيئة،
+            يمنح المدير الحالي الصلاحيات للحسابات الأخرى.
           </p>
           <Button className="w-full" onClick={() => void claim()} disabled={claiming}>
             {claiming ? <Loader2 className="me-1 size-4 animate-spin" /> : null}
