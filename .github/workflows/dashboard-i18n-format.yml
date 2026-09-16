@@ -1,0 +1,53 @@
+name: Dashboard i18n format
+
+on:
+  push:
+    branches:
+      - i18n/dashboard-language
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: i18n/dashboard-language
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Format dashboard localization files
+        run: >-
+          bunx prettier --write
+          e2e/dashboard-language.test.mjs
+          src/lib/dashboardI18n.tsx
+          src/components/admin/AdminLogin.tsx
+          src/components/admin/CollectionEditor.tsx
+          src/components/admin/CustomersEditor.tsx
+          src/components/admin/DashboardShell.tsx
+          src/components/admin/InventoryEditor.tsx
+          src/components/admin/OrdersEditor.tsx
+          src/components/admin/ProductEditor.tsx
+          src/components/admin/SettingsEditor.tsx
+          src/routes/dashboard.tsx
+          src/routes/dashboard.index.tsx
+          src/routes/dashboard.hero.tsx
+          src/routes/dashboard.sections.tsx
+          src/routes/dashboard.navigation.tsx
+          src/routes/dashboard.brands.tsx
+          src/routes/dashboard.seo.tsx
+          src/routes/dashboard.categories.tsx
+          src/routes/dashboard.collections.tsx
+      - name: Commit formatting
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add e2e/dashboard-language.test.mjs src/lib/dashboardI18n.tsx src/components/admin src/routes/dashboard.tsx src/routes/dashboard.index.tsx src/routes/dashboard.hero.tsx src/routes/dashboard.sections.tsx src/routes/dashboard.navigation.tsx src/routes/dashboard.brands.tsx src/routes/dashboard.seo.tsx src/routes/dashboard.categories.tsx src/routes/dashboard.collections.tsx
+          git commit -m "Format dashboard localization"
+          git push origin HEAD:i18n/dashboard-language
