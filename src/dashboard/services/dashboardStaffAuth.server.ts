@@ -2,13 +2,15 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/integrations/supabase/types";
 
-function createAuthenticatedSupabase(accessToken: string) {
-  const url = process.env["SUPABASE_URL"];
-  const publishableKey = process.env["SUPABASE_PUBLISHABLE_KEY"];
+// These are public Supabase connection values, not secrets. Server environment
+// variables still take priority so the project can rotate them without code changes.
+const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
 
-  if (!url || !publishableKey) {
-    throw new Error("Dashboard authentication is not configured on the server");
-  }
+function createAuthenticatedSupabase(accessToken: string) {
+  const url = process.env["SUPABASE_URL"]?.trim() || DEFAULT_SUPABASE_URL;
+  const publishableKey =
+    process.env["SUPABASE_PUBLISHABLE_KEY"]?.trim() || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
 
   return createClient<Database>(url, publishableKey, {
     global: {
