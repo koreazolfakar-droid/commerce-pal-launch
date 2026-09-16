@@ -242,12 +242,8 @@ export function localizeSection(section: CmsSection, language: CmsLocale): CmsSe
     ...section,
     title: localizedCmsText(language, section.title_en, section.title_ar, section.title) ?? null,
     subtitle:
-      localizedCmsText(
-        language,
-        section.subtitle_en,
-        section.subtitle_ar,
-        section.subtitle,
-      ) ?? null,
+      localizedCmsText(language, section.subtitle_en, section.subtitle_ar, section.subtitle) ??
+      null,
     content: localizedContent ?? (legacyContentMatchesLanguage ? section.content : {}),
   };
 }
@@ -274,11 +270,7 @@ export function cmsSeoPage(snapshot: CmsSnapshot, pageSlug: string, language: Cm
     ...page,
     title: localizedCmsText(language, page.title_en, page.title_ar, page.title) ?? null,
     description:
-      localizedCmsText(
-        language,
-        page.description_en,
-        page.description_ar,
-        page.description,
-      ) ?? null,
+      localizedCmsText(language, page.description_en, page.description_ar, page.description) ??
+      null,
   };
 }
