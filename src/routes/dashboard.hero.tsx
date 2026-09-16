@@ -11,15 +11,18 @@ function HeroEditorPage() {
     <CollectionEditor
       table="cms_hero_slides"
       title="صور الهيرو"
-      description="الصور الظاهرة في أعلى الصفحة الرئيسية وروابطها وحالة النشر."
-      labelKey="title"
+      description="الصور الظاهرة في أعلى الصفحة الرئيسية مع نصوص عربية وإنجليزية مستقلة."
+      labelKey="title_en"
       newRow={{ image_url: null, target_type: "none", sort_order: 0, is_published: false }}
       fields={[
         { key: "image_url", label: "صورة (سطح المكتب)", type: "image" },
         { key: "mobile_image_url", label: "صورة الجوال", type: "image" },
-        { key: "title", label: "العنوان", type: "text" },
-        { key: "subtitle", label: "العنوان الفرعي", type: "textarea" },
-        { key: "button_label", label: "نص الزر", type: "text" },
+        { key: "title_en", label: "العنوان بالإنجليزية", type: "text" },
+        { key: "title_ar", label: "العنوان بالعربية", type: "text" },
+        { key: "subtitle_en", label: "العنوان الفرعي بالإنجليزية", type: "textarea" },
+        { key: "subtitle_ar", label: "العنوان الفرعي بالعربية", type: "textarea" },
+        { key: "button_label_en", label: "نص الزر بالإنجليزية", type: "text" },
+        { key: "button_label_ar", label: "نص الزر بالعربية", type: "text" },
         {
           key: "target_type",
           label: "نوع الرابط",
