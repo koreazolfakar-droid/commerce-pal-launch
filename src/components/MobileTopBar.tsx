@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Heart, Menu, Search, ShoppingBag } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -40,14 +42,20 @@ export function MobileTopBar({
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { t } = useLanguage();
+  const { data: cms } = useQuery(cmsQueryOptions());
   const wishlistCount = useWishlistStore((state) => state.handles.length);
   const cartCount = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsLogoUrl = cms?.settings["logo_url"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const logoUrl =
+    typeof cmsLogoUrl === "string" && cmsLogoUrl.trim() ? cmsLogoUrl.trim() : "/logo.svg";
 
   return (
     <>
-      {/* Only the main header row stays sticky. */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-3 py-2.5">
           <button
@@ -60,12 +68,12 @@ export function MobileTopBar({
           </button>
           <Link
             to="/"
-            aria-label={`${STORE_NAME} home`}
+            aria-label={`${storeName} home`}
             className="flex min-w-0 flex-1 items-center justify-center gap-2"
           >
             <img
-              src="/logo.svg"
-              alt={STORE_NAME}
+              src={logoUrl}
+              alt={storeName}
               width={51}
               height={34}
               loading="eager"
@@ -74,7 +82,7 @@ export function MobileTopBar({
               className="h-[34px] w-auto shrink-0 object-contain drop-shadow-sm"
             />
             <span className="truncate text-[17px] font-black tracking-[-0.025em]">
-              {STORE_NAME}
+              {storeName}
             </span>
           </Link>
           <div className="flex shrink-0 items-center gap-0.5">
@@ -100,7 +108,6 @@ export function MobileTopBar({
         </div>
       </header>
 
-      {/* Search + compact category rail scroll away with the page. */}
       <div className="border-b border-border/50 bg-background lg:hidden">
         <div className="mx-auto flex max-w-md min-w-0 items-center gap-2 px-3 py-2.5">
           <button
