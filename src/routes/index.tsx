@@ -62,6 +62,14 @@ const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
 const HOME_SECONDARY_IDLE_TIMEOUT_MS = 1400;
 const HOME_SECONDARY_FALLBACK_DELAY_MS = 350;
 
+type IdleCapableWindow = Window & {
+  requestIdleCallback?: (
+    callback: IdleRequestCallback,
+    options?: IdleRequestOptions,
+  ) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
+
 /**
  * Keep below-the-fold JavaScript and secondary Shopify requests out of the
  * startup critical path. They become available as soon as the browser reaches
@@ -73,23 +81,24 @@ function useDeferredHomepageWork() {
   useEffect(() => {
     let cancelled = false;
     let idleRequestId: number | null = null;
-    let fallbackTimer: number | null = null;
+    let fallbackTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
+    const idleWindow = window as IdleCapableWindow;
     const activate = () => {
       if (!cancelled) setReady(true);
     };
 
-    if ("requestIdleCallback" in window) {
-      idleRequestId = window.requestIdleCallback(activate, {
+    if (typeof idleWindow.requestIdleCallback === "function") {
+      idleRequestId = idleWindow.requestIdleCallback(activate, {
         timeout: HOME_SECONDARY_IDLE_TIMEOUT_MS,
       });
     } else {
-      fallbackTimer = window.setTimeout(activate, HOME_SECONDARY_FALLBACK_DELAY_MS);
+      fallbackTimer = globalThis.setTimeout(activate, HOME_SECONDARY_FALLBACK_DELAY_MS);
     }
 
     return () => {
       cancelled = true;
-      if (idleRequestId !== null) window.cancelIdleCallback(idleRequestId);
-      if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
+      if (idleRequestId !== null) idleWindow.cancelIdleCallback?.(idleRequestId);
+      if (fallbackTimer !== null) globalThis.clearTimeout(fallbackTimer);
     };
   }, []);
 
