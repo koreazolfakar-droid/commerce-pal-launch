@@ -182,6 +182,13 @@ function cleanText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+function containsArabic(value: CmsJsonValue): boolean {
+  if (typeof value === "string") return ARABIC_SCRIPT.test(value);
+  if (Array.isArray(value)) return value.some(containsArabic);
+  if (value && typeof value === "object") return Object.values(value).some(containsArabic);
+  return false;
+}
+
 /**
  * Resolve localized CMS copy without leaking Arabic legacy copy into English mode
  * (or English legacy copy into Arabic mode). Legacy values remain usable when they
@@ -228,12 +235,15 @@ export function localizeNavigationItem(
 
 export function localizeSection(section: CmsSection, language: CmsLocale): CmsSection {
   const localizedContent = language === "ar" ? section.content_ar : section.content_en;
+  const legacyContentMatchesLanguage =
+    language === "ar" ? containsArabic(section.content) : !containsArabic(section.content);
+
   return {
     ...section,
     title: localizedCmsText(language, section.title_en, section.title_ar, section.title) ?? null,
     subtitle:
       localizedCmsText(language, section.subtitle_en, section.subtitle_ar, section.subtitle) ?? null,
-    content: localizedContent ?? section.content,
+    content: localizedContent ?? (legacyContentMatchesLanguage ? section.content : {}),
   };
 }
 
@@ -245,13 +255,15 @@ export function cmsText(snapshot: CmsSnapshot, key: string) {
 export function cmsLocalizedSetting(snapshot: CmsSnapshot, key: string, language: CmsLocale) {
   const explicit = cmsText(snapshot, `${key}_${language}`);
   if (explicit) return explicit;
-  return localizedCmsText(language, language === "en" ? cmsText(snapshot, key) : undefined, language === "ar" ? cmsText(snapshot, key) : undefined, cmsText(snapshot, key));
+  return localizedCmsText(language, undefined, undefined, cmsText(snapshot, key));
 }
 
-export function cmsSeoPage(snapshot: CmsSnapshot, pageSlug: string, language?: CmsLocale) {
+export function cmsSeoPage(snapshot: CmsSnapshot, pageSlug: string, language: CmsLocale = "en") {
   const normalized = pageSlug.replace(/^\/+|\/+$/g, "") || "home";
-  const page = snapshot.seoPages.find((candidate) => candidate.is_public && candidate.page_slug === normalized);
-  if (!page || !language) return page;
+  const page = snapshot.seoPages.find(
+    (candidate) => candidate.is_public && candidate.page_slug === normalized,
+  );
+  if (!page) return undefined;
 
   return {
     ...page,
