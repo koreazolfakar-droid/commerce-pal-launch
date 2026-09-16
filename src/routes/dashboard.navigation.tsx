@@ -11,11 +11,13 @@ function NavigationEditorPage() {
     <CollectionEditor
       table="cms_navigation_items"
       title="القوائم والأيقونات"
-      description="عناصر الهيدر، القائمة السفلية، الفوتر وقائمة الجوال."
-      labelKey="label"
+      description="عناصر الهيدر والقوائم مع نص مستقل بالعربية والإنجليزية."
+      labelKey="label_en"
       newRow={{
         area: "header",
-        label: "",
+        label: "Navigation item",
+        label_en: "",
+        label_ar: "",
         icon_type: "none",
         sort_order: 0,
         is_visible: true,
@@ -33,7 +35,8 @@ function NavigationEditorPage() {
             { value: "trust", label: "شريط الثقة" },
           ],
         },
-        { key: "label", label: "النص", type: "text", required: true },
+        { key: "label_en", label: "النص بالإنجليزية", type: "text", required: true },
+        { key: "label_ar", label: "النص بالعربية", type: "text", required: true },
         {
           key: "icon_type",
           label: "نوع الأيقونة",
