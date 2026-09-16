@@ -29,7 +29,15 @@ type RecentOrder = {
   created_at: string;
 };
 
-type StatusCounts = Record<string, number>;
+type StatusCounts = {
+  pending?: number;
+  confirmed?: number;
+  processing?: number;
+  shipped?: number;
+  delivered?: number;
+  cancelled?: number;
+  [status: string]: number | undefined;
+};
 
 async function loadCommerceStats() {
   const [ordersResult, productsResult, lowStockResult, pendingResult, recentResult] = await Promise.all([
