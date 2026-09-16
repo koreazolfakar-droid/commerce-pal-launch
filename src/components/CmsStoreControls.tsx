@@ -5,6 +5,7 @@ import {
   House,
   LayoutGrid,
   Menu,
+  MessageCircle,
   Search,
   ShoppingBag,
   Smartphone,
@@ -22,6 +23,7 @@ const CMS_ICONS: Record<string, LucideIcon> = {
   House,
   LayoutGrid,
   Menu,
+  MessageCircle,
   Search,
   ShoppingBag,
   Smartphone,
@@ -95,12 +97,14 @@ export function CmsTrustStrip() {
       .sort((a, b) => a.sort_order - b.sort_order) ?? [];
   const freeShipping = cms?.settings["free_shipping_note"];
   const supportHours = cms?.settings["support_hours"];
+  const whatsapp = cms?.settings["whatsapp_number"];
+  const whatsappDigits = typeof whatsapp === "string" ? whatsapp.replace(/\D/g, "") : "";
 
   const utilityNotes = [freeShipping, supportHours].filter(
     (value): value is string => typeof value === "string" && Boolean(value.trim()),
   );
 
-  if (!items.length && !utilityNotes.length) return null;
+  if (!items.length && !utilityNotes.length && !whatsappDigits) return null;
 
   return (
     <div className="border-y border-border/55 bg-muted/20" data-testid="cms-trust-strip">
@@ -114,6 +118,16 @@ export function CmsTrustStrip() {
         {utilityNotes.map((note) => (
           <span key={note}>{note}</span>
         ))}
+        {whatsappDigits ? (
+          <a
+            href={`https://wa.me/${whatsappDigits}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 font-bold text-foreground hover:text-primary"
+          >
+            <MessageCircle className="size-4" /> WhatsApp
+          </a>
+        ) : null}
       </div>
     </div>
   );
