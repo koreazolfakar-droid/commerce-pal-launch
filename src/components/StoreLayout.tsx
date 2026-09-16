@@ -2,6 +2,11 @@ import { type CSSProperties, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav, MOBILE_NAV_HEIGHT } from "@/components/BottomNav";
+import {
+  CmsAnnouncementBar,
+  CmsNavigationStrip,
+  CmsTrustStrip,
+} from "@/components/CmsStoreControls";
 import { DeferredCartDrawer } from "@/components/DeferredCartDrawer";
 import { DeferredDesktopHeader } from "@/components/DeferredDesktopHeader";
 import { MobileTopBar } from "@/components/MobileTopBar";
@@ -33,11 +38,16 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       >
         Skip to content
       </a>
+      <CmsAnnouncementBar />
       <DeferredDesktopHeader />
       <MobileTopBar showCategoryRail={!onHomePage && !onCartPage} />
+      <CmsNavigationStrip area="header" className="hidden lg:block" />
+      <CmsNavigationStrip area="mobile_menu" className="lg:hidden" />
       <main id="main-content" tabIndex={-1} className={onCartPage ? "min-w-0" : "min-w-0 flex-1"}>
         {children}
       </main>
+      <CmsTrustStrip />
+      <CmsNavigationStrip area="footer" />
       <SiteFooter compactTopSpacing={onCartPage} />
       <BottomNav />
       <DeferredCartDrawer />
