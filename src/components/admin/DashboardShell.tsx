@@ -7,6 +7,7 @@ import {
   Loader2,
   LogOut,
   Menu,
+  Package,
   Search,
   Settings,
   ShieldCheck,
@@ -44,7 +45,8 @@ const NAV_GROUPS = [
     label: "المتجر",
     items: [
       { to: "/dashboard/orders", label: "الطلبات", icon: ShoppingBag },
-      { to: "/dashboard/products", label: "المنتجات والمخزون", icon: Store },
+      { to: "/dashboard/products", label: "المنتجات", icon: Store },
+      { to: "/dashboard/inventory", label: "المخزون", icon: Package },
       { to: "/dashboard/categories", label: "التصنيفات", icon: Layers3 },
       { to: "/dashboard/collections", label: "Collections", icon: Tags },
       { to: "/dashboard/seo", label: "SEO", icon: Search },
