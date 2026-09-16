@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Save, Trash2, Upload } from "lucide-react";
+import {
+  Image as ImageIcon,
+  Layers3,
+  Loader2,
+  Plus,
+  Save,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -101,8 +109,9 @@ function payloadFromRow(row: Row, fields: EditorField[]) {
 
     if (field.type === "datetime") {
       const source = typeof value === "string" ? value.trim() : "";
-      if (!source) payload[field.key] = null;
-      else {
+      if (!source) {
+        payload[field.key] = null;
+      } else {
         const date = new Date(source);
         if (Number.isNaN(date.getTime())) {
           throw new Error(`تاريخ غير صالح في «${field.label}»`);
@@ -114,7 +123,9 @@ function payloadFromRow(row: Row, fields: EditorField[]) {
 
     if (field.type === "number") {
       const number = Number(value ?? 0);
-      if (!Number.isFinite(number)) throw new Error(`رقم غير صالح في «${field.label}»`);
+      if (!Number.isFinite(number)) {
+        throw new Error(`رقم غير صالح في «${field.label}»`);
+      }
       payload[field.key] = number;
       continue;
     }
@@ -122,6 +133,13 @@ function payloadFromRow(row: Row, fields: EditorField[]) {
     payload[field.key] = value ?? null;
   }
   return payload;
+}
+
+function rowStatus(row: Row) {
+  const keys = ["is_published", "is_visible", "is_public"] as const;
+  const key = keys.find((candidate) => candidate in row);
+  if (!key) return null;
+  return Boolean(row[key]);
 }
 
 /** Reusable CMS editor backed only by the authenticated server boundary. */
@@ -230,66 +248,118 @@ export function CollectionEditor({
   };
 
   return (
-    <section className="space-y-5" dir="rtl">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-black text-foreground">{title}</h1>
-          {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+    <section className="space-y-6" dir="rtl">
+      <header className="overflow-hidden rounded-[28px] border border-border bg-card shadow-sm">
+        <div className="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
+                <Layers3 className="size-3.5" /> CMS Manager
+              </span>
+              <span className="rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold text-muted-foreground">
+                {loading ? "…" : rows.length} عنصر
+              </span>
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">{title}</h1>
+            {description ? (
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground">{description}</p>
+            ) : null}
+          </div>
+          <Button
+            onClick={() => void addRow()}
+            className="h-11 shrink-0 rounded-xl px-5 shadow-sm"
+          >
+            <Plus className="me-2 size-4" /> إضافة عنصر جديد
+          </Button>
         </div>
-        <Button onClick={() => void addRow()} size="sm">
-          <Plus className="me-1 size-4" /> إضافة
-        </Button>
       </header>
 
       {loading ? (
-        <div className="flex items-center gap-2 rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> جاري التحميل…
+        <div className="grid min-h-56 place-items-center rounded-[28px] border border-border bg-card shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> جاري تحميل البيانات…
+          </div>
         </div>
       ) : rows.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          لا توجد عناصر بعد. اضغط «إضافة» للبدء.
-        </p>
+        <div className="grid min-h-64 place-items-center rounded-[28px] border border-dashed border-border bg-card px-6 text-center shadow-sm">
+          <div>
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Layers3 className="size-6" />
+            </div>
+            <h2 className="mt-4 text-lg font-black">لا توجد عناصر حتى الآن</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              أضف أول عنصر وسيظهر هنا ضمن واجهة الإدارة.
+            </p>
+            <Button className="mt-5" onClick={() => void addRow()}>
+              <Plus className="me-2 size-4" /> إضافة أول عنصر
+            </Button>
+          </div>
+        </div>
       ) : (
-        <div className="space-y-4">
-          {rows.map((row) => {
+        <div className="space-y-5">
+          {rows.map((row, rowIndex) => {
             const identity = String(row[identityKey] ?? "");
+            const status = rowStatus(row);
             return (
               <article
                 key={identity}
-                className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
+                className="overflow-hidden rounded-[28px] border border-border bg-card shadow-sm"
               >
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h2 className="min-w-0 truncate text-sm font-bold text-foreground">
-                    {String(row[labelKey] ?? identity ?? "بدون عنوان")}
-                  </h2>
+                <div className="flex flex-col gap-4 border-b border-border bg-muted/25 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="grid size-8 place-items-center rounded-lg border border-border bg-background text-xs font-black text-muted-foreground">
+                        {rowIndex + 1}
+                      </span>
+                      <h2 className="max-w-xl truncate text-base font-black text-foreground">
+                        {String(row[labelKey] ?? identity ?? "بدون عنوان")}
+                      </h2>
+                      {status !== null ? (
+                        <span
+                          className={
+                            status
+                              ? "rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300"
+                              : "rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-muted-foreground"
+                          }
+                        >
+                          {status ? "مفعّل" : "غير مفعّل"}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 truncate ps-10 font-mono text-[11px] text-muted-foreground">
+                      {identity}
+                    </p>
+                  </div>
+
                   <div className="flex shrink-0 items-center gap-2">
                     <Button
                       size="sm"
-                      variant="outline"
                       onClick={() => void saveRow(row)}
                       disabled={savingId === identity}
+                      className="rounded-xl"
                     >
                       {savingId === identity ? (
-                        <Loader2 className="me-1 size-4 animate-spin" />
+                        <Loader2 className="me-1.5 size-4 animate-spin" />
                       ) : (
-                        <Save className="me-1 size-4" />
+                        <Save className="me-1.5 size-4" />
                       )}
                       حفظ
                     </Button>
                     {allowDelete ? (
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => void deleteRow(row)}
                         aria-label="حذف"
+                        className="rounded-xl text-destructive hover:text-destructive"
                       >
-                        <Trash2 className="size-4 text-destructive" />
+                        <Trash2 className="size-4" />
                       </Button>
                     ) : null}
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
                   {fields.map((field) => {
                     const value = row[field.key];
                     const inputId = `${resource}-${identity}-${field.key}`;
@@ -298,14 +368,25 @@ export function CollectionEditor({
                       field.type === "textarea" ||
                       field.type === "json" ||
                       field.type === "image";
+
                     return (
-                      <div key={field.key} className={fullWidth ? "sm:col-span-2" : undefined}>
-                        <Label htmlFor={inputId} className="text-xs text-muted-foreground">
+                      <div
+                        key={field.key}
+                        className={
+                          fullWidth
+                            ? "rounded-2xl border border-border bg-background/60 p-4 sm:col-span-2"
+                            : "rounded-2xl border border-border bg-background/60 p-4"
+                        }
+                      >
+                        <Label htmlFor={inputId} className="text-xs font-bold text-foreground">
                           {field.label}
                         </Label>
 
                         {field.type === "boolean" ? (
-                          <div className="mt-2 flex h-10 items-center">
+                          <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2.5">
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {Boolean(value) ? "مفعّل" : "متوقف"}
+                            </span>
                             <Switch
                               id={inputId}
                               checked={Boolean(value)}
@@ -315,8 +396,8 @@ export function CollectionEditor({
                         ) : field.type === "textarea" || field.type === "json" ? (
                           <Textarea
                             id={inputId}
-                            className="mt-1 font-mono text-xs"
-                            rows={field.type === "json" ? 7 : 3}
+                            className="mt-2 min-h-24 resize-y rounded-xl border-border bg-card font-mono text-xs"
+                            rows={field.type === "json" ? 8 : 4}
                             required={field.required}
                             value={String(value ?? "")}
                             placeholder={field.placeholder}
@@ -327,7 +408,7 @@ export function CollectionEditor({
                         ) : field.type === "select" ? (
                           <select
                             id={inputId}
-                            className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                            className="mt-2 h-11 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary"
                             value={String(value ?? "")}
                             required={field.required}
                             onChange={(event) =>
@@ -341,10 +422,11 @@ export function CollectionEditor({
                             ))}
                           </select>
                         ) : field.type === "image" ? (
-                          <div className="mt-1 space-y-2">
-                            <div className="flex items-center gap-2">
+                          <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_190px]">
+                            <div className="space-y-3">
                               <Input
                                 id={inputId}
+                                className="h-11 rounded-xl bg-card"
                                 value={String(value ?? "")}
                                 placeholder={field.placeholder ?? "رابط الصورة"}
                                 required={field.required}
@@ -352,13 +434,13 @@ export function CollectionEditor({
                                   setValue(identity, field.key, event.target.value)
                                 }
                               />
-                              <label className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent">
+                              <label className="flex min-h-24 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/35 bg-primary/5 px-4 text-sm font-bold text-primary transition hover:bg-primary/10">
                                 {uploadingKey === `${identity}:${field.key}` ? (
                                   <Loader2 className="size-4 animate-spin" />
                                 ) : (
                                   <Upload className="size-4" />
                                 )}
-                                رفع
+                                رفع صورة جديدة
                                 <input
                                   type="file"
                                   accept="image/jpeg,image/png,image/webp,image/avif"
@@ -371,18 +453,25 @@ export function CollectionEditor({
                                 />
                               </label>
                             </div>
-                            {value ? (
-                              <img
-                                src={String(value)}
-                                alt=""
-                                className="max-h-40 w-auto rounded-xl border border-border bg-white object-contain p-2"
-                              />
-                            ) : null}
+                            <div className="grid min-h-36 place-items-center overflow-hidden rounded-2xl border border-border bg-white p-3">
+                              {value ? (
+                                <img
+                                  src={String(value)}
+                                  alt=""
+                                  className="max-h-40 w-full object-contain"
+                                />
+                              ) : (
+                                <div className="text-center text-muted-foreground">
+                                  <ImageIcon className="mx-auto size-6" />
+                                  <p className="mt-2 text-[11px]">معاينة الصورة</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <Input
                             id={inputId}
-                            className="mt-1"
+                            className="mt-2 h-11 rounded-xl bg-card"
                             type={
                               field.type === "number"
                                 ? "number"
