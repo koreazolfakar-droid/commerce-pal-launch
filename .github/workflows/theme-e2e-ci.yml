@@ -1,0 +1,53 @@
+name: Theme E2E CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/styles.css"
+      - "src/lib/theme.ts"
+      - "src/hooks/useTheme.ts"
+      - "src/components/ThemeToggle.tsx"
+      - "src/components/StoreLayout.tsx"
+      - "src/components/MobileTopBar.tsx"
+      - "src/components/MobileMenu.tsx"
+      - "src/components/SiteHeader.tsx"
+      - "src/components/BottomNav.tsx"
+      - "src/routes/__root.tsx"
+      - "src/routes/brands.tsx"
+      - "e2e/layout.spec.ts"
+      - "e2e/theme.spec.ts"
+      - ".github/workflows/theme-e2e-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: theme-e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  theme-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Full storefront validation
+        run: bun run check
+
+      - name: Playwright E2E
+        run: bun run test:e2e

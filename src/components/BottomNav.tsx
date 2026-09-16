@@ -172,7 +172,7 @@ export function BottomNav() {
       aria-label="Primary mobile navigation"
       className="fixed inset-x-0 bottom-0 z-50 lg:hidden"
     >
-      <div className="border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_18px_-16px_rgba(15,23,42,.55)] supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md">
+      <div className="border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-card supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md">
         {cmsItems.length > 0 ? (
           <div
             className="mx-auto grid h-16 max-w-[560px] px-1 sm:px-3"

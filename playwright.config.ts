@@ -8,6 +8,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env["CI"]),
   retries: process.env["CI"] ? 2 : 0,
+  workers: process.env["CI"] ? 4 : "50%",
   reporter: [["list"], ["html", { open: "never" }]],
   use: { baseURL, trace: "retain-on-failure", screenshot: "only-on-failure" },
   projects: [
@@ -15,7 +16,7 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" } },
   ],
   webServer: {
-    command: "pnpm run dev:e2e --host 0.0.0.0 --port 4173",
+    command: "bun run dev:e2e --host 0.0.0.0 --port 4173",
     url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,
