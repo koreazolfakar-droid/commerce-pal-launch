@@ -86,6 +86,12 @@ function nullableNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** ShopifyQL PERCENT columns are ratios (0.25 = 25%), while the dashboard models use 0-100 values. */
+function percentageValue(value: unknown): number | null {
+  const parsed = nullableNumber(value);
+  return parsed === null ? null : parsed * 100;
+}
+
 function tableRows(table: TablePayload | null | undefined): Array<Record<string, unknown>> {
   if (!table || !Array.isArray(table.columns) || !Array.isArray(table.rows)) return [];
 
@@ -237,16 +243,16 @@ export async function loadShopifyAdminAnalytics(input: {
       date: String(row["day"] ?? ""),
       customers: numberValue(row["customers"]),
       returningCustomers: numberValue(row["returning_customers"]),
-      returningCustomerRate: nullableNumber(row["returning_customer_rate"]),
+      returningCustomerRate: percentageValue(row["returning_customer_rate"]),
     }));
     const sessionPoints: ShopifySessionPoint[] = sessionSeries.rows.map((row) => ({
       date: String(row["day"] ?? ""),
       sessions: numberValue(row["sessions"]),
       visitors: numberValue(row["online_store_visitors"]),
-      conversionRate: nullableNumber(row["conversion_rate"]),
+      conversionRate: percentageValue(row["conversion_rate"]),
     }));
     const productMetrics: ShopifyTopProductMetric[] = topProducts.rows.map((row) => ({
-      title: String(row["product_title"] ?? "Unknown product"),
+      title: String(row["product_title"] || "Unknown product"),
       grossSales: numberValue(row["gross_sales"]),
       netSales: numberValue(row["net_sales"]),
       orders: numberValue(row["orders"]),
@@ -262,10 +268,10 @@ export async function loadShopifyAdminAnalytics(input: {
         averageOrderValue: nullableNumber(salesTotal["average_order_value"]),
         customers: numberValue(customerTotal["customers"]),
         returningCustomers: numberValue(customerTotal["returning_customers"]),
-        returningCustomerRate: nullableNumber(customerTotal["returning_customer_rate"]),
+        returningCustomerRate: percentageValue(customerTotal["returning_customer_rate"]),
         sessions: numberValue(sessionTotal["sessions"]),
         visitors: numberValue(sessionTotal["online_store_visitors"]),
-        conversionRate: nullableNumber(sessionTotal["conversion_rate"]),
+        conversionRate: percentageValue(sessionTotal["conversion_rate"]),
       },
       salesSeries: salesPoints,
       customerSeries: customerPoints,
