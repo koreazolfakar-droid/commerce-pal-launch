@@ -1,13 +1,17 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import { DashboardShell } from "@/components/admin/DashboardShell";
+import { DashboardLanguageProvider } from "@/lib/dashboardI18n";
 
 export const Route = createFileRoute("/dashboard")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "لوحة تحكم Space Call" },
-      { name: "description", content: "لوحة تحكم داخلية لإدارة محتوى متجر Space Call." },
+      { title: "Space Call Dashboard" },
+      {
+        name: "description",
+        content: "Private Space Call dashboard for store and content management.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -16,8 +20,10 @@ export const Route = createFileRoute("/dashboard")({
 
 function DashboardLayout() {
   return (
-    <DashboardShell>
-      <Outlet />
-    </DashboardShell>
+    <DashboardLanguageProvider>
+      <DashboardShell>
+        <Outlet />
+      </DashboardShell>
+    </DashboardLanguageProvider>
   );
 }

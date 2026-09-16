@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useDashboardLanguage } from "@/lib/dashboardI18n";
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -55,6 +56,7 @@ type Movement = {
 };
 
 export function InventoryEditor() {
+  const { language, text } = useDashboardLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
@@ -177,11 +179,16 @@ export function InventoryEditor() {
     const entry = adjustments[row.key] ?? { delta: "", note: "" };
     const delta = Number.parseInt(entry.delta, 10);
     if (!Number.isInteger(delta) || delta === 0) {
-      toast.error("أدخل كمية صحيحة موجبة أو سالبة، مثل 5 أو -2");
+      toast.error(
+        text(
+          "أدخل كمية صحيحة موجبة أو سالبة، مثل 5 أو -2",
+          "Enter a valid positive or negative quantity, such as 5 or -2",
+        ),
+      );
       return;
     }
     if (row.stock + delta < 0) {
-      toast.error("لا يمكن أن يصبح المخزون أقل من صفر");
+      toast.error(text("لا يمكن أن يصبح المخزون أقل من صفر", "Stock cannot go below zero"));
       return;
     }
 
@@ -203,19 +210,25 @@ export function InventoryEditor() {
     }
 
     setAdjustments((current) => ({ ...current, [row.key]: { delta: "", note: "" } }));
-    toast.success(`تم تعديل المخزون ${delta > 0 ? `+${delta}` : delta}`);
+    toast.success(
+      text(
+        `تم تعديل المخزون ${delta > 0 ? `+${delta}` : delta}`,
+        `Inventory adjusted ${delta > 0 ? `+${delta}` : delta}`,
+      ),
+    );
     await load();
   };
 
   const productName = (id: string) =>
-    products.find((product) => product.id === id)?.title ?? "منتج";
+    products.find((product) => product.id === id)?.title ?? text("منتج", "Product");
   const variantName = (id: string | null) =>
     id ? (variants.find((variant) => variant.id === id)?.title ?? null) : null;
 
   if (loading) {
     return (
       <div className="flex min-h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> جاري تحميل المخزون…
+        <Loader2 className="size-4 animate-spin" />
+        {text("جاري تحميل المخزون…", "Loading inventory…")}
       </div>
     );
   }
@@ -224,33 +237,48 @@ export function InventoryEditor() {
     <section className="space-y-5">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold text-muted-foreground">Inventory Center</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight">إدارة المخزون</h1>
+          <p className="text-[11px] font-semibold text-muted-foreground">
+            {text("مركز المخزون", "Inventory Center")}
+          </p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight">
+            {text("إدارة المخزون", "Inventory management")}
+          </h1>
           <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
-            مخزون المنتجات والـVariants مع تعديل آمن وسجل كامل لكل حركة.
+            {text(
+              "مخزون المنتجات والـVariants مع تعديل آمن وسجل كامل لكل حركة.",
+              "Product and variant inventory with safe adjustments and a complete movement history.",
+            )}
           </p>
         </div>
         <Button variant="outline" className="rounded-xl" onClick={() => void load()}>
-          <RefreshCw className="me-2 size-4" /> تحديث
+          <RefreshCw className="me-2 size-4" /> {text("تحديث", "Refresh")}
         </Button>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="عناصر متتبعة" value={stats.tracked} />
-        <Metric label="إجمالي الوحدات" value={stats.units} />
-        <Metric label="Low Stock" value={stats.low} warning={stats.low > 0} />
-        <Metric label="نفد المخزون" value={stats.out} warning={stats.out > 0} />
+        <Metric label={text("عناصر متتبعة", "Tracked items")} value={stats.tracked} />
+        <Metric label={text("إجمالي الوحدات", "Total units")} value={stats.units} />
+        <Metric
+          label={text("مخزون منخفض", "Low stock")}
+          value={stats.low}
+          warning={stats.low > 0}
+        />
+        <Metric
+          label={text("نفد المخزون", "Out of stock")}
+          value={stats.out}
+          warning={stats.out > 0}
+        />
       </div>
 
       <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
         <div className="flex flex-col gap-3 border-b border-border/60 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full max-w-md">
-            <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="اسم المنتج، SKU أو Barcode…"
-              className="h-10 rounded-xl pe-9"
+              placeholder={text("اسم المنتج، SKU أو Barcode…", "Product name, SKU or barcode…")}
+              className="h-10 rounded-xl ps-9"
             />
           </div>
           <button
@@ -258,26 +286,26 @@ export function InventoryEditor() {
             onClick={() => setLowOnly((value) => !value)}
             className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-bold transition ${lowOnly ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300" : "border-border bg-background hover:bg-muted"}`}
           >
-            <AlertTriangle className="size-4" /> Low stock فقط
+            <AlertTriangle className="size-4" /> {text("المخزون المنخفض فقط", "Low stock only")}
           </button>
         </div>
 
         {filteredRows.length === 0 ? (
           <div className="p-12 text-center text-sm text-muted-foreground">
             <Package className="mx-auto mb-3 size-7" />
-            لا توجد عناصر مخزون مطابقة.
+            {text("لا توجد عناصر مخزون مطابقة.", "No matching inventory items.")}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-right">
+            <table className="w-full min-w-[980px] text-start">
               <thead className="bg-muted/25 text-[10px] font-semibold text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-3">المنتج</th>
+                  <th className="px-4 py-3">{text("المنتج", "Product")}</th>
                   <th className="px-3 py-3">SKU / Barcode</th>
-                  <th className="px-3 py-3">المخزون</th>
-                  <th className="px-3 py-3">التعديل</th>
-                  <th className="px-3 py-3">ملاحظة</th>
-                  <th className="px-4 py-3 text-left">حفظ</th>
+                  <th className="px-3 py-3">{text("المخزون", "Stock")}</th>
+                  <th className="px-3 py-3">{text("التعديل", "Adjustment")}</th>
+                  <th className="px-3 py-3">{text("ملاحظة", "Note")}</th>
+                  <th className="px-4 py-3 text-end">{text("حفظ", "Save")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -289,13 +317,14 @@ export function InventoryEditor() {
                       <td className="px-4 py-3.5">
                         <p className="text-xs font-bold">{row.productTitle}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {row.variantTitle || "Default product"} • {row.status}
+                          {row.variantTitle || text("المنتج الافتراضي", "Default product")} •{" "}
+                          {row.status}
                         </p>
                       </td>
                       <td className="px-3 py-3.5">
                         <p className="text-[11px] font-semibold">{row.sku || "—"}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {row.barcode || "No barcode"}
+                          {row.barcode || text("لا يوجد باركود", "No barcode")}
                         </p>
                       </td>
                       <td className="px-3 py-3.5">
@@ -322,11 +351,11 @@ export function InventoryEditor() {
                           onChange={(event) =>
                             patchAdjustment(row.key, { note: event.target.value })
                           }
-                          placeholder="سبب التعديل…"
+                          placeholder={text("سبب التعديل…", "Reason for adjustment…")}
                           className="h-9 min-w-48 rounded-lg text-xs"
                         />
                       </td>
-                      <td className="px-4 py-3.5 text-left">
+                      <td className="px-4 py-3.5 text-end">
                         <Button
                           size="sm"
                           variant="outline"
@@ -339,7 +368,7 @@ export function InventoryEditor() {
                           ) : (
                             <Save className="me-1.5 size-3.5" />
                           )}{" "}
-                          تعديل
+                          {text("تعديل", "Adjust")}
                         </Button>
                       </td>
                     </tr>
@@ -353,23 +382,30 @@ export function InventoryEditor() {
 
       <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
         <div className="border-b border-border/60 px-4 py-4">
-          <h2 className="text-sm font-black">سجل حركات المخزون</h2>
+          <h2 className="text-sm font-black">
+            {text("سجل حركات المخزون", "Inventory movement history")}
+          </h2>
           <p className="mt-1 text-[10px] text-muted-foreground">
-            آخر 100 حركة شراء، بيع، إرجاع أو تعديل.
+            {text(
+              "آخر 100 حركة شراء، بيع، إرجاع أو تعديل.",
+              "The latest 100 purchase, sale, return or adjustment movements.",
+            )}
           </p>
         </div>
         {movements.length === 0 ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">لا توجد حركات مخزون بعد.</p>
+          <p className="p-8 text-center text-xs text-muted-foreground">
+            {text("لا توجد حركات مخزون بعد.", "No inventory movements yet.")}
+          </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-right">
+            <table className="w-full min-w-[760px] text-start">
               <thead className="bg-muted/25 text-[10px] text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-3">المنتج</th>
-                  <th className="px-3 py-3">النوع</th>
-                  <th className="px-3 py-3">الكمية</th>
-                  <th className="px-3 py-3">الملاحظة</th>
-                  <th className="px-4 py-3">الوقت</th>
+                  <th className="px-4 py-3">{text("المنتج", "Product")}</th>
+                  <th className="px-3 py-3">{text("النوع", "Type")}</th>
+                  <th className="px-3 py-3">{text("الكمية", "Quantity")}</th>
+                  <th className="px-3 py-3">{text("الملاحظة", "Note")}</th>
+                  <th className="px-4 py-3">{text("الوقت", "Time")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -395,7 +431,9 @@ export function InventoryEditor() {
                       {movement.note || movement.reference_type || "—"}
                     </td>
                     <td className="px-4 py-3 text-[10px] text-muted-foreground">
-                      {new Date(movement.created_at).toLocaleString("ar-LB")}
+                      {new Date(movement.created_at).toLocaleString(
+                        language === "ar" ? "ar-LB" : "en-LB",
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useDashboardLanguage } from "@/lib/dashboardI18n";
 import { formatPrice } from "@/lib/productPricing";
 
 type Customer = {
@@ -40,6 +41,7 @@ type Order = {
 };
 
 export function CustomersEditor() {
+  const { language, text } = useDashboardLanguage();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -135,7 +137,7 @@ export function CustomersEditor() {
       toast.error(error.message);
       return;
     }
-    toast.success("تم حفظ ملف العميل");
+    toast.success(text("تم حفظ ملف العميل", "Customer profile saved"));
   };
 
   return (
@@ -143,9 +145,14 @@ export function CustomersEditor() {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold text-muted-foreground">Customer CRM</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight">العملاء</h1>
+          <h1 className="mt-1 text-2xl font-black tracking-tight">
+            {text("العملاء", "Customers")}
+          </h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
-            ملفات العملاء، قيمة مشترياتهم، آخر طلب، الملاحظات الداخلية ووسوم VIP/Blocked.
+            {text(
+              "ملفات العملاء، قيمة مشترياتهم، آخر طلب، الملاحظات الداخلية ووسوم VIP/Blocked.",
+              "Customer profiles, lifetime spend, recent orders, internal notes and VIP/Blocked flags.",
+            )}
           </p>
         </div>
         <Button
@@ -159,26 +166,29 @@ export function CustomersEditor() {
           ) : (
             <RefreshCw className="me-2 size-4" />
           )}
-          تحديث
+          {text("تحديث", "Refresh")}
         </Button>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="العملاء" value={String(stats.total)} />
+        <Metric label={text("العملاء", "Customers")} value={String(stats.total)} />
         <Metric label="VIP" value={String(stats.vip)} />
-        <Metric label="محظور" value={String(stats.blocked)} />
-        <Metric label="إجمالي مشتريات العملاء" value={formatPrice(stats.spent, "USD")} />
+        <Metric label={text("محظور", "Blocked")} value={String(stats.blocked)} />
+        <Metric
+          label={text("إجمالي مشتريات العملاء", "Customer lifetime spend")}
+          value={formatPrice(stats.spent, "USD")}
+        />
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
         <aside className="rounded-2xl border border-border/70 bg-card p-3 xl:sticky xl:top-24 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto">
           <div className="relative">
-            <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="الاسم، الهاتف، البريد أو الوسم…"
-              className="h-10 rounded-xl pe-9"
+              placeholder={text("الاسم، الهاتف، البريد أو الوسم…", "Name, phone, email or tag…")}
+              className="h-10 rounded-xl ps-9"
             />
           </div>
           <div className="mt-3 space-y-1.5">
@@ -188,7 +198,7 @@ export function CustomersEditor() {
               </div>
             ) : filtered.length === 0 ? (
               <p className="px-2 py-8 text-center text-xs text-muted-foreground">
-                لا يوجد عملاء بعد.
+                {text("لا يوجد عملاء بعد.", "No customers yet.")}
               </p>
             ) : (
               filtered.map((customer) => (
@@ -207,7 +217,11 @@ export function CustomersEditor() {
                   </div>
                   <p className="mt-1 text-[10px] opacity-70">{customer.phone}</p>
                   <div className="mt-1 flex items-center justify-between gap-2 text-[10px] opacity-70">
-                    <span>{customer.total_orders} طلب</span>
+                    <span>
+                      {language === "ar"
+                        ? `${customer.total_orders} طلب`
+                        : `${customer.total_orders} orders`}
+                    </span>
                     <span>{formatPrice(customer.total_spent, "USD")}</span>
                   </div>
                 </button>
@@ -220,7 +234,7 @@ export function CustomersEditor() {
           <div className="grid min-h-80 place-items-center rounded-2xl border border-dashed border-border bg-card text-sm text-muted-foreground">
             <div className="text-center">
               <UserRound className="mx-auto mb-2 size-6" />
-              اختر عميلاً لعرض ملفه.
+              {text("اختر عميلاً لعرض ملفه.", "Select a customer to view their profile.")}
             </div>
           </div>
         ) : (
@@ -229,7 +243,7 @@ export function CustomersEditor() {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-4 sm:px-5">
                 <div>
                   <p className="text-[10px] font-semibold text-muted-foreground">
-                    Customer Profile
+                    {text("ملف العميل", "Customer Profile")}
                   </p>
                   <h2 className="text-base font-black">{selected.name}</h2>
                 </div>
@@ -245,22 +259,28 @@ export function CustomersEditor() {
                   ) : (
                     <Save className="me-1.5 size-3.5" />
                   )}{" "}
-                  حفظ الملف
+                  {text("حفظ الملف", "Save profile")}
                 </Button>
               </div>
 
               <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-2">
-                <Info label="الهاتف" value={selected.phone} />
-                <Info label="البريد" value={selected.email || "—"} />
-                <Info label="المدينة" value={selected.city || "—"} />
-                <Info label="العنوان" value={selected.default_address || "—"} />
-                <Info label="عدد الطلبات" value={String(selected.total_orders)} />
-                <Info label="إجمالي المشتريات" value={formatPrice(selected.total_spent, "USD")} />
+                <Info label={text("الهاتف", "Phone")} value={selected.phone} />
+                <Info label={text("البريد", "Email")} value={selected.email || "—"} />
+                <Info label={text("المدينة", "City")} value={selected.city || "—"} />
+                <Info label={text("العنوان", "Address")} value={selected.default_address || "—"} />
+                <Info
+                  label={text("عدد الطلبات", "Order count")}
+                  value={String(selected.total_orders)}
+                />
+                <Info
+                  label={text("إجمالي المشتريات", "Total spend")}
+                  value={formatPrice(selected.total_spent, "USD")}
+                />
 
                 <div className="md:col-span-2 grid gap-3 sm:grid-cols-2">
                   <label className="flex min-h-12 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-semibold">
                     <span className="flex items-center gap-2">
-                      <Crown className="size-4" /> VIP Customer
+                      <Crown className="size-4" /> {text("عميل VIP", "VIP Customer")}
                     </span>
                     <Switch
                       checked={selected.is_vip}
@@ -269,7 +289,7 @@ export function CustomersEditor() {
                   </label>
                   <label className="flex min-h-12 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-semibold">
                     <span className="flex items-center gap-2">
-                      <ShieldBan className="size-4" /> Blocked
+                      <ShieldBan className="size-4" /> {text("محظور", "Blocked")}
                     </span>
                     <Switch
                       checked={selected.is_blocked}
@@ -279,7 +299,9 @@ export function CustomersEditor() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label className="text-[11px] text-muted-foreground">Tags</Label>
+                  <Label className="text-[11px] text-muted-foreground">
+                    {text("الوسوم", "Tags")}
+                  </Label>
                   <Input
                     className="mt-1.5 rounded-xl"
                     value={(selected.tags ?? []).join(", ")}
@@ -295,12 +317,17 @@ export function CustomersEditor() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <Label className="text-[11px] text-muted-foreground">ملاحظات داخلية</Label>
+                  <Label className="text-[11px] text-muted-foreground">
+                    {text("ملاحظات داخلية", "Internal notes")}
+                  </Label>
                   <Textarea
                     className="mt-1.5 min-h-28 rounded-xl"
                     value={selected.internal_notes ?? ""}
                     onChange={(event) => patchSelected({ internal_notes: event.target.value })}
-                    placeholder="ملاحظات لا تظهر للعميل…"
+                    placeholder={text(
+                      "ملاحظات لا تظهر للعميل…",
+                      "Notes that are not shown to the customer…",
+                    )}
                   />
                 </div>
               </div>
@@ -308,9 +335,12 @@ export function CustomersEditor() {
 
             <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
               <div className="border-b border-border/60 px-4 py-4 sm:px-5">
-                <h3 className="text-sm font-black">سجل الطلبات</h3>
+                <h3 className="text-sm font-black">{text("سجل الطلبات", "Order history")}</h3>
                 <p className="mt-1 text-[10px] text-muted-foreground">
-                  آخر 100 طلب مرتبط برقم العميل.
+                  {text(
+                    "آخر 100 طلب مرتبط برقم العميل.",
+                    "The latest 100 orders linked to this customer's phone number.",
+                  )}
                 </p>
               </div>
               {loadingOrders ? (
@@ -319,7 +349,7 @@ export function CustomersEditor() {
                 </div>
               ) : orders.length === 0 ? (
                 <p className="py-10 text-center text-xs text-muted-foreground">
-                  لا يوجد سجل طلبات.
+                  {text("لا يوجد سجل طلبات.", "No order history.")}
                 </p>
               ) : (
                 <div className="divide-y divide-border/60">
@@ -329,12 +359,16 @@ export function CustomersEditor() {
                       className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5"
                     >
                       <div>
-                        <p className="text-xs font-black">طلب #{order.order_number}</p>
+                        <p className="text-xs font-black">
+                          {text("طلب", "Order")} #{order.order_number}
+                        </p>
                         <p className="mt-1 text-[10px] text-muted-foreground">
-                          {new Date(order.created_at).toLocaleString("ar-LB")}
+                          {new Date(order.created_at).toLocaleString(
+                            language === "ar" ? "ar-LB" : "en-LB",
+                          )}
                         </p>
                       </div>
-                      <div className="text-left">
+                      <div className="text-end">
                         <p className="text-xs font-black">
                           {formatPrice(order.total, order.currency)}
                         </p>

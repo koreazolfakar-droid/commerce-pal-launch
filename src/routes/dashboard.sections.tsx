@@ -1,17 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { CollectionEditor } from "@/components/admin/CollectionEditor";
+import { useDashboardLanguage } from "@/lib/dashboardI18n";
 
 export const Route = createFileRoute("/dashboard/sections")({
   component: SectionsEditorPage,
 });
 
 function SectionsEditorPage() {
+  const { text } = useDashboardLanguage();
+
   return (
     <CollectionEditor
       table="cms_sections"
-      title="أقسام الصفحة"
-      description="عناوين ومحتوى الأقسام بالعربية والإنجليزية مع ترتيبها وإظهارها."
+      title={text("أقسام الصفحة", "Page sections")}
+      description={text(
+        "عناوين ومحتوى الأقسام بالعربية والإنجليزية مع ترتيبها وإظهارها.",
+        "Manage section titles and content in Arabic and English, including order and visibility.",
+      )}
       labelKey="section_key"
       newRow={{
         page_slug: "home",
@@ -24,17 +30,38 @@ function SectionsEditorPage() {
         is_visible: true,
       }}
       fields={[
-        { key: "page_slug", label: "الصفحة", type: "text", placeholder: "home" },
-        { key: "section_key", label: "معرّف القسم", type: "text", required: true },
-        { key: "section_type", label: "نوع القسم", type: "text" },
-        { key: "title_en", label: "العنوان بالإنجليزية", type: "text" },
-        { key: "title_ar", label: "العنوان بالعربية", type: "text" },
-        { key: "subtitle_en", label: "العنوان الفرعي بالإنجليزية", type: "textarea" },
-        { key: "subtitle_ar", label: "العنوان الفرعي بالعربية", type: "textarea" },
-        { key: "content_en", label: "المحتوى بالإنجليزية (JSON)", type: "json" },
-        { key: "content_ar", label: "المحتوى بالعربية (JSON)", type: "json" },
-        { key: "sort_order", label: "الترتيب", type: "number" },
-        { key: "is_visible", label: "ظاهر", type: "boolean" },
+        { key: "page_slug", label: text("الصفحة", "Page"), type: "text", placeholder: "home" },
+        {
+          key: "section_key",
+          label: text("معرّف القسم", "Section key"),
+          type: "text",
+          required: true,
+        },
+        { key: "section_type", label: text("نوع القسم", "Section type"), type: "text" },
+        { key: "title_en", label: text("العنوان بالإنجليزية", "English title"), type: "text" },
+        { key: "title_ar", label: text("العنوان بالعربية", "Arabic title"), type: "text" },
+        {
+          key: "subtitle_en",
+          label: text("العنوان الفرعي بالإنجليزية", "English subtitle"),
+          type: "textarea",
+        },
+        {
+          key: "subtitle_ar",
+          label: text("العنوان الفرعي بالعربية", "Arabic subtitle"),
+          type: "textarea",
+        },
+        {
+          key: "content_en",
+          label: text("المحتوى بالإنجليزية (JSON)", "English content (JSON)"),
+          type: "json",
+        },
+        {
+          key: "content_ar",
+          label: text("المحتوى بالعربية (JSON)", "Arabic content (JSON)"),
+          type: "json",
+        },
+        { key: "sort_order", label: text("الترتيب", "Sort order"), type: "number" },
+        { key: "is_visible", label: text("ظاهر", "Visible"), type: "boolean" },
       ]}
     />
   );

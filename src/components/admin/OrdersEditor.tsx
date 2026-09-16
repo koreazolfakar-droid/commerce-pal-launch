@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useDashboardLanguage } from "@/lib/dashboardI18n";
 import { formatPrice } from "@/lib/productPricing";
 
 type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
@@ -46,6 +47,7 @@ type OrderItem = {
 };
 
 export function OrdersEditor() {
+  const { text } = useDashboardLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -122,7 +124,7 @@ export function OrdersEditor() {
       toast.error(error.message);
       return;
     }
-    toast.success("تم تحديث الطلب");
+    toast.success(text("تم تحديث الطلب", "Order updated"));
   };
 
   return (
@@ -130,9 +132,12 @@ export function OrdersEditor() {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold text-muted-foreground">Native Commerce</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight">الطلبات</h1>
+          <h1 className="mt-1 text-2xl font-black tracking-tight">{text("الطلبات", "Orders")}</h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
-            طلبات Space Call الأصلية من Supabase، مع حالة الطلب والدفع وتفاصيل المنتجات.
+            {text(
+              "طلبات Space Call الأصلية من Supabase، مع حالة الطلب والدفع وتفاصيل المنتجات.",
+              "Space Call's native Supabase orders with order status, payment status and product details.",
+            )}
           </p>
         </div>
         <Button
@@ -146,7 +151,7 @@ export function OrdersEditor() {
           ) : (
             <RefreshCw className="me-2 size-4" />
           )}
-          تحديث
+          {text("تحديث", "Refresh")}
         </Button>
       </header>
 
@@ -155,7 +160,7 @@ export function OrdersEditor() {
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="رقم الطلب، الاسم أو الهاتف…"
+            placeholder={text("رقم الطلب، الاسم أو الهاتف…", "Order number, name or phone…")}
             className="h-10 rounded-xl"
           />
           <div className="mt-3 space-y-1.5">
@@ -164,7 +169,9 @@ export function OrdersEditor() {
                 <Loader2 className="size-5 animate-spin" />
               </div>
             ) : filtered.length === 0 ? (
-              <p className="px-2 py-8 text-center text-xs text-muted-foreground">لا توجد طلبات.</p>
+              <p className="px-2 py-8 text-center text-xs text-muted-foreground">
+                {text("لا توجد طلبات.", "No orders.")}
+              </p>
             ) : (
               filtered.map((order) => (
                 <button
@@ -192,7 +199,7 @@ export function OrdersEditor() {
           <div className="grid min-h-80 place-items-center rounded-2xl border border-dashed border-border bg-card text-sm text-muted-foreground">
             <div className="text-center">
               <ShoppingBag className="mx-auto mb-2 size-6" />
-              اختر طلباً لعرض التفاصيل.
+              {text("اختر طلباً لعرض التفاصيل.", "Select an order to view its details.")}
             </div>
           </div>
         ) : (
@@ -200,8 +207,12 @@ export function OrdersEditor() {
             <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">Order</p>
-                  <h2 className="text-base font-black">طلب #{selected.order_number}</h2>
+                  <p className="text-[10px] font-semibold text-muted-foreground">
+                    {text("طلب", "Order")}
+                  </p>
+                  <h2 className="text-base font-black">
+                    {text("طلب", "Order")} #{selected.order_number}
+                  </h2>
                 </div>
                 <Button
                   size="sm"
@@ -215,37 +226,41 @@ export function OrdersEditor() {
                   ) : (
                     <Save className="me-1.5 size-3.5" />
                   )}{" "}
-                  حفظ الحالة
+                  {text("حفظ الحالة", "Save status")}
                 </Button>
               </div>
 
               <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-2">
-                <Info label="العميل" value={selected.customer_name} />
-                <Info label="الهاتف" value={selected.customer_phone} />
-                <Info label="المدينة" value={selected.city || "—"} />
-                <Info label="العنوان" value={selected.delivery_address || "—"} />
+                <Info label={text("العميل", "Customer")} value={selected.customer_name} />
+                <Info label={text("الهاتف", "Phone")} value={selected.customer_phone} />
+                <Info label={text("المدينة", "City")} value={selected.city || "—"} />
+                <Info label={text("العنوان", "Address")} value={selected.delivery_address || "—"} />
                 <Info
-                  label="طريقة الدفع"
+                  label={text("طريقة الدفع", "Payment method")}
                   value={selected.payment_method === "whish" ? "Whish Money" : "Cash on delivery"}
                 />
-                <Info label="المصدر" value={selected.source} />
+                <Info label={text("المصدر", "Source")} value={selected.source} />
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">حالة الطلب</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground">
+                    {text("حالة الطلب", "Order status")}
+                  </p>
                   <select
                     value={selected.status}
                     onChange={(e) => patchSelected({ status: e.target.value as OrderStatus })}
                     className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold"
                   >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="pending">{text("قيد الانتظار", "Pending")}</option>
+                    <option value="confirmed">{text("مؤكد", "Confirmed")}</option>
+                    <option value="processing">{text("قيد التجهيز", "Processing")}</option>
+                    <option value="shipped">{text("تم الشحن", "Shipped")}</option>
+                    <option value="delivered">{text("تم التسليم", "Delivered")}</option>
+                    <option value="cancelled">{text("ملغي", "Cancelled")}</option>
                   </select>
                 </div>
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">حالة الدفع</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground">
+                    {text("حالة الدفع", "Payment status")}
+                  </p>
                   <select
                     value={selected.payment_status}
                     onChange={(e) =>
@@ -253,22 +268,24 @@ export function OrdersEditor() {
                     }
                     className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold"
                   >
-                    <option value="unpaid">Unpaid</option>
-                    <option value="paid">Paid</option>
-                    <option value="partially_refunded">Partially refunded</option>
-                    <option value="refunded">Refunded</option>
+                    <option value="unpaid">{text("غير مدفوع", "Unpaid")}</option>
+                    <option value="paid">{text("مدفوع", "Paid")}</option>
+                    <option value="partially_refunded">
+                      {text("مسترد جزئياً", "Partially refunded")}
+                    </option>
+                    <option value="refunded">{text("مسترد", "Refunded")}</option>
                   </select>
                 </div>
                 {selected.notes ? (
                   <div className="md:col-span-2">
-                    <Info label="ملاحظات" value={selected.notes} />
+                    <Info label={text("ملاحظات", "Notes")} value={selected.notes} />
                   </div>
                 ) : null}
               </div>
             </article>
 
             <article className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
-              <h3 className="text-sm font-black">المنتجات</h3>
+              <h3 className="text-sm font-black">{text("المنتجات", "Products")}</h3>
               {loadingItems ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="size-5 animate-spin" />
@@ -300,19 +317,19 @@ export function OrdersEditor() {
 
               <div className="mt-5 space-y-2 border-t border-border/60 pt-4 text-xs">
                 <TotalRow
-                  label="Subtotal"
+                  label={text("المجموع الفرعي", "Subtotal")}
                   value={formatPrice(selected.subtotal, selected.currency)}
                 />
                 <TotalRow
-                  label="Shipping"
+                  label={text("الشحن", "Shipping")}
                   value={formatPrice(selected.shipping_total, selected.currency)}
                 />
                 <TotalRow
-                  label="Discount"
+                  label={text("الخصم", "Discount")}
                   value={`-${formatPrice(selected.discount_total, selected.currency)}`}
                 />
                 <div className="flex items-center justify-between border-t border-border/60 pt-3 text-base font-black">
-                  <span>Total</span>
+                  <span>{text("الإجمالي", "Total")}</span>
                   <span>{formatPrice(selected.total, selected.currency)}</span>
                 </div>
               </div>

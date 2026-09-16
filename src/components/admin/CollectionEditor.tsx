@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadMedia } from "@/lib/adminMedia";
+import { useDashboardLanguage } from "@/lib/dashboardI18n";
 
 export type EditorFieldType =
   "text" | "textarea" | "number" | "boolean" | "select" | "image" | "json";
@@ -62,6 +63,7 @@ export function CollectionEditor({
   labelKey,
   idKey = "id",
 }: CollectionEditorProps) {
+  const { text } = useDashboardLanguage();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -137,9 +139,14 @@ export function CollectionEditor({
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       if (message.startsWith("required:")) {
-        toast.error(`الحقل مطلوب: ${message.slice("required:".length)}`);
+        toast.error(
+          text(
+            `الحقل مطلوب: ${message.slice("required:".length)}`,
+            `Required field: ${message.slice("required:".length)}`,
+          ),
+        );
       } else {
-        toast.error("تحقق من صيغة JSON قبل الحفظ");
+        toast.error(text("تحقق من صيغة JSON قبل الحفظ", "Check the JSON format before saving"));
       }
       return;
     }
@@ -176,7 +183,9 @@ export function CollectionEditor({
           : item,
       ),
     );
-    toast.success(isDraft ? "تمت الإضافة والحفظ" : "تم الحفظ");
+    toast.success(
+      isDraft ? text("تمت الإضافة والحفظ", "Item added and saved") : text("تم الحفظ", "Saved"),
+    );
   };
 
   const deleteRow = async (row: Row) => {
@@ -187,7 +196,7 @@ export function CollectionEditor({
       return;
     }
 
-    if (!window.confirm("هل تريد الحذف نهائياً؟")) return;
+    if (!window.confirm(text("هل تريد الحذف نهائياً؟", "Delete this item permanently?"))) return;
     const { error } = await client
       .from(table as never)
       .delete()
@@ -198,7 +207,7 @@ export function CollectionEditor({
     }
 
     setRows((current) => current.filter((item) => String(item[EDITOR_KEY]) !== editorKey));
-    toast.success("تم الحذف");
+    toast.success(text("تم الحذف", "Deleted"));
   };
 
   const handleUpload = async (row: Row, field: EditorField, file: File) => {
@@ -208,9 +217,11 @@ export function CollectionEditor({
     try {
       const url = await uploadMedia(file, table);
       setValue(editorKey, field.key, url);
-      toast.success("تم رفع الصورة، اضغط حفظ");
+      toast.success(text("تم رفع الصورة، اضغط حفظ", "Image uploaded. Click Save."));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذّر رفع الصورة");
+      toast.error(
+        error instanceof Error ? error.message : text("تعذّر رفع الصورة", "Image upload failed"),
+      );
     } finally {
       setUploadingKey(null);
     }
@@ -220,7 +231,9 @@ export function CollectionEditor({
     <section className="space-y-5">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-semibold text-muted-foreground">Content Management</p>
+          <p className="text-[11px] font-semibold text-muted-foreground">
+            {text("إدارة المحتوى", "Content Management")}
+          </p>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">{title}</h1>
           {description ? (
             <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
@@ -233,18 +246,22 @@ export function CollectionEditor({
           size="sm"
           className="min-h-10 rounded-xl bg-foreground px-4 text-background hover:bg-foreground/90"
         >
-          <Plus className="me-1.5 size-4" /> إضافة عنصر
+          <Plus className="me-1.5 size-4" /> {text("إضافة عنصر", "Add item")}
         </Button>
       </header>
 
       {loading ? (
         <div className="flex min-h-32 items-center justify-center gap-2 rounded-2xl border border-border/70 bg-card text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> جاري التحميل…
+          <Loader2 className="size-4 animate-spin" /> {text("جاري التحميل…", "Loading…")}
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-          <p className="text-sm font-bold text-foreground">لا توجد عناصر بعد</p>
-          <p className="mt-1 text-xs text-muted-foreground">اضغط «إضافة عنصر» للبدء.</p>
+          <p className="text-sm font-bold text-foreground">
+            {text("لا توجد عناصر بعد", "No items yet")}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {text("اضغط «إضافة عنصر» للبدء.", "Click “Add item” to get started.")}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -259,10 +276,10 @@ export function CollectionEditor({
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
                   <div className="min-w-0">
                     <p className="text-[10px] font-semibold text-muted-foreground">
-                      {draft ? "Draft" : `Item ${index + 1}`}
+                      {draft ? text("مسودة", "Draft") : `${text("عنصر", "Item")} ${index + 1}`}
                     </p>
                     <h2 className="mt-0.5 truncate text-sm font-black text-foreground">
-                      {String(row[labelKey] || "بدون عنوان")}
+                      {String(row[labelKey] || text("بدون عنوان", "Untitled"))}
                     </h2>
                   </div>
                   <div className="flex items-center gap-2">
@@ -278,14 +295,18 @@ export function CollectionEditor({
                       ) : (
                         <Save className="me-1.5 size-3.5" />
                       )}
-                      حفظ
+                      {text("حفظ", "Save")}
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="size-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => void deleteRow(row)}
-                      aria-label={draft ? "إلغاء العنصر الجديد" : "حذف العنصر"}
+                      aria-label={
+                        draft
+                          ? text("إلغاء العنصر الجديد", "Cancel new item")
+                          : text("حذف العنصر", "Delete item")
+                      }
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -311,7 +332,7 @@ export function CollectionEditor({
                         {field.type === "boolean" ? (
                           <div className="mt-1.5 flex min-h-11 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5">
                             <span className="text-[11px] font-medium text-foreground">
-                              {value ? "مفعّل" : "غير مفعّل"}
+                              {value ? text("مفعّل", "Enabled") : text("غير مفعّل", "Disabled")}
                             </span>
                             <Switch
                               id={inputId}
@@ -347,7 +368,7 @@ export function CollectionEditor({
                                 id={inputId}
                                 className="h-11 rounded-xl border-border/70 bg-background"
                                 value={String(value ?? "")}
-                                placeholder="رابط الصورة"
+                                placeholder={text("رابط الصورة", "Image URL")}
                                 onChange={(event) =>
                                   setValue(editorKey, field.key, event.target.value)
                                 }
@@ -358,7 +379,7 @@ export function CollectionEditor({
                                 ) : (
                                   <Upload className="size-4" />
                                 )}
-                                رفع صورة
+                                {text("رفع صورة", "Upload image")}
                                 <input
                                   type="file"
                                   accept="image/*"
