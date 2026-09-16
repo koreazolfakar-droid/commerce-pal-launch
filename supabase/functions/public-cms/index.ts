@@ -58,14 +58,19 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // Direct PostgREST reads of CMS source tables are disabled. This server-only
-  // gateway is the sole public projection and exposes only publishable fields.
   const db = createClient(url, secret, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const nowIso = new Date().toISOString();
 
-  const [settingsResult, heroesResult, sectionsResult, navigationResult] = await Promise.all([
+  const [
+    settingsResult,
+    heroesResult,
+    sectionsResult,
+    navigationResult,
+    brandsResult,
+    seoResult,
+  ] = await Promise.all([
     db
       .from("cms_site_settings")
       .select("key,value_text,value_json,value_type")
@@ -92,10 +97,26 @@ Deno.serve(async (req: Request) => {
       .eq("is_visible", true)
       .order("area")
       .order("sort_order"),
+    db
+      .from("cms_brands")
+      .select("id,name,slug,logo_url,href,sort_order,is_visible")
+      .order("sort_order")
+      .order("name"),
+    db
+      .from("cms_seo_pages")
+      .select("page_slug,title,description,og_image_url,canonical_url,robots,json_ld,is_public")
+      .eq("is_public", true)
+      .order("page_slug"),
   ]);
 
   const firstError =
-    settingsResult.error || heroesResult.error || sectionsResult.error || navigationResult.error;
+    settingsResult.error ||
+    heroesResult.error ||
+    sectionsResult.error ||
+    navigationResult.error ||
+    brandsResult.error ||
+    seoResult.error;
+
   if (firstError) {
     console.error("public-cms query failed", firstError.message);
     return new Response(JSON.stringify({ error: "cms_query_failed" }), {
@@ -127,6 +148,8 @@ Deno.serve(async (req: Request) => {
       heroSlides,
       sections: (sectionsResult.data ?? []).map((row) => ({ ...row, is_visible: true })),
       navigation: (navigationResult.data ?? []).map((row) => ({ ...row, is_visible: true })),
+      brands: brandsResult.data ?? [],
+      seoPages: seoResult.data ?? [],
     }),
     { status: 200, headers: headers(req) },
   );
