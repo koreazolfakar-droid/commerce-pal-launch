@@ -13,7 +13,9 @@ test("dashboard products route uses the native Space Call catalog manager", () =
   assert.match(route, /NativeCatalogManager/);
   assert.match(manager, /store_products/);
   assert.match(manager, /store_product_variants/);
-  assert.match(manager, /store_product_images/);
+  assert.match(manager, /base_price/);
+  assert.match(manager, /stock_quantity/);
+  assert.match(manager, /compare_at_price/);
 });
 
 test("native catalog manager never writes to Shopify", () => {
@@ -25,10 +27,9 @@ test("native catalog manager never writes to Shopify", () => {
 
 test("existing products are archived instead of permanently deleted", () => {
   assert.match(manager, /status:\s*"archived"/);
-  const archiveFunction = manager.slice(
-    manager.indexOf("const archiveProduct"),
-    manager.indexOf("const uploadPrimaryImage"),
-  );
+  const archiveStart = manager.indexOf("const archiveProduct");
+  const archiveFunction = manager.slice(archiveStart);
+  assert.ok(archiveStart >= 0);
   assert.doesNotMatch(archiveFunction, /\.delete\(\)/);
   assert.match(archiveFunction, /\.update\(/);
 });
