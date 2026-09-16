@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Save, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
@@ -6,17 +7,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { uploadMedia } from "@/lib/adminMedia";
 
 const SUGGESTED_KEYS = [
-  "store_name",
+  "site_name",
   "whatsapp_number",
+  "announcement_enabled",
   "announcement_text",
   "logo_url",
   "free_shipping_note",
   "support_hours",
+  "home_ticker_heading_ar",
+  "home_ticker_heading_en",
+  "home_ticker_details_ar",
+  "home_ticker_details_en",
 ];
 
 type Setting = {
@@ -40,6 +47,7 @@ export function SettingsEditor() {
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const load = async () => {
     setLoading(true);
@@ -72,6 +80,10 @@ export function SettingsEditor() {
     setRows((current) =>
       current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
     );
+  };
+
+  const refreshCms = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["cms", "snapshot"] });
   };
 
   const save = async (row: Setting, index: number) => {
@@ -114,6 +126,7 @@ export function SettingsEditor() {
     }
 
     patchRow(index, { originalKey: key, key });
+    await refreshCms();
     toast.success("تم الحفظ");
   };
 
@@ -130,6 +143,7 @@ export function SettingsEditor() {
       return;
     }
     setRows((current) => current.filter((item) => item !== row));
+    await refreshCms();
     toast.success("تم الحذف");
   };
 
@@ -154,7 +168,7 @@ export function SettingsEditor() {
           <p className="text-[11px] font-semibold text-muted-foreground">Store Settings</p>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">إعدادات الموقع</h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
-            اسم المتجر، واتساب، الشعار، الشريط الإعلاني والإعدادات العامة.
+            إعدادات الواجهة العامة، واتساب، الإعلانات، ومحتوى الصفحة الرئيسية.
           </p>
         </div>
         <Button
@@ -276,11 +290,30 @@ export function SettingsEditor() {
                   <div className="sm:col-span-2 xl:col-span-4">
                     <Label className="text-[11px] font-semibold text-muted-foreground">القيمة</Label>
                     <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <Input
-                        className="h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
-                        value={row.value}
-                        onChange={(event) => patchRow(index, { value: event.target.value })}
-                      />
+                      {row.valueType === "boolean" ? (
+                        <label className="flex min-h-11 flex-1 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-medium">
+                          <span>{row.value === "true" ? "مفعّل" : "غير مفعّل"}</span>
+                          <Switch
+                            checked={row.value === "true"}
+                            onCheckedChange={(checked) =>
+                              patchRow(index, { value: checked ? "true" : "false" })
+                            }
+                          />
+                        </label>
+                      ) : row.valueType === "json" ? (
+                        <Textarea
+                          className="min-h-28 flex-1 rounded-xl border-border/70 bg-muted/20 font-mono text-xs"
+                          value={row.value}
+                          onChange={(event) => patchRow(index, { value: event.target.value })}
+                        />
+                      ) : (
+                        <Input
+                          className="h-11 flex-1 rounded-xl border-border/70 bg-muted/20 text-xs"
+                          type={row.valueType === "number" ? "number" : "text"}
+                          value={row.value}
+                          onChange={(event) => patchRow(index, { value: event.target.value })}
+                        />
+                      )}
                       <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-bold transition hover:bg-muted">
                         {uploadingKey === rowKey ? (
                           <Loader2 className="size-4 animate-spin" />
