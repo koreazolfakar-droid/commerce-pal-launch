@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 const repairMigration = "supabase/migrations/20260916064000_restore_dashboard_admin_cms.sql";
+const hardeningMigration = "supabase/migrations/20260916074000_harden_dashboard_access.sql";
 
 test("public CMS gateway stays aligned with the live production schema", async () => {
   const source = await read("supabase/functions/public-cms/index.ts");
@@ -62,12 +63,22 @@ test("dashboard CMS CRUD stays role-gated through RLS", async () => {
   assert.match(migration, /bucket_id = 'cms-media'/);
 });
 
-test("first-admin bootstrap is one-time, race-safe, and not a public RPC", async () => {
-  const migration = await read(repairMigration);
+test("dashboard has no public signup or self-service admin bootstrap", async () => {
+  const [migration, login, shell] = await Promise.all([
+    read(hardeningMigration),
+    read("src/components/admin/AdminLogin.tsx"),
+    read("src/components/admin/DashboardShell.tsx"),
+  ]);
 
-  assert.match(migration, /pg_advisory_xact_lock/);
-  assert.match(migration, /if exists \(select 1 from public\.user_roles\)/i);
-  assert.match(migration, /guard_dashboard_role_insert/);
-  assert.match(migration, /new\.user_id <> \(select auth\.uid\(\)\)/i);
-  assert.doesNotMatch(migration, /function public\.claim_admin/i);
+  assert.match(migration, /drop trigger if exists guard_dashboard_role_insert/i);
+  assert.match(migration, /dashboard_roles_insert/);
+  assert.match(migration, /with check \(\(select private\.is_dashboard_admin\(\)\)\)/i);
+  assert.match(migration, /guard_last_dashboard_admin/);
+  assert.match(migration, /dashboard_last_admin_protected/);
+
+  assert.doesNotMatch(login, /auth\.signUp\s*\(/);
+  assert.doesNotMatch(login, /auth\.resend\s*\(/);
+  assert.doesNotMatch(shell, /from\("user_roles"\)\.insert/);
+  assert.doesNotMatch(shell, /role:\s*"admin"/);
+  assert.match(shell, /ADMIN_IDLE_TIMEOUT_MS\s*=\s*30\s*\*\s*60\s*\*\s*1000/);
 });
