@@ -146,9 +146,7 @@ export function CollectionEditor({
           ),
         );
       } else {
-        toast.error(
-          text("تحقق من صيغة JSON قبل الحفظ", "Check the JSON format before saving"),
-        );
+        toast.error(text("تحقق من صيغة JSON قبل الحفظ", "Check the JSON format before saving"));
       }
       return;
     }
@@ -186,9 +184,7 @@ export function CollectionEditor({
       ),
     );
     toast.success(
-      isDraft
-        ? text("تمت الإضافة والحفظ", "Item added and saved")
-        : text("تم الحفظ", "Saved"),
+      isDraft ? text("تمت الإضافة والحفظ", "Item added and saved") : text("تم الحفظ", "Saved"),
     );
   };
 
@@ -224,9 +220,7 @@ export function CollectionEditor({
       toast.success(text("تم رفع الصورة، اضغط حفظ", "Image uploaded. Click Save."));
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : text("تعذّر رفع الصورة", "Image upload failed"),
+        error instanceof Error ? error.message : text("تعذّر رفع الصورة", "Image upload failed"),
       );
     } finally {
       setUploadingKey(null);

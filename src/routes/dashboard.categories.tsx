@@ -41,7 +41,12 @@ function CategoriesDashboardPage() {
         },
         { key: "description", label: text("الوصف", "Description"), type: "textarea" },
         { key: "image_url", label: text("الصورة", "Image"), type: "image" },
-        { key: "icon", label: text("اسم الأيقونة", "Icon name"), type: "text", placeholder: "Smartphone" },
+        {
+          key: "icon",
+          label: text("اسم الأيقونة", "Icon name"),
+          type: "text",
+          placeholder: "Smartphone",
+        },
         { key: "sort_order", label: text("الترتيب", "Sort order"), type: "number" },
         { key: "is_active", label: text("مفعّل", "Active"), type: "boolean" },
       ]}

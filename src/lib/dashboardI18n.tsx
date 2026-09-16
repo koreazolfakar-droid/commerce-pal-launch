@@ -48,9 +48,7 @@ export function DashboardLanguageProvider({ children }: { children: ReactNode })
   );
 
   return (
-    <DashboardLanguageContext.Provider value={value}>
-      {children}
-    </DashboardLanguageContext.Provider>
+    <DashboardLanguageContext.Provider value={value}>{children}</DashboardLanguageContext.Provider>
   );
 }
 

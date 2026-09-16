@@ -199,7 +199,9 @@ function OrderStatusCard({ counts }: { counts: StatusCounts }) {
           className="relative grid size-24 shrink-0 place-items-center rounded-full"
           style={{ background }}
           aria-label={
-            language === "ar" ? `توزيع حالات ${total} طلب` : `Status distribution for ${total} orders`
+            language === "ar"
+              ? `توزيع حالات ${total} طلب`
+              : `Status distribution for ${total} orders`
           }
         >
           <div className="grid size-14 place-items-center rounded-full bg-card shadow-sm">
@@ -297,17 +299,13 @@ function DashboardOverview() {
 
             <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
               <div>
-                <p className="text-[10px] text-white/50">
-                  {text("متوسط الطلب", "Average order")}
-                </p>
+                <p className="text-[10px] text-white/50">{text("متوسط الطلب", "Average order")}</p>
                 <p className="mt-1 text-sm font-black">
                   {loadingValue ?? formatPrice(data?.aov ?? 0, data?.currency ?? "USD")}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] text-white/50">
-                  {text("طلبات فعّالة", "Active orders")}
-                </p>
+                <p className="text-[10px] text-white/50">{text("طلبات فعّالة", "Active orders")}</p>
                 <p className="mt-1 text-sm font-black">
                   {loadingValue ?? String(data?.activeOrderCount ?? 0)}
                 </p>

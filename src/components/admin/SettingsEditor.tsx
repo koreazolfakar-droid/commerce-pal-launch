@@ -158,9 +158,7 @@ export function SettingsEditor() {
       toast.success(text("تم الرفع، اضغط حفظ", "Uploaded. Click Save."));
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : text("تعذّر رفع الصورة", "Image upload failed"),
+        error instanceof Error ? error.message : text("تعذّر رفع الصورة", "Image upload failed"),
       );
     } finally {
       setUploadingKey(null);

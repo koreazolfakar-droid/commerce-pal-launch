@@ -224,9 +224,7 @@ export function ProductEditor() {
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
       specifications = parsed;
     } catch {
-      toast.error(
-        text("صيغة Specifications JSON غير صحيحة", "Specifications JSON is invalid"),
-      );
+      toast.error(text("صيغة Specifications JSON غير صحيحة", "Specifications JSON is invalid"));
       return;
     }
 
@@ -297,9 +295,7 @@ export function ProductEditor() {
       return;
     }
     if (
-      !window.confirm(
-        text(`حذف ${editing.title} نهائياً؟`, `Delete ${editing.title} permanently?`),
-      )
+      !window.confirm(text(`حذف ${editing.title} نهائياً؟`, `Delete ${editing.title} permanently?`))
     )
       return;
     const { error } = await supabase
@@ -395,7 +391,9 @@ export function ProductEditor() {
 
   const uploadProductImage = async (file: File) => {
     if (!editing || editing.isDraft) {
-      toast.error(text("احفظ المنتج أولاً ثم ارفع الصور", "Save the product before uploading images"));
+      toast.error(
+        text("احفظ المنتج أولاً ثم ارفع الصور", "Save the product before uploading images"),
+      );
       return;
     }
     setUploading(true);
@@ -417,9 +415,7 @@ export function ProductEditor() {
       toast.success(text("تم رفع الصورة", "Image uploaded"));
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : text("تعذّر رفع الصورة", "Image upload failed"),
+        error instanceof Error ? error.message : text("تعذّر رفع الصورة", "Image upload failed"),
       );
     } finally {
       setUploading(false);
@@ -464,7 +460,8 @@ export function ProductEditor() {
   if (loading) {
     return (
       <div className="flex min-h-56 items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> {text("جاري تحميل المنتجات…", "Loading products…")}
+        <Loader2 className="size-4 animate-spin" />{" "}
+        {text("جاري تحميل المنتجات…", "Loading products…")}
       </div>
     );
   }

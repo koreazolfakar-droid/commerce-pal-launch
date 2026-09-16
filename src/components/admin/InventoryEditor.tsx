@@ -258,8 +258,16 @@ export function InventoryEditor() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label={text("عناصر متتبعة", "Tracked items")} value={stats.tracked} />
         <Metric label={text("إجمالي الوحدات", "Total units")} value={stats.units} />
-        <Metric label={text("مخزون منخفض", "Low stock")} value={stats.low} warning={stats.low > 0} />
-        <Metric label={text("نفد المخزون", "Out of stock")} value={stats.out} warning={stats.out > 0} />
+        <Metric
+          label={text("مخزون منخفض", "Low stock")}
+          value={stats.low}
+          warning={stats.low > 0}
+        />
+        <Metric
+          label={text("نفد المخزون", "Out of stock")}
+          value={stats.out}
+          warning={stats.out > 0}
+        />
       </div>
 
       <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
@@ -309,7 +317,8 @@ export function InventoryEditor() {
                       <td className="px-4 py-3.5">
                         <p className="text-xs font-bold">{row.productTitle}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {row.variantTitle || text("المنتج الافتراضي", "Default product")} • {row.status}
+                          {row.variantTitle || text("المنتج الافتراضي", "Default product")} •{" "}
+                          {row.status}
                         </p>
                       </td>
                       <td className="px-3 py-3.5">

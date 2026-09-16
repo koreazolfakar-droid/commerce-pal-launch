@@ -46,7 +46,11 @@ function SeoEditorPage() {
         { key: "canonical_url", label: "Canonical URL", type: "text" },
         { key: "robots", label: "Robots", type: "text", placeholder: "index,follow" },
         { key: "json_ld", label: "JSON-LD", type: "json" },
-        { key: "is_public", label: text("عام / قابل للنشر", "Public / publishable"), type: "boolean" },
+        {
+          key: "is_public",
+          label: text("عام / قابل للنشر", "Public / publishable"),
+          type: "boolean",
+        },
       ]}
     />
   );

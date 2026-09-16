@@ -132,9 +132,7 @@ export function OrdersEditor() {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold text-muted-foreground">Native Commerce</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight">
-            {text("الطلبات", "Orders")}
-          </h1>
+          <h1 className="mt-1 text-2xl font-black tracking-tight">{text("الطلبات", "Orders")}</h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
             {text(
               "طلبات Space Call الأصلية من Supabase، مع حالة الطلب والدفع وتفاصيل المنتجات.",

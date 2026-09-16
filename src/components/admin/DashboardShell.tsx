@@ -34,9 +34,7 @@ const NAV_GROUPS = [
   {
     ar: "الرئيسية",
     en: "Home",
-    items: [
-      { to: "/dashboard", ar: "نظرة عامة", en: "Overview", icon: LayoutDashboard },
-    ],
+    items: [{ to: "/dashboard", ar: "نظرة عامة", en: "Overview", icon: LayoutDashboard }],
   },
   {
     ar: "إدارة المحتوى",
@@ -135,10 +133,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const navItems = useMemo(
-    () => NAV_GROUPS.flatMap<DashboardNavItem>((group) => group.items),
-    [],
-  );
+  const navItems = useMemo(() => NAV_GROUPS.flatMap<DashboardNavItem>((group) => group.items), []);
 
   const searchResults = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -292,9 +287,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-bold text-foreground">{session.user.email}</p>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                  {role === "admin"
-                    ? text("مدير", "Administrator")
-                    : text("محرر", "Editor")}
+                  {role === "admin" ? text("مدير", "Administrator") : text("محرر", "Editor")}
                 </p>
               </div>
             </div>

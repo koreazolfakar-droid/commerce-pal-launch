@@ -31,7 +31,12 @@ function SectionsEditorPage() {
       }}
       fields={[
         { key: "page_slug", label: text("الصفحة", "Page"), type: "text", placeholder: "home" },
-        { key: "section_key", label: text("معرّف القسم", "Section key"), type: "text", required: true },
+        {
+          key: "section_key",
+          label: text("معرّف القسم", "Section key"),
+          type: "text",
+          required: true,
+        },
         { key: "section_type", label: text("نوع القسم", "Section type"), type: "text" },
         { key: "title_en", label: text("العنوان بالإنجليزية", "English title"), type: "text" },
         { key: "title_ar", label: text("العنوان بالعربية", "Arabic title"), type: "text" },

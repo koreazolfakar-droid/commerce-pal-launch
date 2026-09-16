@@ -187,10 +187,7 @@ export function CustomersEditor() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder={text(
-                "الاسم، الهاتف، البريد أو الوسم…",
-                "Name, phone, email or tag…",
-              )}
+              placeholder={text("الاسم، الهاتف، البريد أو الوسم…", "Name, phone, email or tag…")}
               className="h-10 rounded-xl ps-9"
             />
           </div>
