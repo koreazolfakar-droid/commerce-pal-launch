@@ -122,6 +122,7 @@ function mapProduct(row: ProductDbRow, context: HydrationContext): ShopifyProduc
   );
   const brand = row.brand_id ? context.brands.get(row.brand_id) : undefined;
   const category = row.category_id ? context.categories.get(row.category_id) : undefined;
+  const productType = row.product_type || category?.name || null;
   const currency = row.currency || "USD";
   const activePrices = variants.map((variant) => Number(variant.price)).filter(Number.isFinite);
   const minPrice = activePrices.length ? Math.min(...activePrices) : Number(row.base_price || 0);
@@ -144,9 +145,7 @@ function mapProduct(row: ProductDbRow, context: HydrationContext): ShopifyProduc
     ...(row.description_html ? { descriptionHtml: row.description_html } : {}),
     handle: row.handle,
     ...(brand?.name ? { vendor: brand.name } : {}),
-    ...(row.product_type || category?.name
-      ? { productType: row.product_type || category?.name }
-      : {}),
+    ...(productType ? { productType } : {}),
     availableForSale,
     createdAt: row.created_at,
     tags: row.tags ?? [],
