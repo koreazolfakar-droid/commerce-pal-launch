@@ -74,7 +74,9 @@ test("shared footer stays lightweight and hides technical build data", async () 
   assert.doesNotMatch(runtimeFooter, /catalogQueryOptions|shopPoliciesQueryOptions/);
   assert.match(runtimeFooter, /cmsQueryOptions/);
   assert.doesNotMatch(runtimeFooter, /STORE_VERSION|app-version|No brands yet|لا توجد علامات بعد/);
-  assert.doesNotMatch(runtimeFooter, /wa\.me\//);
+  assert.match(runtimeFooter, /cmsWhatsApp/);
+  assert.match(runtimeFooter, /https:\/\/wa\.me\/\$\{whatsappDigits\}/);
+  assert.doesNotMatch(runtimeFooter, /https:\/\/wa\.me\/\d{6,}/);
   assert.match(runtimeFooter, /FOOTER_SHOP_LINKS/);
   assert.match(runtimeFooter, /FOOTER_BRAND_LINKS/);
   assert.match(runtimeFooter, /MessageCircle/);
