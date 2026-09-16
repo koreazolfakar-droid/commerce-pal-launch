@@ -12,8 +12,8 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { TopBrands } from "@/components/TopBrands";
 import { WhyShop } from "@/components/WhyShop";
 import { BrandShowcase, BundleSection, CategorySection } from "@/components/BrandShowcaseSections";
-import { buildShopifyBrands } from "@/lib/brandDirectory";
-import { cmsText, EMPTY_CMS } from "@/lib/cms";
+import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
+import { cmsSeoPage, cmsText, EMPTY_CMS, fetchCmsSnapshot } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import {
   bestSellingQueryOptions,
@@ -38,17 +38,24 @@ const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    // Keep the first render lightweight: only the tiny hero collection is required
-    // before HTML can stream. The larger catalog is fetched without suspending the page.
-    const heroCollection = await context.queryClient.ensureQueryData(
-      collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
-    );
+    const [heroCollection, cms] = await Promise.all([
+      context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
+      fetchCmsSnapshot(),
+    ]);
     const heroImage = heroCollection?.products?.[0]?.node.images.edges[0]?.node.url;
-    return { heroImage };
+    return { heroImage, cmsSeo: cmsSeoPage(cms, "home") };
   },
   head: ({ loaderData }) => {
-    const title = `${SITE_NAME} Lebanon | Official Online Electronics Store`;
-    const description = `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and secure Shopify checkout.`;
+    const cmsSeo = loaderData?.cmsSeo;
+    const title =
+      cmsSeo?.title?.trim() || `${SITE_NAME} Lebanon | Official Online Electronics Store`;
+    const description =
+      cmsSeo?.description?.trim() ||
+      `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and secure Shopify checkout.`;
+    const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroImage;
+    const canonicalUrl = cmsSeo?.canonical_url?.trim();
+    const customJsonLd = cmsSeo?.json_ld;
+
     return {
       meta: [
         { title },
@@ -57,17 +64,26 @@ export const Route = createFileRoute("/")({
         { name: "apple-mobile-web-app-title", content: SITE_NAME },
         {
           name: "robots",
-          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+          content:
+            cmsSeo?.robots?.trim() ||
+            "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
         },
         ...socialMeta({
           title,
           description,
           path: "/",
-          ...(loaderData?.heroImage ? { image: loaderData.heroImage } : {}),
+          ...(image ? { image } : {}),
         }),
       ],
-      links: [canonicalLink("/"), ...languageAlternateLinks({ path: "/", arabicPath: "/ar" })],
-      scripts: [jsonLd(websiteJsonLd()), jsonLd(organizationJsonLd())],
+      links: [
+        canonicalUrl ? { rel: "canonical", href: canonicalUrl } : canonicalLink("/"),
+        ...languageAlternateLinks({ path: "/", arabicPath: "/ar" }),
+      ],
+      scripts: [
+        jsonLd(websiteJsonLd()),
+        jsonLd(organizationJsonLd()),
+        ...(customJsonLd && Object.keys(customJsonLd).length ? [jsonLd(customJsonLd)] : []),
+      ],
     };
   },
   component: Index,
@@ -180,9 +196,6 @@ function Index() {
     enabled: catalogReady,
   });
 
-  // Products priced at $0 inside `homepage-hero` are presentation-only entries.
-  // Crucially, keep the original catalog intact for HomeHero so changing homepage
-  // merchandising can never remove the hero itself.
   const heroOnlyProductIds = new Set(
     (heroCollection?.products ?? [])
       .filter((product) => Number(product.node.priceRange.minVariantPrice.amount) <= 0)
@@ -194,7 +207,9 @@ function Index() {
   const products = catalog?.products ?? [];
   const merchandiseProducts = products.filter(isHomepageMerchandise);
   const homepageCatalog = catalog ? { ...catalog, products: merchandiseProducts } : null;
-  const brands = catalog ? buildShopifyBrands(catalog.brands, collections) : [];
+  const brands = catalog
+    ? applyCmsBrands(buildShopifyBrands(catalog.brands, collections), cms.brands)
+    : [];
   const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
   const best = (bestSellers ?? []).filter(isHomepageMerchandise);
   const latest = newItems.filter(isHomepageMerchandise);
