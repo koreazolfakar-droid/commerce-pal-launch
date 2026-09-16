@@ -7,7 +7,8 @@ export const cmsQueryOptions = () =>
     queryFn: fetchCmsSnapshot,
     initialData: EMPTY_CMS,
     initialDataUpdatedAt: 0,
-    staleTime: 5 * 60_000,
-    refetchOnMount: true,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     retry: false,
   });
