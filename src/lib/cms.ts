@@ -54,7 +54,8 @@ export const EMPTY_CMS: CmsSnapshot = {
   navigation: [],
 };
 
-const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
+const LIVE_SUPABASE_PROJECT_REF = "rtwyankpxtffqqrasyzw";
+const DEFAULT_SUPABASE_URL = `https://${LIVE_SUPABASE_PROJECT_REF}.supabase.co`;
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
 
 let cmsPendingRequest: Promise<CmsSnapshot> | null = null;
@@ -71,10 +72,20 @@ function isCmsSnapshot(value: unknown): value is CmsSnapshot {
   );
 }
 
+function getCmsSupabaseConfig() {
+  const envUrl = process.env["SUPABASE_URL"]?.trim().replace(/\/$/, "") || "";
+  const usingLiveProject = envUrl.includes(`${LIVE_SUPABASE_PROJECT_REF}.supabase.co`);
+
+  return {
+    baseUrl: usingLiveProject ? envUrl : DEFAULT_SUPABASE_URL,
+    publishableKey:
+      (usingLiveProject ? process.env["SUPABASE_PUBLISHABLE_KEY"]?.trim() : "") ||
+      DEFAULT_SUPABASE_PUBLISHABLE_KEY,
+  };
+}
+
 async function loadCmsSnapshot(): Promise<CmsSnapshot> {
-  const baseUrl = (process.env["SUPABASE_URL"] || DEFAULT_SUPABASE_URL).replace(/\/$/, "");
-  const publishableKey =
-    process.env["SUPABASE_PUBLISHABLE_KEY"]?.trim() || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
+  const { baseUrl, publishableKey } = getCmsSupabaseConfig();
 
   try {
     const headers = new Headers({
