@@ -39,8 +39,16 @@ const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
     const [heroCollection, cms] = await Promise.all([
-      context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
-      fetchCmsSnapshot(),
+      context.queryClient
+        .ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4))
+        .catch((error) => {
+          console.error("Homepage hero preload failed; continuing without hero preload.", error);
+          return null;
+        }),
+      fetchCmsSnapshot().catch((error) => {
+        console.error("Homepage CMS preload failed; continuing with empty CMS snapshot.", error);
+        return EMPTY_CMS;
+      }),
     ]);
     const heroImage = heroCollection?.products?.[0]?.node.images.edges[0]?.node.url;
     return { heroImage, cmsSeo: cmsSeoPage(cms, "home") };
