@@ -40,8 +40,7 @@ function getSupabaseEnv() {
   const nodeEnv = typeof process !== "undefined" ? process.env : undefined;
 
   return {
-    url:
-      viteEnv["VITE_SUPABASE_URL"] || nodeEnv?.["SUPABASE_URL"] || DEFAULT_SUPABASE_URL,
+    url: viteEnv["VITE_SUPABASE_URL"] || nodeEnv?.["SUPABASE_URL"] || DEFAULT_SUPABASE_URL,
     publishableKey:
       viteEnv["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
       nodeEnv?.["SUPABASE_PUBLISHABLE_KEY"] ||
