@@ -31,7 +31,7 @@ export interface ShopifyTopProductMetric {
 export interface ShopifyAnalyticsSnapshot {
   status: ShopifyAnalyticsStatus;
   source: "shopify-admin";
-  message?: string;
+  message?: string | undefined;
   currency: string;
   totals: {
     orders: number;
