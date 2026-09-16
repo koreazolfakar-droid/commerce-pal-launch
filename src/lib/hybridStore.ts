@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { fetchCmsSnapshot } from "@/lib/cms";
 import * as nativeStore from "@/lib/nativeStore";
-import * as shopifyStore from "@/lib/shopify";
-import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
+import * as shopifyStore from "./shopify";
+import type { ShopifyCollection, ShopifyProduct } from "./shopify";
 
 const MAX_PRODUCTS = 100;
 
