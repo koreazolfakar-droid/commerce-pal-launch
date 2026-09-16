@@ -5,7 +5,7 @@ import test from "node:test";
 const route = fs.readFileSync("src/routes/dashboard.products.tsx", "utf8");
 const manager = fs.readFileSync("src/components/admin/NativeCatalogManager.tsx", "utf8");
 const migration = fs.readFileSync(
-  "supabase/migrations/20260916213500_native_catalog_audit_log.sql",
+  "supabase/migrations/20260916184231_native_catalog_audit_log.sql",
   "utf8",
 );
 
