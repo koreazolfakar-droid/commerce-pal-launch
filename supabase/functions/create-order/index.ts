@@ -58,12 +58,16 @@ function validatePayload(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return "invalid_payload";
   const payload = value as Record<string, unknown>;
   const customer = payload.customer;
-  if (!customer || typeof customer !== "object" || Array.isArray(customer)) return "invalid_customer";
+  if (!customer || typeof customer !== "object" || Array.isArray(customer))
+    return "invalid_customer";
   const customerRecord = customer as Record<string, unknown>;
   if (typeof customerRecord.name !== "string" || customerRecord.name.trim().length < 2) {
     return "customer_name_required";
   }
-  if (typeof customerRecord.phone !== "string" || customerRecord.phone.replace(/\D/g, "").length < 6) {
+  if (
+    typeof customerRecord.phone !== "string" ||
+    customerRecord.phone.replace(/\D/g, "").length < 6
+  ) {
     return "customer_phone_required";
   }
 
@@ -73,7 +77,11 @@ function validatePayload(value: unknown) {
     if (!item || typeof item !== "object" || Array.isArray(item)) return "invalid_item";
     const record = item as Record<string, unknown>;
     if (!isUuid(record.product_id) || !isUuid(record.variant_id)) return "invalid_item_identifier";
-    if (!Number.isInteger(record.quantity) || Number(record.quantity) < 1 || Number(record.quantity) > 99) {
+    if (
+      !Number.isInteger(record.quantity) ||
+      Number(record.quantity) < 1 ||
+      Number(record.quantity) > 99
+    ) {
       return "invalid_quantity";
     }
   }
@@ -184,7 +192,8 @@ Deno.serve(async (req: Request) => {
   if (error) {
     const code = publicError(error.message);
     console.warn("create-order rejected", code);
-    const status = code === "insufficient_stock" || code === "product_or_variant_unavailable" ? 409 : 400;
+    const status =
+      code === "insufficient_stock" || code === "product_or_variant_unavailable" ? 409 : 400;
     return json(req, status, { error: code });
   }
 

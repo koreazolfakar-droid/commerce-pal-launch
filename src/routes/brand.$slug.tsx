@@ -7,7 +7,7 @@ import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/fil
 import { allVendorProductsQueryOptions, catalogQueryOptions } from "@/lib/queries";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
-import { buildCatalogIndex } from "@/lib/taxonomy";
+import { buildCatalogIndex, type CatalogIndex } from "@/lib/taxonomy";
 import type { ShopifyProduct } from "@/lib/shopify";
 
 export const Route = createFileRoute("/brand/$slug")({
@@ -80,17 +80,18 @@ export const Route = createFileRoute("/brand/$slug")({
 function BrandPage() {
   const { language } = useLanguage();
   const { slug } = Route.useParams();
-  const { label: brandLabel, catalog } = Route.useLoaderData();
+  const { label: brandLabel, catalog: loaderCatalog } = Route.useLoaderData();
+  const catalog = loaderCatalog as CatalogIndex;
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
   const inBrand = catalog.products.filter(
-    (product) => catalog.brandOf.get(product.node.handle)?.slug === slug,
+    (product: ShopifyProduct) => catalog.brandOf.get(product.node.handle)?.slug === slug,
   );
   const products = applyFilters(inBrand, catalog, filters);
 
-  const categories = catalog.categories.filter((category) =>
-    inBrand.some((product) =>
+  const categories = catalog.categories.filter((category: CatalogIndex["categories"][number]) =>
+    inBrand.some((product: ShopifyProduct) =>
       (catalog.categoryOf.get(product.node.handle) ?? []).includes(category.slug),
     ),
   );
@@ -111,7 +112,7 @@ function BrandPage() {
       </div>
       {categories.length ? (
         <div className="flex flex-wrap gap-2" aria-label="Brand categories">
-          {categories.map((category) => (
+          {categories.map((category: CatalogIndex["categories"][number]) => (
             <button
               key={category.slug}
               type="button"

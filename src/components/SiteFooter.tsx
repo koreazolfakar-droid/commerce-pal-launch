@@ -42,8 +42,7 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
     typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
   const logoUrl =
     typeof cmsLogoUrl === "string" && cmsLogoUrl.trim() ? cmsLogoUrl.trim() : "/logo.svg";
-  const whatsappDigits =
-    typeof cmsWhatsApp === "string" ? cmsWhatsApp.replace(/\D/g, "") : "";
+  const whatsappDigits = typeof cmsWhatsApp === "string" ? cmsWhatsApp.replace(/\D/g, "") : "";
   const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : generalWhatsAppUrl();
 
   const support = [

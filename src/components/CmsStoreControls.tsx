@@ -32,7 +32,9 @@ const CMS_ICONS: Record<string, LucideIcon> = {
 
 function ItemIcon({ item }: { item: CmsNavigationItem }) {
   if ((item.icon_type === "image" || item.icon_type === "svg") && item.icon_value) {
-    return <img src={item.icon_value} alt="" aria-hidden="true" className="size-4 object-contain" />;
+    return (
+      <img src={item.icon_value} alt="" aria-hidden="true" className="size-4 object-contain" />
+    );
   }
   if (item.icon_type === "none") return null;
   const Icon = (item.icon_value && CMS_ICONS[item.icon_value]) || House;
@@ -110,7 +112,11 @@ export function CmsTrustStrip() {
     <div className="border-y border-border/55 bg-muted/20" data-testid="cms-trust-strip">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 py-3 text-[11px] font-semibold text-muted-foreground sm:px-5 lg:px-6">
         {items.map((item) => (
-          <a key={item.id} href={item.href ?? undefined} className="inline-flex items-center gap-2 hover:text-foreground">
+          <a
+            key={item.id}
+            href={item.href ?? undefined}
+            className="inline-flex items-center gap-2 hover:text-foreground"
+          >
             <ItemIcon item={item} />
             <span>{item.label}</span>
           </a>

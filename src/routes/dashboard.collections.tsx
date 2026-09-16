@@ -13,7 +13,16 @@ function CollectionsDashboardPage() {
       title="Collections"
       description="مجموعات المنتجات الأصلية في Space Call بدون Shopify."
       labelKey="title"
-      newRow={{ handle: "", title: "", title_ar: "", description: "", image_url: null, sort_order: 0, is_active: true, is_featured: false }}
+      newRow={{
+        handle: "",
+        title: "",
+        title_ar: "",
+        description: "",
+        image_url: null,
+        sort_order: 0,
+        is_active: true,
+        is_featured: false,
+      }}
       fields={[
         { key: "title", label: "الاسم", type: "text", required: true },
         { key: "title_ar", label: "الاسم بالعربي", type: "text" },

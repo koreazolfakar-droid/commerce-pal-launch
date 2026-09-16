@@ -122,6 +122,7 @@ function mapProduct(row: ProductDbRow, context: HydrationContext): ShopifyProduc
   );
   const brand = row.brand_id ? context.brands.get(row.brand_id) : undefined;
   const category = row.category_id ? context.categories.get(row.category_id) : undefined;
+  const productType = row.product_type || category?.name || null;
   const currency = row.currency || "USD";
   const activePrices = variants.map((variant) => Number(variant.price)).filter(Number.isFinite);
   const minPrice = activePrices.length ? Math.min(...activePrices) : Number(row.base_price || 0);
@@ -144,9 +145,7 @@ function mapProduct(row: ProductDbRow, context: HydrationContext): ShopifyProduc
     ...(row.description_html ? { descriptionHtml: row.description_html } : {}),
     handle: row.handle,
     ...(brand?.name ? { vendor: brand.name } : {}),
-    ...(row.product_type || category?.name
-      ? { productType: row.product_type || category?.name }
-      : {}),
+    ...(productType ? { productType } : {}),
     availableForSale,
     createdAt: row.created_at,
     tags: row.tags ?? [],
@@ -202,30 +201,39 @@ async function hydrateProducts(rows: ProductDbRow[]): Promise<ShopifyProduct[]> 
   if (!rows.length) return [];
   const ids = rows.map((row) => row.id);
   const brandIds = [...new Set(rows.flatMap((row) => (row.brand_id ? [row.brand_id] : [])))];
-  const categoryIds = [...new Set(rows.flatMap((row) => (row.category_id ? [row.category_id] : [])))];
+  const categoryIds = [
+    ...new Set(rows.flatMap((row) => (row.category_id ? [row.category_id] : []))),
+  ];
 
-  const [variantResult, imageResult, brandResult, categoryResult, membershipResult] = await Promise.all([
-    supabase
-      .from("store_product_variants" as never)
-      .select("*")
-      .in("product_id", ids)
-      .order("sort_order"),
-    supabase
-      .from("store_product_images" as never)
-      .select("*")
-      .in("product_id", ids)
-      .order("sort_order"),
-    brandIds.length
-      ? supabase.from("cms_brands" as never).select("id,name,slug").in("id", brandIds)
-      : Promise.resolve({ data: [], error: null }),
-    categoryIds.length
-      ? supabase.from("store_categories" as never).select("id,name,slug").in("id", categoryIds)
-      : Promise.resolve({ data: [], error: null }),
-    supabase
-      .from("store_collection_products" as never)
-      .select("collection_id,product_id,sort_order")
-      .in("product_id", ids),
-  ]);
+  const [variantResult, imageResult, brandResult, categoryResult, membershipResult] =
+    await Promise.all([
+      supabase
+        .from("store_product_variants" as never)
+        .select("*")
+        .in("product_id", ids)
+        .order("sort_order"),
+      supabase
+        .from("store_product_images" as never)
+        .select("*")
+        .in("product_id", ids)
+        .order("sort_order"),
+      brandIds.length
+        ? supabase
+            .from("cms_brands" as never)
+            .select("id,name,slug")
+            .in("id", brandIds)
+        : Promise.resolve({ data: [], error: null }),
+      categoryIds.length
+        ? supabase
+            .from("store_categories" as never)
+            .select("id,name,slug")
+            .in("id", categoryIds)
+        : Promise.resolve({ data: [], error: null }),
+      supabase
+        .from("store_collection_products" as never)
+        .select("collection_id,product_id,sort_order")
+        .in("product_id", ids),
+    ]);
 
   const firstError =
     variantResult.error ||
@@ -412,18 +420,13 @@ export async function fetchCollectionByHandle(
       handle: collection.handle,
       title: collection.title,
       description: collection.description ?? "",
-      image: collection.image_url
-        ? { url: collection.image_url, altText: collection.title }
-        : null,
+      image: collection.image_url ? { url: collection.image_url, altText: collection.title } : null,
     },
     products,
   };
 }
 
-export async function fetchProductsByVendor(
-  vendor: string,
-  first = 8,
-): Promise<ShopifyProduct[]> {
+export async function fetchProductsByVendor(vendor: string, first = 8): Promise<ShopifyProduct[]> {
   const { data: brand, error: brandError } = await supabase
     .from("cms_brands" as never)
     .select("id")

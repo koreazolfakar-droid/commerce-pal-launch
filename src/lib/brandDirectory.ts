@@ -92,7 +92,10 @@ export function buildShopifyBrands(
  * Matching slugs can rename, hide, reorder, relink or replace the logo of a
  * Shopify brand. CMS-only rows are also allowed for campaign/landing links.
  */
-export function applyCmsBrands(shopifyBrands: ShopifyBrand[], cmsBrands: CmsBrand[]): ShopifyBrand[] {
+export function applyCmsBrands(
+  shopifyBrands: ShopifyBrand[],
+  cmsBrands: CmsBrand[],
+): ShopifyBrand[] {
   if (!cmsBrands.length) return shopifyBrands;
 
   const managed = new Map(cmsBrands.map((brand) => [brand.slug, brand]));

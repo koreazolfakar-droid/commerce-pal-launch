@@ -277,7 +277,9 @@ export function SiteHeader() {
                           {...(brand.image ? { imageUrl: brand.image } : {})}
                         />
                         <span className="min-w-0 flex-1 truncate">{brand.label}</span>
-                        <span className="shrink-0 text-xs text-muted-foreground">{brand.count}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {brand.count}
+                        </span>
                       </a>
                     </DropdownMenuItem>
                   ))}
@@ -315,7 +317,9 @@ export function SiteHeader() {
                         <span className="min-w-0 flex-1 whitespace-normal break-words">
                           {categoryLabel(category, language)}
                         </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">{category.count}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {category.count}
+                        </span>
                       </Link>
                     </DropdownMenuItem>
                   ))}
