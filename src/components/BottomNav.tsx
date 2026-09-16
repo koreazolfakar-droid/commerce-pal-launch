@@ -140,14 +140,12 @@ export function BottomNav() {
   const cartCount = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
-  const cmsItems =
+  const cmsAreaItems =
     cms?.navigation
-      .filter(
-        (item) =>
-          item.area === "bottom" && item.is_visible && item.href && item.href !== "/compare",
-      )
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .slice(0, 4) ?? [];
+      .filter((item) => item.area === "bottom" && item.href && item.href !== "/compare")
+      .sort((a, b) => a.sort_order - b.sort_order) ?? [];
+  const hasCmsConfig = cmsAreaItems.length > 0;
+  const cmsItems = cmsAreaItems.filter((item) => item.is_visible).slice(0, 4);
 
   const itemClass = (active: boolean) =>
     cn(
@@ -166,6 +164,8 @@ export function BottomNav() {
   const actionIconClass =
     "relative grid h-8 w-10 place-items-center rounded-xl transition-[background-color,color] duration-200 ease-out";
 
+  if (hasCmsConfig && cmsItems.length === 0) return null;
+
   return (
     <nav
       data-testid="bottom-nav"
@@ -173,7 +173,7 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 lg:hidden"
     >
       <div className="border-t border-border/60 bg-background/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_18px_-16px_rgba(15,23,42,.55)] supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md">
-        {cmsItems.length > 0 ? (
+        {hasCmsConfig ? (
           <div
             className="mx-auto grid h-16 max-w-[560px] px-1 sm:px-3"
             style={{ gridTemplateColumns: `repeat(${cmsItems.length}, minmax(0, 1fr))` }}
