@@ -42,6 +42,9 @@ const NAV_GROUPS = [
   {
     label: "المتجر",
     items: [
+      { to: "/dashboard/products", label: "المنتجات والمخزون", icon: Store },
+      { to: "/dashboard/categories", label: "التصنيفات", icon: Layers3 },
+      { to: "/dashboard/collections", label: "Collections", icon: Tags },
       { to: "/dashboard/seo", label: "SEO", icon: Search },
       { to: "/dashboard/settings", label: "الإعدادات", icon: Settings },
     ],
