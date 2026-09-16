@@ -10,6 +10,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  ShoppingBag,
   Store,
   Tags,
   X,
@@ -42,6 +43,7 @@ const NAV_GROUPS = [
   {
     label: "المتجر",
     items: [
+      { to: "/dashboard/orders", label: "الطلبات", icon: ShoppingBag },
       { to: "/dashboard/products", label: "المنتجات والمخزون", icon: Store },
       { to: "/dashboard/categories", label: "التصنيفات", icon: Layers3 },
       { to: "/dashboard/collections", label: "Collections", icon: Tags },
