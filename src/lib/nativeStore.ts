@@ -107,8 +107,10 @@ function productOptions(variants: VariantDbRow[]) {
 }
 
 function variantAvailable(variant: VariantDbRow) {
-  return variant.is_active &&
-    (!variant.track_inventory || variant.stock_quantity > 0 || variant.allow_backorder);
+  return (
+    variant.is_active &&
+    (!variant.track_inventory || variant.stock_quantity > 0 || variant.allow_backorder)
+  );
 }
 
 function mapProduct(row: ProductDbRow, context: HydrationContext): ShopifyProduct {
@@ -287,13 +289,16 @@ export async function fetchProducts(
   let request = publicProductsQuery();
   const trimmed = query?.trim();
   if (trimmed) {
+    const safe = trimmed.replace(/[,%]/g, " ");
     request = request.or(
-      `title.ilike.%${trimmed.replace(/[,%]/g, " ")}%,handle.ilike.%${trimmed.replace(/[,%]/g, " ")}%,product_type.ilike.%${trimmed.replace(/[,%]/g, " ")}%`,
+      `title.ilike.%${safe}%,handle.ilike.%${safe}%,product_type.ilike.%${safe}%`,
     );
   }
 
   if (sortKey === "BEST_SELLING") {
-    request = request.order("best_seller", { ascending: false }).order("sort_order", { ascending: true });
+    request = request
+      .order("best_seller", { ascending: false })
+      .order("sort_order", { ascending: true });
   } else if (sortKey === "CREATED_AT") {
     request = request.order("created_at", { ascending: !reverse });
   } else if (sortKey === "PRICE") {
@@ -301,7 +306,9 @@ export async function fetchProducts(
   } else if (sortKey === "TITLE") {
     request = request.order("title", { ascending: !reverse });
   } else {
-    request = request.order("featured", { ascending: false }).order("sort_order", { ascending: true });
+    request = request
+      .order("featured", { ascending: false })
+      .order("sort_order", { ascending: true });
   }
 
   const { data, error } = await request.limit(Math.min(Math.max(first, 1), MAX_PAGE));
@@ -318,7 +325,11 @@ export async function fetchBestSellingProducts(first = 12) {
 }
 
 export async function fetchBrandVendors(): Promise<string[]> {
-  const { data: productRows, error: productError } = await publicProductsQuery().select("brand_id");
+  const { data: productRows, error: productError } = await supabase
+    .from("store_products" as never)
+    .select("brand_id")
+    .eq("status", "active")
+    .or(`published_at.is.null,published_at.lte.${new Date().toISOString()}`);
   if (productError) throw productError;
   const brandIds = [
     ...new Set(
@@ -409,7 +420,10 @@ export async function fetchCollectionByHandle(
   };
 }
 
-export async function fetchProductsByVendor(vendor: string, first = 8): Promise<ShopifyProduct[]> {
+export async function fetchProductsByVendor(
+  vendor: string,
+  first = 8,
+): Promise<ShopifyProduct[]> {
   const { data: brand, error: brandError } = await supabase
     .from("cms_brands" as never)
     .select("id")
@@ -430,12 +444,20 @@ export function fetchAllProductsByVendor(vendor: string) {
 }
 
 export async function fetchProductsByHandles(handles: string[]): Promise<ShopifyProduct[]> {
-  const unique = [...new Set(handles.map((handle) => handle.trim()).filter(Boolean))].slice(0, MAX_PAGE);
+  const unique = [...new Set(handles.map((handle) => handle.trim()).filter(Boolean))].slice(
+    0,
+    MAX_PAGE,
+  );
   if (!unique.length) return [];
   const { data, error } = await publicProductsQuery().in("handle", unique);
   if (error) throw error;
   const byHandle = new Map(((data ?? []) as ProductDbRow[]).map((row) => [row.handle, row]));
-  return hydrateProducts(unique.flatMap((handle) => (byHandle.get(handle) ? [byHandle.get(handle)!] : [])));
+  return hydrateProducts(
+    unique.flatMap((handle) => {
+      const product = byHandle.get(handle);
+      return product ? [product] : [];
+    }),
+  );
 }
 
 export async function fetchProductRecommendations(handle: string): Promise<ShopifyProduct[]> {
@@ -453,8 +475,13 @@ export async function fetchProductRecommendations(handle: string): Promise<Shopi
 
 export async function searchStorefront(term: string) {
   const trimmed = term.trim();
-  if (!trimmed) return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
-  const [products, collections] = await Promise.all([fetchProducts(20, trimmed), fetchCollections(100)]);
+  if (!trimmed) {
+    return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
+  }
+  const [products, collections] = await Promise.all([
+    fetchProducts(20, trimmed),
+    fetchCollections(100),
+  ]);
   const lowered = trimmed.toLowerCase();
   return {
     products,
