@@ -3,6 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 import { brokeredPreviewStorage } from "./previewAuthStorage";
 
+// These are public browser credentials, not secrets. Environment variables still
+// take priority so the deployment can rotate the project/key without a code change.
+const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
+
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
 }
@@ -35,9 +40,11 @@ function getSupabaseEnv() {
   const nodeEnv = typeof process !== "undefined" ? process.env : undefined;
 
   return {
-    url: viteEnv["VITE_SUPABASE_URL"] || nodeEnv?.["SUPABASE_URL"],
+    url: viteEnv["VITE_SUPABASE_URL"] || nodeEnv?.["SUPABASE_URL"] || DEFAULT_SUPABASE_URL,
     publishableKey:
-      viteEnv["VITE_SUPABASE_PUBLISHABLE_KEY"] || nodeEnv?.["SUPABASE_PUBLISHABLE_KEY"],
+      viteEnv["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+      nodeEnv?.["SUPABASE_PUBLISHABLE_KEY"] ||
+      DEFAULT_SUPABASE_PUBLISHABLE_KEY,
   };
 }
 
