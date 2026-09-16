@@ -15,6 +15,15 @@ test("Shopify dashboard analytics stays explicitly read-only and feature gated",
   assert.doesNotMatch(source, /inventoryAdjust|productCreate|productUpdate|orderCreate/i);
 });
 
+test("ShopifyQL percentage ratios are normalized for dashboard display", async () => {
+  const source = await read("src/dashboard/services/shopifyAdminRead.server.ts");
+
+  assert.match(source, /function percentageValue/);
+  assert.match(source, /parsed \* 100/);
+  assert.match(source, /returningCustomerRate: percentageValue/);
+  assert.match(source, /conversionRate: percentageValue/);
+});
+
 test("Shopify Admin credential names stay out of browser-shipped dashboard files", async () => {
   const [route, functions] = await Promise.all([
     read("src/routes/dashboard.analytics.tsx"),
