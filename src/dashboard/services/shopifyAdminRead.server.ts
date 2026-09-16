@@ -109,11 +109,12 @@ function tableRows(table: TablePayload | null | undefined): Array<Record<string,
 }
 
 function adminConfig() {
-  const enabled = process.env["SHOPIFY_ADMIN_READS_ENABLED"] === "true";
   const token =
     process.env["SHOPIFY_ADMIN_API_TOKEN"]?.trim() ||
     process.env["SHOPIFY_ADMIN_ACCESS_TOKEN"]?.trim() ||
     "";
+  const explicitReadSetting = process.env["SHOPIFY_ADMIN_READS_ENABLED"]?.trim().toLowerCase();
+  const enabled = Boolean(token) && explicitReadSetting !== "false";
   const domain = (
     process.env["SHOPIFY_ADMIN_STORE_DOMAIN"]?.trim() ||
     process.env["VITE_SHOPIFY_STORE_DOMAIN"]?.trim() ||
@@ -170,19 +171,20 @@ function quoteDate(value: string) {
 }
 
 /**
- * Read-only Shopify Admin analytics. The integration is deliberately disabled
- * unless an explicit server flag and server credential are both configured.
+ * Read-only Shopify Admin analytics. A server-side Admin token is the only
+ * required secret. SHOPIFY_ADMIN_READS_ENABLED=false remains available as an
+ * emergency kill switch; store domain and API version have safe defaults.
  */
 export async function loadShopifyAdminAnalytics(input: {
   start: string;
   end: string;
 }): Promise<ShopifyAnalyticsSnapshot> {
   const config = adminConfig();
-  if (!config.enabled) {
-    return emptySnapshot("disabled", "Shopify Admin dashboard reads are disabled");
-  }
   if (!config.token) {
     return emptySnapshot("unconfigured", "Shopify Admin dashboard credential is not configured");
+  }
+  if (!config.enabled) {
+    return emptySnapshot("disabled", "Shopify Admin dashboard reads are disabled");
   }
 
   const start = quoteDate(input.start);
