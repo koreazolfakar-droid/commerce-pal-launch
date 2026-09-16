@@ -6,7 +6,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 const repairMigration = "supabase/migrations/20260916064000_restore_dashboard_admin_cms.sql";
 const hardeningMigration = "supabase/migrations/20260916074000_harden_dashboard_access.sql";
-const bilingualMigration = "supabase/migrations/20260916170000_add_bilingual_cms_fields.sql";
+const bilingualMigration = "supabase/migrations/20260916134642_add_bilingual_cms_fields.sql";
 
 test("public CMS gateway stays aligned with the live production schema", async () => {
   const source = await read("supabase/functions/public-cms/index.ts");
@@ -31,11 +31,12 @@ test("public CMS gateway stays aligned with the live production schema", async (
   assert.match(source, /label_ar/);
   assert.match(source, /description_en/);
   assert.match(source, /description_ar/);
-  assert.match(source, /sections,\s*navigation,/);
+  assert.match(source, /sections:\s*sectionsResult\.data/);
+  assert.match(source, /navigation:\s*navigationResult\.data/);
   assert.doesNotMatch(source, /from\("cms_sections"\)[\s\S]*?eq\("is_visible", true\)/);
   assert.doesNotMatch(source, /from\("cms_navigation_items"\)[\s\S]*?eq\("is_visible", true\)/);
   assert.match(source, /brands:\s*brandsResult\.data/);
-  assert.match(source, /seoPages,/);
+  assert.match(source, /seoPages:\s*seoResult\.data/);
 });
 
 test("dashboard routes edit the same CMS tables and bilingual fields as production", async () => {
