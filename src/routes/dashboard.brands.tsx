@@ -11,14 +11,14 @@ function BrandsEditorPage() {
     <CollectionEditor
       table="cms_brands"
       title="البراندات"
-      description="أسماء الشركات وشعاراتها والتصنيف المرتبط بها."
+      description="أسماء الشركات وشعاراتها وروابطها في المتجر."
       labelKey="name"
       newRow={{ name: "", slug: "", sort_order: 0, is_visible: true }}
       fields={[
         { key: "name", label: "الاسم", type: "text", required: true },
         { key: "slug", label: "المعرّف", type: "text", required: true, placeholder: "samsung" },
         { key: "logo_url", label: "الشعار", type: "image" },
-        { key: "collection_handle", label: "تصنيف Shopify", type: "text" },
+        { key: "href", label: "الرابط", type: "text", placeholder: "/brand/samsung" },
         { key: "sort_order", label: "الترتيب", type: "number" },
         { key: "is_visible", label: "ظاهر", type: "boolean" },
       ]}

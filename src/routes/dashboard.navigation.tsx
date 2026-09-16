@@ -9,7 +9,7 @@ export const Route = createFileRoute("/dashboard/navigation")({
 function NavigationEditorPage() {
   return (
     <CollectionEditor
-      table="cms_navigation"
+      table="cms_navigation_items"
       title="القوائم والأيقونات"
       description="عناصر الهيدر، القائمة السفلية، الفوتر وقائمة الجوال."
       labelKey="label"
@@ -45,7 +45,7 @@ function NavigationEditorPage() {
             { value: "svg", label: "SVG" },
           ],
         },
-        { key: "icon_value", label: "الأيقونة / الصورة", type: "image" },
+        { key: "icon_value", label: "الأيقونة / الصورة", type: "text" },
         { key: "href", label: "الرابط", type: "text", placeholder: "/shop" },
         { key: "sort_order", label: "الترتيب", type: "number" },
         { key: "is_visible", label: "ظاهر", type: "boolean" },

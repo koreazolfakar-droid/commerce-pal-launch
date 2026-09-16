@@ -7,7 +7,11 @@ export const Route = createFileRoute("/dashboard/")({
 const CARDS = [
   { to: "/dashboard/hero", title: "صور الهيرو", text: "أضف وبدّل صور الواجهة وروابطها." },
   { to: "/dashboard/sections", title: "أقسام الصفحة", text: "عناوين وترتيب وإظهار الأقسام." },
-  { to: "/dashboard/navigation", title: "القوائم والأيقونات", text: "عناصر الهيدر والفوتر والجوال." },
+  {
+    to: "/dashboard/navigation",
+    title: "القوائم والأيقونات",
+    text: "عناصر الهيدر والفوتر والجوال.",
+  },
   { to: "/dashboard/brands", title: "البراندات", text: "الأسماء والشعارات والروابط." },
   { to: "/dashboard/seo", title: "SEO", text: "عناوين ووصف الصفحات وصور المشاركة." },
   { to: "/dashboard/settings", title: "الإعدادات", text: "اسم المتجر، واتساب، الشعار…" },
