@@ -36,18 +36,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   if (!role) {
     const claim = async () => {
       setClaiming(true);
-      const { data, error } = await supabase.rpc("claim_admin");
+      const { error } = await supabase.from("user_roles").insert({
+        user_id: session.user.id,
+        role: "admin",
+      });
       setClaiming(false);
+
       if (error) {
-        toast.error(error.message);
+        if (error.message.includes("dashboard_bootstrap_closed")) {
+          toast.error("تم إعداد لوحة الإدارة مسبقاً. استخدم حساب مدير معتمد.");
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
-      if (data) {
-        toast.success("تم منحك صلاحية المدير");
-        await refresh();
-      } else {
-        toast.error("تعذّر منح صلاحية المدير تلقائياً. توجد تهيئة إدارية سابقة.");
-      }
+
+      await refresh();
+      toast.success("تم منحك صلاحية المدير");
     };
 
     return (
