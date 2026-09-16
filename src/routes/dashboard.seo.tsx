@@ -11,7 +11,7 @@ function SeoEditorPage() {
     <CollectionEditor
       table="cms_seo_pages"
       title="إعدادات SEO"
-      description="عنوان ووصف كل صفحة وصورة المشاركة وبيانات الفهرسة."
+      description="عنوان ووصف كل صفحة بالعربية والإنجليزية مع صورة المشاركة وبيانات الفهرسة."
       labelKey="page_slug"
       idKey="page_slug"
       orderBy="page_slug"
@@ -24,8 +24,10 @@ function SeoEditorPage() {
           required: true,
           placeholder: "shop",
         },
-        { key: "title", label: "العنوان", type: "text" },
-        { key: "description", label: "الوصف", type: "textarea" },
+        { key: "title_en", label: "العنوان بالإنجليزية", type: "text" },
+        { key: "title_ar", label: "العنوان بالعربية", type: "text" },
+        { key: "description_en", label: "الوصف بالإنجليزية", type: "textarea" },
+        { key: "description_ar", label: "الوصف بالعربية", type: "textarea" },
         { key: "og_image_url", label: "صورة المشاركة", type: "image" },
         { key: "canonical_url", label: "Canonical URL", type: "text" },
         { key: "robots", label: "Robots", type: "text", placeholder: "index,follow" },
