@@ -29,11 +29,7 @@ type Setting = {
   isPublic: boolean;
 };
 
-function settingValue(row: {
-  value_type: string;
-  value_text: string | null;
-  value_json: unknown;
-}) {
+function settingValue(row: { value_type: string; value_text: string | null; value_json: unknown }) {
   if (row.value_type === "json") return JSON.stringify(row.value_json ?? {}, null, 2);
   return row.value_text ?? "";
 }
