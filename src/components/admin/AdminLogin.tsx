@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { SITE_URL } from "@/lib/storeConfig";
 
 /**
  * Dashboard authentication card. Account creation only creates a normal
@@ -26,7 +27,7 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+          options: { emailRedirectTo: `${SITE_URL}/dashboard` },
         });
         if (error) throw error;
 
