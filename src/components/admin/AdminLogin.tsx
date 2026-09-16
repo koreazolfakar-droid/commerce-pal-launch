@@ -51,7 +51,9 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
       >
         <div>
           <h1 className="text-lg font-semibold text-foreground">لوحة تحكم Space Call</h1>
-          <p className="mt-1 text-sm text-muted-foreground">سجّل الدخول بحساب إداري معتمد</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {mode === "signin" ? "سجّل الدخول بحساب إداري" : "أنشئ حساب الإدارة الأول"}
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="admin-email">البريد الإلكتروني</Label>
@@ -78,11 +80,15 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
         </div>
         <Button type="submit" className="w-full" disabled={busy}>
           {busy ? <Loader2 className="me-1 size-4 animate-spin" /> : null}
-          تسجيل الدخول
+          {mode === "signin" ? "تسجيل الدخول" : "إنشاء الحساب"}
         </Button>
-        <p className="text-center text-xs text-muted-foreground">
-          إنشاء حسابات الإدارة يتم من جهة موثوقة فقط.
-        </p>
+        <button
+          type="button"
+          className="w-full text-center text-xs text-muted-foreground underline"
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+        >
+          {mode === "signin" ? "أول مرة؟ أنشئ حساب الإدارة" : "لدي حساب بالفعل"}
+        </button>
       </form>
     </div>
   );
