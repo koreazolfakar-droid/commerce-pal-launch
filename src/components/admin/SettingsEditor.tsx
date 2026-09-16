@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { uploadMedia } from "@/lib/adminMedia";
 
 const SUGGESTED_KEYS = [
@@ -84,10 +85,10 @@ export function SettingsEditor() {
       return;
     }
 
-    let valueJson: unknown = null;
+    let valueJson: Json | null = null;
     if (row.valueType === "json") {
       try {
-        valueJson = JSON.parse(row.value || "{}");
+        valueJson = JSON.parse(row.value || "{}") as Json;
       } catch {
         toast.error("تحقق من صيغة JSON قبل الحفظ");
         return;
@@ -98,7 +99,7 @@ export function SettingsEditor() {
     const payload = {
       key,
       value_text: row.valueType === "json" ? null : row.value,
-      value_json: row.valueType === "json" ? valueJson : null,
+      value_json: valueJson,
       value_type: row.valueType,
       label: row.label.trim() || null,
       group_name: row.groupName.trim() || "general",
