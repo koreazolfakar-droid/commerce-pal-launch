@@ -15,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AdminLogin } from "@/components/admin/AdminLogin";
@@ -31,7 +31,7 @@ const NAV_GROUPS = [
     items: [{ to: "/dashboard", label: "نظرة عامة", icon: LayoutDashboard }],
   },
   {
-    label: "محتوى المتجر",
+    label: "إدارة المحتوى",
     items: [
       { to: "/dashboard/hero", label: "صور الهيرو", icon: Image },
       { to: "/dashboard/sections", label: "أقسام الصفحة", icon: Layers3 },
@@ -40,7 +40,7 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "التسويق والنظام",
+    label: "المتجر",
     items: [
       { to: "/dashboard/seo", label: "SEO", icon: Search },
       { to: "/dashboard/settings", label: "الإعدادات", icon: Settings },
@@ -48,12 +48,14 @@ const NAV_GROUPS = [
   },
 ] as const;
 
+const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items);
+
 function DashboardNavigation({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <nav className="space-y-5" aria-label="تنقل لوحة التحكم">
+    <nav className="space-y-6" aria-label="تنقل لوحة التحكم">
       {NAV_GROUPS.map((group) => (
         <div key={group.label}>
-          <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/75">
+          <p className="mb-2 px-3 text-[10px] font-bold tracking-[0.08em] text-muted-foreground/60">
             {group.label}
           </p>
           <div className="space-y-1">
@@ -66,12 +68,12 @@ function DashboardNavigation({ onNavigate }: { onNavigate?: () => void }) {
                   activeOptions={{ exact: item.to === "/dashboard" }}
                   activeProps={{
                     className:
-                      "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground",
+                      "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background",
                   }}
                   onClick={onNavigate}
-                  className="group flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="group flex min-h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-semibold text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
                 >
-                  <Icon className="size-[18px] shrink-0" strokeWidth={1.9} />
+                  <Icon className="size-[17px] shrink-0" strokeWidth={1.8} />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -87,6 +89,13 @@ function DashboardNavigation({ onNavigate }: { onNavigate?: () => void }) {
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { loading, session, role, refresh } = useAdminSession();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const searchResults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+    return NAV_ITEMS.filter((item) => item.label.toLowerCase().includes(query)).slice(0, 6);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!session || !role) return;
@@ -128,9 +137,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-foreground transition-colors duration-300">
+      <div className="flex min-h-screen items-center justify-center bg-muted/20 text-foreground transition-colors duration-300">
         <div className="space-y-3 text-center">
-          <Loader2 className="mx-auto size-6 animate-spin text-primary" />
+          <Loader2 className="mx-auto size-6 animate-spin text-foreground" />
           <p className="text-xs text-muted-foreground">جارٍ التحقق من جلسة الإدارة…</p>
         </div>
       </div>
@@ -142,14 +151,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   if (!role) {
     return (
       <div
-        className="relative flex min-h-screen items-center justify-center bg-background px-4 text-foreground transition-colors duration-300"
+        className="relative flex min-h-screen items-center justify-center bg-muted/20 px-4 text-foreground transition-colors duration-300"
         dir="rtl"
       >
         <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
-          <ThemeToggle className="border border-border/70 bg-card/95 shadow-sm backdrop-blur hover:bg-muted" />
+          <ThemeToggle className="border border-border/70 bg-card shadow-sm hover:bg-muted" />
         </div>
 
-        <div className="w-full max-w-md space-y-4 rounded-[1.75rem] border border-border/70 bg-card p-6 text-center shadow-card transition-colors duration-300">
+        <div className="w-full max-w-md space-y-4 rounded-3xl border border-border/70 bg-card p-7 text-center shadow-sm transition-colors duration-300">
           <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-destructive/10 text-destructive">
             <ShieldCheck className="size-6" />
           </span>
@@ -176,44 +185,48 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = () => void supabase.auth.signOut().then(refresh);
+  const userInitial = (session.user.email?.trim().charAt(0) || "S").toUpperCase();
 
   return (
-    <div className="min-h-screen bg-muted/20 text-foreground transition-colors duration-300" dir="rtl">
-      <aside className="fixed inset-y-0 right-0 z-40 hidden w-72 flex-col border-l border-border/70 bg-card lg:flex">
-        <div className="border-b border-border/70 px-5 py-5">
+    <div className="min-h-screen bg-[#f7f7f5] text-foreground transition-colors duration-300 dark:bg-background" dir="rtl">
+      <aside className="fixed inset-y-0 right-0 z-40 hidden w-64 flex-col border-l border-border/70 bg-card lg:flex">
+        <div className="px-5 pb-4 pt-5">
           <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-              <Store className="size-5" />
+            <span className="grid size-10 place-items-center rounded-xl bg-foreground text-background">
+              <Store className="size-[18px]" />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-base font-black tracking-tight">Space Call</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">لوحة إدارة المتجر</p>
+              <p className="truncate text-[15px] font-black tracking-tight">Space Call</p>
+              <p className="mt-0.5 text-[10px] font-medium text-muted-foreground">E-commerce Admin</p>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-5">
+        <div className="flex-1 overflow-y-auto px-4 py-4">
           <DashboardNavigation />
         </div>
 
-        <div className="space-y-3 border-t border-border/70 p-4">
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-              <ShieldCheck className="size-4 text-emerald-500" />
-              جلسة محمية
+        <div className="p-4">
+          <div className="rounded-2xl border border-border/70 bg-muted/25 p-3.5">
+            <div className="flex items-center gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground text-xs font-black text-background">
+                {userInitial}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-bold text-foreground">{session.user.email}</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {role === "admin" ? "Administrator" : "Editor"}
+                </p>
+              </div>
             </div>
-            <p className="mt-1 truncate text-[11px] text-muted-foreground">{session.user.email}</p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
-              الصلاحية: {role === "admin" ? "مدير" : "محرّر"}
-            </p>
+            <button
+              type="button"
+              onClick={signOut}
+              className="mt-3 flex min-h-9 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-semibold transition-colors hover:bg-muted"
+            >
+              <LogOut className="size-3.5" /> تسجيل الخروج
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={signOut}
-            className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-semibold transition-colors hover:bg-muted"
-          >
-            <LogOut className="size-4" /> تسجيل الخروج
-          </button>
         </div>
       </aside>
 
@@ -222,37 +235,37 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             aria-label="إغلاق القائمة"
-            className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px] lg:hidden"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] lg:hidden"
             onClick={() => setMobileNavOpen(false)}
           />
           <aside className="fixed inset-y-0 right-0 z-50 flex w-[min(86vw,320px)] flex-col border-l border-border bg-card shadow-2xl lg:hidden">
-            <div className="flex items-center justify-between border-b border-border/70 px-4 py-4">
+            <div className="flex items-center justify-between px-4 py-4">
               <div className="flex items-center gap-3">
-                <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
-                  <Store className="size-5" />
+                <span className="grid size-10 place-items-center rounded-xl bg-foreground text-background">
+                  <Store className="size-[18px]" />
                 </span>
                 <div>
-                  <p className="font-black">Space Call</p>
-                  <p className="text-[11px] text-muted-foreground">لوحة الإدارة</p>
+                  <p className="text-sm font-black">Space Call</p>
+                  <p className="text-[10px] text-muted-foreground">E-commerce Admin</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(false)}
-                className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="grid size-9 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label="إغلاق القائمة"
               >
                 <X className="size-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-5">
+            <div className="flex-1 overflow-y-auto border-t border-border/60 px-4 py-5">
               <DashboardNavigation onNavigate={() => setMobileNavOpen(false)} />
             </div>
-            <div className="border-t border-border/70 p-4">
+            <div className="border-t border-border/60 p-4">
               <button
                 type="button"
                 onClick={signOut}
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-semibold"
+                className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-sm font-semibold"
               >
                 <LogOut className="size-4" /> تسجيل الخروج
               </button>
@@ -261,46 +274,78 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </>
       ) : null}
 
-      <div className="min-h-screen lg:pr-72">
-        <header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur-xl">
-          <div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-            <div className="flex min-w-0 items-center gap-3">
-              <button
-                type="button"
-                className="grid size-10 shrink-0 place-items-center rounded-xl border border-border bg-card lg:hidden"
-                onClick={() => setMobileNavOpen(true)}
-                aria-label="فتح قائمة لوحة التحكم"
-              >
-                <Menu className="size-5" />
-              </button>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-sm font-black sm:text-base">إدارة Space Call</p>
-                  <span className="hidden items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 sm:inline-flex dark:text-emerald-400">
-                    <ShieldCheck className="size-3" /> آمن
-                  </span>
+      <div className="min-h-screen lg:pr-64">
+        <header className="sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur-xl">
+          <div className="flex min-h-[68px] items-center gap-3 px-4 sm:px-6 lg:px-7">
+            <button
+              type="button"
+              className="grid size-10 shrink-0 place-items-center rounded-xl border border-border bg-card lg:hidden"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="فتح قائمة لوحة التحكم"
+            >
+              <Menu className="size-5" />
+            </button>
+
+            <div className="relative hidden w-full max-w-md md:block">
+              <Search className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="ابحث في لوحة التحكم..."
+                className="h-10 w-full rounded-xl border border-border/70 bg-muted/30 pe-4 ps-10 text-xs font-medium outline-none transition focus:border-foreground/25 focus:bg-background focus:ring-2 focus:ring-foreground/5"
+              />
+              {searchQuery.trim() ? (
+                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-xl">
+                  {searchResults.length ? (
+                    searchResults.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.to}
+                          to={item.to}
+                          onClick={() => setSearchQuery("")}
+                          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                        >
+                          <Icon className="size-4" /> {item.label}
+                        </Link>
+                      );
+                    })
+                  ) : (
+                    <p className="px-3 py-3 text-xs text-muted-foreground">لا توجد نتائج مطابقة.</p>
+                  )}
                 </div>
-                <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
-                  {role === "admin" ? "مدير النظام" : "محرّر المحتوى"}
-                </p>
-              </div>
+              ) : null}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="ms-auto flex items-center gap-2">
+              <span className="hidden items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 text-[10px] font-bold text-muted-foreground xl:inline-flex">
+                <span className="size-2 rounded-full bg-emerald-500" /> CMS Live
+              </span>
               <a
                 href="/"
                 target="_blank"
                 rel="noreferrer"
-                className="hidden min-h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-xs font-bold transition-colors hover:bg-muted sm:inline-flex"
+                className="hidden min-h-10 items-center gap-2 rounded-xl border border-border/70 bg-card px-3 text-xs font-bold transition-colors hover:bg-muted sm:inline-flex"
               >
-                <ExternalLink className="size-4" /> عرض المتجر
+                <ExternalLink className="size-3.5" /> عرض المتجر
               </a>
-              <ThemeToggle className="border border-border/70 bg-card shadow-sm hover:bg-muted" />
+              <ThemeToggle className="border border-border/70 bg-card shadow-none hover:bg-muted" />
+              <div className="hidden items-center gap-2 border-r border-border/70 pr-2 sm:flex">
+                <span className="grid size-9 place-items-center rounded-full bg-foreground text-xs font-black text-background">
+                  {userInitial}
+                </span>
+                <div className="hidden max-w-36 lg:block">
+                  <p className="truncate text-[11px] font-bold">{session.user.email}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {role === "admin" ? "Admin" : "Editor"}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+        <main className="mx-auto w-full max-w-[1480px] px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7">
           {children}
         </main>
       </div>
