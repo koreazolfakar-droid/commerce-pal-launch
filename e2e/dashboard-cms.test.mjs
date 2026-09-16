@@ -31,12 +31,11 @@ test("public CMS gateway stays aligned with the live production schema", async (
   assert.match(source, /label_ar/);
   assert.match(source, /description_en/);
   assert.match(source, /description_ar/);
-  assert.match(source, /sections:\s*sectionsResult\.data/);
-  assert.match(source, /navigation:\s*navigationResult\.data/);
+  assert.match(source, /sections,\s*navigation,/);
   assert.doesNotMatch(source, /from\("cms_sections"\)[\s\S]*?eq\("is_visible", true\)/);
   assert.doesNotMatch(source, /from\("cms_navigation_items"\)[\s\S]*?eq\("is_visible", true\)/);
   assert.match(source, /brands:\s*brandsResult\.data/);
-  assert.match(source, /seoPages:\s*seoResult\.data/);
+  assert.match(source, /seoPages,/);
 });
 
 test("dashboard routes edit the same CMS tables and bilingual fields as production", async () => {
