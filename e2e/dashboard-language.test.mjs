@@ -15,18 +15,21 @@ test("dashboard has an independent persistent Arabic and English language provid
 });
 
 test("dashboard shell and login expose the language switch and directional UI", async () => {
-  const [shell, login, route] = await Promise.all([
+  const [shell, login, route, navigation] = await Promise.all([
     read("src/components/admin/DashboardShell.tsx"),
     read("src/components/admin/AdminLogin.tsx"),
     read("src/routes/dashboard.tsx"),
+    read("src/dashboard/config/navigation.ts"),
   ]);
 
   assert.match(route, /DashboardLanguageProvider/);
   assert.match(shell, /LanguageToggle/);
   assert.match(shell, /useDashboardLanguage/);
   assert.match(shell, /dir=\{direction\}/);
-  assert.match(shell, /Overview/);
-  assert.match(shell, /الرئيسية/);
+  assert.match(navigation, /Dashboard/);
+  assert.match(navigation, /لوحة التحكم/);
+  assert.match(navigation, /Analytics/);
+  assert.match(navigation, /التحليلات/);
   assert.match(login, /useDashboardLanguage/);
   assert.match(login, /Change dashboard language/);
   assert.match(login, /تغيير لغة لوحة التحكم/);
@@ -48,6 +51,9 @@ test("all primary dashboard editors consume dashboard language context", async (
     "src/routes/dashboard.seo.tsx",
     "src/routes/dashboard.categories.tsx",
     "src/routes/dashboard.collections.tsx",
+    "src/routes/dashboard.analytics.tsx",
+    "src/routes/dashboard.marketing.tsx",
+    "src/routes/dashboard.messages.tsx",
   ];
 
   for (const file of files) {
