@@ -311,8 +311,8 @@ function DashboardOverview() {
   });
 
   return (
-    <section className="space-y-5">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <section className="admin-page space-y-5">
+      <header className="admin-page-header flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/65">Dashboard</p>
           <h1 className="mt-1 text-[24px] font-black tracking-tight text-foreground sm:text-[28px]">

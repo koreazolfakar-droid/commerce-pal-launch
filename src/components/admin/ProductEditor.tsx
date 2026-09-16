@@ -467,8 +467,8 @@ export function ProductEditor() {
   }
 
   return (
-    <section className="space-y-5">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <section className="admin-page space-y-5">
+      <header className="admin-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold text-muted-foreground">Native Commerce</p>
           <h1 className="mt-1 text-2xl font-black tracking-tight">
@@ -490,7 +490,7 @@ export function ProductEditor() {
       </header>
 
       <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="rounded-2xl border border-border/70 bg-card p-3 xl:sticky xl:top-24 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto">
+        <aside className="admin-list-panel rounded-2xl border border-border/70 bg-card p-3 xl:sticky xl:top-24 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto">
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}

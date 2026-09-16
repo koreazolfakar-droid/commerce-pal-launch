@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { useAdminSession } from "@/hooks/useAdminSession";
 import { supabase } from "@/integrations/supabase/client";
 import { useDashboardLanguage } from "@/lib/dashboardI18n";
+import "@/styles/admin-dashboard.css";
 
 const ADMIN_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -264,7 +265,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="min-h-screen bg-[#f6f7f9] text-foreground transition-colors duration-300 dark:bg-background"
+      className="spacecall-admin-dashboard min-h-screen bg-[#f6f7f9] text-foreground transition-colors duration-300 dark:bg-background"
       dir={direction}
       data-dashboard-language={language}
     >
@@ -418,7 +419,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-6">
+        <main className="spacecall-admin-content mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-6">
           {children}
         </main>
       </div>

@@ -234,8 +234,8 @@ export function InventoryEditor() {
   }
 
   return (
-    <section className="space-y-5">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <section className="admin-page space-y-5">
+      <header className="admin-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold text-muted-foreground">
             {text("مركز المخزون", "Inventory Center")}
