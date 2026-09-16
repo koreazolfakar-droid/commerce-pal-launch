@@ -11,12 +11,13 @@ function SectionsEditorPage() {
     <CollectionEditor
       table="cms_sections"
       title="أقسام الصفحة"
-      description="عناوين الأقسام وترتيبها وإظهارها."
+      description="عناوين الأقسام وترتيبها ومحتواها وإظهارها."
       labelKey="section_key"
       newRow={{
         page_slug: "home",
         section_key: "",
         section_type: "custom",
+        content: {},
         sort_order: 0,
         is_visible: true,
       }}
@@ -26,6 +27,7 @@ function SectionsEditorPage() {
         { key: "section_type", label: "نوع القسم", type: "text" },
         { key: "title", label: "العنوان", type: "text" },
         { key: "subtitle", label: "العنوان الفرعي", type: "textarea" },
+        { key: "content", label: "محتوى القسم (JSON)", type: "json" },
         { key: "sort_order", label: "الترتيب", type: "number" },
         { key: "is_visible", label: "ظاهر", type: "boolean" },
       ]}
