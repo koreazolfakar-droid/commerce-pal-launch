@@ -87,14 +87,12 @@ Deno.serve(async (req: Request) => {
       .order("sort_order"),
     db
       .from("cms_sections")
-      .select("id,page_slug,section_key,section_type,title,subtitle,content,sort_order")
-      .eq("is_visible", true)
+      .select("id,page_slug,section_key,section_type,title,subtitle,content,sort_order,is_visible")
       .order("page_slug")
       .order("sort_order"),
     db
       .from("cms_navigation_items")
-      .select("id,area,label,icon_type,icon_value,href,sort_order")
-      .eq("is_visible", true)
+      .select("id,area,label,icon_type,icon_value,href,sort_order,is_visible")
       .order("area")
       .order("sort_order"),
     db
@@ -146,8 +144,8 @@ Deno.serve(async (req: Request) => {
     JSON.stringify({
       settings,
       heroSlides,
-      sections: (sectionsResult.data ?? []).map((row) => ({ ...row, is_visible: true })),
-      navigation: (navigationResult.data ?? []).map((row) => ({ ...row, is_visible: true })),
+      sections: sectionsResult.data ?? [],
+      navigation: navigationResult.data ?? [],
       brands: brandsResult.data ?? [],
       seoPages: seoResult.data ?? [],
     }),
