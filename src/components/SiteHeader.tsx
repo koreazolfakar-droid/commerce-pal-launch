@@ -34,6 +34,8 @@ import { lazy, Suspense, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { useHydrated } from "@/hooks/useHydrated";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
@@ -52,7 +54,6 @@ const UTILITY = [
   { icon: RotateCcw, key: "returns" as const },
 ];
 
-/** Requested navigation order, resolved against the live Shopify taxonomy. */
 const NAV_ORDER: Array<{ label: string; slugs: string[] }> = [
   { label: "Smartphones", slugs: ["smartphones"] },
   { label: "Tablets", slugs: ["tablets"] },
@@ -83,7 +84,7 @@ function orderedNav(categories: CatalogFacet[]) {
   return nav;
 }
 
-/** Desktop header: black utility bar, main bar with search, then category navigation. */
+/** Desktop header: utility bar, main bar with search, then category navigation. */
 export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [brandsOpen, setBrandsOpen] = useState(false);
@@ -97,10 +98,19 @@ export function SiteHeader() {
 
   const { data: catalog } = useQuery(catalogQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
+  const { data: cms } = useQuery(cmsQueryOptions());
 
-  // Dynamic navigation waits one client frame so SSR and the first client render match.
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsLogoUrl = cms?.settings["logo_url"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const logoUrl =
+    typeof cmsLogoUrl === "string" && cmsLogoUrl.trim() ? cmsLogoUrl.trim() : "/logo.svg";
+
   const categories = hydrated ? (catalog?.categories ?? []) : [];
-  const brands = hydrated ? (catalog?.brands ?? []) : [];
+  const brands = hydrated
+    ? applyCmsBrands(buildShopifyBrands(catalog?.brands ?? [], collections), cms?.brands ?? [])
+    : [];
   const collectionList = hydrated ? displayCollections(collections ?? []) : [];
   const nav = orderedNav(categories);
 
@@ -149,8 +159,8 @@ export function SiteHeader() {
         <div className="mx-auto grid max-w-7xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-5 px-4 py-2">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
             <img
-              src="/logo.svg"
-              alt={STORE_NAME}
+              src={logoUrl}
+              alt={storeName}
               width={54}
               height={36}
               loading="eager"
@@ -158,7 +168,7 @@ export function SiteHeader() {
               decoding="async"
               className="h-9 w-auto shrink-0 object-contain"
             />
-            <span className="truncate text-[19px] font-extrabold tracking-tight">{STORE_NAME}</span>
+            <span className="truncate text-[19px] font-extrabold tracking-tight">{storeName}</span>
           </Link>
 
           <button
@@ -256,17 +266,19 @@ export function SiteHeader() {
                 <DropdownMenuContent align="start" className="w-64 rounded-2xl p-2">
                   {brands.map((brand) => (
                     <DropdownMenuItem key={brand.slug} asChild>
-                      <Link
-                        to="/brand/$slug"
-                        params={{ slug: brand.slug }}
+                      <a
+                        href={brand.href || `/brand/${brand.slug}`}
                         className="flex min-w-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm"
                       >
-                        <BrandLogo slug={brand.slug} label={brand.label} size={24} />
+                        <BrandLogo
+                          slug={brand.slug}
+                          label={brand.label}
+                          size={24}
+                          {...(brand.image ? { imageUrl: brand.image } : {})}
+                        />
                         <span className="min-w-0 flex-1 truncate">{brand.label}</span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          {brand.count}
-                        </span>
-                      </Link>
+                        <span className="shrink-0 text-xs text-muted-foreground">{brand.count}</span>
+                      </a>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -303,9 +315,7 @@ export function SiteHeader() {
                         <span className="min-w-0 flex-1 whitespace-normal break-words">
                           {categoryLabel(category, language)}
                         </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          {category.count}
-                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">{category.count}</span>
                       </Link>
                     </DropdownMenuItem>
                   ))}
