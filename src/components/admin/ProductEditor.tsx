@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ImagePlus, Loader2, PackagePlus, Plus, Save, Trash2 } from "lucide-react";
+import { Archive, ImagePlus, Loader2, PackagePlus, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -130,6 +130,7 @@ export function ProductEditor() {
   const [images, setImages] = useState<ImageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -218,6 +219,32 @@ export function ProductEditor() {
       return;
     }
 
+    const currency = editing.currency.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      toast.error(text("العملة يجب أن تكون 3 أحرف مثل USD", "Currency must be 3 letters such as USD"));
+      return;
+    }
+
+    const basePrice = Number(editing.base_price);
+    if (!Number.isFinite(basePrice) || basePrice < 0) {
+      toast.error(text("السعر الأساسي غير صالح", "Base price must be zero or greater"));
+      return;
+    }
+
+    const compareAtPrice = editing.compare_at_price;
+    if (
+      compareAtPrice !== null &&
+      (!Number.isFinite(Number(compareAtPrice)) || Number(compareAtPrice) < basePrice)
+    ) {
+      toast.error(
+        text(
+          "السعر قبل الخصم يجب أن يساوي أو يتجاوز السعر الحالي",
+          "Compare-at price must be equal to or greater than the current price",
+        ),
+      );
+      return;
+    }
+
     let specifications: Record<string, unknown>;
     try {
       const parsed = JSON.parse(editing.specificationsText || "{}");
@@ -239,9 +266,13 @@ export function ProductEditor() {
       category_id: editing.category_id || null,
       product_type: editing.product_type?.trim() || null,
       status: editing.status,
-      currency: (editing.currency || "USD").toUpperCase().slice(0, 3),
-      base_price: Number(editing.base_price) || 0,
-      compare_at_price: editing.compare_at_price,
+      currency,
+      ...(variants.length === 0
+        ? {
+            base_price: basePrice,
+            compare_at_price: compareAtPrice,
+          }
+        : {}),
       featured: editing.featured,
       best_seller: editing.best_seller,
       tags: editing.tagsText
@@ -288,28 +319,44 @@ export function ProductEditor() {
     if (editing.isDraft) await loadRelations(saved.id);
   };
 
-  const deleteProduct = async () => {
+  const archiveProduct = async () => {
     if (!editing) return;
     if (editing.isDraft) {
       setEditing(null);
+      setVariants([]);
+      setImages([]);
+      return;
+    }
+    if (editing.status === "archived") {
+      toast.info(text("المنتج مؤرشف بالفعل", "Product is already archived"));
       return;
     }
     if (
-      !window.confirm(text(`حذف ${editing.title} نهائياً؟`, `Delete ${editing.title} permanently?`))
+      !window.confirm(
+        text(
+          `أرشفة ${editing.title}؟ سيتم الاحتفاظ بكل البيانات والصور والـ Variants.`,
+          `Archive ${editing.title}? All data, images and variants will be preserved.`,
+        ),
+      )
     )
       return;
-    const { error } = await supabase
+
+    setArchiving(true);
+    const { data, error } = await supabase
       .from("store_products" as never)
-      .delete()
-      .eq("id", editing.id);
+      .update({ status: "archived", featured: false, best_seller: false } as never)
+      .eq("id", editing.id)
+      .select("*")
+      .single();
+    setArchiving(false);
+
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success(text("تم حذف المنتج", "Product deleted"));
-    setEditing(null);
-    setVariants([]);
-    setImages([]);
+
+    setEditing(toEditing(data as ProductRow));
+    toast.success(text("تمت أرشفة المنتج مع الاحتفاظ ببياناته", "Product archived and data preserved"));
     await loadBase();
   };
 
@@ -347,15 +394,40 @@ export function ProductEditor() {
   };
 
   const saveVariant = async (variant: Variant) => {
+    const price = Number(variant.price);
+    const compareAtPrice = variant.compare_at_price;
+    const stock = Number(variant.stock_quantity);
+
+    if (!Number.isFinite(price) || price < 0) {
+      toast.error(text("سعر الـ Variant غير صالح", "Variant price must be zero or greater"));
+      return;
+    }
+    if (
+      compareAtPrice !== null &&
+      (!Number.isFinite(Number(compareAtPrice)) || Number(compareAtPrice) < price)
+    ) {
+      toast.error(
+        text(
+          "السعر قبل الخصم للـ Variant يجب أن يساوي أو يتجاوز السعر الحالي",
+          "Variant compare-at price must be equal to or greater than its current price",
+        ),
+      );
+      return;
+    }
+    if (!Number.isInteger(stock) || stock < 0) {
+      toast.error(text("المخزون يجب أن يكون رقماً صحيحاً موجباً أو صفراً", "Stock must be a whole number of zero or greater"));
+      return;
+    }
+
     const { error } = await supabase
       .from("store_product_variants" as never)
       .update({
         title: variant.title.trim() || "Default",
         sku: variant.sku?.trim() || null,
         barcode: variant.barcode?.trim() || null,
-        price: Number(variant.price) || 0,
-        compare_at_price: variant.compare_at_price,
-        stock_quantity: Math.max(0, Number(variant.stock_quantity) || 0),
+        price,
+        compare_at_price: compareAtPrice,
+        stock_quantity: stock,
         options: variant.options ?? {},
         image_url: variant.image_url?.trim() || null,
         sort_order: Number(variant.sort_order) || 0,
@@ -543,7 +615,7 @@ export function ProductEditor() {
                     size="sm"
                     className="rounded-xl"
                     onClick={() => void saveProduct()}
-                    disabled={saving}
+                    disabled={saving || archiving}
                   >
                     {saving ? (
                       <Loader2 className="me-1.5 size-3.5 animate-spin" />
@@ -555,11 +627,27 @@ export function ProductEditor() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-xl text-destructive"
-                    onClick={() => void deleteProduct()}
-                    aria-label={text("حذف المنتج", "Delete product")}
+                    className="rounded-xl text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600"
+                    onClick={() => void archiveProduct()}
+                    disabled={archiving || (!editing.isDraft && editing.status === "archived")}
+                    aria-label={
+                      editing.isDraft
+                        ? text("إلغاء المسودة", "Discard draft")
+                        : text("أرشفة المنتج", "Archive product")
+                    }
+                    title={
+                      editing.isDraft
+                        ? text("إلغاء المسودة", "Discard draft")
+                        : text("أرشفة المنتج بدون حذف بياناته", "Archive product without deleting its data")
+                    }
                   >
-                    <Trash2 className="size-4" />
+                    {archiving ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : editing.isDraft ? (
+                      <Trash2 className="size-4" />
+                    ) : (
+                      <Archive className="size-4" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -643,19 +731,37 @@ export function ProductEditor() {
                     onChange={(e) => patchProduct({ currency: e.target.value.toUpperCase() })}
                   />
                 </Field>
-                <Field label={text("السعر الأساسي", "Base price")}>
+                <Field
+                  label={
+                    variants.length > 0
+                      ? text("السعر الأساسي (من الـ Variants)", "Base price (from variants)")
+                      : text("السعر الأساسي", "Base price")
+                  }
+                >
                   <Input
                     type="number"
                     step="0.01"
+                    min="0"
                     value={editing.base_price}
+                    readOnly={variants.length > 0}
+                    className={variants.length > 0 ? "bg-muted/40" : undefined}
                     onChange={(e) => patchProduct({ base_price: Number(e.target.value) })}
                   />
                 </Field>
-                <Field label={text("السعر قبل الخصم", "Compare at price")}>
+                <Field
+                  label={
+                    variants.length > 0
+                      ? text("السعر قبل الخصم (من الـ Variants)", "Compare at price (from variants)")
+                      : text("السعر قبل الخصم", "Compare at price")
+                  }
+                >
                   <Input
                     type="number"
                     step="0.01"
+                    min="0"
                     value={editing.compare_at_price ?? ""}
+                    readOnly={variants.length > 0}
+                    className={variants.length > 0 ? "bg-muted/40" : undefined}
                     onChange={(e) =>
                       patchProduct({ compare_at_price: numberOrNull(e.target.value) })
                     }
@@ -785,6 +891,7 @@ export function ProductEditor() {
                           <Input
                             type="number"
                             step="0.01"
+                            min="0"
                             value={variant.price}
                             onChange={(e) =>
                               patchVariant(variant.id, { price: Number(e.target.value) })
@@ -795,6 +902,7 @@ export function ProductEditor() {
                           <Input
                             type="number"
                             step="0.01"
+                            min="0"
                             value={variant.compare_at_price ?? ""}
                             onChange={(e) =>
                               patchVariant(variant.id, {
@@ -806,6 +914,8 @@ export function ProductEditor() {
                         <Field label={text("المخزون", "Stock")}>
                           <Input
                             type="number"
+                            min="0"
+                            step="1"
                             value={variant.stock_quantity}
                             onChange={(e) =>
                               patchVariant(variant.id, {
