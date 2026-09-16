@@ -48,3 +48,28 @@ test("product editor supports the core native product workflow", async () => {
   assert.match(editor, /Active/);
   assert.match(editor, /Archived/);
 });
+
+test("saved products archive safely instead of being hard-deleted", async () => {
+  const editor = await read("src/components/admin/ProductEditor.tsx");
+
+  assert.match(editor, /const archiveProduct = async/);
+  assert.match(editor, /status: "archived"/);
+  assert.match(editor, /Product archived and data preserved/);
+  assert.match(editor, /Archive product without deleting its data/);
+  assert.doesNotMatch(
+    editor,
+    /from\("store_products" as never\)[\s\S]{0,180}?\.delete\(\)/,
+  );
+});
+
+test("product and variant pricing inputs validate before database writes", async () => {
+  const editor = await read("src/components/admin/ProductEditor.tsx");
+
+  assert.match(editor, /Currency must be 3 letters such as USD/);
+  assert.match(editor, /Base price must be zero or greater/);
+  assert.match(editor, /Compare-at price must be equal to or greater than the current price/);
+  assert.match(editor, /Variant price must be zero or greater/);
+  assert.match(editor, /Stock must be a whole number of zero or greater/);
+  assert.match(editor, /variants\.length === 0/);
+  assert.match(editor, /Base price \(from variants\)/);
+});
