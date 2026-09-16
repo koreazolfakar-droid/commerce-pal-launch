@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Sign-in only card for the dashboard.
- * Admin/editor accounts must be provisioned through the trusted backend;
- * the public application never creates privileged accounts.
+ * Dashboard authentication card. Account creation only creates a normal
+ * Supabase auth user; privileged access is granted separately by the guarded
+ * first-admin bootstrap or by an existing administrator.
  */
 export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | void }) {
   const [email, setEmail] = useState("");
@@ -29,7 +29,7 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
           options: { emailRedirectTo: `${window.location.origin}/dashboard` },
         });
         if (error) throw error;
-        toast.success("تم إنشاء الحساب. سجّل الدخول الآن.");
+        toast.success("تم إنشاء الحساب. سجّل الدخول لإكمال إعداد الإدارة.");
         setMode("signin");
         return;
       }
@@ -71,7 +71,7 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
           <Input
             id="admin-password"
             type="password"
-            autoComplete="current-password"
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
             required
             minLength={8}
             value={password}
