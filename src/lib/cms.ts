@@ -54,6 +54,9 @@ export const EMPTY_CMS: CmsSnapshot = {
   navigation: [],
 };
 
+const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
+
 let cmsPendingRequest: Promise<CmsSnapshot> | null = null;
 
 function isCmsSnapshot(value: unknown): value is CmsSnapshot {
@@ -69,17 +72,17 @@ function isCmsSnapshot(value: unknown): value is CmsSnapshot {
 }
 
 async function loadCmsSnapshot(): Promise<CmsSnapshot> {
-  const baseUrl = process.env["SUPABASE_URL"]?.replace(/\/$/, "");
-  const publishableKey = process.env["SUPABASE_PUBLISHABLE_KEY"]?.trim();
-  if (!baseUrl) return EMPTY_CMS;
+  const baseUrl = (process.env["SUPABASE_URL"] || DEFAULT_SUPABASE_URL).replace(/\/$/, "");
+  const publishableKey =
+    process.env["SUPABASE_PUBLISHABLE_KEY"]?.trim() || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
 
   try {
     const headers = new Headers({
       Accept: "application/json",
       "Cache-Control": "no-cache",
       Pragma: "no-cache",
+      apikey: publishableKey,
     });
-    if (publishableKey) headers.set("apikey", publishableKey);
 
     const response = await fetch(`${baseUrl}/functions/v1/public-cms?fresh=${Date.now()}`, {
       method: "GET",
