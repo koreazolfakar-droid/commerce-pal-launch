@@ -1,0 +1,22 @@
+name: Dashboard Reference QA
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/routes/dashboard.index.tsx'
+      - 'e2e/dashboard-reference-layout.test.mjs'
+      - '.github/workflows/dashboard-reference-qa.yml'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint
+      - run: bun run test:unit
+      - run: bun run build
+      - run: bun run test:ssr
