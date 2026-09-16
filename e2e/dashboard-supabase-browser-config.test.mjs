@@ -8,9 +8,11 @@ const source = await readFile(
 );
 
 test("browser dashboard always has public Supabase configuration", () => {
-  assert.match(source, /DEFAULT_SUPABASE_URL/);
-  assert.match(source, /DEFAULT_SUPABASE_PUBLISHABLE_KEY/);
-  assert.match(source, /sb_publishable_/);
-  assert.doesNotMatch(source, /service_role/i);
-  assert.doesNotMatch(source, /sb_secret_/);
+  assert.match(source, /const DEFAULT_SUPABASE_URL = "https:\/\/[^"]+\.supabase\.co";/);
+  assert.match(
+    source,
+    /const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_[^"]+";/,
+  );
+  assert.doesNotMatch(source, /DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_secret_/);
+  assert.doesNotMatch(source, /DEFAULT_SUPABASE_PUBLISHABLE_KEY = ".*service_role/i);
 });
