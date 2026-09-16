@@ -106,7 +106,7 @@ export function InventoryEditor() {
       byProduct.set(variant.product_id, list);
     });
 
-    return products.flatMap((product) => {
+    return products.flatMap<InventoryRow>((product) => {
       const productVariants = byProduct.get(product.id) ?? [];
       if (productVariants.length === 0) {
         return [{
