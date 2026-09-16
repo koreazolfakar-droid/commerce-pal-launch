@@ -6,7 +6,8 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("repository exposes one comprehensive validation command", async () => {
   const pkg = JSON.parse(await read("package.json"));
-  assert.equal(pkg.scripts.typecheck, "tsc --noEmit");
+  assert.match(pkg.scripts.typecheck, /routes:generate/);
+  assert.match(pkg.scripts.typecheck, /tsc --noEmit/);
   assert.match(pkg.scripts.check, /typecheck/);
   assert.match(pkg.scripts.check, /lint/);
   assert.match(pkg.scripts.check, /test:unit/);
