@@ -1,20 +1,25 @@
--- Keep direct CMS writes available to authenticated dashboard staff while
--- preserving row-level security. Anonymous clients never receive write grants.
-revoke insert, update, delete, truncate, references, trigger on public.cms_brands from anon;
-revoke insert, update, delete, truncate, references, trigger on public.cms_hero_slides from anon;
-revoke insert, update, delete, truncate, references, trigger on public.cms_navigation from anon;
-revoke insert, update, delete, truncate, references, trigger on public.cms_sections from anon;
-revoke insert, update, delete, truncate, references, trigger on public.cms_seo_pages from anon;
-revoke insert, update, delete, truncate, references, trigger on public.cms_settings from anon;
+drop policy if exists "cms_admin_manage_hero_slides" on public.cms_hero_slides;
+drop policy if exists "cms_admin_manage_navigation" on public.cms_navigation_items;
+drop policy if exists "cms_admin_manage_sections" on public.cms_sections;
+drop policy if exists "cms_admin_manage_site_settings" on public.cms_site_settings;
+drop policy if exists "cms_admin_insert_audit_log" on public.cms_audit_log;
+drop policy if exists "cms_admin_read_audit_log" on public.cms_audit_log;
 
--- Dashboard CRUD is still constrained by the existing is_staff(auth.uid()) RLS
--- policies. These table privileges merely allow those policies to be evaluated.
-grant select, insert, update, delete on public.cms_brands to authenticated;
-grant select, insert, update, delete on public.cms_hero_slides to authenticated;
-grant select, insert, update, delete on public.cms_navigation to authenticated;
-grant select, insert, update, delete on public.cms_sections to authenticated;
-grant select, insert, update, delete on public.cms_seo_pages to authenticated;
-grant select, insert, update, delete on public.cms_settings to authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.cms_brands from anon, authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.cms_hero_slides from anon, authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.cms_navigation_items from anon, authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.cms_sections from anon, authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.cms_seo_pages from anon, authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.cms_site_settings from anon, authenticated;
+revoke all on public.cms_media_assets from anon, authenticated;
+revoke all on public.cms_audit_log from anon, authenticated;
+
+grant select on public.cms_brands to anon, authenticated;
+grant select on public.cms_hero_slides to anon, authenticated;
+grant select on public.cms_navigation_items to anon, authenticated;
+grant select on public.cms_sections to anon, authenticated;
+grant select on public.cms_seo_pages to anon, authenticated;
+grant select on public.cms_site_settings to anon, authenticated;
 
 create table if not exists public.edge_rate_limits (
   key text primary key,
