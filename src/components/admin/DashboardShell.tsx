@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Store,
   Tags,
+  UsersRound,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -45,6 +46,7 @@ const NAV_GROUPS = [
     label: "المتجر",
     items: [
       { to: "/dashboard/orders", label: "الطلبات", icon: ShoppingBag },
+      { to: "/dashboard/customers", label: "العملاء", icon: UsersRound },
       { to: "/dashboard/products", label: "المنتجات", icon: Store },
       { to: "/dashboard/inventory", label: "المخزون", icon: Package },
       { to: "/dashboard/categories", label: "التصنيفات", icon: Layers3 },
