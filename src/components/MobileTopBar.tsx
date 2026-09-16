@@ -81,9 +81,7 @@ export function MobileTopBar({
               decoding="async"
               className="h-[34px] w-auto shrink-0 object-contain drop-shadow-sm"
             />
-            <span className="truncate text-[17px] font-black tracking-[-0.025em]">
-              {storeName}
-            </span>
+            <span className="truncate text-[17px] font-black tracking-[-0.025em]">{storeName}</span>
           </Link>
           <div className="flex shrink-0 items-center gap-0.5">
             <Link

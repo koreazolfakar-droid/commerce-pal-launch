@@ -59,7 +59,10 @@ test("generic CMS editor creates drafts before database inserts", async () => {
   assert.match(editor, /draft-\$\{crypto\.randomUUID\(\)\}/);
   assert.match(editor, /insert\(payload as never\)\.select\("\*"\)\.single\(\)/);
   assert.match(editor, /field\.required/);
-  assert.doesNotMatch(editor, /const addRow = async \(\) => \{\s*const \{ error \} = await client\.from/);
+  assert.doesNotMatch(
+    editor,
+    /const addRow = async \(\) => \{\s*const \{ error \} = await client\.from/,
+  );
 });
 
 test("storefront consumes dashboard brands SEO navigation and settings", async () => {

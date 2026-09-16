@@ -128,7 +128,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     };
 
     const events: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "touchstart", "scroll"];
-    events.forEach((eventName) => window.addEventListener(eventName, resetTimer, { passive: true }));
+    events.forEach((eventName) =>
+      window.addEventListener(eventName, resetTimer, { passive: true }),
+    );
     resetTimer();
 
     return () => {
@@ -176,8 +178,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div>
             <h1 className="text-xl font-black tracking-tight text-foreground">الحساب غير مخوّل</h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              تم التحقق من تسجيل الدخول، لكن هذا الحساب لا يملك صلاحية Admin أو Editor للوحة Space Call.
-              لن يتم منح أي صلاحية تلقائياً.
+              تم التحقق من تسجيل الدخول، لكن هذا الحساب لا يملك صلاحية Admin أو Editor للوحة Space
+              Call. لن يتم منح أي صلاحية تلقائياً.
             </p>
           </div>
           <div className="rounded-2xl border border-border/70 bg-muted/35 p-3 text-xs leading-5 text-muted-foreground">
@@ -211,7 +213,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </span>
             <div className="min-w-0">
               <p className="truncate text-[15px] font-black tracking-tight">Space Call</p>
-              <p className="mt-0.5 text-[10px] font-medium text-muted-foreground">E-commerce Admin</p>
+              <p className="mt-0.5 text-[10px] font-medium text-muted-foreground">
+                E-commerce Admin
+              </p>
             </div>
           </div>
         </div>

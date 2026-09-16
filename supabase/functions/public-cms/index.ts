@@ -63,49 +63,45 @@ Deno.serve(async (req: Request) => {
   });
   const nowIso = new Date().toISOString();
 
-  const [
-    settingsResult,
-    heroesResult,
-    sectionsResult,
-    navigationResult,
-    brandsResult,
-    seoResult,
-  ] = await Promise.all([
-    db
-      .from("cms_site_settings")
-      .select("key,value_text,value_json,value_type")
-      .eq("is_public", true)
-      .order("key"),
-    db
-      .from("cms_hero_slides")
-      .select(
-        "id,title,subtitle,image_url,mobile_image_url,button_label,target_type,target_value,sort_order,starts_at,ends_at",
-      )
-      .eq("is_published", true)
-      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
-      .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
-      .order("sort_order"),
-    db
-      .from("cms_sections")
-      .select("id,page_slug,section_key,section_type,title,subtitle,content,sort_order,is_visible")
-      .order("page_slug")
-      .order("sort_order"),
-    db
-      .from("cms_navigation_items")
-      .select("id,area,label,icon_type,icon_value,href,sort_order,is_visible")
-      .order("area")
-      .order("sort_order"),
-    db
-      .from("cms_brands")
-      .select("id,name,slug,logo_url,href,sort_order,is_visible")
-      .order("sort_order")
-      .order("name"),
-    db
-      .from("cms_seo_pages")
-      .select("page_slug,title,description,og_image_url,canonical_url,robots,json_ld,is_public")
-      .eq("is_public", true)
-      .order("page_slug"),
-  ]);
+  const [settingsResult, heroesResult, sectionsResult, navigationResult, brandsResult, seoResult] =
+    await Promise.all([
+      db
+        .from("cms_site_settings")
+        .select("key,value_text,value_json,value_type")
+        .eq("is_public", true)
+        .order("key"),
+      db
+        .from("cms_hero_slides")
+        .select(
+          "id,title,subtitle,image_url,mobile_image_url,button_label,target_type,target_value,sort_order,starts_at,ends_at",
+        )
+        .eq("is_published", true)
+        .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+        .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
+        .order("sort_order"),
+      db
+        .from("cms_sections")
+        .select(
+          "id,page_slug,section_key,section_type,title,subtitle,content,sort_order,is_visible",
+        )
+        .order("page_slug")
+        .order("sort_order"),
+      db
+        .from("cms_navigation_items")
+        .select("id,area,label,icon_type,icon_value,href,sort_order,is_visible")
+        .order("area")
+        .order("sort_order"),
+      db
+        .from("cms_brands")
+        .select("id,name,slug,logo_url,href,sort_order,is_visible")
+        .order("sort_order")
+        .order("name"),
+      db
+        .from("cms_seo_pages")
+        .select("page_slug,title,description,og_image_url,canonical_url,robots,json_ld,is_public")
+        .eq("is_public", true)
+        .order("page_slug"),
+    ]);
 
   const firstError =
     settingsResult.error ||

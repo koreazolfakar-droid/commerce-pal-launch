@@ -11,13 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadMedia } from "@/lib/adminMedia";
 
 export type EditorFieldType =
-  | "text"
-  | "textarea"
-  | "number"
-  | "boolean"
-  | "select"
-  | "image"
-  | "json";
+  "text" | "textarea" | "number" | "boolean" | "select" | "image" | "json";
 
 export type EditorField = {
   key: string;
@@ -112,10 +106,7 @@ export function CollectionEditor({
 
   const addRow = () => {
     const editorKey = `draft-${crypto.randomUUID()}`;
-    setRows((current) => [
-      { ...newRow, [EDITOR_KEY]: editorKey, [IS_DRAFT]: true },
-      ...current,
-    ]);
+    setRows((current) => [{ ...newRow, [EDITOR_KEY]: editorKey, [IS_DRAFT]: true }, ...current]);
   };
 
   const buildPayload = (row: Row) => {
@@ -157,7 +148,11 @@ export function CollectionEditor({
     const isDraft = Boolean(row[IS_DRAFT]);
 
     const result = isDraft
-      ? await client.from(table as never).insert(payload as never).select("*").single()
+      ? await client
+          .from(table as never)
+          .insert(payload as never)
+          .select("*")
+          .single()
       : await client
           .from(table as never)
           .update(payload as never)
@@ -193,7 +188,10 @@ export function CollectionEditor({
     }
 
     if (!window.confirm("هل تريد الحذف نهائياً؟")) return;
-    const { error } = await client.from(table as never).delete().eq(idKey, editorKey);
+    const { error } = await client
+      .from(table as never)
+      .delete()
+      .eq(idKey, editorKey);
     if (error) {
       toast.error(error.message);
       return;
@@ -225,7 +223,9 @@ export function CollectionEditor({
           <p className="text-[11px] font-semibold text-muted-foreground">Content Management</p>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">{title}</h1>
           {description ? (
-            <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">{description}</p>
+            <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
+              {description}
+            </p>
           ) : null}
         </div>
         <Button
@@ -296,17 +296,22 @@ export function CollectionEditor({
                   {fields.map((field) => {
                     const value = row[field.key];
                     const inputId = `${editorKey}-${field.key}`;
-                    const wide = field.type === "textarea" || field.type === "json" || field.type === "image";
+                    const wide =
+                      field.type === "textarea" || field.type === "json" || field.type === "image";
                     return (
                       <div key={field.key} className={wide ? "lg:col-span-2" : undefined}>
-                        <Label htmlFor={inputId} className="text-[11px] font-semibold text-muted-foreground">
-                          {field.label}{field.required ? " *" : ""}
+                        <Label
+                          htmlFor={inputId}
+                          className="text-[11px] font-semibold text-muted-foreground"
+                        >
+                          {field.label}
+                          {field.required ? " *" : ""}
                         </Label>
 
                         {field.type === "boolean" ? (
                           <div className="mt-1.5 flex min-h-11 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5">
                             <span className="text-[11px] font-medium text-foreground">
-                              {Boolean(value) ? "مفعّل" : "غير مفعّل"}
+                              {value ? "مفعّل" : "غير مفعّل"}
                             </span>
                             <Switch
                               id={inputId}
@@ -330,7 +335,9 @@ export function CollectionEditor({
                             onChange={(event) => setValue(editorKey, field.key, event.target.value)}
                           >
                             {(field.options ?? []).map((option) => (
-                              <option key={option.value} value={option.value}>{option.label}</option>
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
                             ))}
                           </select>
                         ) : field.type === "image" ? (
@@ -341,10 +348,16 @@ export function CollectionEditor({
                                 className="h-11 rounded-xl border-border/70 bg-background"
                                 value={String(value ?? "")}
                                 placeholder="رابط الصورة"
-                                onChange={(event) => setValue(editorKey, field.key, event.target.value)}
+                                onChange={(event) =>
+                                  setValue(editorKey, field.key, event.target.value)
+                                }
                               />
                               <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-bold transition hover:bg-muted">
-                                {uploadingKey === `${editorKey}:${field.key}` ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                                {uploadingKey === `${editorKey}:${field.key}` ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                  <Upload className="size-4" />
+                                )}
                                 رفع صورة
                                 <input
                                   type="file"
@@ -360,7 +373,11 @@ export function CollectionEditor({
                             </div>
                             {value ? (
                               <div className="mt-3 overflow-hidden rounded-xl border border-border/60 bg-white p-2">
-                                <img src={String(value)} alt="" className="h-28 w-full object-contain" />
+                                <img
+                                  src={String(value)}
+                                  alt=""
+                                  className="h-28 w-full object-contain"
+                                />
                               </div>
                             ) : null}
                           </div>
@@ -375,7 +392,9 @@ export function CollectionEditor({
                               setValue(
                                 editorKey,
                                 field.key,
-                                field.type === "number" ? Number(event.target.value) : event.target.value,
+                                field.type === "number"
+                                  ? Number(event.target.value)
+                                  : event.target.value,
                               )
                             }
                           />

@@ -60,12 +60,15 @@ export function CustomersEditor() {
     );
   }, [customers, search]);
 
-  const stats = useMemo(() => ({
-    total: customers.length,
-    vip: customers.filter((customer) => customer.is_vip).length,
-    blocked: customers.filter((customer) => customer.is_blocked).length,
-    spent: customers.reduce((sum, customer) => sum + Number(customer.total_spent || 0), 0),
-  }), [customers]);
+  const stats = useMemo(
+    () => ({
+      total: customers.length,
+      vip: customers.filter((customer) => customer.is_vip).length,
+      blocked: customers.filter((customer) => customer.is_blocked).length,
+      spent: customers.reduce((sum, customer) => sum + Number(customer.total_spent || 0), 0),
+    }),
+    [customers],
+  );
 
   const loadCustomers = async () => {
     setLoading(true);
@@ -108,7 +111,9 @@ export function CustomersEditor() {
   const patchSelected = (patch: Partial<Customer>) => {
     if (!selectedId) return;
     setCustomers((current) =>
-      current.map((customer) => customer.id === selectedId ? { ...customer, ...patch } : customer),
+      current.map((customer) =>
+        customer.id === selectedId ? { ...customer, ...patch } : customer,
+      ),
     );
   };
 
@@ -143,8 +148,17 @@ export function CustomersEditor() {
             ملفات العملاء، قيمة مشترياتهم، آخر طلب، الملاحظات الداخلية ووسوم VIP/Blocked.
           </p>
         </div>
-        <Button variant="outline" className="rounded-xl" onClick={() => void loadCustomers()} disabled={loading}>
-          {loading ? <Loader2 className="me-2 size-4 animate-spin" /> : <RefreshCw className="me-2 size-4" />}
+        <Button
+          variant="outline"
+          className="rounded-xl"
+          onClick={() => void loadCustomers()}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="me-2 size-4 animate-spin" />
+          ) : (
+            <RefreshCw className="me-2 size-4" />
+          )}
           تحديث
         </Button>
       </header>
@@ -160,51 +174,78 @@ export function CustomersEditor() {
         <aside className="rounded-2xl border border-border/70 bg-card p-3 xl:sticky xl:top-24 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto">
           <div className="relative">
             <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="الاسم، الهاتف، البريد أو الوسم…" className="h-10 rounded-xl pe-9" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="الاسم، الهاتف، البريد أو الوسم…"
+              className="h-10 rounded-xl pe-9"
+            />
           </div>
           <div className="mt-3 space-y-1.5">
             {loading ? (
-              <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
+              <div className="flex justify-center py-8">
+                <Loader2 className="size-5 animate-spin" />
+              </div>
             ) : filtered.length === 0 ? (
-              <p className="px-2 py-8 text-center text-xs text-muted-foreground">لا يوجد عملاء بعد.</p>
-            ) : filtered.map((customer) => (
-              <button
-                key={customer.id}
-                type="button"
-                onClick={() => void selectCustomer(customer)}
-                className={`w-full rounded-xl px-3 py-3 text-start transition ${selectedId === customer.id ? "bg-foreground text-background" : "hover:bg-muted"}`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-xs font-black">{customer.name}</p>
-                  <div className="flex items-center gap-1">
-                    {customer.is_vip ? <Crown className="size-3.5" /> : null}
-                    {customer.is_blocked ? <ShieldBan className="size-3.5" /> : null}
+              <p className="px-2 py-8 text-center text-xs text-muted-foreground">
+                لا يوجد عملاء بعد.
+              </p>
+            ) : (
+              filtered.map((customer) => (
+                <button
+                  key={customer.id}
+                  type="button"
+                  onClick={() => void selectCustomer(customer)}
+                  className={`w-full rounded-xl px-3 py-3 text-start transition ${selectedId === customer.id ? "bg-foreground text-background" : "hover:bg-muted"}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-xs font-black">{customer.name}</p>
+                    <div className="flex items-center gap-1">
+                      {customer.is_vip ? <Crown className="size-3.5" /> : null}
+                      {customer.is_blocked ? <ShieldBan className="size-3.5" /> : null}
+                    </div>
                   </div>
-                </div>
-                <p className="mt-1 text-[10px] opacity-70">{customer.phone}</p>
-                <div className="mt-1 flex items-center justify-between gap-2 text-[10px] opacity-70">
-                  <span>{customer.total_orders} طلب</span>
-                  <span>{formatPrice(customer.total_spent, "USD")}</span>
-                </div>
-              </button>
-            ))}
+                  <p className="mt-1 text-[10px] opacity-70">{customer.phone}</p>
+                  <div className="mt-1 flex items-center justify-between gap-2 text-[10px] opacity-70">
+                    <span>{customer.total_orders} طلب</span>
+                    <span>{formatPrice(customer.total_spent, "USD")}</span>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </aside>
 
         {!selected ? (
           <div className="grid min-h-80 place-items-center rounded-2xl border border-dashed border-border bg-card text-sm text-muted-foreground">
-            <div className="text-center"><UserRound className="mx-auto mb-2 size-6" />اختر عميلاً لعرض ملفه.</div>
+            <div className="text-center">
+              <UserRound className="mx-auto mb-2 size-6" />
+              اختر عميلاً لعرض ملفه.
+            </div>
           </div>
         ) : (
           <div className="space-y-5">
             <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-4 sm:px-5">
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">Customer Profile</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground">
+                    Customer Profile
+                  </p>
                   <h2 className="text-base font-black">{selected.name}</h2>
                 </div>
-                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => void saveCustomer()} disabled={saving}>
-                  {saving ? <Loader2 className="me-1.5 size-3.5 animate-spin" /> : <Save className="me-1.5 size-3.5" />} حفظ الملف
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl"
+                  onClick={() => void saveCustomer()}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <Loader2 className="me-1.5 size-3.5 animate-spin" />
+                  ) : (
+                    <Save className="me-1.5 size-3.5" />
+                  )}{" "}
+                  حفظ الملف
                 </Button>
               </div>
 
@@ -218,12 +259,22 @@ export function CustomersEditor() {
 
                 <div className="md:col-span-2 grid gap-3 sm:grid-cols-2">
                   <label className="flex min-h-12 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-semibold">
-                    <span className="flex items-center gap-2"><Crown className="size-4" /> VIP Customer</span>
-                    <Switch checked={selected.is_vip} onCheckedChange={(checked) => patchSelected({ is_vip: checked })} />
+                    <span className="flex items-center gap-2">
+                      <Crown className="size-4" /> VIP Customer
+                    </span>
+                    <Switch
+                      checked={selected.is_vip}
+                      onCheckedChange={(checked) => patchSelected({ is_vip: checked })}
+                    />
                   </label>
                   <label className="flex min-h-12 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-semibold">
-                    <span className="flex items-center gap-2"><ShieldBan className="size-4" /> Blocked</span>
-                    <Switch checked={selected.is_blocked} onCheckedChange={(checked) => patchSelected({ is_blocked: checked })} />
+                    <span className="flex items-center gap-2">
+                      <ShieldBan className="size-4" /> Blocked
+                    </span>
+                    <Switch
+                      checked={selected.is_blocked}
+                      onCheckedChange={(checked) => patchSelected({ is_blocked: checked })}
+                    />
                   </label>
                 </div>
 
@@ -233,7 +284,14 @@ export function CustomersEditor() {
                     className="mt-1.5 rounded-xl"
                     value={(selected.tags ?? []).join(", ")}
                     placeholder="VIP, wholesale, repeat-customer"
-                    onChange={(event) => patchSelected({ tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })}
+                    onChange={(event) =>
+                      patchSelected({
+                        tags: event.target.value
+                          .split(",")
+                          .map((tag) => tag.trim())
+                          .filter(Boolean),
+                      })
+                    }
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -251,23 +309,38 @@ export function CustomersEditor() {
             <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
               <div className="border-b border-border/60 px-4 py-4 sm:px-5">
                 <h3 className="text-sm font-black">سجل الطلبات</h3>
-                <p className="mt-1 text-[10px] text-muted-foreground">آخر 100 طلب مرتبط برقم العميل.</p>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  آخر 100 طلب مرتبط برقم العميل.
+                </p>
               </div>
               {loadingOrders ? (
-                <div className="flex justify-center py-10"><Loader2 className="size-5 animate-spin" /></div>
+                <div className="flex justify-center py-10">
+                  <Loader2 className="size-5 animate-spin" />
+                </div>
               ) : orders.length === 0 ? (
-                <p className="py-10 text-center text-xs text-muted-foreground">لا يوجد سجل طلبات.</p>
+                <p className="py-10 text-center text-xs text-muted-foreground">
+                  لا يوجد سجل طلبات.
+                </p>
               ) : (
                 <div className="divide-y divide-border/60">
                   {orders.map((order) => (
-                    <div key={order.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
+                    <div
+                      key={order.id}
+                      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5"
+                    >
                       <div>
                         <p className="text-xs font-black">طلب #{order.order_number}</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">{new Date(order.created_at).toLocaleString("ar-LB")}</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {new Date(order.created_at).toLocaleString("ar-LB")}
+                        </p>
                       </div>
                       <div className="text-left">
-                        <p className="text-xs font-black">{formatPrice(order.total, order.currency)}</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">{order.status} • {order.payment_status}</p>
+                        <p className="text-xs font-black">
+                          {formatPrice(order.total, order.currency)}
+                        </p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {order.status} • {order.payment_status}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -282,9 +355,19 @@ export function CustomersEditor() {
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-2xl border border-border/70 bg-card p-4"><p className="text-[10px] font-semibold text-muted-foreground">{label}</p><p className="mt-2 text-xl font-black">{value}</p></div>;
+  return (
+    <div className="rounded-2xl border border-border/70 bg-card p-4">
+      <p className="text-[10px] font-semibold text-muted-foreground">{label}</p>
+      <p className="mt-2 text-xl font-black">{value}</p>
+    </div>
+  );
 }
 
 function Info({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-xl border border-border/70 bg-muted/20 p-3"><p className="text-[10px] font-semibold text-muted-foreground">{label}</p><p className="mt-1 break-words text-xs font-semibold">{value}</p></div>;
+  return (
+    <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
+      <p className="text-[10px] font-semibold text-muted-foreground">{label}</p>
+      <p className="mt-1 break-words text-xs font-semibold">{value}</p>
+    </div>
+  );
 }

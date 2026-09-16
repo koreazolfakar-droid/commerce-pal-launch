@@ -142,9 +142,18 @@ export function ProductEditor() {
   const loadBase = async () => {
     setLoading(true);
     const [productsResult, brandsResult, categoriesResult] = await Promise.all([
-      supabase.from("store_products" as never).select("*").order("updated_at", { ascending: false }),
-      supabase.from("cms_brands" as never).select("id,name").order("name"),
-      supabase.from("store_categories" as never).select("id,name").order("sort_order"),
+      supabase
+        .from("store_products" as never)
+        .select("*")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("cms_brands" as never)
+        .select("id,name")
+        .order("name"),
+      supabase
+        .from("store_categories" as never)
+        .select("id,name")
+        .order("sort_order"),
     ]);
 
     const firstError = productsResult.error || brandsResult.error || categoriesResult.error;
@@ -242,11 +251,17 @@ export function ProductEditor() {
       seo_description: editing.seo_description?.trim() || null,
       sort_order: Number(editing.sort_order) || 0,
       published_at:
-        editing.status === "active" ? editing.published_at ?? new Date().toISOString() : editing.published_at,
+        editing.status === "active"
+          ? (editing.published_at ?? new Date().toISOString())
+          : editing.published_at,
     };
 
     const result = editing.isDraft
-      ? await supabase.from("store_products" as never).insert(payload as never).select("*").single()
+      ? await supabase
+          .from("store_products" as never)
+          .insert(payload as never)
+          .select("*")
+          .single()
       : await supabase
           .from("store_products" as never)
           .update(payload as never)
@@ -274,7 +289,10 @@ export function ProductEditor() {
       return;
     }
     if (!window.confirm(`حذف ${editing.title} نهائياً؟`)) return;
-    const { error } = await supabase.from("store_products" as never).delete().eq("id", editing.id);
+    const { error } = await supabase
+      .from("store_products" as never)
+      .delete()
+      .eq("id", editing.id);
     if (error) {
       toast.error(error.message);
       return;
@@ -312,7 +330,9 @@ export function ProductEditor() {
   };
 
   const patchVariant = (id: string, patch: Partial<Variant>) => {
-    setVariants((current) => current.map((variant) => (variant.id === id ? { ...variant, ...patch } : variant)));
+    setVariants((current) =>
+      current.map((variant) => (variant.id === id ? { ...variant, ...patch } : variant)),
+    );
   };
 
   const saveVariant = async (variant: Variant) => {
@@ -346,7 +366,10 @@ export function ProductEditor() {
 
   const deleteVariant = async (id: string) => {
     if (!window.confirm("حذف الـ Variant؟")) return;
-    const { error } = await supabase.from("store_product_variants" as never).delete().eq("id", id);
+    const { error } = await supabase
+      .from("store_product_variants" as never)
+      .delete()
+      .eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
@@ -407,7 +430,10 @@ export function ProductEditor() {
   };
 
   const deleteImage = async (id: string) => {
-    const { error } = await supabase.from("store_product_images" as never).delete().eq("id", id);
+    const { error } = await supabase
+      .from("store_product_images" as never)
+      .delete()
+      .eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
@@ -434,17 +460,27 @@ export function ProductEditor() {
             إدارة المنتجات والأسعار والـ Variants والصور والمخزون مباشرة من Supabase بدون Shopify.
           </p>
         </div>
-        <Button onClick={startDraft} className="rounded-xl bg-foreground text-background hover:bg-foreground/90">
+        <Button
+          onClick={startDraft}
+          className="rounded-xl bg-foreground text-background hover:bg-foreground/90"
+        >
           <PackagePlus className="me-2 size-4" /> منتج جديد
         </Button>
       </header>
 
       <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="rounded-2xl border border-border/70 bg-card p-3 xl:sticky xl:top-24 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto">
-          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="بحث بالاسم أو handle…" className="h-10 rounded-xl" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="بحث بالاسم أو handle…"
+            className="h-10 rounded-xl"
+          />
           <div className="mt-3 space-y-1.5">
             {filteredProducts.length === 0 ? (
-              <p className="px-2 py-6 text-center text-xs text-muted-foreground">لا توجد منتجات بعد.</p>
+              <p className="px-2 py-6 text-center text-xs text-muted-foreground">
+                لا توجد منتجات بعد.
+              </p>
             ) : (
               filteredProducts.map((product) => (
                 <button
@@ -477,88 +513,376 @@ export function ProductEditor() {
                   <h2 className="text-sm font-black">{editing.title || "منتج جديد"}</h2>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="rounded-xl" onClick={() => void saveProduct()} disabled={saving}>
-                    {saving ? <Loader2 className="me-1.5 size-3.5 animate-spin" /> : <Save className="me-1.5 size-3.5" />} حفظ
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl"
+                    onClick={() => void saveProduct()}
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <Loader2 className="me-1.5 size-3.5 animate-spin" />
+                    ) : (
+                      <Save className="me-1.5 size-3.5" />
+                    )}{" "}
+                    حفظ
                   </Button>
-                  <Button variant="ghost" size="icon" className="rounded-xl text-destructive" onClick={() => void deleteProduct()}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-xl text-destructive"
+                    onClick={() => void deleteProduct()}
+                  >
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
               </div>
 
               <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-2">
-                <Field label="اسم المنتج *"><Input value={editing.title} onChange={(e) => patchProduct({ title: e.target.value, ...(editing.isDraft && !editing.handle ? { handle: slugify(e.target.value) } : {}) })} /></Field>
-                <Field label="Handle *"><Input value={editing.handle} onChange={(e) => patchProduct({ handle: slugify(e.target.value) })} /></Field>
-                <Field label="الاسم بالعربي"><Input value={editing.title_ar ?? ""} onChange={(e) => patchProduct({ title_ar: e.target.value })} /></Field>
-                <Field label="نوع المنتج"><Input value={editing.product_type ?? ""} onChange={(e) => patchProduct({ product_type: e.target.value })} placeholder="Smartphone" /></Field>
+                <Field label="اسم المنتج *">
+                  <Input
+                    value={editing.title}
+                    onChange={(e) =>
+                      patchProduct({
+                        title: e.target.value,
+                        ...(editing.isDraft && !editing.handle
+                          ? { handle: slugify(e.target.value) }
+                          : {}),
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Handle *">
+                  <Input
+                    value={editing.handle}
+                    onChange={(e) => patchProduct({ handle: slugify(e.target.value) })}
+                  />
+                </Field>
+                <Field label="الاسم بالعربي">
+                  <Input
+                    value={editing.title_ar ?? ""}
+                    onChange={(e) => patchProduct({ title_ar: e.target.value })}
+                  />
+                </Field>
+                <Field label="نوع المنتج">
+                  <Input
+                    value={editing.product_type ?? ""}
+                    onChange={(e) => patchProduct({ product_type: e.target.value })}
+                    placeholder="Smartphone"
+                  />
+                </Field>
                 <Field label="البراند">
-                  <select value={editing.brand_id ?? ""} onChange={(e) => patchProduct({ brand_id: e.target.value || null })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                    <option value="">بدون براند</option>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
+                  <select
+                    value={editing.brand_id ?? ""}
+                    onChange={(e) => patchProduct({ brand_id: e.target.value || null })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">بدون براند</option>
+                    {brands.map((brand) => (
+                      <option key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </option>
+                    ))}
                   </select>
                 </Field>
                 <Field label="التصنيف">
-                  <select value={editing.category_id ?? ""} onChange={(e) => patchProduct({ category_id: e.target.value || null })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                    <option value="">بدون تصنيف</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                  <select
+                    value={editing.category_id ?? ""}
+                    onChange={(e) => patchProduct({ category_id: e.target.value || null })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">بدون تصنيف</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
                   </select>
                 </Field>
                 <Field label="الحالة">
-                  <select value={editing.status} onChange={(e) => patchProduct({ status: e.target.value as ProductStatus })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                    <option value="draft">Draft</option><option value="active">Active</option><option value="archived">Archived</option>
+                  <select
+                    value={editing.status}
+                    onChange={(e) => patchProduct({ status: e.target.value as ProductStatus })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="active">Active</option>
+                    <option value="archived">Archived</option>
                   </select>
                 </Field>
-                <Field label="العملة"><Input value={editing.currency} maxLength={3} onChange={(e) => patchProduct({ currency: e.target.value.toUpperCase() })} /></Field>
-                <Field label="السعر الأساسي"><Input type="number" step="0.01" value={editing.base_price} onChange={(e) => patchProduct({ base_price: Number(e.target.value) })} /></Field>
-                <Field label="Compare at"><Input type="number" step="0.01" value={editing.compare_at_price ?? ""} onChange={(e) => patchProduct({ compare_at_price: numberOrNull(e.target.value) })} /></Field>
-                <Field label="المخزون الحالي"><Input value={editing.stock_quantity} readOnly className="bg-muted/40" /></Field>
-                <Field label="الترتيب"><Input type="number" value={editing.sort_order} onChange={(e) => patchProduct({ sort_order: Number(e.target.value) })} /></Field>
-                <div className="md:col-span-2"><Field label="الوصف"><Textarea rows={5} value={editing.description} onChange={(e) => patchProduct({ description: e.target.value })} /></Field></div>
-                <div className="md:col-span-2"><Field label="الوصف بالعربي"><Textarea rows={4} value={editing.description_ar ?? ""} onChange={(e) => patchProduct({ description_ar: e.target.value })} /></Field></div>
-                <div className="md:col-span-2"><Field label="Tags (مفصولة بفواصل)"><Input value={editing.tagsText} onChange={(e) => patchProduct({ tagsText: e.target.value })} /></Field></div>
-                <div className="md:col-span-2"><Field label="Specifications JSON"><Textarea rows={7} className="font-mono text-xs" value={editing.specificationsText} onChange={(e) => patchProduct({ specificationsText: e.target.value })} /></Field></div>
-                <Field label="SEO Title"><Input value={editing.seo_title ?? ""} onChange={(e) => patchProduct({ seo_title: e.target.value })} /></Field>
-                <Field label="SEO Description"><Input value={editing.seo_description ?? ""} onChange={(e) => patchProduct({ seo_description: e.target.value })} /></Field>
-                <ToggleField label="Featured" checked={editing.featured} onChange={(checked) => patchProduct({ featured: checked })} />
-                <ToggleField label="Best seller" checked={editing.best_seller} onChange={(checked) => patchProduct({ best_seller: checked })} />
+                <Field label="العملة">
+                  <Input
+                    value={editing.currency}
+                    maxLength={3}
+                    onChange={(e) => patchProduct({ currency: e.target.value.toUpperCase() })}
+                  />
+                </Field>
+                <Field label="السعر الأساسي">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editing.base_price}
+                    onChange={(e) => patchProduct({ base_price: Number(e.target.value) })}
+                  />
+                </Field>
+                <Field label="Compare at">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editing.compare_at_price ?? ""}
+                    onChange={(e) =>
+                      patchProduct({ compare_at_price: numberOrNull(e.target.value) })
+                    }
+                  />
+                </Field>
+                <Field label="المخزون الحالي">
+                  <Input value={editing.stock_quantity} readOnly className="bg-muted/40" />
+                </Field>
+                <Field label="الترتيب">
+                  <Input
+                    type="number"
+                    value={editing.sort_order}
+                    onChange={(e) => patchProduct({ sort_order: Number(e.target.value) })}
+                  />
+                </Field>
+                <div className="md:col-span-2">
+                  <Field label="الوصف">
+                    <Textarea
+                      rows={5}
+                      value={editing.description}
+                      onChange={(e) => patchProduct({ description: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <div className="md:col-span-2">
+                  <Field label="الوصف بالعربي">
+                    <Textarea
+                      rows={4}
+                      value={editing.description_ar ?? ""}
+                      onChange={(e) => patchProduct({ description_ar: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <div className="md:col-span-2">
+                  <Field label="Tags (مفصولة بفواصل)">
+                    <Input
+                      value={editing.tagsText}
+                      onChange={(e) => patchProduct({ tagsText: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <div className="md:col-span-2">
+                  <Field label="Specifications JSON">
+                    <Textarea
+                      rows={7}
+                      className="font-mono text-xs"
+                      value={editing.specificationsText}
+                      onChange={(e) => patchProduct({ specificationsText: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <Field label="SEO Title">
+                  <Input
+                    value={editing.seo_title ?? ""}
+                    onChange={(e) => patchProduct({ seo_title: e.target.value })}
+                  />
+                </Field>
+                <Field label="SEO Description">
+                  <Input
+                    value={editing.seo_description ?? ""}
+                    onChange={(e) => patchProduct({ seo_description: e.target.value })}
+                  />
+                </Field>
+                <ToggleField
+                  label="Featured"
+                  checked={editing.featured}
+                  onChange={(checked) => patchProduct({ featured: checked })}
+                />
+                <ToggleField
+                  label="Best seller"
+                  checked={editing.best_seller}
+                  onChange={(checked) => patchProduct({ best_seller: checked })}
+                />
               </div>
             </article>
 
             <article className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3">
-                <div><h3 className="text-sm font-black">Variants والمخزون</h3><p className="mt-1 text-xs text-muted-foreground">السعر والمخزون الحقيقيان يُحسبان من الـVariants.</p></div>
-                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => void addVariant()}><Plus className="me-1.5 size-4" /> Variant</Button>
+                <div>
+                  <h3 className="text-sm font-black">Variants والمخزون</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    السعر والمخزون الحقيقيان يُحسبان من الـVariants.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl"
+                  onClick={() => void addVariant()}
+                >
+                  <Plus className="me-1.5 size-4" /> Variant
+                </Button>
               </div>
               <div className="mt-4 space-y-3">
-                {variants.length === 0 ? <p className="rounded-xl border border-dashed p-5 text-center text-xs text-muted-foreground">لا يوجد Variants بعد.</p> : variants.map((variant) => (
-                  <div key={variant.id} className="rounded-xl border border-border/70 p-3">
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                      <Field label="Title"><Input value={variant.title} onChange={(e) => patchVariant(variant.id, { title: e.target.value })} /></Field>
-                      <Field label="SKU"><Input value={variant.sku ?? ""} onChange={(e) => patchVariant(variant.id, { sku: e.target.value })} /></Field>
-                      <Field label="Barcode"><Input value={variant.barcode ?? ""} onChange={(e) => patchVariant(variant.id, { barcode: e.target.value })} /></Field>
-                      <Field label="Price"><Input type="number" step="0.01" value={variant.price} onChange={(e) => patchVariant(variant.id, { price: Number(e.target.value) })} /></Field>
-                      <Field label="Compare at"><Input type="number" step="0.01" value={variant.compare_at_price ?? ""} onChange={(e) => patchVariant(variant.id, { compare_at_price: numberOrNull(e.target.value) })} /></Field>
-                      <Field label="Stock"><Input type="number" value={variant.stock_quantity} onChange={(e) => patchVariant(variant.id, { stock_quantity: Math.max(0, Number(e.target.value)) })} /></Field>
-                      <Field label="Options JSON"><Input value={JSON.stringify(variant.options ?? {})} onChange={(e) => { try { patchVariant(variant.id, { options: JSON.parse(e.target.value || "{}") }); } catch { /* keep previous valid value */ } }} /></Field>
-                      <ToggleField label="Active" checked={variant.is_active} onChange={(checked) => patchVariant(variant.id, { is_active: checked })} />
+                {variants.length === 0 ? (
+                  <p className="rounded-xl border border-dashed p-5 text-center text-xs text-muted-foreground">
+                    لا يوجد Variants بعد.
+                  </p>
+                ) : (
+                  variants.map((variant) => (
+                    <div key={variant.id} className="rounded-xl border border-border/70 p-3">
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <Field label="Title">
+                          <Input
+                            value={variant.title}
+                            onChange={(e) => patchVariant(variant.id, { title: e.target.value })}
+                          />
+                        </Field>
+                        <Field label="SKU">
+                          <Input
+                            value={variant.sku ?? ""}
+                            onChange={(e) => patchVariant(variant.id, { sku: e.target.value })}
+                          />
+                        </Field>
+                        <Field label="Barcode">
+                          <Input
+                            value={variant.barcode ?? ""}
+                            onChange={(e) => patchVariant(variant.id, { barcode: e.target.value })}
+                          />
+                        </Field>
+                        <Field label="Price">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={variant.price}
+                            onChange={(e) =>
+                              patchVariant(variant.id, { price: Number(e.target.value) })
+                            }
+                          />
+                        </Field>
+                        <Field label="Compare at">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={variant.compare_at_price ?? ""}
+                            onChange={(e) =>
+                              patchVariant(variant.id, {
+                                compare_at_price: numberOrNull(e.target.value),
+                              })
+                            }
+                          />
+                        </Field>
+                        <Field label="Stock">
+                          <Input
+                            type="number"
+                            value={variant.stock_quantity}
+                            onChange={(e) =>
+                              patchVariant(variant.id, {
+                                stock_quantity: Math.max(0, Number(e.target.value)),
+                              })
+                            }
+                          />
+                        </Field>
+                        <Field label="Options JSON">
+                          <Input
+                            value={JSON.stringify(variant.options ?? {})}
+                            onChange={(e) => {
+                              try {
+                                patchVariant(variant.id, {
+                                  options: JSON.parse(e.target.value || "{}"),
+                                });
+                              } catch {
+                                /* keep previous valid value */
+                              }
+                            }}
+                          />
+                        </Field>
+                        <ToggleField
+                          label="Active"
+                          checked={variant.is_active}
+                          onChange={(checked) => patchVariant(variant.id, { is_active: checked })}
+                        />
+                      </div>
+                      <div className="mt-3 flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void saveVariant(variant)}
+                        >
+                          <Save className="me-1.5 size-3.5" /> حفظ
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => void deleteVariant(variant.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="mt-3 flex justify-end gap-2"><Button size="sm" variant="outline" onClick={() => void saveVariant(variant)}><Save className="me-1.5 size-3.5" /> حفظ</Button><Button size="icon" variant="ghost" className="text-destructive" onClick={() => void deleteVariant(variant.id)}><Trash2 className="size-4" /></Button></div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </article>
 
             <article className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div><h3 className="text-sm font-black">صور المنتج</h3><p className="mt-1 text-xs text-muted-foreground">الصور تُحفظ مباشرة في Supabase Storage.</p></div>
+                <div>
+                  <h3 className="text-sm font-black">صور المنتج</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    الصور تُحفظ مباشرة في Supabase Storage.
+                  </p>
+                </div>
                 <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-xl border border-border px-3 text-xs font-bold hover:bg-muted">
-                  {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />} رفع صورة
-                  <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadProductImage(file); e.target.value = ""; }} />
+                  {uploading ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <ImagePlus className="size-4" />
+                  )}{" "}
+                  رفع صورة
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void uploadProductImage(file);
+                      e.target.value = "";
+                    }}
+                  />
                 </label>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {images.map((image) => (
-                  <div key={image.id} className={`overflow-hidden rounded-xl border ${image.is_primary ? "border-foreground" : "border-border"}`}>
-                    <div className="aspect-square bg-white p-2"><img src={image.url} alt={image.alt_text ?? ""} className="h-full w-full object-contain" /></div>
-                    <div className="flex items-center justify-between gap-1 border-t p-2"><button type="button" onClick={() => void setPrimaryImage(image.id)} className="truncate text-[10px] font-bold">{image.is_primary ? "الرئيسية" : "اجعلها رئيسية"}</button><button type="button" className="text-destructive" onClick={() => void deleteImage(image.id)}><Trash2 className="size-3.5" /></button></div>
+                  <div
+                    key={image.id}
+                    className={`overflow-hidden rounded-xl border ${image.is_primary ? "border-foreground" : "border-border"}`}
+                  >
+                    <div className="aspect-square bg-white p-2">
+                      <img
+                        src={image.url}
+                        alt={image.alt_text ?? ""}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-1 border-t p-2">
+                      <button
+                        type="button"
+                        onClick={() => void setPrimaryImage(image.id)}
+                        className="truncate text-[10px] font-bold"
+                      >
+                        {image.is_primary ? "الرئيسية" : "اجعلها رئيسية"}
+                      </button>
+                      <button
+                        type="button"
+                        className="text-destructive"
+                        onClick={() => void deleteImage(image.id)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -571,9 +895,29 @@ export function ProductEditor() {
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div><Label className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">{label}</Label>{children}</div>;
+  return (
+    <div>
+      <Label className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
 }
 
-function ToggleField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
-  return <div className="flex min-h-10 items-center justify-between rounded-xl border border-border/70 px-3"><span className="text-xs font-semibold">{label}</span><Switch checked={checked} onCheckedChange={onChange} /></div>;
+function ToggleField({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex min-h-10 items-center justify-between rounded-xl border border-border/70 px-3">
+      <span className="text-xs font-semibold">{label}</span>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </div>
+  );
 }

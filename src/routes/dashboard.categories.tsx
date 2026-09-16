@@ -13,7 +13,16 @@ function CategoriesDashboardPage() {
       title="التصنيفات"
       description="إدارة تصنيفات المتجر الأصلية مباشرة من Supabase."
       labelKey="name"
-      newRow={{ name: "", name_ar: "", slug: "", description: "", image_url: null, icon: null, sort_order: 0, is_active: true }}
+      newRow={{
+        name: "",
+        name_ar: "",
+        slug: "",
+        description: "",
+        image_url: null,
+        icon: null,
+        sort_order: 0,
+        is_active: true,
+      }}
       fields={[
         { key: "name", label: "الاسم", type: "text", required: true },
         { key: "name_ar", label: "الاسم بالعربي", type: "text" },

@@ -166,7 +166,9 @@ export function SettingsEditor() {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold text-muted-foreground">Store Settings</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">إعدادات الموقع</h1>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">
+            إعدادات الموقع
+          </h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
             إعدادات الواجهة العامة، واتساب، الإعلانات، ومحتوى الصفحة الرئيسية.
           </p>
@@ -247,7 +249,9 @@ export function SettingsEditor() {
 
                 <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-4">
                   <div>
-                    <Label className="text-[11px] font-semibold text-muted-foreground">المفتاح</Label>
+                    <Label className="text-[11px] font-semibold text-muted-foreground">
+                      المفتاح
+                    </Label>
                     <Input
                       className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
                       list="cms-setting-keys"
@@ -256,7 +260,9 @@ export function SettingsEditor() {
                     />
                   </div>
                   <div>
-                    <Label className="text-[11px] font-semibold text-muted-foreground">الاسم الظاهر</Label>
+                    <Label className="text-[11px] font-semibold text-muted-foreground">
+                      الاسم الظاهر
+                    </Label>
                     <Input
                       className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
                       value={row.label}
@@ -264,7 +270,9 @@ export function SettingsEditor() {
                     />
                   </div>
                   <div>
-                    <Label className="text-[11px] font-semibold text-muted-foreground">المجموعة</Label>
+                    <Label className="text-[11px] font-semibold text-muted-foreground">
+                      المجموعة
+                    </Label>
                     <Input
                       className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs"
                       value={row.groupName}
@@ -272,7 +280,9 @@ export function SettingsEditor() {
                     />
                   </div>
                   <div>
-                    <Label className="text-[11px] font-semibold text-muted-foreground">نوع القيمة</Label>
+                    <Label className="text-[11px] font-semibold text-muted-foreground">
+                      نوع القيمة
+                    </Label>
                     <select
                       className="mt-1.5 h-11 w-full rounded-xl border border-border/70 bg-muted/20 px-3 text-xs font-medium outline-none"
                       value={row.valueType}
@@ -288,7 +298,9 @@ export function SettingsEditor() {
                   </div>
 
                   <div className="sm:col-span-2 xl:col-span-4">
-                    <Label className="text-[11px] font-semibold text-muted-foreground">القيمة</Label>
+                    <Label className="text-[11px] font-semibold text-muted-foreground">
+                      القيمة
+                    </Label>
                     <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-center">
                       {row.valueType === "boolean" ? (
                         <label className="flex min-h-11 flex-1 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-medium">
@@ -339,7 +351,9 @@ export function SettingsEditor() {
                     <label className="flex min-h-11 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5 text-xs font-medium text-foreground">
                       <span>
                         متاح للواجهة العامة
-                        <span className="ms-2 text-[10px] font-normal text-muted-foreground">يظهر عبر public CMS</span>
+                        <span className="ms-2 text-[10px] font-normal text-muted-foreground">
+                          يظهر عبر public CMS
+                        </span>
                       </span>
                       <Switch
                         checked={row.isPublic}

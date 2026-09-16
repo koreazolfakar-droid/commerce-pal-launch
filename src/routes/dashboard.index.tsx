@@ -40,25 +40,26 @@ type StatusCounts = {
 };
 
 async function loadCommerceStats() {
-  const [ordersResult, productsResult, lowStockResult, pendingResult, recentResult] = await Promise.all([
-    supabase.from("store_orders" as never).select("total,status,currency"),
-    supabase.from("store_products" as never).select("id", { count: "exact", head: true }),
-    supabase
-      .from("store_product_variants" as never)
-      .select("id", { count: "exact", head: true })
-      .eq("is_active", true)
-      .eq("track_inventory", true)
-      .lte("stock_quantity", 5),
-    supabase
-      .from("store_orders" as never)
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending"),
-    supabase
-      .from("store_orders" as never)
-      .select("id,order_number,customer_name,status,payment_status,total,currency,created_at")
-      .order("created_at", { ascending: false })
-      .limit(6),
-  ]);
+  const [ordersResult, productsResult, lowStockResult, pendingResult, recentResult] =
+    await Promise.all([
+      supabase.from("store_orders" as never).select("total,status,currency"),
+      supabase.from("store_products" as never).select("id", { count: "exact", head: true }),
+      supabase
+        .from("store_product_variants" as never)
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true)
+        .eq("track_inventory", true)
+        .lte("stock_quantity", 5),
+      supabase
+        .from("store_orders" as never)
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
+      supabase
+        .from("store_orders" as never)
+        .select("id,order_number,customer_name,status,payment_status,total,currency,created_at")
+        .order("created_at", { ascending: false })
+        .limit(6),
+    ]);
 
   const orders = (ordersResult.data ?? []) as Array<{
     total: number | string;
@@ -105,7 +106,9 @@ function MetricCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
-          <p className="mt-2 truncate text-2xl font-black tracking-tight text-foreground">{value}</p>
+          <p className="mt-2 truncate text-2xl font-black tracking-tight text-foreground">
+            {value}
+          </p>
         </div>
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/60 text-foreground">
           <Icon className="size-4" strokeWidth={1.8} />
@@ -194,7 +197,10 @@ function OrderStatusCard({ counts }: { counts: StatusCounts }) {
             entries.slice(0, 4).map((entry) => (
               <div key={entry.key} className="flex items-center justify-between gap-2 text-[10px]">
                 <span className="inline-flex min-w-0 items-center gap-2 text-muted-foreground">
-                  <span className="size-2 shrink-0 rounded-full" style={{ background: entry.color }} />
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ background: entry.color }}
+                  />
                   <span className="truncate">{entry.label}</span>
                 </span>
                 <span className="font-black text-foreground">{entry.value}</span>
@@ -274,7 +280,9 @@ function DashboardOverview() {
               </div>
               <div>
                 <p className="text-[10px] text-white/50">طلبات فعّالة</p>
-                <p className="mt-1 text-sm font-black">{loadingValue ?? String(data?.activeOrderCount ?? 0)}</p>
+                <p className="mt-1 text-sm font-black">
+                  {loadingValue ?? String(data?.activeOrderCount ?? 0)}
+                </p>
               </div>
             </div>
           </div>
@@ -301,7 +309,9 @@ function DashboardOverview() {
           <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-4 sm:px-5">
             <div>
               <h2 className="text-sm font-black text-foreground">آخر الطلبات</h2>
-              <p className="mt-1 text-[10px] text-muted-foreground">أحدث عمليات الشراء المسجلة في المتجر.</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                أحدث عمليات الشراء المسجلة في المتجر.
+              </p>
             </div>
             <Link
               to="/dashboard/orders"
@@ -317,7 +327,9 @@ function DashboardOverview() {
             <div className="p-8 text-center">
               <ShoppingBag className="mx-auto size-6 text-muted-foreground" />
               <p className="mt-2 text-xs font-bold text-foreground">لا توجد طلبات بعد</p>
-              <p className="mt-1 text-[10px] text-muted-foreground">ستظهر الطلبات الجديدة هنا تلقائيًا.</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                ستظهر الطلبات الجديدة هنا تلقائيًا.
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -334,8 +346,12 @@ function DashboardOverview() {
                 <tbody>
                   {data.recentOrders.map((order) => (
                     <tr key={order.id} className="border-b border-border/50 last:border-0">
-                      <td className="px-5 py-4 text-xs font-black text-foreground">#{order.order_number}</td>
-                      <td className="px-4 py-4 text-[11px] font-semibold text-foreground">{order.customer_name}</td>
+                      <td className="px-5 py-4 text-xs font-black text-foreground">
+                        #{order.order_number}
+                      </td>
+                      <td className="px-4 py-4 text-[11px] font-semibold text-foreground">
+                        {order.customer_name}
+                      </td>
                       <td className="px-4 py-4 text-[10px] font-semibold text-muted-foreground">
                         {statusLabel(order.status)}
                       </td>

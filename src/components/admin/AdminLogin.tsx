@@ -110,7 +110,10 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
   };
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground transition-colors duration-300" dir="rtl">
+    <div
+      className="relative min-h-screen bg-background text-foreground transition-colors duration-300"
+      dir="rtl"
+    >
       <div className="fixed left-4 top-4 z-40 sm:left-6 sm:top-6">
         <ThemeToggle className="border border-border/70 bg-card/95 shadow-sm backdrop-blur hover:bg-muted" />
       </div>
@@ -131,7 +134,8 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
             إدارة المتجر محمية بصلاحيات منفصلة عن حسابات العملاء.
           </h1>
           <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground">
-            إنشاء الحسابات الإدارية ومنح الصلاحيات لا يتمان من هذه الصفحة. فقط الحسابات التي تم اعتمادها مسبقاً تستطيع الوصول إلى لوحة التحكم.
+            إنشاء الحسابات الإدارية ومنح الصلاحيات لا يتمان من هذه الصفحة. فقط الحسابات التي تم
+            اعتمادها مسبقاً تستطيع الوصول إلى لوحة التحكم.
           </p>
 
           <div className="mt-8 space-y-3 text-sm">
@@ -139,14 +143,18 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
               <LockKeyhole className="size-5 shrink-0 text-primary" />
               <div>
                 <p className="font-bold text-foreground">صلاحيات RLS محمية</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">لا يمكن للمستخدم منح نفسه Admin أو Editor.</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  لا يمكن للمستخدم منح نفسه Admin أو Editor.
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-background/50 p-4 transition-colors duration-300">
               <Wifi className="size-5 shrink-0 text-primary" />
               <div>
                 <p className="font-bold text-foreground">اتصال Supabase آمن</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">الجلسة والصلاحية يتم التحقق منهما قبل عرض أدوات الإدارة.</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  الجلسة والصلاحية يتم التحقق منهما قبل عرض أدوات الإدارة.
+                </p>
               </div>
             </div>
           </div>
@@ -162,7 +170,9 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
                 <LockKeyhole className="size-5" />
               </span>
               <div>
-                <h1 className="text-xl font-black tracking-tight text-foreground">تسجيل دخول الإدارة</h1>
+                <h1 className="text-xl font-black tracking-tight text-foreground">
+                  تسجيل دخول الإدارة
+                </h1>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
                   الحسابات المعتمدة فقط يمكنها الدخول.
                 </p>
@@ -217,8 +227,16 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
               </div>
             </div>
 
-            <Button type="submit" className="h-12 w-full rounded-xl font-bold" disabled={busy || locked}>
-              {busy ? <Loader2 className="me-2 size-4 animate-spin" /> : <LockKeyhole className="me-2 size-4" />}
+            <Button
+              type="submit"
+              className="h-12 w-full rounded-xl font-bold"
+              disabled={busy || locked}
+            >
+              {busy ? (
+                <Loader2 className="me-2 size-4 animate-spin" />
+              ) : (
+                <LockKeyhole className="me-2 size-4" />
+              )}
               {locked ? `مقفل مؤقتاً · ${secondsLocked}ث` : "دخول آمن"}
             </Button>
 
@@ -227,7 +245,10 @@ export function AdminLogin({ onSignedIn }: { onSignedIn: () => Promise<void> | v
                 <span className="size-1.5 rounded-full bg-emerald-500" />
                 Supabase Auth
               </span>
-              <a href="/" className="inline-flex items-center gap-1 font-semibold hover:text-primary">
+              <a
+                href="/"
+                className="inline-flex items-center gap-1 font-semibold hover:text-primary"
+              >
                 <Store className="size-3.5" /> العودة للمتجر
               </a>
             </div>

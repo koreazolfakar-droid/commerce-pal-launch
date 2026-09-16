@@ -135,18 +135,34 @@ export function OrdersEditor() {
             طلبات Space Call الأصلية من Supabase، مع حالة الطلب والدفع وتفاصيل المنتجات.
           </p>
         </div>
-        <Button variant="outline" className="rounded-xl" onClick={() => void loadOrders()} disabled={loading}>
-          {loading ? <Loader2 className="me-2 size-4 animate-spin" /> : <RefreshCw className="me-2 size-4" />}
+        <Button
+          variant="outline"
+          className="rounded-xl"
+          onClick={() => void loadOrders()}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="me-2 size-4 animate-spin" />
+          ) : (
+            <RefreshCw className="me-2 size-4" />
+          )}
           تحديث
         </Button>
       </header>
 
       <div className="grid gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
         <aside className="rounded-2xl border border-border/70 bg-card p-3 xl:sticky xl:top-24 xl:h-[calc(100vh-8rem)] xl:overflow-y-auto">
-          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="رقم الطلب، الاسم أو الهاتف…" className="h-10 rounded-xl" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="رقم الطلب، الاسم أو الهاتف…"
+            className="h-10 rounded-xl"
+          />
           <div className="mt-3 space-y-1.5">
             {loading ? (
-              <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
+              <div className="flex justify-center py-8">
+                <Loader2 className="size-5 animate-spin" />
+              </div>
             ) : filtered.length === 0 ? (
               <p className="px-2 py-8 text-center text-xs text-muted-foreground">لا توجد طلبات.</p>
             ) : (
@@ -174,7 +190,10 @@ export function OrdersEditor() {
 
         {!selected ? (
           <div className="grid min-h-80 place-items-center rounded-2xl border border-dashed border-border bg-card text-sm text-muted-foreground">
-            <div className="text-center"><ShoppingBag className="mx-auto mb-2 size-6" />اختر طلباً لعرض التفاصيل.</div>
+            <div className="text-center">
+              <ShoppingBag className="mx-auto mb-2 size-6" />
+              اختر طلباً لعرض التفاصيل.
+            </div>
           </div>
         ) : (
           <div className="space-y-5">
@@ -184,8 +203,19 @@ export function OrdersEditor() {
                   <p className="text-[10px] font-semibold text-muted-foreground">Order</p>
                   <h2 className="text-base font-black">طلب #{selected.order_number}</h2>
                 </div>
-                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => void saveOrder()} disabled={saving}>
-                  {saving ? <Loader2 className="me-1.5 size-3.5 animate-spin" /> : <Save className="me-1.5 size-3.5" />} حفظ الحالة
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl"
+                  onClick={() => void saveOrder()}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <Loader2 className="me-1.5 size-3.5 animate-spin" />
+                  ) : (
+                    <Save className="me-1.5 size-3.5" />
+                  )}{" "}
+                  حفظ الحالة
                 </Button>
               </div>
 
@@ -194,48 +224,97 @@ export function OrdersEditor() {
                 <Info label="الهاتف" value={selected.customer_phone} />
                 <Info label="المدينة" value={selected.city || "—"} />
                 <Info label="العنوان" value={selected.delivery_address || "—"} />
-                <Info label="طريقة الدفع" value={selected.payment_method === "whish" ? "Whish Money" : "Cash on delivery"} />
+                <Info
+                  label="طريقة الدفع"
+                  value={selected.payment_method === "whish" ? "Whish Money" : "Cash on delivery"}
+                />
                 <Info label="المصدر" value={selected.source} />
                 <div>
                   <p className="text-[10px] font-semibold text-muted-foreground">حالة الطلب</p>
-                  <select value={selected.status} onChange={(e) => patchSelected({ status: e.target.value as OrderStatus })} className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold">
-                    <option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option>
+                  <select
+                    value={selected.status}
+                    onChange={(e) => patchSelected({ status: e.target.value as OrderStatus })}
+                    className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-muted-foreground">حالة الدفع</p>
-                  <select value={selected.payment_status} onChange={(e) => patchSelected({ payment_status: e.target.value as PaymentStatus })} className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold">
-                    <option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="partially_refunded">Partially refunded</option><option value="refunded">Refunded</option>
+                  <select
+                    value={selected.payment_status}
+                    onChange={(e) =>
+                      patchSelected({ payment_status: e.target.value as PaymentStatus })
+                    }
+                    className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold"
+                  >
+                    <option value="unpaid">Unpaid</option>
+                    <option value="paid">Paid</option>
+                    <option value="partially_refunded">Partially refunded</option>
+                    <option value="refunded">Refunded</option>
                   </select>
                 </div>
-                {selected.notes ? <div className="md:col-span-2"><Info label="ملاحظات" value={selected.notes} /></div> : null}
+                {selected.notes ? (
+                  <div className="md:col-span-2">
+                    <Info label="ملاحظات" value={selected.notes} />
+                  </div>
+                ) : null}
               </div>
             </article>
 
             <article className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
               <h3 className="text-sm font-black">المنتجات</h3>
               {loadingItems ? (
-                <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
+                <div className="flex justify-center py-8">
+                  <Loader2 className="size-5 animate-spin" />
+                </div>
               ) : (
                 <div className="mt-3 divide-y divide-border/60">
                   {items.map((item) => (
-                    <div key={item.id} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                    <div
+                      key={item.id}
+                      className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                    >
                       <div className="min-w-0">
                         <p className="text-xs font-bold">{item.title}</p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">{item.variant_title || "Default"}{item.sku ? ` • SKU ${item.sku}` : ""}</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">{formatPrice(item.unit_price, selected.currency)} × {item.quantity}</p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                          {item.variant_title || "Default"}
+                          {item.sku ? ` • SKU ${item.sku}` : ""}
+                        </p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {formatPrice(item.unit_price, selected.currency)} × {item.quantity}
+                        </p>
                       </div>
-                      <p className="shrink-0 text-xs font-black">{formatPrice(item.line_total, selected.currency)}</p>
+                      <p className="shrink-0 text-xs font-black">
+                        {formatPrice(item.line_total, selected.currency)}
+                      </p>
                     </div>
                   ))}
                 </div>
               )}
 
               <div className="mt-5 space-y-2 border-t border-border/60 pt-4 text-xs">
-                <TotalRow label="Subtotal" value={formatPrice(selected.subtotal, selected.currency)} />
-                <TotalRow label="Shipping" value={formatPrice(selected.shipping_total, selected.currency)} />
-                <TotalRow label="Discount" value={`-${formatPrice(selected.discount_total, selected.currency)}`} />
-                <div className="flex items-center justify-between border-t border-border/60 pt-3 text-base font-black"><span>Total</span><span>{formatPrice(selected.total, selected.currency)}</span></div>
+                <TotalRow
+                  label="Subtotal"
+                  value={formatPrice(selected.subtotal, selected.currency)}
+                />
+                <TotalRow
+                  label="Shipping"
+                  value={formatPrice(selected.shipping_total, selected.currency)}
+                />
+                <TotalRow
+                  label="Discount"
+                  value={`-${formatPrice(selected.discount_total, selected.currency)}`}
+                />
+                <div className="flex items-center justify-between border-t border-border/60 pt-3 text-base font-black">
+                  <span>Total</span>
+                  <span>{formatPrice(selected.total, selected.currency)}</span>
+                </div>
               </div>
             </article>
           </div>
@@ -246,9 +325,19 @@ export function OrdersEditor() {
 }
 
 function Info({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-xl border border-border/70 bg-muted/20 p-3"><p className="text-[10px] font-semibold text-muted-foreground">{label}</p><p className="mt-1 break-words text-xs font-semibold">{value}</p></div>;
+  return (
+    <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
+      <p className="text-[10px] font-semibold text-muted-foreground">{label}</p>
+      <p className="mt-1 break-words text-xs font-semibold">{value}</p>
+    </div>
+  );
 }
 
 function TotalRow({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between text-muted-foreground"><span>{label}</span><span className="font-semibold text-foreground">{value}</span></div>;
+  return (
+    <div className="flex items-center justify-between text-muted-foreground">
+      <span>{label}</span>
+      <span className="font-semibold text-foreground">{value}</span>
+    </div>
+  );
 }
