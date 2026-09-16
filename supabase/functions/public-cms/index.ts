@@ -56,21 +56,27 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // The public storefront reads CMS content only through this service-role
-  // projection. Dashboard users write directly to the same canonical tables,
-  // where RLS limits access to admin/editor staff.
+  // Direct PostgREST reads of CMS source tables are disabled. This server-only
+  // gateway is the sole public projection and exposes only publishable fields.
   const db = createClient(url, secret, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  const nowIso = new Date().toISOString();
 
   const [settingsResult, heroesResult, sectionsResult, navigationResult] = await Promise.all([
-    db.from("cms_settings").select("key,value").order("key"),
+    db
+      .from("cms_site_settings")
+      .select("key,value_text,value_json,value_type")
+      .eq("is_public", true)
+      .order("key"),
     db
       .from("cms_hero_slides")
       .select(
-        "id,title,subtitle,image_url,mobile_image_url,button_label,target_type,target_value,sort_order",
+        "id,title,subtitle,image_url,mobile_image_url,button_label,target_type,target_value,sort_order,starts_at,ends_at",
       )
-      .eq("is_visible", true)
+      .eq("is_published", true)
+      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+      .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
       .order("sort_order"),
     db
       .from("cms_sections")
@@ -79,7 +85,7 @@ Deno.serve(async (req: Request) => {
       .order("page_slug")
       .order("sort_order"),
     db
-      .from("cms_navigation")
+      .from("cms_navigation_items")
       .select("id,area,label,icon_type,icon_value,href,sort_order")
       .eq("is_visible", true)
       .order("area")
@@ -96,14 +102,27 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  const heroSlides = (heroesResult.data ?? [])
+    .filter((row) => typeof row.image_url === "string" && row.image_url.trim())
+    .map(({ starts_at: _startsAt, ends_at: _endsAt, ...slide }) => slide);
+
   const settings = Object.fromEntries(
-    (settingsResult.data ?? []).map((row) => [row.key, row.value]),
+    (settingsResult.data ?? []).map((row) => {
+      let value: unknown = row.value_text;
+      if (row.value_type === "json") value = row.value_json;
+      else if (row.value_type === "boolean") value = row.value_text === "true";
+      else if (row.value_type === "number") {
+        const parsed = Number(row.value_text);
+        value = Number.isFinite(parsed) ? parsed : null;
+      }
+      return [row.key, value];
+    }),
   );
 
   return new Response(
     JSON.stringify({
       settings,
-      heroSlides: heroesResult.data ?? [],
+      heroSlides,
       sections: (sectionsResult.data ?? []).map((row) => ({ ...row, is_visible: true })),
       navigation: (navigationResult.data ?? []).map((row) => ({ ...row, is_visible: true })),
     }),
