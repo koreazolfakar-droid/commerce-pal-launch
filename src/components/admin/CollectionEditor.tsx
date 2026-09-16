@@ -171,71 +171,92 @@ export function CollectionEditor({
   };
 
   return (
-    <section className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+    <section className="space-y-5">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-          {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+          <p className="text-[11px] font-semibold text-muted-foreground">Content Management</p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground">{title}</h1>
+          {description ? (
+            <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">{description}</p>
+          ) : null}
         </div>
-        <Button onClick={() => void addRow()} size="sm">
-          <Plus className="me-1 size-4" /> إضافة
+        <Button
+          onClick={() => void addRow()}
+          size="sm"
+          className="min-h-10 rounded-xl bg-foreground px-4 text-background hover:bg-foreground/90"
+        >
+          <Plus className="me-1.5 size-4" /> إضافة عنصر
         </Button>
       </header>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex min-h-32 items-center justify-center gap-2 rounded-2xl border border-border/70 bg-card text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" /> جاري التحميل…
         </div>
       ) : rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          لا توجد عناصر بعد. اضغط «إضافة» للبدء.
-        </p>
+        <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+          <p className="text-sm font-bold text-foreground">لا توجد عناصر بعد</p>
+          <p className="mt-1 text-xs text-muted-foreground">اضغط «إضافة عنصر» للبدء.</p>
+        </div>
       ) : (
         <div className="space-y-4">
-          {rows.map((row) => {
+          {rows.map((row, index) => {
             const editorKey = String(row[EDITOR_KEY]);
             return (
               <article
                 key={editorKey}
-                className="rounded-xl border border-border bg-card p-4 shadow-sm"
+                className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgb(0_0_0/0.02)]"
               >
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <h2 className="truncate text-sm font-semibold text-foreground">
-                    {String(row[labelKey] ?? "بدون عنوان")}
-                  </h2>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold text-muted-foreground">Item {index + 1}</p>
+                    <h2 className="mt-0.5 truncate text-sm font-black text-foreground">
+                      {String(row[labelKey] ?? "بدون عنوان")}
+                    </h2>
+                  </div>
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
                       variant="outline"
+                      className="min-h-9 rounded-xl"
                       onClick={() => void saveRow(row)}
                       disabled={savingId === editorKey}
                     >
                       {savingId === editorKey ? (
-                        <Loader2 className="me-1 size-4 animate-spin" />
+                        <Loader2 className="me-1.5 size-3.5 animate-spin" />
                       ) : (
-                        <Save className="me-1 size-4" />
+                        <Save className="me-1.5 size-3.5" />
                       )}
                       حفظ
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => void deleteRow(row)}>
-                      <Trash2 className="size-4 text-destructive" />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-9 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => void deleteRow(row)}
+                      aria-label="حذف العنصر"
+                    >
+                      <Trash2 className="size-4" />
                     </Button>
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-2">
                   {fields.map((field) => {
                     const value = row[field.key];
                     const inputId = `${editorKey}-${field.key}`;
-                    const wide = field.type === "textarea" || field.type === "json";
+                    const wide = field.type === "textarea" || field.type === "json" || field.type === "image";
                     return (
-                      <div key={field.key} className={wide ? "sm:col-span-2" : undefined}>
-                        <Label htmlFor={inputId} className="text-xs text-muted-foreground">
+                      <div key={field.key} className={wide ? "lg:col-span-2" : undefined}>
+                        <Label htmlFor={inputId} className="text-[11px] font-semibold text-muted-foreground">
                           {field.label}
                         </Label>
 
                         {field.type === "boolean" ? (
-                          <div className="mt-2">
+                          <div className="mt-1.5 flex min-h-11 items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-3.5">
+                            <span className="text-[11px] font-medium text-foreground">
+                              {Boolean(value) ? "مفعّل" : "غير مفعّل"}
+                            </span>
                             <Switch
                               id={inputId}
                               checked={Boolean(value)}
@@ -245,15 +266,15 @@ export function CollectionEditor({
                         ) : field.type === "textarea" || field.type === "json" ? (
                           <Textarea
                             id={inputId}
-                            className="mt-1 font-mono"
-                            rows={field.type === "json" ? 6 : 3}
+                            className="mt-1.5 rounded-xl border-border/70 bg-muted/20 font-mono text-xs focus-visible:bg-background"
+                            rows={field.type === "json" ? 6 : 4}
                             value={field.type === "json" ? displayJson(value) : String(value ?? "")}
                             onChange={(event) => setValue(editorKey, field.key, event.target.value)}
                           />
                         ) : field.type === "select" ? (
                           <select
                             id={inputId}
-                            className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                            className="mt-1.5 h-11 w-full rounded-xl border border-border/70 bg-muted/20 px-3 text-xs font-medium outline-none transition focus:bg-background focus:ring-2 focus:ring-foreground/5"
                             value={String(value ?? "")}
                             onChange={(event) => setValue(editorKey, field.key, event.target.value)}
                           >
@@ -264,22 +285,22 @@ export function CollectionEditor({
                             ))}
                           </select>
                         ) : field.type === "image" ? (
-                          <div className="mt-1 space-y-2">
-                            <div className="flex items-center gap-2">
+                          <div className="mt-1.5 rounded-2xl border border-dashed border-border bg-muted/15 p-3">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                               <Input
                                 id={inputId}
+                                className="h-11 rounded-xl border-border/70 bg-background"
                                 value={String(value ?? "")}
                                 placeholder="رابط الصورة"
-                                onChange={(event) =>
-                                  setValue(editorKey, field.key, event.target.value)
-                                }
+                                onChange={(event) => setValue(editorKey, field.key, event.target.value)}
                               />
-                              <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-input px-2 py-2 text-xs">
+                              <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-bold transition hover:bg-muted">
                                 {uploadingKey === `${editorKey}:${field.key}` ? (
                                   <Loader2 className="size-4 animate-spin" />
                                 ) : (
                                   <Upload className="size-4" />
                                 )}
+                                رفع صورة
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -293,17 +314,19 @@ export function CollectionEditor({
                               </label>
                             </div>
                             {value ? (
-                              <img
-                                src={String(value)}
-                                alt=""
-                                className="h-20 w-auto rounded-md border border-border bg-white object-contain p-1"
-                              />
+                              <div className="mt-3 overflow-hidden rounded-xl border border-border/60 bg-white p-2">
+                                <img
+                                  src={String(value)}
+                                  alt=""
+                                  className="h-28 w-full object-contain"
+                                />
+                              </div>
                             ) : null}
                           </div>
                         ) : (
                           <Input
                             id={inputId}
-                            className="mt-1"
+                            className="mt-1.5 h-11 rounded-xl border-border/70 bg-muted/20 text-xs focus-visible:bg-background"
                             type={field.type === "number" ? "number" : "text"}
                             value={String(value ?? "")}
                             placeholder={field.placeholder ?? ""}
