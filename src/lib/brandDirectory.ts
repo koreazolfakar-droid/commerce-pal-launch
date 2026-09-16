@@ -1,3 +1,4 @@
+import type { CmsBrand } from "@/lib/cms";
 import type { ShopifyCollection } from "@/lib/shopify";
 import type { CatalogFacet } from "@/lib/taxonomy";
 import { slugify } from "@/lib/taxonomy";
@@ -8,6 +9,7 @@ export interface ShopifyBrand extends CatalogFacet {
   image?: string;
   imageAlt?: string;
   collectionHandle?: string;
+  href?: string;
 }
 
 const GENERIC_VENDOR_LABELS = new Set([
@@ -18,12 +20,6 @@ const GENERIC_VENDOR_LABELS = new Set([
   "unknown",
 ]);
 
-/**
- * Extend the bounded catalogue brand index with every explicit Shopify vendor.
- * The vendor discovery query is intentionally tiny (vendor only), so brands from
- * products outside the homepage's first catalogue page still appear without
- * making the homepage fetch every product card payload.
- */
 export function mergeVendorBrands(brands: CatalogFacet[], vendors: string[]): CatalogFacet[] {
   const merged = new Map(brands.map((brand) => [brand.slug, { ...brand }]));
 
@@ -48,10 +44,6 @@ function looksLikeLogoImage(collection: ShopifyCollection) {
   return /(?:^|[\s_\-/.])logo(?:[\s_\-/.]|$)/.test(evidence);
 }
 
-/**
- * Treat separators as presentation-only so common Shopify naming variations
- * resolve to the same brand. Examples: `UGREEN`, `U Green`, and `u-green`.
- */
 function compactBrandIdentity(value: string) {
   return slugify(value).replace(/-/g, "");
 }
@@ -61,16 +53,6 @@ function dedicatedCollectionBrandIdentity(handle: string) {
   return compactBrandIdentity(withoutPrefix);
 }
 
-/**
- * Resolve a merchant logo in priority order:
- * 1) dedicated `logo-*` / `brand-logo-*` collections;
- * 2) an exact brand collection, preferring artwork explicitly named as a logo.
- *
- * Exact matching is separator-insensitive, so a vendor like `UGREEN` can use a
- * Shopify collection such as `u-green` or `logo-u-green`. The exact collection
- * image is merchant-controlled and is therefore accepted even when its file
- * name or alt text does not contain the word "logo".
- */
 export function buildShopifyBrands(
   brands: CatalogFacet[],
   collections: ShopifyCollection[] | undefined,
@@ -103,4 +85,58 @@ export function buildShopifyBrands(
     }
     return entry;
   });
+}
+
+/**
+ * Dashboard brand rows are an override layer on top of Shopify vendors.
+ * Matching slugs can rename, hide, reorder, relink or replace the logo of a
+ * Shopify brand. CMS-only rows are also allowed for campaign/landing links.
+ */
+export function applyCmsBrands(shopifyBrands: ShopifyBrand[], cmsBrands: CmsBrand[]): ShopifyBrand[] {
+  if (!cmsBrands.length) return shopifyBrands;
+
+  const managed = new Map(cmsBrands.map((brand) => [brand.slug, brand]));
+  const result: Array<ShopifyBrand & { __cmsOrder?: number }> = [];
+  const seen = new Set<string>();
+
+  for (const brand of shopifyBrands) {
+    const override = managed.get(brand.slug);
+    seen.add(brand.slug);
+    if (override && !override.is_visible) continue;
+
+    result.push({
+      ...brand,
+      ...(override?.name?.trim() ? { label: override.name.trim() } : {}),
+      ...(override?.logo_url?.trim() ? { image: override.logo_url.trim() } : {}),
+      ...(override?.href?.trim() ? { href: override.href.trim() } : {}),
+      ...(override ? { __cmsOrder: override.sort_order } : {}),
+    });
+  }
+
+  for (const brand of cmsBrands) {
+    if (seen.has(brand.slug) || !brand.is_visible) continue;
+    result.push({
+      slug: brand.slug,
+      label: brand.name,
+      count: 0,
+      ...(brand.logo_url ? { image: brand.logo_url } : {}),
+      ...(brand.href ? { href: brand.href } : {}),
+      __cmsOrder: brand.sort_order,
+    });
+  }
+
+  return result
+    .map((brand, index) => ({ brand, index }))
+    .sort((a, b) => {
+      const aOrder = a.brand.__cmsOrder;
+      const bOrder = b.brand.__cmsOrder;
+      if (aOrder !== undefined && bOrder !== undefined && aOrder !== bOrder) return aOrder - bOrder;
+      if (aOrder !== undefined && bOrder === undefined) return -1;
+      if (aOrder === undefined && bOrder !== undefined) return 1;
+      return a.index - b.index;
+    })
+    .map(({ brand }) => {
+      const { __cmsOrder: _cmsOrder, ...clean } = brand;
+      return clean;
+    });
 }
