@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
+// This suite also acts as a deployment guard for the read-only Shopify preview path.
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("Shopify dashboard analytics stays explicitly read-only and feature gated", async () => {
