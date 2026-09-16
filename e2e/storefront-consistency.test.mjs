@@ -67,11 +67,12 @@ test("Shopify brand artwork cache refreshes quickly and cannot pin stale logos",
   assert.doesNotMatch(queries, /brand-logo-cache-v4/);
 });
 
-test("shared footer is deterministic and hides technical build data", async () => {
+test("shared footer stays lightweight and hides technical build data", async () => {
   const footer = await source("src/components/SiteFooter.tsx");
   const runtimeFooter = withoutComments(footer);
 
-  assert.doesNotMatch(runtimeFooter, /catalogQueryOptions|shopPoliciesQueryOptions|useQuery\(/);
+  assert.doesNotMatch(runtimeFooter, /catalogQueryOptions|shopPoliciesQueryOptions/);
+  assert.match(runtimeFooter, /cmsQueryOptions/);
   assert.doesNotMatch(runtimeFooter, /STORE_VERSION|app-version|No brands yet|لا توجد علامات بعد/);
   assert.doesNotMatch(runtimeFooter, /wa\.me\//);
   assert.match(runtimeFooter, /FOOTER_SHOP_LINKS/);
