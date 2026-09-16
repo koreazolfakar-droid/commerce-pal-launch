@@ -1,5 +1,6 @@
 /* Space Call Admin — scoped production dashboard visual system.
-   Visual-only: business logic, auth, RLS and commerce data remain outside this stylesheet. */
+   Visual-only: business logic, auth, RLS and commerce data remain outside this stylesheet.
+   The storefront owns the canonical OKLCH theme tokens in styles.css; the dashboard consumes them. */
 
 .spacecall-admin-dashboard {
   --sc-primary: #4f46e5;
@@ -8,27 +9,30 @@
   --sc-blue: #2563eb;
   --sc-sidebar: #0b1428;
   --sc-sidebar-secondary: #111d35;
-  --sc-background: #f5f7fb;
-  --sc-card: #ffffff;
-  --sc-border: #e7eaf0;
-  --sc-text: #0f172a;
-  --sc-muted: #64748b;
   --sc-success: #10b981;
   --sc-warning: #f59e0b;
   --sc-danger: #ef4444;
-  --admin-panel-border: color-mix(in srgb, hsl(var(--border)) 80%, transparent);
-  --admin-shadow: 0 1px 3px rgb(15 23 42 / 0.04);
-  --admin-shadow-hover: 0 12px 28px -24px rgb(15 23 42 / 0.28);
-  background: var(--sc-background);
+  --admin-page-bg: color-mix(in oklab, var(--background) 92%, var(--surface) 8%);
+  --admin-panel-bg: var(--card);
+  --admin-panel-border: color-mix(in oklab, var(--border) 66%, transparent);
+  --admin-panel-border-hover: color-mix(in oklab, var(--border) 88%, transparent);
+  --admin-control-bg: color-mix(in oklab, var(--muted) 24%, var(--card));
+  --admin-soft-bg: color-mix(in oklab, var(--muted) 16%, transparent);
+  --admin-shadow: 0 1px 2px rgb(15 23 42 / 0.035), 0 8px 28px -26px rgb(15 23 42 / 0.2);
+  --admin-shadow-hover: 0 12px 30px -26px rgb(15 23 42 / 0.26);
+  background: var(--admin-page-bg);
   font-variant-numeric: tabular-nums;
 }
 
 .dark .spacecall-admin-dashboard {
-  --sc-background: hsl(var(--background));
-  --admin-panel-border: color-mix(in srgb, hsl(var(--border)) 88%, transparent);
-  --admin-shadow: 0 1px 3px rgb(0 0 0 / 0.18);
-  --admin-shadow-hover: 0 14px 34px -30px rgb(0 0 0 / 0.65);
-  background: hsl(var(--background));
+  --admin-page-bg: var(--background);
+  --admin-panel-bg: var(--card);
+  --admin-panel-border: color-mix(in oklab, var(--border) 78%, transparent);
+  --admin-panel-border-hover: color-mix(in oklab, var(--border) 100%, transparent);
+  --admin-control-bg: color-mix(in oklab, var(--muted) 42%, var(--card));
+  --admin-soft-bg: color-mix(in oklab, var(--muted) 24%, transparent);
+  --admin-shadow: 0 1px 2px rgb(0 0 0 / 0.2), 0 12px 32px -28px rgb(0 0 0 / 0.72);
+  --admin-shadow-hover: 0 16px 38px -30px rgb(0 0 0 / 0.84);
 }
 
 .spacecall-admin-dashboard .spacecall-admin-content {
@@ -44,12 +48,12 @@
 .spacecall-admin-dashboard .admin-page-header {
   min-height: 70px;
   padding: 2px 2px 14px;
-  border-bottom: 1px solid color-mix(in srgb, hsl(var(--border)) 52%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 46%, transparent);
 }
 
 .spacecall-admin-dashboard .admin-page-header > p:first-child,
 .spacecall-admin-dashboard .admin-page-header > div:first-child > p:first-child {
-  color: hsl(var(--muted-foreground) / 0.74);
+  color: color-mix(in oklab, var(--muted-foreground) 78%, transparent);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -58,7 +62,7 @@
 
 .spacecall-admin-dashboard .admin-page-header h1 {
   margin-top: 4px;
-  color: hsl(var(--foreground));
+  color: var(--foreground);
   font-size: clamp(1.45rem, 2vw, 1.9rem);
   font-weight: 900;
   line-height: 1.1;
@@ -69,17 +73,18 @@
 .spacecall-admin-dashboard .admin-page-header > p:last-child {
   max-width: 760px;
   margin-top: 6px;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   font-size: 12px;
   line-height: 1.55;
 }
 
-/* Reference card system */
+/* Reference card system: thin neutral borders and restrained elevation. */
 .spacecall-admin-dashboard .admin-page article,
 .spacecall-admin-dashboard .admin-panel,
 .spacecall-admin-dashboard .admin-list-panel {
   border-color: var(--admin-panel-border) !important;
   border-radius: 16px !important;
+  background-color: var(--admin-panel-bg);
   box-shadow: var(--admin-shadow);
 }
 
@@ -92,14 +97,13 @@
 
 @media (hover: hover) {
   .spacecall-admin-dashboard .admin-page article:hover {
-    border-color: color-mix(in srgb, hsl(var(--border)) 96%, transparent) !important;
+    border-color: var(--admin-panel-border-hover) !important;
     box-shadow: var(--admin-shadow-hover);
   }
 }
 
 /* Editor/list rails */
 .spacecall-admin-dashboard .admin-list-panel {
-  background: hsl(var(--card));
   padding: 10px !important;
 }
 
@@ -107,8 +111,8 @@
 .spacecall-admin-dashboard .admin-list-panel > div:first-child input {
   height: 40px !important;
   border-radius: 10px !important;
-  border-color: color-mix(in srgb, hsl(var(--border)) 76%, transparent) !important;
-  background: hsl(var(--muted) / 0.24) !important;
+  border-color: var(--admin-panel-border) !important;
+  background: var(--admin-control-bg) !important;
 }
 
 .spacecall-admin-dashboard .admin-list-panel button {
@@ -121,40 +125,48 @@
 }
 
 .spacecall-admin-dashboard .admin-list-panel button:hover {
-  border-color: color-mix(in srgb, hsl(var(--border)) 72%, transparent);
-  background: hsl(var(--muted) / 0.42) !important;
+  border-color: var(--admin-panel-border);
+  background: var(--admin-soft-bg) !important;
 }
 
 .spacecall-admin-dashboard .admin-list-panel button.bg-foreground {
-  border-color: color-mix(in srgb, hsl(var(--primary)) 20%, transparent) !important;
-  background: color-mix(in srgb, hsl(var(--primary)) 9%, transparent) !important;
-  color: hsl(var(--primary)) !important;
-  box-shadow: inset 3px 0 0 hsl(var(--primary));
+  border-color: color-mix(in oklab, var(--primary) 20%, transparent) !important;
+  background: color-mix(in oklab, var(--primary) 9%, transparent) !important;
+  color: var(--primary) !important;
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 [dir="rtl"] .spacecall-admin-dashboard .admin-list-panel button.bg-foreground {
-  box-shadow: inset -3px 0 0 hsl(var(--primary));
+  box-shadow: inset -3px 0 0 var(--primary);
 }
 
-/* Compact production form controls */
+/* Compact production form controls. */
 .spacecall-admin-dashboard .admin-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 .spacecall-admin-dashboard .admin-page textarea,
 .spacecall-admin-dashboard .admin-page select {
   border-radius: 10px !important;
-  border-color: color-mix(in srgb, hsl(var(--border)) 82%, transparent) !important;
-  background: hsl(var(--background)) !important;
-  box-shadow: 0 1px 1px rgb(15 23 42 / 0.015);
+  border-color: var(--admin-panel-border) !important;
+  background: var(--admin-control-bg) !important;
+  color: var(--foreground);
+  box-shadow: 0 1px 1px rgb(15 23 42 / 0.012);
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease,
     background-color 140ms ease;
 }
 
+.spacecall-admin-dashboard .admin-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):hover,
+.spacecall-admin-dashboard .admin-page textarea:hover,
+.spacecall-admin-dashboard .admin-page select:hover {
+  border-color: var(--admin-panel-border-hover) !important;
+}
+
 .spacecall-admin-dashboard .admin-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
 .spacecall-admin-dashboard .admin-page textarea:focus,
 .spacecall-admin-dashboard .admin-page select:focus {
-  border-color: color-mix(in srgb, hsl(var(--primary)) 48%, hsl(var(--border))) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, hsl(var(--primary)) 9%, transparent) !important;
+  border-color: color-mix(in oklab, var(--primary) 46%, var(--border)) !important;
+  background: var(--card) !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 10%, transparent) !important;
   outline: none;
 }
 
@@ -176,13 +188,13 @@
 }
 
 .spacecall-admin-dashboard .admin-page thead {
-  background: hsl(var(--muted) / 0.24) !important;
+  background: color-mix(in oklab, var(--muted) 36%, transparent) !important;
 }
 
 .spacecall-admin-dashboard .admin-page thead th {
   height: 38px;
   padding-block: 9px !important;
-  color: hsl(var(--muted-foreground) / 0.82) !important;
+  color: color-mix(in oklab, var(--muted-foreground) 84%, transparent) !important;
   font-size: 9px !important;
   font-weight: 800 !important;
   letter-spacing: 0.035em;
@@ -195,14 +207,38 @@
 }
 
 .spacecall-admin-dashboard .admin-page tbody tr:hover {
-  background: hsl(var(--muted) / 0.16);
+  background: color-mix(in oklab, var(--muted) 22%, transparent);
 }
 
 .spacecall-admin-dashboard .admin-page tbody td {
-  border-color: color-mix(in srgb, hsl(var(--border)) 52%, transparent) !important;
+  border-color: color-mix(in oklab, var(--border) 48%, transparent) !important;
 }
 
-/* Recharts follows the same visual language. */
+/* Settings is intentionally denser than generic editors. */
+.spacecall-admin-dashboard .admin-setting-card > div:first-child {
+  background: color-mix(in oklab, var(--muted) 16%, var(--card));
+}
+
+.spacecall-admin-dashboard .admin-setting-card input:not([type="file"]),
+.spacecall-admin-dashboard .admin-setting-card select,
+.spacecall-admin-dashboard .admin-setting-card label:has([role="switch"]) {
+  min-height: 40px !important;
+  height: 40px;
+}
+
+.spacecall-admin-dashboard .admin-setting-card textarea {
+  min-height: 88px !important;
+}
+
+/* Empty/loading surfaces should communicate state without becoming giant blank cards. */
+.spacecall-admin-dashboard .admin-empty-state {
+  min-height: 150px;
+  border: 1px dashed var(--admin-panel-border);
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--muted) 10%, transparent);
+}
+
+/* Recharts follows the same semantic theme tokens. */
 .spacecall-admin-dashboard .recharts-wrapper,
 .spacecall-admin-dashboard .recharts-surface {
   max-width: 100%;
@@ -222,14 +258,15 @@
 
 .spacecall-admin-dashboard .admin-page label:has(input[type="file"]) {
   border-radius: 10px !important;
-  border-color: color-mix(in srgb, hsl(var(--border)) 80%, transparent) !important;
+  border-color: var(--admin-panel-border) !important;
+  background: var(--admin-control-bg);
 }
 
 .spacecall-admin-dashboard .admin-list-panel,
 .spacecall-admin-dashboard main,
 .spacecall-admin-dashboard aside {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--border)) transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 /* Keep internal pages intentionally compact on large desktop. */
@@ -272,6 +309,10 @@
 
   .spacecall-admin-dashboard .admin-page table {
     font-size: 11px;
+  }
+
+  .spacecall-admin-dashboard .admin-empty-state {
+    min-height: 124px;
   }
 }
 

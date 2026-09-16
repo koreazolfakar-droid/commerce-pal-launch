@@ -15,7 +15,8 @@ import type { DashboardTrend, OrdersTrend, RevenueData } from "@/dashboard/types
 import { formatPrice } from "@/lib/productPricing";
 
 function TrendText({ trend }: { trend: DashboardTrend }) {
-  if (trend.value === null) return <span className="text-xs font-semibold text-muted-foreground">—</span>;
+  if (trend.value === null)
+    return <span className="text-xs font-semibold text-muted-foreground">—</span>;
   const positive = trend.direction === "up";
   return (
     <span
@@ -32,7 +33,7 @@ function TrendText({ trend }: { trend: DashboardTrend }) {
 
 function EmptyChart({ label }: { label: string }) {
   return (
-    <div className="grid h-[250px] place-items-center rounded-xl border border-dashed border-border/70 bg-muted/10 text-xs text-muted-foreground">
+    <div className="admin-empty-state grid h-[170px] place-items-center px-4 text-center text-xs text-muted-foreground sm:h-[205px] xl:h-[250px]">
       {label}
     </div>
   );
@@ -75,36 +76,39 @@ export function RevenueChartCard({
       {!hasData ? (
         <EmptyChart label={emptyLabel} />
       ) : (
-        <div className="h-[250px] w-full">
+        <div className="h-[200px] w-full sm:h-[225px] xl:h-[250px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
               <defs>
                 <linearGradient id="spacecallRevenueFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.24} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.01} />
+                  <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.24} />
+                  <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.01} />
                 </linearGradient>
               </defs>
-              <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.45} />
+              <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.45} />
               <XAxis
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
                 minTickGap={24}
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
                 width={44}
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                tickFormatter={(value) => (value >= 1000 ? `${Math.round(value / 1000)}K` : String(value))}
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                tickFormatter={(value) =>
+                  value >= 1000 ? `${Math.round(value / 1000)}K` : String(value)
+                }
               />
               <Tooltip
-                cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.18 }}
+                cursor={{ stroke: "var(--primary)", strokeOpacity: 0.18 }}
                 contentStyle={{
                   borderRadius: 12,
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--card))",
+                  border: "1px solid var(--border)",
+                  background: "var(--popover)",
+                  color: "var(--popover-foreground)",
                   boxShadow: "0 10px 30px -20px rgba(15,23,42,.35)",
                   fontSize: 12,
                 }}
@@ -116,14 +120,14 @@ export function RevenueChartCard({
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="hsl(var(--primary))"
+                stroke="var(--primary)"
                 strokeWidth={2.25}
                 fill="url(#spacecallRevenueFill)"
                 activeDot={{
                   r: 4,
                   strokeWidth: 2,
-                  fill: "hsl(var(--background))",
-                  stroke: "hsl(var(--primary))",
+                  fill: "var(--background)",
+                  stroke: "var(--primary)",
                 }}
               />
             </AreaChart>
@@ -156,7 +160,9 @@ export function OrdersTrendCard({
             {language === "ar" ? "اتجاه الطلبات" : "Orders Trend"}
           </p>
           <div className="mt-1.5 flex items-center gap-3">
-            <span className="text-[23px] font-black tracking-[-0.03em]">{total.toLocaleString()}</span>
+            <span className="text-[23px] font-black tracking-[-0.03em]">
+              {total.toLocaleString()}
+            </span>
             <TrendText trend={trend} />
           </div>
         </div>
@@ -167,38 +173,42 @@ export function OrdersTrendCard({
       {!hasData ? (
         <EmptyChart label={emptyLabel} />
       ) : (
-        <div className="h-[250px] w-full">
+        <div className="h-[200px] w-full sm:h-[225px] xl:h-[250px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.45} />
+              <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.45} />
               <XAxis
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
                 minTickGap={24}
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
               />
               <YAxis
                 allowDecimals={false}
                 axisLine={false}
                 tickLine={false}
                 width={36}
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
               />
               <Tooltip
-                cursor={{ fill: "hsl(var(--muted) / 0.22)" }}
+                cursor={{ fill: "color-mix(in oklab, var(--muted) 24%, transparent)" }}
                 contentStyle={{
                   borderRadius: 12,
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--card))",
+                  border: "1px solid var(--border)",
+                  background: "var(--popover)",
+                  color: "var(--popover-foreground)",
                   boxShadow: "0 10px 30px -20px rgba(15,23,42,.35)",
                   fontSize: 12,
                 }}
-                formatter={(value) => [Number(value ?? 0), language === "ar" ? "الطلبات" : "Orders"]}
+                formatter={(value) => [
+                  Number(value ?? 0),
+                  language === "ar" ? "الطلبات" : "Orders",
+                ]}
               />
               <Bar
                 dataKey="orders"
-                fill="hsl(var(--primary))"
+                fill="var(--primary)"
                 radius={[4, 4, 0, 0]}
                 maxBarSize={18}
                 opacity={0.82}

@@ -10,7 +10,7 @@ export function DashboardCard({
   return (
     <article
       className={cn(
-        "rounded-2xl border border-slate-200/70 bg-card shadow-[0_1px_3px_rgba(15,23,42,0.04)] dark:border-border/70",
+        "rounded-2xl border border-border/70 bg-card shadow-[0_1px_3px_rgba(15,23,42,0.035)]",
         className,
       )}
       {...props}
