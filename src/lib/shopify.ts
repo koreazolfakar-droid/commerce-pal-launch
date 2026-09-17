@@ -256,47 +256,70 @@ const storefrontApiRequestFn = createServerFn({ method: "POST" })
     const key = storefrontCacheKey(data.query, data.variables);
     const now = Date.now();
 
+    const runRequest = (skipPersistent = false) =>
+      (async () => {
+        if (cacheable && !skipPersistent) {
+          const persistent = await readPersistentStorefrontCache(key);
+          if (persistent !== undefined) return persistent;
+        }
+
+        const sanitized = sanitizeQuery(data.query);
+        const result = await postStorefront(sanitized, data.variables);
+        const errors: Array<{ message: string }> = result.errors ?? [];
+        if (errors.length) {
+          const denied = extractDeniedFields(errors).filter((field) => !deniedFields.has(field));
+          if (denied.length) {
+            denied.forEach((field) => deniedFields.add(field));
+            const retry = await postStorefront(sanitizeQuery(data.query), data.variables);
+            if (retry?.data) return retry;
+          }
+          if (!result.data)
+            throw new Error(`Error calling Shopify: ${errors.map((e) => e.message).join(", ")}`);
+          console.warn(`Shopify partial response: ${errors.map((e) => e.message).join(", ")}`);
+        }
+        return result;
+      })();
+
+    const storeResult = async (value: StorefrontJsonValue) => {
+      storefrontResponseCache.set(key, {
+        value,
+        expiresAt: Date.now() + STOREFRONT_CACHE_TTL_MS,
+      });
+      await writePersistentStorefrontCache(key, value);
+    };
+
     if (cacheable) {
       const cached = storefrontResponseCache.get(key);
       if (cached && cached.expiresAt > now) return cached.value;
+
+      // Stale-while-revalidate: keep the page instant and refresh in the background.
+      if (cached && cached.expiresAt + STOREFRONT_STALE_TTL_MS > now) {
+        if (!storefrontPendingRequests.has(key)) {
+          const refresh = runRequest(true);
+          storefrontPendingRequests.set(key, refresh);
+          void refresh
+            .then((value) => storeResult(value))
+            .catch(() => {
+              // Keep serving the stale payload until the next successful refresh.
+            })
+            .finally(() => storefrontPendingRequests.delete(key));
+        }
+        return cached.value;
+      }
+
       const pending = storefrontPendingRequests.get(key);
       if (pending) return pending;
       pruneStorefrontCache(now);
     }
 
-    const request = (async () => {
-      if (cacheable) {
-        const persistent = await readPersistentStorefrontCache(key);
-        if (persistent !== undefined) return persistent;
-      }
-
-      const sanitized = sanitizeQuery(data.query);
-      const result = await postStorefront(sanitized, data.variables);
-      const errors: Array<{ message: string }> = result.errors ?? [];
-      if (errors.length) {
-        const denied = extractDeniedFields(errors).filter((field) => !deniedFields.has(field));
-        if (denied.length) {
-          denied.forEach((field) => deniedFields.add(field));
-          const retry = await postStorefront(sanitizeQuery(data.query), data.variables);
-          if (retry?.data) return retry;
-        }
-        if (!result.data)
-          throw new Error(`Error calling Shopify: ${errors.map((e) => e.message).join(", ")}`);
-        console.warn(`Shopify partial response: ${errors.map((e) => e.message).join(", ")}`);
-      }
-      return result;
-    })();
+    const request = runRequest();
 
     if (!cacheable) return request;
 
     storefrontPendingRequests.set(key, request);
     try {
       const result = await request;
-      storefrontResponseCache.set(key, {
-        value: result,
-        expiresAt: Date.now() + STOREFRONT_CACHE_TTL_MS,
-      });
-      await writePersistentStorefrontCache(key, result);
+      await storeResult(result);
       return result;
     } finally {
       storefrontPendingRequests.delete(key);
