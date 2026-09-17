@@ -117,7 +117,7 @@ test("account links stay branded before the Shopify hand-off", async () => {
   assert.match(infoPage, /secure Shopify account page/);
 });
 
-test("homepage hero is Shopify-first, click-safe, high-resolution, and refresh-resilient", async () => {
+test("homepage hero is Shopify-first, inert, high-resolution, and refresh-resilient", async () => {
   const home = await source("src/routes/index.tsx");
   const hero = await source("src/components/HomeHero.tsx");
 
@@ -135,9 +135,10 @@ test("homepage hero is Shopify-first, click-safe, high-resolution, and refresh-r
   assert.match(hero, /const effectiveHeroCollection = heroCollection\?\.collection/);
   assert.match(hero, /const shopifyImage = shopifySlide\?\.image/);
   assert.match(hero, /heroFallbackProduct = effectiveHeroCollection\?\.products\.find/);
-  assert.match(hero, /heroTargetProduct/);
+  assert.doesNotMatch(hero, /heroTargetProduct/);
   assert.doesNotMatch(hero, /to="\/collections\/\$handle"/);
-  assert.match(hero, /to="\/product\/\$handle"/);
+  assert.doesNotMatch(hero, /to="\/product\/\$handle"/);
+  assert.doesNotMatch(hero, /from "@tanstack\/react-router"/);
   assert.match(hero, /HERO_IMAGE_WIDTHS = \[640, 960, 1280, 1600, 1920, 2400, 2880\]/);
   assert.match(hero, /parsed\.searchParams\.set\("quality", "88"\)/);
   assert.match(hero, /src=\{heroCdnImage\(shopifyImage\.url, 1920\)\}/);
