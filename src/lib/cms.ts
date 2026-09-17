@@ -101,9 +101,11 @@ export const EMPTY_CMS: CmsSnapshot = {
 const LIVE_SUPABASE_PROJECT_REF = "rtwyankpxtffqqrasyzw";
 const DEFAULT_SUPABASE_URL = `https://${LIVE_SUPABASE_PROJECT_REF}.supabase.co`;
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
+const CMS_BROWSER_FALLBACK_KEY = "space-call-public-cms-v1";
 const ARABIC_SCRIPT = /[\u0600-\u06ff]/;
 
 let cmsPendingRequest: Promise<CmsSnapshot> | null = null;
+let lastSuccessfulCmsSnapshot: CmsSnapshot | null = null;
 
 function isCmsSnapshot(value: unknown): value is CmsSnapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
@@ -117,6 +119,28 @@ function isCmsSnapshot(value: unknown): value is CmsSnapshot {
     Array.isArray(record.brands) &&
     Array.isArray(record.seoPages)
   );
+}
+
+function readBrowserCmsFallback(): CmsSnapshot | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(CMS_BROWSER_FALLBACK_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    return isCmsSnapshot(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeBrowserCmsFallback(snapshot: CmsSnapshot) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CMS_BROWSER_FALLBACK_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Storage can be unavailable in private/restricted browser modes. The live
+    // request and in-memory fallback still work in those environments.
+  }
 }
 
 function getCmsSupabaseConfig() {
@@ -133,49 +157,64 @@ function getCmsSupabaseConfig() {
 
 async function loadCmsSnapshot(): Promise<CmsSnapshot> {
   const { baseUrl, publishableKey } = getCmsSupabaseConfig();
+  const headers = new Headers({
+    Accept: "application/json",
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+    apikey: publishableKey,
+  });
 
-  try {
-    const headers = new Headers({
-      Accept: "application/json",
-      "Cache-Control": "no-cache",
-      Pragma: "no-cache",
-      apikey: publishableKey,
-    });
+  const response = await fetch(`${baseUrl}/functions/v1/public-cms?fresh=${Date.now()}`, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) throw new Error(`public-cms returned ${response.status}`);
 
-    const response = await fetch(`${baseUrl}/functions/v1/public-cms?fresh=${Date.now()}`, {
-      method: "GET",
-      headers,
-      cache: "no-store",
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!response.ok) throw new Error(`public-cms returned ${response.status}`);
-
-    const payload: unknown = await response.json();
-    return isCmsSnapshot(payload) ? payload : EMPTY_CMS;
-  } catch (error) {
-    console.warn("Space Call dashboard content is unavailable; using storefront defaults", error);
-    return EMPTY_CMS;
-  }
+  const payload: unknown = await response.json();
+  if (!isCmsSnapshot(payload)) throw new Error("public-cms returned an invalid snapshot");
+  return payload;
 }
 
 /**
  * Public storefront snapshot. The browser never receives direct CMS table access;
  * this server function reads only the curated public-cms Edge Function projection.
- * Requests are intentionally uncached so Dashboard publishes become visible immediately.
+ * Requests remain uncached so Dashboard publishes become visible immediately.
+ * A previous good snapshot is used only when the live gateway is unavailable.
  */
 const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
   if (cmsPendingRequest) return cmsPendingRequest;
 
-  const request = loadCmsSnapshot().finally(() => {
-    cmsPendingRequest = null;
-  });
+  const request = loadCmsSnapshot()
+    .then((snapshot) => {
+      lastSuccessfulCmsSnapshot = snapshot;
+      return snapshot;
+    })
+    .finally(() => {
+      cmsPendingRequest = null;
+    });
 
   cmsPendingRequest = request;
   return request;
 });
 
 export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
-  return cmsSnapshotFn();
+  try {
+    const snapshot = await cmsSnapshotFn();
+    lastSuccessfulCmsSnapshot = snapshot;
+    writeBrowserCmsFallback(snapshot);
+    return snapshot;
+  } catch (error) {
+    const fallback = lastSuccessfulCmsSnapshot ?? readBrowserCmsFallback();
+    console.warn(
+      fallback
+        ? "Space Call dashboard content is temporarily unavailable; using the last good snapshot"
+        : "Space Call dashboard content is unavailable; using storefront defaults",
+      error,
+    );
+    return fallback ?? EMPTY_CMS;
+  }
 }
 
 function cleanText(value: unknown) {
