@@ -205,8 +205,8 @@ export function DashboardSidebar({
                         key={item.to}
                         item={item}
                         collapsed={compact}
-                        badge={badgeKey ? counts[badgeKey] : undefined}
-                        onNavigate={onClose}
+                        {...(badgeKey ? { badge: counts[badgeKey] } : {})}
+                        {...(onClose ? { onNavigate: onClose } : {})}
                       />
                     );
                   })}
