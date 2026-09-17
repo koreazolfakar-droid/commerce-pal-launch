@@ -83,8 +83,8 @@ export function HomeHero({
     : undefined;
   const shopifySlide = !useCmsSlides ? (shopifySlides[activeIndex] ?? shopifySlides[0]) : undefined;
   const shopifyImage = shopifySlide?.image;
-  const heroFallbackProduct = heroCollection?.products.find(
-    (product) => Boolean(product.node.images.edges[0]?.node.url),
+  const heroFallbackProduct = heroCollection?.products.find((product) =>
+    Boolean(product.node.images.edges[0]?.node.url),
   );
   const heroFallbackImage = heroFallbackProduct?.node.images.edges[0]?.node;
   const cmsImageActive = Boolean(cmsSlide && failedCmsSlideId !== cmsSlide.id);
@@ -109,9 +109,11 @@ export function HomeHero({
         aria-label={t("featuredTechnology")}
         data-testid="home-hero"
         data-hero-source={heroSource}
-        data-hero-handle={shopifySlide?.handle ?? cmsSlide?.id ?? heroFallbackProduct?.node.handle ?? "none"}
+        data-hero-handle={
+          shopifySlide?.handle ?? cmsSlide?.id ?? heroFallbackProduct?.node.handle ?? "none"
+        }
         data-hero-collection-handle={shopifySlide?.handle}
-        className="relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
+        className="relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:[...]
       >
         {cmsSlide && cmsImageActive ? (
           <a
