@@ -37,10 +37,8 @@ test("merchant brand artwork overrides curated local fallbacks and raw SVG marku
   assert.match(brandDirectory, /compactBrandIdentity/);
   assert.match(brandDirectory, /slugify\(value\)\.replace\(\/-\/g, ""\)/);
   assert.match(brandDirectory, /dedicatedCollectionBrandIdentity/);
-  assert.match(
-    brandDirectory,
-    /exactCandidates\.find\(looksLikeLogoImage\) \?\? exactCandidates\[0\]/,
-  );
+  assert.match(brandDirectory, /const exact = exactCandidates\.find\(looksLikeLogoImage\);/);
+  assert.doesNotMatch(brandDirectory, /exactCandidates\[0\]/);
 
   for (const name of ["apple", "xiaomi", "anker", "poco", "tecno"]) {
     assert.match(brands, new RegExp(`/${name}\\.(?:svg|png)`));
@@ -104,7 +102,7 @@ test("account links stay branded before the Shopify hand-off", async () => {
   assert.match(infoPage, /secure Shopify account page/);
 });
 
-test("hero uses Shopify collection artwork and routes to the matching collection", async () => {
+test("hero never becomes an empty black panel when remote artwork is unavailable", async () => {
   const home = await source("src/routes/index.tsx");
   const hero = await source("src/components/HomeHero.tsx");
 
@@ -116,8 +114,14 @@ test("hero uses Shopify collection artwork and routes to the matching collection
   assert.match(home, /heroCollection=\{heroCollection\}/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
   assert.match(hero, /const shopifyImage = shopifySlide\?\.image/);
+  assert.match(hero, /heroFallbackProduct = heroCollection\?\.products\.find/);
+  assert.match(hero, /heroFallbackImage = heroFallbackProduct\?\.node\.images\.edges\[0\]\?\.node/);
+  assert.match(hero, /onError=\{\(\) => setFailedCmsSlideId\(cmsSlide\.id\)\}/);
   assert.match(hero, /to="\/collections\/\$handle"/);
-  assert.match(hero, /params=\{\{ handle: shopifySlide\.handle \}\}/);
-  assert.match(hero, /alt=\{shopifyImage\.altText \?\? shopifySlide\.title \?\? "Space Call"\}/);
-  assert.doesNotMatch(hero, /products\[0\]|featuredProduct|featuredNode|Latest arrival|أحدث وصول/);
+  assert.match(hero, /to="\/product\/\$handle"/);
+  assert.match(hero, /data-hero-source=\{heroSource\}/);
+  assert.match(hero, /hero-product-fallback/);
+  assert.match(hero, /bg-gradient-to-br/);
+  assert.match(hero, /src="\/logo\.svg"/);
+  assert.doesNotMatch(hero, /_products\[0\]/);
 });
