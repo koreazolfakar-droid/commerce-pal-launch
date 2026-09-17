@@ -17,88 +17,16 @@ import {
 import { NativeCatalogManager } from "@/components/admin/NativeCatalogManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  adminCommerceUiService,
+  type CatalogImageDto,
+  type CatalogVariantDto,
+} from "@/commerce/services/adminCommerceUiService";
+import type { ProductStatus } from "@/commerce/core/models";
 import { useDashboardLanguage } from "@/lib/dashboardI18n";
 import { cn } from "@/lib/utils";
 
-type ProductStatus = "draft" | "active" | "archived";
-type Product = {
-  id: string;
-  title: string;
-  handle: string;
-  brand_id: string | null;
-  category_id: string | null;
-  status: ProductStatus;
-  currency: string;
-  base_price: number;
-  stock_quantity: number;
-  updated_at: string;
-};
-
-type Variant = {
-  id: string;
-  product_id: string;
-  stock_quantity: number;
-  track_inventory: boolean;
-  is_active: boolean;
-};
-
-type ProductImage = {
-  id: string;
-  product_id: string;
-  url: string;
-  is_primary: boolean;
-  sort_order: number;
-};
-
-type Brand = { id: string; name: string };
-type Category = { id: string; name: string };
-
-type CatalogData = {
-  products: Product[];
-  variants: Variant[];
-  images: ProductImage[];
-  brands: Brand[];
-  categories: Category[];
-};
-
 const LOW_STOCK_THRESHOLD = 5;
-
-async function loadCatalogOverview(): Promise<CatalogData> {
-  const [productsResult, variantsResult, imagesResult, brandsResult, categoriesResult] =
-    await Promise.all([
-      supabase
-        .from("store_products" as never)
-        .select("id,title,handle,brand_id,category_id,status,currency,base_price,stock_quantity,updated_at")
-        .order("updated_at", { ascending: false }),
-      supabase
-        .from("store_product_variants" as never)
-        .select("id,product_id,stock_quantity,track_inventory,is_active")
-        .order("sort_order"),
-      supabase
-        .from("store_product_images" as never)
-        .select("id,product_id,url,is_primary,sort_order")
-        .order("sort_order"),
-      supabase.from("cms_brands" as never).select("id,name").order("name"),
-      supabase.from("store_categories" as never).select("id,name").order("sort_order"),
-    ]);
-
-  const error =
-    productsResult.error ||
-    variantsResult.error ||
-    imagesResult.error ||
-    brandsResult.error ||
-    categoriesResult.error;
-  if (error) throw error;
-
-  return {
-    products: (productsResult.data ?? []) as Product[],
-    variants: (variantsResult.data ?? []) as Variant[],
-    images: (imagesResult.data ?? []) as ProductImage[],
-    brands: (brandsResult.data ?? []) as Brand[],
-    categories: (categoriesResult.data ?? []) as Category[],
-  };
-}
 
 function formatMoney(value: number, currency: string) {
   try {
@@ -119,14 +47,14 @@ function statusClass(status: ProductStatus) {
 }
 
 export function CatalogWorkspace() {
-  const { language, text } = useDashboardLanguage();
+  const { text } = useDashboardLanguage();
   const [mode, setMode] = useState<"overview" | "editor">("overview");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | ProductStatus>("all");
 
   const query = useQuery({
     queryKey: ["dashboard", "catalog-workspace-overview"],
-    queryFn: loadCatalogOverview,
+    queryFn: adminCommerceUiService.getCatalogOverview,
     staleTime: 15_000,
   });
 
@@ -134,20 +62,20 @@ export function CatalogWorkspace() {
     const data = query.data;
     if (!data) return null;
 
-    const variantsByProduct = new Map<string, Variant[]>();
-    data.variants.forEach((variant) => {
+    const variantsByProduct = new Map<string, CatalogVariantDto[]>();
+    for (const variant of data.variants) {
       const current = variantsByProduct.get(variant.product_id) ?? [];
       current.push(variant);
       variantsByProduct.set(variant.product_id, current);
-    });
+    }
 
-    const imageByProduct = new Map<string, ProductImage>();
-    data.images.forEach((image) => {
+    const imageByProduct = new Map<string, CatalogImageDto>();
+    for (const image of data.images) {
       const current = imageByProduct.get(image.product_id);
       if (!current || image.is_primary || image.sort_order < current.sort_order) {
         imageByProduct.set(image.product_id, image);
       }
-    });
+    }
 
     const brandById = new Map(data.brands.map((brand) => [brand.id, brand.name]));
     const categoryById = new Map(data.categories.map((category) => [category.id, category.name]));
@@ -230,26 +158,12 @@ export function CatalogWorkspace() {
       </header>
 
       <div className="inline-flex w-full gap-1 rounded-2xl border border-border/70 bg-card p-1 sm:w-auto">
-        <button
-          type="button"
-          onClick={() => setMode("overview")}
-          className={cn(
-            "flex-1 rounded-xl px-4 py-2.5 text-xs font-black transition sm:flex-none",
-            mode === "overview" ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:bg-muted",
-          )}
-        >
+        <ModeButton active={mode === "overview"} onClick={() => setMode("overview")}>
           {text("نظرة عامة", "Catalog overview")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("editor")}
-          className={cn(
-            "flex-1 rounded-xl px-4 py-2.5 text-xs font-black transition sm:flex-none",
-            mode === "editor" ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:bg-muted",
-          )}
-        >
+        </ModeButton>
+        <ModeButton active={mode === "editor"} onClick={() => setMode("editor")}>
           {text("محرر المنتجات", "Product editor")}
-        </button>
+        </ModeButton>
       </div>
 
       {mode === "editor" ? (
@@ -428,6 +342,29 @@ export function CatalogWorkspace() {
         </>
       )}
     </section>
+  );
+}
+
+function ModeButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex-1 rounded-xl px-4 py-2.5 text-xs font-black transition sm:flex-none",
+        active ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:bg-muted",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
