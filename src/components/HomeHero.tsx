@@ -7,6 +7,7 @@ import { localizeHeroSlide, type CmsHeroSlide } from "@/lib/cms";
 import { homepageHeroCollections } from "@/lib/homeMerchandising";
 import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { useLanguage } from "@/lib/i18n";
+import { collectionsQueryOptions } from "@/lib/queries";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 
 type HomeHeroCollection =
@@ -37,10 +38,9 @@ export function HomeHero({
 }) {
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
-  const cachedCollections = queryClient.getQueryData<ShopifyCollection[]>([
-    "shopify",
-    "collections",
-  ]);
+  const cachedCollections = queryClient.getQueryData<ShopifyCollection[]>(
+    collectionsQueryOptions().queryKey,
+  );
 
   const configuredCollections = useMemo(() => {
     const collections = cachedCollections ?? [];
