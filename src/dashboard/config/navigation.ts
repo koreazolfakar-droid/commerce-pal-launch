@@ -2,6 +2,7 @@ import {
   BarChart3,
   Boxes,
   FolderKanban,
+  History,
   Image,
   LayoutDashboard,
   LayoutPanelTop,
@@ -36,6 +37,13 @@ export const DASHBOARD_OPERATIONS_NAVIGATION = [
     en: "Customers",
     ar: "العملاء",
     icon: UsersRound,
+    badge: undefined,
+  },
+  {
+    to: "/dashboard/activity",
+    en: "Activity Log",
+    ar: "سجل النشاط",
+    icon: History,
     badge: undefined,
   },
 ] as const;
