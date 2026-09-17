@@ -35,9 +35,18 @@ import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsHandleRouteImport } from './routes/collections.$handle'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
 import { Route as DashboardBrandsRouteImport } from './routes/dashboard.brands'
+import { Route as DashboardCategoriesRouteImport } from './routes/dashboard.categories'
+import { Route as DashboardCollectionsRouteImport } from './routes/dashboard.collections'
+import { Route as DashboardCustomersRouteImport } from './routes/dashboard.customers'
 import { Route as DashboardHeroRouteImport } from './routes/dashboard.hero'
+import { Route as DashboardInventoryRouteImport } from './routes/dashboard.inventory'
+import { Route as DashboardMarketingRouteImport } from './routes/dashboard.marketing'
+import { Route as DashboardMessagesRouteImport } from './routes/dashboard.messages'
 import { Route as DashboardNavigationRouteImport } from './routes/dashboard.navigation'
+import { Route as DashboardOrdersRouteImport } from './routes/dashboard.orders'
+import { Route as DashboardProductsRouteImport } from './routes/dashboard.products'
 import { Route as DashboardSectionsRouteImport } from './routes/dashboard.sections'
 import { Route as DashboardSeoRouteImport } from './routes/dashboard.seo'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
@@ -173,9 +182,29 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardBrandsRoute = DashboardBrandsRouteImport.update({
   id: '/brands',
   path: '/brands',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardCategoriesRoute = DashboardCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardCollectionsRoute = DashboardCollectionsRouteImport.update({
+  id: '/collections',
+  path: '/collections',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardCustomersRoute = DashboardCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardHeroRoute = DashboardHeroRouteImport.update({
@@ -183,9 +212,34 @@ const DashboardHeroRoute = DashboardHeroRouteImport.update({
   path: '/hero',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardInventoryRoute = DashboardInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMarketingRoute = DashboardMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMessagesRoute = DashboardMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardNavigationRoute = DashboardNavigationRouteImport.update({
   id: '/navigation',
   path: '/navigation',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardOrdersRoute = DashboardOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardProductsRoute = DashboardProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardSectionsRoute = DashboardSectionsRouteImport.update({
@@ -234,9 +288,18 @@ export interface FileRoutesByFullPath {
   '/brand/$slug': typeof BrandSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/collections/$handle': typeof CollectionsHandleRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/brands': typeof DashboardBrandsRoute
+  '/dashboard/categories': typeof DashboardCategoriesRoute
+  '/dashboard/collections': typeof DashboardCollectionsRoute
+  '/dashboard/customers': typeof DashboardCustomersRoute
   '/dashboard/hero': typeof DashboardHeroRoute
+  '/dashboard/inventory': typeof DashboardInventoryRoute
+  '/dashboard/marketing': typeof DashboardMarketingRoute
+  '/dashboard/messages': typeof DashboardMessagesRoute
   '/dashboard/navigation': typeof DashboardNavigationRoute
+  '/dashboard/orders': typeof DashboardOrdersRoute
+  '/dashboard/products': typeof DashboardProductsRoute
   '/dashboard/sections': typeof DashboardSectionsRoute
   '/dashboard/seo': typeof DashboardSeoRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -268,9 +331,18 @@ export interface FileRoutesByTo {
   '/brand/$slug': typeof BrandSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/collections/$handle': typeof CollectionsHandleRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/brands': typeof DashboardBrandsRoute
+  '/dashboard/categories': typeof DashboardCategoriesRoute
+  '/dashboard/collections': typeof DashboardCollectionsRoute
+  '/dashboard/customers': typeof DashboardCustomersRoute
   '/dashboard/hero': typeof DashboardHeroRoute
+  '/dashboard/inventory': typeof DashboardInventoryRoute
+  '/dashboard/marketing': typeof DashboardMarketingRoute
+  '/dashboard/messages': typeof DashboardMessagesRoute
   '/dashboard/navigation': typeof DashboardNavigationRoute
+  '/dashboard/orders': typeof DashboardOrdersRoute
+  '/dashboard/products': typeof DashboardProductsRoute
   '/dashboard/sections': typeof DashboardSectionsRoute
   '/dashboard/seo': typeof DashboardSeoRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -304,9 +376,18 @@ export interface FileRoutesById {
   '/brand/$slug': typeof BrandSlugRoute
   '/category/$slug': typeof CategorySlugRoute
   '/collections/$handle': typeof CollectionsHandleRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/brands': typeof DashboardBrandsRoute
+  '/dashboard/categories': typeof DashboardCategoriesRoute
+  '/dashboard/collections': typeof DashboardCollectionsRoute
+  '/dashboard/customers': typeof DashboardCustomersRoute
   '/dashboard/hero': typeof DashboardHeroRoute
+  '/dashboard/inventory': typeof DashboardInventoryRoute
+  '/dashboard/marketing': typeof DashboardMarketingRoute
+  '/dashboard/messages': typeof DashboardMessagesRoute
   '/dashboard/navigation': typeof DashboardNavigationRoute
+  '/dashboard/orders': typeof DashboardOrdersRoute
+  '/dashboard/products': typeof DashboardProductsRoute
   '/dashboard/sections': typeof DashboardSectionsRoute
   '/dashboard/seo': typeof DashboardSeoRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -341,9 +422,18 @@ export interface FileRouteTypes {
     | '/brand/$slug'
     | '/category/$slug'
     | '/collections/$handle'
+    | '/dashboard/analytics'
     | '/dashboard/brands'
+    | '/dashboard/categories'
+    | '/dashboard/collections'
+    | '/dashboard/customers'
     | '/dashboard/hero'
+    | '/dashboard/inventory'
+    | '/dashboard/marketing'
+    | '/dashboard/messages'
     | '/dashboard/navigation'
+    | '/dashboard/orders'
+    | '/dashboard/products'
     | '/dashboard/sections'
     | '/dashboard/seo'
     | '/dashboard/settings'
@@ -375,9 +465,18 @@ export interface FileRouteTypes {
     | '/brand/$slug'
     | '/category/$slug'
     | '/collections/$handle'
+    | '/dashboard/analytics'
     | '/dashboard/brands'
+    | '/dashboard/categories'
+    | '/dashboard/collections'
+    | '/dashboard/customers'
     | '/dashboard/hero'
+    | '/dashboard/inventory'
+    | '/dashboard/marketing'
+    | '/dashboard/messages'
     | '/dashboard/navigation'
+    | '/dashboard/orders'
+    | '/dashboard/products'
     | '/dashboard/sections'
     | '/dashboard/seo'
     | '/dashboard/settings'
@@ -410,9 +509,18 @@ export interface FileRouteTypes {
     | '/brand/$slug'
     | '/category/$slug'
     | '/collections/$handle'
+    | '/dashboard/analytics'
     | '/dashboard/brands'
+    | '/dashboard/categories'
+    | '/dashboard/collections'
+    | '/dashboard/customers'
     | '/dashboard/hero'
+    | '/dashboard/inventory'
+    | '/dashboard/marketing'
+    | '/dashboard/messages'
     | '/dashboard/navigation'
+    | '/dashboard/orders'
+    | '/dashboard/products'
     | '/dashboard/sections'
     | '/dashboard/seo'
     | '/dashboard/settings'
@@ -634,11 +742,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/analytics': {
+      id: '/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/dashboard/analytics'
+      preLoaderRoute: typeof DashboardAnalyticsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/brands': {
       id: '/dashboard/brands'
       path: '/brands'
       fullPath: '/dashboard/brands'
       preLoaderRoute: typeof DashboardBrandsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/categories': {
+      id: '/dashboard/categories'
+      path: '/categories'
+      fullPath: '/dashboard/categories'
+      preLoaderRoute: typeof DashboardCategoriesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/collections': {
+      id: '/dashboard/collections'
+      path: '/collections'
+      fullPath: '/dashboard/collections'
+      preLoaderRoute: typeof DashboardCollectionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/customers': {
+      id: '/dashboard/customers'
+      path: '/customers'
+      fullPath: '/dashboard/customers'
+      preLoaderRoute: typeof DashboardCustomersRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/hero': {
@@ -648,11 +784,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardHeroRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/inventory': {
+      id: '/dashboard/inventory'
+      path: '/inventory'
+      fullPath: '/dashboard/inventory'
+      preLoaderRoute: typeof DashboardInventoryRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/marketing': {
+      id: '/dashboard/marketing'
+      path: '/marketing'
+      fullPath: '/dashboard/marketing'
+      preLoaderRoute: typeof DashboardMarketingRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/messages': {
+      id: '/dashboard/messages'
+      path: '/messages'
+      fullPath: '/dashboard/messages'
+      preLoaderRoute: typeof DashboardMessagesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/navigation': {
       id: '/dashboard/navigation'
       path: '/navigation'
       fullPath: '/dashboard/navigation'
       preLoaderRoute: typeof DashboardNavigationRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/orders': {
+      id: '/dashboard/orders'
+      path: '/orders'
+      fullPath: '/dashboard/orders'
+      preLoaderRoute: typeof DashboardOrdersRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/products': {
+      id: '/dashboard/products'
+      path: '/products'
+      fullPath: '/dashboard/products'
+      preLoaderRoute: typeof DashboardProductsRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/sections': {
@@ -687,9 +858,18 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardBrandsRoute: typeof DashboardBrandsRoute
+  DashboardCategoriesRoute: typeof DashboardCategoriesRoute
+  DashboardCollectionsRoute: typeof DashboardCollectionsRoute
+  DashboardCustomersRoute: typeof DashboardCustomersRoute
   DashboardHeroRoute: typeof DashboardHeroRoute
+  DashboardInventoryRoute: typeof DashboardInventoryRoute
+  DashboardMarketingRoute: typeof DashboardMarketingRoute
+  DashboardMessagesRoute: typeof DashboardMessagesRoute
   DashboardNavigationRoute: typeof DashboardNavigationRoute
+  DashboardOrdersRoute: typeof DashboardOrdersRoute
+  DashboardProductsRoute: typeof DashboardProductsRoute
   DashboardSectionsRoute: typeof DashboardSectionsRoute
   DashboardSeoRoute: typeof DashboardSeoRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
@@ -697,9 +877,18 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardBrandsRoute: DashboardBrandsRoute,
+  DashboardCategoriesRoute: DashboardCategoriesRoute,
+  DashboardCollectionsRoute: DashboardCollectionsRoute,
+  DashboardCustomersRoute: DashboardCustomersRoute,
   DashboardHeroRoute: DashboardHeroRoute,
+  DashboardInventoryRoute: DashboardInventoryRoute,
+  DashboardMarketingRoute: DashboardMarketingRoute,
+  DashboardMessagesRoute: DashboardMessagesRoute,
   DashboardNavigationRoute: DashboardNavigationRoute,
+  DashboardOrdersRoute: DashboardOrdersRoute,
+  DashboardProductsRoute: DashboardProductsRoute,
   DashboardSectionsRoute: DashboardSectionsRoute,
   DashboardSeoRoute: DashboardSeoRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
