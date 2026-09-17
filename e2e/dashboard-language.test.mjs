@@ -43,7 +43,7 @@ test("all primary dashboard editors consume dashboard language context", async (
     "src/components/admin/CustomersEditor.tsx",
     "src/components/admin/InventoryEditor.tsx",
     "src/components/admin/ProductEditor.tsx",
-    "src/routes/dashboard.index.tsx",
+    "src/dashboard/components/TablerDashboardOverview.tsx",
     "src/routes/dashboard.hero.tsx",
     "src/routes/dashboard.sections.tsx",
     "src/routes/dashboard.navigation.tsx",
@@ -60,4 +60,7 @@ test("all primary dashboard editors consume dashboard language context", async (
     const source = await read(file);
     assert.match(source, /useDashboardLanguage/, `${file} must use dashboard localization`);
   }
+
+  const route = await read("src/routes/dashboard.index.tsx");
+  assert.match(route, /TablerDashboardOverview/);
 });
