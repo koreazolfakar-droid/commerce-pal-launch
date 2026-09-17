@@ -96,6 +96,7 @@ const deniedFields = new Set<string>();
 type StorefrontJsonValue = Awaited<ReturnType<Response["json"]>>;
 type StorefrontCacheEntry = { expiresAt: number; value: StorefrontJsonValue };
 const STOREFRONT_CACHE_TTL_MS = 60_000;
+const STOREFRONT_STALE_TTL_MS = 5 * 60_000;
 const STOREFRONT_CACHE_MAX_ENTRIES = 100;
 const PERSISTENT_STOREFRONT_CACHE_NAME = "space-call-storefront-v2";
 const PERSISTENT_STOREFRONT_CACHE_TIMESTAMP_HEADER = "x-space-call-cached-at";
