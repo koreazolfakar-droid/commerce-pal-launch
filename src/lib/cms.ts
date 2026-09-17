@@ -1,5 +1,3 @@
-import { createServerFn } from "@tanstack/react-start";
-
 export type CmsJsonValue =
   string | number | boolean | null | CmsJsonValue[] | { [key: string]: CmsJsonValue };
 
@@ -98,123 +96,19 @@ export const EMPTY_CMS: CmsSnapshot = {
   seoPages: [],
 };
 
-const LIVE_SUPABASE_PROJECT_REF = "rtwyankpxtffqqrasyzw";
-const DEFAULT_SUPABASE_URL = `https://${LIVE_SUPABASE_PROJECT_REF}.supabase.co`;
-const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
-const CMS_BROWSER_FALLBACK_KEY = "space-call-public-cms-v1";
 const ARABIC_SCRIPT = /[\u0600-\u06ff]/;
 
-let cmsPendingRequest: Promise<CmsSnapshot> | null = null;
-let lastSuccessfulCmsSnapshot: CmsSnapshot | null = null;
-
-function isCmsSnapshot(value: unknown): value is CmsSnapshot {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const record = value as Partial<CmsSnapshot>;
-  return (
-    !!record.settings &&
-    typeof record.settings === "object" &&
-    Array.isArray(record.heroSlides) &&
-    Array.isArray(record.sections) &&
-    Array.isArray(record.navigation) &&
-    Array.isArray(record.brands) &&
-    Array.isArray(record.seoPages)
-  );
-}
-
-function readBrowserCmsFallback(): CmsSnapshot | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(CMS_BROWSER_FALLBACK_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    return isCmsSnapshot(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeBrowserCmsFallback(snapshot: CmsSnapshot) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(CMS_BROWSER_FALLBACK_KEY, JSON.stringify(snapshot));
-  } catch {
-    // Storage can be unavailable in private/restricted browser modes. The live
-    // request and in-memory fallback still work in those environments.
-  }
-}
-
-function getCmsSupabaseConfig() {
-  const envUrl = process.env["SUPABASE_URL"]?.trim().replace(/\/$/, "") || "";
-  const usingLiveProject = envUrl.includes(`${LIVE_SUPABASE_PROJECT_REF}.supabase.co`);
-
-  return {
-    baseUrl: usingLiveProject ? envUrl : DEFAULT_SUPABASE_URL,
-    publishableKey:
-      (usingLiveProject ? process.env["SUPABASE_PUBLISHABLE_KEY"]?.trim() : "") ||
-      DEFAULT_SUPABASE_PUBLISHABLE_KEY,
-  };
-}
-
-async function loadCmsSnapshot(): Promise<CmsSnapshot> {
-  const { baseUrl, publishableKey } = getCmsSupabaseConfig();
-  const headers = new Headers({
-    Accept: "application/json",
-    "Cache-Control": "no-cache",
-    Pragma: "no-cache",
-    apikey: publishableKey,
-  });
-
-  const response = await fetch(`${baseUrl}/functions/v1/public-cms?fresh=${Date.now()}`, {
-    method: "GET",
-    headers,
-    cache: "no-store",
-    signal: AbortSignal.timeout(8_000),
-  });
-  if (!response.ok) throw new Error(`public-cms returned ${response.status}`);
-
-  const payload: unknown = await response.json();
-  if (!isCmsSnapshot(payload)) throw new Error("public-cms returned an invalid snapshot");
-  return payload;
-}
-
 /**
- * Public storefront snapshot. The browser never receives direct CMS table access;
- * this server function reads only the curated public-cms Edge Function projection.
- * Requests remain uncached so Dashboard publishes become visible immediately.
- * A previous good snapshot is used only when the live gateway is unavailable.
+ * The storefront is intentionally Shopify-only.
+ *
+ * Dashboard/CMS editors remain available under /dashboard, but public storefront
+ * code no longer reads their Supabase projection. Keeping this compatibility
+ * function returning an empty snapshot lets existing presentational components
+ * fall back to their built-in copy without introducing a second runtime source
+ * of truth or a refresh race against Shopify.
  */
-const cmsSnapshotFn = createServerFn({ method: "GET" }).handler(async () => {
-  if (cmsPendingRequest) return cmsPendingRequest;
-
-  const request = loadCmsSnapshot()
-    .then((snapshot) => {
-      lastSuccessfulCmsSnapshot = snapshot;
-      return snapshot;
-    })
-    .finally(() => {
-      cmsPendingRequest = null;
-    });
-
-  cmsPendingRequest = request;
-  return request;
-});
-
 export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
-  try {
-    const snapshot = await cmsSnapshotFn();
-    lastSuccessfulCmsSnapshot = snapshot;
-    writeBrowserCmsFallback(snapshot);
-    return snapshot;
-  } catch (error) {
-    const fallback = lastSuccessfulCmsSnapshot ?? readBrowserCmsFallback();
-    console.warn(
-      fallback
-        ? "Space Call dashboard content is temporarily unavailable; using the last good snapshot"
-        : "Space Call dashboard content is unavailable; using storefront defaults",
-      error,
-    );
-    return fallback ?? EMPTY_CMS;
-  }
+  return EMPTY_CMS;
 }
 
 function cleanText(value: unknown) {
@@ -228,11 +122,6 @@ function containsArabic(value: CmsJsonValue): boolean {
   return false;
 }
 
-/**
- * Resolve localized CMS copy without leaking Arabic legacy copy into English mode
- * (or English legacy copy into Arabic mode). Legacy values remain usable when they
- * are already written in the requested script, which keeps older CMS rows safe.
- */
 export function localizedCmsText(
   language: CmsLocale,
   english: unknown,
