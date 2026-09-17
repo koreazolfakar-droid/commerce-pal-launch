@@ -1,6 +1,7 @@
-import { Bell, Languages, Menu } from "lucide-react";
+import { Languages, Menu } from "lucide-react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { DashboardNotifications } from "@/dashboard/components/DashboardNotifications";
 import { GlobalDashboardSearch } from "@/dashboard/components/GlobalDashboardSearch";
 import { useDashboardLanguage } from "@/lib/dashboardI18n";
 
@@ -33,15 +34,7 @@ export function DashboardHeader({
         </div>
 
         <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
-          <button
-            type="button"
-            className="relative grid size-9 place-items-center rounded-xl border border-border/70 bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            aria-label={text("الإشعارات", "Notifications")}
-            title={text("الإشعارات", "Notifications")}
-          >
-            <Bell className="size-4" />
-            <span className="absolute end-[8px] top-[7px] size-1.5 rounded-full bg-rose-500 ring-2 ring-card" />
-          </button>
+          <DashboardNotifications />
 
           <button
             type="button"
