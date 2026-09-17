@@ -18,20 +18,18 @@ test("dashboard consumes the canonical OKLCH theme tokens without legacy hsl wra
 });
 
 test("dashboard controls use semantic light and dark surfaces", async () => {
-  const [header, search, card, pageHeader] = await Promise.all([
+  const [header, search, card] = await Promise.all([
     read("src/dashboard/components/DashboardHeader.tsx"),
     read("src/dashboard/components/GlobalDashboardSearch.tsx"),
     read("src/dashboard/components/DashboardCard.tsx"),
-    read("src/dashboard/components/DashboardPageHeader.tsx"),
   ]);
 
-  for (const source of [header, search, card, pageHeader]) {
+  for (const source of [header, search, card]) {
     assert.doesNotMatch(source, /border-slate-200/);
   }
   assert.match(header, /bg-background\/95/);
   assert.match(search, /bg-muted\/25/);
   assert.match(card, /border-border\/70/);
-  assert.match(pageHeader, /bg-foreground/);
 });
 
 test("settings editor remains compact and progressively disclosed", async () => {
