@@ -88,7 +88,9 @@ function TrendBadge({ trend }: { trend: DashboardTrend }) {
       : "bg-muted text-muted-foreground";
 
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${className}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${className}`}
+    >
       <Icon className="size-3" />
       {Math.abs(trend.value).toFixed(1)}%
     </span>
@@ -112,7 +114,9 @@ function KpiCard({
     <article className="rounded-xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            {label}
+          </p>
           <p className="mt-2 text-2xl font-black tracking-tight text-foreground">{value}</p>
         </div>
         <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary">
@@ -203,7 +207,9 @@ export function TablerDashboardOverview() {
             <input
               type="date"
               value={range.start}
-              onChange={(event) => setRange((current) => ({ ...current, start: event.target.value }))}
+              onChange={(event) =>
+                setRange((current) => ({ ...current, start: event.target.value }))
+              }
               className="w-[118px] bg-transparent font-semibold text-foreground outline-none"
             />
             <span>–</span>
@@ -242,7 +248,10 @@ export function TablerDashboardOverview() {
               Space Call Commerce OS
             </span>
             <h2 className="mt-4 text-xl font-black tracking-tight sm:text-2xl">
-              {text("مرحباً بك في مركز إدارة Space Call", "Welcome to your Space Call command center")}
+              {text(
+                "مرحباً بك في مركز إدارة Space Call",
+                "Welcome to your Space Call command center",
+              )}
             </h2>
             <p className="mt-2 max-w-lg text-xs leading-5 text-muted-foreground">
               {text(
@@ -357,7 +366,10 @@ export function TablerDashboardOverview() {
                 {text("آخر نشاط للطلبات", "Latest order activity")}
               </p>
             </div>
-            <Link to="/dashboard/orders" className="text-[11px] font-bold text-primary hover:underline">
+            <Link
+              to="/dashboard/orders"
+              className="text-[11px] font-bold text-primary hover:underline"
+            >
               {text("عرض الكل", "View all")}
             </Link>
           </div>
@@ -386,9 +398,13 @@ export function TablerDashboardOverview() {
                         <p className="font-bold">{order.customer}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">{order.date}</p>
                       </td>
-                      <td className="max-w-52 truncate px-3 py-3.5 text-muted-foreground">{order.item}</td>
+                      <td className="max-w-52 truncate px-3 py-3.5 text-muted-foreground">
+                        {order.item}
+                      </td>
                       <td className="px-3 py-3.5">
-                        <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusClasses(order.status)}`}>
+                        <span
+                          className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusClasses(order.status)}`}
+                        >
                           {order.status}
                         </span>
                       </td>
@@ -449,7 +465,10 @@ export function TablerDashboardOverview() {
                 </p>
               ) : (
                 data.topProducts.slice(0, 5).map((product) => (
-                  <div key={product.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <div
+                    key={product.id}
+                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                  >
                     <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-border/60 bg-muted/40">
                       {product.imageUrl ? (
                         <img src={product.imageUrl} alt="" className="size-full object-cover" />

@@ -63,10 +63,7 @@ const HOME_SECONDARY_IDLE_TIMEOUT_MS = 1400;
 const HOME_SECONDARY_FALLBACK_DELAY_MS = 350;
 
 type IdleCapableWindow = Window & {
-  requestIdleCallback?: (
-    callback: IdleRequestCallback,
-    options?: IdleRequestOptions,
-  ) => number;
+  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
   cancelIdleCallback?: (handle: number) => void;
 };
 

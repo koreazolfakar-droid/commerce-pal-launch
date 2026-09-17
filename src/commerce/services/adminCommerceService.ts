@@ -20,7 +20,8 @@ export function createAdminCommerceService(repository: AdminCommerceRepository) 
     ) => repository.updateOrderState(orderId, state),
 
     listCustomers: () => repository.listCustomers(),
-    getCustomerOrders: (phone: string, limit?: number) => repository.getCustomerOrders(phone, limit),
+    getCustomerOrders: (phone: string, limit?: number) =>
+      repository.getCustomerOrders(phone, limit),
     updateCustomerProfile: (customerId: string, patch: CustomerProfilePatch) =>
       repository.updateCustomerProfile(customerId, patch),
   };

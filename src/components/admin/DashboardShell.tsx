@@ -104,7 +104,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f7fb] text-foreground dark:bg-background" dir={direction}>
+      <div
+        className="flex min-h-screen items-center justify-center bg-[#f5f7fb] text-foreground dark:bg-background"
+        dir={direction}
+      >
         <div className="space-y-3 text-center">
           <Loader2 className="mx-auto size-6 animate-spin text-primary" />
           <p className="text-xs text-muted-foreground">
@@ -119,7 +122,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (!role) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center bg-[#f5f7fb] px-4 text-foreground dark:bg-background" dir={direction}>
+      <div
+        className="relative flex min-h-screen items-center justify-center bg-[#f5f7fb] px-4 text-foreground dark:bg-background"
+        dir={direction}
+      >
         <div className="fixed start-4 top-4 z-40 flex gap-2 sm:start-6 sm:top-6">
           <LanguageToggle />
           <ThemeToggle className="border border-border/70 bg-card shadow-sm hover:bg-muted" />
@@ -145,7 +151,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               "An authorized administrator must assign access through the trusted admin flow or Supabase.",
             )}
           </div>
-          <Button variant="outline" className="w-full" onClick={() => void supabase.auth.signOut().then(refresh)}>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => void supabase.auth.signOut().then(refresh)}
+          >
             <LogOut className="me-2 size-4" /> {text("تسجيل الخروج", "Sign out")}
           </Button>
         </div>

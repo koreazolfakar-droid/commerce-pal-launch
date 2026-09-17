@@ -99,7 +99,10 @@ function sortMergedProducts(
 }
 
 function reportSourceFailure(source: "Shopify" | "Space Call", operation: string, reason: unknown) {
-  console.warn(`${source} ${operation} failed; continuing with the other storefront source.`, reason);
+  console.warn(
+    `${source} ${operation} failed; continuing with the other storefront source.`,
+    reason,
+  );
 }
 
 async function settlePair<TShopify, TNative>(
@@ -142,7 +145,10 @@ async function enrichNativeBrands(products: ShopifyProduct[]) {
   if (!ids.length) return products;
 
   const [productRowsResult, cms] = await Promise.all([
-    supabase.from("store_products" as never).select("id,brand_id").in("id", ids),
+    supabase
+      .from("store_products" as never)
+      .select("id,brand_id")
+      .in("id", ids),
     fetchCmsSnapshot(),
   ]);
 
@@ -214,7 +220,9 @@ export async function fetchBrandVendors(): Promise<string[]> {
   );
 
   const vendors = [
-    ...(nativeProducts ?? []).flatMap((product) => (product.node.vendor ? [product.node.vendor] : [])),
+    ...(nativeProducts ?? []).flatMap((product) =>
+      product.node.vendor ? [product.node.vendor] : [],
+    ),
     ...(shopifyVendors ?? []),
   ];
 

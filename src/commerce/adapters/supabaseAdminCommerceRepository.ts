@@ -159,8 +159,14 @@ export const supabaseAdminCommerceRepository: AdminCommerceRepository = {
           .from("store_product_images" as never)
           .select("id,product_id,url,is_primary,sort_order")
           .order("sort_order"),
-        supabase.from("cms_brands" as never).select("id,name").order("name"),
-        supabase.from("store_categories" as never).select("id,name").order("sort_order"),
+        supabase
+          .from("cms_brands" as never)
+          .select("id,name")
+          .order("name"),
+        supabase
+          .from("store_categories" as never)
+          .select("id,name")
+          .order("sort_order"),
       ]);
 
     throwIfError(
@@ -377,15 +383,17 @@ export const supabaseAdminCommerceRepository: AdminCommerceRepository = {
       .limit(limit);
     throwIfError(error);
 
-    return ((data ?? []) as Array<{
-      id: string;
-      order_number: number;
-      status: string;
-      payment_status: string;
-      total: number | string;
-      currency: string;
-      created_at: string;
-    }>).map((row) => ({
+    return (
+      (data ?? []) as Array<{
+        id: string;
+        order_number: number;
+        status: string;
+        payment_status: string;
+        total: number | string;
+        currency: string;
+        created_at: string;
+      }>
+    ).map((row) => ({
       id: row.id,
       orderNumber: row.order_number,
       status: row.status,
