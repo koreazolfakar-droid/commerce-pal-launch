@@ -9,6 +9,7 @@ const cases = [
   { width: 390, height: 844 },
   { width: 412, height: 915 },
   { width: 430, height: 932 },
+  { width: 768, height: 1024 },
 ];
 const expectedIds = ["home", "categories", "search", "cart"];
 
@@ -24,6 +25,33 @@ async function assertActive(page, id) {
   const item = page.locator(`[data-nav-id="${id}"]`);
   assert.equal(await item.getAttribute("data-active"), "true", `${id} should be active`);
   assert.equal(await item.getAttribute("aria-current"), "page", `${id} should expose aria-current`);
+
+  const activeColor = await item.evaluate((element) => getComputedStyle(element).color);
+  const items = page.locator('[data-testid="bottom-nav"] [data-nav-id]');
+  const count = await items.count();
+
+  for (let index = 0; index < count; index += 1) {
+    const candidate = items.nth(index);
+    const candidateId = await candidate.getAttribute("data-nav-id");
+    if (candidateId === id) continue;
+
+    assert.equal(
+      await candidate.getAttribute("data-active"),
+      "false",
+      `${candidateId} should not be active while ${id} is active`,
+    );
+    assert.equal(
+      await candidate.getAttribute("aria-current"),
+      null,
+      `${candidateId} should not expose aria-current while ${id} is active`,
+    );
+    const candidateColor = await candidate.evaluate((element) => getComputedStyle(element).color);
+    assert.notEqual(
+      candidateColor,
+      activeColor,
+      `${candidateId} should not look active while ${id} is active`,
+    );
+  }
 }
 
 try {
@@ -58,6 +86,15 @@ try {
     assert.ok(
       navMetrics.scrollWidth <= navMetrics.viewportWidth,
       `${testCase.width}px: horizontal overflow detected`,
+    );
+
+    const brand = page.getByTestId("mobile-brand");
+    const brandBox = await brand.boundingBox();
+    assert.ok(brandBox, `${testCase.width}px: mobile brand is missing`);
+    const brandCenter = brandBox.x + brandBox.width / 2;
+    assert.ok(
+      Math.abs(brandCenter - navMetrics.viewportWidth / 2) <= 2,
+      `${testCase.width}px: mobile brand is not visually centered`,
     );
 
     const items = nav.locator("[data-nav-id]");
