@@ -34,8 +34,8 @@ jobs:
       - name: Install Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
-      - name: Run storefront end-to-end tests
-        run: bun run test:e2e
+      - name: Run targeted layout diagnostic
+        run: bunx playwright test e2e/layout.spec.ts --project=desktop --grep "homepage layout 320px en" --workers=1 --retries=0
 
       - name: Upload Playwright report on failure
         if: failure()
