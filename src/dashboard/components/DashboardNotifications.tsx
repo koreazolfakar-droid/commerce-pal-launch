@@ -51,9 +51,9 @@ type AuditRow = {
 
 function auditTitle(row: AuditRow) {
   const data = row.after_data ?? row.before_data ?? {};
-  const title = data.title;
+  const title = data["title"];
   if (typeof title === "string" && title.trim()) return title;
-  const sku = data.sku;
+  const sku = data["sku"];
   if (typeof sku === "string" && sku.trim()) return `SKU ${sku}`;
   return row.entity_type;
 }
@@ -133,8 +133,18 @@ async function loadNotifications(): Promise<DashboardNotification[]> {
     const label = auditTitle(row);
     notifications.push({
       id: `audit:${row.id}`,
-      titleAr: row.action === "insert" ? "تمت إضافة عنصر" : row.action === "delete" ? "تم حذف عنصر" : "تم تعديل عنصر",
-      titleEn: row.action === "insert" ? "Item created" : row.action === "delete" ? "Item deleted" : "Item updated",
+      titleAr:
+        row.action === "insert"
+          ? "تمت إضافة عنصر"
+          : row.action === "delete"
+            ? "تم حذف عنصر"
+            : "تم تعديل عنصر",
+      titleEn:
+        row.action === "insert"
+          ? "Item created"
+          : row.action === "delete"
+            ? "Item deleted"
+            : "Item updated",
       bodyAr: label,
       bodyEn: label,
       target: "/dashboard/activity",
@@ -149,7 +159,9 @@ async function loadNotifications(): Promise<DashboardNotification[]> {
     .sort((left, right) => {
       const severity = rank[left.severity] - rank[right.severity];
       if (severity !== 0) return severity;
-      return new Date(right.createdAt ?? 0).getTime() - new Date(left.createdAt ?? 0).getTime();
+      return (
+        new Date(right.createdAt ?? 0).getTime() - new Date(left.createdAt ?? 0).getTime()
+      );
     })
     .slice(0, 18);
 }
@@ -161,8 +173,10 @@ function iconFor(kind: DashboardNotification["kind"]) {
 }
 
 function severityClass(severity: DashboardNotification["severity"]) {
-  if (severity === "critical") return "bg-rose-500/10 text-rose-600 dark:text-rose-300";
-  if (severity === "warning") return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
+  if (severity === "critical")
+    return "bg-rose-500/10 text-rose-600 dark:text-rose-300";
+  if (severity === "warning")
+    return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
   return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
 }
 
@@ -225,7 +239,9 @@ export function DashboardNotifications() {
         <div className="absolute end-0 top-[calc(100%+10px)] z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border/70 bg-popover text-popover-foreground shadow-2xl">
           <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5">
             <div>
-              <p className="text-xs font-black">{text("مركز الإشعارات", "Notification Center")}</p>
+              <p className="text-xs font-black">
+                {text("مركز الإشعارات", "Notification Center")}
+              </p>
               <p className="mt-0.5 text-[9px] text-muted-foreground">
                 {text("تنبيهات حقيقية من المتجر", "Live store alerts")}
               </p>
@@ -260,7 +276,9 @@ export function DashboardNotifications() {
             ) : query.isError ? (
               <div className="px-4 py-8 text-center">
                 <TriangleAlert className="mx-auto size-5 text-amber-500" />
-                <p className="mt-2 text-xs font-bold">{text("تعذّر تحميل الإشعارات", "Notifications unavailable")}</p>
+                <p className="mt-2 text-xs font-bold">
+                  {text("تعذّر تحميل الإشعارات", "Notifications unavailable")}
+                </p>
                 <button
                   type="button"
                   onClick={() => void query.refetch()}
@@ -283,7 +301,9 @@ export function DashboardNotifications() {
                     onClick={() => setOpen(false)}
                     className="flex items-start gap-3 rounded-xl px-3 py-3 transition hover:bg-muted/55"
                   >
-                    <span className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${severityClass(item.severity)}`}>
+                    <span
+                      className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${severityClass(item.severity)}`}
+                    >
                       <Icon className="size-4" />
                     </span>
                     <span className="min-w-0 flex-1">
