@@ -98,8 +98,8 @@ export function CatalogWorkspace() {
         low,
         variantCount: productVariants.length,
         imageUrl: imageByProduct.get(product.id)?.url ?? null,
-        brand: product.brand_id ? (brandById.get(product.brand_id) ?? "—") : "—",
-        category: product.category_id ? (categoryById.get(product.category_id) ?? "—") : "—",
+        brand: product.brand_id ? brandById.get(product.brand_id) ?? "—" : "—",
+        category: product.category_id ? categoryById.get(product.category_id) ?? "—" : "—",
       };
     });
 
@@ -175,34 +175,15 @@ export function CatalogWorkspace() {
         </div>
       ) : query.isError || !summary ? (
         <div className="rounded-3xl border border-destructive/25 bg-destructive/5 p-6 text-sm text-destructive">
-          {text(
-            "تعذر تحميل الكتالوج. حاول مرة أخرى.",
-            "Unable to load the catalog. Please try again.",
-          )}
+          {text("تعذر تحميل الكتالوج. حاول مرة أخرى.", "Unable to load the catalog. Please try again.")}
         </div>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <Metric
-              icon={Package}
-              label={text("كل المنتجات", "All products")}
-              value={summary.rows.length}
-            />
-            <Metric
-              icon={Package}
-              label={text("المنتجات النشطة", "Active products")}
-              value={summary.active}
-            />
-            <Metric
-              icon={Layers3}
-              label={text("Variants النشطة", "Active variants")}
-              value={summary.variants}
-            />
-            <Metric
-              icon={Boxes}
-              label={text("إجمالي الوحدات", "Total units")}
-              value={summary.totalUnits}
-            />
+            <Metric icon={Package} label={text("كل المنتجات", "All products")} value={summary.rows.length} />
+            <Metric icon={Package} label={text("المنتجات النشطة", "Active products")} value={summary.active} />
+            <Metric icon={Layers3} label={text("Variants النشطة", "Active variants")} value={summary.variants} />
+            <Metric icon={Boxes} label={text("إجمالي الوحدات", "Total units")} value={summary.totalUnits} />
             <Metric
               icon={TriangleAlert}
               label={text("تحتاج انتباه", "Need attention")}
@@ -218,10 +199,7 @@ export function CatalogWorkspace() {
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder={text(
-                    "ابحث بالاسم، البراند أو التصنيف…",
-                    "Search by product, brand or category…",
-                  )}
+                  placeholder={text("ابحث بالاسم، البراند أو التصنيف…", "Search by product, brand or category…")}
                   className="h-11 rounded-xl ps-9"
                 />
               </div>
@@ -265,9 +243,7 @@ export function CatalogWorkspace() {
                       <tr>
                         <th className="px-4 py-3">{text("المنتج", "Product")}</th>
                         <th className="px-3 py-3">{text("الحالة", "Status")}</th>
-                        <th className="px-3 py-3">
-                          {text("البراند / التصنيف", "Brand / category")}
-                        </th>
+                        <th className="px-3 py-3">{text("البراند / التصنيف", "Brand / category")}</th>
                         <th className="px-3 py-3">{text("السعر", "Price")}</th>
                         <th className="px-3 py-3">Variants</th>
                         <th className="px-3 py-3">{text("الكمية", "Quantity")}</th>
@@ -276,48 +252,32 @@ export function CatalogWorkspace() {
                     </thead>
                     <tbody>
                       {filteredRows.map((row) => (
-                        <tr
-                          key={row.id}
-                          className="border-t border-border/50 transition hover:bg-muted/20"
-                        >
+                        <tr key={row.id} className="border-t border-border/50 transition hover:bg-muted/20">
                           <td className="px-4 py-3.5">
                             <div className="flex min-w-0 items-center gap-3">
                               <ProductImage url={row.imageUrl} title={row.title} />
                               <div className="min-w-0">
                                 <p className="max-w-72 truncate text-xs font-black">{row.title}</p>
-                                <p className="mt-0.5 max-w-72 truncate text-[10px] text-muted-foreground">
-                                  {row.handle}
-                                </p>
+                                <p className="mt-0.5 max-w-72 truncate text-[10px] text-muted-foreground">{row.handle}</p>
                               </div>
                             </div>
                           </td>
                           <td className="px-3 py-3.5">
-                            <span
-                              className={cn(
-                                "rounded-full px-2.5 py-1 text-[10px] font-black capitalize",
-                                statusClass(row.status),
-                              )}
-                            >
+                            <span className={cn("rounded-full px-2.5 py-1 text-[10px] font-black capitalize", statusClass(row.status))}>
                               {row.status}
                             </span>
                           </td>
                           <td className="px-3 py-3.5">
                             <p className="text-[11px] font-bold">{row.brand}</p>
-                            <p className="mt-0.5 text-[10px] text-muted-foreground">
-                              {row.category}
-                            </p>
+                            <p className="mt-0.5 text-[10px] text-muted-foreground">{row.category}</p>
                           </td>
-                          <td className="px-3 py-3.5 text-xs font-black">
-                            {formatMoney(row.base_price, row.currency)}
-                          </td>
+                          <td className="px-3 py-3.5 text-xs font-black">{formatMoney(row.base_price, row.currency)}</td>
                           <td className="px-3 py-3.5 text-xs font-black">{row.variantCount}</td>
                           <td className="px-3 py-3.5">
                             <span
                               className={cn(
                                 "inline-flex min-w-10 justify-center rounded-full px-2.5 py-1 text-xs font-black",
-                                row.low
-                                  ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                                  : "bg-muted text-foreground",
+                                row.low ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-muted text-foreground",
                               )}
                             >
                               {row.stock}
@@ -347,30 +307,16 @@ export function CatalogWorkspace() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-black">{row.title}</p>
-                              <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                                {row.brand} · {row.category}
-                              </p>
+                              <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{row.brand} · {row.category}</p>
                             </div>
-                            <span
-                              className={cn(
-                                "shrink-0 rounded-full px-2 py-1 text-[9px] font-black capitalize",
-                                statusClass(row.status),
-                              )}
-                            >
+                            <span className={cn("shrink-0 rounded-full px-2 py-1 text-[9px] font-black capitalize", statusClass(row.status))}>
                               {row.status}
                             </span>
                           </div>
                           <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-muted/30 p-2.5 text-center">
-                            <SmallMetric
-                              label={text("السعر", "Price")}
-                              value={formatMoney(row.base_price, row.currency)}
-                            />
+                            <SmallMetric label={text("السعر", "Price")} value={formatMoney(row.base_price, row.currency)} />
                             <SmallMetric label="Variants" value={String(row.variantCount)} />
-                            <SmallMetric
-                              label={text("الكمية", "Qty")}
-                              value={String(row.stock)}
-                              warning={row.low}
-                            />
+                            <SmallMetric label={text("الكمية", "Qty")} value={String(row.stock)} warning={row.low} />
                           </div>
                           <button
                             type="button"
@@ -389,27 +335,9 @@ export function CatalogWorkspace() {
           </section>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <Shortcut
-              to="/dashboard/inventory"
-              icon={Boxes}
-              title={text("إدارة المخزون", "Inventory")}
-              description={text(
-                "تعديل الكميات ومراجعة سجل الحركات",
-                "Adjust quantities and review movement history",
-              )}
-            />
-            <Shortcut
-              to="/dashboard/categories"
-              icon={Tags}
-              title={text("التصنيفات", "Categories")}
-              description={text("تنظيم المنتجات حسب الأقسام", "Organize products by category")}
-            />
-            <Shortcut
-              to="/dashboard/brands"
-              icon={Tags}
-              title={text("البراندات", "Brands")}
-              description={text("إدارة أسماء وشعارات البراندات", "Manage brand names and logos")}
-            />
+            <Shortcut to="/dashboard/inventory" icon={Boxes} title={text("إدارة المخزون", "Inventory")} description={text("تعديل الكميات ومراجعة سجل الحركات", "Adjust quantities and review movement history")} />
+            <Shortcut to="/dashboard/categories" icon={Tags} title={text("التصنيفات", "Categories")} description={text("تنظيم المنتجات حسب الأقسام", "Organize products by category")} />
+            <Shortcut to="/dashboard/brands" icon={Tags} title={text("البراندات", "Brands")} description={text("إدارة أسماء وشعارات البراندات", "Manage brand names and logos")} />
           </div>
         </>
       )}
@@ -466,45 +394,21 @@ function Metric({
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <span
-          className={cn(
-            "grid size-9 place-items-center rounded-xl bg-primary/10 text-primary",
-            warning && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-          )}
-        >
+        <span className={cn("grid size-9 place-items-center rounded-xl bg-primary/10 text-primary", warning && "bg-amber-500/10 text-amber-600 dark:text-amber-400")}>
           <Icon className="size-4" />
         </span>
-        <strong
-          className={cn("text-xl font-black", warning && "text-amber-600 dark:text-amber-400")}
-        >
-          {value.toLocaleString()}
-        </strong>
+        <strong className={cn("text-xl font-black", warning && "text-amber-600 dark:text-amber-400")}>{value.toLocaleString()}</strong>
       </div>
       <p className="mt-3 text-[10px] font-black text-muted-foreground">{label}</p>
     </div>
   );
 }
 
-function SmallMetric({
-  label,
-  value,
-  warning,
-}: {
-  label: string;
-  value: string;
-  warning?: boolean;
-}) {
+function SmallMetric({ label, value, warning }: { label: string; value: string; warning?: boolean }) {
   return (
     <div className="min-w-0">
       <p className="truncate text-[9px] text-muted-foreground">{label}</p>
-      <p
-        className={cn(
-          "mt-0.5 truncate text-[10px] font-black",
-          warning && "text-amber-600 dark:text-amber-400",
-        )}
-      >
-        {value}
-      </p>
+      <p className={cn("mt-0.5 truncate text-[10px] font-black", warning && "text-amber-600 dark:text-amber-400")}>{value}</p>
     </div>
   );
 }
@@ -521,10 +425,7 @@ function Shortcut({
   description: string;
 }) {
   return (
-    <Link
-      to={to}
-      className="group rounded-2xl border border-border/70 bg-card p-4 transition hover:border-primary/25 hover:shadow-sm"
-    >
+    <Link to={to} className="group rounded-2xl border border-border/70 bg-card p-4 transition hover:border-primary/25 hover:shadow-sm">
       <div className="flex items-start gap-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
           <Icon className="size-4" />

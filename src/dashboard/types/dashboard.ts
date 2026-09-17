@@ -35,7 +35,12 @@ export type OrdersTrend = {
 };
 
 export type DashboardOrderStatus =
-  "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
+  | "pending"
+  | "confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 
 export type DashboardOrder = {
   id: string;

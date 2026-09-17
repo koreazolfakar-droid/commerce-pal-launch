@@ -167,7 +167,10 @@ export function SettingsEditor() {
   };
 
   const addSetting = () => {
-    setRows((current) => [{ originalKey: "", key: "", value: "", valueType: "text" }, ...current]);
+    setRows((current) => [
+      { originalKey: "", key: "", value: "", valueType: "text" },
+      ...current,
+    ]);
     setExpandedIndex(0);
   };
 

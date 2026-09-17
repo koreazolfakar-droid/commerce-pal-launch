@@ -1,7 +1,12 @@
 export type CommerceSource = "native" | "shopify";
 export type ProductStatus = "draft" | "active" | "archived";
 export type OrderStatus =
-  "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
+  | "pending"
+  | "confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 export type PaymentStatus = "unpaid" | "paid" | "refunded" | "partially_refunded";
 
 export type Money = {

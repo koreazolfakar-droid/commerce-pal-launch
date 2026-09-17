@@ -361,7 +361,10 @@ export function NativeCatalogManager() {
       }
       if (!Number.isInteger(rawStock) || rawStock < 0) {
         toast.error(
-          text("المخزون يجب أن يكون رقماً صحيحاً موجباً", "Stock must be a non-negative integer"),
+          text(
+            "المخزون يجب أن يكون رقماً صحيحاً موجباً",
+            "Stock must be a non-negative integer",
+          ),
         );
         return;
       }
@@ -403,20 +406,22 @@ export function NativeCatalogManager() {
         if (result.error) throw result.error;
         savedProduct = result.data as ProductRow;
 
-        const variantResult = await supabase.from("store_product_variants" as never).insert({
-          product_id: savedProduct.id,
-          title: "Default",
-          sku: form.seedSku.trim() || null,
-          barcode: form.seedBarcode.trim() || null,
-          price: seedPrice,
-          compare_at_price: seedCompareAtPrice,
-          stock_quantity: seedStock,
-          track_inventory: form.trackInventory,
-          allow_backorder: form.allowBackorder,
-          options: {},
-          sort_order: 0,
-          is_active: true,
-        } as never);
+        const variantResult = await supabase
+          .from("store_product_variants" as never)
+          .insert({
+            product_id: savedProduct.id,
+            title: "Default",
+            sku: form.seedSku.trim() || null,
+            barcode: form.seedBarcode.trim() || null,
+            price: seedPrice,
+            compare_at_price: seedCompareAtPrice,
+            stock_quantity: seedStock,
+            track_inventory: form.trackInventory,
+            allow_backorder: form.allowBackorder,
+            options: {},
+            sort_order: 0,
+            is_active: true,
+          } as never);
 
         if (variantResult.error) {
           toast.warning(
@@ -601,13 +606,15 @@ export function NativeCatalogManager() {
     setUploadingImage(true);
     try {
       const url = await uploadMedia(file, `products/${form.id}`);
-      const result = await supabase.from("store_product_images" as never).insert({
-        product_id: form.id,
-        url,
-        alt_text: form.title,
-        sort_order: images.length,
-        is_primary: images.length === 0,
-      } as never);
+      const result = await supabase
+        .from("store_product_images" as never)
+        .insert({
+          product_id: form.id,
+          url,
+          alt_text: form.title,
+          sort_order: images.length,
+          is_primary: images.length === 0,
+        } as never);
       if (result.error) throw result.error;
       toast.success(text("تم رفع صورة المنتج", "Product image uploaded"));
       await loadCatalog(form.id);
@@ -648,7 +655,9 @@ export function NativeCatalogManager() {
 
   const removeImage = async (image: ProductImage) => {
     if (!form.id) return;
-    if (!window.confirm(text("إزالة هذه الصورة من المنتج؟", "Remove this image from the product?")))
+    if (
+      !window.confirm(text("إزالة هذه الصورة من المنتج؟", "Remove this image from the product?"))
+    )
       return;
 
     const result = await supabase

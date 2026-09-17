@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, HelpCircle, LogOut, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  HelpCircle,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  X,
+} from "lucide-react";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DASHBOARD_NAV_GROUPS, DASHBOARD_SEARCH_TARGETS } from "@/dashboard/config/navigation";
@@ -184,9 +191,7 @@ export function DashboardSidebar({
           <nav className="space-y-4" aria-label={text("تنقل لوحة التحكم", "Dashboard navigation")}>
             {DASHBOARD_NAV_GROUPS.map((group, groupIndex) => (
               <section key={group.id}>
-                {groupIndex > 0 && compact ? (
-                  <div className="my-2 border-t border-white/8" />
-                ) : null}
+                {groupIndex > 0 && compact ? <div className="my-2 border-t border-white/8" /> : null}
                 {!compact ? (
                   <p className="mb-1.5 px-3 text-[9px] font-black uppercase tracking-[0.15em] text-slate-600">
                     {language === "ar" ? group.ar : group.en}
