@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
 import { useCartStore } from "@/stores/cartStore";
-import { useCompareStore } from "@/stores/compareStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
@@ -16,7 +15,6 @@ export function usePersistedStoreHydration() {
       Promise.resolve(useCartStore.persist.rehydrate()),
       Promise.resolve(useWishlistStore.persist.rehydrate()),
       Promise.resolve(useRecentlyViewedStore.persist.rehydrate()),
-      Promise.resolve(useCompareStore.persist.rehydrate()),
     ]);
   }, []);
 }
