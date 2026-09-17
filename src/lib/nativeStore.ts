@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCmsSnapshot } from "@/lib/cms";
 import type { ShopifyCollection, ShopifyProduct, ShopifyProductNode } from "@/lib/shopify";
 
 type ProductDbRow = {
@@ -51,7 +52,6 @@ type ImageDbRow = {
   is_primary: boolean;
 };
 
-type BrandDbRow = { id: string; name: string; slug: string };
 type CategoryDbRow = { id: string; name: string; slug: string };
 type CollectionDbRow = {
   id: string;
@@ -67,7 +67,6 @@ type CollectionProductRow = { collection_id: string; product_id: string; sort_or
 type HydrationContext = {
   variants: Map<string, VariantDbRow[]>;
   images: Map<string, ImageDbRow[]>;
-  brands: Map<string, BrandDbRow>;
   categories: Map<string, CategoryDbRow>;
   collections: Map<string, Array<{ handle: string; title: string }>>;
 };
@@ -120,7 +119,6 @@ function mapProduct(row: ProductDbRow, context: HydrationContext): ShopifyProduc
   const images = (context.images.get(row.id) ?? []).sort(
     (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
   );
-  const brand = row.brand_id ? context.brands.get(row.brand_id) : undefined;
   const category = row.category_id ? context.categories.get(row.category_id) : undefined;
   const productType = row.product_type || category?.name || null;
   const currency = row.currency || "USD";
@@ -144,7 +142,6 @@ function mapProduct(row: ProductDbRow, context: HydrationContext): ShopifyProduc
     description: row.description ?? "",
     ...(row.description_html ? { descriptionHtml: row.description_html } : {}),
     handle: row.handle,
-    ...(brand?.name ? { vendor: brand.name } : {}),
     ...(productType ? { productType } : {}),
     availableForSale,
     createdAt: row.created_at,
@@ -200,47 +197,38 @@ function mapProduct(row: ProductDbRow, context: HydrationContext): ShopifyProduc
 async function hydrateProducts(rows: ProductDbRow[]): Promise<ShopifyProduct[]> {
   if (!rows.length) return [];
   const ids = rows.map((row) => row.id);
-  const brandIds = [...new Set(rows.flatMap((row) => (row.brand_id ? [row.brand_id] : [])))];
   const categoryIds = [
     ...new Set(rows.flatMap((row) => (row.category_id ? [row.category_id] : []))),
   ];
 
-  const [variantResult, imageResult, brandResult, categoryResult, membershipResult] =
-    await Promise.all([
-      supabase
-        .from("store_product_variants" as never)
-        .select("*")
-        .in("product_id", ids)
-        .order("sort_order"),
-      supabase
-        .from("store_product_images" as never)
-        .select("*")
-        .in("product_id", ids)
-        .order("sort_order"),
-      brandIds.length
-        ? supabase
-            .from("cms_brands" as never)
-            .select("id,name,slug")
-            .in("id", brandIds)
-        : Promise.resolve({ data: [], error: null }),
-      categoryIds.length
-        ? supabase
-            .from("store_categories" as never)
-            .select("id,name,slug")
-            .in("id", categoryIds)
-        : Promise.resolve({ data: [], error: null }),
-      supabase
-        .from("store_collection_products" as never)
-        .select("collection_id,product_id,sort_order")
-        .in("product_id", ids),
-    ]);
+  // Keep anonymous storefront reads limited to the native public catalog tables.
+  // Brand names are deliberately enriched later by hybridStore through the curated
+  // public CMS projection, so SSR refreshes never depend on dashboard-only cms_brands RLS.
+  const [variantResult, imageResult, categoryResult, membershipResult] = await Promise.all([
+    supabase
+      .from("store_product_variants" as never)
+      .select("*")
+      .in("product_id", ids)
+      .order("sort_order"),
+    supabase
+      .from("store_product_images" as never)
+      .select("*")
+      .in("product_id", ids)
+      .order("sort_order"),
+    categoryIds.length
+      ? supabase
+          .from("store_categories" as never)
+          .select("id,name,slug")
+          .in("id", categoryIds)
+      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("store_collection_products" as never)
+      .select("collection_id,product_id,sort_order")
+      .in("product_id", ids),
+  ]);
 
   const firstError =
-    variantResult.error ||
-    imageResult.error ||
-    brandResult.error ||
-    categoryResult.error ||
-    membershipResult.error;
+    variantResult.error || imageResult.error || categoryResult.error || membershipResult.error;
   if (firstError) throw firstError;
 
   const memberships = (membershipResult.data ?? []) as CollectionProductRow[];
@@ -270,7 +258,6 @@ async function hydrateProducts(rows: ProductDbRow[]): Promise<ShopifyProduct[]> 
   const context: HydrationContext = {
     variants: groupByProduct((variantResult.data ?? []) as VariantDbRow[]),
     images: groupByProduct((imageResult.data ?? []) as ImageDbRow[]),
-    brands: new Map(((brandResult.data ?? []) as BrandDbRow[]).map((brand) => [brand.id, brand])),
     categories: new Map(
       ((categoryResult.data ?? []) as CategoryDbRow[]).map((category) => [category.id, category]),
     ),
@@ -339,21 +326,18 @@ export async function fetchBrandVendors(): Promise<string[]> {
     .eq("status", "active")
     .or(`published_at.is.null,published_at.lte.${new Date().toISOString()}`);
   if (productError) throw productError;
-  const brandIds = [
-    ...new Set(
-      ((productRows ?? []) as Array<{ brand_id: string | null }>).flatMap((row) =>
-        row.brand_id ? [row.brand_id] : [],
-      ),
+
+  const brandIds = new Set(
+    ((productRows ?? []) as Array<{ brand_id: string | null }>).flatMap((row) =>
+      row.brand_id ? [row.brand_id] : [],
     ),
-  ];
-  if (!brandIds.length) return [];
-  const { data, error } = await supabase
-    .from("cms_brands" as never)
-    .select("id,name")
-    .in("id", brandIds)
-    .eq("is_visible", true);
-  if (error) throw error;
-  return ((data ?? []) as Array<{ id: string; name: string }>).map((brand) => brand.name);
+  );
+  if (!brandIds.size) return [];
+
+  const cms = await fetchCmsSnapshot();
+  return cms.brands
+    .filter((brand) => brand.is_visible && brandIds.has(brand.id))
+    .map((brand) => brand.name);
 }
 
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
@@ -427,15 +411,17 @@ export async function fetchCollectionByHandle(
 }
 
 export async function fetchProductsByVendor(vendor: string, first = 8): Promise<ShopifyProduct[]> {
-  const { data: brand, error: brandError } = await supabase
-    .from("cms_brands" as never)
-    .select("id")
-    .ilike("name", vendor.trim())
-    .maybeSingle();
-  if (brandError) throw brandError;
+  const normalized = vendor.trim().toLowerCase();
+  if (!normalized) return [];
+
+  const cms = await fetchCmsSnapshot();
+  const brand = cms.brands.find(
+    (candidate) => candidate.is_visible && candidate.name.trim().toLowerCase() === normalized,
+  );
   if (!brand) return [];
+
   const { data, error } = await publicProductsQuery()
-    .eq("brand_id", (brand as { id: string }).id)
+    .eq("brand_id", brand.id)
     .order("sort_order")
     .limit(Math.min(Math.max(first, 1), MAX_PAGE));
   if (error) throw error;

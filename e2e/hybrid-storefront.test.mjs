@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 
 const hybrid = fs.readFileSync("src/lib/hybridStore.ts", "utf8");
+const nativeStore = fs.readFileSync("src/lib/nativeStore.ts", "utf8");
 const facade = fs.readFileSync("src/lib/storefrontFacade.ts", "utf8");
 const queries = fs.readFileSync("src/lib/queries.ts", "utf8");
 const productRoute = fs.readFileSync("src/routes/product.$handle.tsx", "utf8");
@@ -47,6 +48,12 @@ test("native brand names use the curated public CMS path without weakening CMS R
   assert.match(hybrid, /select\("id,brand_id"\)/);
   assert.match(hybrid, /cms\.brands\.filter\(\(brand\) => brand\.is_visible\)/);
   assert.doesNotMatch(hybrid, /from\("cms_brands"/);
+});
+
+test("anonymous native hydration never reads dashboard-only cms_brands directly", () => {
+  assert.match(nativeStore, /fetchCmsSnapshot/);
+  assert.match(nativeStore, /Brand names are deliberately enriched later by hybridStore/);
+  assert.doesNotMatch(nativeStore, /\.from\("cms_brands"/);
 });
 
 test("hybrid storefront does not introduce Shopify Admin writes or secrets", () => {

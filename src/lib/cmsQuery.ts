@@ -5,8 +5,9 @@ export const cmsQueryOptions = () =>
   queryOptions({
     queryKey: ["cms", "snapshot"],
     queryFn: fetchCmsSnapshot,
-    initialData: EMPTY_CMS,
-    initialDataUpdatedAt: 0,
+    // Show safe defaults while the live CMS request is in flight without writing
+    // an empty snapshot into the query cache as if it were real persisted data.
+    placeholderData: EMPTY_CMS,
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
