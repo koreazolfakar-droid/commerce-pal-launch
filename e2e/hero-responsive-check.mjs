@@ -45,7 +45,10 @@ try {
     );
     assert.equal(await hero.getAttribute("data-hero-source"), "shopify-collection");
     assert.equal(await hero.getAttribute("data-hero-handle"), "homepage-hero");
-    assert.equal(await hero.locator('a[href^="/product/"]').count(), 0);
+    assert.equal(await hero.locator('a[href="/collections/homepage-hero"]').count(), 0);
+
+    const productTarget = hero.locator('a[href="/product/fixture-phone-1"]');
+    assert.equal(await productTarget.count(), 1);
     assert.equal(await hero.locator('[data-testid="home-hero-content"]').count(), 0);
     assert.equal(await hero.locator('[data-testid="home-hero-mobile-controls"]').count(), 0);
 
@@ -71,7 +74,12 @@ try {
       assert.ok(metrics.height >= 400, `${testCase.name}: desktop hero became too short`);
     }
 
-    console.log(`PASS ${testCase.name}: independent hero, no product content, overflow OK`);
+    await productTarget.click();
+    await page.waitForURL(/\/product\/fixture-phone-1$/);
+    assert.equal(new URL(page.url()).pathname, "/product/fixture-phone-1");
+    await page.locator("h1").first().waitFor({ state: "visible" });
+
+    console.log(`PASS ${testCase.name}: hero quality/layout and product navigation OK`);
     await page.close();
   }
 } finally {
