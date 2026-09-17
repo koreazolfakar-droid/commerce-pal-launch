@@ -20,7 +20,7 @@ export const DASHBOARD_OPERATIONS_NAVIGATION = [
   {
     to: "/dashboard",
     en: "Overview",
-    ar: "نظرة عامة",
+    ar: "لوحة التحكم",
     icon: LayoutDashboard,
     badge: undefined,
   },
