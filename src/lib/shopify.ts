@@ -137,7 +137,9 @@ function makeProduct(input: {
       createdAt: input.createdAt,
       tags: input.tags ?? [],
       priceRange: { minVariantPrice: money },
-      compareAtPriceRange: input.compareAt ? { minVariantPrice: compareAt! } : undefined,
+      ...(input.compareAt && compareAt
+        ? { compareAtPriceRange: { minVariantPrice: compareAt } }
+        : {}),
       images: image(input.imageUrl, input.title),
       collections: { edges: collectionEdges },
       variants: {
@@ -280,8 +282,9 @@ export function fetchProductsByHandles(handles: string[], first = 20) {
  */
 export async function storefrontApiRequest(query: string, variables: Record<string, unknown> = {}) {
   if (query === PRODUCTS_QUERY || query === BRAND_VENDORS_QUERY) {
-    const first = Number(variables.first ?? 100);
-    const products = await fetchProducts(first, typeof variables.query === "string" ? variables.query : undefined);
+    const first = Number(variables["first"] ?? 100);
+    const rawQuery = variables["query"];
+    const products = await fetchProducts(first, typeof rawQuery === "string" ? rawQuery : undefined);
     return {
       data: {
         products: {
@@ -293,17 +296,17 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
   }
 
   if (query === PRODUCT_BY_HANDLE_QUERY) {
-    const product = await fetchProductByHandle(String(variables.handle ?? ""));
+    const product = await fetchProductByHandle(String(variables["handle"] ?? ""));
     return { data: { product: product?.node ?? null } };
   }
 
   if (query === PRODUCT_RECOMMENDATIONS_QUERY) {
-    const recommendations = await fetchProductRecommendations(String(variables.handle ?? ""));
+    const recommendations = await fetchProductRecommendations(String(variables["handle"] ?? ""));
     return { data: { productRecommendations: recommendations.map((item) => item.node) } };
   }
 
   if (query === COLLECTIONS_QUERY) {
-    const collections = await fetchCollections(Number(variables.first ?? 100));
+    const collections = await fetchCollections(Number(variables["first"] ?? 100));
     return {
       data: {
         collections: {
@@ -315,7 +318,10 @@ export async function storefrontApiRequest(query: string, variables: Record<stri
   }
 
   if (query === COLLECTION_BY_HANDLE_QUERY) {
-    const result = await fetchCollectionByHandle(String(variables.handle ?? ""), Number(variables.first ?? 48));
+    const result = await fetchCollectionByHandle(
+      String(variables["handle"] ?? ""),
+      Number(variables["first"] ?? 48),
+    );
     if (!result) return { data: { collection: null } };
     return {
       data: {
