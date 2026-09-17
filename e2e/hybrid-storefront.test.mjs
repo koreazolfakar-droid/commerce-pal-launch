@@ -39,7 +39,10 @@ test("native products win duplicate handles during gradual migration", () => {
   assert.match(hybrid, /for \(const product of \[\.\.\.nativeProducts, \.\.\.shopifyProducts\]\)/);
   assert.match(hybrid, /seen\.has\(key\)/);
   assert.match(hybrid, /if \(nativeProduct\)/);
-  assert.match(hybrid, /return \(await enrichNativeBrands\(\[nativeProduct\]\)\)\[0\] \?\? nativeProduct/);
+  assert.match(
+    hybrid,
+    /return \(await enrichNativeBrands\(\[nativeProduct\]\)\)\[0\] \?\? nativeProduct/,
+  );
 });
 
 test("native brand names use the curated public CMS path without weakening CMS RLS", () => {

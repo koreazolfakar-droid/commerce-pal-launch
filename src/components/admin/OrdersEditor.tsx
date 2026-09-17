@@ -40,7 +40,11 @@ export function OrdersEditor() {
     try {
       setItems(await adminCommerceUiService.getOrderItems(orderId));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : text("تعذر تحميل تفاصيل الطلب", "Unable to load order details"));
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : text("تعذر تحميل تفاصيل الطلب", "Unable to load order details"),
+      );
     } finally {
       setLoadingItems(false);
     }
@@ -53,7 +57,11 @@ export function OrdersEditor() {
       setOrders(next);
       if (!selectedId && next[0]) void selectOrder(next[0].id);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : text("تعذر تحميل الطلبات", "Unable to load orders"));
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : text("تعذر تحميل الطلبات", "Unable to load orders"),
+      );
     } finally {
       setLoading(false);
     }
@@ -81,7 +89,9 @@ export function OrdersEditor() {
       });
       toast.success(text("تم تحديث الطلب", "Order updated"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : text("فشل تحديث الطلب", "Order update failed"));
+      toast.error(
+        error instanceof Error ? error.message : text("فشل تحديث الطلب", "Order update failed"),
+      );
     } finally {
       setSaving(false);
     }
@@ -100,8 +110,17 @@ export function OrdersEditor() {
             )}
           </p>
         </div>
-        <Button variant="outline" className="rounded-xl" onClick={() => void loadOrders()} disabled={loading}>
-          {loading ? <Loader2 className="me-2 size-4 animate-spin" /> : <RefreshCw className="me-2 size-4" />}
+        <Button
+          variant="outline"
+          className="rounded-xl"
+          onClick={() => void loadOrders()}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="me-2 size-4 animate-spin" />
+          ) : (
+            <RefreshCw className="me-2 size-4" />
+          )}
           {text("تحديث", "Refresh")}
         </Button>
       </header>
@@ -116,9 +135,13 @@ export function OrdersEditor() {
           />
           <div className="mt-3 space-y-1.5">
             {loading ? (
-              <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
+              <div className="flex justify-center py-8">
+                <Loader2 className="size-5 animate-spin" />
+              </div>
             ) : filtered.length === 0 ? (
-              <p className="px-2 py-8 text-center text-xs text-muted-foreground">{text("لا توجد طلبات.", "No orders.")}</p>
+              <p className="px-2 py-8 text-center text-xs text-muted-foreground">
+                {text("لا توجد طلبات.", "No orders.")}
+              </p>
             ) : (
               filtered.map((order) => (
                 <button
@@ -154,11 +177,26 @@ export function OrdersEditor() {
             <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">{text("طلب", "Order")}</p>
-                  <h2 className="text-base font-black">{text("طلب", "Order")} #{selected.order_number}</h2>
+                  <p className="text-[10px] font-semibold text-muted-foreground">
+                    {text("طلب", "Order")}
+                  </p>
+                  <h2 className="text-base font-black">
+                    {text("طلب", "Order")} #{selected.order_number}
+                  </h2>
                 </div>
-                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => void saveOrder()} disabled={saving}>
-                  {saving ? <Loader2 className="me-1.5 size-3.5 animate-spin" /> : <Save className="me-1.5 size-3.5" />} {text("حفظ الحالة", "Save status")}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl"
+                  onClick={() => void saveOrder()}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <Loader2 className="me-1.5 size-3.5 animate-spin" />
+                  ) : (
+                    <Save className="me-1.5 size-3.5" />
+                  )}{" "}
+                  {text("حفظ الحالة", "Save status")}
                 </Button>
               </div>
 
@@ -167,13 +205,20 @@ export function OrdersEditor() {
                 <Info label={text("الهاتف", "Phone")} value={selected.customer_phone} />
                 <Info label={text("المدينة", "City")} value={selected.city || "—"} />
                 <Info label={text("العنوان", "Address")} value={selected.delivery_address || "—"} />
-                <Info label={text("طريقة الدفع", "Payment method")} value={selected.payment_method === "whish" ? "Whish Money" : "Cash on delivery"} />
+                <Info
+                  label={text("طريقة الدفع", "Payment method")}
+                  value={selected.payment_method === "whish" ? "Whish Money" : "Cash on delivery"}
+                />
                 <Info label={text("المصدر", "Source")} value={selected.source} />
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">{text("حالة الطلب", "Order status")}</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground">
+                    {text("حالة الطلب", "Order status")}
+                  </p>
                   <select
                     value={selected.status}
-                    onChange={(event) => patchSelected({ status: event.target.value as OrderStatus })}
+                    onChange={(event) =>
+                      patchSelected({ status: event.target.value as OrderStatus })
+                    }
                     className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold"
                   >
                     <option value="pending">{text("قيد الانتظار", "Pending")}</option>
@@ -185,47 +230,76 @@ export function OrdersEditor() {
                   </select>
                 </div>
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">{text("حالة الدفع", "Payment status")}</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground">
+                    {text("حالة الدفع", "Payment status")}
+                  </p>
                   <select
                     value={selected.payment_status}
-                    onChange={(event) => patchSelected({ payment_status: event.target.value as PaymentStatus })}
+                    onChange={(event) =>
+                      patchSelected({ payment_status: event.target.value as PaymentStatus })
+                    }
                     className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold"
                   >
                     <option value="unpaid">{text("غير مدفوع", "Unpaid")}</option>
                     <option value="paid">{text("مدفوع", "Paid")}</option>
-                    <option value="partially_refunded">{text("مسترد جزئياً", "Partially refunded")}</option>
+                    <option value="partially_refunded">
+                      {text("مسترد جزئياً", "Partially refunded")}
+                    </option>
                     <option value="refunded">{text("مسترد", "Refunded")}</option>
                   </select>
                 </div>
-                {selected.notes ? <div className="md:col-span-2"><Info label={text("ملاحظات", "Notes")} value={selected.notes} /></div> : null}
+                {selected.notes ? (
+                  <div className="md:col-span-2">
+                    <Info label={text("ملاحظات", "Notes")} value={selected.notes} />
+                  </div>
+                ) : null}
               </div>
             </article>
 
             <article className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
               <h3 className="text-sm font-black">{text("المنتجات", "Products")}</h3>
               {loadingItems ? (
-                <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
+                <div className="flex justify-center py-8">
+                  <Loader2 className="size-5 animate-spin" />
+                </div>
               ) : (
                 <div className="mt-3 divide-y divide-border/60">
                   {items.map((item) => (
-                    <div key={item.id} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                    <div
+                      key={item.id}
+                      className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                    >
                       <div className="min-w-0">
                         <p className="text-xs font-bold">{item.title}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {item.variant_title || "Default"}{item.sku ? ` • SKU ${item.sku}` : ""}
+                          {item.variant_title || "Default"}
+                          {item.sku ? ` • SKU ${item.sku}` : ""}
                         </p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">{formatPrice(item.unit_price, selected.currency)} × {item.quantity}</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {formatPrice(item.unit_price, selected.currency)} × {item.quantity}
+                        </p>
                       </div>
-                      <p className="shrink-0 text-xs font-black">{formatPrice(item.line_total, selected.currency)}</p>
+                      <p className="shrink-0 text-xs font-black">
+                        {formatPrice(item.line_total, selected.currency)}
+                      </p>
                     </div>
                   ))}
                 </div>
               )}
 
               <div className="mt-5 space-y-2 border-t border-border/60 pt-4 text-xs">
-                <TotalRow label={text("المجموع الفرعي", "Subtotal")} value={formatPrice(selected.subtotal, selected.currency)} />
-                <TotalRow label={text("الشحن", "Shipping")} value={formatPrice(selected.shipping_total, selected.currency)} />
-                <TotalRow label={text("الخصم", "Discount")} value={`-${formatPrice(selected.discount_total, selected.currency)}`} />
+                <TotalRow
+                  label={text("المجموع الفرعي", "Subtotal")}
+                  value={formatPrice(selected.subtotal, selected.currency)}
+                />
+                <TotalRow
+                  label={text("الشحن", "Shipping")}
+                  value={formatPrice(selected.shipping_total, selected.currency)}
+                />
+                <TotalRow
+                  label={text("الخصم", "Discount")}
+                  value={`-${formatPrice(selected.discount_total, selected.currency)}`}
+                />
                 <div className="flex items-center justify-between border-t border-border/60 pt-3 text-base font-black">
                   <span>{text("الإجمالي", "Total")}</span>
                   <span>{formatPrice(selected.total, selected.currency)}</span>
