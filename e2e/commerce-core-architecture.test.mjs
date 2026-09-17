@@ -22,7 +22,7 @@ test("commerce core defines platform-neutral domain models and repository ports"
   assert.match(ports, /updateCustomerProfile/);
 });
 
-test("Supabase is isolated behind the commerce adapter and service facade", async () => {
+test("Supabase is isolated behind an injectable commerce adapter and service facade", async () => {
   const [adapter, service, uiService] = await Promise.all([
     read("src/commerce/adapters/supabaseAdminCommerceRepository.ts"),
     read("src/commerce/services/adminCommerceService.ts"),
@@ -31,7 +31,9 @@ test("Supabase is isolated behind the commerce adapter and service facade", asyn
 
   assert.match(adapter, /@\/integrations\/supabase\/client/);
   assert.match(adapter, /AdminCommerceRepository/);
-  assert.match(service, /supabaseAdminCommerceRepository/);
+  assert.match(service, /createAdminCommerceService/);
+  assert.match(service, /repository: AdminCommerceRepository/);
+  assert.match(service, /createAdminCommerceService\(supabaseAdminCommerceRepository\)/);
   assert.doesNotMatch(service, /@\/integrations\/supabase\/client/);
   assert.doesNotMatch(uiService, /@\/integrations\/supabase\/client/);
 });
