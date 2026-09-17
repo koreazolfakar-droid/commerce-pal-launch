@@ -65,6 +65,21 @@ test("Shopify brand artwork cache refreshes quickly and cannot pin stale logos",
   assert.doesNotMatch(queries, /brand-logo-cache-v4/);
 });
 
+test("homepage catalog survives transient Shopify failures across repeated refreshes", async () => {
+  const queries = await source("src/lib/queries.ts");
+
+  assert.match(queries, /CATALOG_REFRESH_FALLBACK_TTL_MS = 5 \* 60 \* 1000/);
+  assert.match(queries, /CATALOG_REFRESH_FALLBACK_STORAGE_KEY = "space-call-catalog-refresh-fallback-v1"/);
+  assert.match(queries, /window\.sessionStorage\.setItem\(CATALOG_REFRESH_FALLBACK_STORAGE_KEY/);
+  assert.match(queries, /window\.sessionStorage\.getItem\(CATALOG_REFRESH_FALLBACK_STORAGE_KEY/);
+  assert.match(queries, /Shopify catalog refresh failed; keeping the last successful catalog for this tab/);
+  assert.match(queries, /allowing React Query to retry instead of caching an empty catalog/);
+  assert.doesNotMatch(queries, /return buildCatalogIndex\(\[\]\)/);
+  assert.match(queries, /SHOPIFY_QUERY_RETRY_COUNT = 3/);
+  assert.match(queries, /retry: SHOPIFY_QUERY_RETRY_COUNT/);
+  assert.match(queries, /retryDelay: shopifyRetryDelay/);
+});
+
 test("shared footer stays lightweight and hides technical build data", async () => {
   const footer = await source("src/components/SiteFooter.tsx");
   const runtimeFooter = withoutComments(footer);
