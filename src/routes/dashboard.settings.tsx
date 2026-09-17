@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { SettingsEditor } from "@/components/admin/SettingsEditor";
+import { SettingsWorkspace } from "@/components/admin/SettingsWorkspace";
 
 export const Route = createFileRoute("/dashboard/settings")({
   component: SettingsPage,
 });
 
 function SettingsPage() {
-  return <SettingsEditor />;
+  return <SettingsWorkspace />;
 }
