@@ -109,18 +109,17 @@
   color: var(--color-muted-foreground) !important;
 }
 
-[data-testid="bottom-nav"] :is(a, button)[aria-current="page"],
-[data-testid="bottom-nav"] a[href="/"] {
+[data-testid="bottom-nav"] :is(a, button)[aria-current="page"] {
   color: var(--color-primary) !important;
 }
 
-[data-testid="bottom-nav"] a[href="/"] > span:first-child {
+[data-testid="bottom-nav"] :is(a, button)[aria-current="page"] > span:first-child {
   border-color: color-mix(in oklab, var(--color-primary) 20%, var(--color-border)) !important;
   background: color-mix(in oklab, var(--color-primary) 11%, var(--color-card)) !important;
   box-shadow: var(--shadow-card) !important;
 }
 
-[data-testid="bottom-nav"] a[href="/"] svg path:first-child {
+[data-testid="bottom-nav"] [data-nav-id="home"][aria-current="page"] svg path:first-child {
   fill: var(--color-primary) !important;
 }
 
