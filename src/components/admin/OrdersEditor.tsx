@@ -4,53 +4,20 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  adminCommerceUiService,
+  type OrderDto,
+  type OrderItemDto,
+} from "@/commerce/services/adminCommerceUiService";
+import type { OrderStatus, PaymentStatus } from "@/commerce/core/models";
 import { useDashboardLanguage } from "@/lib/dashboardI18n";
 import { formatPrice } from "@/lib/productPricing";
 
-type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
-type PaymentStatus = "unpaid" | "paid" | "refunded" | "partially_refunded";
-
-type Order = {
-  id: string;
-  order_number: number;
-  status: OrderStatus;
-  payment_status: PaymentStatus;
-  payment_method: "cash" | "whish";
-  customer_name: string;
-  customer_phone: string;
-  customer_email: string | null;
-  delivery_address: string | null;
-  city: string | null;
-  notes: string | null;
-  customer_reference: string | null;
-  currency: string;
-  subtotal: number;
-  shipping_total: number;
-  discount_total: number;
-  total: number;
-  source: string;
-  created_at: string;
-  updated_at: string;
-};
-
-type OrderItem = {
-  id: string;
-  order_id: string;
-  title: string;
-  variant_title: string | null;
-  sku: string | null;
-  unit_price: number;
-  quantity: number;
-  line_total: number;
-  options: Record<string, unknown>;
-};
-
 export function OrdersEditor() {
   const { text } = useDashboardLanguage();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderDto[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [items, setItems] = useState<OrderItem[]>([]);
+  const [items, setItems] = useState<OrderItemDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingItems, setLoadingItems] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -67,37 +34,29 @@ export function OrdersEditor() {
     );
   }, [orders, search]);
 
-  const loadOrders = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("store_orders" as never)
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(200);
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    const next = (data ?? []) as Order[];
-    setOrders(next);
-    if (!selectedId && next[0]) void selectOrder(next[0].id);
-  };
-
   const selectOrder = async (orderId: string) => {
     setSelectedId(orderId);
     setLoadingItems(true);
-    const { data, error } = await supabase
-      .from("store_order_items" as never)
-      .select("*")
-      .eq("order_id", orderId)
-      .order("created_at");
-    setLoadingItems(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      setItems(await adminCommerceUiService.getOrderItems(orderId));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text("تعذر تحميل تفاصيل الطلب", "Unable to load order details"));
+    } finally {
+      setLoadingItems(false);
     }
-    setItems((data ?? []) as OrderItem[]);
+  };
+
+  const loadOrders = async () => {
+    setLoading(true);
+    try {
+      const next = await adminCommerceUiService.listOrders(200);
+      setOrders(next);
+      if (!selectedId && next[0]) void selectOrder(next[0].id);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text("تعذر تحميل الطلبات", "Unable to load orders"));
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -105,7 +64,7 @@ export function OrdersEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const patchSelected = (patch: Partial<Order>) => {
+  const patchSelected = (patch: Partial<OrderDto>) => {
     if (!selectedId) return;
     setOrders((current) =>
       current.map((order) => (order.id === selectedId ? { ...order, ...patch } : order)),
@@ -115,16 +74,17 @@ export function OrdersEditor() {
   const saveOrder = async () => {
     if (!selected) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("store_orders" as never)
-      .update({ status: selected.status, payment_status: selected.payment_status } as never)
-      .eq("id", selected.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await adminCommerceUiService.updateOrderState(selected.id, {
+        status: selected.status,
+        paymentStatus: selected.payment_status,
+      });
+      toast.success(text("تم تحديث الطلب", "Order updated"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text("فشل تحديث الطلب", "Order update failed"));
+    } finally {
+      setSaving(false);
     }
-    toast.success(text("تم تحديث الطلب", "Order updated"));
   };
 
   return (
@@ -135,22 +95,13 @@ export function OrdersEditor() {
           <h1 className="mt-1 text-2xl font-black tracking-tight">{text("الطلبات", "Orders")}</h1>
           <p className="mt-1.5 max-w-2xl text-xs leading-5 text-muted-foreground">
             {text(
-              "طلبات Space Call الأصلية من Supabase، مع حالة الطلب والدفع وتفاصيل المنتجات.",
-              "Space Call's native Supabase orders with order status, payment status and product details.",
+              "طلبات Space Call الأصلية مع حالة الطلب والدفع وتفاصيل المنتجات.",
+              "Space Call native orders with order status, payment status and product details.",
             )}
           </p>
         </div>
-        <Button
-          variant="outline"
-          className="rounded-xl"
-          onClick={() => void loadOrders()}
-          disabled={loading}
-        >
-          {loading ? (
-            <Loader2 className="me-2 size-4 animate-spin" />
-          ) : (
-            <RefreshCw className="me-2 size-4" />
-          )}
+        <Button variant="outline" className="rounded-xl" onClick={() => void loadOrders()} disabled={loading}>
+          {loading ? <Loader2 className="me-2 size-4 animate-spin" /> : <RefreshCw className="me-2 size-4" />}
           {text("تحديث", "Refresh")}
         </Button>
       </header>
@@ -165,13 +116,9 @@ export function OrdersEditor() {
           />
           <div className="mt-3 space-y-1.5">
             {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="size-5 animate-spin" />
-              </div>
+              <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
             ) : filtered.length === 0 ? (
-              <p className="px-2 py-8 text-center text-xs text-muted-foreground">
-                {text("لا توجد طلبات.", "No orders.")}
-              </p>
+              <p className="px-2 py-8 text-center text-xs text-muted-foreground">{text("لا توجد طلبات.", "No orders.")}</p>
             ) : (
               filtered.map((order) => (
                 <button
@@ -207,26 +154,11 @@ export function OrdersEditor() {
             <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3.5 sm:px-5">
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">
-                    {text("طلب", "Order")}
-                  </p>
-                  <h2 className="text-base font-black">
-                    {text("طلب", "Order")} #{selected.order_number}
-                  </h2>
+                  <p className="text-[10px] font-semibold text-muted-foreground">{text("طلب", "Order")}</p>
+                  <h2 className="text-base font-black">{text("طلب", "Order")} #{selected.order_number}</h2>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-xl"
-                  onClick={() => void saveOrder()}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <Loader2 className="me-1.5 size-3.5 animate-spin" />
-                  ) : (
-                    <Save className="me-1.5 size-3.5" />
-                  )}{" "}
-                  {text("حفظ الحالة", "Save status")}
+                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => void saveOrder()} disabled={saving}>
+                  {saving ? <Loader2 className="me-1.5 size-3.5 animate-spin" /> : <Save className="me-1.5 size-3.5" />} {text("حفظ الحالة", "Save status")}
                 </Button>
               </div>
 
@@ -235,18 +167,13 @@ export function OrdersEditor() {
                 <Info label={text("الهاتف", "Phone")} value={selected.customer_phone} />
                 <Info label={text("المدينة", "City")} value={selected.city || "—"} />
                 <Info label={text("العنوان", "Address")} value={selected.delivery_address || "—"} />
-                <Info
-                  label={text("طريقة الدفع", "Payment method")}
-                  value={selected.payment_method === "whish" ? "Whish Money" : "Cash on delivery"}
-                />
+                <Info label={text("طريقة الدفع", "Payment method")} value={selected.payment_method === "whish" ? "Whish Money" : "Cash on delivery"} />
                 <Info label={text("المصدر", "Source")} value={selected.source} />
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">
-                    {text("حالة الطلب", "Order status")}
-                  </p>
+                  <p className="text-[10px] font-semibold text-muted-foreground">{text("حالة الطلب", "Order status")}</p>
                   <select
                     value={selected.status}
-                    onChange={(e) => patchSelected({ status: e.target.value as OrderStatus })}
+                    onChange={(event) => patchSelected({ status: event.target.value as OrderStatus })}
                     className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold"
                   >
                     <option value="pending">{text("قيد الانتظار", "Pending")}</option>
@@ -258,76 +185,47 @@ export function OrdersEditor() {
                   </select>
                 </div>
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground">
-                    {text("حالة الدفع", "Payment status")}
-                  </p>
+                  <p className="text-[10px] font-semibold text-muted-foreground">{text("حالة الدفع", "Payment status")}</p>
                   <select
                     value={selected.payment_status}
-                    onChange={(e) =>
-                      patchSelected({ payment_status: e.target.value as PaymentStatus })
-                    }
+                    onChange={(event) => patchSelected({ payment_status: event.target.value as PaymentStatus })}
                     className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-3 text-xs font-semibold"
                   >
                     <option value="unpaid">{text("غير مدفوع", "Unpaid")}</option>
                     <option value="paid">{text("مدفوع", "Paid")}</option>
-                    <option value="partially_refunded">
-                      {text("مسترد جزئياً", "Partially refunded")}
-                    </option>
+                    <option value="partially_refunded">{text("مسترد جزئياً", "Partially refunded")}</option>
                     <option value="refunded">{text("مسترد", "Refunded")}</option>
                   </select>
                 </div>
-                {selected.notes ? (
-                  <div className="md:col-span-2">
-                    <Info label={text("ملاحظات", "Notes")} value={selected.notes} />
-                  </div>
-                ) : null}
+                {selected.notes ? <div className="md:col-span-2"><Info label={text("ملاحظات", "Notes")} value={selected.notes} /></div> : null}
               </div>
             </article>
 
             <article className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
               <h3 className="text-sm font-black">{text("المنتجات", "Products")}</h3>
               {loadingItems ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="size-5 animate-spin" />
-                </div>
+                <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
               ) : (
                 <div className="mt-3 divide-y divide-border/60">
                   {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0"
-                    >
+                    <div key={item.id} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
                       <div className="min-w-0">
                         <p className="text-xs font-bold">{item.title}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {item.variant_title || "Default"}
-                          {item.sku ? ` • SKU ${item.sku}` : ""}
+                          {item.variant_title || "Default"}{item.sku ? ` • SKU ${item.sku}` : ""}
                         </p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">
-                          {formatPrice(item.unit_price, selected.currency)} × {item.quantity}
-                        </p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">{formatPrice(item.unit_price, selected.currency)} × {item.quantity}</p>
                       </div>
-                      <p className="shrink-0 text-xs font-black">
-                        {formatPrice(item.line_total, selected.currency)}
-                      </p>
+                      <p className="shrink-0 text-xs font-black">{formatPrice(item.line_total, selected.currency)}</p>
                     </div>
                   ))}
                 </div>
               )}
 
               <div className="mt-5 space-y-2 border-t border-border/60 pt-4 text-xs">
-                <TotalRow
-                  label={text("المجموع الفرعي", "Subtotal")}
-                  value={formatPrice(selected.subtotal, selected.currency)}
-                />
-                <TotalRow
-                  label={text("الشحن", "Shipping")}
-                  value={formatPrice(selected.shipping_total, selected.currency)}
-                />
-                <TotalRow
-                  label={text("الخصم", "Discount")}
-                  value={`-${formatPrice(selected.discount_total, selected.currency)}`}
-                />
+                <TotalRow label={text("المجموع الفرعي", "Subtotal")} value={formatPrice(selected.subtotal, selected.currency)} />
+                <TotalRow label={text("الشحن", "Shipping")} value={formatPrice(selected.shipping_total, selected.currency)} />
+                <TotalRow label={text("الخصم", "Discount")} value={`-${formatPrice(selected.discount_total, selected.currency)}`} />
                 <div className="flex items-center justify-between border-t border-border/60 pt-3 text-base font-black">
                   <span>{text("الإجمالي", "Total")}</span>
                   <span>{formatPrice(selected.total, selected.currency)}</span>
