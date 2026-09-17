@@ -16,10 +16,7 @@ test("public storefront queries use Shopify directly instead of the hybrid dashb
 });
 
 test("dashboard CMS cannot become a second storefront runtime source of truth", async () => {
-  const [cms, cmsQuery] = await Promise.all([
-    read("src/lib/cms.ts"),
-    read("src/lib/cmsQuery.ts"),
-  ]);
+  const [cms, cmsQuery] = await Promise.all([read("src/lib/cms.ts"), read("src/lib/cmsQuery.ts")]);
 
   assert.match(
     cms,
