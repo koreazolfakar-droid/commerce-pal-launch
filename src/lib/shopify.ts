@@ -167,7 +167,7 @@ function makeProduct(input: {
 }
 
 const LOCAL_PRODUCTS: ShopifyProduct[] = [
-  makeProduct({ id: "local-iphone-18-pro", title: "iPhone 18 Pro", handle: "iphone-18-pro", vendor: "Apple", type: "Smartphones", price: 1299, compareAt: 1399, sku: "APL-IP18P-256", imageUrl: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=900&q=85", collections: ["iphone", "featured", "new-arrivals"], createdAt: "2026-09-01T10:00:00Z", tags: ["phone", "apple", "featured"] }),
+  makeProduct({ id: "local-iphone-18-pro", title: "iPhone 18 Pro", handle: "iphone-18-pro", vendor: "Apple", type: "Smartphones", price: 1299, compareAt: 1399, sku: "APL-IP18P-256", imageUrl: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=900&q=85", collections: ["homepage-hero", "iphone", "featured", "new-arrivals"], createdAt: "2026-09-01T10:00:00Z", tags: ["phone", "apple", "featured"] }),
   makeProduct({ id: "local-iphone-18", title: "iPhone 18", handle: "iphone-18", vendor: "Apple", type: "Smartphones", price: 999, sku: "APL-IP18-128", imageUrl: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=900&q=85", collections: ["iphone", "new-arrivals"], createdAt: "2026-08-28T10:00:00Z", tags: ["phone", "apple"] }),
   makeProduct({ id: "local-galaxy-s26-ultra", title: "Galaxy S26 Ultra", handle: "galaxy-s26-ultra", vendor: "Samsung", type: "Smartphones", price: 1199, compareAt: 1249, sku: "SAM-S26U-256", imageUrl: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=900&q=85", collections: ["samsung", "featured"], createdAt: "2026-08-20T10:00:00Z", tags: ["phone", "samsung", "featured"] }),
   makeProduct({ id: "local-xiaomi-16-pro", title: "Xiaomi 16 Pro", handle: "xiaomi-16-pro", vendor: "Xiaomi", type: "Smartphones", price: 799, sku: "XIA-16P-256", imageUrl: "https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=900&q=85", collections: ["xiaomi", "featured"], createdAt: "2026-08-12T10:00:00Z", tags: ["phone", "xiaomi"] }),
@@ -176,6 +176,7 @@ const LOCAL_PRODUCTS: ShopifyProduct[] = [
 ];
 
 const LOCAL_COLLECTIONS: ShopifyCollection[] = [
+  { id: "col-homepage-hero", handle: "homepage-hero", title: "Homepage Hero", description: "Local staging hero collection", image: LOCAL_PRODUCTS[0]!.node.images.edges[0]!.node },
   { id: "col-iphone", handle: "iphone", title: "iPhone", description: "Apple iPhone lineup", image: LOCAL_PRODUCTS[0]!.node.images.edges[0]!.node },
   { id: "col-samsung", handle: "samsung", title: "Samsung", description: "Samsung Galaxy devices", image: LOCAL_PRODUCTS[2]!.node.images.edges[0]!.node },
   { id: "col-xiaomi", handle: "xiaomi", title: "Xiaomi", description: "Xiaomi devices", image: LOCAL_PRODUCTS[3]!.node.images.edges[0]!.node },
