@@ -16,7 +16,7 @@ import {
   fetchProductsByHandles,
   fetchProductsByVendor,
   searchStorefront,
-} from "@/lib/hybridStore";
+} from "@/lib/shopify";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 2 * 60 * 1000;
@@ -28,7 +28,7 @@ async function fetchCatalogIndexSafely() {
   try {
     const vendorPromise = fetchBrandVendors().catch((error) => {
       console.error(
-        "Storefront vendor discovery failed; using brands from the bounded catalog.",
+        "Shopify vendor discovery failed; using brands from the bounded Shopify catalog.",
         error,
       );
       return [] as string[];
@@ -41,14 +41,14 @@ async function fetchCatalogIndexSafely() {
     };
   } catch (error) {
     console.error(
-      "Storefront catalog fetch failed; rendering the update state instead of the global error page.",
+      "Shopify catalog fetch failed; rendering the update state instead of the global error page.",
       error,
     );
     return buildCatalogIndex([]);
   }
 }
 
-/** Bounded discovery index. Route-specific product data uses dedicated queries. */
+/** Bounded Shopify discovery index. Route-specific product data uses dedicated queries. */
 export const catalogQueryOptions = () =>
   queryOptions({
     queryKey: ["shopify", "catalog"],
@@ -58,7 +58,6 @@ export const catalogQueryOptions = () =>
 
 export const collectionsQueryOptions = () =>
   queryOptions({
-    // Keep collection/brand artwork fresh while preserving the established cache key.
     queryKey: ["shopify", "collections", "brand-logo-cache-v5", 100],
     queryFn: () => fetchCollections(100),
     staleTime: BRAND_COLLECTION_STALE_TIME,
@@ -78,7 +77,7 @@ export const collectionQueryOptions = (handle: string, pageSize = 48) =>
     staleTime: CATALOG_STALE_TIME,
   });
 
-/** Creation order across both storefront sources. */
+/** Shopify creation order. */
 export const newestQueryOptions = () =>
   queryOptions({
     queryKey: ["shopify", "newest"],
@@ -93,7 +92,6 @@ export const productQueryOptions = (handle: string) =>
     staleTime: CATALOG_STALE_TIME,
   });
 
-/** Recommendations can now include both native Space Call and Shopify products. */
 export const recommendationsQueryOptions = (handle: string) =>
   queryOptions({
     queryKey: ["shopify", "recommendations", handle],
@@ -109,10 +107,7 @@ export const vendorProductsQueryOptions = (vendor: string) =>
     staleTime: CATALOG_STALE_TIME,
   });
 
-/**
- * Small homepage-only vendor payload. The hybrid layer keeps this bounded and
- * can backfill a brand shelf from either storefront source.
- */
+/** Small homepage-only Shopify vendor payload. */
 export const homeVendorProductsQueryOptions = (vendor: string) => {
   const normalizedVendor = vendor.trim();
   return queryOptions({
@@ -123,7 +118,7 @@ export const homeVendorProductsQueryOptions = (vendor: string) => {
   });
 };
 
-/** Complete product list for a brand page; fetched only when that route is opened. */
+/** Complete Shopify product list for a brand page; fetched only when that route is opened. */
 export const allVendorProductsQueryOptions = (vendor: string) =>
   queryOptions({
     queryKey: ["shopify", "vendor-products-all", vendor],
