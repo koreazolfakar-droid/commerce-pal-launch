@@ -239,11 +239,10 @@ export function SettingsEditor() {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-black text-foreground">
-                        {row.label || row.key || text("إعداد جديد", "New setting")}
+                        {row.key || text("إعداد جديد", "New setting")}
                       </span>
                       <span className="mt-0.5 block truncate text-[10px] text-muted-foreground">
-                        {row.groupName || "general"} · {row.valueType}
-                        {row.isPublic ? ` · ${text("عام", "Public")}` : ""}
+                        {row.valueType}
                       </span>
                     </span>
                   </button>
