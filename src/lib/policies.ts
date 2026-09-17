@@ -15,6 +15,8 @@ export type ShopPolicies = {
 };
 export type PolicyKey = keyof ShopPolicies;
 
+type ShopPoliciesResponse = { data?: { shop?: ShopPolicies | null } };
+
 export function safePolicyUrl(value: string): string | null {
   try {
     const url = new URL(value);
@@ -27,8 +29,7 @@ export function safePolicyUrl(value: string): string | null {
 export const fetchShopPolicies = createServerFn({ method: "GET" }).handler(
   async (): Promise<ShopPolicies | null> => {
     try {
-      const response: { data?: { shop?: ShopPolicies } } =
-        await storefrontApiRequest(SHOP_POLICIES_QUERY);
+      const response = (await storefrontApiRequest(SHOP_POLICIES_QUERY)) as ShopPoliciesResponse;
       const shop = response.data?.shop;
       if (!shop) return null;
       const { sanitizePolicyHtml } = await import("@/lib/policyHtml");
