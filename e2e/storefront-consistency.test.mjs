@@ -117,7 +117,7 @@ test("account links stay branded before the Shopify hand-off", async () => {
   assert.match(infoPage, /secure Shopify account page/);
 });
 
-test("homepage hero is Shopify-first and survives transient artwork failures", async () => {
+test("homepage hero is Shopify-first, click-safe, high-resolution, and refresh-resilient", async () => {
   const home = await source("src/routes/index.tsx");
   const hero = await source("src/components/HomeHero.tsx");
 
@@ -135,10 +135,16 @@ test("homepage hero is Shopify-first and survives transient artwork failures", a
   assert.match(hero, /const effectiveHeroCollection = heroCollection\?\.collection/);
   assert.match(hero, /const shopifyImage = shopifySlide\?\.image/);
   assert.match(hero, /heroFallbackProduct = effectiveHeroCollection\?\.products\.find/);
+  assert.match(hero, /heroTargetProduct/);
+  assert.doesNotMatch(hero, /to="\/collections\/\$handle"/);
+  assert.match(hero, /to="\/product\/\$handle"/);
+  assert.match(hero, /HERO_IMAGE_WIDTHS = \[640, 960, 1280, 1600, 1920, 2400, 2880\]/);
+  assert.match(hero, /parsed\.searchParams\.set\("quality", "88"\)/);
+  assert.match(hero, /src=\{heroCdnImage\(shopifyImage\.url, 1920\)\}/);
+  assert.match(hero, /srcSet=\{heroCdnSrcSet\(shopifyImage\.url\)\}/);
+  assert.match(hero, /sizes="100vw"/);
   assert.match(hero, /onError=\{\(\) => setFailedShopifySlideId\(shopifySlide\.id\)\}/);
   assert.match(hero, /key=\{`\$\{shopifySlide\.id\}:\$\{shopifyImage\.url\}`\}/);
-  assert.match(hero, /to="\/collections\/\$handle"/);
-  assert.match(hero, /to="\/product\/\$handle"/);
   assert.match(hero, /data-hero-source=\{heroSource\}/);
   assert.match(hero, /hero-product-fallback/);
   assert.match(hero, /bg-gradient-to-br/);
