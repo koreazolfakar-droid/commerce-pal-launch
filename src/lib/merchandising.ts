@@ -22,7 +22,9 @@ interface ShowcaseResponse {
 
 export async function fetchShowcaseCollections(): Promise<ShowcaseCollection[]> {
   try {
-    const response: ShowcaseResponse = await storefrontApiRequest(SHOWCASE_COLLECTIONS_QUERY);
+    const response = (await storefrontApiRequest(
+      SHOWCASE_COLLECTIONS_QUERY,
+    )) as ShowcaseResponse;
     const nodes = (response.data?.collections.nodes ?? []).filter((collection) =>
       collection.handle.startsWith("showcase-"),
     );

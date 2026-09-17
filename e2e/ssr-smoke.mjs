@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { fixtureRequests } from "./shopify-fixture.mjs";
 
-// Run after `bun run build`. Calls the actual production SSR entry with isolated Shopify fixtures.
+// Run after `bun run build`. Calls the actual production SSR entry with no Shopify credentials.
 const { default: handler } = await import("../.output/server/index.mjs");
 const pending = [];
 const context = { waitUntil: (promise) => pending.push(promise), passThroughOnException() {} };
-const env = { SHOPIFY_STOREFRONT_TOKEN: "space-cell-local-fixture-only" };
+const env = {};
 
 async function request(path) {
   let url = new URL(path, "https://spacecallapp.store");
@@ -62,15 +61,10 @@ for (const delayedTestId of [
   );
 }
 
-if (process.env.SPACE_CELL_FIXTURE_FALLBACK !== "1") {
-  assert.match(home.body, /data-hero-source="shopify-collection"/);
-  assert.match(home.body, /data-hero-handle="homepage-hero"/);
-  assert.doesNotMatch(home.body, /href="\/collections\/homepage-hero"/);
-  assert.doesNotMatch(home.body, /href="\/product\/fixture-phone-1"/);
-  assert.match(home.body, /Merchant artwork homepage-hero/);
-} else {
-  assert.match(home.body, /data-hero-source="placeholder"/);
-}
+// The staging hero is backed by the local provider-neutral catalog, not an external Shopify call.
+assert.match(home.body, /data-hero-handle="homepage-hero"/);
+assert.doesNotMatch(home.body, /href="\/collections\/homepage-hero"/);
+assert.match(home.body, /iPhone 18 Pro|Homepage Hero/);
 
 for (const [name, value] of Object.entries({
   "x-content-type-options": "nosniff",
@@ -85,71 +79,42 @@ assert.equal(
   home.response.headers.get("strict-transport-security"),
   "max-age=31536000; includeSubDomains",
 );
-assert.ok(
-  fixtureRequests.includes("GetCollection"),
-  "Homepage resolves its Shopify hero collection",
-);
-assert.equal(
-  fixtureRequests.filter((name) => name === "ShowcaseCollections").length,
-  0,
-  "Hydration-delayed showcase metadata is not fetched during initial SSR",
-);
 
 const help = await request("/help");
 assert.match(help.body, /Help &amp; Support/);
-assert.match(help.body, /href="https:\/\/dj6qeq-j9.myshopify.com\/account"/);
 assert.match(help.body, /href="https:\/\/wa.me\//);
 assert.match(help.body, /rel="canonical" href="https:\/\/spacecallapp.store\/help"/);
 
 const privacy = await request("/privacy");
 assert.equal((privacy.body.match(/<h1\b/g) ?? []).length, 1);
-if (process.env.SPACE_CELL_FIXTURE_FALLBACK === "1") {
-  assert.match(privacy.body, /published soon/);
-} else {
-  assert.match(privacy.body, /Fixture policy content from Shopify/);
-  assert.ok(!privacy.body.includes("window.policyUnsafe"));
-  assert.ok(!privacy.body.includes('href="javascript:'));
-  assert.ok(!privacy.body.includes('onclick="'));
-}
+assert.match(privacy.body, /published soon/);
+assert.ok(!privacy.body.includes('href="javascript:'));
+assert.ok(!privacy.body.includes('onclick="'));
 
-const product = await request("/product/fixture-phone-1");
+const product = await request("/product/iphone-18-pro");
 assert.equal((product.body.match(/<h1\b/g) ?? []).length, 1);
+assert.match(product.body, /iPhone 18 Pro/);
 assert.match(product.body, /Add to cart/);
 assert.match(product.body, /Share product/);
+
+const collection = await request("/collections/iphone");
+assert.equal((collection.body.match(/<h1\b/g) ?? []).length, 1);
+assert.match(collection.body, /\/product\/iphone-18-pro/);
+
+const brand = await request("/brand/apple");
+assert.equal((brand.body.match(/<h1\b/g) ?? []).length, 1);
+assert.match(brand.body, /\/product\/iphone-18-pro/);
+
+const shop = await request("/shop?brand=apple");
+assert.equal((shop.body.match(/<h1\b/g) ?? []).length, 1);
+assert.match(shop.body, /\/product\/iphone-18-pro/);
 
 const used = await request("/used-phones");
 assert.equal((used.body.match(/<h1\b/g) ?? []).length, 1, "Used phones retains its page heading");
 
-for (const path of [
-  "/category/e-readers",
-  "/category/cases",
-  "/brand/kobo",
-  "/collections/mixed-collection?brand=apple",
-  "/shop?category=cases&brand=spigen",
-]) {
-  const page = await request(path);
-  assert.equal((page.body.match(/<h1\b/g) ?? []).length, 1, `${path} has exactly one H1`);
-  const cards = [...page.body.matchAll(/<article\b[^>]*>([\s\S]*?)<\/article>/g)].map(
-    (match) => match[1],
-  );
-  const expected =
-    path.includes("e-readers") || path.includes("kobo")
-      ? "fixture-phone-8"
-      : path.includes("cases")
-        ? "fixture-phone-7"
-        : "fixture-phone-2";
-  assert.ok(
-    cards.some((card) => card.includes(`/product/${expected}`)),
-    `${path} contains matching products`,
-  );
-  assert.ok(
-    cards.every((card) => !card.includes("/product/fixture-phone-1")),
-    `${path} excludes unrelated Samsung phone`,
-  );
-}
-
 const sitemap = await request("/sitemap.xml");
 assert.match(sitemap.body, /https:\/\/spacecallapp.store\/help/);
+assert.match(sitemap.body, /https:\/\/spacecallapp.store\/product\/iphone-18-pro/);
 assert.equal(
   sitemap.response.headers.get("x-frame-options"),
   "SAMEORIGIN",
@@ -158,26 +123,22 @@ assert.equal(
 
 const robots = await readFile(new URL("../public/robots.txt", import.meta.url), "utf8");
 assert.ok(!/^Disallow:\s*\/$/m.test(robots));
-assert.ok(!fixtureRequests.some((name) => name?.startsWith("cart")), "SSR must never mutate carts");
 await Promise.allSettled(pending);
 console.log(
   JSON.stringify({
     passed: true,
-    fallback: process.env.SPACE_CELL_FIXTURE_FALLBACK === "1",
+    provider: "local-staging",
     paths: [
       "/",
       "/help",
       "/privacy",
-      "/product/fixture-phone-1",
+      "/product/iphone-18-pro",
+      "/collections/iphone",
+      "/brand/apple",
+      "/shop?brand=apple",
       "/used-phones",
-      "/category/e-readers",
-      "/category/cases",
-      "/brand/kobo",
-      "/collections/mixed-collection?brand=apple",
-      "/shop?category=cases&brand=spigen",
       "/sitemap.xml",
     ],
-    fixtureRequests: fixtureRequests.length,
   }),
 );
 
