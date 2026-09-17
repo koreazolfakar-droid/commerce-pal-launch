@@ -117,7 +117,7 @@ test("account links stay branded before the Shopify hand-off", async () => {
   assert.match(infoPage, /secure Shopify account page/);
 });
 
-test("hero never becomes an empty black panel when remote artwork is unavailable", async () => {
+test("homepage hero is Shopify-first and survives transient artwork failures", async () => {
   const home = await source("src/routes/index.tsx");
   const hero = await source("src/components/HomeHero.tsx");
 
@@ -127,11 +127,16 @@ test("hero never becomes an empty black panel when remote artwork is unavailable
   assert.match(home, /<HomeHero/);
   assert.match(home, /products=\{products\}/);
   assert.match(home, /heroCollection=\{heroCollection\}/);
-  assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
+  assert.match(hero, /cmsHeroSlides: _cmsHeroSlides/);
+  assert.doesNotMatch(hero, /localizeHeroSlide/);
+  assert.match(hero, /HERO_REFRESH_FALLBACK_STORAGE_KEY = "space-call-home-hero-refresh-fallback-v1"/);
+  assert.match(hero, /window\.sessionStorage\.setItem\(HERO_REFRESH_FALLBACK_STORAGE_KEY/);
+  assert.match(hero, /window\.sessionStorage\.getItem\(HERO_REFRESH_FALLBACK_STORAGE_KEY/);
+  assert.match(hero, /const effectiveHeroCollection = heroCollection\?\.collection/);
   assert.match(hero, /const shopifyImage = shopifySlide\?\.image/);
-  assert.match(hero, /heroFallbackProduct = heroCollection\?\.products\.find/);
-  assert.match(hero, /heroFallbackImage = heroFallbackProduct\?\.node\.images\.edges\[0\]\?\.node/);
-  assert.match(hero, /onError=\{\(\) => setFailedCmsSlideId\(cmsSlide\.id\)\}/);
+  assert.match(hero, /heroFallbackProduct = effectiveHeroCollection\?\.products\.find/);
+  assert.match(hero, /onError=\{\(\) => setFailedShopifySlideId\(shopifySlide\.id\)\}/);
+  assert.match(hero, /key=\{`\$\{shopifySlide\.id\}:\$\{shopifyImage\.url\}`\}/);
   assert.match(hero, /to="\/collections\/\$handle"/);
   assert.match(hero, /to="\/product\/\$handle"/);
   assert.match(hero, /data-hero-source=\{heroSource\}/);
