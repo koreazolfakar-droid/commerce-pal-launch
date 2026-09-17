@@ -55,19 +55,25 @@ test("dashboard overview is replaced by the focused Tabler operations view", asy
   assert.doesNotMatch(route, /DashboardManagementHub/);
 });
 
-test("products route provides overview and keeps the full native editor", async () => {
-  const [route, workspace] = await Promise.all([
+test("products route provides overview and keeps the full native editor behind the commerce service", async () => {
+  const [route, workspace, adapter] = await Promise.all([
     read("src/routes/dashboard.products.tsx"),
     read("src/components/admin/CatalogWorkspace.tsx"),
+    read("src/commerce/adapters/supabaseAdminCommerceRepository.ts"),
   ]);
 
   assert.match(route, /CatalogWorkspace/);
   assert.match(workspace, /NativeCatalogManager/);
   assert.match(workspace, /Catalog overview/);
   assert.match(workspace, /Product editor/);
-  assert.match(workspace, /store_products/);
-  assert.match(workspace, /store_product_variants/);
-  assert.match(workspace, /store_product_images/);
+  assert.match(workspace, /adminCommerceUiService/);
+  assert.match(workspace, /getCatalogOverview/);
+  assert.doesNotMatch(workspace, /store_products/);
+  assert.doesNotMatch(workspace, /store_product_variants/);
+  assert.doesNotMatch(workspace, /store_product_images/);
+  assert.match(adapter, /store_products/);
+  assert.match(adapter, /store_product_variants/);
+  assert.match(adapter, /store_product_images/);
   assert.match(workspace, /variantCount/);
   assert.match(workspace, /Total units/);
   assert.match(workspace, /Quantity/);
