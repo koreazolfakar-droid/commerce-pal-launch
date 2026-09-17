@@ -4,32 +4,15 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  adminCommerceUiService,
+  type InventoryMovementDto,
+  type InventoryProductDto,
+  type InventoryVariantDto,
+} from "@/commerce/services/adminCommerceUiService";
 import { useDashboardLanguage } from "@/lib/dashboardI18n";
 
 const LOW_STOCK_THRESHOLD = 5;
-
-type Product = {
-  id: string;
-  title: string;
-  handle: string;
-  status: string;
-  sku: string | null;
-  barcode: string | null;
-  stock_quantity: number;
-  track_inventory: boolean;
-};
-
-type Variant = {
-  id: string;
-  product_id: string;
-  title: string;
-  sku: string | null;
-  barcode: string | null;
-  stock_quantity: number;
-  track_inventory: boolean;
-  is_active: boolean;
-};
 
 type InventoryRow = {
   key: string;
@@ -44,22 +27,11 @@ type InventoryRow = {
   status: string;
 };
 
-type Movement = {
-  id: string;
-  product_id: string;
-  variant_id: string | null;
-  movement_type: string;
-  quantity_delta: number;
-  note: string | null;
-  reference_type: string | null;
-  created_at: string;
-};
-
 export function InventoryEditor() {
   const { language, text } = useDashboardLanguage();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [variants, setVariants] = useState<Variant[]>([]);
-  const [movements, setMovements] = useState<Movement[]>([]);
+  const [products, setProducts] = useState<InventoryProductDto[]>([]);
+  const [variants, setVariants] = useState<InventoryVariantDto[]>([]);
+  const [movements, setMovements] = useState<InventoryMovementDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -70,34 +42,16 @@ export function InventoryEditor() {
 
   const load = async () => {
     setLoading(true);
-    const [productsResult, variantsResult, movementResult] = await Promise.all([
-      supabase
-        .from("store_products" as never)
-        .select("id,title,handle,status,sku,barcode,stock_quantity,track_inventory")
-        .order("title"),
-      supabase
-        .from("store_product_variants" as never)
-        .select("id,product_id,title,sku,barcode,stock_quantity,track_inventory,is_active")
-        .order("sort_order"),
-      supabase
-        .from("store_inventory_movements" as never)
-        .select(
-          "id,product_id,variant_id,movement_type,quantity_delta,note,reference_type,created_at",
-        )
-        .order("created_at", { ascending: false })
-        .limit(100),
-    ]);
-
-    setLoading(false);
-    const error = productsResult.error || variantsResult.error || movementResult.error;
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const data = await adminCommerceUiService.getInventoryWorkspace();
+      setProducts(data.products);
+      setVariants(data.variants);
+      setMovements(data.movements);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text("تعذر تحميل المخزون", "Unable to load inventory"));
+    } finally {
+      setLoading(false);
     }
-
-    setProducts((productsResult.data ?? []) as Product[]);
-    setVariants((variantsResult.data ?? []) as Variant[]);
-    setMovements((movementResult.data ?? []) as Movement[]);
   };
 
   useEffect(() => {
@@ -105,7 +59,7 @@ export function InventoryEditor() {
   }, []);
 
   const rows = useMemo<InventoryRow[]>(() => {
-    const byProduct = new Map<string, Variant[]>();
+    const byProduct = new Map<string, InventoryVariantDto[]>();
     variants.forEach((variant) => {
       const list = byProduct.get(variant.product_id) ?? [];
       list.push(variant);
@@ -193,30 +147,26 @@ export function InventoryEditor() {
     }
 
     setSavingKey(row.key);
-    const { error } = await supabase.rpc(
-      "adjust_store_inventory" as never,
-      {
-        p_product_id: row.productId,
-        p_variant_id: row.variantId,
-        p_quantity_delta: delta,
-        p_note: entry.note.trim() || null,
-      } as never,
-    );
-    setSavingKey(null);
-
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await adminCommerceUiService.adjustInventory({
+        productId: row.productId,
+        variantId: row.variantId,
+        quantityDelta: delta,
+        note: entry.note.trim() || null,
+      });
+      setAdjustments((current) => ({ ...current, [row.key]: { delta: "", note: "" } }));
+      toast.success(
+        text(
+          `تم تعديل المخزون ${delta > 0 ? `+${delta}` : delta}`,
+          `Inventory adjusted ${delta > 0 ? `+${delta}` : delta}`,
+        ),
+      );
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : text("فشل تعديل المخزون", "Inventory adjustment failed"));
+    } finally {
+      setSavingKey(null);
     }
-
-    setAdjustments((current) => ({ ...current, [row.key]: { delta: "", note: "" } }));
-    toast.success(
-      text(
-        `تم تعديل المخزون ${delta > 0 ? `+${delta}` : delta}`,
-        `Inventory adjusted ${delta > 0 ? `+${delta}` : delta}`,
-      ),
-    );
-    await load();
   };
 
   const productName = (id: string) =>
@@ -258,16 +208,8 @@ export function InventoryEditor() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label={text("عناصر متتبعة", "Tracked items")} value={stats.tracked} />
         <Metric label={text("إجمالي الوحدات", "Total units")} value={stats.units} />
-        <Metric
-          label={text("مخزون منخفض", "Low stock")}
-          value={stats.low}
-          warning={stats.low > 0}
-        />
-        <Metric
-          label={text("نفد المخزون", "Out of stock")}
-          value={stats.out}
-          warning={stats.out > 0}
-        />
+        <Metric label={text("مخزون منخفض", "Low stock")} value={stats.low} warning={stats.low > 0} />
+        <Metric label={text("نفد المخزون", "Out of stock")} value={stats.out} warning={stats.out > 0} />
       </div>
 
       <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
@@ -317,20 +259,15 @@ export function InventoryEditor() {
                       <td className="px-4 py-3.5">
                         <p className="text-xs font-bold">{row.productTitle}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {row.variantTitle || text("المنتج الافتراضي", "Default product")} •{" "}
-                          {row.status}
+                          {row.variantTitle || text("المنتج الافتراضي", "Default product")} • {row.status}
                         </p>
                       </td>
                       <td className="px-3 py-3.5">
                         <p className="text-[11px] font-semibold">{row.sku || "—"}</p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {row.barcode || text("لا يوجد باركود", "No barcode")}
-                        </p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">{row.barcode || text("لا يوجد باركود", "No barcode")}</p>
                       </td>
                       <td className="px-3 py-3.5">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ${low ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-muted text-foreground"}`}
-                        >
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ${low ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-muted text-foreground"}`}>
                           {row.stock}
                         </span>
                       </td>
@@ -338,9 +275,7 @@ export function InventoryEditor() {
                         <Input
                           type="number"
                           value={entry.delta}
-                          onChange={(event) =>
-                            patchAdjustment(row.key, { delta: event.target.value })
-                          }
+                          onChange={(event) => patchAdjustment(row.key, { delta: event.target.value })}
                           placeholder="+5 / -2"
                           className="h-9 w-24 rounded-lg text-xs"
                         />
@@ -348,9 +283,7 @@ export function InventoryEditor() {
                       <td className="px-3 py-3.5">
                         <Input
                           value={entry.note}
-                          onChange={(event) =>
-                            patchAdjustment(row.key, { note: event.target.value })
-                          }
+                          onChange={(event) => patchAdjustment(row.key, { note: event.target.value })}
                           placeholder={text("سبب التعديل…", "Reason for adjustment…")}
                           className="h-9 min-w-48 rounded-lg text-xs"
                         />
@@ -382,20 +315,13 @@ export function InventoryEditor() {
 
       <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
         <div className="border-b border-border/60 px-4 py-4">
-          <h2 className="text-sm font-black">
-            {text("سجل حركات المخزون", "Inventory movement history")}
-          </h2>
+          <h2 className="text-sm font-black">{text("سجل حركات المخزون", "Inventory movement history")}</h2>
           <p className="mt-1 text-[10px] text-muted-foreground">
-            {text(
-              "آخر 100 حركة شراء، بيع، إرجاع أو تعديل.",
-              "The latest 100 purchase, sale, return or adjustment movements.",
-            )}
+            {text("آخر 100 حركة شراء، بيع، إرجاع أو تعديل.", "The latest 100 purchase, sale, return or adjustment movements.")}
           </p>
         </div>
         {movements.length === 0 ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">
-            {text("لا توجد حركات مخزون بعد.", "No inventory movements yet.")}
-          </p>
+          <p className="p-8 text-center text-xs text-muted-foreground">{text("لا توجد حركات مخزون بعد.", "No inventory movements yet.")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-start">
@@ -414,26 +340,16 @@ export function InventoryEditor() {
                     <td className="px-4 py-3">
                       <span className="font-bold">{productName(movement.product_id)}</span>
                       {variantName(movement.variant_id) ? (
-                        <span className="text-muted-foreground">
-                          {" "}
-                          • {variantName(movement.variant_id)}
-                        </span>
+                        <span className="text-muted-foreground"> • {variantName(movement.variant_id)}</span>
                       ) : null}
                     </td>
                     <td className="px-3 py-3 text-muted-foreground">{movement.movement_type}</td>
-                    <td
-                      className={`px-3 py-3 font-black ${movement.quantity_delta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
-                    >
-                      {movement.quantity_delta > 0 ? "+" : ""}
-                      {movement.quantity_delta}
+                    <td className={`px-3 py-3 font-black ${movement.quantity_delta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                      {movement.quantity_delta > 0 ? "+" : ""}{movement.quantity_delta}
                     </td>
-                    <td className="px-3 py-3 text-muted-foreground">
-                      {movement.note || movement.reference_type || "—"}
-                    </td>
+                    <td className="px-3 py-3 text-muted-foreground">{movement.note || movement.reference_type || "—"}</td>
                     <td className="px-4 py-3 text-[10px] text-muted-foreground">
-                      {new Date(movement.created_at).toLocaleString(
-                        language === "ar" ? "ar-LB" : "en-LB",
-                      )}
+                      {new Date(movement.created_at).toLocaleString(language === "ar" ? "ar-LB" : "en-LB")}
                     </td>
                   </tr>
                 ))}
@@ -446,23 +362,11 @@ export function InventoryEditor() {
   );
 }
 
-function Metric({
-  label,
-  value,
-  warning = false,
-}: {
-  label: string;
-  value: number;
-  warning?: boolean;
-}) {
+function Metric({ label, value, warning = false }: { label: string; value: number; warning?: boolean }) {
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-4">
       <p className="text-[10px] font-semibold text-muted-foreground">{label}</p>
-      <p
-        className={`mt-2 text-2xl font-black ${warning ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}
-      >
-        {value}
-      </p>
+      <p className={`mt-2 text-2xl font-black ${warning ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>{value}</p>
     </div>
   );
 }
