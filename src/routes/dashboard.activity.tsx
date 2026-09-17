@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Activity, CirclePlus, Pencil, RefreshCw, Trash2 } from "lucide-react";
@@ -31,11 +31,13 @@ type AuditRow = {
 
 function titleFromAudit(row: AuditRow) {
   const source = row.after_data ?? row.before_data ?? {};
-  const title = source.title;
+  const title = source["title"];
   if (typeof title === "string" && title.trim()) return title;
-  const sku = source.sku;
+  const sku = source["sku"];
   if (typeof sku === "string" && sku.trim()) return `SKU ${sku}`;
-  return row.entity_type === "product" ? row.product_id ?? "Product" : row.variant_id ?? "Variant";
+  return row.entity_type === "product"
+    ? row.product_id ?? "Product"
+    : row.variant_id ?? "Variant";
 }
 
 function changedFields(row: AuditRow) {
@@ -47,7 +49,8 @@ function changedFields(row: AuditRow) {
 }
 
 function actionClass(action: AuditAction) {
-  if (action === "insert") return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+  if (action === "insert")
+    return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
   if (action === "delete") return "bg-rose-500/10 text-rose-700 dark:text-rose-300";
   return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
 }
@@ -153,7 +156,9 @@ function DashboardActivityPage() {
         cell: (row) => (
           <div>
             <p className="font-bold text-foreground">
-              {row.entity_type === "product" ? text("منتج", "Product") : text("نسخة", "Variant")}
+              {row.entity_type === "product"
+                ? text("منتج", "Product")
+                : text("نسخة", "Variant")}
             </p>
             <p className="mt-0.5 max-w-40 truncate text-[9px] text-muted-foreground">
               {row.entity_type === "product" ? row.product_id : row.variant_id}
@@ -167,7 +172,9 @@ function DashboardActivityPage() {
         sortValue: titleFromAudit,
         searchValue: titleFromAudit,
         exportValue: titleFromAudit,
-        cell: (row) => <span className="font-semibold text-foreground">{titleFromAudit(row)}</span>,
+        cell: (row) => (
+          <span className="font-semibold text-foreground">{titleFromAudit(row)}</span>
+        ),
       },
       {
         id: "changes",
@@ -189,7 +196,10 @@ function DashboardActivityPage() {
           return (
             <div className="flex max-w-72 flex-wrap gap-1">
               {fields.slice(0, 4).map((field) => (
-                <span key={field} className="rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-semibold">
+                <span
+                  key={field}
+                  className="rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-semibold"
+                >
                   {field}
                 </span>
               ))}
@@ -211,6 +221,7 @@ function DashboardActivityPage() {
     return (
       <DashboardErrorState
         message={text("تعذّر تحميل سجل النشاط.", "Unable to load activity history.")}
+        retryLabel={text("إعادة المحاولة", "Retry")}
         onRetry={() => void query.refetch()}
       />
     );
@@ -242,10 +253,26 @@ function DashboardActivityPage() {
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard label={text("كل النشاط", "All activity")} value={summary.total} icon={<Activity className="size-4" />} />
-        <SummaryCard label={text("إضافات", "Created")} value={summary.inserts} icon={<CirclePlus className="size-4" />} />
-        <SummaryCard label={text("تعديلات", "Updated")} value={summary.updates} icon={<Pencil className="size-4" />} />
-        <SummaryCard label={text("حذف", "Deleted")} value={summary.deletes} icon={<Trash2 className="size-4" />} />
+        <SummaryCard
+          label={text("كل النشاط", "All activity")}
+          value={summary.total}
+          icon={<Activity className="size-4" />}
+        />
+        <SummaryCard
+          label={text("إضافات", "Created")}
+          value={summary.inserts}
+          icon={<CirclePlus className="size-4" />}
+        />
+        <SummaryCard
+          label={text("تعديلات", "Updated")}
+          value={summary.updates}
+          icon={<Pencil className="size-4" />}
+        />
+        <SummaryCard
+          label={text("حذف", "Deleted")}
+          value={summary.deletes}
+          icon={<Trash2 className="size-4" />}
+        />
       </div>
 
       <DashboardCard className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:p-4">
@@ -288,10 +315,12 @@ function DashboardActivityPage() {
   );
 }
 
-function SummaryCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
+function SummaryCard({ label, value, icon }: { label: string; value: number; icon: ReactNode }) {
   return (
     <DashboardCard className="flex items-center gap-3 p-4">
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">{icon}</span>
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+        {icon}
+      </span>
       <div>
         <p className="text-[10px] font-semibold text-muted-foreground">{label}</p>
         <p className="mt-0.5 text-xl font-black text-foreground">{value.toLocaleString()}</p>
