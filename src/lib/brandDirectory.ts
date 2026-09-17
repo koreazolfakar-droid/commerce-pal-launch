@@ -74,8 +74,11 @@ export function buildShopifyBrands(
         (compactBrandIdentity(item.handle) === brandIdentity ||
           compactBrandIdentity(item.title) === brandIdentity),
     );
-    const exact = exactCandidates.find(looksLikeLogoImage) ?? exactCandidates[0];
+    const exact = exactCandidates.find(looksLikeLogoImage);
 
+    // A normal brand collection often uses a product/lifestyle cover. Never pass
+    // that artwork into the logo rail: if no explicit/logo-like image exists,
+    // BrandLogo falls back to the curated local wordmark instead.
     const collection = dedicated ?? exact;
     const entry: ShopifyBrand = { ...brand };
     if (collection?.image) {
