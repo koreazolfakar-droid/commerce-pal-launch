@@ -57,18 +57,21 @@ export function MobileTopBar({
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-between gap-2 px-3 py-2.5">
-          <button
-            type="button"
-            aria-label={t("openMenu")}
-            onClick={() => setMenuOpen(true)}
-            className="press grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-surface"
-          >
-            <Menu aria-hidden className="h-5 w-5" />
-          </button>
+        <div className="mx-auto flex max-w-md items-center gap-2 px-3 py-2.5">
+          <div className="flex w-20 shrink-0 items-center sm:w-[7.5rem]">
+            <button
+              type="button"
+              aria-label={t("openMenu")}
+              onClick={() => setMenuOpen(true)}
+              className="press grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-surface"
+            >
+              <Menu aria-hidden className="h-5 w-5" />
+            </button>
+          </div>
           <Link
             to="/"
             aria-label={`${storeName} home`}
+            data-testid="mobile-brand"
             className="flex min-w-0 flex-1 items-center justify-center gap-2"
           >
             <img
@@ -83,7 +86,7 @@ export function MobileTopBar({
             />
             <span className="truncate text-[17px] font-black tracking-[-0.025em]">{storeName}</span>
           </Link>
-          <div className="flex shrink-0 items-center gap-0.5">
+          <div className="flex w-20 shrink-0 items-center justify-end gap-0.5 sm:w-[7.5rem]">
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
