@@ -6,25 +6,50 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  Smartphone,
   X,
 } from "lucide-react";
 
-import {
-  DASHBOARD_CONTENT_NAVIGATION,
-  DASHBOARD_NAVIGATION,
-} from "@/dashboard/config/navigation";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DASHBOARD_NAV_GROUPS, DASHBOARD_SEARCH_TARGETS } from "@/dashboard/config/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useDashboardLanguage } from "@/lib/dashboardI18n";
 import { cn } from "@/lib/utils";
 
-async function getPendingOrdersCount() {
-  const result = await supabase
-    .from("store_orders" as never)
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pending");
-  return result.error ? 0 : (result.count ?? 0);
+type SidebarBadgeKey = "orders" | "products" | "inventory";
+type SidebarCounts = Record<SidebarBadgeKey, number>;
+type DashboardNavItem = (typeof DASHBOARD_SEARCH_TARGETS)[number];
+
+async function getSidebarCounts(): Promise<SidebarCounts> {
+  const [ordersResult, productsResult, inventoryResult] = await Promise.all([
+    supabase
+      .from("store_orders" as never)
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending"),
+    supabase
+      .from("store_products" as never)
+      .select("id", { count: "exact", head: true })
+      .neq("status", "archived"),
+    supabase
+      .from("store_product_variants" as never)
+      .select("stock_quantity,track_inventory,is_active")
+      .eq("is_active", true),
+  ]);
+
+  const inventoryRows = (inventoryResult.data ?? []) as Array<{
+    stock_quantity: number;
+    track_inventory: boolean;
+    is_active: boolean;
+  }>;
+
+  const needsAttention = inventoryRows.filter(
+    (row) => row.track_inventory && row.stock_quantity <= 5,
+  ).length;
+
+  return {
+    orders: ordersResult.error ? 0 : (ordersResult.count ?? 0),
+    products: productsResult.error ? 0 : (productsResult.count ?? 0),
+    inventory: inventoryResult.error ? 0 : needsAttention,
+  };
 }
 
 type DashboardSidebarProps = {
@@ -44,34 +69,11 @@ function SpaceCallBrand({ collapsed }: { collapsed: boolean }) {
       {!collapsed ? (
         <div className="min-w-0">
           <p className="truncate text-[15px] font-black tracking-tight text-white">Space Call</p>
-          <p className="mt-0.5 whitespace-nowrap text-[9px] font-medium text-slate-400">
-            Tech for a Better Tomorrow
+          <p className="mt-0.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Commerce OS
           </p>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function SidebarPromoCard({ language }: { language: "ar" | "en" }) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(145deg,rgba(79,70,229,.42),rgba(124,58,237,.16)_55%,rgba(255,255,255,.04))] p-4">
-      <div className="pointer-events-none absolute -end-6 bottom-0 opacity-85">
-        <Smartphone className="size-24 rotate-[8deg] text-blue-300/80" strokeWidth={1.1} />
-      </div>
-      <div className="relative max-w-[118px]">
-        <p className="text-[14px] font-black leading-[1.35] text-white">
-          {language === "ar" ? "تقنية أذكى، غدٌ أكثر إشراقاً" : "Smarter Tech, Brighter Tomorrows"}
-        </p>
-        <a
-          href="/"
-          target="_blank"
-          rel="noreferrer"
-          className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-lg border border-blue-400/40 bg-blue-500/10 px-3 text-[10px] font-bold text-blue-100 transition hover:bg-blue-500/20"
-        >
-          {language === "ar" ? "عرض المتجر" : "View Store"} <ArrowUpRight className="size-3" />
-        </a>
-      </div>
     </div>
   );
 }
@@ -82,10 +84,10 @@ function NavItem({
   badge,
   onNavigate,
 }: {
-  item: (typeof DASHBOARD_NAVIGATION)[number] | (typeof DASHBOARD_CONTENT_NAVIGATION)[number];
+  item: DashboardNavItem;
   collapsed: boolean;
-  badge?: number | undefined;
-  onNavigate?: (() => void) | undefined;
+  badge?: number;
+  onNavigate?: () => void;
 }) {
   const { language } = useDashboardLanguage();
   const Icon = item.icon;
@@ -97,18 +99,18 @@ function NavItem({
       activeOptions={{ exact: item.to === "/dashboard" }}
       activeProps={{
         className:
-          "bg-[linear-gradient(100deg,#3b82f6,#5b5cf0_55%,#7c3aed)] text-white shadow-[0_8px_22px_-16px_rgba(79,70,229,.9)] hover:text-white",
+          "bg-white text-slate-950 shadow-[0_10px_24px_-18px_rgba(15,23,42,.95)] hover:bg-white hover:text-slate-950",
       }}
       onClick={onNavigate}
       className={cn(
-        "group flex h-11 items-center gap-3 rounded-xl px-3 text-[12px] font-semibold text-slate-300 transition-colors duration-150 hover:bg-white/7 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60",
+        "group flex h-10 items-center gap-3 rounded-xl px-3 text-[12px] font-semibold text-slate-300 transition-colors duration-150 hover:bg-white/7 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60",
         collapsed && "justify-center px-0",
       )}
     >
-      <Icon className="size-[17px] shrink-0" strokeWidth={1.8} />
+      <Icon className="size-[16px] shrink-0" strokeWidth={1.8} />
       {!collapsed ? <span className="min-w-0 flex-1 truncate">{label}</span> : null}
-      {!collapsed && badge && badge > 0 ? (
-        <span className="grid min-w-6 place-items-center rounded-full bg-white/12 px-1.5 py-1 text-[9px] font-black text-white">
+      {!collapsed && badge !== undefined && badge > 0 ? (
+        <span className="grid min-w-6 place-items-center rounded-full bg-slate-700 px-1.5 py-1 text-[9px] font-black text-white group-data-[status=active]:bg-slate-900">
           {badge > 99 ? "99+" : badge}
         </span>
       ) : null}
@@ -121,6 +123,7 @@ function NavItem({
       <TooltipTrigger asChild>{link}</TooltipTrigger>
       <TooltipContent side="right" className="bg-[#0b1428] text-white">
         {label}
+        {badge !== undefined && badge > 0 ? ` · ${badge}` : ""}
       </TooltipContent>
     </Tooltip>
   );
@@ -134,9 +137,9 @@ export function DashboardSidebar({
   onSignOut,
 }: DashboardSidebarProps) {
   const { language, text } = useDashboardLanguage();
-  const { data: pendingOrders = 0 } = useQuery({
-    queryKey: ["dashboard", "pending-orders-count"],
-    queryFn: getPendingOrdersCount,
+  const { data: counts = { orders: 0, products: 0, inventory: 0 } } = useQuery({
+    queryKey: ["dashboard", "sidebar-counts"],
+    queryFn: getSidebarCounts,
     staleTime: 30_000,
   });
 
@@ -145,7 +148,12 @@ export function DashboardSidebar({
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex h-full flex-col bg-[#0b1428] text-white">
-        <div className={cn("flex h-[72px] items-center border-b border-white/8 px-4", compact ? "justify-center" : "justify-between")}>
+        <div
+          className={cn(
+            "flex h-[72px] items-center border-b border-white/8 px-4",
+            compact ? "justify-center" : "justify-between",
+          )}
+        >
           <SpaceCallBrand collapsed={compact} />
           {mobile ? (
             <button
@@ -179,39 +187,52 @@ export function DashboardSidebar({
           </button>
         ) : null}
 
-        <div className={cn("flex-1 overflow-y-auto py-4", compact ? "px-2.5" : "px-3")}>
-          <nav className="space-y-1" aria-label={text("تنقل لوحة التحكم", "Dashboard navigation")}>
-            {DASHBOARD_NAVIGATION.map((item) => (
-              <NavItem
-                key={item.to}
-                item={item}
-                collapsed={compact}
-                badge={item.badge === "orders" ? pendingOrders : undefined}
-                onNavigate={onClose}
-              />
-            ))}
-          </nav>
-
-          <div className="my-4 border-t border-white/8" />
-          {!compact ? (
-            <p className="mb-2 px-3 text-[9px] font-black uppercase tracking-[0.14em] text-slate-600">
-              {language === "ar" ? "المحتوى" : "Content"}
-            </p>
-          ) : null}
-          <nav className="space-y-1" aria-label={text("إدارة المحتوى", "Content management")}>
-            {DASHBOARD_CONTENT_NAVIGATION.map((item) => (
-              <NavItem key={item.to} item={item} collapsed={compact} onNavigate={onClose} />
+        <div className={cn("flex-1 overflow-y-auto py-3", compact ? "px-2.5" : "px-3")}>
+          <nav className="space-y-4" aria-label={text("تنقل لوحة التحكم", "Dashboard navigation")}>
+            {DASHBOARD_NAV_GROUPS.map((group, groupIndex) => (
+              <section key={group.id}>
+                {groupIndex > 0 && compact ? <div className="my-2 border-t border-white/8" /> : null}
+                {!compact ? (
+                  <p className="mb-1.5 px-3 text-[9px] font-black uppercase tracking-[0.15em] text-slate-600">
+                    {language === "ar" ? group.ar : group.en}
+                  </p>
+                ) : null}
+                <div className="space-y-1">
+                  {group.items.map((item) => {
+                    const badgeKey = item.badge as SidebarBadgeKey | undefined;
+                    return (
+                      <NavItem
+                        key={item.to}
+                        item={item}
+                        collapsed={compact}
+                        {...(badgeKey ? { badge: counts[badgeKey] } : {})}
+                        {...(onClose ? { onNavigate: onClose } : {})}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
             ))}
           </nav>
         </div>
 
         <div className={cn("border-t border-white/8 p-3", compact && "px-2.5")}>
-          {!compact ? <SidebarPromoCard language={language} /> : null}
-          <div className={cn("mt-3 space-y-1", compact && "mt-0")}>
+          {!compact ? (
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              className="mb-2 flex h-10 items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[11px] font-bold text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
+            >
+              <span>{text("فتح المتجر", "Open storefront")}</span>
+              <ArrowUpRight className="size-3.5" />
+            </a>
+          ) : null}
+          <div className="space-y-1">
             {!compact ? (
               <a
                 href="mailto:support@spacecallapp.store"
-                className="flex h-10 items-center gap-3 rounded-xl px-3 text-[11px] font-semibold text-slate-400 transition hover:bg-white/7 hover:text-white"
+                className="flex h-9 items-center gap-3 rounded-xl px-3 text-[11px] font-semibold text-slate-400 transition hover:bg-white/7 hover:text-white"
               >
                 <HelpCircle className="size-4" />
                 {text("المساعدة والدعم", "Help & Support")}
@@ -221,7 +242,7 @@ export function DashboardSidebar({
               type="button"
               onClick={onSignOut}
               className={cn(
-                "flex h-10 w-full items-center gap-3 rounded-xl px-3 text-[11px] font-semibold text-slate-400 transition hover:bg-white/7 hover:text-white",
+                "flex h-9 w-full items-center gap-3 rounded-xl px-3 text-[11px] font-semibold text-slate-400 transition hover:bg-white/7 hover:text-white",
                 compact && "justify-center px-0",
               )}
               aria-label={text("تسجيل الخروج", "Logout")}

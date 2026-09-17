@@ -3,14 +3,16 @@ import fs from "node:fs";
 import test from "node:test";
 
 const route = fs.readFileSync("src/routes/dashboard.products.tsx", "utf8");
+const workspace = fs.readFileSync("src/components/admin/CatalogWorkspace.tsx", "utf8");
 const manager = fs.readFileSync("src/components/admin/NativeCatalogManager.tsx", "utf8");
 const migration = fs.readFileSync(
   "supabase/migrations/20260916184231_native_catalog_audit_log.sql",
   "utf8",
 );
 
-test("dashboard products route uses the native Space Call catalog manager", () => {
-  assert.match(route, /NativeCatalogManager/);
+test("dashboard products route keeps the native Space Call catalog manager behind the professional workspace", () => {
+  assert.match(route, /CatalogWorkspace/);
+  assert.match(workspace, /NativeCatalogManager/);
   assert.match(manager, /store_products/);
   assert.match(manager, /store_product_variants/);
   assert.match(manager, /base_price/);

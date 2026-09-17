@@ -19,6 +19,7 @@ import {
   TopBrandsCard,
   TopSellingProductsCard,
 } from "@/dashboard/components/DashboardInsights";
+import { DashboardManagementHub } from "@/dashboard/components/DashboardManagementHub";
 import { DashboardPageHeader } from "@/dashboard/components/DashboardPageHeader";
 import { RecentOrdersTable } from "@/dashboard/components/RecentOrdersTable";
 import { DashboardErrorState, DashboardSkeleton } from "@/dashboard/components/DashboardStates";
@@ -162,6 +163,8 @@ function DashboardContent({
           icon={<Package className="size-5" />}
         />
       </div>
+
+      <DashboardManagementHub data={data} language={language} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <div className="xl:col-span-7">
