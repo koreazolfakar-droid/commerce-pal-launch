@@ -36,19 +36,18 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
   await expect(showcase.first()).toContainText("Zeta showcase");
 });
 
-test("hero uses independent Shopify artwork without catalogue product content", async ({
-  page,
-}) => {
+test("hero uses independent Shopify artwork and opens a safe product target", async ({ page }) => {
   await page.goto("/");
   const hero = page.getByTestId("home-hero");
   await expect(hero).toHaveAttribute("data-hero-source", "shopify-collection");
   await expect(hero).toHaveAttribute("data-hero-collection-handle", "homepage-hero");
   await expect(hero).toHaveAttribute("data-hero-handle", "homepage-hero");
   await expect(hero.locator("img")).toHaveAttribute("alt", "Merchant artwork homepage-hero");
-  await expect(hero.locator('a[href^="/product/"]')).toHaveCount(0);
+  await expect(hero.locator('a[href="/collections/homepage-hero"]')).toHaveCount(0);
+  await expect(hero.locator('a[href="/product/fixture-phone-1"]')).toHaveCount(1);
+  await expect(hero.locator('img[srcset*="2880w"]')).toHaveCount(1);
   await expect(hero.locator('[data-testid="home-hero-content"]')).toHaveCount(0);
   await expect(hero.locator('[data-testid="home-hero-mobile-controls"]')).toHaveCount(0);
-  await expect(hero.locator('a[href="/shop"]')).toHaveCount(1);
 });
 
 test("each brand keeps its compact showcase, products and exact destination without duplicate hero artwork", async ({
