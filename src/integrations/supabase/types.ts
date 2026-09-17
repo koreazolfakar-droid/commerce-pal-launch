@@ -14,40 +14,40 @@ export type Database = {
   }
   public: {
     Tables: {
-      cms_audit_log: {
+      admin_audit_log: {
         Row: {
           action: string
           actor_email: string | null
+          actor_id: string | null
           created_at: string
-          details: Json
-          entity_id: string | null
-          entity_type: string
+          detail: Json
           id: string
+          resource: string
         }
         Insert: {
           action: string
           actor_email?: string | null
+          actor_id?: string | null
           created_at?: string
-          details?: Json
-          entity_id?: string | null
-          entity_type: string
+          detail?: Json
           id?: string
+          resource: string
         }
         Update: {
           action?: string
           actor_email?: string | null
+          actor_id?: string | null
           created_at?: string
-          details?: Json
-          entity_id?: string | null
-          entity_type?: string
+          detail?: Json
           id?: string
+          resource?: string
         }
         Relationships: []
       }
       cms_brands: {
         Row: {
+          collection_handle: string | null
           created_at: string
-          href: string | null
           id: string
           is_visible: boolean
           logo_url: string | null
@@ -57,8 +57,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          collection_handle?: string | null
           created_at?: string
-          href?: string | null
           id?: string
           is_visible?: boolean
           logo_url?: string | null
@@ -68,8 +68,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          collection_handle?: string | null
           created_at?: string
-          href?: string | null
           id?: string
           is_visible?: boolean
           logo_url?: string | null
@@ -84,13 +84,11 @@ export type Database = {
         Row: {
           button_label: string | null
           created_at: string
-          ends_at: string | null
           id: string
-          image_url: string | null
-          is_published: boolean
+          image_url: string
+          is_visible: boolean
           mobile_image_url: string | null
           sort_order: number
-          starts_at: string | null
           subtitle: string | null
           target_type: string
           target_value: string | null
@@ -100,13 +98,11 @@ export type Database = {
         Insert: {
           button_label?: string | null
           created_at?: string
-          ends_at?: string | null
           id?: string
-          image_url?: string | null
-          is_published?: boolean
+          image_url: string
+          is_visible?: boolean
           mobile_image_url?: string | null
           sort_order?: number
-          starts_at?: string | null
           subtitle?: string | null
           target_type?: string
           target_value?: string | null
@@ -116,13 +112,11 @@ export type Database = {
         Update: {
           button_label?: string | null
           created_at?: string
-          ends_at?: string | null
           id?: string
-          image_url?: string | null
-          is_published?: boolean
+          image_url?: string
+          is_visible?: boolean
           mobile_image_url?: string | null
           sort_order?: number
-          starts_at?: string | null
           subtitle?: string | null
           target_type?: string
           target_value?: string | null
@@ -131,43 +125,7 @@ export type Database = {
         }
         Relationships: []
       }
-      cms_media_assets: {
-        Row: {
-          alt_text: string | null
-          bucket_id: string
-          created_at: string
-          file_name: string
-          id: string
-          mime_type: string | null
-          object_path: string
-          size_bytes: number | null
-          updated_at: string
-        }
-        Insert: {
-          alt_text?: string | null
-          bucket_id?: string
-          created_at?: string
-          file_name: string
-          id?: string
-          mime_type?: string | null
-          object_path: string
-          size_bytes?: number | null
-          updated_at?: string
-        }
-        Update: {
-          alt_text?: string | null
-          bucket_id?: string
-          created_at?: string
-          file_name?: string
-          id?: string
-          mime_type?: string | null
-          object_path?: string
-          size_bytes?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      cms_navigation_items: {
+      cms_navigation: {
         Row: {
           area: string
           created_at: string
@@ -181,7 +139,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          area: string
+          area?: string
           created_at?: string
           href?: string | null
           icon_type?: string
@@ -227,7 +185,7 @@ export type Database = {
           is_visible?: boolean
           page_slug?: string
           section_key: string
-          section_type: string
+          section_type?: string
           sort_order?: number
           subtitle?: string | null
           title?: string | null
@@ -250,111 +208,72 @@ export type Database = {
       }
       cms_seo_pages: {
         Row: {
-          canonical_url: string | null
           created_at: string
           description: string | null
-          is_public: boolean
-          json_ld: Json
+          id: string
+          noindex: boolean
           og_image_url: string | null
-          page_slug: string
-          robots: string
+          path: string
           title: string | null
           updated_at: string
         }
         Insert: {
-          canonical_url?: string | null
           created_at?: string
           description?: string | null
-          is_public?: boolean
-          json_ld?: Json
+          id?: string
+          noindex?: boolean
           og_image_url?: string | null
-          page_slug: string
-          robots?: string
+          path: string
           title?: string | null
           updated_at?: string
         }
         Update: {
-          canonical_url?: string | null
           created_at?: string
           description?: string | null
-          is_public?: boolean
-          json_ld?: Json
+          id?: string
+          noindex?: boolean
           og_image_url?: string | null
-          page_slug?: string
-          robots?: string
+          path?: string
           title?: string | null
           updated_at?: string
         }
         Relationships: []
       }
-      cms_site_settings: {
+      cms_settings: {
         Row: {
-          group_name: string
-          is_public: boolean
-          key: string
-          label: string | null
-          updated_at: string
-          value_json: Json | null
-          value_text: string | null
-          value_type: string
-        }
-        Insert: {
-          group_name?: string
-          is_public?: boolean
-          key: string
-          label?: string | null
-          updated_at?: string
-          value_json?: Json | null
-          value_text?: string | null
-          value_type?: string
-        }
-        Update: {
-          group_name?: string
-          is_public?: boolean
-          key?: string
-          label?: string | null
-          updated_at?: string
-          value_json?: Json | null
-          value_text?: string | null
-          value_type?: string
-        }
-        Relationships: []
-      }
-      edge_rate_limits: {
-        Row: {
-          count: number
           key: string
           updated_at: string
-          window_start: string
+          value: Json
         }
         Insert: {
-          count?: number
           key: string
           updated_at?: string
-          window_start?: string
+          value?: Json
         }
         Update: {
-          count?: number
           key?: string
           updated_at?: string
-          window_start?: string
+          value?: Json
         }
         Relationships: []
       }
       user_roles: {
         Row: {
           created_at: string
-          role: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
-          role: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
-          role?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -364,17 +283,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      consume_edge_rate_limit: {
-        Args: { _key: string; _limit: number; _window_seconds: number }
-        Returns: {
-          allowed: boolean
-          remaining: number
-          reset_at: string
-        }[]
+      claim_admin: { Args: never; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "editor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -501,6 +421,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "editor"],
+    },
   },
 } as const
