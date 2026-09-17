@@ -5,7 +5,10 @@ export function DashboardSkeleton() {
     <div className="space-y-4" aria-busy="true" aria-label="Loading dashboard">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-32 animate-pulse rounded-2xl border border-border/60 bg-card" />
+          <div
+            key={index}
+            className="h-32 animate-pulse rounded-2xl border border-border/60 bg-card"
+          />
         ))}
       </div>
       <div className="grid gap-4 xl:grid-cols-12">
@@ -14,7 +17,10 @@ export function DashboardSkeleton() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-28 animate-pulse rounded-2xl border border-border/60 bg-card" />
+          <div
+            key={index}
+            className="h-28 animate-pulse rounded-2xl border border-border/60 bg-card"
+          />
         ))}
       </div>
       <div className="grid gap-4 xl:grid-cols-12">

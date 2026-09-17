@@ -15,6 +15,13 @@ test("repository exposes one comprehensive validation command", async () => {
   assert.match(pkg.scripts.check, /build/);
 });
 
+test("lint checks do not mutate source files in CI", async () => {
+  const pkg = JSON.parse(await read("package.json"));
+  assert.equal(pkg.scripts.lint, "eslint .");
+  assert.doesNotMatch(pkg.scripts.lint, /--fix/);
+  assert.match(pkg.scripts["lint:fix"], /eslint \. --fix/);
+});
+
 test("storefront CI protects both pull requests and main pushes", async () => {
   const workflow = await read(".github/workflows/storefront-ci.yml");
   assert.match(workflow, /push:\s*[\s\S]*branches:\s*[\s\S]*- main/);
@@ -25,6 +32,21 @@ test("storefront CI protects both pull requests and main pushes", async () => {
   assert.match(workflow, /bun run test:unit/);
   assert.match(workflow, /bun run test:ssr/);
   assert.match(workflow, /bun run build/);
+});
+
+test("Playwright E2E is a required CI gate on pull requests and main", async () => {
+  const [workflow, config] = await Promise.all([
+    read(".github/workflows/storefront-e2e-ci.yml"),
+    read("playwright.config.ts"),
+  ]);
+
+  assert.match(workflow, /push:\s*[\s\S]*branches:\s*[\s\S]*- main/);
+  assert.match(workflow, /pull_request:\s*[\s\S]*branches:\s*[\s\S]*- main/);
+  assert.match(workflow, /playwright install --with-deps chromium/);
+  assert.match(workflow, /bun run test:e2e/);
+  assert.doesNotMatch(workflow, /continue-on-error:\s*true/);
+  assert.match(config, /command:\s*"bun run dev:e2e/);
+  assert.doesNotMatch(config, /pnpm run dev:e2e/);
 });
 
 test("specialized responsive CI cannot silently ignore regressions", async () => {

@@ -48,7 +48,11 @@ export function InventoryEditor() {
       setVariants(data.variants);
       setMovements(data.movements);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : text("تعذر تحميل المخزون", "Unable to load inventory"));
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : text("تعذر تحميل المخزون", "Unable to load inventory"),
+      );
     } finally {
       setLoading(false);
     }
@@ -163,7 +167,11 @@ export function InventoryEditor() {
       );
       await load();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : text("فشل تعديل المخزون", "Inventory adjustment failed"));
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : text("فشل تعديل المخزون", "Inventory adjustment failed"),
+      );
     } finally {
       setSavingKey(null);
     }
@@ -208,8 +216,16 @@ export function InventoryEditor() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label={text("عناصر متتبعة", "Tracked items")} value={stats.tracked} />
         <Metric label={text("إجمالي الوحدات", "Total units")} value={stats.units} />
-        <Metric label={text("مخزون منخفض", "Low stock")} value={stats.low} warning={stats.low > 0} />
-        <Metric label={text("نفد المخزون", "Out of stock")} value={stats.out} warning={stats.out > 0} />
+        <Metric
+          label={text("مخزون منخفض", "Low stock")}
+          value={stats.low}
+          warning={stats.low > 0}
+        />
+        <Metric
+          label={text("نفد المخزون", "Out of stock")}
+          value={stats.out}
+          warning={stats.out > 0}
+        />
       </div>
 
       <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
@@ -259,15 +275,20 @@ export function InventoryEditor() {
                       <td className="px-4 py-3.5">
                         <p className="text-xs font-bold">{row.productTitle}</p>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {row.variantTitle || text("المنتج الافتراضي", "Default product")} • {row.status}
+                          {row.variantTitle || text("المنتج الافتراضي", "Default product")} •{" "}
+                          {row.status}
                         </p>
                       </td>
                       <td className="px-3 py-3.5">
                         <p className="text-[11px] font-semibold">{row.sku || "—"}</p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">{row.barcode || text("لا يوجد باركود", "No barcode")}</p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                          {row.barcode || text("لا يوجد باركود", "No barcode")}
+                        </p>
                       </td>
                       <td className="px-3 py-3.5">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ${low ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-muted text-foreground"}`}>
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ${low ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-muted text-foreground"}`}
+                        >
                           {row.stock}
                         </span>
                       </td>
@@ -275,7 +296,9 @@ export function InventoryEditor() {
                         <Input
                           type="number"
                           value={entry.delta}
-                          onChange={(event) => patchAdjustment(row.key, { delta: event.target.value })}
+                          onChange={(event) =>
+                            patchAdjustment(row.key, { delta: event.target.value })
+                          }
                           placeholder="+5 / -2"
                           className="h-9 w-24 rounded-lg text-xs"
                         />
@@ -283,7 +306,9 @@ export function InventoryEditor() {
                       <td className="px-3 py-3.5">
                         <Input
                           value={entry.note}
-                          onChange={(event) => patchAdjustment(row.key, { note: event.target.value })}
+                          onChange={(event) =>
+                            patchAdjustment(row.key, { note: event.target.value })
+                          }
                           placeholder={text("سبب التعديل…", "Reason for adjustment…")}
                           className="h-9 min-w-48 rounded-lg text-xs"
                         />
@@ -315,13 +340,20 @@ export function InventoryEditor() {
 
       <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
         <div className="border-b border-border/60 px-4 py-4">
-          <h2 className="text-sm font-black">{text("سجل حركات المخزون", "Inventory movement history")}</h2>
+          <h2 className="text-sm font-black">
+            {text("سجل حركات المخزون", "Inventory movement history")}
+          </h2>
           <p className="mt-1 text-[10px] text-muted-foreground">
-            {text("آخر 100 حركة شراء، بيع، إرجاع أو تعديل.", "The latest 100 purchase, sale, return or adjustment movements.")}
+            {text(
+              "آخر 100 حركة شراء، بيع، إرجاع أو تعديل.",
+              "The latest 100 purchase, sale, return or adjustment movements.",
+            )}
           </p>
         </div>
         {movements.length === 0 ? (
-          <p className="p-8 text-center text-xs text-muted-foreground">{text("لا توجد حركات مخزون بعد.", "No inventory movements yet.")}</p>
+          <p className="p-8 text-center text-xs text-muted-foreground">
+            {text("لا توجد حركات مخزون بعد.", "No inventory movements yet.")}
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-start">
@@ -340,16 +372,26 @@ export function InventoryEditor() {
                     <td className="px-4 py-3">
                       <span className="font-bold">{productName(movement.product_id)}</span>
                       {variantName(movement.variant_id) ? (
-                        <span className="text-muted-foreground"> • {variantName(movement.variant_id)}</span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          • {variantName(movement.variant_id)}
+                        </span>
                       ) : null}
                     </td>
                     <td className="px-3 py-3 text-muted-foreground">{movement.movement_type}</td>
-                    <td className={`px-3 py-3 font-black ${movement.quantity_delta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
-                      {movement.quantity_delta > 0 ? "+" : ""}{movement.quantity_delta}
+                    <td
+                      className={`px-3 py-3 font-black ${movement.quantity_delta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
+                    >
+                      {movement.quantity_delta > 0 ? "+" : ""}
+                      {movement.quantity_delta}
                     </td>
-                    <td className="px-3 py-3 text-muted-foreground">{movement.note || movement.reference_type || "—"}</td>
+                    <td className="px-3 py-3 text-muted-foreground">
+                      {movement.note || movement.reference_type || "—"}
+                    </td>
                     <td className="px-4 py-3 text-[10px] text-muted-foreground">
-                      {new Date(movement.created_at).toLocaleString(language === "ar" ? "ar-LB" : "en-LB")}
+                      {new Date(movement.created_at).toLocaleString(
+                        language === "ar" ? "ar-LB" : "en-LB",
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -362,11 +404,23 @@ export function InventoryEditor() {
   );
 }
 
-function Metric({ label, value, warning = false }: { label: string; value: number; warning?: boolean }) {
+function Metric({
+  label,
+  value,
+  warning = false,
+}: {
+  label: string;
+  value: number;
+  warning?: boolean;
+}) {
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-4">
       <p className="text-[10px] font-semibold text-muted-foreground">{label}</p>
-      <p className={`mt-2 text-2xl font-black ${warning ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>{value}</p>
+      <p
+        className={`mt-2 text-2xl font-black ${warning ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}
+      >
+        {value}
+      </p>
     </div>
   );
 }

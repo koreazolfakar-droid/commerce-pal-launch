@@ -138,31 +138,38 @@ export async function getDashboardOverview(
   const previousEnd = new Date(currentStart.getTime() - 1);
   const previousStart = new Date(previousEnd.getTime() - periodMs + 1);
 
-  const [ordersResult, orderItemsResult, productsResult, variantsResult, imagesResult, brandsResult, customersResult] =
-    await Promise.all([
-      supabase
-        .from("store_orders" as never)
-        .select("id,order_number,status,customer_name,customer_phone,currency,total,created_at")
-        .gte("created_at", previousStart.toISOString())
-        .lte("created_at", currentEnd.toISOString()),
-      supabase
-        .from("store_order_items" as never)
-        .select("id,order_id,product_id,title,unit_price,quantity,line_total,created_at")
-        .gte("created_at", previousStart.toISOString())
-        .lte("created_at", currentEnd.toISOString()),
-      supabase
-        .from("store_products" as never)
-        .select("id,title,brand_id,base_price,stock_quantity,status,created_at"),
-      supabase
-        .from("store_product_variants" as never)
-        .select("id,product_id,stock_quantity,track_inventory,is_active"),
-      supabase
-        .from("store_product_images" as never)
-        .select("product_id,url,is_primary,sort_order")
-        .order("sort_order", { ascending: true }),
-      supabase.from("cms_brands" as never).select("id,name,logo_url"),
-      supabase.from("store_customers" as never).select("id,created_at"),
-    ]);
+  const [
+    ordersResult,
+    orderItemsResult,
+    productsResult,
+    variantsResult,
+    imagesResult,
+    brandsResult,
+    customersResult,
+  ] = await Promise.all([
+    supabase
+      .from("store_orders" as never)
+      .select("id,order_number,status,customer_name,customer_phone,currency,total,created_at")
+      .gte("created_at", previousStart.toISOString())
+      .lte("created_at", currentEnd.toISOString()),
+    supabase
+      .from("store_order_items" as never)
+      .select("id,order_id,product_id,title,unit_price,quantity,line_total,created_at")
+      .gte("created_at", previousStart.toISOString())
+      .lte("created_at", currentEnd.toISOString()),
+    supabase
+      .from("store_products" as never)
+      .select("id,title,brand_id,base_price,stock_quantity,status,created_at"),
+    supabase
+      .from("store_product_variants" as never)
+      .select("id,product_id,stock_quantity,track_inventory,is_active"),
+    supabase
+      .from("store_product_images" as never)
+      .select("product_id,url,is_primary,sort_order")
+      .order("sort_order", { ascending: true }),
+    supabase.from("cms_brands" as never).select("id,name,logo_url"),
+    supabase.from("store_customers" as never).select("id,created_at"),
+  ]);
 
   const firstError = [
     ordersResult.error,
@@ -183,22 +190,39 @@ export async function getDashboardOverview(
   const brands = (brandsResult.data ?? []) as BrandRow[];
   const customers = (customersResult.data ?? []) as CustomerRow[];
 
-  const currentOrders = orders.filter((order) => isBetween(order.created_at, currentStart, currentEnd));
-  const previousOrders = orders.filter((order) => isBetween(order.created_at, previousStart, previousEnd));
+  const currentOrders = orders.filter((order) =>
+    isBetween(order.created_at, currentStart, currentEnd),
+  );
+  const previousOrders = orders.filter((order) =>
+    isBetween(order.created_at, previousStart, previousEnd),
+  );
   const currentActiveOrders = currentOrders.filter((order) => order.status !== "cancelled");
   const previousActiveOrders = previousOrders.filter((order) => order.status !== "cancelled");
   const currentRevenue = currentActiveOrders.reduce((sum, order) => sum + numeric(order.total), 0);
-  const previousRevenue = previousActiveOrders.reduce((sum, order) => sum + numeric(order.total), 0);
+  const previousRevenue = previousActiveOrders.reduce(
+    (sum, order) => sum + numeric(order.total),
+    0,
+  );
   const currency = currentActiveOrders[0]?.currency ?? previousActiveOrders[0]?.currency ?? "USD";
 
-  const currentCustomers = customers.filter((customer) => isBetween(customer.created_at, currentStart, currentEnd)).length;
-  const previousCustomers = customers.filter((customer) => isBetween(customer.created_at, previousStart, previousEnd)).length;
-  const currentProducts = products.filter((product) => isBetween(product.created_at, currentStart, currentEnd)).length;
-  const previousProducts = products.filter((product) => isBetween(product.created_at, previousStart, previousEnd)).length;
+  const currentCustomers = customers.filter((customer) =>
+    isBetween(customer.created_at, currentStart, currentEnd),
+  ).length;
+  const previousCustomers = customers.filter((customer) =>
+    isBetween(customer.created_at, previousStart, previousEnd),
+  ).length;
+  const currentProducts = products.filter((product) =>
+    isBetween(product.created_at, currentStart, currentEnd),
+  ).length;
+  const previousProducts = products.filter((product) =>
+    isBetween(product.created_at, previousStart, previousEnd),
+  ).length;
 
   const activeVariants = variants.filter((variant) => variant.is_active && variant.track_inventory);
   const inStock = activeVariants.filter((variant) => variant.stock_quantity > 5).length;
-  const lowStock = activeVariants.filter((variant) => variant.stock_quantity > 0 && variant.stock_quantity <= 5).length;
+  const lowStock = activeVariants.filter(
+    (variant) => variant.stock_quantity > 0 && variant.stock_quantity <= 5,
+  ).length;
   const outOfStock = activeVariants.filter((variant) => variant.stock_quantity <= 0).length;
   const inventoryTotal = activeVariants.length;
 
@@ -266,7 +290,7 @@ export async function getDashboardOverview(
       unitsSold: 0,
       revenue: 0,
       price: numeric(item.unit_price),
-      imageUrl: item.product_id ? imageByProduct.get(item.product_id) ?? null : null,
+      imageUrl: item.product_id ? (imageByProduct.get(item.product_id) ?? null) : null,
     };
     existing.unitsSold += item.quantity;
     existing.revenue += numeric(item.line_total);
@@ -314,8 +338,12 @@ export async function getDashboardOverview(
       customers: customers.length,
       products: products.filter((product) => product.status !== "archived").length,
       conversionRate: null,
-      averageOrderValue: currentActiveOrders.length ? currentRevenue / currentActiveOrders.length : 0,
-      returningCustomerRate: uniqueCurrentCustomers ? (returningCustomers / uniqueCurrentCustomers) * 100 : 0,
+      averageOrderValue: currentActiveOrders.length
+        ? currentRevenue / currentActiveOrders.length
+        : 0,
+      returningCustomerRate: uniqueCurrentCustomers
+        ? (returningCustomers / uniqueCurrentCustomers) * 100
+        : 0,
       lowStockAlerts: lowStock,
       revenueTrend: trend(currentRevenue, previousRevenue),
       ordersTrend: trend(currentOrders.length, previousOrders.length),
