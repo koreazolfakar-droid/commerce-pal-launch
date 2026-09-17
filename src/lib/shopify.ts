@@ -191,9 +191,9 @@ const collectionProducts = (handle: string) =>
 function parseProductQuery(query?: string) {
   if (!query?.trim()) return LOCAL_PRODUCTS;
   const value = query.trim();
-  const vendor = /^vendor:\"?(.+?)\"?$/.exec(value)?.[1]?.replace(/\"/g, "").trim();
+  const vendor = /^vendor:"?(.+?)"?$/.exec(value)?.[1]?.replace(/"/g, "").trim();
   if (vendor) return LOCAL_PRODUCTS.filter((product) => product.node.vendor?.toLowerCase() === vendor.toLowerCase());
-  const handles = [...value.matchAll(/handle:\"?([^\"\s]+)\"?/g)].map((match) => match[1]);
+  const handles = [...value.matchAll(/handle:"?([^"\s]+)"?/g)].map((match) => match[1]);
   if (handles.length) return LOCAL_PRODUCTS.filter((product) => handles.includes(product.node.handle));
   const lowered = value.toLowerCase();
   return LOCAL_PRODUCTS.filter((product) =>
