@@ -45,7 +45,7 @@ try {
     );
     assert.equal(await hero.getAttribute("data-hero-source"), "shopify-collection");
     assert.equal(await hero.getAttribute("data-hero-handle"), "homepage-hero");
-    assert.equal(await hero.locator('a[href^="/product/"]').count(), 0);
+    assert.equal(await hero.locator("a").count(), 0);
     assert.equal(await hero.locator('[data-testid="home-hero-content"]').count(), 0);
     assert.equal(await hero.locator('[data-testid="home-hero-mobile-controls"]').count(), 0);
 
@@ -53,7 +53,8 @@ try {
     await image.waitFor({ state: "visible" });
     assert.equal(await image.getAttribute("alt"), "Merchant artwork homepage-hero");
 
-    const mediaBox = await page.locator('[data-testid="home-hero-media"]').boundingBox();
+    const media = page.locator('[data-testid="home-hero-media"]');
+    const mediaBox = await media.boundingBox();
     assert.ok(mediaBox, `${testCase.name}: hero media is missing`);
     assert.ok(
       Math.abs(mediaBox.width - metrics.width) <= 2,
@@ -71,7 +72,12 @@ try {
       assert.ok(metrics.height >= 400, `${testCase.name}: desktop hero became too short`);
     }
 
-    console.log(`PASS ${testCase.name}: independent hero, no product content, overflow OK`);
+    const before = page.url();
+    await media.click({ position: { x: 8, y: 8 } });
+    await page.waitForTimeout(100);
+    assert.equal(page.url(), before, `${testCase.name}: hero media click changed route`);
+
+    console.log(`PASS ${testCase.name}: hero image/layout and inert media click OK`);
     await page.close();
   }
 } finally {

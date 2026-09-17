@@ -1,11 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
 import type { CmsHeroSlide } from "@/lib/cms";
 import { homepageHeroCollections } from "@/lib/homeMerchandising";
-import { cdnImage, cdnSrcSet } from "@/lib/image";
 import { useLanguage } from "@/lib/i18n";
 import { collectionsQueryOptions } from "@/lib/queries";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
@@ -26,6 +24,28 @@ type StoredHomeHero = {
 const HERO_ROTATION_MS = 8000;
 const HERO_REFRESH_FALLBACK_TTL_MS = 10 * 60 * 1000;
 const HERO_REFRESH_FALLBACK_STORAGE_KEY = "space-call-home-hero-refresh-fallback-v1";
+const SHOPIFY_CDN = /cdn\.shopify\.com|shopifycdn\.(net|com)/;
+const HERO_IMAGE_WIDTHS = [640, 960, 1280, 1600, 1920, 2400, 2880] as const;
+
+function heroCdnImage(url: string | undefined, width: number): string | undefined {
+  if (!url) return undefined;
+  if (!SHOPIFY_CDN.test(url)) return url;
+
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set("width", String(width));
+    parsed.searchParams.set("format", "webp");
+    parsed.searchParams.set("quality", "88");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function heroCdnSrcSet(url: string | undefined): string | undefined {
+  if (!url || !SHOPIFY_CDN.test(url)) return undefined;
+  return HERO_IMAGE_WIDTHS.map((width) => `${heroCdnImage(url, width)} ${width}w`).join(", ");
+}
 
 function readStoredHero(): Exclude<HomeHeroCollection, null | undefined> | null {
   if (typeof window === "undefined") return null;
@@ -152,6 +172,30 @@ export function HomeHero({
     }
   }, [failedShopifySlideId, shopifySlide?.id]);
 
+  const shopifyHeroPicture =
+    shopifyImageActive && shopifyImage && shopifySlide ? (
+      <picture>
+        <source
+          media="(max-width: 639px)"
+          srcSet={heroCdnSrcSet(shopifyImage.url)}
+          sizes="100vw"
+        />
+        <img
+          key={`${shopifySlide.id}:${shopifyImage.url}`}
+          src={heroCdnImage(shopifyImage.url, 1920)}
+          srcSet={heroCdnSrcSet(shopifyImage.url)}
+          sizes="(min-width: 1440px) 1400px, 100vw"
+          alt={shopifyImage.altText ?? shopifySlide.title ?? "Space Call"}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          draggable={false}
+          onError={() => setFailedShopifySlideId(shopifySlide.id)}
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+      </picture>
+    ) : null;
+
   return (
     <>
       <section
@@ -162,46 +206,31 @@ export function HomeHero({
         data-hero-collection-handle={shopifySlide?.handle}
         className="relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
       >
-        {shopifyImageActive && shopifyImage && shopifySlide ? (
-          <Link
-            to="/collections/$handle"
-            params={{ handle: shopifySlide.handle }}
-            aria-label={shopifySlide.title ?? t("shopNow")}
+        {shopifyHeroPicture ? (
+          <div
             data-testid="home-hero-media"
+            aria-label={shopifySlide?.title ?? "Space Call"}
             className="absolute inset-0 z-[1] block overflow-hidden"
           >
-            <picture>
-              <source media="(max-width: 639px)" srcSet={cdnImage(shopifyImage.url, 480)} />
-              <img
-                key={`${shopifySlide.id}:${shopifyImage.url}`}
-                src={cdnImage(shopifyImage.url, 1440)}
-                srcSet={cdnSrcSet(shopifyImage.url, 1440)}
-                sizes="(min-width: 1280px) 1280px, 100vw"
-                alt={shopifyImage.altText ?? shopifySlide.title ?? "Space Call"}
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-                draggable={false}
-                onError={() => setFailedShopifySlideId(shopifySlide.id)}
-                className="absolute inset-0 h-full w-full object-cover object-center"
-              />
-            </picture>
-          </Link>
+            {shopifyHeroPicture}
+          </div>
         ) : heroFallbackImage && heroFallbackProduct ? (
-          <Link
-            to="/product/$handle"
-            params={{ handle: heroFallbackProduct.node.handle }}
-            aria-label={heroFallbackProduct.node.title ?? t("shopNow")}
+          <div
             data-testid="home-hero-media"
+            aria-label={heroFallbackProduct.node.title ?? "Space Call"}
             className="absolute inset-0 z-[1] block overflow-hidden bg-white"
           >
             <picture>
-              <source media="(max-width: 639px)" srcSet={cdnImage(heroFallbackImage.url, 480)} />
+              <source
+                media="(max-width: 639px)"
+                srcSet={heroCdnSrcSet(heroFallbackImage.url)}
+                sizes="100vw"
+              />
               <img
                 key={`${heroFallbackProduct.node.id}:${heroFallbackImage.url}`}
-                src={cdnImage(heroFallbackImage.url, 1440)}
-                srcSet={cdnSrcSet(heroFallbackImage.url, 1440)}
-                sizes="(min-width: 1280px) 1280px, 100vw"
+                src={heroCdnImage(heroFallbackImage.url, 1920)}
+                srcSet={heroCdnSrcSet(heroFallbackImage.url)}
+                sizes="(min-width: 1440px) 1400px, 100vw"
                 alt={heroFallbackImage.altText ?? heroFallbackProduct.node.title ?? "Space Call"}
                 loading="eager"
                 fetchPriority="high"
@@ -210,7 +239,7 @@ export function HomeHero({
                 className="absolute inset-0 h-full w-full object-contain object-center"
               />
             </picture>
-          </Link>
+          </div>
         ) : (
           <div
             data-testid="home-hero-media"

@@ -65,7 +65,8 @@ for (const delayedTestId of [
 if (process.env.SPACE_CELL_FIXTURE_FALLBACK !== "1") {
   assert.match(home.body, /data-hero-source="shopify-collection"/);
   assert.match(home.body, /data-hero-handle="homepage-hero"/);
-  assert.match(home.body, /href="\/collections\/homepage-hero"/);
+  assert.doesNotMatch(home.body, /href="\/collections\/homepage-hero"/);
+  assert.doesNotMatch(home.body, /href="\/product\/fixture-phone-1"/);
   assert.match(home.body, /Merchant artwork homepage-hero/);
 } else {
   assert.match(home.body, /data-hero-source="placeholder"/);
