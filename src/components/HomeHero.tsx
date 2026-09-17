@@ -1,5 +1,4 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
@@ -157,10 +156,6 @@ export function HomeHero({
     Boolean(product.node.images.edges[0]?.node.url),
   );
   const heroFallbackImage = heroFallbackProduct?.node.images.edges[0]?.node;
-  const heroTargetProduct =
-    shopifySlide?.handle === effectiveHeroCollection?.collection.handle
-      ? heroFallbackProduct
-      : undefined;
   const heroSource = shopifyImageActive
     ? "shopify-collection"
     : heroFallbackImage && heroFallbackProduct
@@ -211,29 +206,18 @@ export function HomeHero({
         data-hero-collection-handle={shopifySlide?.handle}
         className="relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
       >
-        {shopifyHeroPicture && heroTargetProduct ? (
-          <Link
-            to="/product/$handle"
-            params={{ handle: heroTargetProduct.node.handle }}
-            aria-label={heroTargetProduct.node.title ?? shopifySlide?.title ?? t("shopNow")}
-            data-testid="home-hero-media"
-            className="absolute inset-0 z-[1] block overflow-hidden"
-          >
-            {shopifyHeroPicture}
-          </Link>
-        ) : shopifyHeroPicture ? (
+        {shopifyHeroPicture ? (
           <div
             data-testid="home-hero-media"
+            aria-label={shopifySlide?.title ?? "Space Call"}
             className="absolute inset-0 z-[1] block overflow-hidden"
           >
             {shopifyHeroPicture}
           </div>
         ) : heroFallbackImage && heroFallbackProduct ? (
-          <Link
-            to="/product/$handle"
-            params={{ handle: heroFallbackProduct.node.handle }}
-            aria-label={heroFallbackProduct.node.title ?? t("shopNow")}
+          <div
             data-testid="home-hero-media"
+            aria-label={heroFallbackProduct.node.title ?? "Space Call"}
             className="absolute inset-0 z-[1] block overflow-hidden bg-white"
           >
             <picture>
@@ -255,7 +239,7 @@ export function HomeHero({
                 className="absolute inset-0 h-full w-full object-contain object-center"
               />
             </picture>
-          </Link>
+          </div>
         ) : (
           <div
             data-testid="home-hero-media"
