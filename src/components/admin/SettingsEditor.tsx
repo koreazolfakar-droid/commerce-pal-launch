@@ -32,17 +32,23 @@ type Setting = {
   key: string;
   value: string;
   valueType: "text" | "json" | "boolean" | "number";
-  label: string;
-  groupName: string;
-  isPublic: boolean;
 };
 
-function settingValue(row: { value_type: string; value_text: string | null; value_json: unknown }) {
-  if (row.value_type === "json") return JSON.stringify(row.value_json ?? {}, null, 2);
-  return row.value_text ?? "";
+function settingValueType(value: Json): Setting["valueType"] {
+  if (typeof value === "boolean") return "boolean";
+  if (typeof value === "number") return "number";
+  if (typeof value === "string") return "text";
+  return "json";
 }
 
-/** Editor for the live cms_site_settings schema used by public-cms. */
+function settingValueText(value: Json): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "boolean" || typeof value === "number") return String(value);
+  return JSON.stringify(value, null, 2);
+}
+
+/** Editor for the live cms_settings key/value schema used by the storefront CMS. */
 export function SettingsEditor() {
   const { text } = useDashboardLanguage();
   const [rows, setRows] = useState<Setting[]>([]);
@@ -54,21 +60,13 @@ export function SettingsEditor() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("cms_site_settings")
-      .select("key,value_text,value_json,value_type,label,group_name,is_public")
-      .order("key");
+    const { data, error } = await supabase.from("cms_settings").select("key,value").order("key");
     if (error) toast.error(error.message);
     const nextRows = (data ?? []).map((row) => ({
       originalKey: row.key,
       key: row.key,
-      value: settingValue(row),
-      valueType: ["json", "boolean", "number"].includes(row.value_type)
-        ? (row.value_type as Setting["valueType"])
-        : "text",
-      label: row.label ?? "",
-      groupName: row.group_name,
-      isPublic: row.is_public,
+      value: settingValueText(row.value),
+      valueType: settingValueType(row.value),
     }));
     setRows(nextRows);
     setExpandedIndex(nextRows.length ? 0 : null);
@@ -96,31 +94,31 @@ export function SettingsEditor() {
       return;
     }
 
-    let valueJson: Json | null = null;
+    let value: Json = row.value;
     if (row.valueType === "json") {
       try {
-        valueJson = JSON.parse(row.value || "{}") as Json;
+        value = JSON.parse(row.value || "{}") as Json;
       } catch {
         toast.error(text("تحقق من صيغة JSON قبل الحفظ", "Check the JSON format before saving"));
         return;
       }
+    } else if (row.valueType === "boolean") {
+      value = row.value === "true";
+    } else if (row.valueType === "number") {
+      const parsed = Number(row.value);
+      if (!Number.isFinite(parsed)) {
+        toast.error(text("أدخل رقماً صحيحاً", "Enter a valid number"));
+        return;
+      }
+      value = parsed;
     }
 
     setSavingKey(row.originalKey || key);
-    const payload = {
-      key,
-      value_text: row.valueType === "json" ? null : row.value,
-      value_json: valueJson,
-      value_type: row.valueType,
-      label: row.label.trim() || null,
-      group_name: row.groupName.trim() || "general",
-      is_public: row.isPublic,
-      updated_at: new Date().toISOString(),
-    };
+    const payload = { key, value, updated_at: new Date().toISOString() };
 
     const result = row.originalKey
-      ? await supabase.from("cms_site_settings").update(payload).eq("key", row.originalKey)
-      : await supabase.from("cms_site_settings").insert(payload);
+      ? await supabase.from("cms_settings").update(payload).eq("key", row.originalKey)
+      : await supabase.from("cms_settings").insert(payload);
 
     setSavingKey(null);
     if (result.error) {
@@ -141,7 +139,7 @@ export function SettingsEditor() {
       return;
     }
     if (!window.confirm(text("حذف هذا الإعداد؟", "Delete this setting?"))) return;
-    const { error } = await supabase.from("cms_site_settings").delete().eq("key", key);
+    const { error } = await supabase.from("cms_settings").delete().eq("key", key);
     if (error) {
       toast.error(error.message);
       return;
@@ -170,15 +168,7 @@ export function SettingsEditor() {
 
   const addSetting = () => {
     setRows((current) => [
-      {
-        originalKey: "",
-        key: "",
-        value: "",
-        valueType: "text",
-        label: "",
-        groupName: "general",
-        isPublic: true,
-      },
+      { originalKey: "", key: "", value: "", valueType: "text" },
       ...current,
     ]);
     setExpandedIndex(0);
@@ -249,11 +239,10 @@ export function SettingsEditor() {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-black text-foreground">
-                        {row.label || row.key || text("إعداد جديد", "New setting")}
+                        {row.key || text("إعداد جديد", "New setting")}
                       </span>
                       <span className="mt-0.5 block truncate text-[10px] text-muted-foreground">
-                        {row.groupName || "general"} · {row.valueType}
-                        {row.isPublic ? ` · ${text("عام", "Public")}` : ""}
+                        {row.valueType}
                       </span>
                     </span>
                   </button>
