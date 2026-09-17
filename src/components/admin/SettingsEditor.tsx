@@ -275,7 +275,7 @@ export function SettingsEditor() {
                 </div>
 
                 {expanded ? (
-                  <div className="grid gap-3 p-3.5 sm:grid-cols-4 sm:p-4">
+                  <div className="grid gap-3 p-3.5 sm:grid-cols-2 sm:p-4">
                     <div>
                       <Label className="text-[10px] font-semibold text-muted-foreground">
                         {text("المفتاح", "Key")}
@@ -285,26 +285,6 @@ export function SettingsEditor() {
                         list="cms-setting-keys"
                         value={row.key}
                         onChange={(event) => patchRow(index, { key: event.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-[10px] font-semibold text-muted-foreground">
-                        {text("الاسم الظاهر", "Display label")}
-                      </Label>
-                      <Input
-                        className="mt-1.5 h-10 rounded-lg text-xs"
-                        value={row.label}
-                        onChange={(event) => patchRow(index, { label: event.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-[10px] font-semibold text-muted-foreground">
-                        {text("المجموعة", "Group")}
-                      </Label>
-                      <Input
-                        className="mt-1.5 h-10 rounded-lg text-xs"
-                        value={row.groupName}
-                        onChange={(event) => patchRow(index, { groupName: event.target.value })}
                       />
                     </div>
                     <div>
@@ -325,7 +305,7 @@ export function SettingsEditor() {
                       </select>
                     </div>
 
-                    <div className="sm:col-span-4">
+                    <div className="sm:col-span-2">
                       <Label className="text-[10px] font-semibold text-muted-foreground">
                         {text("القيمة", "Value")}
                       </Label>
@@ -377,21 +357,6 @@ export function SettingsEditor() {
                           />
                         </label>
                       </div>
-                    </div>
-
-                    <div className="sm:col-span-4">
-                      <label className="flex min-h-10 items-center justify-between rounded-lg border border-border/70 px-3.5 text-xs font-medium text-foreground">
-                        <span>
-                          {text("متاح للواجهة العامة", "Available to storefront")}
-                          <span className="ms-2 text-[10px] font-normal text-muted-foreground">
-                            {text("يظهر عبر public CMS", "Exposed through public CMS")}
-                          </span>
-                        </span>
-                        <Switch
-                          checked={row.isPublic}
-                          onCheckedChange={(checked) => patchRow(index, { isPublic: checked })}
-                        />
-                      </label>
                     </div>
                   </div>
                 ) : null}

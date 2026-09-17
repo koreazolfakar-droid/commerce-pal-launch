@@ -39,19 +39,20 @@ test("dashboard navigation exposes every management area in grouped sections", a
   assert.match(sidebar, /stock_quantity <= 5/);
 });
 
-test("dashboard overview includes a management control center", async () => {
-  const [route, hub] = await Promise.all([
+test("dashboard overview is replaced by the focused Tabler operations view", async () => {
+  const [route, tabler] = await Promise.all([
     read("src/routes/dashboard.index.tsx"),
-    read("src/dashboard/components/DashboardManagementHub.tsx"),
+    read("src/dashboard/components/TablerDashboardOverview.tsx"),
   ]);
 
-  assert.match(route, /DashboardManagementHub/);
-  assert.match(hub, /Management center/);
-  assert.match(hub, /Products/);
-  assert.match(hub, /Inventory/);
-  assert.match(hub, /Storefront Content/);
-  assert.match(hub, /Analytics/);
-  assert.match(hub, /Settings/);
+  assert.match(route, /TablerDashboardOverview/);
+  assert.match(tabler, /Space Call Commerce OS/);
+  assert.match(tabler, /RevenueChartCard/);
+  assert.match(tabler, /OrdersTrendCard/);
+  assert.match(tabler, /Recent orders|الطلبات الأخيرة/);
+  assert.match(tabler, /Inventory status|حالة المخزون/);
+  assert.match(tabler, /Top products|أفضل المنتجات/);
+  assert.doesNotMatch(route, /DashboardManagementHub/);
 });
 
 test("products route provides overview and keeps the full native editor", async () => {
@@ -88,9 +89,9 @@ test("settings route provides a control center without removing the existing set
   assert.match(workspace, /Collections/);
 });
 
-test("dashboard restructure does not add Shopify Admin secrets or destructive catalog migrations", async () => {
+test("dashboard replacement does not add Shopify Admin secrets or destructive catalog migrations", async () => {
   const paths = [
-    "src/dashboard/components/DashboardManagementHub.tsx",
+    "src/dashboard/components/TablerDashboardOverview.tsx",
     "src/components/admin/CatalogWorkspace.tsx",
     "src/components/admin/SettingsWorkspace.tsx",
     "src/dashboard/components/DashboardSidebar.tsx",

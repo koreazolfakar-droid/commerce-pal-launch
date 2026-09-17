@@ -38,7 +38,7 @@ test("public CMS gateway stays aligned with the live production schema", async (
   assert.match(source, /seoPages,/);
 });
 
-test("dashboard routes edit the same CMS tables and bilingual fields as production", async () => {
+test("dashboard routes keep bilingual CMS editors and current key-value settings schema", async () => {
   const [hero, sections, navigation, brands, seo, settings, migration] = await Promise.all([
     read("src/routes/dashboard.hero.tsx"),
     read("src/routes/dashboard.sections.tsx"),
@@ -74,8 +74,12 @@ test("dashboard routes edit the same CMS tables and bilingual fields as producti
   assert.match(seo, /description_ar/);
   assert.match(seo, /json_ld/);
 
-  assert.match(settings, /from\("cms_site_settings"\)/);
-  assert.match(settings, /value_type/);
+  // The latest production settings editor uses the real cms_settings key/value
+  // schema. Obsolete display-label/group/public fields must not be reintroduced.
+  assert.match(settings, /from\("cms_settings"\)/);
+  assert.match(settings, /select\("key,value"\)/);
+  assert.match(settings, /const payload = \{ key, value, updated_at:/);
+  assert.doesNotMatch(settings, /row\.label|row\.groupName|row\.isPublic/);
 
   for (const column of [
     "title_en",

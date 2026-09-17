@@ -40,5 +40,6 @@ test("settings editor remains compact and progressively disclosed", async () => 
   assert.match(settings, /expandedIndex/);
   assert.match(settings, /aria-expanded=\{expanded\}/);
   assert.match(settings, /admin-setting-card/);
-  assert.match(settings, /sm:grid-cols-4/);
+  assert.match(settings, /sm:grid-cols-2/);
+  assert.doesNotMatch(settings, /row\.label|row\.groupName|row\.isPublic/);
 });
