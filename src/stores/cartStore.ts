@@ -70,6 +70,7 @@ export const useCartStore = create<CartStore>()(
       isSyncing: false,
 
       addItem: async (item) => {
+        await hydrateCartStore();
         set({ isLoading: true });
         try {
           const current = get().items;
@@ -97,6 +98,7 @@ export const useCartStore = create<CartStore>()(
 
       updateQuantity: async (variantId, quantity) => {
         if (quantity <= 0) return get().removeItem(variantId);
+        await hydrateCartStore();
         set({ isLoading: true });
         try {
           const next = get().items.map((item) =>
@@ -111,6 +113,7 @@ export const useCartStore = create<CartStore>()(
       },
 
       removeItem: async (variantId) => {
+        await hydrateCartStore();
         set({ isLoading: true });
         try {
           const current = get().items;
@@ -127,7 +130,9 @@ export const useCartStore = create<CartStore>()(
 
       // Kept for API compatibility with existing UI. Native carts have no
       // remote state to synchronize and no Shopify checkout URL.
-      syncCart: async () => undefined,
+      syncCart: async () => {
+        await hydrateCartStore();
+      },
       getCheckoutUrl: () => null,
     }),
     {
@@ -142,3 +147,25 @@ export const useCartStore = create<CartStore>()(
     },
   ),
 );
+
+
+let cartHydrationPromise: Promise<void> | null = null;
+
+/**
+ * Hydrate the persisted native cart exactly once per browser runtime.
+ *
+ * Mutations await this same promise so a late localStorage rehydrate can never
+ * overwrite an item the user just added during initial client hydration.
+ */
+export function hydrateCartStore(): Promise<void> {
+  if (!cartHydrationPromise) {
+    cartHydrationPromise = Promise.resolve(useCartStore.persist.rehydrate())
+      .then(() => undefined)
+      .catch((error) => {
+        cartHydrationPromise = null;
+        throw error;
+      });
+  }
+
+  return cartHydrationPromise;
+}
