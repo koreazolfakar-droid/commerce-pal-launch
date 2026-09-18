@@ -49,17 +49,24 @@ test("merchant brand artwork overrides curated local fallbacks and raw SVG marku
 test("no-Shopify staging provider is isolated behind the storefront facade", async () => {
   const legacySource = await source("src/lib/shopify.ts");
   const legacy = withoutComments(legacySource);
-  const provider = withoutComments(await source("src/lib/localStorefrontProvider.ts"));
+  const fallbackProvider = withoutComments(await source("src/lib/localStorefrontProvider.ts"));
+  const nativeProvider = withoutComments(await source("src/lib/supabaseStorefrontProvider.ts"));
   const facade = withoutComments(await source("src/lib/storefrontFacade.ts"));
   const queries = await source("src/lib/queries.ts");
 
   assert.match(legacySource, /Compatibility shim/);
   assert.doesNotMatch(legacy, /SHOPIFY_STOREFRONT|myshopify|storefrontApiRequest|await fetch\(/);
-  assert.match(provider, /const LOCAL_PRODUCTS: StoreProduct\[\]/);
-  assert.match(provider, /const LOCAL_COLLECTIONS: StoreCollection\[\]/);
-  assert.doesNotMatch(provider, /Shopify|shopify|await fetch\(/);
-  assert.match(facade, /from "\.\/localStorefrontProvider"/);
-  assert.match(facade, /from "\.\/storefrontTypes"/);
+  assert.match(fallbackProvider, /const LOCAL_PRODUCTS: StoreProduct\[\]/);
+  assert.match(fallbackProvider, /const LOCAL_COLLECTIONS: StoreCollection\[\]/);
+  assert.doesNotMatch(fallbackProvider, /Shopify|shopify|await fetch\(/);
+  assert.match(nativeProvider, /from\("store_products"\)/);
+  assert.match(nativeProvider, /fetchCmsSnapshot/);
+  assert.doesNotMatch(nativeProvider, /SUPABASE_SERVICE_ROLE_KEY|sb_secret_|service_role/);
+  assert.match(facade, /import \* as localProvider from "\.\/localStorefrontProvider"/);
+  assert.match(facade, /import \* as supabaseProvider from "\.\/supabaseStorefrontProvider"/);
+  assert.match(facade, /hasPublishedProducts/);
+  assert.match(facade, /cachedMode\?\.mode === "supabase"/);
+  assert.doesNotMatch(facade, /\.\.\.localProvider|\.\.\.supabaseProvider/);
   assert.match(queries, /from "@\/lib\/storefrontFacade"/);
 
   assert.match(queries, /BRAND_COLLECTION_STALE_TIME = 60 \* 1000/);
