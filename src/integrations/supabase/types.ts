@@ -469,8 +469,11 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_featured: boolean
           name: string
           name_ar: string | null
+          seo_description: string | null
+          seo_title: string | null
           slug: string
           sort_order: number
           updated_at: string
@@ -482,8 +485,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_featured?: boolean
           name: string
           name_ar?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           slug: string
           sort_order?: number
           updated_at?: string
@@ -495,8 +501,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_featured?: boolean
           name?: string
           name_ar?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           slug?: string
           sort_order?: number
           updated_at?: string
@@ -1087,7 +1096,28 @@ export type Database = {
         Args: { p_brand_id: string; p_destination_brand_id?: string }
         Returns: undefined
       }
+      delete_store_category: {
+        Args: { p_category_id: string; p_destination_category_id?: string }
+        Returns: undefined
+      }
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
+      reorder_store_categories: { Args: { p_items: Json }; Returns: undefined }
+      update_store_category: {
+        Args: {
+          p_category_id: string
+          p_description: string
+          p_icon: string
+          p_image_url: string
+          p_is_active: boolean
+          p_is_featured: boolean
+          p_name: string
+          p_seo_description: string
+          p_seo_title: string
+          p_slug: string
+          p_sort_order: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
