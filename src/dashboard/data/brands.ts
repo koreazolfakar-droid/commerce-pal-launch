@@ -180,10 +180,12 @@ export async function deleteDashboardBrand(
   destinationBrandId: string | null,
 ) {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("delete_store_brand", {
-    p_brand_id: brandId,
-    p_destination_brand_id: destinationBrandId,
-  });
+  const { error } = await supabase.rpc(
+    "delete_store_brand",
+    destinationBrandId
+      ? { p_brand_id: brandId, p_destination_brand_id: destinationBrandId }
+      : { p_brand_id: brandId },
+  );
   throwIfError(error, "Deleting brand failed");
   invalidateNativeStoreCache();
 }
