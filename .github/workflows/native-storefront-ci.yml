@@ -36,3 +36,11 @@ jobs:
 
       - name: Storefront browser E2E
         run: bun run test:e2e
+
+      - name: Build Supabase-only storefront
+        env:
+          VITE_STOREFRONT_DATA_SOURCE: supabase
+        run: bun run build
+
+      - name: Supabase-only SSR smoke
+        run: node e2e/ssr-native-supabase.mjs
