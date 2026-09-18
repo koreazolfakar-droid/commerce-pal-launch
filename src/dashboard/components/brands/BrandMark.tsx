@@ -1,5 +1,5 @@
 import { Building2 } from "lucide-react";
-import type { CatalogBrand } from "@/dashboard/mock/brands";
+import type { CatalogBrand } from "@/dashboard/data/brands";
 
 export default function BrandMark({
   brand,
