@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 const dashboardUrl =
-  import.meta.env.VITE_DASHBOARD_URL || 'https://fast-site-lift.vercel.app';
+  import.meta.env['VITE_DASHBOARD_URL'] || 'https://fast-site-lift.vercel.app';
 
 export const Route = createFileRoute('/dashboard')({
   head: () => ({
