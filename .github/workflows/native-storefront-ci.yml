@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - "integration/no-shopify-dashboard-unified"
+      - "verification/native-storefront-gate-2026-09-18"
 
 permissions:
   contents: read
