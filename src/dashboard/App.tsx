@@ -743,6 +743,40 @@ function DashboardGate() {
     };
   }, [navigate]);
 
+  useEffect(() => {
+    if (state !== "ready") return;
+
+    const idleMs = 30 * 60 * 1000;
+    let timeoutId = window.setTimeout(() => undefined, idleMs);
+
+    const expire = async () => {
+      await signOutDashboard().catch(() => undefined);
+      toast.info("Dashboard session expired after 30 minutes of inactivity.");
+      navigate("/login");
+    };
+
+    const reset = () => {
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => void expire(), idleMs);
+    };
+
+    const events: Array<keyof WindowEventMap> = [
+      "pointerdown",
+      "keydown",
+      "touchstart",
+      "scroll",
+    ];
+    events.forEach((eventName) =>
+      window.addEventListener(eventName, reset, { passive: true }),
+    );
+    reset();
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      events.forEach((eventName) => window.removeEventListener(eventName, reset));
+    };
+  }, [navigate, state]);
+
   if (state !== "ready") {
     return (
       <div className="grid min-h-screen place-items-center bg-[#f7f9fc]">
