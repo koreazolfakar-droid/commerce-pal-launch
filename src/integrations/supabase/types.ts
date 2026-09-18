@@ -554,6 +554,8 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           is_featured: boolean
+          seo_description: string | null
+          seo_title: string | null
           sort_order: number
           title: string
           title_ar: string | null
@@ -567,6 +569,8 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          seo_description?: string | null
+          seo_title?: string | null
           sort_order?: number
           title: string
           title_ar?: string | null
@@ -580,6 +584,8 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          seo_description?: string | null
+          seo_title?: string | null
           sort_order?: number
           title?: string
           title_ar?: string | null
@@ -1094,6 +1100,40 @@ export type Database = {
           reset_at: string
         }[]
       }
+      create_store_collection: {
+        Args: {
+          p_description?: string
+          p_handle: string
+          p_image_url?: string
+          p_is_active?: boolean
+          p_is_featured?: boolean
+          p_seo_description?: string
+          p_seo_title?: string
+          p_title: string
+          p_title_ar?: string
+        }
+        Returns: {
+          created_at: string
+          description: string
+          handle: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_featured: boolean
+          seo_description: string | null
+          seo_title: string | null
+          sort_order: number
+          title: string
+          title_ar: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_collections"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_store_customer: {
         Args: {
           p_city?: string
@@ -1141,6 +1181,10 @@ export type Database = {
         Args: { p_category_id: string; p_destination_category_id?: string }
         Returns: undefined
       }
+      delete_store_collection: {
+        Args: { p_collection_id: string }
+        Returns: undefined
+      }
       get_store_customer_orders: {
         Args: { p_customer_id: string; p_limit?: number }
         Returns: {
@@ -1174,6 +1218,11 @@ export type Database = {
       }
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_categories: { Args: { p_items: Json }; Returns: undefined }
+      reorder_store_collections: { Args: { p_items: Json }; Returns: undefined }
+      set_store_collection_products: {
+        Args: { p_collection_id: string; p_product_ids: string[] }
+        Returns: undefined
+      }
       set_store_inventory_stock: {
         Args: {
           p_note?: string
@@ -1201,6 +1250,41 @@ export type Database = {
           p_sort_order: number
         }
         Returns: undefined
+      }
+      update_store_collection: {
+        Args: {
+          p_collection_id: string
+          p_description?: string
+          p_handle: string
+          p_image_url?: string
+          p_is_active?: boolean
+          p_is_featured?: boolean
+          p_seo_description?: string
+          p_seo_title?: string
+          p_title: string
+          p_title_ar?: string
+        }
+        Returns: {
+          created_at: string
+          description: string
+          handle: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_featured: boolean
+          seo_description: string | null
+          seo_title: string | null
+          sort_order: number
+          title: string
+          title_ar: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_collections"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       update_store_customer_profile: {
         Args: {
