@@ -60,6 +60,9 @@ test("no-Shopify staging provider is isolated behind the storefront facade", asy
   assert.match(fallbackProvider, /const LOCAL_COLLECTIONS: StoreCollection\[\]/);
   assert.doesNotMatch(fallbackProvider, /Shopify|shopify|await fetch\(/);
   assert.match(nativeProvider, /from\("store_products"\)/);
+  assert.match(nativeProvider, /\.eq\("status", "active"\)/);
+  assert.match(nativeProvider, /\.lte\("published_at", new Date\(\)\.toISOString\(\)\)/);
+  assert.doesNotMatch(nativeProvider, /published_at\.is\.null/);
   assert.match(nativeProvider, /fetchCmsSnapshot/);
   assert.doesNotMatch(nativeProvider, /SUPABASE_SERVICE_ROLE_KEY|sb_secret_|service_role/);
   assert.match(facade, /import \* as localProvider from "\.\/localStorefrontProvider"/);
