@@ -4,11 +4,11 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("public storefront queries use Shopify directly", async () => {
+test("public storefront queries use the provider-neutral facade", async () => {
   const queries = await read("src/lib/queries.ts");
 
-  assert.match(queries, /from "@\/lib\/shopify"/);
-  assert.doesNotMatch(queries, /@\/lib\/hybridStore|@\/lib\/nativeStore|@\/lib\/storefrontFacade/);
+  assert.match(queries, /from "@\/lib\/storefrontFacade"/);
+  assert.doesNotMatch(queries, /from "@\/lib\/shopify"/);
   assert.match(queries, /fetchCatalogProducts/);
   assert.match(queries, /fetchCollectionByHandle/);
   assert.match(queries, /fetchProductByHandle/);
