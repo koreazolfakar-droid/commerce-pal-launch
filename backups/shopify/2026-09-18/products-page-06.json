@@ -1,0 +1,1927 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "products",
+  "page": 6,
+  "data": [
+    {
+      "id": "gid://shopify/Product/9656429936867",
+      "title": "Infinix GT 30 Pro",
+      "handle": "infinix-gt-30-pro",
+      "descriptionHtml": "<p><strong>Infinix GT 30 Pro</strong> is a high-performance gaming smartphone inspired by futuristic mecha design. Built for fast gameplay and demanding apps, it combines a 144Hz AMOLED display with a powerful Dimensity processor and advanced charging features.</p><ul>\n<li>6.78-inch AMOLED display with 144Hz refresh rate</li>\n<li>MediaTek Dimensity 8350 Ultimate processor</li>\n<li>8GB RAM and 256GB storage</li>\n<li>108MP + 8MP dual rear camera system</li>\n<li>5500mAh battery with 45W fast charging</li>\n<li>30W wireless charging</li>\n</ul><p>Get the Infinix GT 30 Pro for smooth mobile gaming, powerful performance, a premium display, and long-lasting battery life.</p>",
+      "status": "ACTIVE",
+      "vendor": "Infinix",
+      "productType": "هواتف ذكية",
+      "tags": [
+        "GT Series",
+        "Infinix",
+        "ألعاب",
+        "جيمنغ",
+        "هواتف"
+      ],
+      "createdAt": "2026-09-06T03:34:53Z",
+      "updatedAt": "2026-09-06T20:46:43Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680740253923",
+            "title": "Default",
+            "sku": "INF-GT30PRO",
+            "barcode": null,
+            "price": "319.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852665258211",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852665258211",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925077999843",
+            "alt": "Infinix GT 30 Pro - لون 1",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925077999843",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-gt30-pro-1.jpg?v=1788666067",
+              "altText": "Infinix GT 30 Pro - لون 1",
+              "width": 560,
+              "height": 592
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39925078032611",
+            "alt": "Infinix GT 30 Pro - لون 2",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925078032611",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-gt30-pro-2.jpg?v=1788666067",
+              "altText": "Infinix GT 30 Pro - لون 2",
+              "width": 710,
+              "height": 553
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194329231587",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397389027",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Infinix GT 30 Pro 5G 8GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397421795",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Infinix GT 30 Pro with 144Hz AMOLED display, Dimensity 8350 Ultimate, 8GB RAM, 256GB storage and 45W charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656429969635",
+      "title": "Infinix Zero 40 5G",
+      "handle": "infinix-zero-40-5g",
+      "descriptionHtml": "<p><strong>Infinix Zero 40 5G</strong> is a premium 5G smartphone built for high-performance users and mobile photography enthusiasts. Enjoy a curved 6.78-inch AMOLED display with a 144Hz refresh rate, powerful processing, and advanced cameras.</p><ul>\n<li>6.78-inch curved AMOLED display with 144Hz refresh rate</li>\n<li>MediaTek Dimensity 8200 Ultimate processor</li>\n<li>12GB RAM and up to 512GB storage</li>\n<li>108MP + 50MP + 2MP rear camera system</li>\n<li>50MP front camera</li>\n<li>5000mAh battery with 45W fast charging and 20W wireless charging</li>\n</ul><p>Choose the Infinix Zero 40 5G for fast 5G connectivity, flagship-style performance, immersive visuals, and versatile photography.</p>",
+      "status": "ACTIVE",
+      "vendor": "Infinix",
+      "productType": "هواتف ذكية",
+      "tags": [
+        "5G",
+        "Infinix",
+        "Zero Series",
+        "تصوير",
+        "فئة عليا",
+        "هواتف"
+      ],
+      "createdAt": "2026-09-06T03:35:04Z",
+      "updatedAt": "2026-09-07T00:06:21Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680740745443",
+            "title": "Default",
+            "sku": "INF-ZERO40-5G",
+            "barcode": null,
+            "price": "299.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852665749731",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852665749731",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925078917347",
+            "alt": "Infinix Zero 40 5G - لون 1",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925078917347",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-zero40-5g-3.jpg?v=1788666075",
+              "altText": "Infinix Zero 40 5G - لون 1",
+              "width": 437,
+              "height": 566
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39925078950115",
+            "alt": "Infinix Zero 40 5G - لون 2",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925078950115",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-zero40-5g-2.jpg?v=1788666075",
+              "altText": "Infinix Zero 40 5G - لون 2",
+              "width": 704,
+              "height": 566
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194329395427",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Curved AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397716707",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Infinix Zero 40 5G 12GB 512GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397749475",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Infinix Zero 40 5G with curved 144Hz AMOLED display, Dimensity 8200 Ultimate, up to 512GB storage and 108MP camera."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430231779",
+      "title": "OnePlus 13",
+      "handle": "oneplus-13",
+      "descriptionHtml": "<p><strong>OnePlus 13 5G</strong> is a flagship smartphone built for premium performance, advanced photography and long battery life.</p><ul>\n<li>\n<strong>Display:</strong> 6.82-inch QHD+ LTPO AMOLED, up to 120Hz</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 8 Elite</li>\n<li>\n<strong>Storage:</strong> 256GB in this store configuration</li>\n<li>\n<strong>Rear cameras:</strong> triple 50MP camera system with main, telephoto and ultra-wide lenses</li>\n<li>\n<strong>Front camera:</strong> 32MP</li>\n<li>\n<strong>Battery:</strong> large-capacity battery designed for all-day use</li>\n<li>\n<strong>Charging:</strong> ultra-fast wired charging with wireless charging support</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>Designed for users who want top-tier speed, a smooth premium display, flexible cameras and flagship charging performance.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:36:38Z",
+      "updatedAt": "2026-09-08T10:01:17Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680742514915",
+            "title": "Default Title",
+            "sku": "OP13-256",
+            "barcode": null,
+            "price": "799.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852667519203",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852667519203",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925081014499",
+            "alt": "OnePlus 13 smartphone on clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925081014499",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-13-white.webp?v=1788666130",
+              "altText": "OnePlus 13 smartphone on clean white background",
+              "width": 1024,
+              "height": 768
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194334179555",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194398011619",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus 13 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194398044387",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus 13 5G flagship smartphone with premium performance, advanced cameras and a high-quality display."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430264547",
+      "title": "OnePlus 13R",
+      "handle": "oneplus-13r",
+      "descriptionHtml": "<p><strong>OnePlus 13R 5G</strong> is a performance-focused smartphone that combines flagship-class speed, a smooth AMOLED display and excellent battery life.</p><ul>\n<li>\n<strong>Display:</strong> 6.78-inch AMOLED, up to 120Hz refresh rate</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 8 Gen 3</li>\n<li>\n<strong>Storage:</strong> 256GB in this store configuration</li>\n<li>\n<strong>Main camera:</strong> 50MP with optical image stabilization</li>\n<li>\n<strong>Battery:</strong> large-capacity battery for extended daily use</li>\n<li>\n<strong>Charging:</strong> high-speed SUPERVOOC wired charging</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>Ideal for gaming, multitasking and demanding everyday use without stepping all the way up to the flagship price tier.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:36:42Z",
+      "updatedAt": "2026-09-08T09:51:13Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680742547683",
+            "title": "Default Title",
+            "sku": "OP13R-256",
+            "barcode": null,
+            "price": "579.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852667551971",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852667551971",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925080293603",
+            "alt": "OnePlus 13R smartphone on clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925080293603",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-13r-white.jpg?v=1788666124",
+              "altText": "OnePlus 13R smartphone on clean white background",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194334212323",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194398077155",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus 13R 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194398109923",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus 13R 5G with high-performance hardware, long battery life, advanced cameras and strong value."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430297315",
+      "title": "OnePlus 12",
+      "handle": "oneplus-12",
+      "descriptionHtml": "<p><strong>OnePlus 12 5G</strong> is a premium flagship smartphone designed for high-end performance, photography and ultra-fast charging.</p><ul>\n<li>\n<strong>Display:</strong> 6.82-inch QHD+ LTPO AMOLED, adaptive 1–120Hz refresh rate</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 8 Gen 3</li>\n<li>\n<strong>Storage:</strong> 256GB in this store configuration</li>\n<li>\n<strong>Rear cameras:</strong> 50MP main + 64MP periscope telephoto + 48MP ultra-wide</li>\n<li>\n<strong>Front camera:</strong> 32MP</li>\n<li>\n<strong>Battery:</strong> 5,400mAh</li>\n<li>\n<strong>Charging:</strong> up to 100W wired and 50W wireless charging</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>Ideal for users who want flagship speed, a high-resolution display, strong zoom photography and very fast charging.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:36:45Z",
+      "updatedAt": "2026-09-08T08:36:55Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680742580451",
+            "title": "Default Title",
+            "sku": "OP12-256",
+            "barcode": null,
+            "price": "649.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852667584739",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852667584739",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925081080035",
+            "alt": "OnePlus 12 smartphone on clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925081080035",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-12-white.jpg?v=1788666135",
+              "altText": "OnePlus 12 smartphone on clean white background",
+              "width": 600,
+              "height": 600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194329723107",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397880547",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus 12 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397913315",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus 12 5G with powerful performance, advanced cameras, high-quality display and fast charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430330083",
+      "title": "OnePlus 12R",
+      "handle": "oneplus-12r",
+      "descriptionHtml": "<p><strong>OnePlus 12R 5G</strong> is a performance-focused smartphone that brings flagship-level speed, a smooth AMOLED display and excellent battery life at a more accessible price.</p><ul>\n<li>\n<strong>Display:</strong> 6.78-inch AMOLED, up to 120Hz refresh rate</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 8 Gen 2</li>\n<li>\n<strong>Storage:</strong> 256GB in this store configuration</li>\n<li>\n<strong>Main camera:</strong> 50MP with optical image stabilization</li>\n<li>\n<strong>Battery:</strong> 5,500mAh</li>\n<li>\n<strong>Charging:</strong> up to 100W SUPERVOOC fast charging</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>A strong option for gaming, multitasking and everyday use, with a large battery and very fast charging.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:36:48Z",
+      "updatedAt": "2026-09-08T12:37:16Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680742613219",
+            "title": "Default Title",
+            "sku": "OP12R-256",
+            "barcode": null,
+            "price": "449.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852667617507",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852667617507",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925088452835",
+            "alt": "OnePlus 12R smartphone on clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925088452835",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-12r_030f91bc-f18c-4649-b670-862bb33b6675.webp?v=1788666324",
+              "altText": "OnePlus 12R smartphone on clean white background",
+              "width": 400,
+              "height": 400
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194329755875",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397946083",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus 12R 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397978851",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus 12R 5G with a smooth display, strong performance, long-lasting battery and fast charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430395619",
+      "title": "OnePlus 11",
+      "handle": "oneplus-11",
+      "descriptionHtml": "<p><strong>OnePlus 11 5G</strong> is a flagship smartphone built for fast performance, smooth visuals and versatile photography. It combines a premium QHD+ AMOLED display with flagship Snapdragon performance, fast charging and a Hasselblad-tuned triple-camera system.</p><ul>\n<li>\n<strong>Display:</strong> 6.7-inch QHD+ Super Fluid AMOLED LTPO, adaptive 1–120Hz refresh rate</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 8 Gen 2</li>\n<li>\n<strong>Memory &amp; storage:</strong> LPDDR5X RAM with fast UFS storage; this store configuration includes 256GB storage</li>\n<li>\n<strong>Rear cameras:</strong> 50MP main camera with OIS + 48MP ultra-wide + 32MP telephoto</li>\n<li>\n<strong>Battery:</strong> 5,000mAh</li>\n<li>\n<strong>Charging:</strong> SUPERVOOC fast charging up to 100W</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>A strong choice for users who want flagship-level speed, a high-resolution 120Hz display, fast charging and a flexible camera setup.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:36:51Z",
+      "updatedAt": "2026-09-08T09:29:19Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680742678755",
+            "title": "Default Title",
+            "sku": "OP11-256",
+            "barcode": null,
+            "price": "399.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852667683043",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852667683043",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925089632483",
+            "alt": "OnePlus 11 smartphone product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925089632483",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-11_81745432-10ce-413f-a288-ca9f77860b60.jpg?v=1788666388",
+              "altText": "OnePlus 11 smartphone product image",
+              "width": 520,
+              "height": 520
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194329690339",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO Fluid AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397815011",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus 11 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397847779",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus 11 5G smartphone with flagship performance, advanced cameras, premium design and fast charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430493923",
+      "title": "OnePlus Nord 5",
+      "handle": "oneplus-nord-5",
+      "descriptionHtml": "<p><strong>OnePlus Nord 5 5G</strong> is a modern performance-focused smartphone designed for fast everyday use, gaming and multimedia.</p><ul>\n<li>\n<strong>Display:</strong> large AMOLED display with high refresh rate for smooth scrolling and gaming</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 8s-series performance platform</li>\n<li>\n<strong>Storage:</strong> 512GB in this store configuration</li>\n<li>\n<strong>Camera:</strong> high-resolution main camera with advanced image processing</li>\n<li>\n<strong>Battery:</strong> large-capacity battery for extended daily use</li>\n<li>\n<strong>Charging:</strong> fast wired charging</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>A strong choice for users who want generous storage, smooth performance and long battery life in the Nord series.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:36:55Z",
+      "updatedAt": "2026-09-08T09:21:03Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680742777059",
+            "title": "Default Title",
+            "sku": "OPN5-512",
+            "barcode": null,
+            "price": "545.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852667781347",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852667781347",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925081735395",
+            "alt": "OnePlus Nord 5 smartphone on clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925081735395",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-nord-5-white.jpg?v=1788666142",
+              "altText": "OnePlus Nord 5 smartphone on clean white background",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194334310627",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483175651",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus Nord 5 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483208419",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus Nord 5 with a high-refresh-rate display, powerful performance, advanced cameras and fast charging at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430592227",
+      "title": "OnePlus Nord 4",
+      "handle": "oneplus-nord-4",
+      "descriptionHtml": "<p><strong>OnePlus Nord 4 5G</strong> combines a premium metal design, strong mid-range performance, a smooth AMOLED display and fast charging for everyday use.</p><ul>\n<li>\n<strong>Display:</strong> 6.74-inch AMOLED, up to 120Hz refresh rate</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 7+ Gen 3</li>\n<li>\n<strong>Storage:</strong> 256GB in this store configuration</li>\n<li>\n<strong>Main camera:</strong> 50MP with optical image stabilization</li>\n<li>\n<strong>Battery:</strong> 5,500mAh</li>\n<li>\n<strong>Charging:</strong> 100W SUPERVOOC fast charging</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>Designed for users who want a stylish phone with excellent speed, long battery life and very fast charging.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:36:58Z",
+      "updatedAt": "2026-09-08T09:34:23Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680742875363",
+            "title": "Default Title",
+            "sku": "OPN4-256",
+            "barcode": null,
+            "price": "479.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852667879651",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852667879651",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925088256227",
+            "alt": "OnePlus Nord 4 smartphone isolated on clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925088256227",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-nord-4_421576b0-4bd7-4b50-acae-483306502a68.png?v=1788666316",
+              "altText": "OnePlus Nord 4 smartphone isolated on clean white background",
+              "width": 600,
+              "height": 600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194334277859",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483110115",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus Nord 4 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483142883",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus Nord 4 with high-performance hardware, premium display, long battery life and fast charging at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430624995",
+      "title": "OnePlus Nord 3 5G",
+      "handle": "oneplus-nord-3-5g",
+      "descriptionHtml": "<p><strong>OnePlus Nord 3 5G</strong> is a powerful upper-midrange smartphone with a fast AMOLED display, strong everyday performance and fast charging.</p><ul>\n<li>\n<strong>Display:</strong> 6.74-inch AMOLED, up to 120Hz refresh rate</li>\n<li>\n<strong>Processor:</strong> MediaTek Dimensity 9000</li>\n<li>\n<strong>Storage:</strong> 256GB in this store configuration</li>\n<li>\n<strong>Main camera:</strong> 50MP Sony sensor with OIS</li>\n<li>\n<strong>Battery:</strong> 5,000mAh</li>\n<li>\n<strong>Charging:</strong> 80W SUPERVOOC fast charging</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>A great choice for users who want smooth performance, a quality display and fast charging in the Nord lineup.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:37:01Z",
+      "updatedAt": "2026-09-08T08:37:11Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680743104739",
+            "title": "Default Title",
+            "sku": "OPN3-256",
+            "barcode": null,
+            "price": "329.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852668109027",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852668109027",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925090189539",
+            "alt": "OnePlus Nord 3 5G smartphone product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925090189539",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-nord-3_94a0169c-d4b2-4918-b331-dfd75fd989d4.webp?v=1788666393",
+              "altText": "OnePlus Nord 3 5G smartphone product image",
+              "width": 1600,
+              "height": 1600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194334245091",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Fluid AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194482979043",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus Nord 3 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483011811",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus Nord 3 5G with smooth AMOLED display, strong performance, advanced cameras and fast charging at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430657763",
+      "title": "OnePlus Nord CE 4",
+      "handle": "oneplus-nord-ce-4",
+      "descriptionHtml": "<p><strong>OnePlus Nord CE 4 5G</strong> is a balanced mid-range smartphone combining strong performance, a smooth AMOLED display, long battery life and very fast charging.</p><ul>\n<li>\n<strong>Display:</strong> 6.7-inch AMOLED with 120Hz refresh rate</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 7 Gen 3</li>\n<li>\n<strong>Main camera:</strong> 50MP with optical image stabilization</li>\n<li>\n<strong>Battery:</strong> 5,500mAh</li>\n<li>\n<strong>Charging:</strong> 100W SUPERVOOC fast charging</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>A strong everyday option for users who want speed, excellent battery endurance and rapid charging without flagship pricing.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:37:04Z",
+      "updatedAt": "2026-09-08T12:09:25Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680743137507",
+            "title": "Default Title",
+            "sku": "OPCE4",
+            "barcode": null,
+            "price": "279.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852668141795",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852668141795",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925089272035",
+            "alt": "OnePlus Nord CE 4 smartphone product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925089272035",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-nord-ce4.jpg?v=1788666338",
+              "altText": "OnePlus Nord CE 4 smartphone product image",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194334376163",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483306723",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus Nord CE 4 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483339491",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus Nord CE 4 with AMOLED display, strong performance, long battery life and fast charging at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430690531",
+      "title": "OnePlus Nord CE 4 Lite 5G",
+      "handle": "oneplus-nord-ce-4-lite-5g",
+      "descriptionHtml": "<p><strong>OnePlus Nord CE 4 Lite 5G</strong> is a value-focused 5G smartphone designed for everyday use, media and long battery life.</p><ul>\n<li>\n<strong>Display:</strong> large AMOLED display with smooth high-refresh-rate performance</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 5G platform</li>\n<li>\n<strong>Main camera:</strong> 50MP high-resolution camera</li>\n<li>\n<strong>Battery:</strong> large-capacity battery for all-day use</li>\n<li>\n<strong>Charging:</strong> fast SUPERVOOC wired charging</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth and USB-C</li>\n</ul><p>A practical choice for users who want 5G connectivity, a smooth display, dependable battery life and fast charging at an affordable price.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:37:07Z",
+      "updatedAt": "2026-09-08T09:30:45Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680743170275",
+            "title": "Default Title",
+            "sku": "OPCE4L",
+            "barcode": null,
+            "price": "219.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852668174563",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852668174563",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925089337571",
+            "alt": "OnePlus Nord CE 4 Lite 5G smartphone product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925089337571",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-nord-ce4-lite.jpg?v=1788666344",
+              "altText": "OnePlus Nord CE 4 Lite 5G smartphone product image",
+              "width": 552,
+              "height": 551
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194334408931",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483372259",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus Nord CE 4 Lite 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483405027",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus Nord CE 4 Lite 5G with smooth display, long-lasting battery, capable cameras and fast charging at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430723299",
+      "title": "OnePlus Nord CE 3 Lite 5G",
+      "handle": "oneplus-nord-ce-3-lite-5g",
+      "descriptionHtml": "<p><strong>OnePlus Nord CE 3 Lite 5G</strong> is an affordable 5G smartphone built for everyday use, entertainment and long battery life.</p><ul>\n<li>\n<strong>Display:</strong> 6.72-inch FHD+ LCD with 120Hz refresh rate</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 695 5G</li>\n<li>\n<strong>Camera:</strong> 108MP main camera with additional depth and macro sensors</li>\n<li>\n<strong>Battery:</strong> 5,000mAh</li>\n<li>\n<strong>Charging:</strong> 67W SUPERVOOC fast charging</li>\n<li>\n<strong>Audio:</strong> stereo speakers with 3.5mm headphone jack</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth and USB-C</li>\n</ul><p>A practical choice for users who want a large 120Hz screen, strong battery life, fast charging and 5G connectivity at a budget-friendly price.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:37:11Z",
+      "updatedAt": "2026-09-08T09:28:13Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680743203043",
+            "title": "Default Title",
+            "sku": "OPCE3L",
+            "barcode": null,
+            "price": "189.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852668207331",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852668207331",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925089370339",
+            "alt": "OnePlus Nord CE 3 Lite 5G smartphone product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925089370339",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-nord-ce3-lite.jpg?v=1788666351",
+              "altText": "OnePlus Nord CE 3 Lite 5G smartphone product image",
+              "width": 480,
+              "height": 615
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194334343395",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LCD"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483241187",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus Nord CE 3 Lite 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483273955",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus Nord CE 3 Lite 5G with 120Hz display, Snapdragon performance, large battery and fast charging at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656430756067",
+      "title": "OnePlus Open",
+      "handle": "oneplus-open",
+      "descriptionHtml": "<p><strong>OnePlus Open 5G</strong> is a premium foldable flagship that combines a large flexible inner display with a practical cover screen, flagship performance and a versatile camera system.</p><ul>\n<li>\n<strong>Main display:</strong> 7.82-inch foldable AMOLED with 120Hz refresh rate</li>\n<li>\n<strong>Cover display:</strong> 6.31-inch AMOLED with 120Hz refresh rate</li>\n<li>\n<strong>Processor:</strong> Qualcomm Snapdragon 8 Gen 2</li>\n<li>\n<strong>Storage:</strong> 512GB in this store configuration</li>\n<li>\n<strong>Rear cameras:</strong> high-end triple camera system with main, ultra-wide and telephoto lenses</li>\n<li>\n<strong>Battery:</strong> 4,805mAh</li>\n<li>\n<strong>Charging:</strong> 67W SUPERVOOC fast charging</li>\n<li>\n<strong>Software:</strong> OxygenOS based on Android with foldable multitasking features</li>\n<li>\n<strong>Connectivity:</strong> 5G, Wi-Fi, Bluetooth, NFC and USB-C</li>\n</ul><p>Ideal for users who want a tablet-like workspace in a phone-sized device, with premium performance, multitasking and flagship photography.</p>",
+      "status": "ACTIVE",
+      "vendor": "OnePlus",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "OnePlus",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-06T03:37:15Z",
+      "updatedAt": "2026-09-08T12:11:45Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680743235811",
+            "title": "Default Title",
+            "sku": "OPOPEN-512",
+            "barcode": null,
+            "price": "899.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852668240099",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852668240099",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925082226915",
+            "alt": "OnePlus Open foldable smartphone on clean background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925082226915",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/oneplus-open.png?v=1788666147",
+              "altText": "OnePlus Open foldable smartphone on clean background",
+              "width": 1080,
+              "height": 1080
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194334441699",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Flexi-Fluid AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483437795",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "OnePlus Open Foldable Phone | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483470563",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop OnePlus Open foldable smartphone with dual AMOLED displays, flagship performance, advanced cameras and premium design."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658213368035",
+      "title": "Black Shark Run Smartwatch",
+      "handle": "black-shark-run-smartwatch",
+      "descriptionHtml": "<h2>Black Shark Run Smartwatch</h2><p>Black Shark Run Smartwatch is built for active lifestyles, offering a practical smartwatch companion for workouts, daily activity and everyday wear.</p><ul>\n<li>Designed for active users</li>\n<li>Fitness and daily activity companion</li>\n<li>Comfortable everyday wearable</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:10:48Z",
+      "updatedAt": "2026-09-07T18:13:44Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699593552099",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "65.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871535497443",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871535497443",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658213531875",
+      "title": "Black Shark GT3 Neo 2 Smart Watch",
+      "handle": "black-shark-gt3-neo-2-smart-watch",
+      "descriptionHtml": "<h2>Black Shark GT3 Neo 2 Smart Watch</h2><p>A modern Black Shark smartwatch combining a clean design with practical everyday fitness and wearable features.</p><ul>\n<li>Smart everyday companion</li>\n<li>Fitness-focused wearable</li>\n<li>Comfortable modern design</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:10:54Z",
+      "updatedAt": "2026-09-07T17:25:36Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699594207459",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "39.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871536152803",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871536152803",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940253909219",
+            "alt": "Black Shark GT3 Neo 2 Smart Watch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940253909219",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/black-shark-gt3-neo2-negro-reloj-inteligente-principal_ad_l.webp?v=1788757856",
+              "altText": "Black Shark GT3 Neo 2 Smart Watch",
+              "width": 1024,
+              "height": 1024
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940265050339",
+            "alt": "Black Shark GT3 Neo 2 Smart Watch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940265050339",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757925252.webp?v=1788757927",
+              "altText": "Black Shark GT3 Neo 2 Smart Watch",
+              "width": 1024,
+              "height": 1024
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658213695715",
+      "title": "HUAWEI WATCH FIT 5 Pro",
+      "handle": "huawei-watch-fit-5-pro",
+      "descriptionHtml": "<h2>HUAWEI WATCH FIT 5 Pro</h2><p>HUAWEI WATCH FIT 5 Pro is a premium smartwatch for active users looking for a stylish and capable wearable for fitness and everyday life.</p><ul>\n<li>Premium smartwatch experience</li>\n<li>Designed for active lifestyles</li>\n<li>Stylish everyday wearable</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "HUAWEI",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:10:57Z",
+      "updatedAt": "2026-09-07T19:12:40Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699594633443",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "245.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871536578787",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871536578787",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940254630115",
+            "alt": "HUAWEI WATCH FIT 5 Pro",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940254630115",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/huawei-watch-fit-5-pro.jpg?v=1788757860",
+              "altText": "HUAWEI WATCH FIT 5 Pro",
+              "width": 866,
+              "height": 960
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940266524899",
+            "alt": "HUAWEI WATCH FIT 5 Pro",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940266524899",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757930597.jpg?v=1788757932",
+              "altText": "HUAWEI WATCH FIT 5 Pro",
+              "width": 866,
+              "height": 960
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658213826787",
+      "title": "HUAWEI Watch Fit 5",
+      "handle": "huawei-watch-fit-5",
+      "descriptionHtml": "<h2>HUAWEI Watch Fit 5</h2><p>HUAWEI Watch Fit 5 is a modern fitness smartwatch that combines a stylish look with practical support for your active daily routine.</p><ul>\n<li>Fitness-focused smartwatch</li>\n<li>Modern lightweight design</li>\n<li>Great for everyday activity</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "HUAWEI",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:01Z",
+      "updatedAt": "2026-09-07T20:13:52Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699595026659",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "165.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871536972003",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871536972003",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940255121635",
+            "alt": "HUAWEI Watch Fit 5",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940255121635",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/huawei-watch-fit-5-black-official-image.webp?v=1788757863",
+              "altText": "HUAWEI Watch Fit 5",
+              "width": 700,
+              "height": 700
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940267114723",
+            "alt": "HUAWEI Watch Fit 5",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940267114723",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757935672.webp?v=1788757937",
+              "altText": "HUAWEI Watch Fit 5",
+              "width": 700,
+              "height": 700
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658213957859",
+      "title": "Huawei Watch Fit 4 Pro",
+      "handle": "huawei-watch-fit-4-pro",
+      "descriptionHtml": "<h2>Huawei Watch Fit 4 Pro</h2><p>Huawei Watch Fit 4 Pro is a premium fitness smartwatch designed for users who want a stylish wearable for workouts, activity and everyday life.</p><ul>\n<li>Premium fitness-focused design</li>\n<li>Smart everyday companion</li>\n<li>Stylish wearable for active lifestyles</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "HUAWEI",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:05Z",
+      "updatedAt": "2026-09-07T19:09:32Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699595288803",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "155.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871537234147",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871537234147",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940255809763",
+            "alt": "Huawei Watch Fit 4 Pro",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940255809763",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s922p90x300vkcw_b027cc6e_png.webp?v=1788757868",
+              "altText": "Huawei Watch Fit 4 Pro",
+              "width": 800,
+              "height": 800
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940267442403",
+            "alt": "Huawei Watch Fit 4 Pro",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940267442403",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757939777.webp?v=1788757941",
+              "altText": "Huawei Watch Fit 4 Pro",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658214056163",
+      "title": "Xiaomi Smart Band 10 Ceramic Edition - Pearl White",
+      "handle": "xiaomi-smart-band-10-ceramic-edition-pearl-white",
+      "descriptionHtml": "<h2>Xiaomi Smart Band 10 Ceramic Edition - Pearl White</h2><p>A premium-looking Xiaomi fitness band in Pearl White Ceramic Edition styling, designed for everyday activity and an active lifestyle.</p><ul>\n<li>Elegant Pearl White design</li>\n<li>Fitness-focused wearable</li>\n<li>Comfortable everyday companion</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "XIAOMI",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:08Z",
+      "updatedAt": "2026-09-07T21:18:12Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699595518179",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "75.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871537463523",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871537463523",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940256104675",
+            "alt": "Xiaomi Smart Band 10 Ceramic Edition - Pearl White",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940256104675",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/cca3a1b1535718fbb964bb048d8d86f5.jpg?v=1788757871",
+              "altText": "Xiaomi Smart Band 10 Ceramic Edition - Pearl White",
+              "width": 1024,
+              "height": 1024
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940268458211",
+            "alt": "Xiaomi Smart Band 10 Ceramic Edition - Pearl White",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940268458211",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757943530.jpg?v=1788757945",
+              "altText": "Xiaomi Smart Band 10 Ceramic Edition - Pearl White",
+              "width": 1024,
+              "height": 1024
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo5NjU4MjE0MDU2MTYzLCJsYXN0X3ZhbHVlIjoiOTY1ODIxNDA1NjE2MyJ9"
+  }
+}
