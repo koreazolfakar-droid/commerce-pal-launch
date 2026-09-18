@@ -1,8 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-import { storefrontApiRequest, type ShopifyCollection, type ShopifyProduct } from "@/lib/shopify";
-import { COLLECTIONS_QUERY, PRODUCTS_QUERY } from "@/lib/shopifyDocuments";
+import {
+  fetchCatalogProducts,
+  fetchCollections,
+  type StoreCollection,
+  type StoreProduct,
+} from "@/lib/storefrontFacade";
 import { absoluteUrl } from "@/lib/seo";
 import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";
 
@@ -12,8 +16,6 @@ interface SitemapEntry {
 }
 
 const PAGE_SIZE = 100;
-const MAX_PRODUCT_PAGES = 490;
-const MAX_COLLECTION_PAGES = 100;
 
 function escapeXml(value: string) {
   return value
@@ -24,55 +26,21 @@ function escapeXml(value: string) {
     .replace(/'/g, "&apos;");
 }
 
-async function fetchAllProductsForSitemap(): Promise<ShopifyProduct[]> {
-  const products: ShopifyProduct[] = [];
-  let after: string | null = null;
-
-  for (let page = 0; page < MAX_PRODUCT_PAGES; page += 1) {
-    const response = await storefrontApiRequest(PRODUCTS_QUERY, {
-      first: PAGE_SIZE,
-      after,
-    });
-    const connection = response?.data?.products;
-    const edges = Array.isArray(connection?.edges) ? connection.edges : [];
-    products.push(...edges);
-
-    const nextCursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
-    if (!nextCursor) break;
-    after = nextCursor;
-  }
-
-  return products;
+async function fetchAllProductsForSitemap(): Promise<StoreProduct[]> {
+  return fetchCatalogProducts(PAGE_SIZE);
 }
 
-async function fetchAllCollectionsForSitemap(): Promise<ShopifyCollection[]> {
-  const collections: ShopifyCollection[] = [];
-  let after: string | null = null;
-
-  for (let page = 0; page < MAX_COLLECTION_PAGES; page += 1) {
-    const response = await storefrontApiRequest(COLLECTIONS_QUERY, {
-      first: PAGE_SIZE,
-      after,
-    });
-    const connection = response?.data?.collections;
-    const edges = Array.isArray(connection?.edges) ? connection.edges : [];
-    collections.push(...edges.map((edge: { node: ShopifyCollection }) => edge.node));
-
-    const nextCursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
-    if (!nextCursor) break;
-    after = nextCursor;
-  }
-
-  return collections;
+async function fetchAllCollectionsForSitemap(): Promise<StoreCollection[]> {
+  return fetchCollections(PAGE_SIZE);
 }
 
-function productLastmod(product: ShopifyProduct) {
-  const node = product.node as ShopifyProduct["node"] & { updatedAt?: string };
+function productLastmod(product: StoreProduct) {
+  const node = product.node as StoreProduct["node"] & { updatedAt?: string };
   return (node.updatedAt || node.createdAt)?.slice(0, 10);
 }
 
-function collectionLastmod(collection: ShopifyCollection) {
-  return (collection as ShopifyCollection & { updatedAt?: string }).updatedAt?.slice(0, 10);
+function collectionLastmod(collection: StoreCollection) {
+  return (collection as StoreCollection & { updatedAt?: string }).updatedAt?.slice(0, 10);
 }
 
 function buildStaticEntries(): SitemapEntry[] {
