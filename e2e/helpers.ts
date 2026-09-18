@@ -42,9 +42,9 @@ export async function addLocalProduct(page: Page) {
     .filter({ visible: true })
     .first();
 
-  // Product purchase controls intentionally stay disabled until persisted
-  // browser state has hydrated. Wait for the real user-ready state instead
-  // of racing the hydration gate in E2E.
+  // Product purchase controls remain disabled until client hydration is ready.
+  // Waiting for enabled state mirrors the first point at which a real user can
+  // safely trigger the cart mutation.
   await expect(addButton).toBeEnabled();
   await addButton.click();
 
