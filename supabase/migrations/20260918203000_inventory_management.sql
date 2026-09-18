@@ -194,9 +194,6 @@ $$;
 revoke all on function public.set_store_inventory_stock(uuid, uuid, integer, text) from public, anon;
 grant execute on function public.set_store_inventory_stock(uuid, uuid, integer, text) to authenticated;
 
-create index if not exists store_inventory_movements_product_created_idx
-  on public.store_inventory_movements(product_id, created_at desc);
-
-create index if not exists store_inventory_movements_variant_created_idx
-  on public.store_inventory_movements(variant_id, created_at desc)
-  where variant_id is not null;
+create index if not exists store_inventory_movements_created_by_idx
+  on public.store_inventory_movements(created_by)
+  where created_by is not null;
