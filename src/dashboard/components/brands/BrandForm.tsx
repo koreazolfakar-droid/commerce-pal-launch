@@ -2,7 +2,7 @@ import { Check, Image as ImageIcon, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
-import { normalizeBrandSlug, type CatalogBrand } from "@/dashboard/mock/brands";
+import { normalizeBrandSlug, type CatalogBrand } from "@/dashboard/data/brands";
 
 function Field({
   label,
@@ -229,8 +229,8 @@ export default function BrandForm({
             </div>
             <div className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-[10px] text-slate-400">
               <ImageIcon className="size-4 shrink-0" />
-              URLs are stored locally for the training dashboard. No media service or production
-              storage is connected.
+              Brand identity URLs are stored in Supabase for the Space Call catalog.
+
             </div>
           </section>
 
