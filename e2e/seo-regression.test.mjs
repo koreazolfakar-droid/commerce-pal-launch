@@ -60,8 +60,8 @@ test("header account and tracking links stay first-party", async () => {
   assert.doesNotMatch(header, /SHOPIFY_ACCOUNT_URL/);
   assert.match(infoPage, /id="track-order"/);
   assert.match(infoPage, /id="account-orders"/);
-  assert.match(infoPage, /SHOPIFY_ACCOUNT_URL/);
-  assert.match(infoPage, /secure Shopify account page/);
+  assert.match(infoPage, /generalWhatsAppUrl\(\)/);
+  assert.doesNotMatch(infoPage, /SHOPIFY_ACCOUNT_URL|secure Shopify account page|myshopify/);
 });
 
 test("commercial landing pages carry Lebanon search intent", async () => {
