@@ -1,0 +1,146 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 9,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/477131604195",
+      "title": "Brand Logo — CMF",
+      "handle": "logo-cmf",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:24:24Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608464099",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/cmf-official-logo.svg?v=1789388664",
+        "altText": "CMF by Nothing logo",
+        "width": 386,
+        "height": 258
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131636963",
+      "title": "Brand Logo — Dell",
+      "handle": "logo-dell",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T14:37:23Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608496867",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/rn-image_picker_lib_temp_41146b25-b84d-4af8-a56c-9c2f76067783.png?v=1789396643",
+        "altText": "Dell logo",
+        "width": 677,
+        "height": 369
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131669731",
+      "title": "Brand Logo — HONOR",
+      "handle": "logo-honor",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:24:43Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608529635",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/honor-official-logo.svg?v=1789388683",
+        "altText": "HONOR logo",
+        "width": 161,
+        "height": 42
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131702499",
+      "title": "Brand Logo — HUAWEI",
+      "handle": "logo-huawei",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:51Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608562403",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-huawei-1024.png?v=1789387204",
+        "altText": "HUAWEI logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131735267",
+      "title": "Brand Logo — Infinix",
+      "handle": "logo-infinix",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T15:48:43Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608595171",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/rn-image_picker_lib_temp_e0ac0009-4608-4e6f-b08a-349d1a2bdae1.webp?v=1789400923",
+        "altText": "Infinix logo on white background",
+        "width": 2172,
+        "height": 724
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzcxMzE3MzUyNjcsImxhc3RfdmFsdWUiOiI0NzcxMzE3MzUyNjcifQ=="
+  }
+}
