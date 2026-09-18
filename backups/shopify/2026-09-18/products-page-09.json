@@ -1,0 +1,111 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "products",
+  "page": 9,
+  "data": [
+    {
+      "id": "gid://shopify/Product/9669584126179",
+      "title": "ACEFAST A119 45W GaN USB-C Fast Charger Set + 1.2m Cable",
+      "handle": "acefast-a119-45w-gan-usb-c-charger-set",
+      "descriptionHtml": "<p><strong>ACEFAST A119</strong> is a compact <strong>45W GaN USB-C fast charger set</strong> with an EU plug and an included <strong>1.2m USB-C to USB-C cable</strong>. Designed for fast, efficient charging of compatible smartphones, tablets, laptops and other USB-C devices.</p><h2>Key Features</h2><ul>\n<li>\n<strong>45W USB-C fast charging</strong> with Power Delivery support.</li>\n<li>\n<strong>GaN technology</strong> for higher efficiency, lower heat and a compact body.</li>\n<li>\n<strong>PPS support</strong> for dynamic voltage adjustment on compatible devices.</li>\n<li>Supports major fast-charge protocols including <strong>PD3.0, PD2.0, QC4+, QC3.0, QC2.0, AFC, FCP and SCP</strong>.</li>\n<li>\n<strong>Single USB-C port</strong> with up to 45W output.</li>\n<li>\n<strong>EU plug</strong> and universal 100–240V input for convenient everyday and travel use.</li>\n<li>Includes a <strong>1.2m USB-C to USB-C fast charging cable</strong>.</li>\n<li>Flame-retardant PC housing with multiple safety protections.</li>\n</ul><h2>Specifications</h2><ul>\n<li>\n<strong>Brand:</strong> ACEFAST</li>\n<li>\n<strong>Model:</strong> A119</li>\n<li>\n<strong>Charger type:</strong> GaN wall charger</li>\n<li>\n<strong>Maximum output:</strong> 45W</li>\n<li>\n<strong>Port:</strong> 1 × USB-C</li>\n<li>\n<strong>Input:</strong> AC 100–240V, 1.2A, 50/60Hz</li>\n<li>\n<strong>USB-C PPS output:</strong> 5–21V ⎓ 2.1A</li>\n<li>\n<strong>USB-C fixed outputs:</strong> 5V ⎓ 3A, 9V ⎓ 3A, 12V ⎓ 3A, 15V ⎓ 3A, 20V ⎓ 2.25A</li>\n<li>\n<strong>Fast-charge protocols:</strong> PPS / PD3.0 / PD2.0 / QC4+ / QC3.0 / QC2.0 / AFC / FCP / SCP</li>\n<li>\n<strong>Material:</strong> Flame-retardant PC</li>\n<li>\n<strong>Dimensions:</strong> 76.5 × 33.5 × 33.5 mm</li>\n<li>\n<strong>Charger weight:</strong> 85 g</li>\n<li>\n<strong>Plug:</strong> EU</li>\n<li>\n<strong>Cable:</strong> USB-C to USB-C, 1.2 m</li>\n<li>\n<strong>Certifications:</strong> CE, RoHS, EAC, ERP6</li>\n<li>\n<strong>Color:</strong> Black</li>\n</ul><h2>What's in the Box</h2><ul>\n<li>ACEFAST A119 45W GaN USB-C wall charger</li>\n<li>1.2m USB-C to USB-C fast charging cable</li>\n</ul><p><strong>Compatibility:</strong> Suitable for compatible USB-C laptops, smartphones, tablets and other devices that support USB-C charging. Actual charging speed depends on the connected device and charging protocol.</p>",
+      "status": "ACTIVE",
+      "vendor": "ACEFAST",
+      "productType": "Wall Charger",
+      "tags": [
+        "45W Charger",
+        "A119",
+        "ACEFAST",
+        "EU Plug",
+        "Fast Charger",
+        "GaN Charger",
+        "Laptop Charger",
+        "PD Charger",
+        "Phone Accessories",
+        "PPS",
+        "USB-C Cable",
+        "USB-C Charger"
+      ],
+      "createdAt": "2026-09-14T11:23:33Z",
+      "updatedAt": "2026-09-14T17:00:45Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49732977590499",
+            "title": "Default Title",
+            "sku": "ACEFAST-A119",
+            "barcode": null,
+            "price": "25.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51905164411107",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51905164411107",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/40036262904035",
+            "alt": "ACEFAST A119 45W GaN USB-C fast charger set with 1.2m USB-C cable EU plug black",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40036262904035",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/acefast-a119-45w-gan-usb-c-charger-set-black.jpg?v=1789385000",
+              "altText": "ACEFAST A119 45W GaN USB-C fast charger set with 1.2m USB-C cable EU plug black",
+              "width": 1536,
+              "height": 1536
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52410415317219",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "ACEFAST A119 45W GaN USB-C Charger Set + 1.2m Cable"
+          },
+          {
+            "id": "gid://shopify/Metafield/52410415349987",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Buy ACEFAST A119 45W GaN USB-C fast charger with PPS, PD/QC support, EU plug and 1.2m USB-C cable. Compact charging for phones, tablets and laptops."
+          }
+        ]
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": false,
+    "endCursor": "eyJsYXN0X2lkIjo5NjY5NTg0MTI2MTc5LCJsYXN0X3ZhbHVlIjoiOTY2OTU4NDEyNjE3OSJ9"
+  }
+}
