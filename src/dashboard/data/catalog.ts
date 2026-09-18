@@ -284,7 +284,20 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   const category = input.categoryId
     ? categories.find((item) => item.id === input.categoryId)
     : undefined;
-  const handle = await uniqueHandle(input.title, input.id);
+
+  let existingProduct: Pick<ProductRow, "id" | "handle" | "published_at"> | null = null;
+  if (input.id) {
+    const { data, error } = await supabase
+      .from("store_products")
+      .select("id,handle,published_at")
+      .eq("id", input.id)
+      .maybeSingle();
+    throwIfError(error, "Loading product before save failed");
+    if (!data) throw new Error("Product not found.");
+    existingProduct = data;
+  }
+
+  const handle = existingProduct?.handle ?? (await uniqueHandle(input.title));
   const productPayload = {
     title: input.title.trim(),
     handle,
@@ -302,7 +315,10 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
     track_inventory: true,
     seo_title: input.seoTitle.trim() || null,
     seo_description: input.seoDescription.trim() || null,
-    published_at: input.status === "Active" ? new Date().toISOString() : null,
+    published_at:
+      input.status === "Active"
+        ? existingProduct?.published_at ?? new Date().toISOString()
+        : null,
   };
 
   let productId = input.id;
