@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
-import type { Json, Tables } from "@/integrations/supabase/types";
+import { publicSupabase } from "@/integrations/publicSupabase/publicClient";
+import type { Json, Tables } from "@/integrations/publicSupabase/types";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 
 type ProductRow = Tables<"store_products">;
@@ -153,29 +153,29 @@ async function loadSnapshot(): Promise<NativeSnapshot> {
   pendingSnapshot = (async () => {
     const [productResult, variantResult, imageResult, collectionResult, linkResult, brandResult] =
       await Promise.all([
-        supabase
+        publicSupabase
           .from("store_products")
           .select("*")
           .eq("status", "active")
           .order("sort_order", { ascending: true })
           .order("created_at", { ascending: false }),
-        supabase
+        publicSupabase
           .from("store_product_variants")
           .select("*")
           .eq("is_active", true)
           .order("sort_order", { ascending: true }),
-        supabase
+        publicSupabase
           .from("store_product_images")
           .select("*")
           .order("sort_order", { ascending: true }),
-        supabase
+        publicSupabase
           .from("store_collections")
           .select("*")
           .eq("is_active", true)
           .order("sort_order", { ascending: true })
           .order("title", { ascending: true }),
-        supabase.from("store_collection_products").select("*").order("sort_order", { ascending: true }),
-        supabase
+        publicSupabase.from("store_collection_products").select("*").order("sort_order", { ascending: true }),
+        publicSupabase
           .from("cms_brands")
           .select("*")
           .eq("is_visible", true)
@@ -250,7 +250,7 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
   const normalized = handle.trim().toLowerCase();
   if (!normalized) return null;
 
-  const productResult = await supabase
+  const productResult = await publicSupabase
     .from("store_products")
     .select("*")
     .eq("handle", normalized)
@@ -263,24 +263,24 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
   if (!row) return null;
 
   const [variantResult, imageResult, linkResult, brandResult] = await Promise.all([
-    supabase
+    publicSupabase
       .from("store_product_variants")
       .select("*")
       .eq("product_id", row.id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
-    supabase
+    publicSupabase
       .from("store_product_images")
       .select("*")
       .eq("product_id", row.id)
       .order("sort_order", { ascending: true }),
-    supabase
+    publicSupabase
       .from("store_collection_products")
       .select("*")
       .eq("product_id", row.id)
       .order("sort_order", { ascending: true }),
     row.brand_id
-      ? supabase.from("cms_brands").select("*").eq("id", row.brand_id).maybeSingle()
+      ? publicSupabase.from("cms_brands").select("*").eq("id", row.brand_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -294,7 +294,7 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
   const collectionIds = links.map((link) => link.collection_id);
   let collections: CollectionRow[] = [];
   if (collectionIds.length) {
-    const collectionResult = await supabase
+    const collectionResult = await publicSupabase
       .from("store_collections")
       .select("*")
       .in("id", collectionIds)
