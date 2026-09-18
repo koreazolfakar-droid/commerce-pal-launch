@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("homepage has one rebuilt catalog hero, one heading, one benefits strip and adaptive deals", async ({
+test("homepage has one native catalog hero, one heading, benefits and catalog sections", async ({
   page,
   isMobile,
 }) => {
@@ -13,6 +13,7 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
   await expect(page.getByTestId("top-brands")).toBeVisible();
   await expect(page.getByTestId("best-sellers")).toHaveCount(1);
   await expect(page.getByTestId("new-items")).toHaveCount(1);
+
   const order = await page
     .locator(".home-page [data-testid]")
     .evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")));
@@ -25,27 +26,26 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
     "new-items",
     "brand-showcases",
   ];
-  for (let i = 1; i < expected.length; i++)
-    expect(order.indexOf(expected[i]!)).toBeGreaterThan(order.indexOf(expected[i - 1]!));
+  for (let index = 1; index < expected.length; index++) {
+    expect(order.indexOf(expected[index]!)).toBeGreaterThan(order.indexOf(expected[index - 1]!));
+  }
+
   await expect(page.getByTestId("deal-spotlight").locator("article")).toHaveCount(2);
   if (isMobile) await expect(page.getByTestId("bottom-nav")).toBeVisible();
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-  ).toBeTruthy();
-  const showcase = page.locator('section[aria-labelledby^="showcase-"]');
-  await expect(showcase.first()).toContainText("Zeta showcase");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+
+  await expect(page.getByTestId("brand-showcases")).toContainText("iPhone Showcase");
 });
 
-test("hero uses independent Shopify artwork without unsafe navigation", async ({ page }) => {
+test("hero uses provider-neutral catalog artwork without unsafe navigation", async ({ page }) => {
   await page.goto("/");
   const hero = page.getByTestId("home-hero");
-  await expect(hero).toHaveAttribute("data-hero-source", "shopify-collection");
+
+  await expect(hero).toHaveAttribute("data-hero-source", "catalog-collection");
   await expect(hero).toHaveAttribute("data-hero-collection-handle", "homepage-hero");
   await expect(hero).toHaveAttribute("data-hero-handle", "homepage-hero");
-  await expect(hero.locator("img")).toHaveAttribute("alt", "Merchant artwork homepage-hero");
+  await expect(hero.locator("img")).toHaveAttribute("alt", "iPhone 18 Pro");
   await expect(hero.locator("a")).toHaveCount(0);
-  await expect(hero.locator('[data-testid="home-hero-content"]')).toHaveCount(0);
-  await expect(hero.locator('[data-testid="home-hero-mobile-controls"]')).toHaveCount(0);
 
   const before = page.url();
   await page.getByTestId("home-hero-media").click({ position: { x: 8, y: 8 } });
@@ -53,29 +53,21 @@ test("hero uses independent Shopify artwork without unsafe navigation", async ({
   expect(page.url()).toBe(before);
 });
 
-test("each brand keeps its compact showcase, products and exact destination without duplicate hero artwork", async ({
-  page,
-}) => {
+test("brand sections use the provider-neutral local catalog and exact destinations", async ({ page }) => {
   await page.goto("/");
+
   for (const [brand, included, excluded] of [
-    ["apple", "2", "1"],
-    ["samsung", "1", "2"],
-    ["xiaomi", "3", "1"],
-    ["kobo", "8", "1"],
+    ["apple", "iphone-18-pro", "galaxy-s26-ultra"],
+    ["samsung", "galaxy-s26-ultra", "iphone-18"],
+    ["xiaomi", "xiaomi-16-pro", "iphone-18"],
   ]) {
-    const section = page.locator(`section[data-facet-kind="brand"][data-facet-slug="${brand}"]`);
+    const section = page.locator(
+      `section[data-facet-kind="brand"][data-facet-slug="${brand}"]`,
+    );
     await expect(section.locator(`a[href="/brand/${brand}"]`)).toHaveCount(1);
-    await expect(
-      section.locator(`a[href="/product/fixture-phone-${included}"]`).first(),
-    ).toBeAttached();
-    await expect(section.locator(`a[href="/product/fixture-phone-${excluded}"]`)).toHaveCount(0);
+    await expect(section.locator(`a[href="/product/${included}"]`).first()).toBeAttached();
+    await expect(section.locator(`a[href="/product/${excluded}"]`)).toHaveCount(0);
   }
-  await expect(
-    page.getByTestId("brand-showcases").locator('img[alt^="Merchant artwork hero-"]'),
-  ).toHaveCount(0);
-  await expect(
-    page.locator('[data-facet-kind="category"][data-facet-slug="e-readers"]'),
-  ).toBeAttached();
 });
 
 test("mobile menu supports Arabic and closes after navigation", async ({ page, isMobile }) => {

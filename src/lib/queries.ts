@@ -16,8 +16,8 @@ import {
   fetchProductsByHandles,
   fetchProductsByVendor,
   searchStorefront,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+  type StoreProduct,
+} from "@/lib/storefrontFacade";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 2 * 60 * 1000;
@@ -26,17 +26,17 @@ const MERCHANDISING_STALE_TIME = 10 * 60 * 1000;
 const POLICY_STALE_TIME = 30 * 60 * 1000;
 const CATALOG_REFRESH_FALLBACK_TTL_MS = 5 * 60 * 1000;
 const CATALOG_REFRESH_FALLBACK_STORAGE_KEY = "space-call-catalog-refresh-fallback-v1";
-const SHOPIFY_QUERY_RETRY_COUNT = 3;
+const STOREFRONT_QUERY_RETRY_COUNT = 3;
 
-const shopifyRetryDelay = (attemptIndex: number) => Math.min(300 * 2 ** attemptIndex, 2_000);
+const storefrontRetryDelay = (attemptIndex: number) => Math.min(300 * 2 ** attemptIndex, 2_000);
 
 type CatalogRefreshFallback = {
   cachedAt: number;
-  products: ShopifyProduct[];
+  products: StoreProduct[];
   vendors: string[];
 };
 
-function buildCatalogFromSource(products: ShopifyProduct[], vendors: string[]) {
+function buildCatalogFromSource(products: StoreProduct[], vendors: string[]) {
   const catalog = buildCatalogIndex(products);
   return {
     ...catalog,
@@ -69,7 +69,7 @@ function readCatalogRefreshFallback(): CatalogRefreshFallback | null {
   }
 }
 
-function writeCatalogRefreshFallback(products: ShopifyProduct[], vendors: string[]) {
+function writeCatalogRefreshFallback(products: StoreProduct[], vendors: string[]) {
   if (typeof window === "undefined") return;
 
   try {
@@ -88,7 +88,7 @@ async function fetchCatalogIndexSafely() {
   try {
     const vendorPromise = fetchBrandVendors().catch((error) => {
       console.error(
-        "Shopify vendor discovery failed; using brands from the bounded Shopify catalog.",
+        "Storefront brand discovery failed; using brands from the bounded catalog.",
         error,
       );
       return [] as string[];
@@ -100,144 +100,145 @@ async function fetchCatalogIndexSafely() {
     const fallback = readCatalogRefreshFallback();
     if (fallback) {
       console.warn(
-        "Shopify catalog refresh failed; keeping the last successful catalog for this tab.",
+        "Storefront catalog refresh failed; keeping the last successful catalog for this tab.",
         error,
       );
       return buildCatalogFromSource(fallback.products, fallback.vendors);
     }
 
     console.error(
-      "Shopify catalog fetch failed; allowing React Query to retry instead of caching an empty catalog.",
+      "Storefront catalog fetch failed; allowing React Query to retry instead of caching an empty catalog.",
       error,
     );
     throw error;
   }
 }
 
-/** Bounded Shopify discovery index. Route-specific product data uses dedicated queries. */
+/** Bounded storefront discovery index. Route-specific product data uses dedicated queries. */
 export const catalogQueryOptions = () =>
   queryOptions({
-    queryKey: ["shopify", "catalog"],
+    queryKey: ["storefront", "catalog"],
     queryFn: fetchCatalogIndexSafely,
+    meta: { ssr: false },
     staleTime: CATALOG_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
 export const collectionsQueryOptions = () =>
   queryOptions({
-    queryKey: ["shopify", "collections", "brand-logo-cache-v5", 100],
+    queryKey: ["storefront", "collections", "brand-logo-cache-v5", 100],
     queryFn: () => fetchCollections(100),
     staleTime: BRAND_COLLECTION_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
 export const bestSellingQueryOptions = () =>
   queryOptions({
-    queryKey: ["shopify", "best-selling"],
+    queryKey: ["storefront", "best-selling"],
     queryFn: () => fetchBestSellingProducts(12),
     staleTime: CATALOG_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
 export const collectionQueryOptions = (handle: string, pageSize = 48) =>
   queryOptions({
-    queryKey: ["shopify", "collection", handle, pageSize],
+    queryKey: ["storefront", "collection", handle, pageSize],
     queryFn: () => fetchCollectionByHandle(handle, pageSize),
     staleTime: CATALOG_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
-/** Shopify creation order. */
+/** Storefront creation order. */
 export const newestQueryOptions = () =>
   queryOptions({
-    queryKey: ["shopify", "newest"],
+    queryKey: ["storefront", "newest"],
     queryFn: () => fetchProducts(12, undefined, "CREATED_AT", true),
     staleTime: CATALOG_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
 export const productQueryOptions = (handle: string) =>
   queryOptions({
-    queryKey: ["shopify", "product", handle],
+    queryKey: ["storefront", "product", handle],
     queryFn: () => fetchProductByHandle(handle),
     staleTime: CATALOG_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
 export const recommendationsQueryOptions = (handle: string) =>
   queryOptions({
-    queryKey: ["shopify", "recommendations", handle],
+    queryKey: ["storefront", "recommendations", handle],
     queryFn: () => fetchProductRecommendations(handle),
     staleTime: CATALOG_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
 export const vendorProductsQueryOptions = (vendor: string) =>
   queryOptions({
-    queryKey: ["shopify", "vendor-products", vendor],
+    queryKey: ["storefront", "vendor-products", vendor],
     queryFn: () => fetchProductsByVendor(vendor, 9),
     enabled: Boolean(vendor.trim()),
     staleTime: CATALOG_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
-/** Small homepage-only Shopify vendor payload. */
+/** Small homepage-only brand payload. */
 export const homeVendorProductsQueryOptions = (vendor: string) => {
   const normalizedVendor = vendor.trim();
   return queryOptions({
-    queryKey: ["shopify", "home-vendor-products", normalizedVendor],
+    queryKey: ["storefront", "home-vendor-products", normalizedVendor],
     queryFn: () => fetchProductsByVendor(normalizedVendor, 4),
     enabled: Boolean(normalizedVendor),
     staleTime: CATALOG_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 };
 
-/** Complete Shopify product list for a brand page; fetched only when that route is opened. */
+/** Complete storefront product list for a brand page; fetched only when that route is opened. */
 export const allVendorProductsQueryOptions = (vendor: string) =>
   queryOptions({
-    queryKey: ["shopify", "vendor-products-all", vendor],
+    queryKey: ["storefront", "vendor-products-all", vendor],
     queryFn: () => fetchAllProductsByVendor(vendor),
     enabled: Boolean(vendor.trim()),
     staleTime: CATALOG_STALE_TIME,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
 export const productsByHandlesQueryOptions = (handles: string[]) => {
   const normalized = [...new Set(handles)].sort();
   return queryOptions({
-    queryKey: ["shopify", "products-by-handles", normalized],
+    queryKey: ["storefront", "products-by-handles", normalized],
     queryFn: () => fetchProductsByHandles(normalized),
     enabled: normalized.length > 0,
     staleTime: 60 * 1000,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 };
 
 export const storefrontSearchQueryOptions = (term: string) =>
   queryOptions({
-    queryKey: ["shopify", "search", term.trim()],
+    queryKey: ["storefront", "search", term.trim()],
     queryFn: () => searchStorefront(term),
     enabled: Boolean(term.trim()),
     staleTime: 60 * 1000,
-    retry: SHOPIFY_QUERY_RETRY_COUNT,
-    retryDelay: shopifyRetryDelay,
+    retry: STOREFRONT_QUERY_RETRY_COUNT,
+    retryDelay: storefrontRetryDelay,
   });
 
 export const shopPoliciesQueryOptions = () =>
   queryOptions({
-    queryKey: ["shopify", "policies"],
+    queryKey: ["storefront", "policies"],
     queryFn: () => fetchShopPolicies(),
     staleTime: POLICY_STALE_TIME,
     retry: false,

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useCartStore } from "@/stores/cartStore";
+import { hydrateCartStore } from "@/stores/cartStore";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
@@ -12,7 +12,7 @@ import { useWishlistStore } from "@/stores/wishlistStore";
 export function usePersistedStoreHydration() {
   useEffect(() => {
     void Promise.all([
-      Promise.resolve(useCartStore.persist.rehydrate()),
+      hydrateCartStore(),
       Promise.resolve(useWishlistStore.persist.rehydrate()),
       Promise.resolve(useRecentlyViewedStore.persist.rehydrate()),
     ]);

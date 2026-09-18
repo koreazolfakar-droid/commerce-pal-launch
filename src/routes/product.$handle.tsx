@@ -30,12 +30,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
-import {
-  discountPercent,
-  fetchProductByHandle,
-  formatPrice,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { discountPercent, formatPrice } from "@/lib/productPricing";
+import { fetchProductByHandle } from "@/lib/storefrontFacade";
+import type { StoreProduct } from "@/lib/storefrontTypes";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
@@ -109,7 +106,7 @@ export const Route = createFileRoute("/product/$handle")({
 
 function ProductPage() {
   const { t, language } = useLanguage();
-  const { product } = Route.useLoaderData() as { product: ShopifyProduct };
+  const { product } = Route.useLoaderData() as { product: StoreProduct };
   const node = product.node;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
   const images = useMemo(() => node.images.edges.map((edge) => edge.node), [node]);
@@ -193,9 +190,7 @@ function ProductPage() {
       }
       toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
       if (checkout) {
-        const checkoutUrl = useCartStore.getState().getCheckoutUrl();
-        if (checkoutUrl) window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-        else toast.error(t("addToCartFailed"));
+        window.location.assign("/cart#whatsapp-checkout");
       }
     } catch {
       toast.error(t("addToCartFailed"));
@@ -248,13 +243,13 @@ function ProductPage() {
   }, [content.specs, selectedVariant, node.productType, node.vendor]);
 
   const similar = useMemo(() => {
-    const fromShopify = (recommended ?? []).filter(
+    const recommendedProducts = (recommended ?? []).filter(
       (candidate) => candidate.node.handle !== node.handle,
     );
-    if (fromShopify.length >= 4) return fromShopify.slice(0, 8);
-    const seen = new Set([node.handle, ...fromShopify.map((item) => item.node.handle)]);
+    if (recommendedProducts.length >= 4) return recommendedProducts.slice(0, 8);
+    const seen = new Set([node.handle, ...recommendedProducts.map((item) => item.node.handle)]);
     const fallback = (vendorProducts ?? []).filter((candidate) => !seen.has(candidate.node.handle));
-    return [...fromShopify, ...fallback].slice(0, 8);
+    return [...recommendedProducts, ...fallback].slice(0, 8);
   }, [recommended, vendorProducts, node.handle]);
 
   const hasOverview = content.overview.length > 0;
