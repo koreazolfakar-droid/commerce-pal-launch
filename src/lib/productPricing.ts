@@ -1,4 +1,4 @@
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct as ShopifyProduct } from "@/lib/storefrontTypes";
 
 export function formatPrice(amount: string | number, currencyCode: string) {
   const value = typeof amount === "string" ? parseFloat(amount) : amount;
