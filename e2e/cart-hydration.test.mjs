@@ -9,13 +9,20 @@ test("native cart mutations share a single persisted hydration gate", async () =
 
   assert.match(source, /let cartHydrationPromise: Promise<void> \| null = null/);
   assert.match(source, /export function hydrateCartStore\(\): Promise<void>/);
-  assert.match(source, /cartHydrationPromise = Promise\.resolve\(useCartStore\.persist\.rehydrate\(\)\)/);
+  assert.match(
+    source,
+    /cartHydrationPromise = Promise\.resolve\(useCartStore\.persist\.rehydrate\(\)\)/,
+  );
 
   for (const mutation of ["addItem", "updateQuantity", "removeItem", "syncCart"]) {
-    const start = source.indexOf(`${mutation}: async`);
-    assert.notEqual(start, -1, `${mutation} implementation remains defined`);
-    const window = source.slice(start, start + 700);
-    assert.match(window, /await hydrateCartStore\(\)/, `${mutation} waits for persisted hydration`);
+    const implementation = new RegExp(
+      `${mutation}:\\s*async\\s*\\([^)]*\\)\\s*=>\\s*\\{[\\s\\S]{0,1400}?await hydrateCartStore\\(\\)`,
+    );
+    assert.match(
+      source,
+      implementation,
+      `${mutation} implementation waits for persisted hydration`,
+    );
   }
 });
 
