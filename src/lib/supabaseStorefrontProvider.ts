@@ -28,11 +28,12 @@ function bounded(value: number, fallback: number) {
 }
 
 function publicProductsQuery() {
+  const now = new Date().toISOString();
   return supabase
     .from("store_products")
     .select("*")
     .eq("status", "active")
-    .lte("published_at", new Date().toISOString());
+    .or(`published_at.is.null,published_at.lte.${now}`);
 }
 
 function groupByProduct<T extends { product_id: string }>(rows: T[]) {
