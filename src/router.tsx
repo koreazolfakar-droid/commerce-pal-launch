@@ -35,7 +35,7 @@ export const getRouter = () => {
     // Derived catalog queries contain Maps and Lucide components. They are useful
     // inside the server render, but must never cross the SSR serialization boundary.
     dehydrateOptions: {
-      shouldDehydrateQuery: (query) => query.meta?.ssrSerializable !== false,
+      shouldDehydrateQuery: (query) => query.meta?.["ssr"] !== false,
     },
     // RootComponent already owns QueryClientProvider.
     wrapQueryClient: false,
