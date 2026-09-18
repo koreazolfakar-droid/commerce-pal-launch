@@ -1,0 +1,146 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 12,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/477132095715",
+      "title": "Brand Logo — TECNO",
+      "handle": "logo-tecno",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:02:04Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608955619",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-tecno-1024.png?v=1789387218",
+        "altText": "TECNO logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477132128483",
+      "title": "Brand Logo — UGREEN",
+      "handle": "logo-ugreen",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T15:01:37Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608988387",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/rn-image_picker_lib_temp_f3d6a3f8-28b8-4d3a-8384-535fc26d3380.webp?v=1789398097",
+        "altText": "UGREEN logo on white background",
+        "width": 1254,
+        "height": 1254
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477132161251",
+      "title": "Brand Logo — Vention",
+      "handle": "logo-vention",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:02:04Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730609021155",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-vention-1024.png?v=1789387220",
+        "altText": "Vention logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477132194019",
+      "title": "Brand Logo — WIWU",
+      "handle": "logo-wiwu",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:02:04Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730609053923",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-wiwu-1024.png?v=1789387221",
+        "altText": "WIWU logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477132226787",
+      "title": "Brand Logo — Xiaomi",
+      "handle": "logo-xiaomi",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:02:05Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730609086691",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-xiaomi-1024.png?v=1789387222",
+        "altText": "Xiaomi logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": false,
+    "endCursor": "eyJsYXN0X2lkIjo0NzcxMzIyMjY3ODcsImxhc3RfdmFsdWUiOiI0NzcxMzIyMjY3ODcifQ=="
+  }
+}
