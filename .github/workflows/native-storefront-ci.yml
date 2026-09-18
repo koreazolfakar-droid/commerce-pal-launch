@@ -58,7 +58,7 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Storefront browser E2E (${{ matrix.project }})
-        run: bun run test:e2e -- --project=${{ matrix.project }}
+        run: bunx playwright test --project=${{ matrix.project }} --retries=0 --max-failures=1
 
   supabase-only:
     runs-on: ubuntu-latest
