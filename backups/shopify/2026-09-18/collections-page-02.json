@@ -1,0 +1,249 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 2,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/476227731683",
+      "title": "Anker UGREEN Chargers",
+      "handle": "anker-ugreen-chargers",
+      "descriptionHtml": "<p>شواحن Anker وUGREEN الرسمية مع مواصفات تقنية دقيقة وصور عالية الدقة.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-14T15:00:30Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730611052771",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/rn-image_picker_lib_temp_c65f3197-21ec-40eb-a6e8-faf7c497620e.webp?v=1789398030",
+        "altText": null,
+        "width": 1254,
+        "height": 1254
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650867994851"
+          },
+          {
+            "id": "gid://shopify/Product/9650868060387"
+          },
+          {
+            "id": "gid://shopify/Product/9650868158691"
+          },
+          {
+            "id": "gid://shopify/Product/9650868224227"
+          },
+          {
+            "id": "gid://shopify/Product/9650868388067"
+          },
+          {
+            "id": "gid://shopify/Product/9650868584675"
+          },
+          {
+            "id": "gid://shopify/Product/9650868977891"
+          },
+          {
+            "id": "gid://shopify/Product/9650868322531"
+          },
+          {
+            "id": "gid://shopify/Product/9650868256995"
+          },
+          {
+            "id": "gid://shopify/Product/9650868912355"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476229697763",
+      "title": "Laptops",
+      "handle": "laptops",
+      "descriptionHtml": "<p>أجهزة لابتوب حديثة ومتنوعة للعمل والدراسة والاستخدام اليومي، مع مواصفات واضحة وصور عالية الجودة.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-13T09:40:01Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730502623459",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/laptops-hero-lenovo.png?v=1789292401",
+        "altText": "Lenovo IdeaPad Slim 3 laptop",
+        "width": 584,
+        "height": 584
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650897551587"
+          },
+          {
+            "id": "gid://shopify/Product/9650897617123"
+          },
+          {
+            "id": "gid://shopify/Product/9650897748195"
+          },
+          {
+            "id": "gid://shopify/Product/9650897518819"
+          },
+          {
+            "id": "gid://shopify/Product/9650898043107"
+          },
+          {
+            "id": "gid://shopify/Product/9650898403555"
+          },
+          {
+            "id": "gid://shopify/Product/9650898239715"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476230156515",
+      "title": "Laptop - Lenovo",
+      "handle": "laptop-lenovo",
+      "descriptionHtml": "<p>مجموعة لابتوبات Lenovo المتوفرة في المتجر.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-13T08:49:33Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522185955",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/lenovo-logo.svg?v=1788625797",
+        "altText": "Lenovo logo",
+        "width": 6749,
+        "height": 1353
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "Lenovo"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650897551587"
+          },
+          {
+            "id": "gid://shopify/Product/9650897617123"
+          },
+          {
+            "id": "gid://shopify/Product/9650897748195"
+          },
+          {
+            "id": "gid://shopify/Product/9650897518819"
+          },
+          {
+            "id": "gid://shopify/Product/9650898043107"
+          },
+          {
+            "id": "gid://shopify/Product/9650931957987"
+          },
+          {
+            "id": "gid://shopify/Product/9650898403555"
+          },
+          {
+            "id": "gid://shopify/Product/9650898239715"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476230189283",
+      "title": "Laptop - HP",
+      "handle": "laptop-hp",
+      "descriptionHtml": "<p>مجموعة لابتوبات HP المتوفرة في المتجر.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-06T06:07:33Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "HP"
+          }
+        ]
+      },
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476230222051",
+      "title": "Laptop - Dell",
+      "handle": "laptop-dell",
+      "descriptionHtml": "<p>مجموعة لابتوبات Dell المتوفرة في المتجر.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-14T14:34:37Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730610823395",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/rn-image_picker_lib_temp_868973d1-ab7a-4163-bd9a-180e38fe8a04.jpg?v=1789396477",
+        "altText": null,
+        "width": 1408,
+        "height": 768
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "Dell"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9658222444771"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzYyMzAyMjIwNTEsImxhc3RfdmFsdWUiOiI0NzYyMzAyMjIwNTEifQ=="
+  }
+}
