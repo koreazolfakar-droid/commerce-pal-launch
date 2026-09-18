@@ -32,10 +32,14 @@ test("public storefront uses an SSR-safe Supabase client without auth storage", 
   assert.match(publicClient, /autoRefreshToken:\s*false/);
   assert.match(publicClient, /detectSessionInUrl:\s*false/);
   assert.doesNotMatch(publicClient, /brokeredPreviewStorage|localStorage/);
+  assert.match(publicClient, /new Proxy/);
+  assert.match(publicClient, /if \(!publicClient\) publicClient = createPublicSupabaseClient\(\)/);
 });
 
 test("public storefront data has a Shopify fail-safe instead of throwing the whole site", () => {
   assert.match(storefrontData, /withShopifyFallback/);
+  assert.match(storefrontData, /SUPABASE_PUBLIC_READ_TIMEOUT_MS/);
+  assert.match(storefrontData, /withTimeout\(primary\(\), label\)/);
   assert.match(storefrontData, /Supabase .* failed; using Shopify fallback/);
   assert.match(storefrontData, /fetchShopifyCatalogProducts/);
   assert.match(storefrontData, /fetchShopifyCollectionByHandle/);
