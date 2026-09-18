@@ -15,13 +15,32 @@ import {
 } from "@/lib/shopify";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 
+const SUPABASE_PUBLIC_READ_TIMEOUT_MS = 4_000;
+
+async function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`Supabase public ${label} timed out`)),
+          SUPABASE_PUBLIC_READ_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function withShopifyFallback<T>(
   label: string,
   primary: () => Promise<T>,
   fallback: () => Promise<T>,
 ): Promise<T> {
   try {
-    return await primary();
+    return await withTimeout(primary(), label);
   } catch (error) {
     console.error(
       `[StorefrontData] Supabase ${label} failed; using Shopify fallback.`,
