@@ -596,6 +596,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           is_blocked: boolean
+          is_profile_managed: boolean
           is_vip: boolean
           last_order_at: string | null
           name: string
@@ -614,6 +615,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           is_blocked?: boolean
+          is_profile_managed?: boolean
           is_vip?: boolean
           last_order_at?: string | null
           name: string
@@ -632,6 +634,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           is_blocked?: boolean
+          is_profile_managed?: boolean
           is_vip?: boolean
           last_order_at?: string | null
           name?: string
@@ -1111,6 +1114,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           is_blocked: boolean
+          is_profile_managed: boolean
           is_vip: boolean
           last_order_at: string | null
           name: string
@@ -1218,6 +1222,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           is_blocked: boolean
+          is_profile_managed: boolean
           is_vip: boolean
           last_order_at: string | null
           name: string
