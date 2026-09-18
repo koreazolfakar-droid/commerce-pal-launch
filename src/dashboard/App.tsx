@@ -1,37 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Route, Switch, useLocation } from "wouter";
 import { Toaster, toast } from "sonner";
 import {
-  Activity, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, BarChart3, Bell, Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleHelp, Clock3, Cloud, Command, Download, ExternalLink, Eye, FileText, Filter, FolderOpen, Gauge, Image as ImageIcon, Inbox, Layers3, LayoutDashboard, LifeBuoy, ListFilter, Loader2, LockKeyhole, LogOut, Mail, Megaphone, Menu, MenuSquare, MessageSquare, MoreHorizontal, Package, PanelLeftClose, PanelLeftOpen, PanelsTopLeft, Pencil, Plus, RefreshCw, Search, SearchCheck, Send, Settings2, ShoppingBag, SlidersHorizontal, Sparkles, Star, Tags, TicketPercent, Trash2, TrendingUp, UploadCloud, UserCog, Users, X, Zap
+  Activity, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, BarChart3, Bell, Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleHelp, Clock3, Cloud, Command, Download, ExternalLink, Eye, FileText, Filter, FolderOpen, Gauge, Image as ImageIcon, Inbox, Layers3, LayoutDashboard, LifeBuoy, ListFilter, Loader2, LockKeyhole, LogOut, Mail, Megaphone, Menu, MenuSquare, MessageSquare, MoreHorizontal, Package, PanelLeftClose, PanelLeftOpen, PanelsTopLeft, Pencil, Plus, RefreshCw, Search, SearchCheck, Send, Settings2, ShoppingBag, SlidersHorizontal, Sparkles, Star, Tags, TicketPercent, TrendingUp, UploadCloud, UserCog, Users, X, Zap
 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { customers, navSections, orders, pageMeta, products, revenueData, topBrands, type Order, type Product } from "@/dashboard/mock/data";
 import { LanguageContext, useLanguage } from "@/dashboard/i18n";
 import { validateProductDraft } from "@/dashboard/lib/validation";
 import {
-  PRODUCT_IMAGE_RESOLUTIONS,
-  getProductImageResolution,
-  setProductImageResolution,
-  type ProductImageResolution,
-} from "@/dashboard/lib/imageProcessing";
-import {
-  deleteDashboardProductImage,
   getDashboardProduct,
   getDashboardRole,
   listDashboardBrands,
   listDashboardCategories,
   listDashboardCollections,
-  listDashboardProductImages,
   listDashboardProducts,
-  reorderDashboardProductImages,
-  replaceDashboardProductImage,
   saveDashboardProduct,
-  setDashboardPrimaryProductImage,
   signInDashboard,
   signOutDashboard,
-  uploadDashboardProductImage,
   type DashboardProduct,
-  type DashboardProductImage,
 } from "@/dashboard/data/catalog";
 import HomepageBuilderPage from "@/dashboard/pages/HomepageBuilder";
 import CategoriesPage from "@/dashboard/pages/CategoriesPage";
@@ -45,6 +32,7 @@ import CustomerDetailPageLive from "@/dashboard/pages/CustomerDetailPage";
 import CollectionsPageLive from "@/dashboard/pages/CollectionsPage";
 import CollectionDetailPageLive from "@/dashboard/pages/CollectionDetailPage";
 import HeroBannersPageLive from "@/dashboard/pages/HeroBannersPage";
+import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 
 const iconMap: Record<string, typeof LayoutDashboard> = { LayoutDashboard, ShoppingBag, Package, Layers3, Tags, Boxes, Users, PanelsTopLeft, Image: ImageIcon, Badge: Star, Menu, BadgePercent: TicketPercent, Megaphone, TicketPercent, SearchCheck, ChartNoAxesCombined: BarChart3, Mail, Star, FolderOpen, UserCog, ScrollText: FileText, Settings2 };
 
@@ -587,23 +575,29 @@ function ProductForm({ id }: { id?: string }) {
         </div>
 
         <div className="space-y-4">
-          <SmallPanel title="Media" subtitle="Use an existing public product image URL">
-            <div className="space-y-4 p-5">
-              {form.imageUrl ? (
-                <div className="grid aspect-[1.5] place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-[#fafbfe]">
-                  <img
-                    src={form.imageUrl}
-                    alt={form.title || "Product"}
-                    className="h-full w-full object-contain p-4"
-                  />
+          <SmallPanel
+            title="Media"
+            subtitle={existing?.id ? "Live Supabase product gallery" : "Save the product first to upload images"}
+          >
+            {existing?.id ? (
+              <ProductMediaManager
+                productId={existing.id}
+                productTitle={form.title}
+                onPrimaryChange={(url) => update("imageUrl", url)}
+              />
+            ) : (
+              <div className="m-5 grid min-h-44 place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-[#fafbfe] text-center">
+                <div>
+                  <div className="mx-auto mb-2 grid size-10 place-items-center rounded-xl bg-indigo-50 text-indigo-500">
+                    <UploadCloud className="size-5" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-600">Save the product first</div>
+                  <div className="mt-1 text-[9px] text-slate-400">
+                    Then you can upload, replace, delete and reorder product images.
+                  </div>
                 </div>
-              ) : (
-                <div className="grid aspect-[1.5] place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-[#fafbfe] text-slate-400">
-                  <ImageIcon className="size-7" />
-                </div>
-              )}
-              {input("Image URL", "imageUrl")}
-            </div>
+              </div>
+            )}
           </SmallPanel>
 
           <SmallPanel title="Search preview">
