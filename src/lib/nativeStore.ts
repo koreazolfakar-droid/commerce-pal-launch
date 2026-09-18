@@ -248,10 +248,70 @@ export async function fetchBrandVendors(): Promise<string[]> {
 
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
   const normalized = handle.trim().toLowerCase();
-  const snapshot = await loadSnapshot();
-  return (
-    snapshot.products.find((entry) => entry.product.node.handle.toLowerCase() === normalized)
-      ?.product ?? null
+  if (!normalized) return null;
+
+  const productResult = await supabase
+    .from("store_products")
+    .select("*")
+    .eq("handle", normalized)
+    .eq("status", "active")
+    .maybeSingle();
+  if (productResult.error) {
+    throw new Error(`Supabase product failed: ${productResult.error.message}`);
+  }
+  const row = productResult.data as ProductRow | null;
+  if (!row) return null;
+
+  const [variantResult, imageResult, linkResult, brandResult] = await Promise.all([
+    supabase
+      .from("store_product_variants")
+      .select("*")
+      .eq("product_id", row.id)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("store_product_images")
+      .select("*")
+      .eq("product_id", row.id)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("store_collection_products")
+      .select("*")
+      .eq("product_id", row.id)
+      .order("sort_order", { ascending: true }),
+    row.brand_id
+      ? supabase.from("cms_brands").select("*").eq("id", row.brand_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+
+  const variants = assertResult(variantResult, "product variants");
+  const images = assertResult(imageResult, "product images");
+  const links = assertResult(linkResult, "product collection links");
+  if (brandResult.error) {
+    throw new Error(`Supabase product brand failed: ${brandResult.error.message}`);
+  }
+
+  const collectionIds = links.map((link) => link.collection_id);
+  let collections: CollectionRow[] = [];
+  if (collectionIds.length) {
+    const collectionResult = await supabase
+      .from("store_collections")
+      .select("*")
+      .in("id", collectionIds)
+      .eq("is_active", true);
+    collections = assertResult(collectionResult, "product collections");
+    const order = new Map(links.map((link, index) => [link.collection_id, index]));
+    collections.sort(
+      (a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+    );
+  }
+
+  return buildProduct(
+    row,
+    variants,
+    images,
+    collections,
+    (brandResult.data as BrandRow | null) ?? undefined,
   );
 }
 
