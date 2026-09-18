@@ -1,0 +1,280 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 5,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/476231467235",
+      "title": "iPhone 17 Series",
+      "handle": "iphone-17-series",
+      "descriptionHtml": "Apple iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max and iPhone 17e.",
+      "sortOrder": "ALPHA_ASC",
+      "updatedAt": "2026-09-06T06:07:34Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650957156579"
+          },
+          {
+            "id": "gid://shopify/Product/9650957975779"
+          },
+          {
+            "id": "gid://shopify/Product/9650958467299"
+          },
+          {
+            "id": "gid://shopify/Product/9650958860515"
+          },
+          {
+            "id": "gid://shopify/Product/9650957615331"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476231500003",
+      "title": "iPhone 16 Series",
+      "handle": "iphone-16-series",
+      "descriptionHtml": "Apple iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max and iPhone 16e.",
+      "sortOrder": "ALPHA_ASC",
+      "updatedAt": "2026-09-06T06:07:34Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650959286499"
+          },
+          {
+            "id": "gid://shopify/Product/9650959909091"
+          },
+          {
+            "id": "gid://shopify/Product/9650960335075"
+          },
+          {
+            "id": "gid://shopify/Product/9650960892131"
+          },
+          {
+            "id": "gid://shopify/Product/9650961219811"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476233105635",
+      "title": "Xiaomi Phones",
+      "handle": "xiaomi-phones",
+      "descriptionHtml": "<p>هواتف Xiaomi و Redmi و POCO المتوفرة في المتجر، مع الألوان والمواصفات والأسعار.</p>",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-06T06:07:34Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "TAG",
+            "relation": "EQUALS",
+            "condition": "xiaomi-phone"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9651061424355"
+          },
+          {
+            "id": "gid://shopify/Product/9651061391587"
+          },
+          {
+            "id": "gid://shopify/Product/9651061358819"
+          },
+          {
+            "id": "gid://shopify/Product/9651061260515"
+          },
+          {
+            "id": "gid://shopify/Product/9651061227747"
+          },
+          {
+            "id": "gid://shopify/Product/9651061162211"
+          },
+          {
+            "id": "gid://shopify/Product/9651061129443"
+          },
+          {
+            "id": "gid://shopify/Product/9651060834531"
+          },
+          {
+            "id": "gid://shopify/Product/9651060670691"
+          },
+          {
+            "id": "gid://shopify/Product/9651060539619"
+          },
+          {
+            "id": "gid://shopify/Product/9651060343011"
+          },
+          {
+            "id": "gid://shopify/Product/9651060179171"
+          },
+          {
+            "id": "gid://shopify/Product/9651059032291"
+          },
+          {
+            "id": "gid://shopify/Product/9651058770147"
+          },
+          {
+            "id": "gid://shopify/Product/9651058082019"
+          },
+          {
+            "id": "gid://shopify/Product/9651057787107"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476233302243",
+      "title": "Xiaomi",
+      "handle": "xiaomi-1",
+      "descriptionHtml": "<p>مجموعة هواتف Xiaomi الأصلية.</p>",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-12T05:45:25Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522087651",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/xiaomi-logo.svg?v=1788625785",
+        "altText": "Xiaomi logo",
+        "width": 200,
+        "height": 200
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "Xiaomi"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9658221494499"
+          },
+          {
+            "id": "gid://shopify/Product/9658219430115"
+          },
+          {
+            "id": "gid://shopify/Product/9658215825635"
+          },
+          {
+            "id": "gid://shopify/Product/9658214056163"
+          },
+          {
+            "id": "gid://shopify/Product/9654432596195"
+          },
+          {
+            "id": "gid://shopify/Product/9651060834531"
+          },
+          {
+            "id": "gid://shopify/Product/9651060670691"
+          },
+          {
+            "id": "gid://shopify/Product/9651060539619"
+          },
+          {
+            "id": "gid://shopify/Product/9651060343011"
+          },
+          {
+            "id": "gid://shopify/Product/9651060179171"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476233335011",
+      "title": "POCO",
+      "handle": "poco",
+      "descriptionHtml": "<p>مجموعة هواتف POCO الأصلية.</p>",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-06T06:07:34Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522153187",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/poco-logo.png?v=1788625792",
+        "altText": "POCO logo",
+        "width": 2500,
+        "height": 1406
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "POCO"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9651059032291"
+          },
+          {
+            "id": "gid://shopify/Product/9651058770147"
+          },
+          {
+            "id": "gid://shopify/Product/9651058082019"
+          },
+          {
+            "id": "gid://shopify/Product/9651057787107"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzYyMzMzMzUwMTEsImxhc3RfdmFsdWUiOiI0NzYyMzMzMzUwMTEifQ=="
+  }
+}
