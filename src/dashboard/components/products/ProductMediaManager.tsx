@@ -22,8 +22,11 @@ import {
 import {
   PRODUCT_IMAGE_RESOLUTIONS,
   getProductImageResolution,
+  inspectProductImageSource,
   setProductImageResolution,
+  type ProductImageConversionResult,
   type ProductImageResolution,
+  type ProductImageSourceInfo,
 } from "@/dashboard/lib/imageProcessing";
 
 export default function ProductMediaManager({
@@ -45,6 +48,9 @@ export default function ProductMediaManager({
   const [resolution, setResolution] = useState<ProductImageResolution>(() =>
     getProductImageResolution(),
   );
+  const [pendingInfo, setPendingInfo] = useState<ProductImageSourceInfo[]>([]);
+  const [lastConversions, setLastConversions] = useState<ProductImageConversionResult[]>([]);
+  const [storedMeta, setStoredMeta] = useState<Record<string, { width: number; height: number; bytes?: number }>>({});
 
   const sync = (rows: DashboardProductImage[]) => {
     setImages(rows);
@@ -71,10 +77,18 @@ export default function ProductMediaManager({
   const upload = async (files: File[]) => {
     if (!files.length) return;
     setUploading(true);
+    setLastConversions([]);
     try {
+      const inspected = await Promise.all(files.map((file) => inspectProductImageSource(file)));
+      setPendingInfo(inspected);
+
       let rows = images;
+      const conversions: ProductImageConversionResult[] = [];
       for (const file of files) {
-        rows = await uploadDashboardProductImage(productId, file, resolution, productTitle);
+        const result = await uploadDashboardProductImage(productId, file, resolution, productTitle);
+        rows = result.images;
+        conversions.push(result.conversion);
+        setLastConversions([...conversions]);
       }
       sync(rows);
       toast.success(files.length === 1 ? "Image uploaded." : `${files.length} images uploaded.`);
@@ -83,18 +97,24 @@ export default function ProductMediaManager({
       await load();
     } finally {
       setUploading(false);
+      setPendingInfo([]);
     }
   };
 
   const replace = async (file: File) => {
     if (!replaceTarget) return;
     setBusyId(replaceTarget.id);
+    setLastConversions([]);
     try {
-      sync(await replaceDashboardProductImage(replaceTarget, file, resolution));
+      setPendingInfo([await inspectProductImageSource(file)]);
+      const result = await replaceDashboardProductImage(replaceTarget, file, resolution);
+      sync(result.images);
+      setLastConversions([result.conversion]);
       toast.success("Image replaced.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image replacement failed.");
     } finally {
+      setPendingInfo([]);
       setReplaceTarget(null);
       setBusyId(null);
     }
@@ -144,6 +164,41 @@ export default function ProductMediaManager({
       setBusyId(null);
     }
   };
+
+  const formatBytes = (bytes?: number) => {
+    if (bytes == null || !Number.isFinite(bytes)) return "Size unavailable";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all(
+      images.map(async (image) => {
+        try {
+          const response = await fetch(image.url, { method: "HEAD" });
+          const value = response.headers.get("content-length");
+          return [image.id, value ? Number(value) : undefined] as const;
+        } catch {
+          return [image.id, undefined] as const;
+        }
+      }),
+    ).then((rows) => {
+      if (cancelled) return;
+      setStoredMeta((current) => {
+        const next = { ...current };
+        for (const [id, bytes] of rows) {
+          const existing = next[id] ?? { width: 0, height: 0 };
+          next[id] = { ...existing, ...(bytes ? { bytes } : {}) };
+        }
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [images]);
 
   return (
     <div className="space-y-4 p-5">
@@ -214,6 +269,53 @@ export default function ProductMediaManager({
         </div>
       </div>
 
+      {(pendingInfo.length > 0 || lastConversions.length > 0) && (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.12em] text-slate-500">
+            Real image size
+          </div>
+          <div className="space-y-2">
+            {(lastConversions.length ? lastConversions : pendingInfo.map((source) => ({ source, output: null, file: null }))).map((item, index) => {
+              const source = "source" in item ? item.source : item;
+              const output = "output" in item ? item.output : null;
+              const reduction = output && source.bytes > 0
+                ? Math.max(0, Math.round((1 - output.bytes / source.bytes) * 100))
+                : null;
+              return (
+                <div key={`${source.name}-${index}`} className="grid gap-2 rounded-xl bg-white p-3 sm:grid-cols-2">
+                  <div>
+                    <div className="text-[9px] font-bold uppercase tracking-[.12em] text-slate-400">Before upload</div>
+                    <div className="mt-1 text-[11px] font-bold text-slate-700">
+                      {source.width} × {source.height}px
+                    </div>
+                    <div className="mt-0.5 text-[10px] text-slate-500">
+                      {formatBytes(source.bytes)} · {source.mimeType.replace("image/", "").toUpperCase()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] font-bold uppercase tracking-[.12em] text-[#5968ea]">After upload</div>
+                    {output ? (
+                      <>
+                        <div className="mt-1 text-[11px] font-bold text-slate-700">
+                          {output.width} × {output.height}px
+                        </div>
+                        <div className="mt-0.5 text-[10px] text-slate-500">
+                          {formatBytes(output.bytes)} · WebP{reduction != null ? ` · ${reduction}% smaller` : ""}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold text-slate-400">
+                        <Loader2 className="size-3 animate-spin" /> Converting & uploading…
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="grid min-h-40 place-items-center rounded-2xl border border-slate-200 bg-slate-50">
           <Loader2 className="size-5 animate-spin text-[#5968ea]" />
@@ -234,6 +336,17 @@ export default function ProductMediaManager({
                   src={image.url}
                   alt={image.altText || productTitle}
                   className="h-full w-full object-contain p-3"
+                  onLoad={(event) => {
+                    const element = event.currentTarget;
+                    setStoredMeta((current) => ({
+                      ...current,
+                      [image.id]: {
+                        ...current[image.id],
+                        width: element.naturalWidth,
+                        height: element.naturalHeight,
+                      },
+                    }));
+                  }}
                 />
                 {image.isPrimary && (
                   <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-[#5968ea] px-2 py-1 text-[9px] font-bold text-white">
@@ -248,6 +361,10 @@ export default function ProductMediaManager({
               </div>
 
               <div className="space-y-2 border-t border-slate-100 p-2.5">
+                <div className="rounded-lg bg-slate-50 px-2 py-1.5 text-[9px] font-semibold text-slate-500">
+                  Actual: {storedMeta[image.id]?.width ? `${storedMeta[image.id].width} × ${storedMeta[image.id].height}px` : "Reading dimensions…"}
+                  {storedMeta[image.id]?.bytes ? ` · ${formatBytes(storedMeta[image.id].bytes)}` : ""}
+                </div>
                 <div className="flex flex-wrap gap-1.5">
                   <button
                     type="button"
