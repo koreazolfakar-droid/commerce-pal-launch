@@ -805,7 +805,7 @@ export default function CategoriesPage() {
                     Products in {selected.name}
                   </div>
                   <div className="mt-1 text-[10px] text-slate-400">
-                    Assignment uses Product.category and the existing catalog relationship logic.
+                    Assignment uses store_products.category_id in Supabase as the source of truth.
                   </div>
                 </div>
                 <button
