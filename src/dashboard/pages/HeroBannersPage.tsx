@@ -1,0 +1,651 @@
+import {
+  ArrowDown,
+  ArrowUp,
+  Copy,
+  ExternalLink,
+  Image as ImageIcon,
+  Loader2,
+  Monitor,
+  Plus,
+  RefreshCw,
+  Save,
+  Smartphone,
+  Trash2,
+  UploadCloud,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import {
+  createDashboardHeroSlide,
+  deleteDashboardHeroSlide,
+  getHeroScheduleState,
+  listDashboardHeroLinkOptions,
+  listDashboardHeroMedia,
+  listDashboardHeroSlides,
+  reorderDashboardHeroSlides,
+  updateDashboardHeroSlide,
+  uploadDashboardHeroImage,
+  type DashboardHeroInput,
+  type DashboardHeroLinkOption,
+  type DashboardHeroMediaAsset,
+  type DashboardHeroSlide,
+  type HeroAlignment,
+  type HeroButtonStyle,
+  type HeroTargetType,
+} from "@/dashboard/data/hero";
+
+const EMPTY_FORM: DashboardHeroInput = {
+  titleEn: "",
+  titleAr: "",
+  subtitleEn: "",
+  subtitleAr: "",
+  imageUrl: "",
+  mobileImageUrl: "",
+  imageAltEn: "",
+  imageAltAr: "",
+  mobileImageAltEn: "",
+  mobileImageAltAr: "",
+  buttonLabelEn: "",
+  buttonLabelAr: "",
+  targetType: "none",
+  targetValue: "",
+  isPublished: false,
+  startsAt: "",
+  endsAt: "",
+  contentAlignment: "start",
+  overlayOpacity: 20,
+  buttonStyle: "primary",
+  openInNewTab: false,
+};
+
+function toLocalInputValue(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function fromSlide(slide: DashboardHeroSlide): DashboardHeroInput {
+  return {
+    titleEn: slide.titleEn,
+    titleAr: slide.titleAr,
+    subtitleEn: slide.subtitleEn,
+    subtitleAr: slide.subtitleAr,
+    imageUrl: slide.imageUrl,
+    mobileImageUrl: slide.mobileImageUrl,
+    imageAltEn: slide.imageAltEn,
+    imageAltAr: slide.imageAltAr,
+    mobileImageAltEn: slide.mobileImageAltEn,
+    mobileImageAltAr: slide.mobileImageAltAr,
+    buttonLabelEn: slide.buttonLabelEn,
+    buttonLabelAr: slide.buttonLabelAr,
+    targetType: slide.targetType,
+    targetValue: slide.targetValue,
+    isPublished: slide.isPublished,
+    startsAt: toLocalInputValue(slide.startsAt),
+    endsAt: toLocalInputValue(slide.endsAt),
+    contentAlignment: slide.contentAlignment,
+    overlayOpacity: slide.overlayOpacity,
+    buttonStyle: slide.buttonStyle,
+    openInNewTab: slide.openInNewTab,
+  };
+}
+
+function statusBadge(slide: DashboardHeroSlide) {
+  const state = getHeroScheduleState(slide);
+  if (state === "live") return { label: "Live", className: "bg-emerald-50 text-emerald-700" };
+  if (state === "scheduled") return { label: "Scheduled", className: "bg-blue-50 text-blue-700" };
+  if (state === "expired") return { label: "Expired", className: "bg-amber-50 text-amber-700" };
+  return { label: "Draft", className: "bg-slate-100 text-slate-600" };
+}
+
+function targetHref(form: DashboardHeroInput) {
+  if (form.targetType === "product" && form.targetValue) return `/product/${form.targetValue}`;
+  if (form.targetType === "collection" && form.targetValue) return `/collections/${form.targetValue}`;
+  if (form.targetType === "url" && form.targetValue) return form.targetValue;
+  return "";
+}
+
+function buttonClass(style: HeroButtonStyle) {
+  if (style === "light") return "bg-white text-slate-950";
+  if (style === "dark") return "bg-slate-950 text-white";
+  if (style === "secondary") return "border border-white/70 bg-white/10 text-white backdrop-blur";
+  return "bg-[#5968ea] text-white";
+}
+
+function MediaLibraryModal({
+  assets,
+  onSelect,
+  onClose,
+}: {
+  assets: DashboardHeroMediaAsset[];
+  onSelect: (asset: DashboardHeroMediaAsset) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm">
+      <div className="max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-[.16em] text-indigo-500">Supabase Storage</div>
+            <div className="mt-1 text-lg font-bold text-[#14203a]">Hero media library</div>
+          </div>
+          <button onClick={onClose} className="grid size-9 place-items-center rounded-xl bg-slate-100 text-slate-500">
+            <X className="size-4" />
+          </button>
+        </div>
+        <div className="max-h-[68vh] overflow-y-auto p-5">
+          {assets.length ? (
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {assets.map((asset) => (
+                <button
+                  key={asset.id}
+                  onClick={() => onSelect(asset)}
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:border-indigo-400 hover:shadow-md"
+                >
+                  <div className="aspect-[4/3] bg-slate-50">
+                    <img src={asset.url} alt={asset.altText || asset.fileName} className="size-full object-cover" />
+                  </div>
+                  <div className="p-3">
+                    <div className="truncate text-[10px] font-bold text-slate-700">{asset.fileName}</div>
+                    <div className="mt-1 text-[9px] text-slate-400">
+                      {asset.sizeBytes ? `${(asset.sizeBytes / 1024 / 1024).toFixed(2)} MB` : "Stored media"}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="py-16 text-center text-sm text-slate-400">No hero images uploaded yet.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function HeroBannersPage() {
+  const [slides, setSlides] = useState<DashboardHeroSlide[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [form, setForm] = useState<DashboardHeroInput>(EMPTY_FORM);
+  const [language, setLanguage] = useState<"en" | "ar">("en");
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [products, setProducts] = useState<DashboardHeroLinkOption[]>([]);
+  const [collections, setCollections] = useState<DashboardHeroLinkOption[]>([]);
+  const [media, setMedia] = useState<DashboardHeroMediaAsset[]>([]);
+  const [mediaTarget, setMediaTarget] = useState<"desktop" | "mobile" | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<"desktop" | "mobile" | null>(null);
+  const desktopFileRef = useRef<HTMLInputElement>(null);
+  const mobileFileRef = useRef<HTMLInputElement>(null);
+
+  const selected = useMemo(
+    () => slides.find((slide) => slide.id === selectedId) ?? null,
+    [selectedId, slides],
+  );
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [nextSlides, links, nextMedia] = await Promise.all([
+        listDashboardHeroSlides(),
+        listDashboardHeroLinkOptions(),
+        listDashboardHeroMedia(),
+      ]);
+      setSlides(nextSlides);
+      setProducts(links.products);
+      setCollections(links.collections);
+      setMedia(nextMedia);
+      setSelectedId((current) => {
+        if (current && nextSlides.some((slide) => slide.id === current)) return current;
+        return nextSlides[0]?.id ?? null;
+      });
+      if (!nextSlides.length) setForm(EMPTY_FORM);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Unable to load hero CMS.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useEffect(() => {
+    if (selected) setForm(fromSlide(selected));
+  }, [selected]);
+
+  const dirty = useMemo(() => {
+    if (!selected) return JSON.stringify(form) !== JSON.stringify(EMPTY_FORM);
+    return JSON.stringify(form) !== JSON.stringify(fromSlide(selected));
+  }, [form, selected]);
+
+  const newSlide = () => {
+    setSelectedId(null);
+    setForm(EMPTY_FORM);
+    setLanguage("en");
+  };
+
+  const save = async () => {
+    if (form.isPublished && !form.imageUrl.trim()) {
+      toast.error("Upload a desktop image before publishing.");
+      return;
+    }
+    if (form.startsAt && form.endsAt && new Date(form.endsAt) <= new Date(form.startsAt)) {
+      toast.error("End time must be after start time.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const saved = selectedId
+        ? await updateDashboardHeroSlide(selectedId, form)
+        : await createDashboardHeroSlide(form);
+      if (!saved) throw new Error("Hero save returned no record.");
+      toast.success(selectedId ? "Hero slide saved." : "Hero slide created.");
+      await load();
+      setSelectedId(saved.id);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Hero save failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const duplicate = async () => {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      const copy = await createDashboardHeroSlide({
+        ...fromSlide(selected),
+        titleEn: selected.titleEn ? `${selected.titleEn} Copy` : "Hero Copy",
+        isPublished: false,
+        startsAt: "",
+        endsAt: "",
+      });
+      if (!copy) throw new Error("Hero duplicate returned no record.");
+      await load();
+      setSelectedId(copy.id);
+      toast.success("Hero duplicated as draft.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Duplicate failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!selected || !window.confirm("Delete this hero slide? Uploaded media stays in Media Library.")) return;
+    try {
+      await deleteDashboardHeroSlide(selected.id);
+      toast.success("Hero slide deleted.");
+      await load();
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Delete failed.");
+    }
+  };
+
+  const move = async (direction: -1 | 1) => {
+    if (!selected) return;
+    const ordered = [...slides].sort((a, b) => a.sortOrder - b.sortOrder);
+    const index = ordered.findIndex((slide) => slide.id === selected.id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= ordered.length) return;
+    [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+    const next = ordered.map((slide, sortOrder) => ({ ...slide, sortOrder }));
+    setSlides(next);
+    try {
+      await reorderDashboardHeroSlides(next.map((slide) => ({ id: slide.id, sortOrder: slide.sortOrder })));
+      toast.success("Hero order saved.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Reorder failed.");
+      void load();
+    }
+  };
+
+  const upload = async (file: File | undefined, target: "desktop" | "mobile") => {
+    if (!file) return;
+    setUploading(target);
+    try {
+      const alt = target === "desktop"
+        ? (language === "ar" ? form.imageAltAr : form.imageAltEn)
+        : (language === "ar" ? form.mobileImageAltAr : form.mobileImageAltEn);
+      const asset = await uploadDashboardHeroImage(file, alt);
+      setMedia((current) => [asset, ...current.filter((item) => item.id !== asset.id)]);
+      setForm((current) =>
+        target === "desktop"
+          ? { ...current, imageUrl: asset.url }
+          : { ...current, mobileImageUrl: asset.url },
+      );
+      toast.success(`${target === "desktop" ? "Desktop" : "Mobile"} hero image uploaded.`);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Image upload failed.");
+    } finally {
+      setUploading(null);
+      if (desktopFileRef.current) desktopFileRef.current.value = "";
+      if (mobileFileRef.current) mobileFileRef.current.value = "";
+    }
+  };
+
+  const chooseMedia = (asset: DashboardHeroMediaAsset) => {
+    if (!mediaTarget) return;
+    setForm((current) =>
+      mediaTarget === "desktop"
+        ? { ...current, imageUrl: asset.url }
+        : { ...current, mobileImageUrl: asset.url },
+    );
+    setMediaTarget(null);
+  };
+
+  const linkOptions = form.targetType === "product" ? products : form.targetType === "collection" ? collections : [];
+  const previewImage = previewMode === "mobile" && form.mobileImageUrl ? form.mobileImageUrl : form.imageUrl;
+  const previewTitle = language === "ar" ? form.titleAr : form.titleEn;
+  const previewSubtitle = language === "ar" ? form.subtitleAr : form.subtitleEn;
+  const previewButton = language === "ar" ? form.buttonLabelAr : form.buttonLabelEn;
+  const alignClass =
+    form.contentAlignment === "center"
+      ? "items-center text-center"
+      : form.contentAlignment === "end"
+        ? "items-end text-right"
+        : "items-start text-left";
+  const liveCount = slides.filter((slide) => getHeroScheduleState(slide) === "live").length;
+  const scheduledCount = slides.filter((slide) => getHeroScheduleState(slide) === "scheduled").length;
+
+  if (loading && !slides.length) {
+    return <div className="grid min-h-[480px] place-items-center rounded-2xl border border-slate-200 bg-white"><Loader2 className="size-6 animate-spin text-[#5968ea]" /></div>;
+  }
+
+  return (
+    <div>
+      <div className="mb-7 flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
+        <div>
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">Store content / CMS</div>
+          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Hero banners</h1>
+          <p className="mt-1.5 text-sm text-slate-500">Control the storefront hero, scheduling, links, responsive images and bilingual content from Supabase.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => window.open("/", "_blank", "noopener,noreferrer")} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">
+            <ExternalLink className="size-3.5" /> View storefront
+          </button>
+          <button onClick={() => void load()} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">
+            <RefreshCw className="size-3.5" /> Refresh
+          </button>
+          <button onClick={newSlide} className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white">
+            <Plus className="size-4" /> New slide
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-4">
+        {[
+          ["Total slides", slides.length],
+          ["Live", liveCount],
+          ["Scheduled", scheduledCount],
+          ["Media assets", media.length],
+        ].map(([label, value]) => (
+          <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="text-[10px] text-slate-400">{label}</div>
+            <div className="mt-1 text-xl font-bold text-[#14203a]">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <div className="text-[12px] font-bold text-[#14203a]">Slides</div>
+            <button onClick={newSlide} className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><Plus className="size-4" /></button>
+          </div>
+          <div className="max-h-[760px] divide-y divide-slate-100 overflow-y-auto">
+            {slides.map((slide, index) => {
+              const badge = statusBadge(slide);
+              return (
+                <button
+                  key={slide.id}
+                  onClick={() => setSelectedId(slide.id)}
+                  className={`grid w-full grid-cols-[64px_1fr] gap-3 p-3 text-left transition ${selectedId === slide.id ? "bg-indigo-50/70" : "hover:bg-slate-50"}`}
+                >
+                  <div className="grid h-14 w-16 place-items-center overflow-hidden rounded-xl bg-slate-100">
+                    {slide.imageUrl ? <img src={slide.imageUrl} alt="" className="size-full object-cover" /> : <ImageIcon className="size-5 text-slate-300" />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-[11px] font-bold text-slate-700">{slide.titleEn || slide.titleAr || `Slide ${index + 1}`}</div>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${badge.className}`}>{badge.label}</span>
+                      <span className="text-[9px] text-slate-400">#{index + 1}</span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+            {!slides.length ? <div className="px-5 py-12 text-center text-[11px] text-slate-400">No hero slides yet.</div> : null}
+          </div>
+        </aside>
+
+        <div className="space-y-4">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-[13px] font-bold text-[#14203a]">{selected ? "Edit slide" : "Create slide"}</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">{selected ? `Last updated ${new Date(selected.updatedAt).toLocaleString()}` : "New draft hero slide"}</div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {selected ? (
+                  <>
+                    <button onClick={() => void move(-1)} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500"><ArrowUp className="size-4" /></button>
+                    <button onClick={() => void move(1)} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500"><ArrowDown className="size-4" /></button>
+                    <button onClick={() => void duplicate()} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600"><Copy className="size-3.5" /> Duplicate</button>
+                    <button onClick={() => void remove()} className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600"><Trash2 className="size-3.5" /> Delete</button>
+                  </>
+                ) : null}
+                <button onClick={() => void save()} disabled={saving || (!dirty && Boolean(selected))} className="flex h-9 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40">
+                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+                  {selected ? "Save changes" : "Create slide"}
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-5 flex gap-2 rounded-xl bg-slate-100 p-1">
+              <button onClick={() => setLanguage("en")} className={`flex-1 rounded-lg px-3 py-2 text-[10px] font-bold ${language === "en" ? "bg-white text-[#14203a] shadow-sm" : "text-slate-500"}`}>English</button>
+              <button onClick={() => setLanguage("ar")} className={`flex-1 rounded-lg px-3 py-2 text-[10px] font-bold ${language === "ar" ? "bg-white text-[#14203a] shadow-sm" : "text-slate-500"}`}>العربية</button>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Title</span>
+                <input
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                  value={language === "ar" ? form.titleAr : form.titleEn}
+                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, titleAr: e.target.value } : { ...current, titleEn: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button label</span>
+                <input
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                  value={language === "ar" ? form.buttonLabelAr : form.buttonLabelEn}
+                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, buttonLabelAr: e.target.value } : { ...current, buttonLabelEn: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                />
+              </label>
+              <label className="block lg:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Subtitle</span>
+                <textarea
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                  value={language === "ar" ? form.subtitleAr : form.subtitleEn}
+                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, subtitleAr: e.target.value } : { ...current, subtitleEn: e.target.value })}
+                  className="min-h-20 w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
+                />
+              </label>
+            </div>
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            {(["desktop", "mobile"] as const).map((target) => {
+              const isDesktop = target === "desktop";
+              const url = isDesktop ? form.imageUrl : form.mobileImageUrl;
+              const alt = isDesktop
+                ? (language === "ar" ? form.imageAltAr : form.imageAltEn)
+                : (language === "ar" ? form.mobileImageAltAr : form.mobileImageAltEn);
+              return (
+                <div key={target} className="rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 text-[12px] font-bold text-[#14203a]">{isDesktop ? <Monitor className="size-4" /> : <Smartphone className="size-4" />} {isDesktop ? "Desktop image" : "Mobile image"}</div>
+                      <div className="mt-1 text-[10px] text-slate-400">{isDesktop ? "Required when published" : "Optional mobile-specific crop"}</div>
+                    </div>
+                  </div>
+                  <div className={`mb-3 grid overflow-hidden rounded-xl bg-slate-100 ${isDesktop ? "aspect-[16/9]" : "aspect-[9/16] max-h-72"}`}>
+                    {url ? <img src={url} alt={alt} className="size-full object-cover" /> : <div className="grid place-items-center"><ImageIcon className="size-7 text-slate-300" /></div>}
+                  </div>
+                  <input
+                    ref={isDesktop ? desktopFileRef : mobileFileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/svg+xml,image/heic,image/heif"
+                    className="hidden"
+                    onChange={(e) => void upload(e.target.files?.[0], target)}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => (isDesktop ? desktopFileRef.current : mobileFileRef.current)?.click()} disabled={uploading !== null} className="flex h-9 items-center gap-2 rounded-xl bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 disabled:opacity-50">
+                      {uploading === target ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />} Upload
+                    </button>
+                    <button onClick={() => setMediaTarget(target)} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600">
+                      <ImageIcon className="size-3.5" /> Library
+                    </button>
+                    {url ? <button onClick={() => setForm((current) => isDesktop ? { ...current, imageUrl: "" } : { ...current, mobileImageUrl: "" })} className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-500">Remove</button> : null}
+                  </div>
+                  <label className="mt-3 block">
+                    <span className="mb-1.5 block text-[10px] font-bold text-slate-500">Alt text ({language.toUpperCase()})</span>
+                    <input
+                      value={alt}
+                      onChange={(e) => setForm((current) => {
+                        if (isDesktop) return language === "ar" ? { ...current, imageAltAr: e.target.value } : { ...current, imageAltEn: e.target.value };
+                        return language === "ar" ? { ...current, mobileImageAltAr: e.target.value } : { ...current, mobileImageAltEn: e.target.value };
+                      })}
+                      className="h-9 w-full rounded-xl border border-slate-200 px-3 text-[11px]"
+                    />
+                  </label>
+                </div>
+              );
+            })}
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="mb-4 text-[13px] font-bold text-[#14203a]">Link & CTA</div>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Target type</span>
+                <select value={form.targetType} onChange={(e) => setForm((current) => ({ ...current, targetType: e.target.value as HeroTargetType, targetValue: "" }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="none">No link</option>
+                  <option value="product">Product</option>
+                  <option value="collection">Collection</option>
+                  <option value="url">Custom URL</option>
+                </select>
+              </label>
+              <label className="lg:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Destination</span>
+                {form.targetType === "product" || form.targetType === "collection" ? (
+                  <select value={form.targetValue} onChange={(e) => setForm((current) => ({ ...current, targetValue: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                    <option value="">Choose {form.targetType}</option>
+                    {linkOptions.map((option) => <option key={option.id} value={option.value}>{option.label} · {option.status}</option>)}
+                  </select>
+                ) : (
+                  <input value={form.targetValue} onChange={(e) => setForm((current) => ({ ...current, targetValue: e.target.value }))} disabled={form.targetType === "none"} placeholder="/shop or https://..." className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50" />
+                )}
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button style</span>
+                <select value={form.buttonStyle} onChange={(e) => setForm((current) => ({ ...current, buttonStyle: e.target.value as HeroButtonStyle }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="primary">Primary</option>
+                  <option value="secondary">Secondary</option>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-2 self-end rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-[11px] font-semibold text-slate-600">
+                <input type="checkbox" checked={form.openInNewTab} onChange={(e) => setForm((current) => ({ ...current, openInNewTab: e.target.checked }))} />
+                Open in new tab
+              </label>
+              <div className="self-end rounded-xl bg-slate-50 px-3 py-3 text-[10px] text-slate-500">Resolved path: {targetHref(form) || "No destination"}</div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="mb-4 text-[13px] font-bold text-[#14203a]">Publishing & schedule</div>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <label className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                <input type="checkbox" checked={form.isPublished} onChange={(e) => setForm((current) => ({ ...current, isPublished: e.target.checked }))} />
+                <span><span className="block text-[11px] font-bold text-slate-700">Published</span><span className="text-[9px] text-slate-400">Subject to schedule dates</span></span>
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Starts at</span>
+                <input type="datetime-local" value={form.startsAt} onChange={(e) => setForm((current) => ({ ...current, startsAt: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px]" />
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Ends at</span>
+                <input type="datetime-local" value={form.endsAt} onChange={(e) => setForm((current) => ({ ...current, endsAt: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px]" />
+              </label>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="mb-4 text-[13px] font-bold text-[#14203a]">Design & live preview</div>
+            <div className="mb-4 grid gap-4 lg:grid-cols-3">
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content alignment</span>
+                <select value={form.contentAlignment} onChange={(e) => setForm((current) => ({ ...current, contentAlignment: e.target.value as HeroAlignment }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="start">Start</option>
+                  <option value="center">Center</option>
+                  <option value="end">End</option>
+                </select>
+              </label>
+              <label className="lg:col-span-2">
+                <span className="mb-1.5 flex justify-between text-[11px] font-bold text-slate-600"><span>Overlay opacity</span><span>{form.overlayOpacity}%</span></span>
+                <input type="range" min="0" max="90" step="5" value={form.overlayOpacity} onChange={(e) => setForm((current) => ({ ...current, overlayOpacity: Number(e.target.value) }))} className="w-full" />
+              </label>
+            </div>
+
+            <div className="mb-3 flex justify-between gap-2">
+              <div className="flex rounded-xl bg-slate-100 p-1">
+                <button onClick={() => setPreviewMode("desktop")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "desktop" ? "bg-white shadow-sm" : "text-slate-500"}`}><Monitor className="size-3.5" /> Desktop</button>
+                <button onClick={() => setPreviewMode("mobile")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "mobile" ? "bg-white shadow-sm" : "text-slate-500"}`}><Smartphone className="size-3.5" /> Mobile</button>
+              </div>
+              <div className="flex rounded-xl bg-slate-100 p-1">
+                <button onClick={() => setLanguage("en")} className={`rounded-lg px-3 py-2 text-[10px] font-bold ${language === "en" ? "bg-white shadow-sm" : "text-slate-500"}`}>EN</button>
+                <button onClick={() => setLanguage("ar")} className={`rounded-lg px-3 py-2 text-[10px] font-bold ${language === "ar" ? "bg-white shadow-sm" : "text-slate-500"}`}>AR</button>
+              </div>
+            </div>
+
+            <div className={`mx-auto overflow-hidden rounded-2xl bg-slate-950 ${previewMode === "mobile" ? "aspect-[9/16] max-h-[620px] max-w-[340px]" : "aspect-[16/7] w-full"}`}>
+              <div className="relative size-full">
+                {previewImage ? <img src={previewImage} alt="" className="absolute inset-0 size-full object-cover" /> : <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950"><ImageIcon className="size-10 text-white/20" /></div>}
+                <div className="absolute inset-0 bg-black" style={{ opacity: form.overlayOpacity / 100 }} />
+                <div className={`relative z-10 flex size-full flex-col justify-end p-6 text-white sm:p-8 ${alignClass}`} dir={language === "ar" ? "rtl" : "ltr"}>
+                  <div className="max-w-2xl">
+                    {previewTitle ? <div className="text-2xl font-black sm:text-4xl">{previewTitle}</div> : null}
+                    {previewSubtitle ? <div className="mt-2 max-w-xl text-sm text-white/85 sm:text-base">{previewSubtitle}</div> : null}
+                    {previewButton && targetHref(form) ? <span className={`mt-4 inline-flex rounded-xl px-4 py-2.5 text-[11px] font-bold ${buttonClass(form.buttonStyle)}`}>{previewButton}</span> : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {dirty ? (
+        <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl">
+          <span className="text-[11px] font-semibold text-slate-600">Unsaved hero changes</span>
+          <button onClick={() => void save()} disabled={saving} className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white disabled:opacity-50">Save</button>
+        </div>
+      ) : null}
+
+      {mediaTarget ? <MediaLibraryModal assets={media} onSelect={chooseMedia} onClose={() => setMediaTarget(null)} /> : null}
+    </div>
+  );
+}
