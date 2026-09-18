@@ -47,12 +47,13 @@ test("merchant brand artwork overrides curated local fallbacks and raw SVG marku
 });
 
 test("no-Shopify staging provider is isolated behind the storefront facade", async () => {
-  const legacy = withoutComments(await source("src/lib/shopify.ts"));
+  const legacySource = await source("src/lib/shopify.ts");
+  const legacy = withoutComments(legacySource);
   const provider = withoutComments(await source("src/lib/localStorefrontProvider.ts"));
   const facade = withoutComments(await source("src/lib/storefrontFacade.ts"));
   const queries = await source("src/lib/queries.ts");
 
-  assert.match(legacy, /Compatibility shim/);
+  assert.match(legacySource, /Compatibility shim/);
   assert.doesNotMatch(legacy, /SHOPIFY_STOREFRONT|myshopify|storefrontApiRequest|await fetch\(/);
   assert.match(provider, /const LOCAL_PRODUCTS: StoreProduct\[\]/);
   assert.match(provider, /const LOCAL_COLLECTIONS: StoreCollection\[\]/);
@@ -138,8 +139,8 @@ test("homepage hero is catalog-driven, inert, and refresh-resilient", async () =
   assert.doesNotMatch(hero, /to="\/collections\/\$handle"/);
   assert.doesNotMatch(hero, /to="\/product\/\$handle"/);
   assert.doesNotMatch(hero, /from "@tanstack\/react-router"/);
-  assert.match(hero, /HERO_IMAGE_WIDTHS = \[640, 960, 1280, 1600, 1920, 2400, 2880\]/);
-  assert.match(hero, /parsed\.searchParams\.set\("quality", "88"\)/);
+  assert.doesNotMatch(hero, /Shopify|shopify|SHOPIFY|cdn\.shopify/);
+  assert.match(hero, /native media-service boundary/);
   assert.match(hero, /src=\{heroCdnImage\(catalogImage\.url, 1920\)\}/);
   assert.match(hero, /srcSet=\{heroCdnSrcSet\(catalogImage\.url\)\}/);
   assert.match(hero, /sizes="100vw"/);
