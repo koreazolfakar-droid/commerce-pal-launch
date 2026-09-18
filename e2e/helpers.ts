@@ -3,10 +3,36 @@ import { expect, type Page } from "@playwright/test";
 function cartButton(page: Page, count: number) {
   return page
     .getByRole("button", {
-      name: new RegExp(`^(Open bag, ${count}|Cart, ${count} items)$`),
+      name: new RegExp(`^(Open bag, ${count}|Cart, ${count} items)import { expect, type Page } from "@playwright/test";
+
+),
     })
     .filter({ visible: true })
     .first();
+}
+
+async function logCartDiagnostics(page: Page) {
+  const [persistedCart, buttons] = await Promise.all([
+    page.evaluate(() => window.localStorage.getItem("space-call-cart")),
+    page.getByRole("button").evaluateAll((nodes) =>
+      nodes
+        .map((node) => ({
+          ariaLabel: node.getAttribute("aria-label"),
+          text: node.textContent?.trim() ?? "",
+          disabled: node instanceof HTMLButtonElement ? node.disabled : false,
+        }))
+        .filter(
+          (item) =>
+            /cart|bag/i.test(item.ariaLabel ?? "") ||
+            /cart|bag/i.test(item.text),
+        ),
+    ),
+  ]);
+
+  console.log(
+    "[cart-e2e-diagnostics]",
+    JSON.stringify({ persistedCart, buttons }),
+  );
 }
 
 export async function addLocalProduct(page: Page) {
@@ -24,7 +50,12 @@ export async function addLocalProduct(page: Page) {
   await expect(addButton).toBeEnabled();
   await addButton.click();
 
-  await expect(cartButton(page, 1)).toBeVisible();
+  try {
+    await expect(cartButton(page, 1)).toBeVisible();
+  } catch (error) {
+    await logCartDiagnostics(page);
+    throw error;
+  }
 }
 
 export async function openCart(page: Page) {
