@@ -4,6 +4,7 @@ import {
   Eye,
   Globe2,
   GripVertical,
+  Loader2,
   MoreHorizontal,
   MoveRight,
   Pencil,
@@ -13,7 +14,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import BrandAssignmentDialog from "@/dashboard/components/brands/BrandAssignmentDialog";
@@ -24,40 +25,27 @@ import BrandMark from "@/dashboard/components/brands/BrandMark";
 import BrandPreview from "@/dashboard/components/brands/BrandPreview";
 import BrandToolbar from "@/dashboard/components/brands/BrandToolbar";
 import {
-  assignProductsToBrand,
+  assignProductsToDashboardBrand,
   countProductsAssignedToValidBrands,
+  createDashboardBrand,
   createUniqueBrandSlug,
+  deleteDashboardBrand,
   getBrandProductCount,
   getProductsForBrand,
-  moveBrandProducts,
-  persistBrandSnapshot,
-  readBrandCatalogProducts,
-  readBrands,
-  saveBrands,
+  loadBrandsWorkspace,
+  refreshDashboardProducts,
+  reorderDashboardBrands,
+  updateDashboardBrand,
   type CatalogBrand,
-} from "@/dashboard/mock/brands";
-import type { Product } from "@/dashboard/mock/data";
+} from "@/dashboard/data/brands";
+import type { DashboardProduct } from "@/dashboard/data/catalog";
 
 type EditState = {
   mode: "create" | "edit";
   brand: CatalogBrand;
 };
 
-function makeBrandId(brands: CatalogBrand[], base = "brand") {
-  const used = new Set(brands.map((brand) => brand.id));
-  const root = base.replace(/[^a-z0-9-]/gi, "-").toLowerCase() || "brand";
-  let id = root + "-" + Date.now();
-  let suffix = 2;
-
-  while (used.has(id)) {
-    id = root + "-" + Date.now() + "-" + suffix;
-    suffix += 1;
-  }
-
-  return id;
-}
-
-function ProductStatus({ status }: { status: Product["status"] }) {
+function ProductStatus({ status }: { status: DashboardProduct["status"] }) {
   const classes =
     status === "Active"
       ? "bg-emerald-50 text-emerald-700"
@@ -149,11 +137,11 @@ function Modal({
 
 export default function BrandsPage() {
   const [, navigate] = useLocation();
-  const [brands, setBrands] = useState<CatalogBrand[]>(() =>
-    [...readBrands()].sort((a, b) => a.order - b.order),
-  );
-  const [products, setProducts] = useState<Product[]>(readBrandCatalogProducts);
-  const [selectedId, setSelectedId] = useState(() => brands[0]?.id || "");
+  const [brands, setBrands] = useState<CatalogBrand[]>([]);
+  const [products, setProducts] = useState<DashboardProduct[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [homepageFilter, setHomepageFilter] = useState("all");
@@ -162,11 +150,39 @@ export default function BrandsPage() {
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CatalogBrand | null>(null);
   const [deleteDestination, setDeleteDestination] = useState("unbranded");
-  const [moveProduct, setMoveProduct] = useState<Product | null>(null);
+  const [moveProduct, setMoveProduct] = useState<DashboardProduct | null>(null);
   const [moveDestination, setMoveDestination] = useState("");
   const [productMenuId, setProductMenuId] = useState<string | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [reorderDraft, setReorderDraft] = useState<CatalogBrand[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    loadBrandsWorkspace()
+      .then((workspace) => {
+        if (cancelled) return;
+        setBrands(workspace.brands);
+        setProducts(workspace.products);
+        setSelectedId((current) =>
+          current && workspace.brands.some((brand) => brand.id === current)
+            ? current
+            : workspace.brands[0]?.id || "",
+        );
+        setError("");
+      })
+      .catch((cause) => {
+        if (!cancelled) {
+          setError(cause instanceof Error ? cause.message : "Unable to load brands.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const selected = brands.find((brand) => brand.id === selectedId) || brands[0];
 
@@ -213,25 +229,12 @@ export default function BrandsPage() {
 
   const listBrands = reorderMode ? reorderDraft : filteredBrands;
 
-  const persistBrandsOnly = (next: CatalogBrand[]) => {
-    const saved = saveBrands(next);
-    setBrands(saved);
-    return saved;
-  };
-
-  const persistEverything = (nextBrands: CatalogBrand[], nextProducts: Product[]) => {
-    const saved = persistBrandSnapshot(nextBrands, nextProducts);
-    setBrands(saved.brands);
-    setProducts(saved.products);
-    return saved;
-  };
-
   const openCreate = () => {
     const nextOrder = brands.reduce((max, brand) => Math.max(max, brand.order), 0) + 1;
     setEditing({
       mode: "create",
       brand: {
-        id: makeBrandId(brands),
+        id: "",
         name: "",
         slug: "",
         description: "",
@@ -247,7 +250,7 @@ export default function BrandsPage() {
     setEditing({ mode: "edit", brand: { ...brand } });
   };
 
-  const saveBrand = (nextBrand: CatalogBrand) => {
+  const saveBrand = async (nextBrand: CatalogBrand) => {
     const duplicateSlug = brands.some(
       (brand) =>
         brand.id !== nextBrand.id && brand.slug.toLowerCase() === nextBrand.slug.toLowerCase(),
@@ -257,60 +260,61 @@ export default function BrandsPage() {
       return;
     }
 
-    if (editing?.mode === "create") {
-      const safeId = brands.some((brand) => brand.id === nextBrand.id)
-        ? makeBrandId(brands, nextBrand.slug)
-        : nextBrand.id;
-      const created = { ...nextBrand, id: safeId };
-      persistBrandsOnly([...brands, created]);
-      setSelectedId(created.id);
+    try {
+      if (editing?.mode === "create") {
+        const created = await createDashboardBrand(nextBrand);
+        setBrands((current) => [...current, created].sort((a, b) => a.order - b.order));
+        setSelectedId(created.id);
+        setEditing(null);
+        toast.success("Brand created in Supabase.");
+        return;
+      }
+
+      const saved = await updateDashboardBrand(nextBrand);
+      setBrands((current) =>
+        current.map((brand) => (brand.id === saved.id ? saved : brand)),
+      );
+      setSelectedId(saved.id);
       setEditing(null);
-      toast.success("Brand created in the local Space Call catalog.");
-      return;
+      toast.success("Brand saved to Supabase.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Brand save failed.");
     }
-
-    const previous = brands.find((brand) => brand.id === nextBrand.id);
-    if (!previous) return;
-
-    const nextBrands = brands.map((brand) => (brand.id === nextBrand.id ? nextBrand : brand));
-    const nextProducts =
-      previous.name !== nextBrand.name
-        ? moveBrandProducts(products, previous, nextBrand.name)
-        : products;
-
-    persistEverything(nextBrands, nextProducts);
-    setSelectedId(nextBrand.id);
-    setEditing(null);
-    toast.success(
-      previous.name !== nextBrand.name
-        ? "Brand renamed and assigned products were updated automatically."
-        : "Brand saved.",
-    );
   };
 
-  const toggleBrand = (brand: CatalogBrand, patch: Partial<CatalogBrand>) => {
-    const now = new Date().toISOString();
-    persistBrandsOnly(
-      brands.map((item) => (item.id === brand.id ? { ...item, ...patch, updatedAt: now } : item)),
-    );
+  const toggleBrand = async (brand: CatalogBrand, patch: Partial<CatalogBrand>) => {
+    try {
+      const saved = await updateDashboardBrand({ ...brand, ...patch });
+      setBrands((current) =>
+        current.map((item) => (item.id === saved.id ? saved : item)),
+      );
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Brand update failed.");
+    }
   };
 
-  const duplicateBrand = (brand: CatalogBrand) => {
+  const duplicateBrand = async (brand: CatalogBrand) => {
     const now = new Date().toISOString();
     const duplicate: CatalogBrand = {
       ...brand,
-      id: makeBrandId(brands, brand.slug + "-copy"),
+      id: "",
       name: brand.name + " Copy",
       slug: createUniqueBrandSlug(brand.slug + "-copy", brands),
       active: false,
+      featured: false,
       order: brands.reduce((max, item) => Math.max(max, item.order), 0) + 1,
       createdAt: now,
       updatedAt: now,
     };
 
-    persistBrandsOnly([...brands, duplicate]);
-    setSelectedId(duplicate.id);
-    toast.success("Brand duplicated without copying product assignments.");
+    try {
+      const created = await createDashboardBrand(duplicate);
+      setBrands((current) => [...current, created].sort((a, b) => a.order - b.order));
+      setSelectedId(created.id);
+      toast.success("Brand duplicated in Supabase without copying product assignments.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Brand duplication failed.");
+    }
   };
 
   const requestDelete = (brand: CatalogBrand) => {
@@ -322,64 +326,75 @@ export default function BrandsPage() {
     setDeleteDestination("unbranded");
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
+    const destinationId =
+      deleteDestination === "unbranded" ? null : deleteDestination || null;
 
-    const destination = brands.find((brand) => brand.id === deleteDestination);
-    const destinationName =
-      deleteDestination === "unbranded" ? "Unbranded" : destination?.name || "Unbranded";
-    const productCount = getBrandProductCount(products, deleteTarget);
-    const nextProducts =
-      productCount > 0 ? moveBrandProducts(products, deleteTarget, destinationName) : products;
-    const nextBrands = brands
-      .filter((brand) => brand.id !== deleteTarget.id)
-      .sort((a, b) => a.order - b.order)
-      .map((brand, index) => ({ ...brand, order: index + 1 }));
-
-    const saved = persistEverything(nextBrands, nextProducts);
-    if (selectedId === deleteTarget.id) {
-      setSelectedId(saved.brands[0]?.id || "");
+    try {
+      await deleteDashboardBrand(deleteTarget.id, destinationId);
+      const workspace = await loadBrandsWorkspace();
+      setBrands(workspace.brands);
+      setProducts(workspace.products);
+      setSelectedId((current) =>
+        current === deleteTarget.id || !workspace.brands.some((brand) => brand.id === current)
+          ? workspace.brands[0]?.id || ""
+          : current,
+      );
+      setDeleteTarget(null);
+      toast.success("Brand deleted and product assignments updated in Supabase.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Brand deletion failed.");
     }
-    setDeleteTarget(null);
-    toast.success(
-      productCount ? "Brand deleted and products were safely reassigned." : "Empty brand deleted.",
-    );
   };
 
-  const assignProducts = (productIds: string[]) => {
+  const assignProducts = async (productIds: string[]) => {
     if (!selected) return;
-    const nextProducts = assignProductsToBrand(products, productIds, selected.name);
-    persistEverything(brands, nextProducts);
-    setAssignmentOpen(false);
-    toast.success(
-      productIds.length === 1
-        ? "Product assigned to " + selected.name + "."
-        : productIds.length + " products assigned to " + selected.name + ".",
-    );
+    try {
+      await assignProductsToDashboardBrand(productIds, selected.id);
+      setProducts(await refreshDashboardProducts());
+      setAssignmentOpen(false);
+      toast.success(
+        productIds.length === 1
+          ? "Product assigned to " + selected.name + " in Supabase."
+          : productIds.length + " products assigned to " + selected.name + " in Supabase.",
+      );
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Product assignment failed.");
+    }
   };
 
-  const removeProductFromBrand = (product: Product) => {
-    const nextProducts = assignProductsToBrand(products, [product.id], "Unbranded");
-    persistEverything(brands, nextProducts);
-    setProductMenuId(null);
-    toast.success(product.name + " moved to Unbranded.");
+  const removeProductFromBrand = async (product: DashboardProduct) => {
+    try {
+      await assignProductsToDashboardBrand([product.id], null);
+      setProducts(await refreshDashboardProducts());
+      setProductMenuId(null);
+      toast.success(product.name + " moved to Unbranded in Supabase.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Removing product from brand failed.");
+    }
   };
 
-  const confirmMoveProduct = () => {
+  const confirmMoveProduct = async () => {
     if (!moveProduct || !moveDestination) return;
+    const destinationId = moveDestination === "unbranded" ? null : moveDestination;
     const destination = brands.find((brand) => brand.id === moveDestination);
-    const destinationName = moveDestination === "unbranded" ? "Unbranded" : destination?.name;
+    const destinationName = destinationId === null ? "Unbranded" : destination?.name;
 
     if (!destinationName) {
       toast.error("Choose a destination brand.");
       return;
     }
 
-    const nextProducts = assignProductsToBrand(products, [moveProduct.id], destinationName);
-    persistEverything(brands, nextProducts);
-    toast.success(moveProduct.name + " moved to " + destinationName + ".");
-    setMoveProduct(null);
-    setMoveDestination("");
+    try {
+      await assignProductsToDashboardBrand([moveProduct.id], destinationId);
+      setProducts(await refreshDashboardProducts());
+      toast.success(moveProduct.name + " moved to " + destinationName + " in Supabase.");
+      setMoveProduct(null);
+      setMoveDestination("");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Moving product failed.");
+    }
   };
 
   const startReorder = () => {
@@ -399,18 +414,22 @@ export default function BrandsPage() {
     });
   };
 
-  const saveReorder = () => {
-    const now = new Date().toISOString();
+  const saveReorder = async () => {
     const normalized = reorderDraft.map((brand, index) => ({
       ...brand,
       order: index + 1,
-      updatedAt: now,
+      updatedAt: new Date().toISOString(),
     }));
-    persistBrandsOnly(normalized);
-    setReorderMode(false);
-    setReorderDraft([]);
-    setSortMode("order");
-    toast.success("Brand order saved.");
+    try {
+      await reorderDashboardBrands(normalized);
+      setBrands(normalized);
+      setReorderMode(false);
+      setReorderDraft([]);
+      setSortMode("order");
+      toast.success("Brand order saved to Supabase.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Saving brand order failed.");
+    }
   };
 
   const scrollToProducts = (brand?: CatalogBrand) => {
@@ -428,6 +447,22 @@ export default function BrandsPage() {
     setHomepageFilter("all");
     setSortMode("order");
   };
+
+  if (loading) {
+    return (
+      <div className="grid min-h-[360px] place-items-center rounded-2xl border border-slate-200 bg-white">
+        <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
+        {error}
+      </div>
+    );
+  }
 
   if (!brands.length) {
     return (
@@ -745,7 +780,7 @@ export default function BrandsPage() {
                     Products by {selected.name}
                   </div>
                   <div className="mt-1 text-[10px] text-slate-400">
-                    Brand assignment uses Product.brand as the single source of truth.
+                    Brand assignment uses store_products.brand_id in Supabase as the single source of truth.
                   </div>
                 </div>
                 <button
@@ -1000,7 +1035,7 @@ export default function BrandsPage() {
       {moveProduct && (
         <Modal
           title="Move Product"
-          subtitle={moveProduct.name + " stays intact; only Product.brand changes."}
+          subtitle={moveProduct.name + " stays intact; only its Supabase brand assignment changes."}
           onClose={() => {
             setMoveProduct(null);
             setMoveDestination("");
