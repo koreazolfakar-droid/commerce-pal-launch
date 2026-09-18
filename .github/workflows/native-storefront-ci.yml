@@ -9,6 +9,10 @@ on:
     branches:
       - "integration/no-shopify-dashboard-unified"
 
+concurrency:
+  group: native-storefront-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
