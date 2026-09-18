@@ -1102,6 +1102,18 @@ export type Database = {
       }
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_categories: { Args: { p_items: Json }; Returns: undefined }
+      set_store_inventory_stock: {
+        Args: {
+          p_note?: string
+          p_product_id: string
+          p_stock: number
+          p_variant_id: string
+        }
+        Returns: {
+          movement_id: string
+          new_stock: number
+        }[]
+      }
       update_store_category: {
         Args: {
           p_category_id: string
