@@ -32,7 +32,7 @@ function publicProductsQuery() {
     .from("store_products")
     .select("*")
     .eq("status", "active")
-    .or(`published_at.is.null,published_at.lte.${new Date().toISOString()}`);
+    .lte("published_at", new Date().toISOString());
 }
 
 function groupByProduct<T extends { product_id: string }>(rows: T[]) {
