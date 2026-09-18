@@ -1,0 +1,146 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 8,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/477131440355",
+      "title": "Brand Logo — Apple",
+      "handle": "logo-apple",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:38Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608300259",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-apple-1024.png?v=1789387195",
+        "altText": "Apple logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131473123",
+      "title": "Brand Logo — BANGE",
+      "handle": "logo-bange",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:38Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608333027",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-bange-1024.png?v=1789387196",
+        "altText": "BANGE logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131505891",
+      "title": "Brand Logo — Black Shark",
+      "handle": "logo-black-shark",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:38Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608365795",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-black-shark-1024.png?v=1789387198",
+        "altText": "Black Shark logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131538659",
+      "title": "Brand Logo — BOPAI",
+      "handle": "logo-bopai",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:39Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608398563",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-bopai-1024.png?v=1789387199",
+        "altText": "BOPAI logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131571427",
+      "title": "Brand Logo — CHANTRIA",
+      "handle": "logo-chantria",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:39Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608431331",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-chantria-1024.png?v=1789387200",
+        "altText": "CHANTRIA logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzcxMzE1NzE0MjcsImxhc3RfdmFsdWUiOiI0NzcxMzE1NzE0MjcifQ=="
+  }
+}
