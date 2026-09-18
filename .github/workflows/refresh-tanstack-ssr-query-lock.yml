@@ -1,0 +1,41 @@
+name: Refresh TanStack SSR Query Lock
+
+on:
+  push:
+    branches:
+      - integration/no-shopify-dashboard-unified
+    paths:
+      - .github/workflows/refresh-tanstack-ssr-query-lock.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout integration branch
+        uses: actions/checkout@v4
+        with:
+          ref: integration/no-shopify-dashboard-unified
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Add official TanStack SSR Query integration
+        run: bun add @tanstack/react-router-ssr-query
+
+      - name: Commit resolved dependency and lockfile
+        run: |
+          if git diff --quiet -- package.json bun.lock; then
+            echo "No dependency changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json bun.lock
+          git commit -m "build: add TanStack router SSR query integration"
+          git push origin HEAD:integration/no-shopify-dashboard-unified
