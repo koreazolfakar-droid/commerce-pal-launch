@@ -1,24 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Route, Switch, useLocation } from "wouter";
 import { Toaster, toast } from "sonner";
 import {
-  Activity, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, BarChart3, Bell, Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleHelp, Clock3, Cloud, Command, Download, ExternalLink, Eye, FileText, Filter, FolderOpen, Gauge, Image as ImageIcon, Inbox, Layers3, LayoutDashboard, LifeBuoy, ListFilter, Loader2, LockKeyhole, LogOut, Mail, Megaphone, Menu, MenuSquare, MessageSquare, MoreHorizontal, Package, PanelLeftClose, PanelLeftOpen, PanelsTopLeft, Pencil, Plus, RefreshCw, Search, SearchCheck, Send, Settings2, ShoppingBag, SlidersHorizontal, Sparkles, Star, Tags, TicketPercent, TrendingUp, UploadCloud, UserCog, Users, X, Zap
+  Activity, ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, BarChart3, Bell, Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleHelp, Clock3, Cloud, Command, Download, ExternalLink, Eye, FileText, Filter, FolderOpen, Gauge, Image as ImageIcon, Inbox, Layers3, LayoutDashboard, LifeBuoy, ListFilter, Loader2, LockKeyhole, LogOut, Mail, Megaphone, Menu, MenuSquare, MessageSquare, MoreHorizontal, Package, PanelLeftClose, PanelLeftOpen, PanelsTopLeft, Pencil, Plus, RefreshCw, Search, SearchCheck, Send, Settings2, ShoppingBag, SlidersHorizontal, Sparkles, Star, Tags, TicketPercent, Trash2, TrendingUp, UploadCloud, UserCog, Users, X, Zap
 } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { customers, navSections, orders, pageMeta, products, revenueData, topBrands, type Order, type Product } from "@/dashboard/mock/data";
 import { LanguageContext, useLanguage } from "@/dashboard/i18n";
 import { validateProductDraft } from "@/dashboard/lib/validation";
 import {
+  PRODUCT_IMAGE_RESOLUTIONS,
+  getProductImageResolution,
+  setProductImageResolution,
+  type ProductImageResolution,
+} from "@/dashboard/lib/imageProcessing";
+import {
+  deleteDashboardProductImage,
   getDashboardProduct,
   getDashboardRole,
   listDashboardBrands,
   listDashboardCategories,
   listDashboardCollections,
+  listDashboardProductImages,
   listDashboardProducts,
+  reorderDashboardProductImages,
+  replaceDashboardProductImage,
   saveDashboardProduct,
+  setDashboardPrimaryProductImage,
   signInDashboard,
   signOutDashboard,
+  uploadDashboardProductImage,
   type DashboardProduct,
+  type DashboardProductImage,
 } from "@/dashboard/data/catalog";
 import HomepageBuilderPage from "@/dashboard/pages/HomepageBuilder";
 import CategoriesPage from "@/dashboard/pages/CategoriesPage";
