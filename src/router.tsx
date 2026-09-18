@@ -35,7 +35,8 @@ export const getRouter = () => {
     // CatalogIndex intentionally contains runtime-only Maps and React icon
     // components. Queries marked meta.ssr=false stay out of the hydration payload.
     dehydrateOptions: {
-      shouldDehydrateQuery: (query) => query.meta?.ssr !== false,
+      shouldDehydrateQuery: (query) =>
+        query.meta?.ssr !== false && query.meta?.ssrSerializable !== false,
     },
     // RootComponent already owns QueryClientProvider.
     wrapQueryClient: false,
