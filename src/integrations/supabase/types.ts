@@ -46,34 +46,49 @@ export type Database = {
       }
       cms_brands: {
         Row: {
+          cover_image_url: string | null
           created_at: string
+          description: string
           href: string | null
           id: string
+          is_featured: boolean
           is_visible: boolean
           logo_url: string | null
           name: string
+          seo_description: string | null
+          seo_title: string | null
           slug: string
           sort_order: number
           updated_at: string
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string
+          description?: string
           href?: string | null
           id?: string
+          is_featured?: boolean
           is_visible?: boolean
           logo_url?: string | null
           name: string
+          seo_description?: string | null
+          seo_title?: string | null
           slug: string
           sort_order?: number
           updated_at?: string
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string
+          description?: string
           href?: string | null
           id?: string
+          is_featured?: boolean
           is_visible?: boolean
           logo_url?: string | null
           name?: string
+          seo_description?: string | null
+          seo_title?: string | null
           slug?: string
           sort_order?: number
           updated_at?: string
