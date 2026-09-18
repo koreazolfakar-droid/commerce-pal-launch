@@ -1,0 +1,1691 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "products",
+  "page": 8,
+  "data": [
+    {
+      "id": "gid://shopify/Product/9658221625571",
+      "title": "Mark Ryden Coast Laptop Backpack – Waterproof & Anti-Theft",
+      "handle": "mark-ryden-coast-laptop-backpack-waterproof-anti-theft-1",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:13:41Z",
+      "updatedAt": "2026-09-07T06:44:29Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699610329315",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "59.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871552274659",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871552274659",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658221756643",
+      "title": "UGREEN Up to 15.6 inches Laptop Backpack B02 – LP664 – 90798",
+      "handle": "ugreen-up-to-15-6-inches-laptop-backpack-b02-lp664-90799",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "UGREEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:13:45Z",
+      "updatedAt": "2026-09-07T08:06:28Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699610460387",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "39.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871552405731",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871552405731",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658221986019",
+      "title": "Chantria CB00641 Women Expandable Water Resistant Premium Laptop Backpack",
+      "handle": "chantria-cb00641-women-expandable-water-resistant-premium-laptop-backpack",
+      "descriptionHtml": "<h2>Chantria CB00641 Premium Laptop Backpack</h2><p>The Chantria CB00641 is a stylish and practical backpack designed for carrying a laptop and everyday essentials. Its expandable, water-resistant construction offers flexible storage for commuting and daily use.</p><h3>Key Features</h3><ul>\n<li>Expandable storage design</li>\n<li>Water-resistant construction</li>\n<li>Premium everyday styling</li>\n<li>Organized storage for laptop and essentials</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: CHANTRIA</li>\n<li>Model: CB00641</li>\n<li>Product Type: Premium Laptop Backpack</li>\n<li>Features: Expandable, water resistant</li>\n</ul>",
+      "status": "DRAFT",
+      "vendor": "CHANTRIA",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:13:51Z",
+      "updatedAt": "2026-09-15T15:03:59Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699610689763",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "45.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871552635107",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871552635107",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658222149859",
+      "title": "Mark Ryden Compilo Oxford Anti-Theft Waterproof Laptop Backpack with USB Port",
+      "handle": "mark-ryden-compilo-oxford-anti-theft-waterproof-laptop-backpack-with-usb-port",
+      "descriptionHtml": "<h2>Mark Ryden Compilo Oxford Laptop Backpack</h2><p>A versatile business backpack designed to keep your laptop and daily essentials organized and protected. The Compilo Oxford combines water resistance, an anti-theft design and a USB port for convenient everyday commuting.</p><h3>Key Features</h3><ul>\n<li>Water-resistant construction</li>\n<li>Anti-theft design</li>\n<li>Integrated USB port</li>\n<li>Organized compartments for work essentials</li>\n<li>Ideal for commuting and business use</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: MARK RYDEN</li>\n<li>Product Type: Laptop Backpack</li>\n<li>Material Style: Oxford</li>\n<li>Features: Water resistance, anti-theft design, USB port</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:13:55Z",
+      "updatedAt": "2026-09-07T22:27:11Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699610820835",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "65.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871552766179",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871552766179",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658222444771",
+      "title": "Dell EcoLoop Urban Backpack 14–16-inch (CP4523G)",
+      "handle": "dell-ecoloop-urban-backpack-14-16-inch-cp4523g",
+      "descriptionHtml": "<h2>Dell EcoLoop Urban CP4523G Backpack</h2><p>The Dell EcoLoop Urban CP4523G is a practical urban backpack designed to carry and protect laptops and everyday work essentials. It supports devices from 14 to 16 inches and is ideal for commuting.</p><h3>Key Features</h3><ul>\n<li>Supports 14–16 inch laptops</li>\n<li>Urban design for daily commuting</li>\n<li>Practical organization for work essentials</li>\n<li>Designed for laptop carrying and protection</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: DELL</li>\n<li>Model: CP4523G</li>\n<li>Product Type: Urban Laptop Backpack</li>\n<li>Laptop Compatibility: 14–16 inches</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "DELL",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:14:04Z",
+      "updatedAt": "2026-09-07T19:20:32Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699611148515",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "56.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871553093859",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871553093859",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940344905955",
+            "alt": "Dell EcoLoop Urban CP4523G backpack on a clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940344905955",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/dell-ecoloop-urban-cp4523g.jpg?v=1788758672",
+              "altText": "Dell EcoLoop Urban CP4523G backpack on a clean white background",
+              "width": 3840,
+              "height": 6203
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658222969059",
+      "title": "Mark Ryden Mist Backpack - L_MR1106_00",
+      "handle": "mark-ryden-mist-backpack-l_mr1106_00",
+      "descriptionHtml": "<h2>Mark Ryden Mist MR1106 Backpack</h2><p>The Mark Ryden Mist MR1106 combines a modern design with practical organized storage for work, study and everyday commuting. Its functional layout helps keep your daily essentials neatly arranged.</p><h3>Key Features</h3><ul>\n<li>Modern everyday design</li>\n<li>Organized storage compartments</li>\n<li>Suitable for work and study</li>\n<li>Practical for daily commuting</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: MARK RYDEN</li>\n<li>Model: MR1106</li>\n<li>Product Type: Backpack</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:14:14Z",
+      "updatedAt": "2026-09-14T13:45:28Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699611738339",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "30.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871553683683",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871553683683",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940342284515",
+            "alt": "Mark Ryden Mist MR1106 backpack on a clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940342284515",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/mark-ryden-mist-mr1106.jpg?v=1788758645",
+              "altText": "Mark Ryden Mist MR1106 backpack on a clean white background",
+              "width": 1080,
+              "height": 1080
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658223198435",
+      "title": "WiWU 14-inch Ora Waterproof Backpack",
+      "handle": "wiwu-14-inch-ora-waterproof-backpack",
+      "descriptionHtml": "<h2>WiWU Ora Waterproof Backpack</h2><p>The WiWU Ora is a compact and practical waterproof backpack designed for carrying a 14-inch laptop and everyday essentials securely during commuting and daily travel.</p><h3>Key Features</h3><ul>\n<li>Fits 14-inch laptops</li>\n<li>Waterproof design</li>\n<li>Lightweight and practical for daily use</li>\n<li>Suitable for commuting and travel</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: WIWU</li>\n<li>Product Type: Laptop Backpack</li>\n<li>Laptop Compatibility: 14 inches</li>\n<li>Feature: Waterproof</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "WIWU",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:14:21Z",
+      "updatedAt": "2026-09-07T19:11:54Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699611967715",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "35.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871553913059",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871553913059",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940344021219",
+            "alt": "WiWU Ora backpack on a clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940344021219",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/wiwu-ora-backpack.png?v=1788758665",
+              "altText": "WiWU Ora backpack on a clean white background",
+              "width": 600,
+              "height": 600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658223460579",
+      "title": "Mark Ryden AeroShield 15.6-inch Waterproof Backpack with USB Charging Port - MR6886",
+      "handle": "mark-ryden-aeroshield-15-6-inch-waterproof-backpack-with-usb-charging-port-mr6886",
+      "descriptionHtml": "<h2>Mark Ryden AeroShield MR6886 Laptop Backpack</h2><p>The Mark Ryden AeroShield MR6886 is a practical laptop backpack designed for work, commuting and everyday travel. Its water-resistant construction helps protect your essentials, while the integrated USB charging port adds convenient connectivity on the go.</p><h3>Key Features</h3><ul>\n<li>Fits laptops up to 15.6 inches</li>\n<li>Water-resistant exterior</li>\n<li>Integrated USB charging port</li>\n<li>Organized storage for daily essentials</li>\n<li>Suitable for work, commuting and travel</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: MARK RYDEN</li>\n<li>Model: MR6886</li>\n<li>Product Type: Laptop Backpack</li>\n<li>Laptop Compatibility: Up to 15.6 inches</li>\n<li>Special Features: Water resistance, USB charging port</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:14:27Z",
+      "updatedAt": "2026-09-07T20:30:13Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699612229859",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "85.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871554175203",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871554175203",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940368007395",
+            "alt": "Mark Ryden MR6886 backpack",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940368007395",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788758920644.webp?v=1788758922",
+              "altText": "Mark Ryden MR6886 backpack",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658223722723",
+      "title": "BANGE 7700 Large Capacity 15.6-inch Waterproof Laptop Backpack",
+      "handle": "bange-7700-large-capacity-15-6-inch-waterproof-laptop-backpack",
+      "descriptionHtml": "<h2>BANGE 7700 Large Capacity Laptop Backpack</h2><p>The BANGE 7700 is a spacious laptop backpack built for work, commuting and travel. Its large-capacity layout provides practical room for your daily essentials while the water-resistant exterior adds extra protection.</p><h3>Key Features</h3><ul>\n<li>Large-capacity storage</li>\n<li>Fits laptops up to 15.6 inches</li>\n<li>Water-resistant design</li>\n<li>Suitable for work and travel</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: BANGE</li>\n<li>Model: 7700</li>\n<li>Product Type: Laptop Backpack</li>\n<li>Laptop Compatibility: Up to 15.6 inches</li>\n<li>Feature: Water resistance</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "BANGE",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:14:34Z",
+      "updatedAt": "2026-09-07T19:12:23Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699612492003",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "65.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871554437347",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871554437347",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940367548643",
+            "alt": "BANGE 7700 waterproof laptop backpack",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940367548643",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788758915448.jpg?v=1788758917",
+              "altText": "BANGE 7700 waterproof laptop backpack",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658223886563",
+      "title": "BANGE G65 15.6-inch Multi Compartment Water Resistant Business Backpack",
+      "handle": "bange-g65-15-6-inch-multi-compartment-water-resistant-business-backpack",
+      "descriptionHtml": "<h2>BANGE G65 Business Laptop Backpack</h2><p>The BANGE G65 is designed for organized daily commuting, with multiple compartments for a laptop and essential accessories. Its water-resistant construction makes it a practical choice for business and everyday use.</p><h3>Key Features</h3><ul>\n<li>Multiple storage compartments</li>\n<li>Fits laptops up to 15.6 inches</li>\n<li>Water-resistant exterior</li>\n<li>Business-friendly organization</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: BANGE</li>\n<li>Model: G65</li>\n<li>Product Type: Business Laptop Backpack</li>\n<li>Laptop Compatibility: Up to 15.6 inches</li>\n<li>Feature: Water resistance</li>\n</ul>",
+      "status": "DRAFT",
+      "vendor": "BANGE",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:14:39Z",
+      "updatedAt": "2026-09-12T12:40:54Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699612655843",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "1000.00",
+            "compareAtPrice": "10.00",
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871554601187",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871554601187",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658224050403",
+      "title": "BANGE 6625 Super-Light Genuine Leather 15.6-inch Waterproof Laptop Backpack",
+      "handle": "bange-6625-super-light-genuine-leather-15-6-inch-waterproof-laptop-backpack",
+      "descriptionHtml": "<h2>BANGE 6625 Genuine Leather Laptop Backpack</h2><p>The BANGE 6625 combines a lightweight design with genuine leather styling and practical water resistance. It is designed to carry a laptop and daily essentials comfortably for business, commuting and travel.</p><h3>Key Features</h3><ul>\n<li>Genuine leather construction</li>\n<li>Super-lightweight design</li>\n<li>Fits laptops up to 15.6 inches</li>\n<li>Water-resistant exterior</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: BANGE</li>\n<li>Model: 6625</li>\n<li>Product Type: Laptop Backpack</li>\n<li>Material: Genuine Leather</li>\n<li>Laptop Compatibility: Up to 15.6 inches</li>\n<li>Feature: Water resistance</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "BANGE",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:14:43Z",
+      "updatedAt": "2026-09-07T20:35:50Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699612819683",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "95.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871554765027",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871554765027",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940366860515",
+            "alt": "BANGE 6625 leather laptop backpack",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940366860515",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788758908109.jpg?v=1788758909",
+              "altText": "BANGE 6625 leather laptop backpack",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658225623267",
+      "title": "BANGE 2888 Waterproof Laptop and Travel Backpack",
+      "handle": "bange-2888-waterproof-laptop-and-travel-backpack",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "BANGE",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack"
+      ],
+      "createdAt": "2026-09-07T05:15:19Z",
+      "updatedAt": "2026-09-07T09:29:39Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699614523619",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "69.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871556468963",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871556468963",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658225983715",
+      "title": "Mark Ryden Navarro II Waterproof Laptop Backpack",
+      "handle": "mark-ryden-navarro-ii-waterproof-laptop-backpack",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack"
+      ],
+      "createdAt": "2026-09-07T05:15:25Z",
+      "updatedAt": "2026-09-07T10:13:44Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699614884067",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "69.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871556829411",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871556829411",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658226180323",
+      "title": "Mark Ryden Minimalism II MR9366 Backpack",
+      "handle": "mark-ryden-minimalism-ii-mr9366-backpack",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack"
+      ],
+      "createdAt": "2026-09-07T05:15:30Z",
+      "updatedAt": "2026-09-07T08:30:45Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699615080675",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "65.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871557026019",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871557026019",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658226311395",
+      "title": "Bopai 15.6in Black Leather Laptop Backpack",
+      "handle": "bopai-15-6in-black-leather-laptop-backpack",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "BOPAI",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack"
+      ],
+      "createdAt": "2026-09-07T05:15:37Z",
+      "updatedAt": "2026-09-07T10:13:59Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699615211747",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "59.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871557157091",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871557157091",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658226475235",
+      "title": "WiWU Elite 15.6in Waterproof Backpack",
+      "handle": "wiwu-elite-15-6in-waterproof-backpack",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "WIWU",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack"
+      ],
+      "createdAt": "2026-09-07T05:15:43Z",
+      "updatedAt": "2026-09-07T10:00:44Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699615375587",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "45.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871557320931",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871557320931",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658226606307",
+      "title": "BANGE 7713 Waterproof Leather Business Laptop Backpack",
+      "handle": "bange-7713-waterproof-leather-business-laptop-backpack",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "BANGE",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack"
+      ],
+      "createdAt": "2026-09-07T05:15:49Z",
+      "updatedAt": "2026-09-07T08:42:03Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699615506659",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "59.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871557452003",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871557452003",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9666334752995",
+      "title": "Apple iPhone 18 Pro",
+      "handle": "apple-iphone-18-pro",
+      "descriptionHtml": "<p>Apple iPhone 18 Pro with A20 Pro, advanced 48MP Fusion Main camera with variable aperture, redesigned Dynamic Island, Apple Intelligence and Siri AI.</p><p>Official colors: Black, Silver, Glacier, Burgundy. Storage options: 256GB, 512GB, 1TB, 2TB.</p>",
+      "status": "ACTIVE",
+      "vendor": "Apple",
+      "productType": "Smartphone",
+      "tags": [
+        "2026",
+        "Apple",
+        "iPhone",
+        "iPhone 18",
+        "iPhone 18 Pro"
+      ],
+      "createdAt": "2026-09-12T19:26:49Z",
+      "updatedAt": "2026-09-12T20:07:56Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49724790997219",
+            "title": "256GB / Black",
+            "sku": null,
+            "barcode": null,
+            "price": "1199.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51896950423779",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51896950423779",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49724791029987",
+            "title": "256GB / Silver",
+            "sku": null,
+            "barcode": null,
+            "price": "1199.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Silver"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51896950456547",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51896950456547",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49724791062755",
+            "title": "256GB / Glacier",
+            "sku": null,
+            "barcode": null,
+            "price": "1199.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Glacier"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51896950489315",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51896950489315",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49724791095523",
+            "title": "256GB / Burgundy",
+            "sku": null,
+            "barcode": null,
+            "price": "1199.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Burgundy"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51896950522083",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51896950522083",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/40011518017763",
+            "alt": "Apple iPhone 18 Pro Black on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40011518017763",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-18-pro-black.jpg?v=1789243237",
+              "altText": "Apple iPhone 18 Pro Black on white background",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/40011518607587",
+            "alt": "Apple iPhone 18 Pro Silver on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40011518607587",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-18-pro-silver.jpg?v=1789243245",
+              "altText": "Apple iPhone 18 Pro Silver on white background",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/40011519099107",
+            "alt": "Apple iPhone 18 Pro Glacier on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40011519099107",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-18-pro-glacier.jpg?v=1789243251",
+              "altText": "Apple iPhone 18 Pro Glacier on white background",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/40011519623395",
+            "alt": "Apple iPhone 18 Pro Burgundy on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40011519623395",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-18-pro-burgundy.jpg?v=1789243257",
+              "altText": "Apple iPhone 18 Pro Burgundy on white background",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9666334818531",
+      "title": "Apple iPhone 18 Pro Max",
+      "handle": "apple-iphone-18-pro-max",
+      "descriptionHtml": "<p>Apple iPhone 18 Pro Max with A20 Pro, advanced 48MP Fusion Main camera with variable aperture, redesigned Dynamic Island, Apple Intelligence and Siri AI.</p><p>Official colors: Black, Silver, Glacier, Burgundy. Storage options: 256GB, 512GB, 1TB, 2TB.</p>",
+      "status": "ACTIVE",
+      "vendor": "Apple",
+      "productType": "Smartphone",
+      "tags": [
+        "2026",
+        "Apple",
+        "iPhone",
+        "iPhone 18",
+        "iPhone 18 Pro Max"
+      ],
+      "createdAt": "2026-09-12T19:26:56Z",
+      "updatedAt": "2026-09-13T16:14:00Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49724791161059",
+            "title": "256GB / Black",
+            "sku": null,
+            "barcode": null,
+            "price": "1299.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51896950587619",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51896950587619",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49724791193827",
+            "title": "256GB / Silver",
+            "sku": null,
+            "barcode": null,
+            "price": "1299.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Silver"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51896950620387",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51896950620387",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49724791226595",
+            "title": "256GB / Glacier",
+            "sku": null,
+            "barcode": null,
+            "price": "1299.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Glacier"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51896950653155",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51896950653155",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49724791259363",
+            "title": "256GB / Burgundy",
+            "sku": null,
+            "barcode": null,
+            "price": "1299.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Burgundy"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51896950685923",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51896950685923",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/40011520245987",
+            "alt": "Apple iPhone 18 Pro Max Black on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40011520245987",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-18-pro-max-black.jpg?v=1789243264",
+              "altText": "Apple iPhone 18 Pro Max Black on white background",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/40011521130723",
+            "alt": "Apple iPhone 18 Pro Max Silver on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40011521130723",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-18-pro-max-silver.jpg?v=1789243272",
+              "altText": "Apple iPhone 18 Pro Max Silver on white background",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/40011521589475",
+            "alt": "Apple iPhone 18 Pro Max Glacier on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40011521589475",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-18-pro-max-glacier.jpg?v=1789243278",
+              "altText": "Apple iPhone 18 Pro Max Glacier on white background",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/40011522506979",
+            "alt": "Apple iPhone 18 Pro Max Burgundy on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40011522506979",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-18-pro-max-burgundy.jpg?v=1789243285",
+              "altText": "Apple iPhone 18 Pro Max Burgundy on white background",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9668758307043",
+      "title": "IPhone 18 pro max",
+      "handle": "s26-ultra",
+      "descriptionHtml": "",
+      "status": "ACTIVE",
+      "vendor": "SAMSUNG",
+      "productType": "",
+      "tags": [],
+      "createdAt": "2026-09-13T15:59:48Z",
+      "updatedAt": "2026-09-17T18:00:16Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49728643236067",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "0.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51900809806051",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51900809806051",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/40028466249955",
+            "alt": "Space Call homepage hero upload test",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/40028466249955",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/space-call-hero-upload-test.jpg?v=1789315478",
+              "altText": "Space Call homepage hero upload test",
+              "width": 1536,
+              "height": 864
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo5NjY4NzU4MzA3MDQzLCJsYXN0X3ZhbHVlIjoiOTY2ODc1ODMwNzA0MyJ9"
+  }
+}
