@@ -10,7 +10,7 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   adjustInventoryDelta,
@@ -58,7 +58,7 @@ export default function InventoryManagerPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draftStocks, setDraftStocks] = useState<Record<string, string>>({});
 
-  const load = async (manual = false) => {
+  const load = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
     else setLoading(true);
     try {
@@ -75,11 +75,11 @@ export default function InventoryManagerPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load(false);
-  }, []);
+  }, [load]);
 
   const categories = useMemo(() => {
     const map = new Map<string, string>();
