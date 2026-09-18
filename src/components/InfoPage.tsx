@@ -256,8 +256,8 @@ const PAGE_GUIDES: Partial<Record<InfoPageName, PageGuide>> = {
         icon: ShieldCheck,
         title: { en: "Checkout providers", ar: "مزودو الدفع والطلب" },
         body: {
-          en: "Checkout and account functions may be provided by Shopify and payment or delivery partners. Their systems may process information needed to complete your order.",
-          ar: "قد تتم وظائف الدفع والحساب عبر Shopify وشركاء الدفع أو التوصيل، وقد تعالج أنظمتهم البيانات اللازمة لإتمام الطلب.",
+          en: "Checkout, account, payment and delivery functions may use Space Call services and selected payment or delivery partners. Those systems may process information needed to complete your order.",
+          ar: "قد تتم وظائف الدفع والحساب عبر خدمات Space Call وشركاء الدفع أو التوصيل المختارين، وقد تعالج أنظمتهم البيانات اللازمة لإتمام الطلب.",
         },
       },
       {
