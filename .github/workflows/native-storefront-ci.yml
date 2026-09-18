@@ -30,3 +30,9 @@ jobs:
 
       - name: Full storefront check
         run: bun run check
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Storefront browser E2E
+        run: bun run test:e2e
