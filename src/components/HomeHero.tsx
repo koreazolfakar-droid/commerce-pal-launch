@@ -6,12 +6,12 @@ import type { CmsHeroSlide } from "@/lib/cms";
 import { homepageHeroCollections } from "@/lib/homeMerchandising";
 import { useLanguage } from "@/lib/i18n";
 import { collectionsQueryOptions } from "@/lib/queries";
-import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
+import type { StoreCollection, StoreProduct } from "@/lib/storefrontTypes";
 
 type HomeHeroCollection =
   | {
-      collection: ShopifyCollection;
-      products: ShopifyProduct[];
+      collection: StoreCollection;
+      products: StoreProduct[];
     }
   | null
   | undefined;
@@ -24,27 +24,15 @@ type StoredHomeHero = {
 const HERO_ROTATION_MS = 8000;
 const HERO_REFRESH_FALLBACK_TTL_MS = 10 * 60 * 1000;
 const HERO_REFRESH_FALLBACK_STORAGE_KEY = "space-call-home-hero-refresh-fallback-v1";
-const SHOPIFY_CDN = /cdn\.shopify\.com|shopifycdn\.(net|com)/;
-const HERO_IMAGE_WIDTHS = [640, 960, 1280, 1600, 1920, 2400, 2880] as const;
 
-function heroCdnImage(url: string | undefined, width: number): string | undefined {
-  if (!url) return undefined;
-  if (!SHOPIFY_CDN.test(url)) return url;
-
-  try {
-    const parsed = new URL(url);
-    parsed.searchParams.set("width", String(width));
-    parsed.searchParams.set("format", "webp");
-    parsed.searchParams.set("quality", "88");
-    return parsed.toString();
-  } catch {
-    return url;
-  }
+function heroCdnImage(url: string | undefined, _width: number): string | undefined {
+  return url;
 }
 
-function heroCdnSrcSet(url: string | undefined): string | undefined {
-  if (!url || !SHOPIFY_CDN.test(url)) return undefined;
-  return HERO_IMAGE_WIDTHS.map((width) => `${heroCdnImage(url, width)} ${width}w`).join(", ");
+function heroCdnSrcSet(_url: string | undefined): string | undefined {
+  // The provider supplies canonical media URLs. Responsive media transforms will
+  // be added at the native media-service boundary instead of assuming a vendor CDN.
+  return undefined;
 }
 
 function readStoredHero(): Exclude<HomeHeroCollection, null | undefined> | null {
@@ -87,7 +75,7 @@ export function HomeHero({
   heroCollection,
   cmsHeroSlides: _cmsHeroSlides = [],
 }: {
-  products: ShopifyProduct[];
+  products: StoreProduct[];
   heroCollection?: HomeHeroCollection;
   cmsHeroSlides?: CmsHeroSlide[];
 }) {
@@ -96,7 +84,7 @@ export function HomeHero({
   const [storedHeroCollection, setStoredHeroCollection] = useState<
     Exclude<HomeHeroCollection, null | undefined> | null
   >(null);
-  const [failedShopifySlideId, setFailedShopifySlideId] = useState<string>();
+  const [failedCatalogSlideId, setFailedCatalogSlideId] = useState<string>();
 
   useEffect(() => {
     if (heroCollection?.collection) {
@@ -113,7 +101,7 @@ export function HomeHero({
     ? heroCollection
     : storedHeroCollection;
 
-  const cachedCollections = queryClient.getQueryData<ShopifyCollection[]>(
+  const cachedCollections = queryClient.getQueryData<StoreCollection[]>(
     collectionsQueryOptions().queryKey,
   );
 
@@ -125,11 +113,11 @@ export function HomeHero({
     return [primary, ...collections.filter((collection) => collection.id !== primary.id)];
   }, [cachedCollections, effectiveHeroCollection?.collection]);
 
-  const shopifySlides = useMemo(
+  const catalogSlides = useMemo(
     () => homepageHeroCollections(configuredCollections),
     [configuredCollections],
   );
-  const slideCount = shopifySlides.length;
+  const slideCount = catalogSlides.length;
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -147,50 +135,50 @@ export function HomeHero({
     return () => window.clearInterval(timer);
   }, [slideCount]);
 
-  const shopifySlide = shopifySlides[activeIndex] ?? shopifySlides[0];
-  const shopifyImage = shopifySlide?.image;
-  const shopifyImageActive = Boolean(
-    shopifySlide && shopifyImage && failedShopifySlideId !== shopifySlide.id,
+  const catalogSlide = catalogSlides[activeIndex] ?? catalogSlides[0];
+  const catalogImage = catalogSlide?.image;
+  const catalogImageActive = Boolean(
+    catalogSlide && catalogImage && failedCatalogSlideId !== catalogSlide.id,
   );
   const heroFallbackProduct = effectiveHeroCollection?.products.find((product) =>
     Boolean(product.node.images.edges[0]?.node.url),
   );
   const heroFallbackImage = heroFallbackProduct?.node.images.edges[0]?.node;
-  const heroSource = shopifyImageActive
-    ? "shopify-collection"
+  const heroSource = catalogImageActive
+    ? "catalog-collection"
     : heroFallbackImage && heroFallbackProduct
       ? "hero-product-fallback"
       : "placeholder";
 
   useEffect(() => {
     if (
-      shopifySlide?.id &&
-      failedShopifySlideId &&
-      shopifySlide.id !== failedShopifySlideId
+      catalogSlide?.id &&
+      failedCatalogSlideId &&
+      catalogSlide.id !== failedCatalogSlideId
     ) {
-      setFailedShopifySlideId(undefined);
+      setFailedCatalogSlideId(undefined);
     }
-  }, [failedShopifySlideId, shopifySlide?.id]);
+  }, [failedCatalogSlideId, catalogSlide?.id]);
 
-  const shopifyHeroPicture =
-    shopifyImageActive && shopifyImage && shopifySlide ? (
+  const catalogHeroPicture =
+    catalogImageActive && catalogImage && catalogSlide ? (
       <picture>
         <source
           media="(max-width: 639px)"
-          srcSet={heroCdnSrcSet(shopifyImage.url)}
+          srcSet={heroCdnSrcSet(catalogImage.url)}
           sizes="100vw"
         />
         <img
-          key={`${shopifySlide.id}:${shopifyImage.url}`}
-          src={heroCdnImage(shopifyImage.url, 1920)}
-          srcSet={heroCdnSrcSet(shopifyImage.url)}
+          key={`${catalogSlide.id}:${catalogImage.url}`}
+          src={heroCdnImage(catalogImage.url, 1920)}
+          srcSet={heroCdnSrcSet(catalogImage.url)}
           sizes="(min-width: 1440px) 1400px, 100vw"
-          alt={shopifyImage.altText ?? shopifySlide.title ?? "Space Call"}
+          alt={catalogImage.altText ?? catalogSlide.title ?? "Space Call"}
           loading="eager"
           fetchPriority="high"
           decoding="async"
           draggable={false}
-          onError={() => setFailedShopifySlideId(shopifySlide.id)}
+          onError={() => setFailedCatalogSlideId(catalogSlide.id)}
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
       </picture>
@@ -202,17 +190,17 @@ export function HomeHero({
         aria-label={t("featuredTechnology")}
         data-testid="home-hero"
         data-hero-source={heroSource}
-        data-hero-handle={shopifySlide?.handle ?? heroFallbackProduct?.node.handle ?? "none"}
-        data-hero-collection-handle={shopifySlide?.handle}
+        data-hero-handle={catalogSlide?.handle ?? heroFallbackProduct?.node.handle ?? "none"}
+        data-hero-collection-handle={catalogSlide?.handle}
         className="relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
       >
-        {shopifyHeroPicture ? (
+        {catalogHeroPicture ? (
           <div
             data-testid="home-hero-media"
-            aria-label={shopifySlide?.title ?? "Space Call"}
+            aria-label={catalogSlide?.title ?? "Space Call"}
             className="absolute inset-0 z-[1] block overflow-hidden"
           >
-            {shopifyHeroPicture}
+            {catalogHeroPicture}
           </div>
         ) : heroFallbackImage && heroFallbackProduct ? (
           <div
