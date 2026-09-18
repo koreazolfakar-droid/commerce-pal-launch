@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { addLocalProduct, openCart } from "./helpers";
+import { addLocalProduct, cartButton, openCart } from "./helpers";
 
 test("product has native price, adds to cart and shows same-brand products", async ({ page }) => {
   await addLocalProduct(page);
@@ -52,11 +52,6 @@ test("quick view validates quantity, adds local catalog products and restores fo
   await dialog.getByRole("button", { name: "Add to cart", exact: true }).click();
   await expect(dialog).toHaveCount(0);
 
-  await expect(
-    page
-      .getByRole("button", { name: /^(Open bag|Cart), 2 items/ })
-      .filter({ visible: true })
-      .first(),
-  ).toBeVisible();
+  await expect(cartButton(page, 2)).toBeVisible();
   await expect(await openCart(page)).toContainText("iPhone 18 Pro");
 });
