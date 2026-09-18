@@ -1,8 +1,8 @@
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { productBelongsToCategory, type CatalogCategory } from "@/dashboard/mock/catalog";
-import type { Product } from "@/dashboard/mock/data";
+import { productBelongsToCategory, type CatalogCategory } from "@/dashboard/data/categories";
+import type { DashboardProduct } from "@/dashboard/data/catalog";
 
 export default function ProductAssignmentDialog({
   category,
@@ -11,7 +11,7 @@ export default function ProductAssignmentDialog({
   onAssign,
 }: {
   category: CatalogCategory;
-  products: Product[];
+  products: DashboardProduct[];
   onClose: () => void;
   onAssign: (productIds: string[]) => void;
 }) {
@@ -69,7 +69,7 @@ export default function ProductAssignmentDialog({
               Assign Products
             </h2>
             <p className="mt-1 text-[10px] text-slate-400">
-              Selected products will move to <b>{category.name}</b> by updating Product.category.
+              Selected products will move to <b>{category.name}</b> by updating their Supabase category assignment.
             </p>
           </div>
           <button
