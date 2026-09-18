@@ -1,0 +1,331 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 6,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/476233367779",
+      "title": "Redmi",
+      "handle": "redmi",
+      "descriptionHtml": "<p>مجموعة هواتف Redmi الأصلية.</p>",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-06T06:07:34Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522120419",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/redmi-logo.png?v=1788625788",
+        "altText": "REDMI logo",
+        "width": 500,
+        "height": 281
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "Redmi"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9651061424355"
+          },
+          {
+            "id": "gid://shopify/Product/9651061391587"
+          },
+          {
+            "id": "gid://shopify/Product/9651061358819"
+          },
+          {
+            "id": "gid://shopify/Product/9651061260515"
+          },
+          {
+            "id": "gid://shopify/Product/9651061227747"
+          },
+          {
+            "id": "gid://shopify/Product/9651061162211"
+          },
+          {
+            "id": "gid://shopify/Product/9651061129443"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476359229667",
+      "title": "الأجهزة المستعملة",
+      "handle": "الأجهزة-المستعملة",
+      "descriptionHtml": "<p>أجهزة مستعملة بحالة موضحة بالتفصيل، مع معلومات الحالة والسعر والمواصفات لكل جهاز.</p>",
+      "sortOrder": "CREATED_DESC",
+      "updatedAt": "2026-09-06T06:07:34Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "TAG",
+            "relation": "EQUALS",
+            "condition": "used"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9654435545315"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476447113443",
+      "title": "Anker",
+      "handle": "anker",
+      "descriptionHtml": "<p>منتجات Anker الأصلية المتوفرة في المتجر.</p>",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-06T06:07:34Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522218723",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/anker-logo.svg?v=1788625802",
+        "altText": "Anker logo",
+        "width": 662,
+        "height": 157
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "Anker"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9600708378851"
+          },
+          {
+            "id": "gid://shopify/Product/9656428626147"
+          },
+          {
+            "id": "gid://shopify/Product/9656428593379"
+          },
+          {
+            "id": "gid://shopify/Product/9656428560611"
+          },
+          {
+            "id": "gid://shopify/Product/9656428527843"
+          },
+          {
+            "id": "gid://shopify/Product/9650868256995"
+          },
+          {
+            "id": "gid://shopify/Product/9650868224227"
+          },
+          {
+            "id": "gid://shopify/Product/9650868158691"
+          },
+          {
+            "id": "gid://shopify/Product/9650868060387"
+          },
+          {
+            "id": "gid://shopify/Product/9650867994851"
+          },
+          {
+            "id": "gid://shopify/Product/9650856526051"
+          },
+          {
+            "id": "gid://shopify/Product/9650856394979"
+          },
+          {
+            "id": "gid://shopify/Product/9650856362211"
+          },
+          {
+            "id": "gid://shopify/Product/9650856296675"
+          },
+          {
+            "id": "gid://shopify/Product/9650856263907"
+          },
+          {
+            "id": "gid://shopify/Product/9650856231139"
+          },
+          {
+            "id": "gid://shopify/Product/9650856198371"
+          },
+          {
+            "id": "gid://shopify/Product/9650856100067"
+          },
+          {
+            "id": "gid://shopify/Product/9650856067299"
+          },
+          {
+            "id": "gid://shopify/Product/9650856034531"
+          },
+          {
+            "id": "gid://shopify/Product/9650856001763"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476447146211",
+      "title": "UGREEN",
+      "handle": "ugreen",
+      "descriptionHtml": "<p>منتجات UGREEN الأصلية المتوفرة في المتجر.</p>",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T15:01:17Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522251491",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/rn-image_picker_lib_temp_d0d34580-d6f9-49b0-9e75-8fa24666a3dc.webp?v=1789398077",
+        "altText": "UGREEN logo",
+        "width": 1254,
+        "height": 1254
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "UGREEN"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9658219856099"
+          },
+          {
+            "id": "gid://shopify/Product/9658221756643"
+          },
+          {
+            "id": "gid://shopify/Product/9650868977891"
+          },
+          {
+            "id": "gid://shopify/Product/9650868912355"
+          },
+          {
+            "id": "gid://shopify/Product/9650868584675"
+          },
+          {
+            "id": "gid://shopify/Product/9650868388067"
+          },
+          {
+            "id": "gid://shopify/Product/9650868322531"
+          },
+          {
+            "id": "gid://shopify/Product/9600707985635"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476460777699",
+      "title": "OnePlus Phones",
+      "handle": "oneplus-phones",
+      "descriptionHtml": "<p>Explore our collection of OnePlus smartphones.</p>",
+      "sortOrder": "CREATED_DESC",
+      "updatedAt": "2026-09-06T06:07:34Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "OnePlus"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9656430756067"
+          },
+          {
+            "id": "gid://shopify/Product/9656430723299"
+          },
+          {
+            "id": "gid://shopify/Product/9656430690531"
+          },
+          {
+            "id": "gid://shopify/Product/9656430657763"
+          },
+          {
+            "id": "gid://shopify/Product/9656430624995"
+          },
+          {
+            "id": "gid://shopify/Product/9656430592227"
+          },
+          {
+            "id": "gid://shopify/Product/9656430493923"
+          },
+          {
+            "id": "gid://shopify/Product/9656430395619"
+          },
+          {
+            "id": "gid://shopify/Product/9656430330083"
+          },
+          {
+            "id": "gid://shopify/Product/9656430297315"
+          },
+          {
+            "id": "gid://shopify/Product/9656430264547"
+          },
+          {
+            "id": "gid://shopify/Product/9656430231779"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzY0NjA3Nzc2OTksImxhc3RfdmFsdWUiOiI0NzY0NjA3Nzc2OTkifQ=="
+  }
+}
