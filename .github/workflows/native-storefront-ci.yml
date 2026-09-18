@@ -5,6 +5,9 @@ on:
     branches:
       - "staging/no-shopify-dashboard"
       - main
+  push:
+    branches:
+      - "integration/no-shopify-dashboard-unified"
 
 concurrency:
   group: native-storefront-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
@@ -14,9 +17,9 @@ permissions:
   contents: read
 
 jobs:
-  core:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,48 +37,6 @@ jobs:
           VITE_STOREFRONT_DATA_SOURCE: local
         run: bun run check
 
-  browser-e2e:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - desktop
-          - mobile
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Install Playwright Chromium
-        run: bunx playwright install --with-deps chromium
-
-      - name: Storefront browser E2E (${{ matrix.project }})
-        run: bunx playwright test --project=${{ matrix.project }} --workers=2 --retries=0 --max-failures=1
-
-  supabase-only:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
       - name: Build Supabase-only storefront
         env:
           VITE_STOREFRONT_DATA_SOURCE: supabase
@@ -83,3 +44,11 @@ jobs:
 
       - name: Supabase-only SSR smoke
         run: node e2e/ssr-native-supabase.mjs
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Storefront browser E2E
+        env:
+          VITE_STOREFRONT_DATA_SOURCE: local
+        run: bunx playwright test --project=desktop --project=mobile --workers=2 --retries=0 --max-failures=1
