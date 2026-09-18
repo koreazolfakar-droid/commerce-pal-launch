@@ -46,27 +46,26 @@ test("merchant brand artwork overrides curated local fallbacks and raw SVG marku
   assert.doesNotMatch(brands, /from "@\/assets\/brands\//);
 });
 
-test("no-Shopify staging adapter is local-only and keeps brand queries short-lived", async () => {
-  const shopify = withoutComments(await source("src/lib/shopify.ts"));
+test("no-Shopify staging provider is isolated behind the storefront facade", async () => {
+  const legacy = withoutComments(await source("src/lib/shopify.ts"));
+  const provider = withoutComments(await source("src/lib/localStorefrontProvider.ts"));
+  const facade = withoutComments(await source("src/lib/storefrontFacade.ts"));
   const queries = await source("src/lib/queries.ts");
 
-  assert.match(shopify, /SHOPIFY_API_VERSION = "local-test"/);
-  assert.match(shopify, /SHOPIFY_STORE_PERMANENT_DOMAIN = "disabled\.local"/);
-  assert.match(shopify, /SHOPIFY_STOREFRONT_URL = "local:\/\/space-call-storefront"/);
-  assert.match(shopify, /const LOCAL_PRODUCTS: ShopifyProduct\[\]/);
-  assert.match(shopify, /const LOCAL_COLLECTIONS: ShopifyCollection\[\]/);
-  assert.match(shopify, /export async function storefrontApiRequest/);
-  assert.doesNotMatch(shopify, /X-Shopify-Storefront-Access-Token/);
-  assert.doesNotMatch(shopify, /process\.env\["SHOPIFY_STOREFRONT/);
-  assert.doesNotMatch(shopify, /await fetch\(/);
-  assert.doesNotMatch(shopify, /caches\.open\(/);
+  assert.match(legacy, /Compatibility shim/);
+  assert.doesNotMatch(legacy, /SHOPIFY_STOREFRONT|myshopify|storefrontApiRequest|await fetch\(/);
+  assert.match(provider, /const LOCAL_PRODUCTS: StoreProduct\[\]/);
+  assert.match(provider, /const LOCAL_COLLECTIONS: StoreCollection\[\]/);
+  assert.doesNotMatch(provider, /Shopify|shopify|await fetch\(/);
+  assert.match(facade, /from "\.\/localStorefrontProvider"/);
+  assert.match(facade, /from "\.\/storefrontTypes"/);
+  assert.match(queries, /from "@\/lib\/storefrontFacade"/);
 
   assert.match(queries, /BRAND_COLLECTION_STALE_TIME = 60 \* 1000/);
   assert.match(queries, /brand-logo-cache-v5/);
   assert.match(queries, /staleTime: BRAND_COLLECTION_STALE_TIME/);
   assert.doesNotMatch(queries, /brand-logo-cache-v4/);
 });
-
 test("homepage catalog survives transient storefront failures across repeated refreshes", async () => {
   const queries = await source("src/lib/queries.ts");
 
@@ -117,7 +116,7 @@ test("account support stays Space Call owned with no Shopify hand-off", async ()
   assert.doesNotMatch(infoPage, /SHOPIFY_ACCOUNT_URL|secure Shopify account page|myshopify/);
 });
 
-test("homepage hero is Shopify-first, inert, high-resolution, and refresh-resilient", async () => {
+test("homepage hero is catalog-driven, inert, and refresh-resilient", async () => {
   const home = await source("src/routes/index.tsx");
   const hero = await source("src/components/HomeHero.tsx");
 
@@ -133,7 +132,7 @@ test("homepage hero is Shopify-first, inert, high-resolution, and refresh-resili
   assert.match(hero, /window\.sessionStorage\.setItem\(HERO_REFRESH_FALLBACK_STORAGE_KEY/);
   assert.match(hero, /window\.sessionStorage\.getItem\(HERO_REFRESH_FALLBACK_STORAGE_KEY/);
   assert.match(hero, /const effectiveHeroCollection = heroCollection\?\.collection/);
-  assert.match(hero, /const shopifyImage = shopifySlide\?\.image/);
+  assert.match(hero, /const catalogImage = catalogSlide\?\.image/);
   assert.match(hero, /heroFallbackProduct = effectiveHeroCollection\?\.products\.find/);
   assert.doesNotMatch(hero, /heroTargetProduct/);
   assert.doesNotMatch(hero, /to="\/collections\/\$handle"/);
@@ -141,11 +140,11 @@ test("homepage hero is Shopify-first, inert, high-resolution, and refresh-resili
   assert.doesNotMatch(hero, /from "@tanstack\/react-router"/);
   assert.match(hero, /HERO_IMAGE_WIDTHS = \[640, 960, 1280, 1600, 1920, 2400, 2880\]/);
   assert.match(hero, /parsed\.searchParams\.set\("quality", "88"\)/);
-  assert.match(hero, /src=\{heroCdnImage\(shopifyImage\.url, 1920\)\}/);
-  assert.match(hero, /srcSet=\{heroCdnSrcSet\(shopifyImage\.url\)\}/);
+  assert.match(hero, /src=\{heroCdnImage\(catalogImage\.url, 1920\)\}/);
+  assert.match(hero, /srcSet=\{heroCdnSrcSet\(catalogImage\.url\)\}/);
   assert.match(hero, /sizes="100vw"/);
-  assert.match(hero, /onError=\{\(\) => setFailedShopifySlideId\(shopifySlide\.id\)\}/);
-  assert.match(hero, /key=\{`\$\{shopifySlide\.id\}:\$\{shopifyImage\.url\}`\}/);
+  assert.match(hero, /onError=\{\(\) => setFailedCatalogSlideId\(catalogSlide\.id\)\}/);
+  assert.match(hero, /key=\{`\$\{catalogSlide\.id\}:\$\{catalogImage\.url\}`\}/);
   assert.match(hero, /data-hero-source=\{heroSource\}/);
   assert.match(hero, /hero-product-fallback/);
   assert.match(hero, /bg-gradient-to-br/);
