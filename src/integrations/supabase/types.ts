@@ -1083,6 +1083,11 @@ export type Database = {
         }[]
       }
       create_store_order_internal: { Args: { payload: Json }; Returns: Json }
+      delete_store_brand: {
+        Args: { p_brand_id: string; p_destination_brand_id?: string }
+        Returns: undefined
+      }
+      reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
