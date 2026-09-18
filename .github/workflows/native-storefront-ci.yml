@@ -10,7 +10,7 @@ on:
       - "integration/no-shopify-dashboard-unified"
 
 concurrency:
-  group: native-storefront-${{ github.workflow }}-${{ github.ref }}
+  group: native-storefront-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
