@@ -1,4 +1,5 @@
 name: Native Storefront Integration
+# Stable verification branch is intentionally covered by the push filter below.
 
 on:
   pull_request:
