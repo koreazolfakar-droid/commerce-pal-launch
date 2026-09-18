@@ -1,0 +1,50 @@
+name: Native Storefront Integration
+# Stable verification branch is intentionally covered by the push filter below.
+
+on:
+  pull_request:
+    branches:
+      - "staging/no-shopify-dashboard"
+      - main
+  push:
+    branches:
+      - "integration/no-shopify-dashboard-unified"
+      - "verification/native-storefront-gate-2026-09-18"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Full storefront check (deterministic local provider)
+        env:
+          VITE_STOREFRONT_DATA_SOURCE: local
+        run: bun run check
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Storefront browser E2E
+        run: bun run test:e2e
+
+      - name: Build Supabase-only storefront
+        env:
+          VITE_STOREFRONT_DATA_SOURCE: supabase
+        run: bun run build
+
+      - name: Supabase-only SSR smoke
+        run: node e2e/ssr-native-supabase.mjs

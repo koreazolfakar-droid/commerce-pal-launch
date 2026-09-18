@@ -6,20 +6,15 @@ async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("sitemap paginates Shopify and uses meaningful lastmod data", async () => {
-  const [sitemap, documents] = await Promise.all([
-    source("src/routes/sitemap[.]xml.ts"),
-    source("src/lib/shopifyDocuments.ts"),
-  ]);
+test("sitemap uses the provider-neutral catalog and meaningful lastmod data", async () => {
+  const sitemap = await source("src/routes/sitemap[.]xml.ts");
 
-  assert.match(sitemap, /storefrontApiRequest\(PRODUCTS_QUERY/);
-  assert.match(sitemap, /pageInfo\?\.hasNextPage/);
+  assert.match(sitemap, /fetchCatalogProducts\(PAGE_SIZE\)/);
+  assert.match(sitemap, /fetchCollections\(PAGE_SIZE\)/);
   assert.match(sitemap, /productLastmod/);
-  assert.match(documents, /createdAt updatedAt tags/);
-  assert.match(documents, /description updatedAt image/);
+  assert.doesNotMatch(sitemap, /storefrontApiRequest|shopifyDocuments|PRODUCTS_QUERY|COLLECTIONS_QUERY/);
   assert.doesNotMatch(sitemap, /<changefreq>|<priority>/);
 });
-
 test("global crawler metadata stays indexable without fake hreflang alternates", async () => {
   const root = await source("src/routes/__root.tsx");
 
@@ -60,8 +55,8 @@ test("header account and tracking links stay first-party", async () => {
   assert.doesNotMatch(header, /SHOPIFY_ACCOUNT_URL/);
   assert.match(infoPage, /id="track-order"/);
   assert.match(infoPage, /id="account-orders"/);
-  assert.match(infoPage, /SHOPIFY_ACCOUNT_URL/);
-  assert.match(infoPage, /secure Shopify account page/);
+  assert.match(infoPage, /generalWhatsAppUrl\(\)/);
+  assert.doesNotMatch(infoPage, /SHOPIFY_ACCOUNT_URL|secure Shopify account page|myshopify/);
 });
 
 test("commercial landing pages carry Lebanon search intent", async () => {

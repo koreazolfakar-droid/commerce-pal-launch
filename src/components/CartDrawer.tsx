@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  ExternalLink,
-  Loader2,
   MessageCircle,
   Minus,
   Plus,
@@ -48,11 +46,8 @@ export const CartDrawer = ({
   const {
     items,
     total,
-    isLoading,
-    isSyncing,
     updateQuantity,
     removeItem,
-    getCheckoutUrl,
     syncCart,
   } = useCartStore();
 
@@ -60,7 +55,6 @@ export const CartDrawer = ({
   const totalPrice = Number(total?.amount ?? 0);
   const currency = total?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
   const whatsappLabel = language === "ar" ? "اطلب عبر واتساب" : "Order via WhatsApp";
-  const orLabel = language === "ar" ? "أو" : "or";
 
   useEffect(() => {
     if (isOpen) syncCart();
@@ -73,14 +67,6 @@ export const CartDrawer = ({
     document.addEventListener("space-cell:open-cart", open);
     return () => document.removeEventListener("space-cell:open-cart", open);
   }, [setIsOpen]);
-
-  const handleCheckout = () => {
-    const checkoutUrl = getCheckoutUrl();
-    if (checkoutUrl) {
-      window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-      setIsOpen(false);
-    }
-  };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -192,29 +178,6 @@ export const CartDrawer = ({
                     <MessageCircle className="mr-2 h-4 w-4" />
                     {whatsappLabel}
                   </a>
-                </Button>
-
-                <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                  <span className="h-px flex-1 bg-border" />
-                  <span>{orLabel}</span>
-                  <span className="h-px flex-1 bg-border" />
-                </div>
-
-                <Button
-                  onClick={handleCheckout}
-                  variant="outline"
-                  className="min-h-12 w-full"
-                  size="lg"
-                  disabled={items.length === 0 || isLoading || isSyncing}
-                >
-                  {isLoading || isSyncing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      {t("checkoutShopify")}
-                    </>
-                  )}
                 </Button>
               </div>
             </>

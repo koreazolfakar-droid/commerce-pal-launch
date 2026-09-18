@@ -1,9 +1,8 @@
 import { expect, type Page } from "@playwright/test";
 
-export async function addFixtureProduct(page: Page) {
-  await page.goto("/product/fixture-phone-1");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Samsung Fixture Phone");
-  // :visible selects the desktop action or the mobile sticky buy action.
+export async function addLocalProduct(page: Page) {
+  await page.goto("/product/iphone-18-pro");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("iPhone 18 Pro");
   await page
     .getByRole("button", { name: /^Add to cart/ })
     .filter({ visible: true })

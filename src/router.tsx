@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
+import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
@@ -26,6 +27,18 @@ export const getRouter = () => {
     // right after hover/touch intent. Product/query freshness is still governed by
     // React Query's shorter data stale times.
     defaultPreloadStaleTime: 30_000,
+  });
+
+  setupRouterSsrQueryIntegration({
+    router,
+    queryClient,
+    // CatalogIndex intentionally contains runtime-only Maps and React icon
+    // components. Queries marked meta.ssr=false stay out of the hydration payload.
+    dehydrateOptions: {
+      shouldDehydrateQuery: (query) => query.meta?.["ssr"] !== false,
+    },
+    // RootComponent already owns QueryClientProvider.
+    wrapQueryClient: false,
   });
 
   return router;
