@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
-import { convertProductImageToWebp, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
+import { convertProductImageToWebp, type ProductImageConversionResult, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -470,7 +470,8 @@ async function uploadProductImageFile(
   source: File,
   resolution: ProductImageResolution,
 ) {
-  const file = await convertProductImageToWebp(source, resolution);
+  const conversion = await convertProductImageToWebp(source, resolution);
+  const file = conversion.file;
   if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
     throw new Error("Converted product image must be 10 MB or smaller.");
   }
@@ -489,7 +490,7 @@ async function uploadProductImageFile(
   throwIfError(error, "Uploading product image failed");
 
   const { data } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(objectPath);
-  return { url: data.publicUrl, objectPath };
+  return { url: data.publicUrl, objectPath, conversion };
 }
 
 async function removeOwnedProductImageFile(url: string) {
@@ -504,7 +505,7 @@ export async function uploadDashboardProductImage(
   source: File,
   resolution: ProductImageResolution,
   altText = "",
-): Promise<DashboardProductImage[]> {
+): Promise<{ images: DashboardProductImage[]; conversion: ProductImageConversionResult }> {
   await requireDashboardRole();
 
   const current = await listDashboardProductImages(productId);
@@ -527,14 +528,17 @@ export async function uploadDashboardProductImage(
   }
 
   invalidateNativeStoreCache();
-  return listDashboardProductImages(productId);
+  return {
+    images: await listDashboardProductImages(productId),
+    conversion: uploaded.conversion,
+  };
 }
 
 export async function replaceDashboardProductImage(
   image: DashboardProductImage,
   source: File,
   resolution: ProductImageResolution,
-): Promise<DashboardProductImage[]> {
+): Promise<{ images: DashboardProductImage[]; conversion: ProductImageConversionResult }> {
   await requireDashboardRole();
   const uploaded = await uploadProductImageFile(image.productId, source, resolution);
 
@@ -555,7 +559,10 @@ export async function replaceDashboardProductImage(
 
   await removeOwnedProductImageFile(image.url).catch(() => undefined);
   invalidateNativeStoreCache();
-  return listDashboardProductImages(image.productId);
+  return {
+    images: await listDashboardProductImages(image.productId),
+    conversion: uploaded.conversion,
+  };
 }
 
 export async function setDashboardPrimaryProductImage(
