@@ -21,6 +21,7 @@ console.error = (...args) => {
 };
 
 async function request(path) {
+  activeSsrPath = path;
   let url = new URL(path, "https://spacecallapp.store");
   let response;
   for (let hop = 0; hop < 4; hop++) {
@@ -39,6 +40,7 @@ async function request(path) {
   }
   const body = await response.text();
   assert.equal(response.status, 200, `${path} must render successfully`);
+  activeSsrPath = "idle";
   return { response, body };
 }
 
