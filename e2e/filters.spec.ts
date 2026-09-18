@@ -1,13 +1,17 @@
 import { expect, test } from "@playwright/test";
 
+function productCard(page: import("@playwright/test").Page, handle: string) {
+  return page.locator(`main article:has(a[href="/product/${handle}"])`);
+}
+
 test("combined native-catalog filters, sorting and reset keep URL state", async ({ page, isMobile }) => {
   await page.goto("/shop?brand=apple,samsung&category=smartphones&min=900&max=1300");
   const cards = page.locator("main article");
 
   await expect(cards).toHaveCount(3);
-  await expect(cards.filter({ hasText: "iPhone 18 Pro" })).toHaveCount(1);
-  await expect(cards.filter({ hasText: "iPhone 18" })).toHaveCount(1);
-  await expect(cards.filter({ hasText: "Galaxy S26 Ultra" })).toHaveCount(1);
+  await expect(productCard(page, "iphone-18-pro")).toHaveCount(1);
+  await expect(productCard(page, "iphone-18")).toHaveCount(1);
+  await expect(productCard(page, "galaxy-s26-ultra")).toHaveCount(1);
 
   await page.getByLabel("Sort", { exact: true }).selectOption("price-desc");
   await expect(cards.first()).toContainText("iPhone 18 Pro");
@@ -29,8 +33,8 @@ test("native collections filter accurately and impossible combinations stay empt
   await page.goto("/collections/iphone?brand=apple");
   await expect(page.locator("main h1")).toHaveCount(1);
   await expect(page.locator("main article")).toHaveCount(2);
-  await expect(page.locator("main article").filter({ hasText: "iPhone 18 Pro" })).toHaveCount(1);
-  await expect(page.locator("main article").filter({ hasText: "Galaxy S26 Ultra" })).toHaveCount(0);
+  await expect(productCard(page, "iphone-18-pro")).toHaveCount(1);
+  await expect(productCard(page, "galaxy-s26-ultra")).toHaveCount(0);
 
   await page.goto("/shop?category=cases&brand=apple");
   await expect(page.locator("main article")).toHaveCount(0);
