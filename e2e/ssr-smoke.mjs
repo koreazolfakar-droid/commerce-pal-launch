@@ -7,6 +7,18 @@ const pending = [];
 const context = { waitUntil: (promise) => pending.push(promise), passThroughOnException() {} };
 const env = {};
 
+const originalConsoleError = console.error;
+const ssrSerializationErrors = [];
+console.error = (...args) => {
+  const message = args
+    .map((value) => (value instanceof Error ? `${value.name}: ${value.message}` : String(value)))
+    .join(" ");
+  if (/Serialization error|Seroval Error/i.test(message)) {
+    ssrSerializationErrors.push(message);
+  }
+  originalConsoleError(...args);
+};
+
 async function request(path) {
   let url = new URL(path, "https://spacecallapp.store");
   let response;
@@ -124,6 +136,14 @@ assert.equal(
 const robots = await readFile(new URL("../public/robots.txt", import.meta.url), "utf8");
 assert.ok(!/^Disallow:\s*\/$/m.test(robots));
 await Promise.allSettled(pending);
+
+console.error = originalConsoleError;
+assert.deepEqual(
+  ssrSerializationErrors,
+  [],
+  `SSR emitted serialization errors:\n${ssrSerializationErrors.join("\n")}`,
+);
+
 console.log(
   JSON.stringify({
     passed: true,
