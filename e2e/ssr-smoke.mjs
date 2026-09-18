@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-// Run after `bun run build`. Calls the actual production SSR entry with no Shopify credentials.
+// Run after `bun run build`. Calls the actual production SSR entry with no external commerce-platform credentials.
 const { default: handler } = await import("../.output/server/index.mjs");
 const pending = [];
 const context = { waitUntil: (promise) => pending.push(promise), passThroughOnException() {} };
@@ -61,7 +61,7 @@ for (const delayedTestId of [
   );
 }
 
-// The staging hero is backed by the local provider-neutral catalog, not an external Shopify call.
+// The staging hero is backed by the local provider-neutral catalog, not an external commerce-platform call.
 assert.match(home.body, /data-hero-handle="homepage-hero"/);
 assert.doesNotMatch(home.body, /href="\/collections\/homepage-hero"/);
 assert.match(home.body, /iPhone 18 Pro|Homepage Hero/);
