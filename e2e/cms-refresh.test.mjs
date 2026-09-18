@@ -4,25 +4,26 @@ import test from "node:test";
 
 const cms = fs.readFileSync("src/lib/cms.ts", "utf8");
 const cmsQuery = fs.readFileSync("src/lib/cmsQuery.ts", "utf8");
+const publicClient = fs.readFileSync("src/integrations/supabase/publicClient.ts", "utf8");
 
-test("public storefront CMS bridge is permanently disconnected from dashboard runtime", () => {
-  assert.match(
-    cms,
-    /export async function fetchCmsSnapshot\(\): Promise<CmsSnapshot> \{\s*return EMPTY_CMS;\s*\}/,
-  );
-  assert.doesNotMatch(cms, /createServerFn/);
-  assert.doesNotMatch(cms, /functions\/v1\/public-cms/);
-  assert.doesNotMatch(cms, /lastSuccessfulCmsSnapshot|CMS_BROWSER_FALLBACK_KEY/);
-  assert.doesNotMatch(cms, /localStorage|loadCmsSnapshot|cmsSnapshotFn/);
+test("public storefront CMS reads only through the resilient public edge gateway", () => {
+  assert.match(cms, /functions\/v1\/public-cms/);
+  assert.match(cms, /CMS_PUBLIC_READ_TIMEOUT_MS = 4_000/);
+  assert.match(cms, /AbortController/);
+  assert.match(cms, /return EMPTY_CMS/);
+  assert.match(cms, /normalizeCmsSnapshot/);
+  assert.doesNotMatch(cms, /service_role|SUPABASE_SECRET|sb_secret_/);
+  assert.doesNotMatch(cms, /localStorage|CMS_BROWSER_FALLBACK_KEY/);
+  assert.match(publicClient, /export function getPublicSupabaseConfig/);
 });
 
-test("storefront CMS compatibility query is static and cannot refetch dashboard data", () => {
-  assert.match(cmsQuery, /queryKey: \["storefront", "dashboard-disconnected"\]/);
-  assert.match(cmsQuery, /queryFn: async \(\) => EMPTY_CMS/);
-  assert.match(cmsQuery, /initialData: EMPTY_CMS/);
-  assert.match(cmsQuery, /staleTime: Number\.POSITIVE_INFINITY/);
-  assert.match(cmsQuery, /gcTime: Number\.POSITIVE_INFINITY/);
-  assert.match(cmsQuery, /refetchOnMount: false/);
-  assert.match(cmsQuery, /refetchOnWindowFocus: false/);
-  assert.doesNotMatch(cmsQuery, /fetchCmsSnapshot|placeholderData/);
+test("storefront CMS query refreshes safely without pinning stale dashboard content forever", () => {
+  assert.match(cmsQuery, /queryKey: \["storefront", "public-cms"\]/);
+  assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
+  assert.match(cmsQuery, /placeholderData: EMPTY_CMS/);
+  assert.match(cmsQuery, /staleTime: 30_000/);
+  assert.match(cmsQuery, /gcTime: 5 \* 60_000/);
+  assert.match(cmsQuery, /retry: 1/);
+  assert.doesNotMatch(cmsQuery, /dashboard-disconnected/);
+  assert.doesNotMatch(cmsQuery, /Number\.POSITIVE_INFINITY/);
 });

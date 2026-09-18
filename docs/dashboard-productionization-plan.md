@@ -63,6 +63,7 @@ Completed on this branch:
 - Phase 2: Orders list/detail/status/payment management now use Supabase. Order cancellation restores tracked stock atomically and logs a release movement.
 - Phase 3: Customers CRM now uses Supabase with search, filtering, profile editing, tags, VIP/block flags, internal notes, customer creation and order history. Staff-managed profile fields are protected from being overwritten by future order syncs.
 - Phase 4: Collections now use Supabase with full create/edit/delete, active/draft/featured state, SEO metadata, collection ordering, product membership management and product ordering.
+- Phase 5A: Hero CMS now uses Supabase with dedicated dashboard management, desktop/mobile uploads to Storage, bilingual content, CTA targeting, scheduling, ordering, preview, media library integration, audit logging and CMS-first storefront rendering with safe legacy fallback.
 
 Next planned phase:
-- Phase 5: Homepage/CMS.
+- Phase 5B: Homepage sections and navigation.

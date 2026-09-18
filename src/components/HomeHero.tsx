@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
-import type { CmsHeroSlide } from "@/lib/cms";
+import { localizeHeroSlide, type CmsHeroSlide } from "@/lib/cms";
 import { homepageHeroCollections } from "@/lib/homeMerchandising";
 import { useLanguage } from "@/lib/i18n";
 import { collectionsQueryOptions } from "@/lib/queries";
@@ -82,10 +82,27 @@ function storeHero(value: Exclude<HomeHeroCollection, null | undefined>) {
   }
 }
 
+function cmsHeroHref(slide: CmsHeroSlide) {
+  if (!slide.target_value) return undefined;
+  if (slide.target_type === "product") return `/product/${slide.target_value}`;
+  if (slide.target_type === "collection") return `/collections/${slide.target_value}`;
+  if (slide.target_type === "url") return slide.target_value;
+  return undefined;
+}
+
+function cmsButtonClass(style: CmsHeroSlide["button_style"]) {
+  if (style === "light") return "bg-white text-slate-950 hover:bg-white/90";
+  if (style === "dark") return "bg-slate-950 text-white hover:bg-slate-900";
+  if (style === "secondary") {
+    return "border border-white/70 bg-white/10 text-white backdrop-blur-md hover:bg-white/20";
+  }
+  return "bg-primary text-primary-foreground hover:bg-primary/90";
+}
+
 export function HomeHero({
   products: _products,
   heroCollection,
-  cmsHeroSlides: _cmsHeroSlides = [],
+  cmsHeroSlides = [],
 }: {
   products: ShopifyProduct[];
   heroCollection?: HomeHeroCollection;
@@ -97,6 +114,7 @@ export function HomeHero({
     Exclude<HomeHeroCollection, null | undefined> | null
   >(null);
   const [failedShopifySlideId, setFailedShopifySlideId] = useState<string>();
+  const [failedCmsSlideIds, setFailedCmsSlideIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (heroCollection?.collection) {
@@ -129,7 +147,17 @@ export function HomeHero({
     () => homepageHeroCollections(configuredCollections),
     [configuredCollections],
   );
-  const slideCount = shopifySlides.length;
+
+  const localizedCmsSlides = useMemo(
+    () =>
+      cmsHeroSlides
+        .filter((slide) => Boolean(slide.image_url) && !failedCmsSlideIds.includes(slide.id))
+        .map((slide) => localizeHeroSlide(slide, language)),
+    [cmsHeroSlides, failedCmsSlideIds, language],
+  );
+
+  const usingCms = localizedCmsSlides.length > 0;
+  const slideCount = usingCms ? localizedCmsSlides.length : shopifySlides.length;
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -147,20 +175,30 @@ export function HomeHero({
     return () => window.clearInterval(timer);
   }, [slideCount]);
 
-  const shopifySlide = shopifySlides[activeIndex] ?? shopifySlides[0];
+  const cmsSlide = usingCms
+    ? localizedCmsSlides[activeIndex] ?? localizedCmsSlides[0]
+    : undefined;
+
+  const shopifySlide = !usingCms
+    ? shopifySlides[activeIndex] ?? shopifySlides[0]
+    : undefined;
   const shopifyImage = shopifySlide?.image;
   const shopifyImageActive = Boolean(
     shopifySlide && shopifyImage && failedShopifySlideId !== shopifySlide.id,
   );
+
   const heroFallbackProduct = effectiveHeroCollection?.products.find((product) =>
     Boolean(product.node.images.edges[0]?.node.url),
   );
   const heroFallbackImage = heroFallbackProduct?.node.images.edges[0]?.node;
-  const heroSource = shopifyImageActive
-    ? "shopify-collection"
-    : heroFallbackImage && heroFallbackProduct
-      ? "hero-product-fallback"
-      : "placeholder";
+
+  const heroSource = cmsSlide
+    ? "supabase-cms"
+    : shopifyImageActive
+      ? "shopify-collection"
+      : heroFallbackImage && heroFallbackProduct
+        ? "hero-product-fallback"
+        : "placeholder";
 
   useEffect(() => {
     if (
@@ -171,6 +209,37 @@ export function HomeHero({
       setFailedShopifySlideId(undefined);
     }
   }, [failedShopifySlideId, shopifySlide?.id]);
+
+  const cmsDesktopAlt =
+    (language === "ar" ? cmsSlide?.image_alt_ar : cmsSlide?.image_alt_en) ||
+    cmsSlide?.title ||
+    "Space Call";
+  const cmsMobileAlt =
+    (language === "ar" ? cmsSlide?.mobile_image_alt_ar : cmsSlide?.mobile_image_alt_en) ||
+    cmsDesktopAlt;
+
+  const cmsPicture = cmsSlide ? (
+    <picture>
+      {cmsSlide.mobile_image_url ? (
+        <source media="(max-width: 639px)" srcSet={cmsSlide.mobile_image_url} />
+      ) : null}
+      <img
+        key={`${cmsSlide.id}:${cmsSlide.image_url}`}
+        src={cmsSlide.image_url}
+        alt={cmsSlide.mobile_image_url ? cmsMobileAlt : cmsDesktopAlt}
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
+        draggable={false}
+        onError={() =>
+          setFailedCmsSlideIds((current) =>
+            current.includes(cmsSlide.id) ? current : [...current, cmsSlide.id],
+          )
+        }
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      />
+    </picture>
+  ) : null;
 
   const shopifyHeroPicture =
     shopifyImageActive && shopifyImage && shopifySlide ? (
@@ -196,17 +265,39 @@ export function HomeHero({
       </picture>
     ) : null;
 
+  const cmsHref = cmsSlide ? cmsHeroHref(cmsSlide) : undefined;
+  const cmsAlignment =
+    cmsSlide?.content_alignment === "center"
+      ? "items-center text-center"
+      : cmsSlide?.content_alignment === "end"
+        ? "items-end text-end"
+        : "items-start text-start";
+  const cmsOverlayOpacity = Math.max(0, Math.min(90, cmsSlide?.overlay_opacity ?? 20)) / 100;
+
   return (
     <>
       <section
         aria-label={t("featuredTechnology")}
         data-testid="home-hero"
         data-hero-source={heroSource}
-        data-hero-handle={shopifySlide?.handle ?? heroFallbackProduct?.node.handle ?? "none"}
+        data-hero-id={cmsSlide?.id}
+        data-hero-handle={
+          cmsSlide
+            ? `cms:${cmsSlide.id}`
+            : shopifySlide?.handle ?? heroFallbackProduct?.node.handle ?? "none"
+        }
         data-hero-collection-handle={shopifySlide?.handle}
         className="relative isolate aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:aspect-auto sm:min-h-[25rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border lg:min-h-[28rem]"
       >
-        {shopifyHeroPicture ? (
+        {cmsPicture ? (
+          <div
+            data-testid="home-hero-media"
+            aria-label={cmsSlide?.title ?? "Space Call"}
+            className="absolute inset-0 z-[1] block overflow-hidden"
+          >
+            {cmsPicture}
+          </div>
+        ) : shopifyHeroPicture ? (
           <div
             data-testid="home-hero-media"
             aria-label={shopifySlide?.title ?? "Space Call"}
@@ -251,6 +342,44 @@ export function HomeHero({
             </div>
           </div>
         )}
+
+        {cmsSlide ? (
+          <>
+            <div
+              className="pointer-events-none absolute inset-0 z-[2] bg-black"
+              style={{ opacity: cmsOverlayOpacity }}
+              aria-hidden="true"
+            />
+            <div
+              data-testid="home-hero-content"
+              className={`absolute inset-0 z-[3] flex flex-col justify-end p-5 text-white sm:p-8 lg:p-10 ${cmsAlignment}`}
+              dir={language === "ar" ? "rtl" : "ltr"}
+            >
+              <div className="max-w-2xl">
+                {cmsSlide.title ? (
+                  <h2 className="text-2xl font-black tracking-tight drop-shadow sm:text-4xl lg:text-5xl">
+                    {cmsSlide.title}
+                  </h2>
+                ) : null}
+                {cmsSlide.subtitle ? (
+                  <p className="mt-2 max-w-xl text-sm font-medium text-white/90 drop-shadow sm:text-base lg:text-lg">
+                    {cmsSlide.subtitle}
+                  </p>
+                ) : null}
+                {cmsHref && cmsSlide.button_label ? (
+                  <a
+                    href={cmsHref}
+                    target={cmsSlide.open_in_new_tab ? "_blank" : undefined}
+                    rel={cmsSlide.open_in_new_tab ? "noopener noreferrer" : undefined}
+                    className={`press mt-4 inline-flex min-h-11 items-center justify-center rounded-xl px-5 py-2.5 text-xs font-bold shadow-lg transition ${cmsButtonClass(cmsSlide.button_style)}`}
+                  >
+                    {cmsSlide.button_label}
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          </>
+        ) : null}
 
         {slideCount > 1 && (
           <div

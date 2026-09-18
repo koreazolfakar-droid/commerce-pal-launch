@@ -1,0 +1,1 @@
+grant execute on function private.log_cms_action(text,text,text,jsonb) to authenticated;

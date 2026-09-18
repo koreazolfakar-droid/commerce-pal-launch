@@ -1,3 +1,5 @@
+import { getPublicSupabaseConfig } from "@/integrations/supabase/publicClient";
+
 export type CmsJsonValue =
   string | number | boolean | null | CmsJsonValue[] | { [key: string]: CmsJsonValue };
 
@@ -14,12 +16,20 @@ export type CmsHeroSlide = {
   subtitle_ar?: string | null;
   image_url: string;
   mobile_image_url: string | null;
+  image_alt_en?: string | null;
+  image_alt_ar?: string | null;
+  mobile_image_alt_en?: string | null;
+  mobile_image_alt_ar?: string | null;
   button_label: string | null;
   button_label_en?: string | null;
   button_label_ar?: string | null;
   target_type: "url" | "product" | "collection" | "none";
   target_value: string | null;
   sort_order: number;
+  content_alignment?: "start" | "center" | "end";
+  overlay_opacity?: number;
+  button_style?: "primary" | "secondary" | "light" | "dark";
+  open_in_new_tab?: boolean;
 };
 
 export type CmsSection = {
@@ -98,17 +108,64 @@ export const EMPTY_CMS: CmsSnapshot = {
 
 const ARABIC_SCRIPT = /[\u0600-\u06ff]/;
 
+const CMS_PUBLIC_READ_TIMEOUT_MS = 4_000;
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeCmsSnapshot(value: unknown): CmsSnapshot {
+  if (!isObject(value)) return EMPTY_CMS;
+
+  return {
+    settings: isObject(value.settings) ? (value.settings as Record<string, CmsSettingValue>) : {},
+    heroSlides: Array.isArray(value.heroSlides) ? (value.heroSlides as CmsHeroSlide[]) : [],
+    sections: Array.isArray(value.sections) ? (value.sections as CmsSection[]) : [],
+    navigation: Array.isArray(value.navigation)
+      ? (value.navigation as CmsNavigationItem[])
+      : [],
+    brands: Array.isArray(value.brands) ? (value.brands as CmsBrand[]) : [],
+    seoPages: Array.isArray(value.seoPages) ? (value.seoPages as CmsSeoPage[]) : [],
+  };
+}
+
 /**
- * The storefront is intentionally Shopify-only.
+ * Public CMS snapshot.
  *
- * Dashboard/CMS editors remain available under /dashboard, but public storefront
- * code no longer reads their Supabase projection. Keeping this compatibility
- * function returning an empty snapshot lets existing presentational components
- * fall back to their built-in copy without introducing a second runtime source
- * of truth or a refresh race against Shopify.
+ * The storefront reads only through the public-cms Edge Function. Direct anon
+ * table reads stay denied by RLS. CMS is resilient by design: a timeout,
+ * deployment issue or malformed response returns EMPTY_CMS so storefront
+ * commerce data can continue rendering without a fatal error.
  */
 export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
-  return EMPTY_CMS;
+  const { url, key } = getPublicSupabaseConfig();
+  if (!url || !key) return EMPTY_CMS;
+
+  const controller = new AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), CMS_PUBLIC_READ_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${url}/functions/v1/public-cms`, {
+      method: "GET",
+      headers: {
+        apikey: key,
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      console.warn(`[CMS] public-cms returned HTTP ${response.status}`);
+      return EMPTY_CMS;
+    }
+
+    return normalizeCmsSnapshot(await response.json());
+  } catch (error) {
+    console.warn("[CMS] public-cms unavailable; storefront fallbacks remain active.", error);
+    return EMPTY_CMS;
+  } finally {
+    globalThis.clearTimeout(timeout);
+  }
 }
 
 function cleanText(value: unknown) {

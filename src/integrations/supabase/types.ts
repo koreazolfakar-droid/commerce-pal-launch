@@ -100,12 +100,20 @@ export type Database = {
           button_label: string | null
           button_label_ar: string | null
           button_label_en: string | null
+          button_style: string
+          content_alignment: string
           created_at: string
           ends_at: string | null
           id: string
+          image_alt_ar: string | null
+          image_alt_en: string | null
           image_url: string | null
           is_published: boolean
+          mobile_image_alt_ar: string | null
+          mobile_image_alt_en: string | null
           mobile_image_url: string | null
+          open_in_new_tab: boolean
+          overlay_opacity: number
           sort_order: number
           starts_at: string | null
           subtitle: string | null
@@ -122,12 +130,20 @@ export type Database = {
           button_label?: string | null
           button_label_ar?: string | null
           button_label_en?: string | null
+          button_style?: string
+          content_alignment?: string
           created_at?: string
           ends_at?: string | null
           id?: string
+          image_alt_ar?: string | null
+          image_alt_en?: string | null
           image_url?: string | null
           is_published?: boolean
+          mobile_image_alt_ar?: string | null
+          mobile_image_alt_en?: string | null
           mobile_image_url?: string | null
+          open_in_new_tab?: boolean
+          overlay_opacity?: number
           sort_order?: number
           starts_at?: string | null
           subtitle?: string | null
@@ -144,12 +160,20 @@ export type Database = {
           button_label?: string | null
           button_label_ar?: string | null
           button_label_en?: string | null
+          button_style?: string
+          content_alignment?: string
           created_at?: string
           ends_at?: string | null
           id?: string
+          image_alt_ar?: string | null
+          image_alt_en?: string | null
           image_url?: string | null
           is_published?: boolean
+          mobile_image_alt_ar?: string | null
+          mobile_image_alt_en?: string | null
           mobile_image_url?: string | null
+          open_in_new_tab?: boolean
+          overlay_opacity?: number
           sort_order?: number
           starts_at?: string | null
           subtitle?: string | null
@@ -1100,6 +1124,67 @@ export type Database = {
           reset_at: string
         }[]
       }
+      create_cms_hero_slide: {
+        Args: {
+          p_button_label_ar?: string
+          p_button_label_en?: string
+          p_button_style?: string
+          p_content_alignment?: string
+          p_ends_at?: string
+          p_image_alt_ar?: string
+          p_image_alt_en?: string
+          p_image_url?: string
+          p_is_published?: boolean
+          p_mobile_image_alt_ar?: string
+          p_mobile_image_alt_en?: string
+          p_mobile_image_url?: string
+          p_open_in_new_tab?: boolean
+          p_overlay_opacity?: number
+          p_starts_at?: string
+          p_subtitle_ar?: string
+          p_subtitle_en?: string
+          p_target_type?: string
+          p_target_value?: string
+          p_title_ar?: string
+          p_title_en?: string
+        }
+        Returns: {
+          button_label: string | null
+          button_label_ar: string | null
+          button_label_en: string | null
+          button_style: string
+          content_alignment: string
+          created_at: string
+          ends_at: string | null
+          id: string
+          image_alt_ar: string | null
+          image_alt_en: string | null
+          image_url: string | null
+          is_published: boolean
+          mobile_image_alt_ar: string | null
+          mobile_image_alt_en: string | null
+          mobile_image_url: string | null
+          open_in_new_tab: boolean
+          overlay_opacity: number
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          subtitle_ar: string | null
+          subtitle_en: string | null
+          target_type: string
+          target_value: string | null
+          title: string | null
+          title_ar: string | null
+          title_en: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cms_hero_slides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_store_collection: {
         Args: {
           p_description?: string
@@ -1173,6 +1258,10 @@ export type Database = {
         }
       }
       create_store_order_internal: { Args: { payload: Json }; Returns: Json }
+      delete_cms_hero_slide: {
+        Args: { p_slide_id: string }
+        Returns: undefined
+      }
       delete_store_brand: {
         Args: { p_brand_id: string; p_destination_brand_id?: string }
         Returns: undefined
@@ -1216,6 +1305,33 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      register_cms_media_asset: {
+        Args: {
+          p_alt_text?: string
+          p_file_name: string
+          p_mime_type?: string
+          p_object_path: string
+          p_size_bytes?: number
+        }
+        Returns: {
+          alt_text: string | null
+          bucket_id: string
+          created_at: string
+          file_name: string
+          id: string
+          mime_type: string | null
+          object_path: string
+          size_bytes: number | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cms_media_assets"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reorder_cms_hero_slides: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_categories: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_collections: { Args: { p_items: Json }; Returns: undefined }
@@ -1234,6 +1350,68 @@ export type Database = {
           movement_id: string
           new_stock: number
         }[]
+      }
+      update_cms_hero_slide: {
+        Args: {
+          p_button_label_ar?: string
+          p_button_label_en?: string
+          p_button_style?: string
+          p_content_alignment?: string
+          p_ends_at?: string
+          p_image_alt_ar?: string
+          p_image_alt_en?: string
+          p_image_url?: string
+          p_is_published?: boolean
+          p_mobile_image_alt_ar?: string
+          p_mobile_image_alt_en?: string
+          p_mobile_image_url?: string
+          p_open_in_new_tab?: boolean
+          p_overlay_opacity?: number
+          p_slide_id: string
+          p_starts_at?: string
+          p_subtitle_ar?: string
+          p_subtitle_en?: string
+          p_target_type?: string
+          p_target_value?: string
+          p_title_ar?: string
+          p_title_en?: string
+        }
+        Returns: {
+          button_label: string | null
+          button_label_ar: string | null
+          button_label_en: string | null
+          button_style: string
+          content_alignment: string
+          created_at: string
+          ends_at: string | null
+          id: string
+          image_alt_ar: string | null
+          image_alt_en: string | null
+          image_url: string | null
+          is_published: boolean
+          mobile_image_alt_ar: string | null
+          mobile_image_alt_en: string | null
+          mobile_image_url: string | null
+          open_in_new_tab: boolean
+          overlay_opacity: number
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          subtitle_ar: string | null
+          subtitle_en: string | null
+          target_type: string
+          target_value: string | null
+          title: string | null
+          title_ar: string | null
+          title_en: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cms_hero_slides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       update_store_category: {
         Args: {

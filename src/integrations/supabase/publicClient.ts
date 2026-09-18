@@ -4,7 +4,7 @@ import type { Database } from "./types";
 const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
 
-function publicSupabaseConfig() {
+export function getPublicSupabaseConfig() {
   const viteEnv = import.meta.env as Record<string, string | undefined>;
   const nodeEnv = typeof process !== "undefined" ? process.env : undefined;
 
@@ -18,7 +18,7 @@ function publicSupabaseConfig() {
 }
 
 function createPublicSupabaseClient() {
-  const { url, key } = publicSupabaseConfig();
+  const { url, key } = getPublicSupabaseConfig();
   return createClient<Database>(url, key, {
     auth: {
       persistSession: false,

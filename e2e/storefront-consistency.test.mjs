@@ -117,7 +117,7 @@ test("account links stay branded before the Shopify hand-off", async () => {
   assert.match(infoPage, /secure Shopify account page/);
 });
 
-test("homepage hero is Shopify-first, inert, high-resolution, and refresh-resilient", async () => {
+test("homepage hero is CMS-first with resilient legacy fallback", async () => {
   const home = await source("src/routes/index.tsx");
   const hero = await source("src/components/HomeHero.tsx");
 
@@ -125,30 +125,24 @@ test("homepage hero is Shopify-first, inert, high-resolution, and refresh-resili
   assert.doesNotMatch(home, /Newsletter/);
   assert.match(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
   assert.match(home, /<HomeHero/);
-  assert.match(home, /products=\{products\}/);
-  assert.match(home, /heroCollection=\{heroCollection\}/);
-  assert.match(hero, /cmsHeroSlides: _cmsHeroSlides/);
-  assert.doesNotMatch(hero, /localizeHeroSlide/);
+  assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
+  assert.match(hero, /localizeHeroSlide/);
+  assert.match(hero, /const usingCms = localizedCmsSlides\.length > 0/);
+  assert.match(hero, /data-hero-source=\{heroSource\}/);
+  assert.match(hero, /"supabase-cms"/);
+  assert.match(hero, /shopify-collection/);
+  assert.match(hero, /hero-product-fallback/);
   assert.match(hero, /HERO_REFRESH_FALLBACK_STORAGE_KEY = "space-call-home-hero-refresh-fallback-v1"/);
   assert.match(hero, /window\.sessionStorage\.setItem\(HERO_REFRESH_FALLBACK_STORAGE_KEY/);
   assert.match(hero, /window\.sessionStorage\.getItem\(HERO_REFRESH_FALLBACK_STORAGE_KEY/);
-  assert.match(hero, /const effectiveHeroCollection = heroCollection\?\.collection/);
-  assert.match(hero, /const shopifyImage = shopifySlide\?\.image/);
-  assert.match(hero, /heroFallbackProduct = effectiveHeroCollection\?\.products\.find/);
-  assert.doesNotMatch(hero, /heroTargetProduct/);
-  assert.doesNotMatch(hero, /to="\/collections\/\$handle"/);
-  assert.doesNotMatch(hero, /to="\/product\/\$handle"/);
-  assert.doesNotMatch(hero, /from "@tanstack\/react-router"/);
+  assert.match(hero, /cmsHeroHref/);
+  assert.match(hero, /cmsButtonClass/);
+  assert.match(hero, /cmsSlide\.mobile_image_url/);
+  assert.match(hero, /cmsSlide\.overlay_opacity/);
+  assert.match(hero, /cmsSlide\.open_in_new_tab/);
+  assert.match(hero, /onError=\{\(\) =>[\s\S]+setFailedCmsSlideIds/);
   assert.match(hero, /HERO_IMAGE_WIDTHS = \[640, 960, 1280, 1600, 1920, 2400, 2880\]/);
-  assert.match(hero, /parsed\.searchParams\.set\("quality", "88"\)/);
   assert.match(hero, /src=\{heroCdnImage\(shopifyImage\.url, 1920\)\}/);
-  assert.match(hero, /srcSet=\{heroCdnSrcSet\(shopifyImage\.url\)\}/);
-  assert.match(hero, /sizes="100vw"/);
-  assert.match(hero, /onError=\{\(\) => setFailedShopifySlideId\(shopifySlide\.id\)\}/);
-  assert.match(hero, /key=\{`\$\{shopifySlide\.id\}:\$\{shopifyImage\.url\}`\}/);
-  assert.match(hero, /data-hero-source=\{heroSource\}/);
-  assert.match(hero, /hero-product-fallback/);
   assert.match(hero, /bg-gradient-to-br/);
   assert.match(hero, /src="\/logo\.svg"/);
-  assert.doesNotMatch(hero, /_products\[0\]/);
 });

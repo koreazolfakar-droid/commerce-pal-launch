@@ -8,7 +8,7 @@ import { HomeCategorySection } from "@/components/HomeCategorySection";
 import { HomeHero } from "@/components/HomeHero";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
-import { cmsSeoPage, cmsText, EMPTY_CMS, fetchCmsSnapshot } from "@/lib/cms";
+import { cmsSeoPage, cmsText, EMPTY_CMS } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import {
   bestSellingQueryOptions,
@@ -109,7 +109,7 @@ export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
     const [heroCollection, cms] = await Promise.all([
       context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
-      fetchCmsSnapshot(),
+      context.queryClient.ensureQueryData(cmsQueryOptions()),
     ]);
     const heroImage = heroCollection?.products?.[0]?.node.images.edges[0]?.node.url;
     return { heroImage, cmsSeo: cmsSeoPage(cms, "home") };
