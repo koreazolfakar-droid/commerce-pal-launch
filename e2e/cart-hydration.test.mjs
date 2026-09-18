@@ -12,9 +12,9 @@ test("native cart mutations share a single persisted hydration gate", async () =
   assert.match(source, /cartHydrationPromise = Promise\.resolve\(useCartStore\.persist\.rehydrate\(\)\)/);
 
   for (const mutation of ["addItem", "updateQuantity", "removeItem", "syncCart"]) {
-    const start = source.indexOf(`${mutation}:`);
-    assert.notEqual(start, -1, `${mutation} remains defined`);
-    const window = source.slice(start, start + 500);
+    const start = source.indexOf(`${mutation}: async`);
+    assert.notEqual(start, -1, `${mutation} implementation remains defined`);
+    const window = source.slice(start, start + 700);
     assert.match(window, /await hydrateCartStore\(\)/, `${mutation} waits for persisted hydration`);
   }
 });
