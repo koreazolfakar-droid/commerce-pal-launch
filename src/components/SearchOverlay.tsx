@@ -5,7 +5,7 @@ import { Loader2, Search, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { cdnImage } from "@/lib/image";
-import { searchStorefront } from "@/lib/nativeStore";
+import { searchStorefront } from "@/lib/storefrontData";
 import { formatPrice } from "@/lib/productPricing";
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
