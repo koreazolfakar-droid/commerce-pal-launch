@@ -1,11 +1,9 @@
 /**
- * Provider-neutral storefront read boundary.
+ * Provider-neutral storefront data boundary.
  *
- * The UI must depend on this module (or provider-neutral domain types) for
- * catalogue reads. The current no-Shopify staging adapter still lives in
- * shopify.ts only as a temporary compatibility implementation; it performs
- * zero Shopify network requests and can be replaced by the Space Call
- * Dashboard/Supabase provider without changing query consumers.
+ * Query consumers depend on this module instead of a commerce platform SDK.
+ * During staging it uses the local provider. The next migration step swaps this
+ * provider for the Space Call Dashboard/Supabase backend without changing UI.
  */
 export {
   fetchAllProductsByVendor,
@@ -20,10 +18,6 @@ export {
   fetchProductsByHandles,
   fetchProductsByVendor,
   searchStorefront,
-} from "./shopify";
+} from "./localStorefrontProvider";
 
-export type {
-  ShopifyCollection as StoreCollection,
-  ShopifyProduct as StoreProduct,
-  ShopifyProductNode as StoreProductNode,
-} from "./shopify";
+export type { StoreCollection, StoreProduct, StoreProductNode } from "./storefrontTypes";
