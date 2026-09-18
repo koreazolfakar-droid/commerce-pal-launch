@@ -1,0 +1,42 @@
+import {
+  BadgePercent,
+  BatteryCharging,
+  Cable,
+  Camera,
+  Gamepad2,
+  Headphones,
+  Keyboard,
+  Laptop,
+  LayoutGrid,
+  Monitor,
+  Mouse,
+  Package,
+  Smartphone,
+  Speaker,
+  Tablet,
+  Tag,
+  Watch,
+  type LucideIcon,
+} from "lucide-react";
+
+export const categoryIconMap: Record<string, LucideIcon> = {
+  Smartphone,
+  Tablet,
+  Watch,
+  Headphones,
+  BatteryCharging,
+  Cable,
+  Gamepad2,
+  Laptop,
+  Mouse,
+  Keyboard,
+  Monitor,
+  Speaker,
+  Camera,
+  Tag,
+  Package,
+  LayoutGrid,
+  BadgePercent,
+};
+
+export const categoryIconOptions = Object.keys(categoryIconMap);
