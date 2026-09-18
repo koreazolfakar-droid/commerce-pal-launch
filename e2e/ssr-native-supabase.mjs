@@ -35,9 +35,9 @@ async function request(path) {
   return { response, body };
 }
 
-const paths = ["/", "/shop", "/used-phones", "/sitemap.xml"];
+const htmlPaths = ["/", "/shop", "/used-phones"];
 
-for (const path of paths) {
+for (const path of htmlPaths) {
   const { response } = await request(path);
   assert.match(
     response.headers.get("content-security-policy") ?? "",
@@ -46,13 +46,25 @@ for (const path of paths) {
   );
 }
 
+const sitemap = await request("/sitemap.xml");
+assert.match(
+  sitemap.response.headers.get("content-type") ?? "",
+  /xml/i,
+  "Sitemap stays an XML response in Supabase-only mode",
+);
+assert.equal(
+  sitemap.response.headers.get("x-frame-options"),
+  "SAMEORIGIN",
+  "Sitemap keeps global security headers in Supabase-only mode",
+);
+
 await Promise.allSettled(pending);
 
 console.log(
   JSON.stringify({
     passed: true,
     provider: "supabase-explicit",
-    paths,
+    paths: [...htmlPaths, "/sitemap.xml"],
   }),
 );
 
