@@ -56,5 +56,11 @@ Branch: `feature/dashboard-productionization`
 
 ## Current checkpoint
 
-Products, Brands, Categories, Inventory and dashboard authentication already use Supabase.
-This branch starts the remaining productionization work at Phase 1 only.
+Products, Brands, Categories, Inventory and dashboard authentication use Supabase.
+
+Completed on this branch:
+- Phase 1: Dashboard Home now uses truthful Supabase metrics and empty states.
+- Phase 2: Orders list/detail/status/payment management now use Supabase. Order cancellation restores tracked stock atomically and logs a release movement.
+
+Next planned phase:
+- Phase 3: Customers.
