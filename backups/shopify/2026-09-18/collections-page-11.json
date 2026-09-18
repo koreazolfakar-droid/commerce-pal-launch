@@ -1,0 +1,146 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 11,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/477131931875",
+      "title": "Brand Logo — realme",
+      "handle": "logo-realme",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:52Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608791779",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-realme-1024.png?v=1789387212",
+        "altText": "realme logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131964643",
+      "title": "Brand Logo — RedMagic",
+      "handle": "logo-redmagic",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:02:03Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608824547",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-redmagic-1024.png?v=1789387213",
+        "altText": "RedMagic logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131997411",
+      "title": "Brand Logo — Redmi",
+      "handle": "logo-redmi",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:02:04Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608857315",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-redmi-1024.png?v=1789387215",
+        "altText": "Redmi logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477132030179",
+      "title": "Brand Logo — Samsung",
+      "handle": "logo-samsung",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:02:04Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608890083",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-samsung-1024.png?v=1789387216",
+        "altText": "Samsung logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477132062947",
+      "title": "Brand Logo — Sony",
+      "handle": "logo-sony",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:02:04Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608922851",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-sony-1024.png?v=1789387217",
+        "altText": "Sony logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzcxMzIwNjI5NDcsImxhc3RfdmFsdWUiOiI0NzcxMzIwNjI5NDcifQ=="
+  }
+}
