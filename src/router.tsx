@@ -18,14 +18,14 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    // Explicitly serialize only a JSON-safe TanStack Query cache snapshot during SSR.
-    // QueryClient itself contains non-serializable internals (including Symbols), so
-    // it must never be sent through the router's Seroval payload.
+    // Keep the router payload type-safe and serializable by transporting the
+    // TanStack Query cache as a JSON string. QueryClient itself contains
+    // non-serializable internals and must never enter the router payload.
     dehydrate: () => ({
-      queryClientState: JSON.parse(JSON.stringify(dehydrate(queryClient))),
+      queryClientState: JSON.stringify(dehydrate(queryClient)),
     }),
     hydrate: (dehydrated) => {
-      hydrate(queryClient, dehydrated.queryClientState);
+      hydrate(queryClient, JSON.parse(dehydrated.queryClientState));
     },
     // Preload route chunks/data only when the user signals navigation intent
     // (hover/focus/touch). This keeps initial loading lean while making the next
