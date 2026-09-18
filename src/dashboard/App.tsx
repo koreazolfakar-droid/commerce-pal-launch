@@ -8,8 +8,18 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Too
 import { customers, navSections, orders, pageMeta, products, revenueData, topBrands, type Order, type Product } from "@/dashboard/mock/data";
 import { LanguageContext, useLanguage } from "@/dashboard/i18n";
 import { validateProductDraft } from "@/dashboard/lib/validation";
-import { readCatalogProducts, readCategories, saveCatalogProduct } from "@/dashboard/mock/catalog";
-import { readBrands } from "@/dashboard/mock/brands";
+import {
+  getDashboardProduct,
+  getDashboardRole,
+  listDashboardBrands,
+  listDashboardCategories,
+  listDashboardCollections,
+  listDashboardProducts,
+  saveDashboardProduct,
+  signInDashboard,
+  signOutDashboard,
+  type DashboardProduct,
+} from "@/dashboard/data/catalog";
 import HomepageBuilderPage from "@/dashboard/pages/HomepageBuilder";
 import CategoriesPage from "@/dashboard/pages/CategoriesPage";
 import BrandsPage from "@/dashboard/pages/BrandsPage";
@@ -50,7 +60,7 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: { colla
         </div>)}
       </div>
       <div className="border-t border-white/[.07] p-4">
-        {!collapsed && <div className="mb-3 rounded-2xl border border-white/[.08] bg-white/[.05] p-3"><div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-slate-300"><Sparkles className="size-3.5 text-[#8c8aff]" /> {t("Standalone workspace")}</div><p className="mb-3 text-[11px] leading-4 text-slate-500">{t("Mock data only. Integrations are intentionally paused.")}</p><button onClick={() => toast.info("Store preview link is available in the next integration phase.")} className="flex items-center gap-1.5 text-[11px] font-semibold text-[#a8b2ff] hover:text-white">{t("View store")} <ExternalLink className="size-3" /></button></div>}
+        {!collapsed && <div className="mb-3 rounded-2xl border border-white/[.08] bg-white/[.05] p-3"><div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-slate-300"><Sparkles className="size-3.5 text-[#8c8aff]" /> {t("Standalone workspace")}</div><p className="mb-3 text-[11px] leading-4 text-slate-500">{t("Supabase catalog connected.")}</p><button onClick={() => toast.info("Store preview link is available in the next integration phase.")} className="flex items-center gap-1.5 text-[11px] font-semibold text-[#a8b2ff] hover:text-white">{t("View store")} <ExternalLink className="size-3" /></button></div>}
         <button onClick={() => setCollapsed(!collapsed)} className={`hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[12px] text-slate-500 hover:bg-white/[.06] hover:text-white lg:flex ${collapsed ? "justify-center" : ""}`} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>{collapsed ? <PanelLeftOpen className="size-4" /> : <><PanelLeftClose className="size-4" /><span>{t("Collapse sidebar")}</span></>}</button>
       </div>
     </aside>
@@ -60,11 +70,13 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: { colla
 function Header({ onMenu, onSearch }: { onMenu: () => void; onSearch: (value: string) => void }) {
   const { lang, setLang, t } = useLanguage();
   const [query, setQuery] = useState(""); const [open, setOpen] = useState(false); const [profileOpen, setProfileOpen] = useState(false); const [, navigate] = useLocation();
+  const [headerProducts, setHeaderProducts] = useState<DashboardProduct[]>([]);
   useEffect(() => { const listener = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); document.getElementById("global-search")?.focus(); } }; window.addEventListener("keydown", listener); return () => window.removeEventListener("keydown", listener); }, []);
-  const results = query ? [...products.filter(p => p.name.toLowerCase().includes(query.toLowerCase())).slice(0, 3), ...orders.filter(o => o.id.toLowerCase().includes(query.toLowerCase()) || o.customer.toLowerCase().includes(query.toLowerCase())).slice(0, 2)] : [];
+  useEffect(() => { let cancelled = false; listDashboardProducts().then((rows) => { if (!cancelled) setHeaderProducts(rows); }).catch(() => undefined); return () => { cancelled = true; }; }, []);
+  const results: Array<DashboardProduct | Order> = query ? headerProducts.filter(p => `${p.name} ${p.brand} ${p.sku}`.toLowerCase().includes(query.toLowerCase())).slice(0, 5) : [];
   return <header className="sticky top-0 z-30 flex h-[78px] items-center justify-between border-b border-slate-200/80 bg-[#f7f9fc]/90 px-4 backdrop-blur-xl sm:px-6 lg:px-10">
-    <div className="flex min-w-0 flex-1 items-center gap-3"><button onClick={onMenu} className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 lg:hidden"><Menu className="size-5" /></button><div className="relative hidden max-w-[480px] flex-1 sm:block"><Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input id="global-search" value={query} onChange={e => { setQuery(e.target.value); setOpen(true); onSearch(e.target.value); }} onFocus={() => setOpen(true)} placeholder={t("Search orders, products, customers...")} className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-14 text-[13px] text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#6872ee] focus:ring-4 focus:ring-[#6872ee]/10" /><div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400"><Command className="size-3" />K</div>{open && query && <div className="absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">{results.length ? results.map((item) => <button key={"customer" in item ? item.id : item.name} onClick={() => { setOpen(false); if ("customer" in item) navigate(`/dashboard/orders/${item.id}`); else navigate(`/dashboard/products/${item.id}`); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-slate-50"><div className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600">{"customer" in item ? <ShoppingBag className="size-4" /> : <Package className="size-4" />}</div><div className="min-w-0"><div className="truncate text-[12px] font-semibold text-slate-800">{"customer" in item ? `${item.id} · ${item.customer}` : item.name}</div><div className="text-[11px] text-slate-400">{"customer" in item ? item.items : `${item.brand} · ${item.category}`}</div></div></button>) : <div className="px-3 py-4 text-center text-xs text-slate-400">No matches in mock data</div>}</div>}</div></div>
-    <div className="flex shrink-0 items-center gap-2 sm:gap-4"><button onClick={() => toast.info("You are all caught up.")} className="relative grid size-10 place-items-center rounded-xl text-slate-500 hover:bg-white hover:text-slate-800"><Bell className="size-[18px]" /><span className="absolute right-2.5 top-2 size-1.5 rounded-full bg-rose-500 ring-2 ring-[#f7f9fc]" /></button><div className="hidden h-8 w-px bg-slate-200 sm:block" /><button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-500 hover:text-indigo-600" title={lang === "en" ? "العربية" : "English"}>{lang === "en" ? "AR" : "EN"}</button><button onClick={() => setProfileOpen(!profileOpen)} className="relative flex items-center gap-2.5 rounded-xl p-1.5 pr-2 hover:bg-white"><div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-white">AM</div><div className="hidden text-left sm:block"><div className="text-[12px] font-bold text-slate-800">Alex Morgan</div><div className="text-[10px] font-medium text-slate-400">{t("Store Manager")}</div></div><ChevronDown className="hidden size-4 text-slate-400 sm:block" />{profileOpen && <div className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-2xl border border-slate-200 bg-white p-2 text-left shadow-xl"><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"><Users className="size-3.5" /> Profile</button><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"><Settings2 className="size-3.5" /> Preferences</button><button onClick={() => navigate("/login")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-rose-600 hover:bg-rose-50"><LogOut className="size-3.5" /> Sign out</button></div>}</button></div>
+    <div className="flex min-w-0 flex-1 items-center gap-3"><button onClick={onMenu} className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 lg:hidden"><Menu className="size-5" /></button><div className="relative hidden max-w-[480px] flex-1 sm:block"><Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input id="global-search" value={query} onChange={e => { setQuery(e.target.value); setOpen(true); onSearch(e.target.value); }} onFocus={() => setOpen(true)} placeholder={t("Search orders, products, customers...")} className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-14 text-[13px] text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#6872ee] focus:ring-4 focus:ring-[#6872ee]/10" /><div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400"><Command className="size-3" />K</div>{open && query && <div className="absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">{results.length ? results.map((item) => <button key={"customer" in item ? item.id : item.name} onClick={() => { setOpen(false); if ("customer" in item) navigate(`/dashboard/orders/${item.id}`); else navigate(`/dashboard/products/${item.id}`); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-slate-50"><div className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600">{"customer" in item ? <ShoppingBag className="size-4" /> : <Package className="size-4" />}</div><div className="min-w-0"><div className="truncate text-[12px] font-semibold text-slate-800">{"customer" in item ? `${item.id} · ${item.customer}` : item.name}</div><div className="text-[11px] text-slate-400">{"customer" in item ? item.items : `${item.brand} · ${item.category}`}</div></div></button>) : <div className="px-3 py-4 text-center text-xs text-slate-400">No matching Supabase products</div>}</div>}</div></div>
+    <div className="flex shrink-0 items-center gap-2 sm:gap-4"><button onClick={() => toast.info("You are all caught up.")} className="relative grid size-10 place-items-center rounded-xl text-slate-500 hover:bg-white hover:text-slate-800"><Bell className="size-[18px]" /><span className="absolute right-2.5 top-2 size-1.5 rounded-full bg-rose-500 ring-2 ring-[#f7f9fc]" /></button><div className="hidden h-8 w-px bg-slate-200 sm:block" /><button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-500 hover:text-indigo-600" title={lang === "en" ? "العربية" : "English"}>{lang === "en" ? "AR" : "EN"}</button><button onClick={() => setProfileOpen(!profileOpen)} className="relative flex items-center gap-2.5 rounded-xl p-1.5 pr-2 hover:bg-white"><div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-white">SC</div><div className="hidden text-left sm:block"><div className="text-[12px] font-bold text-slate-800">Space Call Staff</div><div className="text-[10px] font-medium text-slate-400">{t("Store Manager")}</div></div><ChevronDown className="hidden size-4 text-slate-400 sm:block" />{profileOpen && <div className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-2xl border border-slate-200 bg-white p-2 text-left shadow-xl"><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"><Users className="size-3.5" /> Profile</button><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"><Settings2 className="size-3.5" /> Preferences</button><button onClick={async () => { await signOutDashboard().catch(() => undefined); navigate("/login"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-rose-600 hover:bg-rose-50"><LogOut className="size-3.5" /> Sign out</button></div>}</button></div>
   </header>;
 }
 
@@ -86,9 +98,519 @@ function OrdersPage() { const [search, setSearch] = useState(""); const [status,
 
 function OrderDetail({ id }: { id: string }) { const order = orders.find(o => o.id === id) ?? orders[0]; const [, navigate] = useLocation(); return <div><button onClick={() => navigate("/dashboard/orders")} className="mb-6 flex items-center gap-2 text-[12px] font-semibold text-slate-500 hover:text-[#5968ea]"><ArrowLeft className="size-4" /> Back to orders</button><PageHeader meta={{ eyebrow: `Order / #${order.id}`, title: `Order #${order.id}`, description: `Placed on ${order.date} by ${order.customer}.` }} action={<div className="flex gap-2"><button onClick={() => toast.info("Order edit is available with mock state.")} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600"><Pencil className="size-3.5" /> Edit order</button><button onClick={() => toast.success("Mock fulfillment action recorded.")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-3.5 text-[11px] font-bold text-white"><Send className="size-3.5" /> Fulfill order</button></div>} /><div className="grid gap-4 xl:grid-cols-[1.45fr_1fr]"><div className="space-y-4"><SmallPanel title="Order items" subtitle="3 products"><div className="divide-y divide-slate-100 px-5">{[{ product: products[0], qty: 1 }, { product: products[4], qty: 1 }].map(({ product, qty }) => <div key={product.id} className="flex items-center gap-3 py-4"><img src={product.image} className="size-14 rounded-xl bg-slate-100 object-cover" alt="" /><div className="min-w-0 flex-1"><div className="text-[12px] font-bold text-slate-700">{product.name}</div><div className="mt-1 text-[11px] text-slate-400">{product.sku} · Qty {qty}</div></div><div className="text-[12px] font-bold text-slate-700">{compactMoney(product.price * qty)}</div></div>)}</div><div className="space-y-2 border-t border-slate-100 px-5 py-4 text-[12px]"><div className="flex justify-between text-slate-500"><span>Subtotal</span><span>{compactMoney(order.total - 24)}</span></div><div className="flex justify-between text-slate-500"><span>Shipping</span><span>$24.00</span></div><div className="flex justify-between border-t border-slate-100 pt-3 text-[14px] font-bold text-[#14203a]"><span>Total</span><span>{compactMoney(order.total)}</span></div></div></SmallPanel><SmallPanel title="Order timeline"><div className="space-y-5 px-5 py-5">{[["Order placed", "Jan 31, 2026 · 10:42 AM", "#5968ea"], ["Payment confirmed", "Jan 31, 2026 · 10:43 AM", "#19a875"], ["Processing started", "Jan 31, 2026 · 11:05 AM", "#3d8ed1"], ["Shipment pending", "Expected Feb 1, 2026", "#b0b8c8"]].map(([title, date, color], index) => <div key={title} className="relative flex gap-3"><div className="relative z-10 grid size-7 place-items-center rounded-full" style={{ backgroundColor: `${color}18`, color }}><span className="size-2 rounded-full bg-current" /></div>{index < 3 && <div className="absolute left-[13px] top-7 h-6 w-px bg-slate-200" />}<div><div className="text-[12px] font-bold text-slate-700">{title}</div><div className="mt-0.5 text-[11px] text-slate-400">{date}</div></div></div>)}</div></SmallPanel></div><div className="space-y-4"><SmallPanel title="Customer" action={<button onClick={() => navigate("/dashboard/customers")} className="text-[11px] font-bold text-[#5968ea]">View profile</button>}><div className="flex items-center gap-3 px-5 py-4"><div className="grid size-11 place-items-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-600">{order.initials}</div><div><div className="text-[13px] font-bold text-slate-700">{order.customer}</div><div className="mt-0.5 text-[11px] text-slate-400">customer@spacecall.demo</div></div></div></SmallPanel><SmallPanel title="Shipping address"><div className="flex items-start gap-3 px-5 py-4 text-[12px] text-slate-500"><div className="grid size-8 place-items-center rounded-lg bg-slate-100 text-slate-500"><ExternalLink className="size-4" /></div><span className="leading-5">{order.address}</span></div></SmallPanel><SmallPanel title="Payment & fulfillment"><div className="space-y-4 px-5 py-4"><div className="flex items-center justify-between"><span className="text-[11px] text-slate-400">Payment status</span><StatusBadge status={order.payment} /></div><div className="flex items-center justify-between"><span className="text-[11px] text-slate-400">Fulfillment status</span><StatusBadge status={order.status} /></div></div></SmallPanel></div></div></div>; }
 
-function ProductsPage() { const [search, setSearch] = useState(""); const [, navigate] = useLocation(); const [catalog] = useState(readCatalogProducts); const filtered = catalog.filter(p => `${p.name} ${p.brand} ${p.sku}`.toLowerCase().includes(search.toLowerCase())); const activeCount = catalog.filter(p => p.status === "Active").length; const draftCount = catalog.filter(p => p.status === "Draft").length; return <div><PageHeader meta={pageMeta["/dashboard/products"]} action={<button onClick={() => navigate("/dashboard/products/new")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)]"><Plus className="size-4" /> Add product</button>} /><div className="mb-4 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-slate-200 bg-white p-4"><div className="text-[11px] text-slate-400">Total products</div><div className="mt-1 text-xl font-bold text-[#14203a]">{catalog.length}</div></div><div className="rounded-xl border border-slate-200 bg-white p-4"><div className="text-[11px] text-slate-400">Active</div><div className="mt-1 text-xl font-bold text-emerald-600">{activeCount}</div></div><div className="rounded-xl border border-slate-200 bg-white p-4"><div className="text-[11px] text-slate-400">Drafts</div><div className="mt-1 text-xl font-bold text-amber-600">{draftCount}</div></div></div><div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]"><TableToolbar value={search} setValue={setSearch} placeholder="Search by product, brand, or SKU" onFilter={() => toast.info("Product filters are available with mock state.")} /><div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left"><thead className="bg-[#fafbfe]"><tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.12em] text-slate-400"><th className="px-5 py-3 font-semibold">Product</th><th className="px-3 py-3 font-semibold">SKU</th><th className="px-3 py-3 font-semibold">Category</th><th className="px-3 py-3 font-semibold">Price</th><th className="px-3 py-3 font-semibold">Stock</th><th className="px-3 py-3 font-semibold">Status</th><th className="px-5 py-3 font-semibold" /></tr></thead><tbody>{filtered.map(p => <tr key={p.id} onClick={() => navigate(`/dashboard/products/${p.id}`)} className="cursor-pointer border-b border-slate-50 hover:bg-[#fafbff]"><td className="px-5 py-3.5"><div className="flex items-center gap-3"><img src={p.image} alt="" className="size-10 rounded-xl bg-slate-100 object-cover" /><div><div className="text-[12px] font-bold text-slate-700">{p.name}</div><div className="mt-0.5 text-[10px] text-slate-400">{p.brand}</div></div></div></td><td className="px-3 py-3.5 font-mono text-[11px] text-slate-500">{p.sku}</td><td className="px-3 py-3.5 text-[12px] text-slate-500">{p.category}</td><td className="px-3 py-3.5 text-[12px] font-bold text-slate-700">{compactMoney(p.price)}</td><td className="px-3 py-3.5"><span className={`text-[12px] font-bold ${p.stock < 10 ? "text-rose-600" : "text-slate-700"}`}>{p.stock} {p.stock < 10 && <span className="text-[10px] font-medium">low</span>}</span></td><td className="px-3 py-3.5"><StatusBadge status={p.status} /></td><td className="px-5 py-3.5 text-right"><button onClick={(e) => { e.stopPropagation(); toast.info("Product actions are in mock mode."); }} className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><MoreHorizontal className="size-4" /></button></td></tr>)}</tbody></table></div></div></div>; }
+function ProductsPage() {
+  const [search, setSearch] = useState("");
+  const [, navigate] = useLocation();
+  const [catalog, setCatalog] = useState<DashboardProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-function ProductForm({ id }: { id?: string }) { const [, navigate] = useLocation(); const existing = readCatalogProducts().find(p => p.id === id) || products.find(p => p.id === id); const categoryOptions = readCategories(); const brandOptions = readBrands(); const [saved, setSaved] = useState(false); const [form, setForm] = useState({ title: existing?.name ?? "", description: existing?.description ?? "", brand: existing?.brand ?? "Apple", category: existing?.category ?? categoryOptions[0]?.name ?? "Phones", status: existing?.status ?? "Active", collection: "Featured devices", price: existing?.price?.toString() ?? "", compareAt: existing?.compareAt?.toString() ?? "", sku: existing?.sku ?? "", barcode: "089123456789", stock: existing?.stock?.toString() ?? "", seoTitle: existing ? `${existing.name} | Space Call` : "", seoDescription: existing?.description ?? "" }); const update = (key: string, value: string) => setForm(f => ({ ...f, [key]: value })); const input = (label: string, key: string, props: Record<string, string> = {}) => <label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span><input value={form[key as keyof typeof form]} onChange={e => update(key, e.target.value)} {...props} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10" /></label>; return <div><button onClick={() => navigate("/dashboard/products")} className="mb-6 flex items-center gap-2 text-[12px] font-semibold text-slate-500 hover:text-[#5968ea]"><ArrowLeft className="size-4" /> Back to products</button><PageHeader meta={{ eyebrow: id ? "Catalog / Edit product" : "Catalog / New product", title: id ? "Edit product" : "Add a product", description: "Build a clean catalog record ready for future storefront integration." }} action={<div className="flex gap-2"><button onClick={() => navigate("/dashboard/products")} className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">Cancel</button><button onClick={() => { const result = validateProductDraft({ title: form.title, price: form.price, sku: form.sku, stock: form.stock }); if (!result.valid) { toast.error(Object.values(result.errors)[0]); return; } const product = { id: id || `prd-${Date.now()}`, name: form.title, brand: form.brand, category: form.category, price: Number(form.price) || 0, compareAt: Number(form.compareAt) || undefined, stock: Number(form.stock) || 0, status: form.status as "Active" | "Draft" | "Archived", sku: form.sku, image: existing?.image || "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=160&q=80", sold: existing?.sold || 0, description: form.description }; saveCatalogProduct(product); setSaved(true); toast.success(`Product saved under ${form.category}.`); }} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"><Check className="size-4" /> Save product</button></div>} /><div className="grid gap-4 xl:grid-cols-[1.55fr_1fr]"><div className="space-y-4"><SmallPanel title="Product information" subtitle="The essentials customers see"><div className="space-y-4 px-5 py-5">{input("Title", "title", { placeholder: "e.g. iPhone 15 Pro" })}<label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Description</span><textarea value={form.description} onChange={e => update("description", e.target.value)} rows={5} className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-[12px] text-slate-700 outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10" /></label><div className="grid gap-4 sm:grid-cols-2"><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Brand</span><select value={form.brand} onChange={e => update("brand", e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none focus:border-[#6974eb]">{!brandOptions.some(brand => brand.name === form.brand) && <option value={form.brand}>{form.brand}</option>}{brandOptions.map(brand => <option key={brand.id} value={brand.name}>{brand.name}{brand.active ? "" : " (Hidden)"}</option>)}</select></label><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Category</span><select value={form.category} onChange={e => update("category", e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none focus:border-[#6974eb]">{categoryOptions.map(category => <option key={category.id} value={category.name}>{category.name}</option>)}</select></label>{input("Collection", "collection", { placeholder: "Featured devices" })}<label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Status</span><select value={form.status} onChange={e => update("status", e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none"><option>Active</option><option>Draft</option><option>Archived</option></select></label></div></div></SmallPanel><SmallPanel title="Pricing & inventory"><div className="grid gap-4 px-5 py-5 sm:grid-cols-2">{input("Price", "price", { placeholder: "0.00", type: "number" })}{input("Compare-at price", "compareAt", { placeholder: "0.00", type: "number" })}{input("SKU", "sku", { placeholder: "SKU-001" })}{input("Barcode", "barcode")}{input("Stock", "stock", { type: "number" })}</div></SmallPanel><SmallPanel title="Variants" subtitle="Create options like color, storage, or RAM" action={<button onClick={() => toast.success("Variant row added to mock product.")} className="flex items-center gap-1 text-[11px] font-bold text-[#5968ea]"><Plus className="size-3.5" /> Add variant</button>}><div className="px-5 pb-5"><div className="grid grid-cols-[1.1fr_1fr_1fr_32px] gap-2 rounded-xl bg-[#fafbfe] p-2 text-[10px] font-bold uppercase tracking-wider text-slate-400"><span>Option</span><span>SKU</span><span>Stock</span><span /></div><div className="mt-2 grid grid-cols-[1.1fr_1fr_1fr_32px] items-center gap-2"><input value="Natural Titanium" readOnly className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]" /><input value={form.sku || "APL-001"} readOnly className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]" /><input value={form.stock || "0"} readOnly className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]" /><button onClick={() => toast.info("Variant options are mock-only for now.")} className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="size-3.5" /></button></div></div></SmallPanel></div><div className="space-y-4"><SmallPanel title="Media" subtitle="Local preview only"><div className="m-5 grid aspect-[1.5] place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-[#fafbfe] text-center"><div><div className="mx-auto mb-3 grid size-12 place-items-center rounded-2xl bg-indigo-50 text-indigo-500"><UploadCloud className="size-5" /></div><div className="text-[12px] font-bold text-slate-600">Drop product images here</div><div className="mt-1 text-[10px] text-slate-400">PNG, JPG up to 10MB</div><button onClick={() => toast.info("Uploads are disabled in standalone mode.")} className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600">Browse files</button></div></div></SmallPanel><SmallPanel title="Search preview"><div className="px-5 py-4"><div className="rounded-xl border border-slate-200 p-3"><div className="text-[11px] font-semibold text-[#5661c8]">{form.seoTitle || form.title || "Product title"}</div><div className="mt-1 text-[10px] text-emerald-700">spacecallapp.store/products</div><div className="mt-1 line-clamp-2 text-[10px] text-slate-500">{form.seoDescription || "A concise description will appear here in search results."}</div></div></div></SmallPanel>{saved && <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-[11px] font-semibold text-emerald-700">Saved locally in the mock workspace. No external service was contacted.</div>}</div></div></div>; }
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    listDashboardProducts()
+      .then((rows) => {
+        if (!cancelled) {
+          setCatalog(rows);
+          setError("");
+        }
+      })
+      .catch((cause) => {
+        if (!cancelled) setError(cause instanceof Error ? cause.message : "Unable to load products.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const needle = search.trim().toLowerCase();
+  const filtered = catalog.filter((product) =>
+    `${product.name} ${product.brand} ${product.sku} ${product.handle}`
+      .toLowerCase()
+      .includes(needle),
+  );
+  const activeCount = catalog.filter((product) => product.status === "Active").length;
+  const draftCount = catalog.filter((product) => product.status === "Draft").length;
+
+  return (
+    <div>
+      <PageHeader
+        meta={{
+          ...pageMeta["/dashboard/products"],
+          description: "Products are loaded directly from the Space Call Supabase catalog.",
+        }}
+        action={
+          <button
+            onClick={() => navigate("/dashboard/products/new")}
+            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)]"
+          >
+            <Plus className="size-4" /> Add product
+          </button>
+        }
+      />
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-[11px] text-slate-400">Total products</div>
+          <div className="mt-1 text-xl font-bold text-[#14203a]">{catalog.length}</div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-[11px] text-slate-400">Active</div>
+          <div className="mt-1 text-xl font-bold text-emerald-600">{activeCount}</div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="text-[11px] text-slate-400">Drafts</div>
+          <div className="mt-1 text-xl font-bold text-amber-600">{draftCount}</div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+        <TableToolbar
+          value={search}
+          setValue={setSearch}
+          placeholder="Search by product, brand, SKU, or handle"
+        />
+        {loading ? (
+          <div className="grid min-h-56 place-items-center">
+            <Loader2 className="size-5 animate-spin text-[#5968ea]" />
+          </div>
+        ) : error ? (
+          <div className="p-6 text-sm font-semibold text-rose-600">{error}</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left">
+              <thead className="bg-[#fafbfe]">
+                <tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.12em] text-slate-400">
+                  <th className="px-5 py-3 font-semibold">Product</th>
+                  <th className="px-3 py-3 font-semibold">SKU</th>
+                  <th className="px-3 py-3 font-semibold">Category</th>
+                  <th className="px-3 py-3 font-semibold">Price</th>
+                  <th className="px-3 py-3 font-semibold">Stock</th>
+                  <th className="px-3 py-3 font-semibold">Status</th>
+                  <th className="px-5 py-3 font-semibold" />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((product) => (
+                  <tr
+                    key={product.id}
+                    onClick={() => navigate(`/dashboard/products/${product.id}`)}
+                    className="cursor-pointer border-b border-slate-50 hover:bg-[#fafbff]"
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="size-full object-contain"
+                            />
+                          ) : (
+                            <Package className="size-4 text-slate-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-bold text-slate-700">{product.name}</div>
+                          <div className="mt-0.5 text-[10px] text-slate-400">
+                            {product.brand || "No brand"}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3.5 font-mono text-[11px] text-slate-500">
+                      {product.sku || "—"}
+                    </td>
+                    <td className="px-3 py-3.5 text-[12px] text-slate-500">
+                      {product.category || "—"}
+                    </td>
+                    <td className="px-3 py-3.5 text-[12px] font-bold text-slate-700">
+                      {compactMoney(product.price)}
+                    </td>
+                    <td className="px-3 py-3.5">
+                      <span
+                        className={`text-[12px] font-bold ${
+                          product.stock < 10 ? "text-rose-600" : "text-slate-700"
+                        }`}
+                      >
+                        {product.stock}
+                        {product.stock < 10 && (
+                          <span className="ml-1 text-[10px] font-medium">low</span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3.5">
+                      <StatusBadge status={product.status} />
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(`/dashboard/products/${product.id}`);
+                        }}
+                        className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"
+                        aria-label={`Edit ${product.name}`}
+                      >
+                        <Pencil className="size-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!filtered.length && (
+              <div className="p-8 text-center text-sm text-slate-400">No products match this search.</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProductForm({ id }: { id?: string }) {
+  const [, navigate] = useLocation();
+  const [existing, setExisting] = useState<DashboardProduct | null>(null);
+  const [brands, setBrands] = useState<Awaited<ReturnType<typeof listDashboardBrands>>>([]);
+  const [categories, setCategories] = useState<
+    Awaited<ReturnType<typeof listDashboardCategories>>
+  >([]);
+  const [collections, setCollections] = useState<
+    Awaited<ReturnType<typeof listDashboardCollections>>
+  >([]);
+  const [loading, setLoading] = useState(Boolean(id));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    brandId: "",
+    categoryId: "",
+    status: "Draft" as "Active" | "Draft" | "Archived",
+    collectionId: "",
+    price: "",
+    compareAt: "",
+    sku: "",
+    barcode: "",
+    stock: "0",
+    imageUrl: "",
+    seoTitle: "",
+    seoDescription: "",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      id ? getDashboardProduct(id) : Promise.resolve(null),
+      listDashboardBrands(),
+      listDashboardCategories(),
+      listDashboardCollections(),
+    ])
+      .then(([product, brandRows, categoryRows, collectionRows]) => {
+        if (cancelled) return;
+        setExisting(product);
+        setBrands(brandRows);
+        setCategories(categoryRows);
+        setCollections(collectionRows);
+        if (product) {
+          setForm({
+            title: product.name,
+            description: product.description,
+            brandId: product.brandId ?? "",
+            categoryId: product.categoryId ?? "",
+            status: product.status,
+            collectionId: "",
+            price: String(product.price),
+            compareAt: product.compareAt == null ? "" : String(product.compareAt),
+            sku: product.sku,
+            barcode: product.barcode,
+            stock: String(product.stock),
+            imageUrl: product.image,
+            seoTitle: product.seoTitle,
+            seoDescription: product.seoDescription,
+          });
+        }
+      })
+      .catch((cause) => {
+        toast.error(cause instanceof Error ? cause.message : "Unable to load product.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const update = (key: keyof typeof form, value: string) =>
+    setForm((current) => ({ ...current, [key]: value }));
+
+  const input = (
+    label: string,
+    key: keyof typeof form,
+    type = "text",
+    disabled = false,
+  ) => (
+    <label className="block">
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <input
+        value={form[key]}
+        onChange={(event) => update(key, event.target.value)}
+        type={type}
+        disabled={disabled}
+        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10 disabled:bg-slate-50 disabled:text-slate-400"
+      />
+    </label>
+  );
+
+  const variantLocked = Boolean(existing && existing.variantCount > 1);
+
+  const handleSave = async () => {
+    const result = validateProductDraft({
+      title: form.title,
+      price: form.price,
+      sku: form.sku,
+      stock: form.stock,
+    });
+    if (!result.valid) {
+      toast.error(Object.values(result.errors)[0]);
+      return;
+    }
+    setSaving(true);
+    try {
+      const savedProduct = await saveDashboardProduct({
+        id,
+        title: form.title,
+        description: form.description,
+        brandId: form.brandId || null,
+        categoryId: form.categoryId || null,
+        status: form.status,
+        price: Number(form.price) || 0,
+        compareAt: form.compareAt.trim() ? Number(form.compareAt) : null,
+        sku: form.sku,
+        barcode: form.barcode,
+        stock: Number(form.stock) || 0,
+        imageUrl: form.imageUrl,
+        seoTitle: form.seoTitle,
+        seoDescription: form.seoDescription,
+        collectionId: form.collectionId || null,
+      });
+      setSaved(true);
+      toast.success(
+        savedProduct.variantManagedSeparately
+          ? "Product saved. Existing multi-variant pricing and stock were preserved."
+          : "Product saved to Supabase.",
+      );
+      if (!id) navigate(`/dashboard/products/${savedProduct.id}`);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Product save failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="grid min-h-[360px] place-items-center">
+        <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => navigate("/dashboard/products")}
+        className="mb-6 flex items-center gap-2 text-[12px] font-semibold text-slate-500 hover:text-[#5968ea]"
+      >
+        <ArrowLeft className="size-4" /> Back to products
+      </button>
+      <PageHeader
+        meta={{
+          eyebrow: id ? "Catalog / Edit product" : "Catalog / New product",
+          title: id ? "Edit product" : "Add a product",
+          description: "This record is saved directly to the Space Call Supabase catalog.",
+        }}
+        action={
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate("/dashboard/products")}
+              className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+              Save product
+            </button>
+          </div>
+        }
+      />
+
+      <div className="grid gap-4 xl:grid-cols-[1.55fr_1fr]">
+        <div className="space-y-4">
+          <SmallPanel title="Product information" subtitle="Live catalog fields">
+            <div className="space-y-4 px-5 py-5">
+              {input("Title", "title")}
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                  Description
+                </span>
+                <textarea
+                  value={form.description}
+                  onChange={(event) => update("description", event.target.value)}
+                  rows={5}
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-[12px] text-slate-700 outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
+                />
+              </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Brand</span>
+                  <select
+                    value={form.brandId}
+                    onChange={(event) => update("brandId", event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none focus:border-[#6974eb]"
+                  >
+                    <option value="">No brand</option>
+                    {brands.map((brand) => (
+                      <option key={brand.id} value={brand.id}>
+                        {brand.name}{brand.active ? "" : " (Hidden)"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    Category
+                  </span>
+                  <select
+                    value={form.categoryId}
+                    onChange={(event) => update("categoryId", event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none focus:border-[#6974eb]"
+                  >
+                    <option value="">No category</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}{category.active ? "" : " (Hidden)"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    Add to collection
+                  </span>
+                  <select
+                    value={form.collectionId}
+                    onChange={(event) => update("collectionId", event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none focus:border-[#6974eb]"
+                  >
+                    <option value="">No collection change</option>
+                    {collections.map((collection) => (
+                      <option key={collection.id} value={collection.id}>
+                        {collection.title}{collection.active ? "" : " (Hidden)"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Status</span>
+                  <select
+                    value={form.status}
+                    onChange={(event) =>
+                      update("status", event.target.value as "Active" | "Draft" | "Archived")
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none"
+                  >
+                    <option>Active</option>
+                    <option>Draft</option>
+                    <option>Archived</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </SmallPanel>
+
+          <SmallPanel title="Pricing & inventory">
+            <div className="grid gap-4 px-5 py-5 sm:grid-cols-2">
+              {input("Price", "price", "number", variantLocked)}
+              {input("Compare-at price", "compareAt", "number", variantLocked)}
+              {input("SKU", "sku", "text", variantLocked)}
+              {input("Barcode", "barcode", "text", variantLocked)}
+              {input("Stock", "stock", "number", variantLocked)}
+            </div>
+            {variantLocked && (
+              <div className="mx-5 mb-5 rounded-xl border border-amber-100 bg-amber-50 p-3 text-[11px] leading-5 text-amber-800">
+                This product has {existing?.variantCount} real variants. Product-level details can be
+                edited here, while variant pricing, SKU and stock are preserved until the variant
+                editor is connected.
+              </div>
+            )}
+          </SmallPanel>
+
+          <SmallPanel title="Variants" subtitle="Real Supabase variant records">
+            <div className="px-5 py-5 text-[11px] leading-5 text-slate-500">
+              {existing?.variantCount
+                ? `${existing.variantCount} variant${existing.variantCount === 1 ? "" : "s"} currently stored for this product.`
+                : "A single variant will be created from the pricing and inventory fields when this product is saved."}
+            </div>
+          </SmallPanel>
+        </div>
+
+        <div className="space-y-4">
+          <SmallPanel title="Media" subtitle="Use an existing public product image URL">
+            <div className="space-y-4 p-5">
+              {form.imageUrl ? (
+                <div className="grid aspect-[1.5] place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-[#fafbfe]">
+                  <img
+                    src={form.imageUrl}
+                    alt={form.title || "Product"}
+                    className="h-full w-full object-contain p-4"
+                  />
+                </div>
+              ) : (
+                <div className="grid aspect-[1.5] place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-[#fafbfe] text-slate-400">
+                  <ImageIcon className="size-7" />
+                </div>
+              )}
+              {input("Image URL", "imageUrl")}
+            </div>
+          </SmallPanel>
+
+          <SmallPanel title="Search preview">
+            <div className="space-y-4 px-5 py-4">
+              {input("SEO title", "seoTitle")}
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                  SEO description
+                </span>
+                <textarea
+                  value={form.seoDescription}
+                  onChange={(event) => update("seoDescription", event.target.value)}
+                  rows={3}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-[#6974eb]"
+                />
+              </label>
+            </div>
+          </SmallPanel>
+
+          {saved && (
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-[11px] font-semibold text-emerald-700">
+              Saved to the Space Call Supabase catalog.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function CustomersPage() { const [search, setSearch] = useState(""); const filtered = customers.filter(c => `${c.name} ${c.email} ${c.phone}`.toLowerCase().includes(search.toLowerCase())); return <div><PageHeader meta={pageMeta["/dashboard/customers"]} action={<button onClick={() => toast.success("Customer creation form is ready for mock testing.")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"><Plus className="size-4" /> Add customer</button>} /><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="text-[11px] text-slate-400">Total customers</div><div className="mt-2 text-2xl font-bold text-[#14203a]">1,206</div><div className="mt-1 text-[10px] font-semibold text-emerald-600">↑ 14.2% vs last month</div></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="text-[11px] text-slate-400">VIP customers</div><div className="mt-2 text-2xl font-bold text-[#14203a]">184</div><div className="mt-1 text-[10px] font-semibold text-emerald-600">↑ 8.7% vs last month</div></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="text-[11px] text-slate-400">Avg. lifetime value</div><div className="mt-2 text-2xl font-bold text-[#14203a]">$284.16</div><div className="mt-1 text-[10px] font-semibold text-emerald-600">↑ 5.1% vs last month</div></div></div><div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]"><TableToolbar value={search} setValue={setSearch} placeholder="Search customers" /><div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left"><thead className="bg-[#fafbfe]"><tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.12em] text-slate-400"><th className="px-5 py-3 font-semibold">Customer</th><th className="px-3 py-3 font-semibold">Phone</th><th className="px-3 py-3 font-semibold">Orders</th><th className="px-3 py-3 font-semibold">Total spent</th><th className="px-3 py-3 font-semibold">Last order</th><th className="px-5 py-3 font-semibold">Status</th></tr></thead><tbody>{filtered.map(c => <tr key={c.email} className="border-b border-slate-50 hover:bg-[#fafbff]"><td className="px-5 py-4"><div className="flex items-center gap-2.5"><div className="grid size-8 place-items-center rounded-full bg-indigo-50 text-[10px] font-bold text-indigo-600">{c.initials}</div><div><div className="text-[12px] font-bold text-slate-700">{c.name}</div><div className="text-[10px] text-slate-400">{c.email}</div></div></div></td><td className="px-3 py-4 text-[11px] text-slate-500">{c.phone}</td><td className="px-3 py-4 text-[12px] font-bold text-slate-700">{c.orders}</td><td className="px-3 py-4 text-[12px] font-bold text-slate-700">{money(c.spent)}</td><td className="px-3 py-4 text-[11px] text-slate-400">{c.lastOrder}</td><td className="px-5 py-4"><StatusBadge status={c.status} /></td></tr>)}</tbody></table></div></div></div>; }
 
@@ -98,12 +620,125 @@ function SettingsPage() { const [tab, setTab] = useState("General"); const tabs 
 
 function GenericPage({ path }: { path: string }) { const meta = pageMeta[path] ?? { eyebrow: "Workspace", title: "Coming soon", description: "This workspace module is staged for the next iteration." }; const [enabled, setEnabled] = useState(true); return <div><PageHeader meta={meta} action={<button onClick={() => toast.success("Mock changes saved.")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"><Check className="size-4" /> Save changes</button>} /><div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]"><SmallPanel title="Workspace overview" subtitle="A practical starting point for the next management workflow"><div className="space-y-4 px-5 py-5"><div className="rounded-2xl bg-gradient-to-br from-[#17223f] to-[#3446a5] p-6 text-white"><div className="mb-8 flex items-center justify-between"><div className="grid size-10 place-items-center rounded-xl bg-white/10"><Sparkles className="size-5 text-[#bfc5ff]" /></div><span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-[#d5d9ff]">Mock module</span></div><div className="text-[22px] font-bold tracking-[-.04em]">{meta.title}</div><p className="mt-2 max-w-md text-[12px] leading-5 text-indigo-100/75">This screen is connected to the standalone navigation and ready for real data contracts in a future phase.</p></div><div className="grid gap-3 sm:grid-cols-3">{[["Records", "128"], ["Published", "96"], ["Needs review", "12"]].map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 p-4"><div className="text-[10px] text-slate-400">{label}</div><div className="mt-1 text-xl font-bold text-[#14203a]">{value}</div></div>)}</div></div></SmallPanel><SmallPanel title="Module settings"><div className="space-y-4 px-5 py-5"><div className="flex items-center justify-between rounded-xl border border-slate-200 p-4"><div><div className="text-[12px] font-bold text-slate-700">Enable module</div><div className="mt-1 text-[11px] text-slate-400">Show this module in the admin workspace.</div></div><button onClick={() => setEnabled(!enabled)} className={`relative h-6 w-11 rounded-full transition ${enabled ? "bg-[#5968ea]" : "bg-slate-200"}`}><span className={`absolute top-1 size-4 rounded-full bg-white shadow transition ${enabled ? "left-6" : "left-1"}`} /></button></div><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Internal note</span><textarea rows={4} defaultValue={`Mock configuration for ${meta.title}.`} className="w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400" /></label><button onClick={() => toast.info("Preview refreshed from mock state.")} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600"><Eye className="size-3.5" /> Preview module</button></div></SmallPanel></div></div>; }
 
-function LoginPage() { const [, navigate] = useLocation(); const [loading, setLoading] = useState(false); return <div className="grid min-h-screen place-items-center bg-[#101b32] p-5"><div className="absolute inset-0 overflow-hidden"><div className="absolute -left-24 -top-24 size-[420px] rounded-full bg-[#5968ea]/20 blur-[90px]" /><div className="absolute -bottom-32 -right-20 size-[460px] rounded-full bg-[#8d57d7]/20 blur-[100px]" /></div><div className="relative w-full max-w-[400px] rounded-[28px] border border-white/10 bg-white/[.07] p-7 shadow-2xl backdrop-blur-xl sm:p-9"><Logo /><div className="mt-10"><div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#aeb5ff]">Admin workspace</div><h1 className="text-[28px] font-bold tracking-[-.05em] text-white">Welcome back</h1><p className="mt-2 text-sm text-slate-400">Sign in to continue to your standalone dashboard.</p></div><div className="mt-8 space-y-4"><label className="block"><span className="mb-2 block text-[11px] font-bold text-slate-300">Email</span><input defaultValue="admin@spacecall.demo" className="h-11 w-full rounded-xl border border-white/10 bg-white/[.07] px-3 text-[12px] text-white outline-none placeholder:text-slate-500 focus:border-[#7b86ff]" /></label><label className="block"><span className="mb-2 block text-[11px] font-bold text-slate-300">Password</span><input type="password" defaultValue="spacecall" className="h-11 w-full rounded-xl border border-white/10 bg-white/[.07] px-3 text-[12px] text-white outline-none focus:border-[#7b86ff]" /></label><button onClick={() => { setLoading(true); setTimeout(() => navigate("/dashboard"), 450); }} className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#6874f5] text-[12px] font-bold text-white shadow-[0_10px_24px_rgba(104,116,245,.28)] hover:bg-[#7a84ff]">{loading ? <Loader2 className="size-4 animate-spin" /> : "Sign in to dashboard"}</button></div><div className="mt-7 flex items-center justify-center gap-2 text-[10px] text-slate-500"><LockKeyhole className="size-3" /> Local development authentication only</div></div></div>; }
+function LoginPage() {
+  const [, navigate] = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    if (!email.trim() || !password) {
+      toast.error("Enter your Supabase dashboard email and password.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await signInDashboard(email, password);
+      navigate("/dashboard");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Sign in failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="grid min-h-screen place-items-center bg-[#101b32] p-5">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -left-24 -top-24 size-[420px] rounded-full bg-[#5968ea]/20 blur-[90px]" />
+        <div className="absolute -bottom-32 -right-20 size-[460px] rounded-full bg-[#8d57d7]/20 blur-[100px]" />
+      </div>
+      <div className="relative w-full max-w-[400px] rounded-[28px] border border-white/10 bg-white/[.07] p-7 shadow-2xl backdrop-blur-xl sm:p-9">
+        <Logo />
+        <div className="mt-10">
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#aeb5ff]">
+            Admin workspace
+          </div>
+          <h1 className="text-[28px] font-bold tracking-[-.05em] text-white">Welcome back</h1>
+          <p className="mt-2 text-sm text-slate-400">
+            Sign in with an authorized Space Call Supabase account.
+          </p>
+        </div>
+        <div className="mt-8 space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-[11px] font-bold text-slate-300">Email</span>
+            <input
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              type="email"
+              autoComplete="username"
+              className="h-11 w-full rounded-xl border border-white/10 bg-white/[.07] px-3 text-[12px] text-white outline-none placeholder:text-slate-500 focus:border-[#7b86ff]"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-[11px] font-bold text-slate-300">Password</span>
+            <input
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              type="password"
+              autoComplete="current-password"
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void submit();
+              }}
+              className="h-11 w-full rounded-xl border border-white/10 bg-white/[.07] px-3 text-[12px] text-white outline-none focus:border-[#7b86ff]"
+            />
+          </label>
+          <button
+            onClick={() => void submit()}
+            disabled={loading}
+            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#6874f5] text-[12px] font-bold text-white shadow-[0_10px_24px_rgba(104,116,245,.28)] hover:bg-[#7a84ff] disabled:opacity-60"
+          >
+            {loading ? <Loader2 className="size-4 animate-spin" /> : "Sign in to dashboard"}
+          </button>
+        </div>
+        <div className="mt-7 flex items-center justify-center gap-2 text-[10px] text-slate-500">
+          <LockKeyhole className="size-3" /> Supabase Auth + staff role required
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardGate() {
+  const [, navigate] = useLocation();
+  const [state, setState] = useState<"loading" | "ready" | "denied">("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    getDashboardRole()
+      .then((role) => {
+        if (cancelled) return;
+        if (role) setState("ready");
+        else {
+          setState("denied");
+          navigate("/login");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setState("denied");
+          navigate("/login");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
+  if (state !== "ready") {
+    return (
+      <div className="grid min-h-screen place-items-center bg-[#f7f9fc]">
+        {state === "loading" ? <Loader2 className="size-6 animate-spin text-[#5968ea]" /> : null}
+      </div>
+    );
+  }
+  return <DashboardLayout />;
+}
 
 function DashboardLayout() { const [location] = useLocation(); const [collapsed, setCollapsed] = useState(() => localStorage.getItem("spacecall-sidebar") === "collapsed"); const [mobileOpen, setMobileOpen] = useState(false); const [, setSearch] = useState(""); useEffect(() => { localStorage.setItem("spacecall-sidebar", collapsed ? "collapsed" : "expanded"); }, [collapsed]); const route = location.replace(/\/$/, "") || "/dashboard"; const productDetail = route.match(/^\/dashboard\/products\/([^/]+)$/); const orderDetail = route.match(/^\/dashboard\/orders\/([^/]+)$/); let content: React.ReactNode; if (route === "/dashboard" || route === "/dashboard/") content = <HomePage />; else if (route === "/dashboard/orders") content = <OrdersPage />; else if (orderDetail) content = <OrderDetail id={orderDetail[1]} />; else if (route === "/dashboard/products") content = <ProductsPage />; else if (route === "/dashboard/products/new") content = <ProductForm />; else if (productDetail) content = <ProductForm id={productDetail[1]} />; else if (route === "/dashboard/customers") content = <CustomersPage />; else if (route === "/dashboard/inventory") content = <InventoryManagerPage />; else if (route === "/dashboard/categories") content = <CategoriesPage />; else if (route === "/dashboard/brands") content = <BrandsPage />; else if (route === "/dashboard/settings") content = <SettingsPage />; else if (route === "/dashboard/homepage" || route === "/dashboard/homepage/sections") content = <HomepageBuilderPage />; else content = <GenericPage path={route} />; return <div className="min-h-screen bg-[#f7f9fc]"><Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} /><div className={`min-h-screen transition-[padding] duration-200 ${collapsed ? "lg:pl-[82px]" : "lg:pl-[260px]"}`}><Header onMenu={() => setMobileOpen(true)} onSearch={setSearch} /><main className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-9">{content}</main></div></div>; }
 
 export default function App() {
   const [lang, setLang] = useState<"en" | "ar">(() => (localStorage.getItem("spacecall-language") as "en" | "ar") || "en");
   useEffect(() => { document.documentElement.lang = lang; document.documentElement.dir = lang === "ar" ? "rtl" : "ltr"; localStorage.setItem("spacecall-language", lang); }, [lang]);
-  const t = (key: string) => { const dictionary = lang === "ar" ? { "Overview": "نظرة عامة", "Commerce": "التجارة", "Store content": "محتوى المتجر", "Marketing": "التسويق", "Management": "الإدارة", "System": "النظام", "Dashboard": "لوحة التحكم", "Orders": "الطلبات", "Products": "المنتجات", "Collections": "المجموعات", "Categories": "التصنيفات", "Inventory": "المخزون", "Customers": "العملاء", "Homepage": "الصفحة الرئيسية", "Hero banners": "البنرات الرئيسية", "Brands": "العلامات التجارية", "Navigation": "التنقل", "Promotions": "العروض", "Campaigns": "الحملات", "Coupons": "القسائم", "SEO": "تحسين الظهور", "Analytics": "التحليلات", "Messages": "الرسائل", "Reviews": "المراجعات", "Media library": "مكتبة الوسائط", "Users": "المستخدمون", "Activity logs": "سجل النشاط", "Settings": "الإعدادات", "Search orders, products, customers...": "ابحث في الطلبات والمنتجات والعملاء...", "Store Manager": "مدير المتجر", "Export report": "تصدير التقرير", "Standalone workspace": "مساحة مستقلة", "Mock data only. Integrations are intentionally paused.": "بيانات تجريبية فقط. التكاملات متوقفة مؤقتًا.", "View store": "عرض المتجر", "Collapse sidebar": "طي الشريط الجانبي" } : {}; return dictionary[key as keyof typeof dictionary] || key; };
-  return <LanguageContext.Provider value={{ lang, setLang, t }}><><Switch><Route path="/login" component={LoginPage} /><Route component={DashboardLayout} /></Switch><Toaster position="bottom-right" richColors /></></LanguageContext.Provider>; }
+  const t = (key: string) => { const dictionary = lang === "ar" ? { "Overview": "نظرة عامة", "Commerce": "التجارة", "Store content": "محتوى المتجر", "Marketing": "التسويق", "Management": "الإدارة", "System": "النظام", "Dashboard": "لوحة التحكم", "Orders": "الطلبات", "Products": "المنتجات", "Collections": "المجموعات", "Categories": "التصنيفات", "Inventory": "المخزون", "Customers": "العملاء", "Homepage": "الصفحة الرئيسية", "Hero banners": "البنرات الرئيسية", "Brands": "العلامات التجارية", "Navigation": "التنقل", "Promotions": "العروض", "Campaigns": "الحملات", "Coupons": "القسائم", "SEO": "تحسين الظهور", "Analytics": "التحليلات", "Messages": "الرسائل", "Reviews": "المراجعات", "Media library": "مكتبة الوسائط", "Users": "المستخدمون", "Activity logs": "سجل النشاط", "Settings": "الإعدادات", "Search orders, products, customers...": "ابحث في الطلبات والمنتجات والعملاء...", "Store Manager": "مدير المتجر", "Export report": "تصدير التقرير", "Standalone workspace": "مساحة مستقلة", "Mock data only. Integrations are intentionally paused.": "كتالوج Supabase متصل.", "View store": "عرض المتجر", "Collapse sidebar": "طي الشريط الجانبي" } : {}; return dictionary[key as keyof typeof dictionary] || key; };
+  return <LanguageContext.Provider value={{ lang, setLang, t }}><><Switch><Route path="/login" component={LoginPage} /><Route component={DashboardGate} /></Switch><Toaster position="bottom-right" richColors /></></LanguageContext.Provider>; }
