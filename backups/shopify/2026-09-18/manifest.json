@@ -1,0 +1,43 @@
+{
+  "backupName": "Space Call full storefront restore point",
+  "snapshotDate": "2026-09-18",
+  "repository": "koreazolfakar-droid/commerce-pal-launch",
+  "codeRestoreBranch": "backup-spacecall-2026-09-18",
+  "shopifyBackupBranch": "backup-spacecall-2026-09-18-shopify",
+  "shopify": {
+    "productCount": 161,
+    "collectionCount": 60,
+    "productPages": 9,
+    "collectionPages": 12,
+    "includes": [
+      "products",
+      "product descriptions",
+      "product status",
+      "vendors and product types",
+      "tags",
+      "variants",
+      "SKU and barcode",
+      "prices and compare-at prices",
+      "inventory quantities and inventory item/location references",
+      "selected options",
+      "product media/image URLs",
+      "product metafields",
+      "collections",
+      "collection descriptions and handles",
+      "collection images",
+      "collection sort order",
+      "collection rules",
+      "manual collection product membership",
+      "collection SEO",
+      "collection metafields"
+    ],
+    "restorePolicy": {
+      "code": "Restore main from codeRestoreBranch only after reviewing changes.",
+      "catalog": "Use Shopify snapshot files to restore catalog/configuration values that were changed after this snapshot.",
+      "inventory": "Restore inventory only when the incident actually changed inventory. Do not overwrite legitimate sales-related stock movements.",
+      "orders": "Never delete or roll back orders created after the snapshot.",
+      "customers": "Never delete or roll back customers created after the snapshot.",
+      "secrets": "API tokens and environment secrets are not stored in this backup."
+    }
+  }
+}
