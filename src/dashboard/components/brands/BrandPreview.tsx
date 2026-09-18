@@ -1,14 +1,14 @@
 import { EyeOff, Sparkles } from "lucide-react";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
-import type { CatalogBrand } from "@/dashboard/mock/brands";
-import type { Product } from "@/dashboard/mock/data";
+import type { CatalogBrand } from "@/dashboard/data/brands";
+import type { DashboardProduct } from "@/dashboard/data/catalog";
 
 export default function BrandPreview({
   brand,
   products,
 }: {
   brand: CatalogBrand;
-  products: Product[];
+  products: DashboardProduct[];
 }) {
   const visible = brand.active && brand.featured;
 

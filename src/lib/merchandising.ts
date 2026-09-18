@@ -1,5 +1,4 @@
-import { storefrontApiRequest } from "@/lib/shopify";
-import { SHOWCASE_COLLECTIONS_QUERY } from "@/lib/storefrontDocuments";
+import { fetchCollectionByHandle, fetchCollections } from "@/lib/storefrontData";
 
 export interface ShowcaseCollection {
   handle: string;
@@ -8,41 +7,20 @@ export interface ShowcaseCollection {
   image: { url: string; altText: string | null } | null;
   productCount: number;
 }
-interface ShowcaseNode extends Omit<ShowcaseCollection, "productCount"> {
-  sortOrder?: { value: string } | null;
-  products?: { nodes: Array<{ id: string }> };
-}
-interface ShowcaseResponse {
-  data?: {
-    collections: {
-      nodes: ShowcaseNode[];
-    };
-  };
-}
 
+/** Dashboard-managed Supabase collections are the merchandising source of truth. */
 export async function fetchShowcaseCollections(): Promise<ShowcaseCollection[]> {
-  try {
-    const response: ShowcaseResponse = await storefrontApiRequest(SHOWCASE_COLLECTIONS_QUERY);
-    const nodes = (response.data?.collections.nodes ?? []).filter((collection) =>
-      collection.handle.startsWith("showcase-"),
-    );
-    const order = (collection: ShowcaseNode) => {
-      const raw = collection.sortOrder?.value.trim();
-      const value = raw ? Number(raw) : Number.NaN;
-      return Number.isFinite(value) ? value : Number.POSITIVE_INFINITY;
-    };
-    nodes.sort(
-      (a, b) =>
-        order(a) - order(b) ||
-        a.title.localeCompare(b.title, "en", { numeric: true }) ||
-        a.handle.localeCompare(b.handle),
-    );
-    return nodes.map(({ sortOrder: _sortOrder, products, ...collection }) => ({
-      ...collection,
-      productCount: products?.nodes.length ?? 0,
-    }));
-  } catch {
-    // This optional merchandising layer must not prevent the catalogue from rendering.
-    return [];
-  }
+  const collections = (await fetchCollections(500)).filter((collection) =>
+    collection.handle.startsWith("showcase-"),
+  );
+  const withCounts = await Promise.all(
+    collections.map(async (collection) => {
+      const detail = await fetchCollectionByHandle(collection.handle, 500);
+      return {
+        ...collection,
+        productCount: detail?.products.length ?? 0,
+      };
+    }),
+  );
+  return withCounts;
 }

@@ -3,6 +3,7 @@ import {
   ChevronDown,
   Eye,
   GripVertical,
+  Loader2,
   MoreHorizontal,
   MoveRight,
   Pencil,
@@ -12,7 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import CategoryForm from "@/dashboard/components/categories/CategoryForm";
@@ -23,38 +24,27 @@ import CategoryPreview from "@/dashboard/components/categories/CategoryPreview";
 import CategoryToolbar from "@/dashboard/components/categories/CategoryToolbar";
 import ProductAssignmentDialog from "@/dashboard/components/categories/ProductAssignmentDialog";
 import {
-  assignProductsToCategory,
+  assignProductsToDashboardCategory,
   countProductsAssignedToValidCategories,
+  createDashboardCategory,
   createUniqueCategorySlug,
+  deleteDashboardCategory,
   getCategoryProductCount,
   getProductsForCategory,
-  moveCategoryProducts,
-  persistCatalogSnapshot,
-  readCatalogProducts,
-  readCategories,
-  saveCategories,
+  loadCategoriesWorkspace,
+  refreshDashboardCategoryProducts,
+  reorderDashboardCategories,
+  updateDashboardCategory,
   type CatalogCategory,
-} from "@/dashboard/mock/catalog";
-import type { Product } from "@/dashboard/mock/data";
+} from "@/dashboard/data/categories";
+import type { DashboardProduct } from "@/dashboard/data/catalog";
 
 type EditState = {
   mode: "create" | "edit";
   category: CatalogCategory;
 };
 
-function makeCategoryId(categories: CatalogCategory[], base = "category") {
-  const existing = new Set(categories.map((category) => category.id));
-  const root = base.replace(/[^a-z0-9-]/gi, "-").toLowerCase() || "category";
-  let id = root + "-" + Date.now();
-  let suffix = 2;
-  while (existing.has(id)) {
-    id = root + "-" + Date.now() + "-" + suffix;
-    suffix += 1;
-  }
-  return id;
-}
-
-function ProductStatus({ status }: { status: Product["status"] }) {
+function ProductStatus({ status }: { status: DashboardProduct["status"] }) {
   const classes =
     status === "Active"
       ? "bg-emerald-50 text-emerald-700"
@@ -146,11 +136,11 @@ function ModalShell({
 
 export default function CategoriesPage() {
   const [, navigate] = useLocation();
-  const [categories, setCategories] = useState<CatalogCategory[]>(() =>
-    [...readCategories()].sort((a, b) => a.order - b.order),
-  );
-  const [products, setProducts] = useState<Product[]>(readCatalogProducts);
-  const [selectedId, setSelectedId] = useState(() => categories[0]?.id || "");
+  const [categories, setCategories] = useState<CatalogCategory[]>([]);
+  const [products, setProducts] = useState<DashboardProduct[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [homepageFilter, setHomepageFilter] = useState("all");
@@ -159,11 +149,39 @@ export default function CategoriesPage() {
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CatalogCategory | null>(null);
   const [deleteDestination, setDeleteDestination] = useState("uncategorized");
-  const [moveProduct, setMoveProduct] = useState<Product | null>(null);
+  const [moveProduct, setMoveProduct] = useState<DashboardProduct | null>(null);
   const [moveDestination, setMoveDestination] = useState("");
   const [productMenuId, setProductMenuId] = useState<string | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [reorderDraft, setReorderDraft] = useState<CatalogCategory[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    loadCategoriesWorkspace()
+      .then((workspace) => {
+        if (cancelled) return;
+        setCategories(workspace.categories);
+        setProducts(workspace.products);
+        setSelectedId((current) =>
+          current && workspace.categories.some((category) => category.id === current)
+            ? current
+            : workspace.categories[0]?.id || "",
+        );
+        setError("");
+      })
+      .catch((cause) => {
+        if (!cancelled) {
+          setError(cause instanceof Error ? cause.message : "Unable to load categories.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const selected = categories.find((category) => category.id === selectedId) || categories[0];
 
@@ -215,25 +233,12 @@ export default function CategoriesPage() {
 
   const listCategories = reorderMode ? reorderDraft : filteredCategories;
 
-  const persistCategoriesOnly = (next: CatalogCategory[]) => {
-    const saved = saveCategories(next);
-    setCategories(saved);
-    return saved;
-  };
-
-  const persistEverything = (nextCategories: CatalogCategory[], nextProducts: Product[]) => {
-    const saved = persistCatalogSnapshot(nextCategories, nextProducts);
-    setCategories(saved.categories);
-    setProducts(saved.products);
-    return saved;
-  };
-
   const openCreate = () => {
     const nextOrder = categories.reduce((max, category) => Math.max(max, category.order), 0) + 1;
     setEditing({
       mode: "create",
       category: {
-        id: makeCategoryId(categories),
+        id: "",
         name: "",
         slug: "",
         icon: "LayoutGrid",
@@ -250,7 +255,7 @@ export default function CategoriesPage() {
     setEditing({ mode: "edit", category: { ...category } });
   };
 
-  const saveCategory = (nextCategory: CatalogCategory) => {
+  const saveCategory = async (nextCategory: CatalogCategory) => {
     const duplicateSlug = categories.some(
       (category) =>
         category.id !== nextCategory.id &&
@@ -261,63 +266,68 @@ export default function CategoriesPage() {
       return;
     }
 
-    if (editing?.mode === "create") {
-      const safeId = categories.some((category) => category.id === nextCategory.id)
-        ? makeCategoryId(categories, nextCategory.slug)
-        : nextCategory.id;
-      const created = { ...nextCategory, id: safeId };
-      persistCategoriesOnly([...categories, created]);
-      setSelectedId(created.id);
+    try {
+      if (editing?.mode === "create") {
+        const created = await createDashboardCategory(nextCategory);
+        setCategories((current) =>
+          [...current, created].sort((a, b) => a.order - b.order),
+        );
+        setSelectedId(created.id);
+        setEditing(null);
+        toast.success("Category created in Supabase.");
+        return;
+      }
+
+      const saved = await updateDashboardCategory(nextCategory);
+      setCategories((current) =>
+        current.map((category) => (category.id === saved.id ? saved : category)),
+      );
+      setProducts(await refreshDashboardCategoryProducts());
+      setSelectedId(saved.id);
       setEditing(null);
-      toast.success("Category created in the local Space Call catalog.");
-      return;
+      toast.success("Category saved to Supabase.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Category save failed.");
     }
-
-    const previous = categories.find((category) => category.id === nextCategory.id);
-    if (!previous) return;
-
-    const nextCategories = categories.map((category) =>
-      category.id === nextCategory.id ? nextCategory : category,
-    );
-    const nextProducts =
-      previous.name !== nextCategory.name
-        ? moveCategoryProducts(products, previous, nextCategory.name)
-        : products;
-
-    persistEverything(nextCategories, nextProducts);
-    setSelectedId(nextCategory.id);
-    setEditing(null);
-    toast.success(
-      previous.name !== nextCategory.name
-        ? "Category renamed and assigned products were updated automatically."
-        : "Category saved.",
-    );
   };
 
-  const toggleCategory = (category: CatalogCategory, patch: Partial<CatalogCategory>) => {
-    const now = new Date().toISOString();
-    persistCategoriesOnly(
-      categories.map((item) =>
-        item.id === category.id ? { ...item, ...patch, updatedAt: now } : item,
-      ),
-    );
+  const toggleCategory = async (
+    category: CatalogCategory,
+    patch: Partial<CatalogCategory>,
+  ) => {
+    try {
+      const saved = await updateDashboardCategory({ ...category, ...patch });
+      setCategories((current) =>
+        current.map((item) => (item.id === saved.id ? saved : item)),
+      );
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Category update failed.");
+    }
   };
 
-  const duplicateCategory = (category: CatalogCategory) => {
+  const duplicateCategory = async (category: CatalogCategory) => {
     const now = new Date().toISOString();
     const duplicate: CatalogCategory = {
       ...category,
-      id: makeCategoryId(categories, category.slug + "-copy"),
+      id: "",
       name: category.name + " Copy",
       slug: createUniqueCategorySlug(category.slug + "-copy", categories),
       active: false,
+      featured: false,
       order: categories.reduce((max, item) => Math.max(max, item.order), 0) + 1,
       createdAt: now,
       updatedAt: now,
     };
-    persistCategoriesOnly([...categories, duplicate]);
-    setSelectedId(duplicate.id);
-    toast.success("Category duplicated without copying product assignments.");
+    try {
+      const created = await createDashboardCategory(duplicate);
+      setCategories((current) =>
+        [...current, created].sort((a, b) => a.order - b.order),
+      );
+      setSelectedId(created.id);
+      toast.success("Category duplicated in Supabase without copying product assignments.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Category duplication failed.");
+    }
   };
 
   const requestDelete = (category: CatalogCategory) => {
@@ -329,68 +339,73 @@ export default function CategoriesPage() {
     setDeleteDestination("uncategorized");
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    const destinationCategory = categories.find((category) => category.id === deleteDestination);
-    const destinationName =
-      deleteDestination === "uncategorized"
-        ? "Uncategorized"
-        : destinationCategory?.name || "Uncategorized";
-    const productCount = getCategoryProductCount(products, deleteTarget);
-    const nextProducts =
-      productCount > 0 ? moveCategoryProducts(products, deleteTarget, destinationName) : products;
-    const nextCategories = categories
-      .filter((category) => category.id !== deleteTarget.id)
-      .sort((a, b) => a.order - b.order)
-      .map((category, index) => ({ ...category, order: index + 1 }));
+    const destinationId =
+      deleteDestination === "uncategorized" ? null : deleteDestination || null;
 
-    const saved = persistEverything(nextCategories, nextProducts);
-    if (selectedId === deleteTarget.id) {
-      setSelectedId(saved.categories[0]?.id || "");
+    try {
+      await deleteDashboardCategory(deleteTarget.id, destinationId);
+      const workspace = await loadCategoriesWorkspace();
+      setCategories(workspace.categories);
+      setProducts(workspace.products);
+      setSelectedId((current) =>
+        current === deleteTarget.id ||
+        !workspace.categories.some((category) => category.id === current)
+          ? workspace.categories[0]?.id || ""
+          : current,
+      );
+      setDeleteTarget(null);
+      toast.success("Category deleted and product assignments updated in Supabase.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Category deletion failed.");
     }
-    setDeleteTarget(null);
-    toast.success(
-      productCount
-        ? "Category deleted and products were safely reassigned."
-        : "Empty category deleted.",
-    );
   };
 
-  const assignProducts = (productIds: string[]) => {
+  const assignProducts = async (productIds: string[]) => {
     if (!selected) return;
-    const nextProducts = assignProductsToCategory(products, productIds, selected.name);
-    persistEverything(categories, nextProducts);
-    setAssignmentOpen(false);
-    toast.success(
-      productIds.length === 1
-        ? "Product assigned to " + selected.name + "."
-        : productIds.length + " products assigned to " + selected.name + ".",
-    );
-  };
-
-  const removeProductFromCategory = (product: Product) => {
-    const nextProducts = assignProductsToCategory(products, [product.id], "Uncategorized");
-    persistEverything(categories, nextProducts);
-    setProductMenuId(null);
-    toast.success(product.name + " moved to Uncategorized.");
-  };
-
-  const confirmMoveProduct = () => {
-    if (!moveProduct || !moveDestination) return;
-    const destination = categories.find((category) => category.id === moveDestination);
-    const destinationName =
-      moveDestination === "uncategorized" ? "Uncategorized" : destination?.name;
-
-    if (!destinationName) {
-      toast.error("Choose a destination category.");
-      return;
+    try {
+      await assignProductsToDashboardCategory(productIds, selected);
+      setProducts(await refreshDashboardCategoryProducts());
+      setAssignmentOpen(false);
+      toast.success(
+        productIds.length === 1
+          ? "Product assigned to " + selected.name + " in Supabase."
+          : productIds.length + " products assigned to " + selected.name + " in Supabase.",
+      );
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Product assignment failed.");
     }
+  };
 
-    const nextProducts = assignProductsToCategory(products, [moveProduct.id], destinationName);
-    persistEverything(categories, nextProducts);
-    toast.success(moveProduct.name + " moved to " + destinationName + ".");
-    setMoveProduct(null);
-    setMoveDestination("");
+  const removeProductFromCategory = async (product: DashboardProduct) => {
+    try {
+      await assignProductsToDashboardCategory([product.id], null);
+      setProducts(await refreshDashboardCategoryProducts());
+      setProductMenuId(null);
+      toast.success(product.name + " moved to Uncategorized in Supabase.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Removing product from category failed.");
+    }
+  };
+
+  const confirmMoveProduct = async () => {
+    if (!moveProduct || !moveDestination) return;
+    const destination =
+      moveDestination === "uncategorized"
+        ? null
+        : categories.find((category) => category.id === moveDestination) ?? null;
+    const destinationName = destination?.name ?? "Uncategorized";
+
+    try {
+      await assignProductsToDashboardCategory([moveProduct.id], destination);
+      setProducts(await refreshDashboardCategoryProducts());
+      toast.success(moveProduct.name + " moved to " + destinationName + " in Supabase.");
+      setMoveProduct(null);
+      setMoveDestination("");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Moving product failed.");
+    }
   };
 
   const startReorder = () => {
@@ -411,18 +426,22 @@ export default function CategoriesPage() {
     });
   };
 
-  const saveReorder = () => {
-    const now = new Date().toISOString();
+  const saveReorder = async () => {
     const normalized = reorderDraft.map((category, index) => ({
       ...category,
       order: index + 1,
-      updatedAt: now,
+      updatedAt: new Date().toISOString(),
     }));
-    persistCategoriesOnly(normalized);
-    setReorderMode(false);
-    setReorderDraft([]);
-    setSortMode("order");
-    toast.success("Category order saved.");
+    try {
+      await reorderDashboardCategories(normalized);
+      setCategories(normalized);
+      setReorderMode(false);
+      setReorderDraft([]);
+      setSortMode("order");
+      toast.success("Category order saved to Supabase.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Saving category order failed.");
+    }
   };
 
   const scrollToProducts = (category?: CatalogCategory) => {
@@ -440,6 +459,22 @@ export default function CategoriesPage() {
     setHomepageFilter("all");
     setSortMode("order");
   };
+
+  if (loading) {
+    return (
+      <div className="grid min-h-[360px] place-items-center rounded-2xl border border-slate-200 bg-white">
+        <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
+        {error}
+      </div>
+    );
+  }
 
   if (!categories.length) {
     return (
@@ -770,7 +805,7 @@ export default function CategoriesPage() {
                     Products in {selected.name}
                   </div>
                   <div className="mt-1 text-[10px] text-slate-400">
-                    Assignment uses Product.category and the existing catalog relationship logic.
+                    Assignment uses store_products.category_id in Supabase as the source of truth.
                   </div>
                 </div>
                 <button
@@ -1025,7 +1060,7 @@ export default function CategoriesPage() {
       {moveProduct && (
         <ModalShell
           title="Move Product"
-          subtitle={moveProduct.name + " will stay intact; only Product.category changes."}
+          subtitle={moveProduct.name + " will stay intact; only its Supabase category assignment changes."}
           onClose={() => {
             setMoveProduct(null);
             setMoveDestination("");
