@@ -1,0 +1,265 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 1,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/474719748323",
+      "title": "Home page",
+      "handle": "frontpage",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-17T18:00:17Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730427519203",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/rn-image_picker_lib_temp_ab30b179-e590-4c62-be80-92c4deba0edb.png?v=1789204248",
+        "altText": "Space Call iPhone 18 Pro Max homepage hero",
+        "width": 1672,
+        "height": 941
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9668758307043"
+          },
+          {
+            "id": "gid://shopify/Product/9600445776099"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/475750269155",
+      "title": "Samsung",
+      "handle": "samsung",
+      "descriptionHtml": "<p>تشكيلة هواتف وأجهزة Samsung الذكية</p><p><strong>عرض Samsung Galaxy S26 Ultra: شاحن مجاني مع الجهاز.</strong></p>",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-17T18:00:17Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": "Samsung - هواتف وأجهزة Samsung الذكية",
+        "description": "تسوق أحدث هواتف Samsung الذكية وأجهزتها بأفضل الأسعار"
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730427486435",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/samsung-s26-ultra-hero-premium-free-charger.png?v=1788625781",
+        "altText": "Samsung logo",
+        "width": 1048,
+        "height": 350
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "Samsung"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9597660659939"
+          },
+          {
+            "id": "gid://shopify/Product/9668758307043"
+          },
+          {
+            "id": "gid://shopify/Product/9658215989475"
+          },
+          {
+            "id": "gid://shopify/Product/9654432497891"
+          },
+          {
+            "id": "gid://shopify/Product/9650882347235"
+          },
+          {
+            "id": "gid://shopify/Product/9650882314467"
+          },
+          {
+            "id": "gid://shopify/Product/9650882248931"
+          },
+          {
+            "id": "gid://shopify/Product/9650882216163"
+          },
+          {
+            "id": "gid://shopify/Product/9650882183395"
+          },
+          {
+            "id": "gid://shopify/Product/9650882150627"
+          },
+          {
+            "id": "gid://shopify/Product/9650882085091"
+          },
+          {
+            "id": "gid://shopify/Product/9650882052323"
+          },
+          {
+            "id": "gid://shopify/Product/9650881986787"
+          },
+          {
+            "id": "gid://shopify/Product/9650881954019"
+          },
+          {
+            "id": "gid://shopify/Product/9650881888483"
+          },
+          {
+            "id": "gid://shopify/Product/9650881822947"
+          },
+          {
+            "id": "gid://shopify/Product/9650881757411"
+          },
+          {
+            "id": "gid://shopify/Product/9650881691875"
+          },
+          {
+            "id": "gid://shopify/Product/9650877792483"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/51723704140003",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung - هواتف وأجهزة Samsung الذكية"
+          },
+          {
+            "id": "gid://shopify/Metafield/51723704172771",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "تسوق أحدث هواتف Samsung الذكية وأجهزتها بأفضل الأسعار"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476225962211",
+      "title": "هواتف TECNO الجديدة",
+      "handle": "هواتف-tecno-الجديدة",
+      "descriptionHtml": "أحدث هواتف TECNO المتوفرة في المتجر، مع المواصفات والألوان والأسعار.",
+      "sortOrder": "CREATED_DESC",
+      "updatedAt": "2026-09-06T06:07:33Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650839421155"
+          },
+          {
+            "id": "gid://shopify/Product/9650839322851"
+          },
+          {
+            "id": "gid://shopify/Product/9650839159011"
+          },
+          {
+            "id": "gid://shopify/Product/9650838962403"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476226355427",
+      "title": "Anker Earbuds",
+      "handle": "anker-earbuds",
+      "descriptionHtml": "سماعات Anker / soundcore اللاسلكية الحديثة، مرتبة من الأقل سعراً إلى الأعلى.",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-06T06:07:33Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650856001763"
+          },
+          {
+            "id": "gid://shopify/Product/9650856034531"
+          },
+          {
+            "id": "gid://shopify/Product/9650856067299"
+          },
+          {
+            "id": "gid://shopify/Product/9650856100067"
+          },
+          {
+            "id": "gid://shopify/Product/9650856198371"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476226388195",
+      "title": "Anker Power Banks",
+      "handle": "anker-power-banks",
+      "descriptionHtml": "مجموعة باور بانك Anker للشحن السريع، السعات الكبيرة، والهواتف واللابتوبات.",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-06T06:07:33Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650856231139"
+          },
+          {
+            "id": "gid://shopify/Product/9650856263907"
+          },
+          {
+            "id": "gid://shopify/Product/9650856296675"
+          },
+          {
+            "id": "gid://shopify/Product/9650856362211"
+          },
+          {
+            "id": "gid://shopify/Product/9650856526051"
+          },
+          {
+            "id": "gid://shopify/Product/9650856394979"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzYyMjYzODgxOTUsImxhc3RfdmFsdWUiOiI0NzYyMjYzODgxOTUifQ=="
+  }
+}
