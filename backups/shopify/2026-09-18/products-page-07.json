@@ -1,0 +1,1569 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "products",
+  "page": 7,
+  "data": [
+    {
+      "id": "gid://shopify/Product/9658214285539",
+      "title": "Black Shark S3 Smartwatch",
+      "handle": "black-shark-s3-smartwatch",
+      "descriptionHtml": "<h2>Black Shark S3 Smartwatch</h2><p>A modern smartwatch for users who want a practical wearable companion for daily activity, fitness and connected routines.</p><ul>\n<li>Modern Black Shark design</li>\n<li>Fitness and activity companion</li>\n<li>Everyday wearable convenience</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:13Z",
+      "updatedAt": "2026-09-07T17:36:20Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699596009699",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "59.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871537955043",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871537955043",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940257284323",
+            "alt": "Black Shark S3 Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940257284323",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/SXgnK-Photoroom.webp?v=1788757876",
+              "altText": "Black Shark S3 Smartwatch",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940269703395",
+            "alt": "Black Shark S3 Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940269703395",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757949540.webp?v=1788757951",
+              "altText": "Black Shark S3 Smartwatch",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658214482147",
+      "title": "Black Shark S1 Pro Smartwatch",
+      "handle": "black-shark-s1-pro-smartwatch",
+      "descriptionHtml": "<h2>Black Shark S1 Pro Smartwatch</h2><p>A versatile smartwatch that brings Black Shark style and everyday wearable convenience together for fitness and daily routines.</p><ul>\n<li>Modern smartwatch experience</li>\n<li>Fitness-focused everyday companion</li>\n<li>Comfortable wrist design</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:18Z",
+      "updatedAt": "2026-09-07T17:47:02Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699596337379",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "55.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871538282723",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871538282723",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940257906915",
+            "alt": "Black Shark S1 Pro Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940257906915",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/BS-S1-Pro-_3_db04d967-0d27-4aa8-9cdb-c496cd721be5.png?v=1788757881",
+              "altText": "Black Shark S1 Pro Smartwatch",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940270260451",
+            "alt": "Black Shark S1 Pro Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940270260451",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757954861.png?v=1788757956",
+              "altText": "Black Shark S1 Pro Smartwatch",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658214580451",
+      "title": "Black Shark GS3 Ultra Smartwatch",
+      "handle": "black-shark-gs3-ultra-smartwatch",
+      "descriptionHtml": "<h2>Black Shark GS3 Ultra Smartwatch</h2><p>Black Shark GS3 Ultra is a powerful smartwatch for users who want a modern wearable for fitness, activity tracking and everyday convenience.</p><ul>\n<li>Premium smartwatch design</li>\n<li>Fitness and activity companion</li>\n<li>Ideal for everyday wear</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:22Z",
+      "updatedAt": "2026-09-07T17:57:26Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699596566755",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "89.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871538512099",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871538512099",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940258103523",
+            "alt": "Black Shark GS3 Ultra Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940258103523",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s_04_GS3_ultra_black.png?v=1788757885",
+              "altText": "Black Shark GS3 Ultra Smartwatch",
+              "width": 3200,
+              "height": 3200
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940271407331",
+            "alt": "Black Shark GS3 Ultra Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940271407331",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757960489.png?v=1788757963",
+              "altText": "Black Shark GS3 Ultra Smartwatch",
+              "width": 3200,
+              "height": 3200
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658214842595",
+      "title": "Black Shark GT3 Neo Smartwatch",
+      "handle": "black-shark-gt3-neo-smartwatch",
+      "descriptionHtml": "<h2>Black Shark GT3 Neo Smartwatch</h2><p>An affordable Black Shark smartwatch designed for everyday activity, fitness and convenient wrist-based access to essential smart features.</p><ul>\n<li>Modern smartwatch</li>\n<li>Fitness companion</li>\n<li>Great value for everyday use</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:26Z",
+      "updatedAt": "2026-09-07T17:22:12Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699596959971",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "35.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871538905315",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871538905315",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940259283171",
+            "alt": "Black Shark GT3 Neo Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940259283171",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/GT3-Neo-_8.png?v=1788757889",
+              "altText": "Black Shark GT3 Neo Smartwatch",
+              "width": 416,
+              "height": 416
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940272095459",
+            "alt": "Black Shark GT3 Neo Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940272095459",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757966184.png?v=1788757968",
+              "altText": "Black Shark GT3 Neo Smartwatch",
+              "width": 416,
+              "height": 416
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658215006435",
+      "title": "Black Shark GS3 Smartwatch",
+      "handle": "black-shark-gs3-smartwatch",
+      "descriptionHtml": "<h2>Black Shark GS3 Smartwatch</h2><p>A stylish smartwatch designed for everyday activity and fitness tracking. Stay connected and monitor your daily routine from your wrist.</p><h3>Why you'll love it</h3><ul>\n<li>Smartwatch for daily use and fitness</li>\n<li>Modern Black Shark design</li>\n<li>Comfortable wearable companion</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:30Z",
+      "updatedAt": "2026-09-07T17:36:43Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699597385955",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "69.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871539331299",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871539331299",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940259807459",
+            "alt": "Black Shark GS3 Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940259807459",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/smart-chasy-black-shark-gs3-black-322826.webp?v=1788757892",
+              "altText": "Black Shark GS3 Smartwatch",
+              "width": 860,
+              "height": 860
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940272619747",
+            "alt": "Black Shark GS3 Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940272619747",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757971252.webp?v=1788757973",
+              "altText": "Black Shark GS3 Smartwatch",
+              "width": 860,
+              "height": 860
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658215137507",
+      "title": "Black Shark S3 Classic Smartwatch",
+      "handle": "black-shark-s3-classic-smartwatch",
+      "descriptionHtml": "<h2>Black Shark S3 Classic Smartwatch</h2><p>Black Shark S3 Classic offers a classic-inspired smartwatch look with practical features for everyday activity and connected living.</p><ul>\n<li>Classic smartwatch styling</li>\n<li>Daily activity companion</li>\n<li>Designed for everyday wear</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:35Z",
+      "updatedAt": "2026-09-07T17:22:53Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699597517027",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "49.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871539462371",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871539462371",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940260069603",
+            "alt": "Black Shark S3 Classic Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940260069603",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/S3_Classic_04.png?v=1788757899",
+              "altText": "Black Shark S3 Classic Smartwatch",
+              "width": 800,
+              "height": 800
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940273012963",
+            "alt": "Black Shark S3 Classic Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940273012963",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757975137.png?v=1788757977",
+              "altText": "Black Shark S3 Classic Smartwatch",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658215399651",
+      "title": "Black Shark GT3 Smartwatch",
+      "handle": "black-shark-gt3-smartwatch",
+      "descriptionHtml": "<h2>Black Shark GT3 Smartwatch</h2><p>Stay active and connected with the Black Shark GT3 Smartwatch, a practical wearable designed for daily routines and fitness-focused lifestyles.</p><ul>\n<li>Smart wearable convenience</li>\n<li>Daily activity companion</li>\n<li>Modern Black Shark styling</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:39Z",
+      "updatedAt": "2026-09-07T20:18:48Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699597779171",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "55.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871539724515",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871539724515",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940260888803",
+            "alt": "Black Shark GT3 Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940260888803",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/Ue8zX1776061837.png?v=1788757903",
+              "altText": "Black Shark GT3 Smartwatch",
+              "width": 800,
+              "height": 800
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940273209571",
+            "alt": "Black Shark GT3 Smartwatch",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940273209571",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757982658.png?v=1788757984",
+              "altText": "Black Shark GT3 Smartwatch",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658215497955",
+      "title": "Huawei Band 10",
+      "handle": "huawei-band-10",
+      "descriptionHtml": "<h2>Huawei Band 10</h2><p>Huawei Band 10 is a lightweight fitness wearable designed for everyday activity tracking and an active lifestyle.</p><ul>\n<li>Compact fitness band</li>\n<li>Daily activity companion</li>\n<li>Comfortable lightweight design</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "HUAWEI",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:42Z",
+      "updatedAt": "2026-09-07T19:52:40Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699598106851",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "42.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871540052195",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871540052195",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940261413091",
+            "alt": "Huawei Band 10",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940261413091",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/4758838_2.jpg?v=1788757905",
+              "altText": "Huawei Band 10",
+              "width": 1500,
+              "height": 1500
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940274192611",
+            "alt": "Huawei Band 10",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940274192611",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757989231.jpg?v=1788757991",
+              "altText": "Huawei Band 10",
+              "width": 1500,
+              "height": 1500
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658215694563",
+      "title": "CMF Watch 3 Pro",
+      "handle": "cmf-watch-3-pro",
+      "descriptionHtml": "<h2>CMF Watch 3 Pro</h2><p>CMF Watch 3 Pro is a stylish smartwatch designed to support your active lifestyle while adding smart convenience to your everyday routine.</p><ul>\n<li>Modern smartwatch design</li>\n<li>Fitness and daily activity companion</li>\n<li>Comfortable everyday wearable</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "CMF",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:47Z",
+      "updatedAt": "2026-09-07T20:11:37Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699598303459",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "99.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871540248803",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871540248803",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940262363363",
+            "alt": "CMF Watch 3 Pro",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940262363363",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/cmf-watch3pro-dgy.jpg?v=1788757910",
+              "altText": "CMF Watch 3 Pro",
+              "width": 886,
+              "height": 896
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940274782435",
+            "alt": "CMF Watch 3 Pro",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940274782435",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757994182.jpg?v=1788757995",
+              "altText": "CMF Watch 3 Pro",
+              "width": 886,
+              "height": 896
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658215825635",
+      "title": "Xiaomi Smart Band 10 – AMOLED Fitness Tracker with 150+ Sports Modes & 21-Day Battery",
+      "handle": "xiaomi-smart-band-10-amoled-fitness-tracker-with-150-sports-modes-21-day-battery",
+      "descriptionHtml": "<h2>Xiaomi Smart Band 10 AMOLED Fitness Tracker</h2><p>Track your active lifestyle with Xiaomi Smart Band 10, featuring an AMOLED display, more than 150 sports modes and up to 21-day battery life.</p><ul>\n<li>AMOLED display</li>\n<li>150+ sports modes</li>\n<li>Up to 21-day battery life</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "XIAOMI",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:50Z",
+      "updatedAt": "2026-09-07T20:15:09Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699598794979",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "55.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871540740323",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871540740323",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940262658275",
+            "alt": "Xiaomi Smart Band 10 – AMOLED Fitness Tracker with 150+ Sports Modes & 21-Day Battery",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940262658275",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/pms_1750932901.51348731.png?v=1788757913",
+              "altText": "Xiaomi Smart Band 10 – AMOLED Fitness Tracker with 150+ Sports Modes & 21-Day Battery",
+              "width": 700,
+              "height": 700
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940275306723",
+            "alt": "Xiaomi Smart Band 10 – AMOLED Fitness Tracker with 150+ Sports Modes & 21-Day Battery",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940275306723",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788757997534.png?v=1788757999",
+              "altText": "Xiaomi Smart Band 10 – AMOLED Fitness Tracker with 150+ Sports Modes & 21-Day Battery",
+              "width": 700,
+              "height": 700
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658215989475",
+      "title": "Samsung Galaxy Watch 8 - 40mm - Graphite",
+      "handle": "samsung-galaxy-watch-8-40mm-graphite",
+      "descriptionHtml": "<h2>Samsung Galaxy Watch 8 40mm - Graphite</h2><p>Samsung Galaxy Watch 8 in Graphite is a sleek 40mm smartwatch designed for everyday convenience, activity and a connected lifestyle.</p><ul>\n<li>40mm smartwatch design</li>\n<li>Elegant Graphite finish</li>\n<li>Smart companion for everyday use</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "SAMSUNG",
+      "productType": "Smart Watch",
+      "tags": [
+        "Fitness",
+        "Smart Watch",
+        "Wearable"
+      ],
+      "createdAt": "2026-09-07T05:11:53Z",
+      "updatedAt": "2026-09-07T17:45:49Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699599319267",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "309.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871541264611",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871541264611",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940263608547",
+            "alt": "Samsung Galaxy Watch 8 - 40mm - Graphite",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940263608547",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/icon_watch8_40mm_graphite.jpg?v=1788757917",
+              "altText": "Samsung Galaxy Watch 8 - 40mm - Graphite",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39940275634403",
+            "alt": "Samsung Galaxy Watch 8 - 40mm - Graphite",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940275634403",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/upload-1788758002426.jpg?v=1788758004",
+              "altText": "Samsung Galaxy Watch 8 - 40mm - Graphite",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658218971363",
+      "title": "Mark Ryden Expandos MR9299 17.6\" Expandable 2-in-1 Travel Backpack",
+      "handle": "mark-ryden-expandos-mr9299-17-6-expandable-2-in-1-travel-backpack",
+      "descriptionHtml": "<h2>Mark Ryden Expandos MR9299 Travel Backpack</h2><p>The Mark Ryden Expandos MR9299 is a large expandable backpack designed for travel and carrying larger devices and everyday essentials. Its 2-in-1 expandable design provides flexible storage when you need extra capacity.</p><h3>Key Features</h3><ul>\n<li>Expandable storage capacity</li>\n<li>2-in-1 travel design</li>\n<li>Suitable for devices up to 17.6 inches</li>\n<li>Ideal for travel and daily organization</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: MARK RYDEN</li>\n<li>Model: MR9299</li>\n<li>Product Type: Travel Backpack</li>\n<li>Device Compatibility: Up to 17.6 inches</li>\n<li>Special Feature: Expandable 2-in-1 design</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack",
+        "Pixel Zones Selection"
+      ],
+      "createdAt": "2026-09-07T05:12:48Z",
+      "updatedAt": "2026-09-07T19:22:13Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699606724835",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "79.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871548670179",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871548670179",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658219102435",
+      "title": "Mark Ryden Muke I MR1611 Laptop Backpack – Waterproof & Anti-Theft",
+      "handle": "mark-ryden-muke-i-mr1611-laptop-backpack-waterproof-anti-theft",
+      "descriptionHtml": "<h2>Mark Ryden Muke I MR1611 Laptop Backpack</h2><p>A modern laptop backpack designed for secure everyday commuting. The Muke I MR1611 features a water-resistant exterior and anti-theft design to help protect your belongings while keeping essentials organized.</p><h3>Key Features</h3><ul>\n<li>Water-resistant construction</li>\n<li>Anti-theft design</li>\n<li>Organized storage for daily essentials</li>\n<li>Suitable for commuting and travel</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: MARK RYDEN</li>\n<li>Model: MR1611</li>\n<li>Product Type: Laptop Backpack</li>\n<li>Features: Water resistance, anti-theft design</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack",
+        "Pixel Zones Selection"
+      ],
+      "createdAt": "2026-09-07T05:12:53Z",
+      "updatedAt": "2026-09-07T18:26:27Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699606855907",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "45.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871548801251",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871548801251",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658219430115",
+      "title": "Xiaomi Mi Casual Daypack Bag – Lightweight, Durable & Water-Resistant",
+      "handle": "xiaomi-mi-casual-daypack-bag-lightweight-durable-water-resistant",
+      "descriptionHtml": "<h2>Xiaomi Mi Casual Daypack</h2><p>The Xiaomi Mi Casual Daypack is a lightweight everyday backpack with a simple, durable and practical design. Its water-resistant construction makes it a convenient choice for school, commuting and daily activities.</p><h3>Key Features</h3><ul>\n<li>Lightweight design</li>\n<li>Durable everyday construction</li>\n<li>Water-resistant exterior</li>\n<li>Simple and practical styling</li>\n<li>Suitable for school and commuting</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: XIAOMI</li>\n<li>Product Type: Daypack</li>\n<li>Features: Lightweight, durable, water resistant</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "XIAOMI",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack",
+        "Pixel Zones Selection"
+      ],
+      "createdAt": "2026-09-07T05:12:59Z",
+      "updatedAt": "2026-09-07T17:41:42Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699607183587",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "15.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871549128931",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871549128931",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940343824611",
+            "alt": "Xiaomi Mi Casual Daypack on a clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940343824611",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/xiaomi-mi-casual-daypack.png?v=1788758660",
+              "altText": "Xiaomi Mi Casual Daypack on a clean white background",
+              "width": 898,
+              "height": 943
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658219626723",
+      "title": "Mark Ryden Coast Laptop Backpack – Waterproof & Anti-Theft",
+      "handle": "mark-ryden-coast-laptop-backpack-waterproof-anti-theft",
+      "descriptionHtml": "<h2>Mark Ryden Coast Laptop Backpack</h2><p>The Mark Ryden Coast is a practical laptop backpack for work, commuting and travel. Its water-resistant construction and anti-theft design provide extra everyday protection for your belongings.</p><h3>Key Features</h3><ul>\n<li>Water-resistant exterior</li>\n<li>Anti-theft design</li>\n<li>Organized daily storage</li>\n<li>Suitable for work and travel</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: MARK RYDEN</li>\n<li>Product Type: Laptop Backpack</li>\n<li>Features: Water resistance, anti-theft design</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack",
+        "Pixel Zones Selection"
+      ],
+      "createdAt": "2026-09-07T05:13:04Z",
+      "updatedAt": "2026-09-07T18:03:48Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699607380195",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "59.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871549325539",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871549325539",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658219856099",
+      "title": "UGREEN Up to 15.6 inches Laptop Backpack B02 – LP664 – 90798",
+      "handle": "ugreen-up-to-15-6-inches-laptop-backpack-b02-lp664-90798",
+      "descriptionHtml": "<h2>UGREEN LP664 Laptop Backpack</h2><p>The UGREEN LP664 is a practical laptop backpack designed for organized daily commuting. It provides dedicated space for a laptop and accessories, making it suitable for work, study and everyday travel.</p><h3>Key Features</h3><ul>\n<li>Fits laptops up to 15.6 inches</li>\n<li>Organized storage for accessories</li>\n<li>Comfortable everyday design</li>\n<li>Suitable for work, study and commuting</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: UGREEN</li>\n<li>Model: LP664 / B02 / 90798</li>\n<li>Product Type: Laptop Backpack</li>\n<li>Laptop Compatibility: Up to 15.6 inches</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "UGREEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack",
+        "Pixel Zones Selection"
+      ],
+      "createdAt": "2026-09-07T05:13:09Z",
+      "updatedAt": "2026-09-07T17:45:43Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699607609571",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "39.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871549554915",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871549554915",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39940345626851",
+            "alt": "UGREEN LP664 laptop backpack on a clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39940345626851",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/ugreen-lp664-backpack.png?v=1788758678",
+              "altText": "UGREEN LP664 laptop backpack on a clean white background",
+              "width": 600,
+              "height": 600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658220118243",
+      "title": "BANGE 2888 15.6\" Waterproof Laptop Bag & Travel Backpack",
+      "handle": "bange-2888-15-6-waterproof-laptop-bag-travel-backpack",
+      "descriptionHtml": "<h2>BANGE 2888 Laptop &amp; Travel Backpack</h2><p>The BANGE 2888 is a versatile backpack designed for carrying a laptop and travel essentials. Its water-resistant construction and practical storage layout make it suitable for commuting, business and travel.</p><h3>Key Features</h3><ul>\n<li>Fits laptops up to 15.6 inches</li>\n<li>Water-resistant exterior</li>\n<li>Versatile laptop and travel design</li>\n<li>Practical organization for daily essentials</li>\n</ul><h3>Specifications</h3><ul>\n<li>Brand: BANGE</li>\n<li>Model: 2888</li>\n<li>Product Type: Laptop &amp; Travel Backpack</li>\n<li>Laptop Compatibility: Up to 15.6 inches</li>\n<li>Feature: Water resistance</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "BANGE",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack",
+        "Pixel Zones Selection"
+      ],
+      "createdAt": "2026-09-07T05:13:13Z",
+      "updatedAt": "2026-09-07T20:30:18Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699607871715",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "69.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871549784291",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871549784291",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658220478691",
+      "title": "Mark Ryden Expandos MR9299 17.6-inch Expandable 2-in-1 Travel Backpack",
+      "handle": "mark-ryden-expandos-mr9299-17-6-inch-expandable-2-in-1-travel-backpack",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:13:22Z",
+      "updatedAt": "2026-09-07T09:55:09Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699608330467",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "79.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871550275811",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871550275811",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658221297891",
+      "title": "Mark Ryden Muke I MR1611 Laptop Backpack – Waterproof & Anti-Theft",
+      "handle": "mark-ryden-muke-i-mr1611-laptop-backpack-waterproof-anti-theft-1",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "MARK RYDEN",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:13:31Z",
+      "updatedAt": "2026-09-07T10:12:37Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699609837795",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "45.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871551783139",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871551783139",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9658221494499",
+      "title": "Xiaomi Mi Casual Daypack Bag – Lightweight, Durable & Water-Resistant",
+      "handle": "xiaomi-mi-casual-daypack-bag-lightweight-durable-water-resistant-1",
+      "descriptionHtml": "",
+      "status": "ARCHIVED",
+      "vendor": "XIAOMI",
+      "productType": "Backpack",
+      "tags": [
+        "Backpack",
+        "Laptop Backpack"
+      ],
+      "createdAt": "2026-09-07T05:13:36Z",
+      "updatedAt": "2026-09-07T08:40:34Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49699610198243",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "15.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51871552143587",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51871552143587",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo5NjU4MjIxNDk0NDk5LCJsYXN0X3ZhbHVlIjoiOTY1ODIyMTQ5NDQ5OSJ9"
+  }
+}
