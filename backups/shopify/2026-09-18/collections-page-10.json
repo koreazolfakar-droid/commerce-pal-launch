@@ -1,0 +1,146 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 10,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/477131768035",
+      "title": "Brand Logo — Lenovo",
+      "handle": "logo-lenovo",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:51Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608627939",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-lenovo-1024.png?v=1789387207",
+        "altText": "Lenovo logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131800803",
+      "title": "Brand Logo — MARK RYDEN",
+      "handle": "logo-mark-ryden",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:52Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608660707",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-mark-ryden-1024.png?v=1789387208",
+        "altText": "MARK RYDEN logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131833571",
+      "title": "Brand Logo — OnePlus",
+      "handle": "logo-oneplus",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:52Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608693475",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-oneplus-1024.png?v=1789387209",
+        "altText": "OnePlus logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131866339",
+      "title": "Brand Logo — POCO",
+      "handle": "logo-poco",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:52Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608726243",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-poco-1024.png?v=1789387210",
+        "altText": "POCO logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131899107",
+      "title": "Brand Logo — Powerology",
+      "handle": "logo-powerology",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:52Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608759011",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-powerology-1024.png?v=1789387211",
+        "altText": "Powerology logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzcxMzE4OTkxMDcsImxhc3RfdmFsdWUiOiI0NzcxMzE4OTkxMDcifQ=="
+  }
+}
