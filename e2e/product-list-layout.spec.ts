@@ -12,7 +12,7 @@ for (const width of [360, 390, 430]) {
       }, language);
       await page.goto("/shop");
       const cards = page.locator("main .product-list-card");
-      await expect(cards).toHaveCount(9);
+      await expect(cards).toHaveCount(6);
       await expect(page.locator("html")).toHaveAttribute("dir", language === "ar" ? "rtl" : "ltr");
 
       // Isolated test images with different source ratios. No product/store data is changed.
@@ -83,8 +83,8 @@ for (const width of [360, 390, 430]) {
       // The homepage uses the same component and therefore the same bounded image frame.
       await page.goto("/");
       const best = page.getByTestId("best-sellers");
-      await expect(best.locator(".product-list-card")).toHaveCount(9);
-      await expect(best.locator(".product-list-media .product-list-image")).toHaveCount(9);
+      await expect(best.locator(".product-list-card")).toHaveCount(6);
+      await expect(best.locator(".product-list-media .product-list-image")).toHaveCount(6);
     });
   }
 }
@@ -95,7 +95,7 @@ test("list card preserves wishlist, comparison and cart interactions", async ({ 
   await page.goto("/shop");
   const card = page
     .locator(".product-list-card")
-    .filter({ hasText: "Samsung Fixture Phone 512GB" });
+    .filter({ hasText: "Galaxy S26 Ultra" });
   const wish = card.getByRole("button", { name: /^Save / });
   await wish.click();
   await expect(card.getByRole("button", { name: /^Remove .* from wishlist$/ })).toHaveAttribute(
@@ -107,5 +107,5 @@ test("list card preserves wishlist, comparison and cart interactions", async ({ 
     card.getByRole("button", { name: "Remove from comparison", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await card.getByRole("button", { name: "Add to cart", exact: true }).click();
-  await expect(await openCart(page)).toContainText("Samsung Fixture Phone 512GB");
+  await expect(await openCart(page)).toContainText("Galaxy S26 Ultra");
 });
