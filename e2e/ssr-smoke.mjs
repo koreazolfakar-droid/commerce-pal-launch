@@ -9,12 +9,13 @@ const env = {};
 
 const originalConsoleError = console.error;
 const ssrSerializationErrors = [];
+let activeSsrPath = "<idle>";
 console.error = (...args) => {
   const message = args
     .map((value) => (value instanceof Error ? `${value.name}: ${value.message}` : String(value)))
     .join(" ");
   if (/Serialization error|Seroval Error/i.test(message)) {
-    ssrSerializationErrors.push(message);
+    ssrSerializationErrors.push(`[${activeSsrPath}] ${message}`);
   }
   originalConsoleError(...args);
 };
@@ -23,7 +24,9 @@ async function request(path) {
   let url = new URL(path, "https://spacecallapp.store");
   let response;
   for (let hop = 0; hop < 4; hop++) {
+    activeSsrPath = `${url.pathname}${url.search}`;
     response = await handler.fetch(new Request(url), env, context);
+    activeSsrPath = "<idle>";
     if (![301, 302, 307, 308].includes(response.status)) break;
     const location = response.headers.get("location");
     assert.ok(location, "Redirect must include a destination");
