@@ -1,14 +1,14 @@
 import { EyeOff, Sparkles } from "lucide-react";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
-import type { CatalogCategory } from "@/dashboard/mock/catalog";
-import type { Product } from "@/dashboard/mock/data";
+import type { CatalogCategory } from "@/dashboard/data/categories";
+import type { DashboardProduct } from "@/dashboard/data/catalog";
 
 export default function CategoryPreview({
   category,
   products,
 }: {
   category: CatalogCategory;
-  products: Product[];
+  products: DashboardProduct[];
 }) {
   const effectiveFeatured = category.active && category.featured;
 
