@@ -16,7 +16,7 @@
     "format": "prettier --write .",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "dev:e2e": "node --import ./e2e/shopify-fixture.mjs ./node_modules/vite/bin/vite.js",
+    "dev:e2e": "node --import ./e2e/local-storefront-env.mjs ./node_modules/vite/bin/vite.js",
     "test:ssr": "node e2e/ssr-smoke.mjs",
     "test:unit": "node --test e2e/*.test.mjs"
   },
