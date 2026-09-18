@@ -1130,6 +1130,68 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_store_order_payment_status: {
+        Args: { p_order_id: string; p_payment_status: string }
+        Returns: {
+          city: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          customer_reference: string | null
+          delivery_address: string | null
+          discount_total: number
+          id: string
+          notes: string | null
+          order_number: number
+          payment_method: string
+          payment_status: string
+          shipping_total: number
+          source: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_store_order_status: {
+        Args: { p_order_id: string; p_status: string }
+        Returns: {
+          city: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          customer_reference: string | null
+          delivery_address: string | null
+          discount_total: number
+          id: string
+          notes: string | null
+          order_number: number
+          payment_method: string
+          payment_status: string
+          shipping_total: number
+          source: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
