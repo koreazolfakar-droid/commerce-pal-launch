@@ -1,7 +1,7 @@
 import { Check, Image as ImageIcon, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { normalizeCategorySlug, type CatalogCategory } from "@/dashboard/mock/catalog";
+import { normalizeCategorySlug, type CatalogCategory } from "@/dashboard/data/categories";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
 import { categoryIconOptions } from "@/dashboard/components/categories/category-icons";
 
