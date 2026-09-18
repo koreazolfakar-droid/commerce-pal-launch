@@ -1,0 +1,3845 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "products",
+  "page": 2,
+  "data": [
+    {
+      "id": "gid://shopify/Product/9650867994851",
+      "title": "Anker Nano Charger (20W)",
+      "handle": "anker-nano-charger-20w",
+      "descriptionHtml": "<h2>Anker Nano Charger 20W</h2><p>A compact USB-C charger with PowerIQ 3.0 technology, ideal for smartphones and tablets.</p><ul>\n<li>Maximum output: 20W</li>\n<li>Port: 1 × USB-C</li>\n<li>PowerIQ 3.0</li>\n<li>Compact travel-friendly design</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Charger",
+      "tags": [
+        "20W",
+        "Anker",
+        "Charger",
+        "GaN",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:47:09Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660522397923",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "11.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832232706275",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832232706275",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832775098595",
+            "alt": "Anker Nano Charger 20W official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832775098595",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-nano-20w.png?v=1788363961",
+              "altText": "Anker Nano Charger 20W official product image",
+              "width": 1601,
+              "height": 2000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164272193763",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker Nano Charger 20W USB-C | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164272226531",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker Nano 20W USB-C charger with PowerIQ 3.0 technology in a compact travel-friendly design."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328412387",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650868060387",
+      "title": "Anker Nano Charger (45W) with USB-C Cable",
+      "handle": "anker-nano-charger-45w-with-usb-c-cable",
+      "descriptionHtml": "<h2>Anker Nano Charger 45W with USB-C Cable</h2><p>A compact 45W GaN charger with a USB-C to USB-C cable, supporting fast charging with PowerIQ 3.0 and PPS.</p><ul>\n<li>Maximum output: 45W</li>\n<li>Port: 1 × USB-C</li>\n<li>USB-C to USB-C cable included</li>\n<li>GaN technology with PPS support</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Charger",
+      "tags": [
+        "45W",
+        "Anker",
+        "Cable Included",
+        "Charger",
+        "GaN",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:47:14Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660522561763",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "25.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832232870115",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832232870115",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832779718883",
+            "alt": "Anker Nano Charger 45W official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832779718883",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-nano-45w.png?v=1788363967",
+              "altText": "Anker Nano Charger 45W official product image",
+              "width": 2000,
+              "height": 2000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164272095459",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker Nano Charger 45W USB-C Cable | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164272128227",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker Nano 45W GaN charger with USB-C to USB-C cable, PowerIQ 3.0 and PPS fast charging support."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328445155",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650868158691",
+      "title": "Anker 715 Charger (Nano II 65W)",
+      "handle": "anker-715-charger-nano-ii-65w",
+      "descriptionHtml": "<h2>Anker 715 Charger (Nano II 65W)</h2><p>A compact USB-C GaN II charger delivering up to 65W for fast and efficient charging.</p><ul>\n<li>Maximum output: 65W</li>\n<li>Port: 1 × USB-C</li>\n<li>Input: 100–240V, 50–60Hz</li>\n<li>GaN II technology</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Charger",
+      "tags": [
+        "65W",
+        "Anker",
+        "Charger",
+        "GaN II",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:47:20Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660522660067",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "29.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832232968419",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832232968419",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832783290595",
+            "alt": "Anker 715 Charger Nano II 65W official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832783290595",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-715-65w.png?v=1788363975",
+              "altText": "Anker 715 Charger Nano II 65W official product image",
+              "width": 1200,
+              "height": 1200
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164272390371",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker 715 Charger Nano II 65W | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164272423139",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker 715 Charger with 65W USB-C output and GaN II technology for compact, efficient fast charging."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328314083",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650868224227",
+      "title": "Anker 735 Charger (Nano II 65W)",
+      "handle": "anker-735-charger-nano-ii-65w",
+      "descriptionHtml": "<h2>Anker 735 Charger (Nano II 65W)</h2><p>A compact GaN II charger with three ports for charging multiple devices at the same time.</p><ul>\n<li>Total output: 65W</li>\n<li>2 × USB-C and 1 × USB-A</li>\n<li>USB-C fast charging</li>\n<li>GaN II technology</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Charger",
+      "tags": [
+        "3-Port",
+        "65W",
+        "Anker",
+        "Charger",
+        "GaN II",
+        "USB-A",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:47:25Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660522725603",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "29.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832233033955",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832233033955",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832787321059",
+            "alt": "Anker 735 Charger Nano II 65W official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832787321059",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-735-65w.png?v=1788363981",
+              "altText": "Anker 735 Charger Nano II 65W official product image",
+              "width": 2000,
+              "height": 2000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164272324835",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker 735 Charger Nano II 65W | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164272357603",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker 735 Charger with 65W GaN II output, 2 USB-C ports and 1 USB-A port for charging multiple devices."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328346851",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650868256995",
+      "title": "Anker Prime Charger (100W, 3 Ports, GaN)",
+      "handle": "anker-prime-charger-100w-3-ports-gan",
+      "descriptionHtml": "<h2>Anker Prime Charger 100W GaN</h2><p>A compact 100W GaN charger with three ports and ActiveShield 2.0 technology for charging multiple devices efficiently.</p><ul>\n<li>Maximum output: 100W</li>\n<li>2 × USB-C and 1 × USB-A</li>\n<li>GaN technology</li>\n<li>ActiveShield 2.0</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Charger",
+      "tags": [
+        "100W",
+        "3-Port",
+        "Anker",
+        "Charger",
+        "GaN",
+        "Prime",
+        "USB-A",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:47:30Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660522758371",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "69.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832233066723",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832233066723",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832791449827",
+            "alt": "Anker Prime Charger 100W 3-Port official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832791449827",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-prime-100w-3port.png?v=1788363989",
+              "altText": "Anker Prime Charger 100W 3-Port official product image",
+              "width": 500,
+              "height": 500
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164271735011",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker Prime Charger 100W 3 Port GaN | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164271767779",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker Prime 100W GaN charger with 2 USB-C ports, 1 USB-A port and ActiveShield 2.0 for efficient multi-device charging."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328543459",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650868322531",
+      "title": "UGREEN Nexode 100W Charger with Retractable USB-C Cable",
+      "handle": "ugreen-nexode-100w-charger-with-retractable-usb-c-cable",
+      "descriptionHtml": "<p><strong>UGREEN Nexode 100W</strong> شاحن GaN مع كابل USB-C مدمج قابل للسحب، لشحن حتى 4 أجهزة.</p><ul>\n<li>القدرة القصوى: 100W</li>\n<li>4 مخارج: 3 × USB-C + 1 × USB-A، منها كابل USB-C مدمج</li>\n<li>كابل مدمج بطول 0.7م</li>\n<li>USB-C الرئيسي حتى 100W</li>\n<li>USB-C الثاني حتى 30W وUSB-A حتى 22.5W</li>\n<li>الأبعاد: 68.6 × 56.8 × 50.4 مم</li>\n<li>الوزن: 280 غ</li>\n<li>يدعم PD/PPS/QC وUFCS</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "UGREEN",
+      "productType": "Charger",
+      "tags": [
+        "100W",
+        "Charger",
+        "GaN",
+        "Nexode",
+        "Retractable",
+        "UGREEN",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:47:37Z",
+      "updatedAt": "2026-09-06T12:00:39Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660522922211",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "54.95",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832233099491",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832233099491",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832794267875",
+            "alt": "UGREEN Nexode 100W retractable USB-C charger official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832794267875",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/ugreen-nexode-100w-retractable.jpg?v=1788363994",
+              "altText": "UGREEN Nexode 100W retractable USB-C charger official product image",
+              "width": 1200,
+              "height": 1600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194339094755",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486288611",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "UGREEN Nexode 100W Charger with USB-C Cable | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486321379",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop UGREEN Nexode 100W charger with retractable USB-C cable for fast charging laptops, phones and tablets."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650868388067",
+      "title": "UGREEN Nexode 45W 2-Port Charger with Retractable Cable",
+      "handle": "ugreen-nexode-45w-2-port-charger-with-retractable-cable",
+      "descriptionHtml": "<p><strong>UGREEN Nexode 45W</strong> شاحن GaN بثلاثة مخارج USB-C مع كابل مدمج قابل للسحب.</p><ul>\n<li>القدرة القصوى: 45W</li>\n<li>3 × USB-C، بينها كابل مدمج</li>\n<li>طول الكابل المدمج: 0.7م</li>\n<li>الأبعاد: 53 × 53 × 50.4 مم</li>\n<li>الوزن: 185 غ</li>\n<li>يدعم PD3.0/PPS/QC3.0 وغيرها</li>\n<li>حماية من زيادة التيار والجهد والحرارة وقصر الدائرة</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "UGREEN",
+      "productType": "Charger",
+      "tags": [
+        "45W",
+        "Charger",
+        "GaN",
+        "Nexode",
+        "Retractable",
+        "UGREEN",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:47:43Z",
+      "updatedAt": "2026-09-06T12:00:39Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660523118819",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "37.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832233427171",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832233427171",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832798265571",
+            "alt": "UGREEN Nexode 45W retractable USB-C charger official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832798265571",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/ugreen-nexode-45w-retractable.png?v=1788364001",
+              "altText": "UGREEN Nexode 45W retractable USB-C charger official product image",
+              "width": 2048,
+              "height": 2048
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194339127523",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486386915",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "UGREEN Nexode 45W 2-Port Charger | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486419683",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop UGREEN Nexode 45W 2-port charger with retractable USB-C cable for convenient fast charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650868584675",
+      "title": "UGREEN Nexode 65W Charger with Retractable USB-C Cable",
+      "handle": "ugreen-nexode-65w-charger-with-retractable-usb-c-cable",
+      "descriptionHtml": "<p><strong>UGREEN Nexode 65W</strong> شاحن GaN مدمج مع كابل USB-C قابل للسحب.</p><ul>\n<li>القدرة القصوى: 65W</li>\n<li>كابل USB-C مدمج قابل للسحب</li>\n<li>تصميم مدمج للسفر والاستخدام اليومي</li>\n<li>تقنية GaN للحجم والكفاءة</li>\n<li>يدعم شحن الهواتف والأجهزة اللوحية والحواسيب المتوافقة مع USB-C</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "UGREEN",
+      "productType": "Charger",
+      "tags": [
+        "65W",
+        "Charger",
+        "GaN",
+        "Nexode",
+        "Retractable",
+        "UGREEN",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:47:49Z",
+      "updatedAt": "2026-09-06T12:00:39Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660523348195",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "40.06",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832233656547",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832233656547",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832802033891",
+            "alt": "UGREEN Nexode 65W retractable USB-C charger official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832802033891",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/ugreen-nexode-65w-retractable.png?v=1788364007",
+              "altText": "UGREEN Nexode 65W retractable USB-C charger official product image",
+              "width": 1201,
+              "height": 1201
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194339160291",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486485219",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "UGREEN Nexode 65W Charger with USB-C Cable | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486517987",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop UGREEN Nexode 65W charger with retractable USB-C cable for fast and convenient charging of compatible devices."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650868912355",
+      "title": "UGREEN 200W 4-Port Laptop Charger",
+      "handle": "ugreen-200w-4-port-laptop-charger",
+      "descriptionHtml": "<p><strong>UGREEN 200W 4-Port Laptop Charger</strong> شاحن GaN عالي القدرة لشحن حاسوبين محمولين وأجهزة إضافية في الوقت نفسه.</p><ul>\n<li>القدرة الكلية: 200W</li>\n<li>3 × USB-C + 1 × USB-A</li>\n<li>حتى 140W من منفذ واحد</li>\n<li>منفذا USB-C يمكن أن يقدما 100W لكل منهما</li>\n<li>شحن حتى 4 أجهزة معًا</li>\n<li>يدعم أجهزة اللابتوب والهواتف والأجهزة اللوحية وSteam Deck</li>\n<li>حماية من زيادة الجهد والتيار وقصر الدائرة والحرارة</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "UGREEN",
+      "productType": "Charger",
+      "tags": [
+        "200W",
+        "4-Port",
+        "Charger",
+        "GaN",
+        "Laptop",
+        "UGREEN",
+        "USB-A",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:47:56Z",
+      "updatedAt": "2026-09-06T12:00:27Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660524527843",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "69.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832234836195",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832234836195",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832805212387",
+            "alt": "UGREEN 200W 4-Port Laptop Charger official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832805212387",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/ugreen-200w-4port.png?v=1788364013",
+              "altText": "UGREEN 200W 4-Port Laptop Charger official product image",
+              "width": 2048,
+              "height": 2048
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194339029219",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485764323",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "UGREEN 200W 4-Port Laptop Charger | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485797091",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop UGREEN 200W 4-port laptop charger for high-power USB-C charging and convenient charging of multiple devices."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650868977891",
+      "title": "UGREEN Nexode Pro 65W 3-Port Charger",
+      "handle": "ugreen-nexode-pro-65w-3-port-charger",
+      "descriptionHtml": "<p><strong>UGREEN Nexode Pro 65W 3-Port</strong> شاحن GaN صغير متعدد المنافذ.</p><ul>\n<li>القدرة القصوى: 65W</li>\n<li>2 × USB-C + 1 × USB-A</li>\n<li>شحن 3 أجهزة في الوقت نفسه</li>\n<li>تقنية GaNInfinity وكفاءة عالية وحماية متعددة الطبقات</li>\n<li>مناسب للهواتف والأجهزة اللوحية واللابتوبات المتوافقة</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "UGREEN",
+      "productType": "Charger",
+      "tags": [
+        "3-Port",
+        "65W",
+        "Charger",
+        "GaN",
+        "Nexode Pro",
+        "UGREEN",
+        "USB-A",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:48:01Z",
+      "updatedAt": "2026-09-06T12:00:39Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660525347043",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "44.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832235655395",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832235655395",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832808325347",
+            "alt": "UGREEN Nexode Pro 65W 3-Port charger official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832808325347",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/ugreen-nexode-pro-65w-3port.png?v=1788364018",
+              "altText": "UGREEN Nexode Pro 65W 3-Port charger official product image",
+              "width": 1201,
+              "height": 1201
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194339193059",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486550755",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "UGREEN Nexode Pro 65W 3-Port Charger | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486583523",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop UGREEN Nexode Pro 65W 3-port charger for fast charging multiple phones, tablets and laptops."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650877792483",
+      "title": "Samsung Galaxy S24 Ultra",
+      "handle": "samsung-galaxy-s24-ultra",
+      "descriptionHtml": "<p>Samsung Galaxy S24 Ultra — 6.8\" Dynamic AMOLED 2X with 120Hz, Snapdragon 8 Gen 3 for Galaxy, 200MP main camera, built-in S Pen, titanium frame and 5000mAh battery.</p><ul>\n<li>Display: 6.8\" Dynamic AMOLED 2X, QHD+, 120Hz</li>\n<li>Processor: Snapdragon 8 Gen 3 for Galaxy</li>\n<li>Camera: 200MP main + 50MP telephoto + 12MP ultrawide + 10MP telephoto</li>\n<li>S Pen: Built-in</li>\n<li>Frame: Titanium</li>\n<li>Battery: 5000mAh</li>\n</ul><p>Images are product reference photography; specifications verified against Samsung official information.</p>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Android",
+        "Galaxy",
+        "Samsung",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-02T15:57:45Z",
+      "updatedAt": "2026-09-06T12:00:23Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660585214179",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "1299.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832295620835",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832295620835",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39833236570339",
+            "alt": "Samsung Galaxy S24 Ultra front and back with S Pen",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833236570339",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/co-galaxy-s24-s928-sm-s928bztultc-539325480.png?v=1788364672",
+              "altText": "Samsung Galaxy S24 Ultra front and back with S Pen",
+              "width": 650,
+              "height": 519
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833236603107",
+            "alt": "Samsung Galaxy S24 Ultra back view",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833236603107",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/Back_view_of_Samsung_Galaxy_S24_Ultra_Black.jpg?v=1788364668",
+              "altText": "Samsung Galaxy S24 Ultra back view",
+              "width": 3024,
+              "height": 4032
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833236668643",
+            "alt": "Samsung Galaxy S24 Ultra front view",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833236668643",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/Samsung-Galaxy-S24-Ultra-Front.jpg?v=1788364667",
+              "altText": "Samsung Galaxy S24 Ultra front view",
+              "width": 1100,
+              "height": 733
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833245352163",
+            "alt": "Front view with S Pen",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833245352163",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s24-ultra_89e84f98-093e-4b2c-9e95-d0400806711c.png?v=1788364681",
+              "altText": "Front view with S Pen",
+              "width": 650,
+              "height": 519
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833245384931",
+            "alt": "Back view",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833245384931",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s24-ultra_3e97af20-4a25-49aa-952f-7ecb9ab8cb8d.png?v=1788364680",
+              "altText": "Back view",
+              "width": 650,
+              "height": 519
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833245417699",
+            "alt": "Camera module detail",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833245417699",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s24-ultra_327e4742-1072-4c3e-9f61-097c489aa223.png?v=1788364681",
+              "altText": "Camera module detail",
+              "width": 650,
+              "height": 519
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833245450467",
+            "alt": "Side profile",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833245450467",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s24-ultra_6f4d6a27-bcfd-4500-8ce2-e6ba0a89b498.png?v=1788364680",
+              "altText": "Side profile",
+              "width": 650,
+              "height": 519
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164906385635",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.8-inch Dynamic AMOLED 2X, 120Hz\",\"Processor\":\"Snapdragon 8 Gen 3 for Galaxy\",\"Rear Camera\":\"200MP main camera\",\"Features\":\"Built-in S Pen, titanium frame\",\"Network\":\"5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336145635",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Dynamic AMOLED 2X"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484420835",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy S24 Ultra | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484453603",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy S24 Ultra with Dynamic AMOLED 2X display, flagship performance, S Pen and advanced camera system."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650881691875",
+      "title": "Samsung Galaxy A07",
+      "handle": "samsung-galaxy-a07",
+      "descriptionHtml": "<h2>Samsung Galaxy A07</h2><p>The Samsung Galaxy A07 is a practical 4G Dual SIM smartphone designed for everyday use.</p><ul>\n<li>6.7-inch display</li>\n<li>5,000mAh battery</li>\n<li>4G connectivity</li>\n<li>Dual SIM support</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "A07",
+        "Galaxy A",
+        "phones",
+        "Samsung"
+      ],
+      "createdAt": "2026-09-02T16:05:51Z",
+      "updatedAt": "2026-09-06T11:49:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660597633251",
+            "title": "64GB / 4GB RAM / Black",
+            "sku": "SAM-A07-64-4",
+            "barcode": null,
+            "price": "125.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "64GB / 4GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832308039907",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832308039907",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660597666019",
+            "title": "128GB / 4GB RAM / Black",
+            "sku": "SAM-A07-128-4",
+            "barcode": null,
+            "price": "145.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 4GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832308072675",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832308072675",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660597698787",
+            "title": "128GB / 6GB RAM / Black",
+            "sku": "SAM-A07-128-6",
+            "barcode": null,
+            "price": "170.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 6GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832308105443",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832308105443",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660597731555",
+            "title": "256GB / 8GB RAM / Black",
+            "sku": "SAM-A07-256-8",
+            "barcode": null,
+            "price": "195.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832308138211",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832308138211",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607004899",
+            "title": "64GB / 4GB RAM / Light Green",
+            "sku": "SAM-A07-64-4-LIGHTGREEN",
+            "barcode": null,
+            "price": "125.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "64GB / 4GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Light Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317411555",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317411555",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607037667",
+            "title": "128GB / 4GB RAM / Light Green",
+            "sku": "SAM-A07-128-4-LIGHTGREEN",
+            "barcode": null,
+            "price": "145.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 4GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Light Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317444323",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317444323",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607070435",
+            "title": "128GB / 6GB RAM / Light Green",
+            "sku": "SAM-A07-128-6-LIGHTGREEN",
+            "barcode": null,
+            "price": "170.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 6GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Light Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317477091",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317477091",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607103203",
+            "title": "256GB / 8GB RAM / Light Green",
+            "sku": "SAM-A07-256-8-LIGHTGREEN",
+            "barcode": null,
+            "price": "195.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Light Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317509859",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317509859",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39920716579043",
+            "alt": "Samsung Galaxy A07 clean white product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920716579043",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/samsung-galaxy-a07-clean.jpg?v=1788608576",
+              "altText": "Samsung Galaxy A07 clean white product image",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164262789347",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy A07 4G Dual SIM | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164262822115",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy A07 4G Dual SIM with 6.7-inch display, 5000mAh battery and everyday performance."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164906418403",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.7-inch\",\"Network\":\"4G\",\"SIM\":\"Dual SIM\",\"Battery\":\"5000mAh\",\"Type\":\"Samsung Galaxy A07\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334933219",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "PLS LCD"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650881757411",
+      "title": "Samsung Galaxy A17 5G",
+      "handle": "samsung-galaxy-a17-5g",
+      "descriptionHtml": "<p>Samsung Galaxy A17 5G. 6.7-inch Super AMOLED display, 50 MP main camera with OIS, 5000 mAh battery, 5G and Dual SIM. Configurations and prices are based on the supplied price list.</p>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "A17",
+        "Galaxy A",
+        "phones",
+        "Samsung"
+      ],
+      "createdAt": "2026-09-02T16:05:57Z",
+      "updatedAt": "2026-09-06T12:00:23Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660597928163",
+            "title": "128GB / 4GB RAM / Black",
+            "sku": "SAM-A17-128-4",
+            "barcode": null,
+            "price": "175.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 4GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832308334819",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832308334819",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660597960931",
+            "title": "128GB / 6GB RAM / Black",
+            "sku": "SAM-A17-128-6",
+            "barcode": null,
+            "price": "200.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 6GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832308367587",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832308367587",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660597993699",
+            "title": "256GB / 8GB RAM / Black",
+            "sku": "SAM-A17-256-8",
+            "barcode": null,
+            "price": "250.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832308400355",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832308400355",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607168739",
+            "title": "128GB / 4GB RAM / Blue",
+            "sku": "SAM-A17-128-4-BLUE",
+            "barcode": null,
+            "price": "175.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 4GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317575395",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317575395",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607201507",
+            "title": "128GB / 6GB RAM / Blue",
+            "sku": "SAM-A17-128-6-BLUE",
+            "barcode": null,
+            "price": "200.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 6GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317608163",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317608163",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607234275",
+            "title": "256GB / 8GB RAM / Blue",
+            "sku": "SAM-A17-256-8-BLUE",
+            "barcode": null,
+            "price": "250.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317640931",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317640931",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39833407619299",
+            "alt": "Samsung Galaxy A17 5G front",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833407619299",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a17-front.png?v=1788365011",
+              "altText": "Samsung Galaxy A17 5G front",
+              "width": 1164,
+              "height": 776
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833411780835",
+            "alt": "Samsung Galaxy A17 5G back",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833411780835",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a17-back.png?v=1788365017",
+              "altText": "Samsung Galaxy A17 5G back",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833415450851",
+            "alt": "Samsung Galaxy A17 5G angle",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833415450851",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a17-angle1.png?v=1788365024",
+              "altText": "Samsung Galaxy A17 5G angle",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833418367203",
+            "alt": "Samsung Galaxy A17 5G side angle",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833418367203",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a17-angle2.png?v=1788365030",
+              "altText": "Samsung Galaxy A17 5G side angle",
+              "width": 104,
+              "height": 104
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164906451171",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.7-inch Super AMOLED\",\"Rear Camera\":\"50MP main with OIS\",\"Battery\":\"5000mAh\",\"Network\":\"5G\",\"SIM\":\"Dual SIM\",\"Type\":\"Samsung Galaxy A17 5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334965987",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Super AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484125923",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy A17 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484191459",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy A17 5G with Super AMOLED display, reliable performance, versatile cameras and long battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650881822947",
+      "title": "Samsung Galaxy A26 5G",
+      "handle": "samsung-galaxy-a26-5g",
+      "descriptionHtml": "<p>Samsung Galaxy A26 5G with 6.7-inch FHD+ Super AMOLED display, 50 MP main camera with OIS, 5000 mAh battery, 5G and Dual SIM.</p>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "A26",
+        "Galaxy A",
+        "phones",
+        "Samsung"
+      ],
+      "createdAt": "2026-09-02T16:06:03Z",
+      "updatedAt": "2026-09-06T12:00:23Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660598517987",
+            "title": "128GB / 6GB RAM / Black",
+            "sku": "SAM-A26-128-6",
+            "barcode": null,
+            "price": "245.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 6GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832308924643",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832308924643",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660598550755",
+            "title": "256GB / 8GB RAM / Black",
+            "sku": "SAM-A26-256-8",
+            "barcode": null,
+            "price": "290.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832308957411",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832308957411",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607267043",
+            "title": "128GB / 6GB RAM / Mint",
+            "sku": "SAM-A26-128-6-MINT",
+            "barcode": null,
+            "price": "245.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 6GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Mint"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317673699",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317673699",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607299811",
+            "title": "256GB / 8GB RAM / Mint",
+            "sku": "SAM-A26-256-8-MINT",
+            "barcode": null,
+            "price": "290.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Mint"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317706467",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317706467",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39833422889187",
+            "alt": "Samsung Galaxy A26 5G front",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833422889187",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a26-front.png?v=1788365038",
+              "altText": "Samsung Galaxy A26 5G front",
+              "width": 1164,
+              "height": 776
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833426886883",
+            "alt": "Samsung Galaxy A26 5G front view",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833426886883",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a26-front2.png?v=1788365046",
+              "altText": "Samsung Galaxy A26 5G front view",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833431310563",
+            "alt": "Samsung Galaxy A26 5G angle",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833431310563",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a26-angle1.png?v=1788365053",
+              "altText": "Samsung Galaxy A26 5G angle",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833435570403",
+            "alt": "Samsung Galaxy A26 5G back",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833435570403",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a26-back.png?v=1788365060",
+              "altText": "Samsung Galaxy A26 5G back",
+              "width": 104,
+              "height": 104
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164906483939",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.7-inch FHD+ Super AMOLED\",\"Rear Camera\":\"50MP main with OIS\",\"Battery\":\"5000mAh\",\"Network\":\"5G\",\"SIM\":\"Dual SIM\",\"Type\":\"Samsung Galaxy A26 5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336014563",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Super AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484224227",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy A26 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484256995",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy A26 5G with Super AMOLED display, 5G connectivity, versatile cameras and long battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650881888483",
+      "title": "Samsung Galaxy A37 5G",
+      "handle": "samsung-galaxy-a37-5g",
+      "descriptionHtml": "<p>Samsung Galaxy A37 5G with 6.7-inch FHD+ Super AMOLED 120 Hz display, 50 MP + 8 MP + 5 MP rear cameras with OIS, 12 MP front camera, 5000 mAh battery, IP68 and 5G.</p>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "A37",
+        "Galaxy A",
+        "phones",
+        "Samsung"
+      ],
+      "createdAt": "2026-09-02T16:06:13Z",
+      "updatedAt": "2026-09-06T12:00:23Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660598714595",
+            "title": "128GB / 8GB RAM / Awesome Charcoal",
+            "sku": "SAM-A37-128-8",
+            "barcode": null,
+            "price": "340.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Charcoal"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309121251",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309121251",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660598747363",
+            "title": "256GB / 8GB RAM / Awesome Charcoal",
+            "sku": "SAM-A37-256-8",
+            "barcode": null,
+            "price": "380.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Charcoal"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309154019",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309154019",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660598780131",
+            "title": "256GB / 12GB RAM / Awesome Charcoal",
+            "sku": "SAM-A37-256-12",
+            "barcode": null,
+            "price": "400.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Charcoal"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309186787",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309186787",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607398115",
+            "title": "128GB / 8GB RAM / Awesome White",
+            "sku": "SAM-A37-128-8-WHITE",
+            "barcode": null,
+            "price": "340.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317804771",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317804771",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607430883",
+            "title": "256GB / 8GB RAM / Awesome White",
+            "sku": "SAM-A37-256-8-WHITE",
+            "barcode": null,
+            "price": "380.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317837539",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317837539",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607463651",
+            "title": "256GB / 12GB RAM / Awesome White",
+            "sku": "SAM-A37-256-12-WHITE",
+            "barcode": null,
+            "price": "400.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317870307",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317870307",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39833439731939",
+            "alt": "Samsung Galaxy A37 5G front",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833439731939",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a37-front.png?v=1788365068",
+              "altText": "Samsung Galaxy A37 5G front",
+              "width": 1164,
+              "height": 776
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833444483299",
+            "alt": "Samsung Galaxy A37 5G front view",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833444483299",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a37-front2.png?v=1788365075",
+              "altText": "Samsung Galaxy A37 5G front view",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833447727331",
+            "alt": "Samsung Galaxy A37 5G angle",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833447727331",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a37-angle1.png?v=1788365080",
+              "altText": "Samsung Galaxy A37 5G angle",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833452151011",
+            "alt": "Samsung Galaxy A37 5G back angle",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833452151011",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a37-angle2.png?v=1788365086",
+              "altText": "Samsung Galaxy A37 5G back angle",
+              "width": 104,
+              "height": 104
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164906516707",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.7-inch FHD+ Super AMOLED, 120Hz\",\"Rear Cameras\":\"50MP + 8MP + 5MP with OIS\",\"Front Camera\":\"12MP\",\"Battery\":\"5000mAh\",\"Network\":\"5G\",\"Type\":\"Samsung Galaxy A37 5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336080099",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Super AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484289763",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy A37 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484322531",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy A37 5G with smooth AMOLED display, 5G connectivity, capable cameras and long battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650881954019",
+      "title": "Samsung Galaxy A57 5G",
+      "handle": "samsung-galaxy-a57-5g",
+      "descriptionHtml": "<p>Samsung Galaxy A57 5G with 6.7-inch FHD+ Super AMOLED 120 Hz display, 50 MP + 8 MP + 5 MP rear cameras with OIS, 12 MP front camera, 5000 mAh battery, IP68 and 5G.</p>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "A57",
+        "Galaxy A",
+        "phones",
+        "Samsung"
+      ],
+      "createdAt": "2026-09-02T16:06:20Z",
+      "updatedAt": "2026-09-06T12:00:23Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660598878435",
+            "title": "128GB / 8GB RAM / Awesome Navy",
+            "sku": "SAM-A57-128-8",
+            "barcode": null,
+            "price": "370.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Navy"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309285091",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309285091",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660598911203",
+            "title": "256GB / 8GB RAM / Awesome Navy",
+            "sku": "SAM-A57-256-8",
+            "barcode": null,
+            "price": "430.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Navy"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309317859",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309317859",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660598943971",
+            "title": "256GB / 12GB RAM / Awesome Navy",
+            "sku": "SAM-A57-256-12",
+            "barcode": null,
+            "price": "480.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Navy"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309350627",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309350627",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660598976739",
+            "title": "512GB / 12GB RAM / Awesome Navy",
+            "sku": "SAM-A57-512-12",
+            "barcode": null,
+            "price": "540.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "512GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Navy"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309383395",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309383395",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607529187",
+            "title": "128GB / 8GB RAM / Awesome Gray",
+            "sku": "SAM-A57-128-8-GRAY",
+            "barcode": null,
+            "price": "370.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Gray"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317935843",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317935843",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607561955",
+            "title": "256GB / 8GB RAM / Awesome Gray",
+            "sku": "SAM-A57-256-8-GRAY",
+            "barcode": null,
+            "price": "430.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Gray"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317968611",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317968611",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607594723",
+            "title": "256GB / 12GB RAM / Awesome Gray",
+            "sku": "SAM-A57-256-12-GRAY",
+            "barcode": null,
+            "price": "480.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Gray"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832318001379",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832318001379",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607627491",
+            "title": "512GB / 12GB RAM / Awesome Gray",
+            "sku": "SAM-A57-512-12-GRAY",
+            "barcode": null,
+            "price": "540.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "512GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Awesome Gray"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832318034147",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832318034147",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39833456935139",
+            "alt": "Samsung Galaxy A57 5G front",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833456935139",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a57-front.png?v=1788365095",
+              "altText": "Samsung Galaxy A57 5G front",
+              "width": 1164,
+              "height": 776
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833461162211",
+            "alt": "Samsung Galaxy A57 5G front view",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833461162211",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a57-front2.png?v=1788365102",
+              "altText": "Samsung Galaxy A57 5G front view",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833464897763",
+            "alt": "Samsung Galaxy A57 5G angle",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833464897763",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a57-angle1.png?v=1788365109",
+              "altText": "Samsung Galaxy A57 5G angle",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833469452515",
+            "alt": "Samsung Galaxy A57 5G back angle",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833469452515",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/a57-angle2.png?v=1788365115",
+              "altText": "Samsung Galaxy A57 5G back angle",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833732120803",
+            "alt": "Samsung Galaxy A57 5G — Awesome Navy",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833732120803",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/samsung-a57-awesome-navy_d116d15c-c7a1-4e45-a358-61d664ebbb2b.jpg?v=1788365646",
+              "altText": "Samsung Galaxy A57 5G — Awesome Navy",
+              "width": 720,
+              "height": 480
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833732153571",
+            "alt": "Samsung Galaxy A57 5G — Awesome Gray",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833732153571",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/samsung-a57-awesome-gray_364dd5c3-0185-4055-ac14-1f99837c9eb0.jpg?v=1788365646",
+              "altText": "Samsung Galaxy A57 5G — Awesome Gray",
+              "width": 888,
+              "height": 382
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164906549475",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.7-inch FHD+ Super AMOLED, 120Hz\",\"Rear Cameras\":\"50MP + 8MP + 5MP with OIS\",\"Front Camera\":\"12MP\",\"Battery\":\"5000mAh\",\"Network\":\"5G\",\"Type\":\"Samsung Galaxy A57 5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336112867",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Super AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484355299",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy A57 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484388067",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy A57 5G with premium display, 5G performance, advanced cameras and long-lasting battery."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650881986787",
+      "title": "Samsung Galaxy S25 FE",
+      "handle": "samsung-galaxy-s25-fe",
+      "descriptionHtml": "<p>Samsung Galaxy S25 FE, 256GB / 8GB RAM. 5G Dual SIM flagship-style smartphone with advanced Galaxy AI features and 8K video recording.</p>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Galaxy S",
+        "phones",
+        "S25 FE",
+        "Samsung"
+      ],
+      "createdAt": "2026-09-02T16:06:26Z",
+      "updatedAt": "2026-09-06T12:00:24Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660599009507",
+            "title": "256GB / 8GB RAM / Jetblack",
+            "sku": "SAM-S25FE-256-8",
+            "barcode": null,
+            "price": "620.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Jetblack"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309416163",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309416163",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607660259",
+            "title": "256GB / 8GB RAM / White",
+            "sku": "SAM-S25FE-256-8-WHITE",
+            "barcode": null,
+            "price": "620.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832318066915",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832318066915",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39833474040035",
+            "alt": "Samsung Galaxy S25 FE front",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833474040035",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s25fe-front.png?v=1788365124",
+              "altText": "Samsung Galaxy S25 FE front",
+              "width": 1164,
+              "height": 776
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833477578979",
+            "alt": "Samsung Galaxy S25 FE back",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833477578979",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s25fe-back.png?v=1788365131",
+              "altText": "Samsung Galaxy S25 FE back",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833482133731",
+            "alt": "Samsung Galaxy S25 FE angle",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833482133731",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s25fe-angle1.png?v=1788365138",
+              "altText": "Samsung Galaxy S25 FE angle",
+              "width": 104,
+              "height": 104
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39833486229731",
+            "alt": "Samsung Galaxy S25 FE side angle",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833486229731",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/s25fe-angle2.png?v=1788365145",
+              "altText": "Samsung Galaxy S25 FE side angle",
+              "width": 104,
+              "height": 104
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164906582243",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Storage\":\"256GB\",\"RAM\":\"8GB\",\"Network\":\"5G\",\"SIM\":\"Dual SIM\",\"Features\":\"Galaxy AI, 8K video recording\",\"Type\":\"Samsung Galaxy S25 FE\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336211171",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Dynamic AMOLED 2X"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484617443",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy S25 FE | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484650211",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy S25 FE with premium display, strong performance, advanced cameras and long battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650882052323",
+      "title": "Samsung Galaxy A27 5G",
+      "handle": "samsung-galaxy-a27-5g",
+      "descriptionHtml": "<p>Samsung Galaxy A27 5G with 6.7-inch FHD+ Super AMOLED 120 Hz display, Snapdragon 6 Gen 3, 50 MP + 5 MP + 2 MP rear cameras with OIS, 12 MP front camera, 5000 mAh battery, IP64 and 5G.</p>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "A27",
+        "Galaxy A",
+        "phones",
+        "Samsung"
+      ],
+      "createdAt": "2026-09-02T16:06:31Z",
+      "updatedAt": "2026-09-06T11:49:50Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660599140579",
+            "title": "128GB / 6GB RAM / Black",
+            "sku": "SAM-A27-128-6",
+            "barcode": null,
+            "price": "275.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 6GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309547235",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309547235",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660599173347",
+            "title": "256GB / 8GB RAM / Black",
+            "sku": "SAM-A27-256-8",
+            "barcode": null,
+            "price": "335.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309580003",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309580003",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607332579",
+            "title": "128GB / 6GB RAM / Blue",
+            "sku": "SAM-A27-128-6-BLUE",
+            "barcode": null,
+            "price": "275.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "128GB / 6GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317739235",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317739235",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607365347",
+            "title": "256GB / 8GB RAM / Blue",
+            "sku": "SAM-A27-256-8-BLUE",
+            "barcode": null,
+            "price": "335.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Configuration",
+                "value": "256GB / 8GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832317772003",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832317772003",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39919936733411",
+            "alt": "Samsung Galaxy A27 5G clean product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39919936733411",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/samsung-galaxy-a27-5g-blue-clean.png?v=1788603137",
+              "altText": "Samsung Galaxy A27 5G clean product image",
+              "width": 1920,
+              "height": 1280
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164263411939",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy A27 5G | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164263444707",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy A27 5G with 6.7-inch 120Hz Super AMOLED, Snapdragon 6 Gen 3, OIS camera and 5000mAh battery."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164906615011",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.7-inch FHD+ Super AMOLED, 120Hz\",\"Processor\":\"Snapdragon 6 Gen 3\",\"Rear Cameras\":\"50MP + 5MP + 2MP with OIS\",\"Front Camera\":\"12MP\",\"Battery\":\"5000mAh\",\"Network\":\"5G\",\"Type\":\"Samsung Galaxy A27 5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336047331",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Super AMOLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650882085091",
+      "title": "Samsung Galaxy S25 Edge",
+      "handle": "samsung-galaxy-s25-edge",
+      "descriptionHtml": "<p>Samsung Galaxy S25 Edge 256GB. Premium slim Galaxy S smartphone with titanium frame, 200 MP main camera, Galaxy AI and 5G.</p>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Galaxy S",
+        "phones",
+        "S25 Edge",
+        "Samsung"
+      ],
+      "createdAt": "2026-09-02T16:06:35Z",
+      "updatedAt": "2026-09-06T12:00:24Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660599206115",
+            "title": "256GB / Titanium Jetblack",
+            "sku": "SAM-S25EDGE-256",
+            "barcode": null,
+            "price": "700.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Titanium Jetblack"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309612771",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309612771",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660605825251",
+            "title": "256GB / Titanium Silver",
+            "sku": "SAM-S25EDGE-256-SILVER",
+            "barcode": null,
+            "price": "700.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Titanium Silver"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832316231907",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832316231907",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39833803849955",
+            "alt": "Samsung Galaxy S25 Edge official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833803849955",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/samsung-galaxy-s25-edge-optimized.jpg?v=1788365781",
+              "altText": "Samsung Galaxy S25 Edge official product image",
+              "width": 1600,
+              "height": 864
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164906647779",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Storage\":\"256GB\",\"Network\":\"5G\",\"Camera\":\"200MP main camera\",\"Design\":\"Slim Galaxy S smartphone\",\"Frame\":\"Titanium\",\"Features\":\"Galaxy AI\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336178403",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Dynamic AMOLED 2X"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484551907",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy S25 Edge | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484584675",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy S25 Edge with premium AMOLED display, flagship performance, advanced cameras and slim design."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650882150627",
+      "title": "Samsung Galaxy S26",
+      "handle": "samsung-galaxy-s26",
+      "descriptionHtml": "<p>Samsung Galaxy S26 with 6.3-inch display, 12 GB memory, 4300 mAh battery, advanced Galaxy AI and 50 MP wide camera system. 5G.</p>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Galaxy S",
+        "phones",
+        "S26",
+        "Samsung"
+      ],
+      "createdAt": "2026-09-02T16:06:42Z",
+      "updatedAt": "2026-09-06T12:00:24Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660599271651",
+            "title": "256GB / 12GB RAM / Black",
+            "sku": "SAM-S26-256-12",
+            "barcode": null,
+            "price": "780.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309678307",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309678307",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660599304419",
+            "title": "512GB / 12GB RAM / Black",
+            "sku": "SAM-S26-512-12",
+            "barcode": null,
+            "price": "900.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "512GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832309711075",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832309711075",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607693027",
+            "title": "256GB / 12GB RAM / Cobalt Violet",
+            "sku": "SAM-S26-256-12-VIOLET",
+            "barcode": null,
+            "price": "780.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Cobalt Violet"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832318099683",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832318099683",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660607725795",
+            "title": "512GB / 12GB RAM / Cobalt Violet",
+            "sku": "SAM-S26-512-12-VIOLET",
+            "barcode": null,
+            "price": "900.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "512GB / 12GB RAM"
+              },
+              {
+                "name": "Color",
+                "value": "Cobalt Violet"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832318132451",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832318132451",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39833806471395",
+            "alt": "Samsung Galaxy S26 official product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39833806471395",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/samsung-galaxy-s26-optimized.png?v=1788368063",
+              "altText": "Samsung Galaxy S26 official product image",
+              "width": 1024,
+              "height": 1024
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164906680547",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.3-inch\",\"RAM\":\"12GB\",\"Battery\":\"4300mAh\",\"Rear Camera\":\"50MP wide camera system\",\"Network\":\"5G\",\"Features\":\"Galaxy AI\",\"Type\":\"Samsung Galaxy S26\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336243939",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Dynamic AMOLED 2X"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484682979",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy S26 | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484715747",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy S26 with flagship performance, advanced cameras, premium display and 5G connectivity."
+          }
+        ]
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo5NjUwODgyMTUwNjI3LCJsYXN0X3ZhbHVlIjoiOTY1MDg4MjE1MDYyNyJ9"
+  }
+}
