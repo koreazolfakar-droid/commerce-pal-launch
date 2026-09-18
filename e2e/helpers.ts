@@ -3,9 +3,7 @@ import { expect, type Page } from "@playwright/test";
 function cartButton(page: Page, count: number) {
   return page
     .getByRole("button", {
-      name: new RegExp(`^(Open bag, ${count}|Cart, ${count} items)import { expect, type Page } from "@playwright/test";
-
-),
+      name: new RegExp(`^(Open bag, ${count}|Cart, ${count} items)$`),
     })
     .filter({ visible: true })
     .first();
