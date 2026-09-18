@@ -1,19 +1,14 @@
 import { queryOptions } from "@tanstack/react-query";
-import { EMPTY_CMS } from "@/lib/cms";
+import { EMPTY_CMS, fetchCmsSnapshot } from "@/lib/cms";
 
-/**
- * Compatibility query for storefront components that still accept optional CMS
- * overrides. The public store is Shopify-only, so this never performs a network
- * request and always resolves to the empty snapshot.
- */
 export const cmsQueryOptions = () =>
   queryOptions({
-    queryKey: ["storefront", "dashboard-disconnected"],
-    queryFn: async () => EMPTY_CMS,
-    initialData: EMPTY_CMS,
-    staleTime: Number.POSITIVE_INFINITY,
-    gcTime: Number.POSITIVE_INFINITY,
+    queryKey: ["storefront", "public-cms"],
+    queryFn: fetchCmsSnapshot,
+    placeholderData: EMPTY_CMS,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    retry: false,
+    retry: 1,
   });
