@@ -88,7 +88,7 @@ test("no-Shopify staging provider is isolated behind the storefront facade", asy
   assert.match(router, /setupRouterSsrQueryIntegration/);
   assert.match(router, /dehydrateOptions:/);
   assert.match(router, /query\\.meta\\?\\.ssr !== false/);
-  assert.match(router, /query\\.meta\\?\\.ssrSerializable !== false/);
+  assert.match(router, /query\\.meta\\?\\.ssr !== false/);
 });
 test("homepage catalog survives transient storefront failures across repeated refreshes", async () => {
   const queries = await source("src/lib/queries.ts");
