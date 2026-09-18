@@ -31,8 +31,6 @@ function syncRuntimeEnv(env: unknown) {
   if (!env || typeof env !== "object") return;
   const runtime = env as Record<string, unknown>;
   for (const key of [
-    "SHOPIFY_STOREFRONT_TOKEN",
-    "SHOPIFY_STOREFRONT_ACCESS_TOKEN",
     "SUPABASE_URL",
     "SUPABASE_ANON_KEY",
     "SUPABASE_PUBLISHABLE_KEY",
@@ -187,8 +185,8 @@ export default {
     if (blocked) return blocked;
 
     // Cloudflare/Lovable runtime bindings are passed through `env`; TanStack server
-    // functions in this app read server-only secrets from process.env. Mirror only
-    // the known server-side bindings so Shopify and protected API gateways work in SSR.
+    // functions read the approved backend bindings from process.env. Keep the
+    // storefront independent from any commerce-platform credential.
     syncRuntimeEnv(env);
 
     try {
@@ -293,14 +291,14 @@ export function withSecurityHeaders(response: Response): Response {
         "base-uri 'self'",
         "object-src 'none'",
         "frame-ancestors 'self'",
-        "form-action 'self' https://*.myshopify.com https://checkout.shopify.com",
+        "form-action 'self'",
         "script-src 'self' 'unsafe-inline'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' data: https://fonts.gstatic.com",
-        "img-src 'self' data: blob: https://cdn.shopify.com https://*.shopifycdn.com https://rtwyankpxtffqqrasyzw.supabase.co",
-        "media-src 'self' https://cdn.shopify.com https://*.shopifycdn.com",
-        "connect-src 'self' https://*.myshopify.com https://cdn.shopify.com https://rtwyankpxtffqqrasyzw.supabase.co wss://rtwyankpxtffqqrasyzw.supabase.co",
-        "frame-src 'self' https://*.myshopify.com https://checkout.shopify.com https://maps.google.com https://www.google.com",
+        "img-src 'self' data: blob: https://rtwyankpxtffqqrasyzw.supabase.co https://images.unsplash.com",
+        "media-src 'self' https://rtwyankpxtffqqrasyzw.supabase.co",
+        "connect-src 'self' https://rtwyankpxtffqqrasyzw.supabase.co wss://rtwyankpxtffqqrasyzw.supabase.co",
+        "frame-src 'self' https://maps.google.com https://www.google.com https://fast-site-lift.vercel.app",
         "worker-src 'self' blob:",
         "manifest-src 'self'",
         "upgrade-insecure-requests",

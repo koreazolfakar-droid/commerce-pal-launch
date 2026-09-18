@@ -15,7 +15,7 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" } },
   ],
   webServer: {
-    command: "pnpm run dev:e2e --host 0.0.0.0 --port 4173",
+    command: "bun run dev:e2e --host 0.0.0.0 --port 4173",
     url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,

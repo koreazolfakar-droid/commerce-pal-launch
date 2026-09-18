@@ -1,17 +1,33 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-// Run after `bun run build`. Calls the actual production SSR entry with no Shopify credentials.
+// Run after `bun run build`. Calls the actual production SSR entry with no external commerce-platform credentials.
 const { default: handler } = await import("../.output/server/index.mjs");
 const pending = [];
 const context = { waitUntil: (promise) => pending.push(promise), passThroughOnException() {} };
 const env = {};
 
+const originalConsoleError = console.error;
+const ssrSerializationErrors = [];
+let activeSsrPath = "<idle>";
+console.error = (...args) => {
+  const message = args
+    .map((value) => (value instanceof Error ? `${value.name}: ${value.message}` : String(value)))
+    .join(" ");
+  if (/Serialization error|Seroval Error/i.test(message)) {
+    ssrSerializationErrors.push(`[${activeSsrPath}] ${message}`);
+  }
+  originalConsoleError(...args);
+};
+
 async function request(path) {
+  activeSsrPath = path;
   let url = new URL(path, "https://spacecallapp.store");
   let response;
   for (let hop = 0; hop < 4; hop++) {
+    activeSsrPath = `${url.pathname}${url.search}`;
     response = await handler.fetch(new Request(url), env, context);
+    activeSsrPath = "<idle>";
     if (![301, 302, 307, 308].includes(response.status)) break;
     const location = response.headers.get("location");
     assert.ok(location, "Redirect must include a destination");
@@ -24,6 +40,7 @@ async function request(path) {
   }
   const body = await response.text();
   assert.equal(response.status, 200, `${path} must render successfully`);
+  activeSsrPath = "idle";
   return { response, body };
 }
 
@@ -61,7 +78,7 @@ for (const delayedTestId of [
   );
 }
 
-// The staging hero is backed by the local provider-neutral catalog, not an external Shopify call.
+// The staging hero is backed by the local provider-neutral catalog, not an external commerce-platform call.
 assert.match(home.body, /data-hero-handle="homepage-hero"/);
 assert.doesNotMatch(home.body, /href="\/collections\/homepage-hero"/);
 assert.match(home.body, /iPhone 18 Pro|Homepage Hero/);
@@ -124,6 +141,14 @@ assert.equal(
 const robots = await readFile(new URL("../public/robots.txt", import.meta.url), "utf8");
 assert.ok(!/^Disallow:\s*\/$/m.test(robots));
 await Promise.allSettled(pending);
+
+console.error = originalConsoleError;
+assert.deepEqual(
+  ssrSerializationErrors,
+  [],
+  `SSR emitted serialization errors:\n${ssrSerializationErrors.join("\n")}`,
+);
+
 console.log(
   JSON.stringify({
     passed: true,
