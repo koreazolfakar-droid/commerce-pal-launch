@@ -81,7 +81,13 @@ test("no-Shopify staging provider is isolated behind the storefront facade", asy
   assert.match(queries, /BRAND_COLLECTION_STALE_TIME = 60 \* 1000/);
   assert.match(queries, /brand-logo-cache-v5/);
   assert.match(queries, /staleTime: BRAND_COLLECTION_STALE_TIME/);
+  assert.match(queries, /meta: \\{ ssrSerializable: false \\}/);
   assert.doesNotMatch(queries, /brand-logo-cache-v4/);
+
+  const router = await source("src/router.tsx");
+  assert.match(router, /query\\.meta\\?\\.\\["ssrSerializable"\\] !== false/);
+  assert.match(router, /query\\.state\\.status === "success"/);
+  assert.doesNotMatch(router, /setupRouterSsrQueryIntegration/);
 });
 test("homepage catalog survives transient storefront failures across repeated refreshes", async () => {
   const queries = await source("src/lib/queries.ts");
