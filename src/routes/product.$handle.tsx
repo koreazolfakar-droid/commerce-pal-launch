@@ -30,12 +30,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
-import {
-  discountPercent,
-  fetchProductByHandle,
-  formatPrice,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { discountPercent, formatPrice } from "@/lib/productPricing";
+import { fetchProductByHandle } from "@/lib/storefrontFacade";
+import type { StoreProduct } from "@/lib/storefrontTypes";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
@@ -109,7 +106,7 @@ export const Route = createFileRoute("/product/$handle")({
 
 function ProductPage() {
   const { t, language } = useLanguage();
-  const { product } = Route.useLoaderData() as { product: ShopifyProduct };
+  const { product } = Route.useLoaderData() as { product: StoreProduct };
   const node = product.node;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
   const images = useMemo(() => node.images.edges.map((edge) => edge.node), [node]);
