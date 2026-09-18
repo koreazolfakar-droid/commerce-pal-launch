@@ -36,7 +36,7 @@ export const getRouter = () => {
     // components. Queries marked meta.ssr=false stay out of the hydration payload.
     dehydrateOptions: {
       shouldDehydrateQuery: (query) =>
-        query.meta?.ssr !== false && query.meta?.ssrSerializable !== false,
+        query.meta?.["ssr"] !== false && query.meta?.["ssrSerializable"] !== false,
     },
     // RootComponent already owns QueryClientProvider.
     wrapQueryClient: false,
