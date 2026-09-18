@@ -1,8 +1,8 @@
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { productBelongsToBrand, type CatalogBrand } from "@/dashboard/mock/brands";
-import type { Product } from "@/dashboard/mock/data";
+import { productBelongsToBrand, type CatalogBrand } from "@/dashboard/data/brands";
+import type { DashboardProduct } from "@/dashboard/data/catalog";
 
 export default function BrandAssignmentDialog({
   brand,
@@ -11,7 +11,7 @@ export default function BrandAssignmentDialog({
   onAssign,
 }: {
   brand: CatalogBrand;
-  products: Product[];
+  products: DashboardProduct[];
   onClose: () => void;
   onAssign: (productIds: string[]) => void;
 }) {
@@ -69,7 +69,7 @@ export default function BrandAssignmentDialog({
               Assign Products to {brand.name}
             </h2>
             <p className="mt-1 text-[10px] text-slate-400">
-              This updates Product.brand only. Product records are never duplicated.
+              This updates store_products.brand_id in Supabase. Product records are never duplicated.
             </p>
           </div>
           <button
