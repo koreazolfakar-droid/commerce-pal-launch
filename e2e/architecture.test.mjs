@@ -52,9 +52,9 @@ test("native cart keeps local totals and defers authoritative validation to chec
 
   assert.match(store, /function localCartState/);
   assert.match(store, /set\(localCartState\(next\)\)/);
-  assert.match(store, /syncCart:\\s*async \\(\\) => \\{[\\s\\S]*await hydrateCartStore\\(\\)/);
-  assert.match(store, /export function hydrateCartStore\\(\\): Promise<void>/);
-  assert.match(store, /useCartStore\\.persist\\.rehydrate\\(\\)/);
+  assert.match(store, /syncCart:\s*async \(\) => \{[\s\S]*await hydrateCartStore\(\)/);
+  assert.match(store, /export function hydrateCartStore\(\): Promise<void>/);
+  assert.match(store, /useCartStore\.persist\.rehydrate\(\)/);
   assert.match(store, /getCheckoutUrl:\s*\(\) => null/);
   assert.doesNotMatch(store, /remoteState\(result\.cart\)/);
   assert.doesNotMatch(store, /quantity:\s*i\.quantity\s*\+/);
