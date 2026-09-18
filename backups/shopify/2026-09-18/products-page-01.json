@@ -1,0 +1,3397 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "products",
+  "page": 1,
+  "data": [
+    {
+      "id": "gid://shopify/Product/9597660659939",
+      "title": "Samsung Galaxy S26 Ultra",
+      "handle": "samsung-galaxy-s26-ultra",
+      "descriptionHtml": "<p> </p>\n<p>The Samsung Galaxy S26 Ultra is a premium flagship smartphone built for exceptional performance, professional photography, productivity, and an immersive viewing experience. Powered by the Snapdragon® 8 Elite Gen 5 for Galaxy processor and equipped with up to 16GB of RAM, it delivers fast and reliable performance for demanding apps, gaming, multitasking, and AI-powered features.</p>\n<p> </p>\n<p>Key Features</p>\n<p> </p>\n<p>- 6.9\" Dynamic AMOLED 2X Display with QHD+ resolution, adaptive 120Hz refresh rate, and up to 2600 nits peak brightness.</p>\n<p>- Snapdragon® 8 Elite Gen 5 for Galaxy processor built on a 3nm architecture, with speeds up to 4.74GHz.</p>\n<p>- Professional Quad Camera System featuring a 200MP main camera, 50MP ultra-wide, 50MP 5x telephoto, and 10MP 3x telephoto camera.</p>\n<p>- Up to 100x Digital Zoom with OIS, Laser AF, Scene Optimizer, and advanced image processing.</p>\n<p>- 12MP Front Camera for high-quality selfies and video calls.</p>\n<p>- 5,000mAh Battery with up to 31 hours of video playback and Wireless PowerShare.</p>\n<p>- Built-in S Pen for precise writing, drawing, note-taking, and productivity.</p>\n<p>- Advanced Connectivity including 5G, Dual SIM, USB Type-C, Wi-Fi Direct, and UWB.</p>\n<p>- Ultrasonic Fingerprint Sensor for fast and secure authentication.</p>\n<p>- Long-Term Software Support with security updates available until February 2033.</p>\n<p>- Unlocked for flexible carrier compatibility.</p>\n<p> </p>\n<p>Specifications</p>\n<p> </p>\n<p>Processor: Snapdragon® 8 Elite Gen 5 for Galaxy (3nm)</p>\n<p>RAM: 12GB / 16GB</p>\n<p>Storage: 256GB / 1TB</p>\n<p>Display: 6.9\" Dynamic AMOLED 2X, QHD+, 120Hz</p>\n<p>Peak Brightness: Up to 2600 nits</p>\n<p>Main Camera: 200MP</p>\n<p>Ultra-Wide: 50MP</p>\n<p>Telephoto: 50MP 5x + 10MP 3x</p>\n<p>Front Camera: 12MP</p>\n<p>Battery: 5,000mAh</p>\n<p>Operating System: Android</p>\n<p>SIM: Dual SIM</p>\n<p>Connectivity: 5G, 4G LTE, USB Type-C, Wi-Fi Direct, UWB</p>\n<p>S Pen: Supported</p>\n<p>Security: Ultrasonic Fingerprint Sensor</p>\n<p>Carrier: Unlocked</p>\n<p> </p>\n<p>Overview</p>\n<p> </p>\n<p>The Galaxy S26 Ultra combines flagship performance, advanced camera technology, a high-resolution 120Hz display, S Pen functionality, and long-term software support in a premium smartphone designed for demanding users.</p>",
+      "status": "DRAFT",
+      "vendor": "Samsung",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Galaxy S",
+        "phones",
+        "S26 Ultra",
+        "Samsung"
+      ],
+      "createdAt": "2026-08-09T10:45:13Z",
+      "updatedAt": "2026-09-13T12:21:43Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49514769776867",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "1050.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51685461000419",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51685461000419",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39936352059619",
+            "alt": "",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39936352059619",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/rn-image_picker_lib_temp_0128c739-9a36-4f6d-b42c-7e280de4caaf.jpg?v=1788718229",
+              "altText": "",
+              "width": 1080,
+              "height": 581
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/51241715368163",
+            "namespace": "shopify",
+            "key": "color-pattern",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/251278819555\",\"gid://shopify/Metaobject/251282686179\",\"gid://shopify/Metaobject/251282718947\",\"gid://shopify/Metaobject/251282751715\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164906221795",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"Premium flagship smartphone\",\"Camera\":\"Advanced flagship camera system\",\"Performance\":\"High-end performance\",\"Type\":\"Samsung Galaxy S26 Ultra\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336276707",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Dynamic AMOLED 2X"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484748515",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy S26 Ultra | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484781283",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy S26 Ultra with flagship display, advanced camera system, premium performance and 5G connectivity."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9600445776099",
+      "title": "iPhone 17 Pro Max",
+      "handle": "iphone-17-pro-max",
+      "descriptionHtml": "<h1>iPhone 17 Pro Max</h1>\n<p>Experience next-level performance with the iPhone 17 Pro Max. Featuring a premium design, advanced camera system, powerful performance, and an immersive display—built for those who want the best.</p>",
+      "status": "ARCHIVED",
+      "vendor": "Apple",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Apple",
+        "iPhone",
+        "iPhone 17 Pro Max",
+        "Smartphones"
+      ],
+      "createdAt": "2026-08-12T17:25:12Z",
+      "updatedAt": "2026-09-06T11:50:20Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49525488156899",
+            "title": "Orange",
+            "sku": null,
+            "barcode": null,
+            "price": "1300.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Orange"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51696240394467",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51696240394467",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49525488189667",
+            "title": "Silver",
+            "sku": null,
+            "barcode": null,
+            "price": "1300.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Silver"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51696240427235",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51696240427235",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39834416578787",
+            "alt": "iPhone 17 Pro Max official finishes - Silver Cosmic Orange Deep Blue",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39834416578787",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-17-pro-max-official-finishes.jpg?v=1788366829",
+              "altText": "iPhone 17 Pro Max official finishes - Silver Cosmic Orange Deep Blue",
+              "width": 1260,
+              "height": 680
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/51341532823779",
+            "namespace": "shopify",
+            "key": "color-pattern",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/251962982627\",\"gid://shopify/Metaobject/251282718947\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164906254563",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Type\":\"iPhone 17 Pro Max\",\"Status\":\"Archived\",\"Storage\":\"Available in existing variants\",\"Description\":\"Premium iPhone 17 Pro Max\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194340372707",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO Super Retina XDR OLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9600697893091",
+      "title": "Vention 10000mAh Power Bank 22.5W",
+      "handle": "vention-power-bank",
+      "descriptionHtml": "<p><span class=\"word\" data-word=\"Vention\"><animate-element class=\"block animate\" data-animate=\"fade-up\" data-animate-delay=\"0\">Vention</animate-element></span><span class=\"whitespace\"><span> </span></span><span class=\"word\" data-word=\"10000mAh\"><animate-element class=\"block animate\" data-animate=\"fade-up\" data-animate-delay=\"30\">10000mAh</animate-element></span><span class=\"whitespace\"><span> </span></span><span class=\"word\" data-word=\"Power\"><animate-element class=\"block animate\" data-animate=\"fade-up\" data-animate-delay=\"60\">Power</animate-element></span><span class=\"whitespace\"><span> </span></span><span class=\"word\" data-word=\"Bank\"><animate-element class=\"block animate\" data-animate=\"fade-up\" data-animate-delay=\"90\">Bank</animate-element></span><span class=\"whitespace\"><span> </span></span><span class=\"word\" data-word=\"22.5W\"><animate-element class=\"block animate\" data-animate=\"fade-up\" data-animate-delay=\"120\">22.5W</animate-element></span></p>",
+      "status": "ACTIVE",
+      "vendor": "Vention",
+      "productType": "Power Bank",
+      "tags": [
+        "10000mAh",
+        "22.5W",
+        "fast-charging",
+        "Power Bank",
+        "Vention"
+      ],
+      "createdAt": "2026-08-13T01:47:51Z",
+      "updatedAt": "2026-09-06T12:00:39Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49526243033315",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "30.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 6,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51697006117091",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51697006117091",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 6
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39552642777315",
+            "alt": "",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39552642777315",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/rn-image_picker_lib_temp_54be07eb-29fd-4f6c-9ca3-765dd0aceb4b.jpg?v=1786585681",
+              "altText": "",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/51348945109219",
+            "namespace": "shopify",
+            "key": "color-pattern",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/251282686179\",\"gid://shopify/Metaobject/252007710947\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/51348945993955",
+            "namespace": "shopify",
+            "key": "power-source",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/252007776483\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194339225827",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486714595",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Vention 10000mAh Power Bank 22.5W | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486747363",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Vention 10,000mAh power bank with 22.5W fast charging for convenient portable power on the go."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9600707985635",
+      "title": "UGREEN 240W USB-C to USB-C Gen 2 10Gbps Charging Cable (3.2ft)",
+      "handle": "ugreen-240w-usb-c-to-usb-c-gen-2-10gbps-charging-cable-3-2ft",
+      "descriptionHtml": "<h1 class=\"product-title product_title entry-title\">UGREEN 240W USB-C to USB-C Gen 2 10Gbps Charging Cable (3.2ft)</h1>",
+      "status": "DRAFT",
+      "vendor": "UGREEN",
+      "productType": "Charging Cable",
+      "tags": [
+        "10Gbps",
+        "240W",
+        "Charging Cable",
+        "UGREEN",
+        "USB-C"
+      ],
+      "createdAt": "2026-08-13T02:21:11Z",
+      "updatedAt": "2026-09-06T11:50:06Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49526309191907",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "15.00",
+            "compareAtPrice": "20.00",
+            "inventoryQuantity": 2,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51697072308451",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51697072308451",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 2
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39552871235811",
+            "alt": "",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39552871235811",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/rn-image_picker_lib_temp_772f1d89-6ca8-4345-8f31-9ad9498a4a73.webp?v=1786587751",
+              "altText": "",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/51349190279395",
+            "namespace": "shopify",
+            "key": "color-pattern",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/251282686179\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/51349190574307",
+            "namespace": "shopify",
+            "key": "connector-gender",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/252009873635\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/51349190639843",
+            "namespace": "shopify",
+            "key": "cable-housing-material",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/252009971939\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/51349190672611",
+            "namespace": "shopify",
+            "key": "material",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/252009906403\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/51349190705379",
+            "namespace": "shopify",
+            "key": "cable-style",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/252009939171\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194339061987",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9600708378851",
+      "title": "Anker Soundcore Liberty 4 NC — White",
+      "handle": "anker-soundcore-liberty-4-nc",
+      "descriptionHtml": "<p><strong>Anker Soundcore Liberty 4 NC — White</strong> delivers advanced active noise cancellation, detailed wireless audio, and long battery life in a compact true-wireless design. It is a strong choice for everyday listening, commuting, calls, and travel.</p><h2>Adaptive Noise Cancellation</h2><p>Adaptive ANC 2.0 analyzes your ears and surrounding environment in real time to adjust noise cancellation automatically. Soundcore states that the Liberty 4 NC system can reduce external noise by up to 98.5% under its test conditions.</p><h2>Hi-Res Wireless Sound</h2><p>Custom-tuned 11mm drivers are designed for clear, detailed playback. The earbuds support Hi-Res Wireless audio and LDAC on compatible devices, while HearID 2.0 and adjustable EQ options in the Soundcore app let you personalize the sound profile.</p><h2>Battery and Connectivity</h2><ul>\n<li>Up to 10 hours of playback from the earbuds and up to 50 hours with the charging case in normal listening conditions</li>\n<li>Fast charging: around 10 minutes of charging can provide up to 4 hours of playback</li>\n<li>Bluetooth 5.3 with multipoint connection for switching between compatible devices</li>\n<li>Wireless charging support for the case</li>\n</ul><h2>Calls and Everyday Use</h2><p>Six microphones work with an AI algorithm to improve voice clarity during calls. IPX4 water resistance provides protection against splashes and light rain, while automatic play/pause and quick Android pairing add everyday convenience.</p><h2>Key Features</h2><ul>\n<li>Adaptive ANC 2.0</li>\n<li>11mm custom-tuned drivers</li>\n<li>Hi-Res Wireless and LDAC support</li>\n<li>HearID 2.0 and customizable EQ</li>\n<li>Bluetooth 5.3 multipoint</li>\n<li>6 microphones with AI call processing</li>\n<li>IPX4 water resistance</li>\n<li>White finish</li>\n</ul><p>Shop the Anker Soundcore Liberty 4 NC White from Space Call in Lebanon with live stock and pricing shown on the product page.</p>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Wireless Earbuds",
+      "tags": [
+        "ANC",
+        "Anker",
+        "earbuds",
+        "Hi-Res",
+        "LDAC",
+        "soundcore"
+      ],
+      "createdAt": "2026-08-13T02:25:02Z",
+      "updatedAt": "2026-09-16T10:53:09Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49526312567011",
+            "title": "Default Title",
+            "sku": null,
+            "barcode": null,
+            "price": "50.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51697075683555",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51697075683555",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39919947514083",
+            "alt": "Anker Soundcore Liberty 4 NC White product image on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39919947514083",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/soundcore-liberty-4-nc-white-clean.jpg?v=1788603302",
+              "altText": "Anker Soundcore Liberty 4 NC White product image on white background",
+              "width": 1200,
+              "height": 1200
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/51349203222755",
+            "namespace": "shopify",
+            "key": "color-pattern",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/251282751715\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/51349203419363",
+            "namespace": "shopify",
+            "key": "earphone-features",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/252010430691\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/51349203452131",
+            "namespace": "shopify",
+            "key": "noise-cancellation-technology",
+            "type": "list.metaobject_reference",
+            "value": "[\"gid://shopify/Metaobject/252010463459\"]"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164263346403",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker Soundcore Liberty 4 NC in Lebanon | Space Call"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164263379171",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker Soundcore Liberty 4 NC White in Lebanon with Adaptive ANC 2.0, LDAC, multipoint Bluetooth, clear calls and up to 50-hour total battery life."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328608995",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650838962403",
+      "title": "TECNO CAMON 50 Pro 8GB/256GB",
+      "handle": "tecno-camon-50-pro-8gb-256gb",
+      "descriptionHtml": "<h2>TECNO CAMON 50 Pro 8GB/256GB</h2><p>A stylish smartphone featuring a curved AMOLED display, high refresh rate, capable performance, and a versatile camera system.</p><ul>\n<li>Display: 6.78-inch 1.5K AMOLED, 144Hz</li>\n<li>Processor: MediaTek Helio G200 Ultimate</li>\n<li>Memory: 8GB RAM</li>\n<li>Storage: 256GB</li>\n<li>Designed for photography, entertainment, and everyday performance</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "TECNO",
+      "productType": "Smartphone",
+      "tags": [
+        "2026",
+        "CAMON",
+        "CAMON 50 Pro",
+        "Smartphone",
+        "TECNO"
+      ],
+      "createdAt": "2026-09-02T15:17:29Z",
+      "updatedAt": "2026-09-06T11:49:50Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660445491427",
+            "title": "Moonshadow Black",
+            "sku": "CAMON50PRO-BK-8-256",
+            "barcode": null,
+            "price": "385.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Moonshadow Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832155799779",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832155799779",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660445524195",
+            "title": "Malachite Green",
+            "sku": "CAMON50PRO-GR-8-256",
+            "barcode": null,
+            "price": "385.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Malachite Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832155832547",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832155832547",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660445556963",
+            "title": "Nebula Titanium",
+            "sku": "CAMON50PRO-TI-8-256",
+            "barcode": null,
+            "price": "385.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Nebula Titanium"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832155865315",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832155865315",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660445589731",
+            "title": "Fir Green",
+            "sku": "CAMON50PRO-FG-8-256",
+            "barcode": null,
+            "price": "385.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Fir Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832155898083",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832155898083",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660445622499",
+            "title": "Lavender Mist",
+            "sku": "CAMON50PRO-LV-8-256",
+            "barcode": null,
+            "price": "385.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 4,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Lavender Mist"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832155930851",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832155930851",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 4
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660445655267",
+            "title": "Ethereal Blue",
+            "sku": "CAMON50PRO-BL-8-256",
+            "barcode": null,
+            "price": "385.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 2,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Ethereal Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832155963619",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832155963619",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 2
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39920719757539",
+            "alt": "TECNO CAMON 50 Pro clean white product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920719757539",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/tecno-camon-50-pro-clean-white.jpg?v=1788608593",
+              "altText": "TECNO CAMON 50 Pro clean white product image",
+              "width": 680,
+              "height": 709
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164262658275",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "TECNO CAMON 50 Pro 8GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164262691043",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop TECNO CAMON 50 Pro with 8GB RAM, 256GB storage, 144Hz curved AMOLED display and a versatile camera system."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164906287331",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"Curved AMOLED\",\"RAM\":\"8GB\",\"Storage\":\"256GB\",\"Type\":\"TECNO CAMON 50 Pro\",\"Camera\":\"Versatile camera system\",\"Design\":\"Curved display design\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336735459",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650839159011",
+      "title": "TECNO CAMON 50 Ultra 5G 12GB/256GB",
+      "handle": "tecno-camon-50-ultra-5g-12gb-256gb",
+      "descriptionHtml": "<h2>TECNO CAMON 50 Ultra 5G 12GB/256GB</h2><p>A premium 5G smartphone with a curved AMOLED display, high refresh rate, powerful performance, and an advanced camera system.</p><ul>\n<li>Display: 6.78-inch 1.5K AMOLED, 144Hz</li>\n<li>Processor: MediaTek Dimensity 7400 Ultimate</li>\n<li>Memory: 12GB RAM</li>\n<li>Storage: 256GB</li>\n<li>Camera: 50MP Sony LYTIA main camera with OIS, 50MP telephoto, and 8MP ultra-wide</li>\n<li>Front camera: 50MP</li>\n<li>Battery: 6500mAh with 45W charging</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "TECNO",
+      "productType": "Smartphone",
+      "tags": [
+        "2026",
+        "5G",
+        "CAMON",
+        "CAMON 50 Ultra 5G",
+        "Smartphone",
+        "TECNO"
+      ],
+      "createdAt": "2026-09-02T15:17:42Z",
+      "updatedAt": "2026-09-06T11:49:50Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660445884643",
+            "title": "Moonshadow Black",
+            "sku": "CAMON50ULTRA-BK-12-256",
+            "barcode": null,
+            "price": "499.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 6,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Moonshadow Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832156192995",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832156192995",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 6
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660445917411",
+            "title": "Cypress Green",
+            "sku": "CAMON50ULTRA-GR-12-256",
+            "barcode": null,
+            "price": "499.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Cypress Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832156225763",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832156225763",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660445950179",
+            "title": "Nebula Titanium",
+            "sku": "CAMON50ULTRA-TI-12-256",
+            "barcode": null,
+            "price": "499.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Nebula Titanium"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832156258531",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832156258531",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660445982947",
+            "title": "Luminous Orange",
+            "sku": "CAMON50ULTRA-OR-12-256",
+            "barcode": null,
+            "price": "499.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 5,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Luminous Orange"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832156291299",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832156291299",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660446015715",
+            "title": "Misty Purple",
+            "sku": "CAMON50ULTRA-PR-12-256",
+            "barcode": null,
+            "price": "499.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Misty Purple"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832156324067",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832156324067",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832359600355",
+            "alt": "TECNO CAMON 50 Ultra 5G",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832359600355",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/tecno-camon-50-ultra-5g.webp?v=1788362463",
+              "altText": "TECNO CAMON 50 Ultra 5G",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164263870691",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "TECNO CAMON 50 Ultra 5G 12GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164263903459",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop TECNO CAMON 50 Ultra 5G with 12GB RAM, 256GB storage, 144Hz AMOLED display, OIS camera and 6500mAh battery."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164906320099",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"Curved AMOLED\",\"RAM\":\"12GB\",\"Storage\":\"256GB\",\"Network\":\"5G\",\"Type\":\"TECNO CAMON 50 Ultra 5G\",\"Camera\":\"Advanced camera system\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336768227",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650839322851",
+      "title": "TECNO POVA 7 Ultra 5G 12GB/256GB",
+      "handle": "tecno-pova-7-ultra-5g-12gb-256gb",
+      "descriptionHtml": "<p><strong>TECNO POVA 7 Ultra 5G</strong> هاتف أداء وألعاب مع شاشة AMOLED 6.67 بوصة 1.5K وتردد 144Hz.</p><ul>\n<li>MediaTek Dimensity 8350 Ultimate</li>\n<li>256GB + 12GB RAM مع توسعة حتى 24GB</li>\n<li>كاميرا خلفية 108MP + 8MP وكاميرا أمامية 13MP</li>\n<li>بطارية 6000mAh</li>\n<li>شحن 70W وشحن لاسلكي 30W</li>\n<li>5G، NFC، USB-C، بصمة، مكبرات مزدوجة وDolby Atmos</li>\n<li>الألوان: Geek White وGeek Black</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "TECNO",
+      "productType": "Smartphone",
+      "tags": [
+        "2026",
+        "5G",
+        "Gaming",
+        "POVA",
+        "POVA 7 Ultra",
+        "Smartphone",
+        "TECNO"
+      ],
+      "createdAt": "2026-09-02T15:17:47Z",
+      "updatedAt": "2026-09-06T12:00:26Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660446146787",
+            "title": "Geek Black",
+            "sku": "POVA7ULTRA-BK-12-256",
+            "barcode": null,
+            "price": "399.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 4,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Geek Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832156455139",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832156455139",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 4
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660446179555",
+            "title": "Geek White",
+            "sku": "POVA7ULTRA-WH-12-256",
+            "barcode": null,
+            "price": "399.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 4,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Geek White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832156487907",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832156487907",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 4
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832359665891",
+            "alt": "TECNO POVA 7 Ultra 5G",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832359665891",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/tecno-pova-7-ultra-5g.jpg?v=1788362469",
+              "altText": "TECNO POVA 7 Ultra 5G",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164906352867",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.67-inch 1.5K AMOLED, 144Hz\",\"Processor\":\"MediaTek Dimensity 8350 Ultimate\",\"RAM\":\"12GB\",\"Storage\":\"256GB\",\"Network\":\"5G\",\"Type\":\"Gaming smartphone\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336800995",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485633251",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "TECNO POVA 7 Ultra 5G 12GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485666019",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop TECNO POVA 7 Ultra 5G with 12GB RAM, 256GB storage, gaming performance, high-refresh-rate display and fast charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650839421155",
+      "title": "TECNO SPARK 50 Pro 4GB/256GB",
+      "handle": "tecno-spark-50-pro-4gb-256gb",
+      "descriptionHtml": "<p><strong>TECNO SPARK 50 Pro</strong> هاتف اقتصادي حديث من TECNO بسعة تخزين 256GB.</p><ul>\n<li>ذاكرة 256GB مع 4GB RAM</li>\n<li>تصميم حديث ومناسب للاستخدام اليومي</li>\n<li>الألوان والأسعار قابلة للتحديث حسب التوفر المحلي</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "TECNO",
+      "productType": "Mobile Phones",
+      "tags": [
+        "2026",
+        "Smartphones",
+        "SPARK",
+        "SPARK 50 Pro",
+        "TECNO"
+      ],
+      "createdAt": "2026-09-02T15:17:52Z",
+      "updatedAt": "2026-09-06T12:00:27Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660447981795",
+            "title": "Black",
+            "sku": "SPARK50PRO-BK-4-256",
+            "barcode": null,
+            "price": "219.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 3,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832158290147",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832158290147",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832362975459",
+            "alt": "TECNO SPARK 50 Pro Ink Black",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832362975459",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/tecno-spark-50-pro-ink-black.png?v=1788362506",
+              "altText": "TECNO SPARK 50 Pro Ink Black",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194338996451",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485698787",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "TECNO SPARK 50 Pro 4GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485731555",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop TECNO SPARK 50 Pro with 4GB RAM, 256GB storage, large display, capable cameras and long battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856001763",
+      "title": "soundcore P30i",
+      "handle": "soundcore-p30i",
+      "descriptionHtml": "<p>سماعات لاسلكية من soundcore مع ANC متكيف، وضع شفافية، BassUp، وتحكم باللمس. علبة الشحن تعمل أيضاً كحامل للهاتف.</p><ul>\n<li>10 ساعات تشغيل، حتى 45 ساعة مع العلبة</li>\n<li>إلغاء ضوضاء متكيف حتى 42dB</li>\n<li>Bluetooth 5.4 وMultipoint</li>\n<li>مقاومة IP54</li>\n<li>شحن سريع: 10 دقائق تمنح حتى ساعتين</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Wireless Earbuds",
+      "tags": [
+        "ANC",
+        "Anker",
+        "earbuds",
+        "new",
+        "soundcore"
+      ],
+      "createdAt": "2026-09-02T15:31:11Z",
+      "updatedAt": "2026-09-06T12:00:26Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660489629923",
+            "title": "Black",
+            "sku": "P30I-BLK",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832199938275",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832199938275",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660489662691",
+            "title": "White",
+            "sku": "P30I-WHT",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832199971043",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832199971043",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660489695459",
+            "title": "Sky Blue",
+            "sku": "P30I-BLU",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Sky Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200003811",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200003811",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660489728227",
+            "title": "Green",
+            "sku": "P30I-GRN",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200036579",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200036579",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660489760995",
+            "title": "Pink",
+            "sku": "P30I-PNK",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Pink"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200069347",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200069347",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832412127459",
+            "alt": "soundcore P30i earbuds",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832412127459",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/soundcore-p30i.png?v=1788363013",
+              "altText": "soundcore P30i earbuds",
+              "width": 1200,
+              "height": 1200
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194336637155",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485436643",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "soundcore P30i Wireless Earbuds | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485469411",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop soundcore P30i wireless earbuds with active noise cancellation, clear audio and long battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856034531",
+      "title": "soundcore P31i",
+      "handle": "soundcore-p31i",
+      "descriptionHtml": "<p>سماعات لاسلكية حديثة مع Adaptive ANC حتى 52dB، صوت Hi-Res وLDAC وترجمة بالذكاء الاصطناعي.</p><ul>\n<li>حتى 10 ساعات، و50 ساعة مع العلبة</li>\n<li>ANC حتى 52dB</li>\n<li>Bluetooth 6.1 وLDAC</li>\n<li>6 ميكروفونات مع AI</li>\n<li>IP55</li>\n<li>شحن 10 دقائق يمنح حتى 3.5 ساعات</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Wireless Earbuds",
+      "tags": [
+        "ANC",
+        "Anker",
+        "earbuds",
+        "LDAC",
+        "new",
+        "soundcore"
+      ],
+      "createdAt": "2026-09-02T15:31:17Z",
+      "updatedAt": "2026-09-06T12:00:26Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660489793763",
+            "title": "Black",
+            "sku": "P31I-BLK",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200102115",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200102115",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660489826531",
+            "title": "Pearl White",
+            "sku": "P31I-WHT",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Pearl White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200134883",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200134883",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660489859299",
+            "title": "Light Blue",
+            "sku": "P31I-BLU",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Light Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200167651",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200167651",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660489892067",
+            "title": "Pink",
+            "sku": "P31I-PNK",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Pink"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200200419",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200200419",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832412422371",
+            "alt": "soundcore P31i earbuds",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832412422371",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/soundcore-p31i.jpg?v=1788363019",
+              "altText": "soundcore P31i earbuds",
+              "width": 3000,
+              "height": 3000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39832568594659",
+            "alt": "soundcore P31i - مواصفات ANC وإلغاء الضوضاء",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832568594659",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/soundcore-p31i-anc-spec_be080c2a-0dcc-40c0-ad24-efa35ba4d152.jpg?v=1788363510",
+              "altText": "soundcore P31i - مواصفات ANC وإلغاء الضوضاء",
+              "width": 1480,
+              "height": 920
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194336669923",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485502179",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "soundcore P31i Wireless Earbuds | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485534947",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop soundcore P31i wireless earbuds with clear sound, noise reduction, comfortable fit and long battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856067299",
+      "title": "soundcore P40i",
+      "handle": "soundcore-p40i",
+      "descriptionHtml": "<p>سماعات True Wireless مع Adaptive ANC، BassUp، شحن لاسلكي وعلبة تتحول إلى حامل هاتف.</p><ul>\n<li>12 ساعة تشغيل، حتى 60 ساعة مع العلبة</li>\n<li>Adaptive ANC</li>\n<li>درايفرات 11mm</li>\n<li>6 ميكروفونات مع AI</li>\n<li>IPX5</li>\n<li>شحن سريع: 10 دقائق تمنح حتى 5 ساعات</li>\n<li>HearID وMultipoint</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Wireless Earbuds",
+      "tags": [
+        "ANC",
+        "Anker",
+        "earbuds",
+        "soundcore",
+        "wireless-charging"
+      ],
+      "createdAt": "2026-09-02T15:31:23Z",
+      "updatedAt": "2026-09-06T12:00:26Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660489924835",
+            "title": "Black",
+            "sku": "P40I-BLK",
+            "barcode": null,
+            "price": "69.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200233187",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200233187",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660489957603",
+            "title": "Oat White",
+            "sku": "P40I-WHT",
+            "barcode": null,
+            "price": "69.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Oat White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200265955",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200265955",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660489990371",
+            "title": "Navy Blue",
+            "sku": "P40I-NAV",
+            "barcode": null,
+            "price": "69.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Navy Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200298723",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200298723",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490023139",
+            "title": "Purple",
+            "sku": "P40I-PUR",
+            "barcode": null,
+            "price": "69.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Purple"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200331491",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200331491",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832413274339",
+            "alt": "soundcore P40i earbuds",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832413274339",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/soundcore-p40i.png?v=1788363025",
+              "altText": "soundcore P40i earbuds",
+              "width": 2000,
+              "height": 2000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194336702691",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485567715",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "soundcore P40i Wireless Earbuds | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485600483",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop soundcore P40i wireless earbuds with adaptive noise cancellation, powerful sound and extended battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856100067",
+      "title": "soundcore Liberty 4 NC",
+      "handle": "soundcore-liberty-4-nc",
+      "descriptionHtml": "<p>سماعات True Wireless متقدمة مع Adaptive ANC 2.0 وتقنية LDAC وصوت Hi-Res.</p><ul>\n<li>إلغاء ضوضاء حتى 98.5%</li>\n<li>10/50 ساعة تشغيل</li>\n<li>درايفرات 11mm</li>\n<li>Bluetooth 5.3 وMultipoint</li>\n<li>6 ميكروفونات مع AI</li>\n<li>IPX4</li>\n<li>HearID 2.0</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Wireless Earbuds",
+      "tags": [
+        "ANC",
+        "Anker",
+        "earbuds",
+        "Hi-Res",
+        "LDAC",
+        "soundcore"
+      ],
+      "createdAt": "2026-09-02T15:31:28Z",
+      "updatedAt": "2026-09-06T12:00:25Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660490088675",
+            "title": "Velvet Black",
+            "sku": "L4NC-BLK",
+            "barcode": null,
+            "price": "99.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Velvet Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200397027",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200397027",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490121443",
+            "title": "Clear White",
+            "sku": "L4NC-WHT",
+            "barcode": null,
+            "price": "99.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Clear White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200429795",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200429795",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490154211",
+            "title": "Navy Blue",
+            "sku": "L4NC-NAV",
+            "barcode": null,
+            "price": "99.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Navy Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200462563",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200462563",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490186979",
+            "title": "Pastel Pink",
+            "sku": "L4NC-PNK",
+            "barcode": null,
+            "price": "99.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Pastel Pink"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200495331",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200495331",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490219747",
+            "title": "Light Blue",
+            "sku": "L4NC-BLU",
+            "barcode": null,
+            "price": "99.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Light Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200528099",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200528099",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832413667555",
+            "alt": "soundcore Liberty 4 NC earbuds",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832413667555",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/soundcore-liberty-4-nc.png?v=1788363030",
+              "altText": "soundcore Liberty 4 NC earbuds",
+              "width": 1600,
+              "height": 1600
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39832569381091",
+            "alt": "soundcore Liberty 4 NC - مواصفات إلغاء الضوضاء",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832569381091",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/soundcore-liberty-4-nc-spec_8bdbaf21-5109-42f3-ba4c-0d6f7fb07759.png?v=1788363515",
+              "altText": "soundcore Liberty 4 NC - مواصفات إلغاء الضوضاء",
+              "width": 520,
+              "height": 324
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194336571619",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485305571",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "soundcore Liberty 4 NC | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485338339",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop soundcore Liberty 4 NC wireless earbuds with active noise cancellation, long battery life and immersive sound."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856198371",
+      "title": "soundcore Liberty 5",
+      "handle": "soundcore-liberty-5",
+      "descriptionHtml": "<p>سماعات لاسلكية فاخرة مع Dolby Audio وAdaptive ANC 3.0 وصوت Hi-Res وLDAC.</p><ul>\n<li>12/48 ساعة بدون ANC، و8/32 ساعة مع ANC</li>\n<li>درايفرات 9.2mm Wool-Paper</li>\n<li>Bluetooth 5.4</li>\n<li>IP55</li>\n<li>6 ميكروفونات مع AI</li>\n<li>HearID 4.0 وMultipoint</li>\n<li>شحن 10 دقائق يمنح حتى 5 ساعات</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Wireless Earbuds",
+      "tags": [
+        "ANC",
+        "Anker",
+        "Dolby",
+        "earbuds",
+        "LDAC",
+        "soundcore"
+      ],
+      "createdAt": "2026-09-02T15:31:35Z",
+      "updatedAt": "2026-09-06T12:00:26Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660490580195",
+            "title": "Black",
+            "sku": "L5-BLK",
+            "barcode": null,
+            "price": "129.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200888547",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200888547",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490612963",
+            "title": "White",
+            "sku": "L5-WHT",
+            "barcode": null,
+            "price": "129.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200921315",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200921315",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490645731",
+            "title": "Navy Blue",
+            "sku": "L5-NAV",
+            "barcode": null,
+            "price": "129.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Navy Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200954083",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200954083",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490678499",
+            "title": "Apricot",
+            "sku": "L5-APR",
+            "barcode": null,
+            "price": "129.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Apricot"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832200986851",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832200986851",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832414519523",
+            "alt": "soundcore Liberty 5 earbuds",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832414519523",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/soundcore-liberty-5.jpg?v=1788363036",
+              "altText": "soundcore Liberty 5 earbuds",
+              "width": 3200,
+              "height": 3200
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194336604387",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485371107",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "soundcore Liberty 5 | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194485403875",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop soundcore Liberty 5 wireless earbuds with noise cancellation, high-quality sound and long battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856231139",
+      "title": "Anker 313 Power Bank (PowerCore 10K)",
+      "handle": "anker-313-power-bank-powercore-10k",
+      "descriptionHtml": "<h2>Anker 313 Power Bank (PowerCore 10K)</h2><p>A slim and portable 10,000mAh power bank designed for everyday use and travel.</p><ul>\n<li>Capacity: 10,000mAh</li>\n<li>PowerIQ and VoltageBoost charging technology</li>\n<li>USB-A output up to 12W</li>\n<li>USB-C and Micro-USB input</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Power Bank",
+      "tags": [
+        "10000mAh",
+        "Anker",
+        "portable",
+        "Power Bank",
+        "PowerCore"
+      ],
+      "createdAt": "2026-09-02T15:31:40Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660490711267",
+            "title": "Black",
+            "sku": "A1229-BLK",
+            "barcode": null,
+            "price": "21.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201019619",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201019619",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490744035",
+            "title": "White",
+            "sku": "A1229-WHT",
+            "barcode": null,
+            "price": "21.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201052387",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201052387",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832548868323",
+            "alt": "Anker 313 Power Bank PowerCore 10K - صورة المنتج الرسمية",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832548868323",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-313-powercore-10k-official_b272c581-fea8-4143-81c8-4b0e064fd1ff.png?v=1788363471",
+              "altText": "Anker 313 Power Bank PowerCore 10K - صورة المنتج الرسمية",
+              "width": 2400,
+              "height": 3001
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164272488675",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker 313 Power Bank PowerCore 10K | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164272521443",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker 313 Power Bank with 10,000mAh capacity, PowerIQ and VoltageBoost technology in a slim portable design."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328150243",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856263907",
+      "title": "Anker Zolo Power Bank (20K, 45W)",
+      "handle": "anker-zolo-power-bank-20k-45w",
+      "descriptionHtml": "<p>باور بانك Zolo حديث بسعة 20,000mAh وشحن سريع حتى 45W مع كابل USB-C مدمج.</p><ul>\n<li>20,000mAh</li>\n<li>45W Max عبر USB-C/الكابل المدمج</li>\n<li>USB-C + USB-A + كابل USB-C مدمج</li>\n<li>شحن حتى 3 أجهزة معاً</li>\n<li>شحن Pass-Through</li>\n<li>ActiveShield لمراقبة الحرارة</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Power Bank",
+      "tags": [
+        "20000mAh",
+        "45W",
+        "Anker",
+        "fast-charging",
+        "Power Bank",
+        "Zolo"
+      ],
+      "createdAt": "2026-09-02T15:31:46Z",
+      "updatedAt": "2026-09-06T11:59:42Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660490776803",
+            "title": "Black",
+            "sku": "A1689-BLK",
+            "barcode": null,
+            "price": "45.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201085155",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201085155",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490809571",
+            "title": "Blue",
+            "sku": "A1689-BLU",
+            "barcode": null,
+            "price": "45.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201117923",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201117923",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490842339",
+            "title": "Pink",
+            "sku": "A1689-PNK",
+            "barcode": null,
+            "price": "45.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Pink"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201150691",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201150691",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490875107",
+            "title": "White",
+            "sku": "A1689-WHT",
+            "barcode": null,
+            "price": "45.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201183459",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201183459",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832550080739",
+            "alt": "Anker Zolo Power Bank 20K 45W - صورة المنتج الرسمية",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832550080739",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-zolo-20k-45w-official_14000d03-8288-442c-9030-62515109e261.png?v=1788363474",
+              "altText": "Anker Zolo Power Bank 20K 45W - صورة المنتج الرسمية",
+              "width": 1800,
+              "height": 1800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194328641763",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397323491",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker Zolo Power Bank 20K 45W | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397356259",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker Zolo 20,000mAh power bank with 45W fast charging, built-in USB-C cable and support for up to 3 devices."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856296675",
+      "title": "Anker Nano Power Bank (10K, 45W, Built-In Retractable USB-C Cable)",
+      "handle": "anker-nano-power-bank-10k-45w-built-in-retractable-usb-c-cable",
+      "descriptionHtml": "<h2>Anker Nano Power Bank 10K 45W</h2><p>A compact 10,000mAh power bank with up to 45W USB-C output and a built-in retractable USB-C cable.</p><ul>\n<li>Capacity: 10,000mAh</li>\n<li>Maximum output: 45W</li>\n<li>Built-in retractable USB-C cable</li>\n<li>Portable design for everyday use</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Power Bank",
+      "tags": [
+        "10000mAh",
+        "45W",
+        "Anker",
+        "Nano",
+        "Power Bank",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:31:51Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660490907875",
+            "title": "Sprout Green",
+            "sku": "A1638-GRN",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Sprout Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201216227",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201216227",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490940643",
+            "title": "Aurora White",
+            "sku": "A1638-WHT",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Aurora White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201248995",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201248995",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660490973411",
+            "title": "Phantom Black",
+            "sku": "A1638-BLK",
+            "barcode": null,
+            "price": "49.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Phantom Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201281763",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201281763",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832554045667",
+            "alt": "Anker Nano Power Bank 10K 45W - صورة المنتج الرسمية",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832554045667",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-nano-10k-45w-official_47022dcc-a526-44d3-b1c6-1434c2b81a55.png?v=1788363477",
+              "altText": "Anker Nano Power Bank 10K 45W - صورة المنتج الرسمية",
+              "width": 1600,
+              "height": 1600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164272029923",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker Nano Power Bank 10K 45W | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164272062691",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker Nano 10K Power Bank with up to 45W USB-C output and built-in retractable USB-C cable."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328477923",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856362211",
+      "title": "Anker Power Bank (20K, 87W, Built-In USB-C Cable)",
+      "handle": "anker-power-bank-20k-87w-built-in-usb-c-cable",
+      "descriptionHtml": "<h2>Anker Power Bank 20K 87W</h2><p>A high-capacity 20,000mAh power bank with up to 87W output and a built-in USB-C cable, suitable for smartphones, tablets, and compatible laptops.</p><ul>\n<li>Capacity: 20,000mAh</li>\n<li>Maximum output: 87W</li>\n<li>Built-in USB-C cable</li>\n<li>Designed for fast charging</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Power Bank",
+      "tags": [
+        "20000mAh",
+        "87W",
+        "Anker",
+        "fast-charging",
+        "Power Bank",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:31:56Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660491038947",
+            "title": "Black",
+            "sku": "ANK-20K-87W-BLK",
+            "barcode": null,
+            "price": "59.98",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201347299",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201347299",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832555749603",
+            "alt": "Anker Power Bank 20K 87W - صورة المنتج الرسمية",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832555749603",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-20k-87w-official_46e67921-5d6d-4375-b51e-6d2553ae55f4.png?v=1788363482",
+              "altText": "Anker Power Bank 20K 87W - صورة المنتج الرسمية",
+              "width": 355,
+              "height": 355
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164271931619",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker Power Bank 20K 87W USB-C Cable | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164271964387",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker 20K Power Bank with up to 87W output and built-in USB-C cable for fast charging compatible mobile devices."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328510691",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856394979",
+      "title": "Anker Prime Power Bank (20K, 220W)",
+      "handle": "anker-prime-power-bank-20k-220w",
+      "descriptionHtml": "<h2>Anker Prime Power Bank 20K 220W</h2><p>A high-performance 20,100mAh power bank with up to 220W total output, designed to charge laptops, tablets, and smartphones.</p><ul>\n<li>Capacity: 20,100mAh / 72.36Wh</li>\n<li>Maximum total output: 220W</li>\n<li>High-power USB-C charging</li>\n<li>Titanium Gray finish</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Power Bank",
+      "tags": [
+        "20000mAh",
+        "220W",
+        "Anker",
+        "Power Bank",
+        "Prime",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:32:01Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660491071715",
+            "title": "Titanium Gray",
+            "sku": "A110B-GRY",
+            "barcode": null,
+            "price": "129.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Titanium Gray"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201380067",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201380067",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832416026851",
+            "alt": "Anker Prime 20K 220W power bank",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832416026851",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-prime-20k-220w.png?v=1788363050",
+              "altText": "Anker Prime 20K 220W power bank",
+              "width": 2000,
+              "height": 2000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164271669475",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker Prime Power Bank 20K 220W | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164271702243",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker Prime 20K Power Bank with 20,100mAh capacity and up to 220W total output for laptops, tablets and smartphones."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328576227",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650856526051",
+      "title": "Anker Laptop Power Bank (25K, 165W, Built-In and Retractable Cables)",
+      "handle": "anker-laptop-power-bank-25k-165w-built-in-and-retractable-cables",
+      "descriptionHtml": "<h2>Anker Laptop Power Bank 25K 165W</h2><p>A high-capacity power bank designed for laptops, tablets, and smartphones, with built-in retractable USB-C cables.</p><ul>\n<li>Capacity: 25,000mAh</li>\n<li>Maximum total output: 165W</li>\n<li>Built-in retractable USB-C cables</li>\n<li>Suitable for laptops and mobile devices</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Power Bank",
+      "tags": [
+        "165W",
+        "25000mAh",
+        "Anker",
+        "fast-charging",
+        "Laptop",
+        "Power Bank",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-02T15:32:06Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660491202787",
+            "title": "Space Black",
+            "sku": "A1695-BLK",
+            "barcode": null,
+            "price": "119.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Space Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832201511139",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832201511139",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39832556634339",
+            "alt": "Anker Laptop Power Bank 25K 165W - صورة المنتج الرسمية",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39832556634339",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-laptop-25k-165w-official_2f1fbd39-d51a-41c7-b186-07cbc28b8cfd.png?v=1788363489",
+              "altText": "Anker Laptop Power Bank 25K 165W - صورة المنتج الرسمية",
+              "width": 1600,
+              "height": 1600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164272259299",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker Laptop Power Bank 25K 165W | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164272292067",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker Laptop Power Bank with 25,000mAh capacity, up to 165W output and built-in retractable USB-C cables."
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328379619",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo5NjUwODU2NTI2MDUxLCJsYXN0X3ZhbHVlIjoiOTY1MDg1NjUyNjA1MSJ9"
+  }
+}
