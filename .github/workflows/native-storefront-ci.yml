@@ -13,9 +13,9 @@ permissions:
   contents: read
 
 jobs:
-  core-and-browser:
+  core:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,11 +33,32 @@ jobs:
           VITE_STOREFRONT_DATA_SOURCE: local
         run: bun run check
 
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - desktop
+          - mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
       - name: Install Playwright Chromium
         run: bunx playwright install --with-deps chromium
 
-      - name: Storefront browser E2E
-        run: bun run test:e2e
+      - name: Storefront browser E2E (${{ matrix.project }})
+        run: bun run test:e2e -- --project=${{ matrix.project }}
 
   supabase-only:
     runs-on: ubuntu-latest
