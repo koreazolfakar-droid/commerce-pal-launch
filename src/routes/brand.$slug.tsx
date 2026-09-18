@@ -34,11 +34,12 @@ export const Route = createFileRoute("/brand/$slug")({
     for (const product of [...indexedProducts, ...vendorProducts]) {
       uniqueProducts.set(product.node.id, product);
     }
-    const brandCatalog = buildCatalogIndex([...uniqueProducts.values()]);
-
+    // Route loader data must stay transport-safe. CatalogIndex contains derived
+    // Maps and Lucide React icon components, so serialize only the source products
+    // and rebuild the index inside the route component.
     return {
       label: brand.label,
-      catalog: brandCatalog,
+      products: [...uniqueProducts.values()],
     };
   },
   head: ({ params, loaderData }) => {
@@ -52,7 +53,7 @@ export const Route = createFileRoute("/brand/$slug")({
     }
     const label = loaderData.label ?? params.slug.replace(/-/g, " ");
     const title = `${label} Products in Lebanon | ${STORE_NAME}`;
-    const description = `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and secure Shopify checkout.`;
+    const description = `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and secure Space Call ordering.`;
     const path = `/brand/${params.slug}`;
     return {
       meta: [
@@ -70,7 +71,7 @@ export const Route = createFileRoute("/brand/$slug")({
             { name: label, path },
           ]),
         ),
-        jsonLd(itemListJsonLd(`${label} products`, loaderData.catalog.products)),
+        jsonLd(itemListJsonLd(`${label} products`, loaderData.products)),
       ],
     };
   },
@@ -80,8 +81,8 @@ export const Route = createFileRoute("/brand/$slug")({
 function BrandPage() {
   const { language } = useLanguage();
   const { slug } = Route.useParams();
-  const { label: brandLabel, catalog: loaderCatalog } = Route.useLoaderData();
-  const catalog = loaderCatalog as CatalogIndex;
+  const { label: brandLabel, products: loaderProducts } = Route.useLoaderData();
+  const catalog = buildCatalogIndex(loaderProducts);
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
@@ -106,8 +107,8 @@ function BrandPage() {
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
           {language === "ar"
-            ? `تصفح منتجات ${brandLabel} المتوفرة لدى Space Call، بما في ذلك الهواتف والأجهزة والإكسسوارات، مع مخزون مباشر وأسعار واضحة وإتمام شراء آمن عبر Shopify.`
-            : `Browse ${brandLabel} products available at Space Call, including phones, devices and accessories, with live availability, clear pricing and secure Shopify checkout.`}
+            ? `تصفح منتجات ${brandLabel} المتوفرة لدى Space Call، بما في ذلك الهواتف والأجهزة والإكسسوارات، مع مخزون مباشر وأسعار واضحة وطلب آمن عبر Space Call.`
+            : `Browse ${brandLabel} products available at Space Call, including phones, devices and accessories, with live availability, clear pricing and secure Space Call ordering.`}
         </p>
       </div>
       {categories.length ? (
