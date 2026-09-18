@@ -1,5 +1,6 @@
 import { ProductRail } from "@/components/ProductRail";
 import { useLanguage } from "@/lib/i18n";
+import { useHydrated } from "@/hooks/useHydrated";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -109,6 +110,7 @@ export const Route = createFileRoute("/product/$handle")({
 
 function ProductPage() {
   const { t, language } = useLanguage();
+  const hydrated = useHydrated();
   const { product } = Route.useLoaderData() as { product: ShopifyProduct };
   const node = product.node;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
@@ -405,7 +407,7 @@ function ProductPage() {
                 <Button
                   size="lg"
                   onClick={() => handleAddToCart()}
-                  disabled={busy || !inStock}
+                  disabled={!hydrated || busy || !inStock}
                   className="press flex-1 rounded-full"
                 >
                   {pending === "cart" ? (
@@ -419,7 +421,7 @@ function ProductPage() {
                   size="lg"
                   variant="secondary"
                   onClick={() => handleAddToCart(true)}
-                  disabled={busy || !inStock}
+                  disabled={!hydrated || busy || !inStock}
                   className="press rounded-full"
                 >
                   {pending === "buy" ? (
@@ -639,7 +641,7 @@ function ProductPage() {
           </button>
           <Button
             onClick={() => handleAddToCart()}
-            disabled={busy || !inStock}
+            disabled={!hydrated || busy || !inStock}
             className="press h-11 flex-1 rounded-full text-sm font-bold"
           >
             {pending === "cart" ? (
