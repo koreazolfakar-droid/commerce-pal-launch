@@ -15,21 +15,15 @@ test("public storefront queries use the provider-neutral facade", async () => {
   assert.match(queries, /fetchBrandVendors/);
 });
 
-test("legacy CMS cannot become a second storefront runtime source of truth", async () => {
+test("dashboard CMS is exposed only through the curated public gateway", async () => {
   const [cms, cmsQuery] = await Promise.all([
     read("src/lib/cms.ts"),
     read("src/lib/cmsQuery.ts"),
   ]);
 
-  assert.match(
-    cms,
-    /export async function fetchCmsSnapshot\(\): Promise<CmsSnapshot> \{\s*return EMPTY_CMS;\s*\}/,
-  );
-  assert.doesNotMatch(
-    cms,
-    /createServerFn|functions\/v1\/public-cms|loadCmsSnapshot\s*\(|cmsSnapshotFn\s*\(/,
-  );
-  assert.match(cmsQuery, /queryFn: async \(\) => EMPTY_CMS/);
-  assert.match(cmsQuery, /staleTime: Number\.POSITIVE_INFINITY/);
-  assert.doesNotMatch(cmsQuery, /fetchCmsSnapshot|refetchOnMount: "always"/);
+  assert.match(cms, /functions\/v1\/public-cms/);
+  assert.match(cms, /fetchCmsSnapshot/);
+  assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
+  assert.match(cmsQuery, /placeholderData: EMPTY_CMS/);
+  assert.doesNotMatch(cms, /SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
 });
