@@ -51,6 +51,7 @@ test("no-Shopify staging provider is isolated behind the storefront facade", asy
   const legacy = withoutComments(legacySource);
   const fallbackProvider = withoutComments(await source("src/lib/localStorefrontProvider.ts"));
   const nativeProvider = withoutComments(await source("src/lib/supabaseStorefrontProvider.ts"));
+  const supabaseClient = withoutComments(await source("src/integrations/supabase/client.ts"));
   const facade = withoutComments(await source("src/lib/storefrontFacade.ts"));
   const queries = await source("src/lib/queries.ts");
 
@@ -65,6 +66,10 @@ test("no-Shopify staging provider is isolated behind the storefront facade", asy
   assert.doesNotMatch(nativeProvider, /published_at\.is\.null/);
   assert.match(nativeProvider, /fetchCmsSnapshot/);
   assert.doesNotMatch(nativeProvider, /SUPABASE_SERVICE_ROLE_KEY|sb_secret_|service_role/);
+  assert.match(supabaseClient, /isAllowedBrowserSupabaseKey/);
+  assert.match(supabaseClient, /startsWith\("sb_publishable_"\)/);
+  assert.match(supabaseClient, /startsWith\("eyJ"\)/);
+  assert.doesNotMatch(supabaseClient, /SUPABASE_SERVICE_ROLE_KEY|sb_secret_|service_role/);
   assert.match(facade, /import \* as localProvider from "\.\/localStorefrontProvider"/);
   assert.match(facade, /import \* as supabaseProvider from "\.\/supabaseStorefrontProvider"/);
   assert.match(facade, /hasPublishedProducts/);
