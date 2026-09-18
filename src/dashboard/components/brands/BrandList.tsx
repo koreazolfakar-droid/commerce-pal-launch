@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
-import type { CatalogBrand } from "@/dashboard/mock/brands";
+import type { CatalogBrand } from "@/dashboard/data/brands";
 
 export default function BrandList({
   brands,
