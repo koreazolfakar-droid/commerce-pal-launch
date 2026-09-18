@@ -25,7 +25,7 @@ import {
 import { INFO_PAGES, POLICY_PAGES, POLICY_LINKS, type InfoPageName } from "@/lib/infoPages";
 import { useLanguage, type Language } from "@/lib/i18n";
 import { shopPoliciesQueryOptions } from "@/lib/queries";
-import { SHOPIFY_ACCOUNT_URL, STORE_NAME } from "@/lib/storeConfig";
+import { STORE_NAME } from "@/lib/storeConfig";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 
 type LocalizedText = { en: string; ar: string };
@@ -270,8 +270,8 @@ const PAGE_GUIDES: Partial<Record<InfoPageName, PageGuide>> = {
       },
     ],
     note: {
-      en: "If a full Shopify privacy policy is published, it appears below and is the more detailed store policy.",
-      ar: "إذا كانت سياسة الخصوصية الكاملة منشورة عبر Shopify فستظهر أدناه وتكون المرجع الأكثر تفصيلاً للمتجر.",
+      en: "If a full Space Call privacy policy is published, it appears below as the more detailed store policy.",
+      ar: "إذا كانت سياسة الخصوصية الكاملة منشورة عبر نظام Space Call فستظهر أدناه وتكون المرجع الأكثر تفصيلاً للمتجر.",
     },
   },
   terms: {
@@ -306,8 +306,8 @@ const PAGE_GUIDES: Partial<Record<InfoPageName, PageGuide>> = {
       },
     ],
     note: {
-      en: "If Shopify returns a published Terms of Service document, it appears below as the detailed store terms.",
-      ar: "إذا كانت شروط الخدمة منشورة عبر Shopify فستظهر أدناه باعتبارها الشروط التفصيلية للمتجر.",
+      en: "If Space Call publishes a Terms of Service document, it appears below as the detailed store terms.",
+      ar: "إذا كانت شروط الخدمة منشورة عبر نظام Space Call فستظهر أدناه باعتبارها الشروط التفصيلية للمتجر.",
     },
   },
 };
@@ -448,16 +448,16 @@ export function InfoPage({ page }: { page: InfoPageName }) {
               </p>
               <p className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm leading-6 text-muted-foreground">
                 {language === "ar"
-                  ? "عند المتابعة سيتم تحويلك إلى صفحة حساب Shopify الآمنة لإدارة الطلبات. هذا التحويل تابع لمزوّد الدفع والمتجر ولا يغيّر بيانات طلبك."
-                  : "When you continue, you’ll be redirected to the secure Shopify account page to manage your orders. This hand-off is provided by Shopify and does not change your order data."}
+                  ? "يتم نقل حسابات الطلبات إلى نظام Space Call الخاص. لمتابعة حالة طلب حالي أو سجل الطلبات، تواصل مباشرةً مع دعم Space Call."
+                  : "Space Call order accounts are being moved to the native store system. For current order status or order history, contact Space Call support directly."}
               </p>
               <a
-                href={SHOPIFY_ACCOUNT_URL}
+                href={generalWhatsAppUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold hover:bg-accent"
               >
-                {t("openAccount")}
+                {t("contactWhatsApp")}
                 <ExternalLink className="h-4 w-4" />
               </a>
             </section>
@@ -505,8 +505,8 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
                   {language === "ar"
-                    ? "عندما تكون سياسة Shopify منشورة، يتم عرضها هنا باعتبارها المرجع التفصيلي لهذه الصفحة."
-                    : "When Shopify provides a published policy, it is shown here as the detailed reference for this page."}
+                    ? "عندما تكون سياسة Space Call منشورة، يتم عرضها هنا باعتبارها المرجع التفصيلي لهذه الصفحة."
+                    : "When Space Call provides a published policy, it is shown here as the detailed reference for this page."}
                 </p>
               </div>
             </div>
