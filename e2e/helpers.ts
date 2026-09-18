@@ -12,11 +12,17 @@ function cartButton(page: Page, count: number) {
 export async function addLocalProduct(page: Page) {
   await page.goto("/product/iphone-18-pro");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("iPhone 18 Pro");
-  await page
+
+  const addButton = page
     .getByRole("button", { name: /^Add to cart/ })
     .filter({ visible: true })
-    .first()
-    .click();
+    .first();
+
+  // Product purchase controls intentionally stay disabled until persisted
+  // browser state has hydrated. Wait for the real user-ready state instead
+  // of racing the hydration gate in E2E.
+  await expect(addButton).toBeEnabled();
+  await addButton.click();
 
   await expect(cartButton(page, 1)).toBeVisible();
 }
@@ -29,6 +35,7 @@ export async function openCart(page: Page) {
     .filter({ visible: true })
     .first();
 
+  await expect(button).toBeVisible();
   await button.click();
 
   const drawer = page.getByRole("dialog", { name: "Your bag" });
