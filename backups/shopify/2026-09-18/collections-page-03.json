@@ -1,0 +1,417 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 3,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/476230254819",
+      "title": "Laptop - ASUS",
+      "handle": "laptop-asus",
+      "descriptionHtml": "<p>مجموعة لابتوبات ASUS المتوفرة في المتجر.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-06T06:07:33Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": null,
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "ASUS"
+          }
+        ]
+      },
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476230320355",
+      "title": "Smartphones",
+      "handle": "smartphones",
+      "descriptionHtml": "<p>جميع الهواتف الذكية المتوفرة في المتجر من مختلف العلامات التجارية.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-14T17:30:41Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522448099",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/category-smartphones-space-call.jpg?v=1789407041",
+        "altText": "Smartphones category icon",
+        "width": 1536,
+        "height": 1536
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "TYPE",
+            "relation": "EQUALS",
+            "condition": "Smartphone"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650881691875"
+          },
+          {
+            "id": "gid://shopify/Product/9651061260515"
+          },
+          {
+            "id": "gid://shopify/Product/9651061358819"
+          },
+          {
+            "id": "gid://shopify/Product/9650881757411"
+          },
+          {
+            "id": "gid://shopify/Product/9656430723299"
+          },
+          {
+            "id": "gid://shopify/Product/9651061227747"
+          },
+          {
+            "id": "gid://shopify/Product/9651057787107"
+          },
+          {
+            "id": "gid://shopify/Product/9651061391587"
+          },
+          {
+            "id": "gid://shopify/Product/9656430690531"
+          },
+          {
+            "id": "gid://shopify/Product/9650881822947"
+          },
+          {
+            "id": "gid://shopify/Product/9650882052323"
+          },
+          {
+            "id": "gid://shopify/Product/9656430657763"
+          },
+          {
+            "id": "gid://shopify/Product/9656430624995"
+          },
+          {
+            "id": "gid://shopify/Product/9650881888483"
+          },
+          {
+            "id": "gid://shopify/Product/9651061424355"
+          },
+          {
+            "id": "gid://shopify/Product/9650881954019"
+          },
+          {
+            "id": "gid://shopify/Product/9651061129443"
+          },
+          {
+            "id": "gid://shopify/Product/9650838962403"
+          },
+          {
+            "id": "gid://shopify/Product/9651061162211"
+          },
+          {
+            "id": "gid://shopify/Product/9650839322851"
+          },
+          {
+            "id": "gid://shopify/Product/9656430395619"
+          },
+          {
+            "id": "gid://shopify/Product/9652545093859"
+          },
+          {
+            "id": "gid://shopify/Product/9656430330083"
+          },
+          {
+            "id": "gid://shopify/Product/9656430592227"
+          },
+          {
+            "id": "gid://shopify/Product/9650839159011"
+          },
+          {
+            "id": "gid://shopify/Product/9651058770147"
+          },
+          {
+            "id": "gid://shopify/Product/9656430493923"
+          },
+          {
+            "id": "gid://shopify/Product/9655493886179"
+          },
+          {
+            "id": "gid://shopify/Product/9656430264547"
+          },
+          {
+            "id": "gid://shopify/Product/9650881986787"
+          },
+          {
+            "id": "gid://shopify/Product/9656430297315"
+          },
+          {
+            "id": "gid://shopify/Product/9651058082019"
+          },
+          {
+            "id": "gid://shopify/Product/9651060179171"
+          },
+          {
+            "id": "gid://shopify/Product/9650961219811"
+          },
+          {
+            "id": "gid://shopify/Product/9650882085091"
+          },
+          {
+            "id": "gid://shopify/Product/9650882150627"
+          },
+          {
+            "id": "gid://shopify/Product/9650959286499"
+          },
+          {
+            "id": "gid://shopify/Product/9656430231779"
+          },
+          {
+            "id": "gid://shopify/Product/9650958860515"
+          },
+          {
+            "id": "gid://shopify/Product/9651060343011"
+          },
+          {
+            "id": "gid://shopify/Product/9650959909091"
+          },
+          {
+            "id": "gid://shopify/Product/9656430756067"
+          },
+          {
+            "id": "gid://shopify/Product/9650882183395"
+          },
+          {
+            "id": "gid://shopify/Product/9651060670691"
+          },
+          {
+            "id": "gid://shopify/Product/9650957156579"
+          },
+          {
+            "id": "gid://shopify/Product/9651059032291"
+          },
+          {
+            "id": "gid://shopify/Product/9597660659939"
+          },
+          {
+            "id": "gid://shopify/Product/9650882216163"
+          },
+          {
+            "id": "gid://shopify/Product/9650957615331"
+          },
+          {
+            "id": "gid://shopify/Product/9650960335075"
+          },
+          {
+            "id": "gid://shopify/Product/9650960892131"
+          },
+          {
+            "id": "gid://shopify/Product/9666334752995"
+          },
+          {
+            "id": "gid://shopify/Product/9650877792483"
+          },
+          {
+            "id": "gid://shopify/Product/9650957975779"
+          },
+          {
+            "id": "gid://shopify/Product/9666334818531"
+          },
+          {
+            "id": "gid://shopify/Product/9600445776099"
+          },
+          {
+            "id": "gid://shopify/Product/9651060539619"
+          },
+          {
+            "id": "gid://shopify/Product/9650958467299"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476230353123",
+      "title": "Tablets",
+      "handle": "tablets",
+      "descriptionHtml": "<p>الأجهزة اللوحية المتوفرة في المتجر.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-13T09:39:53Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522480867",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/samsung-galaxy-tab-s11-ultra-gray-1-638949165701731361.jpg?v=1789292393",
+        "altText": "Samsung Galaxy Tab S11 Ultra tablet",
+        "width": 1020,
+        "height": 680
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "TYPE",
+            "relation": "EQUALS",
+            "condition": "Tablet"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9654432596195"
+          },
+          {
+            "id": "gid://shopify/Product/9654432694499"
+          },
+          {
+            "id": "gid://shopify/Product/9655578001635"
+          },
+          {
+            "id": "gid://shopify/Product/9654432497891"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476230385891",
+      "title": "Power Banks",
+      "handle": "power-banks",
+      "descriptionHtml": "<p>جميع الباور بانك المتوفرة في المتجر.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-13T09:40:23Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522546403",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/anker-prime-20k-220w.png?v=1789292423",
+        "altText": "Anker Prime 20K 220W power bank",
+        "width": 2000,
+        "height": 2000
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "TYPE",
+            "relation": "EQUALS",
+            "condition": "Power Bank"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650856231139"
+          },
+          {
+            "id": "gid://shopify/Product/9600697893091"
+          },
+          {
+            "id": "gid://shopify/Product/9652287242467"
+          },
+          {
+            "id": "gid://shopify/Product/9650856263907"
+          },
+          {
+            "id": "gid://shopify/Product/9650856296675"
+          },
+          {
+            "id": "gid://shopify/Product/9650856362211"
+          },
+          {
+            "id": "gid://shopify/Product/9650856526051"
+          },
+          {
+            "id": "gid://shopify/Product/9650856394979"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476230418659",
+      "title": "Wireless Earbuds",
+      "handle": "wireless-earbuds",
+      "descriptionHtml": "<p>جميع سماعات الأذن اللاسلكية المتوفرة في المتجر.</p>",
+      "sortOrder": "PRICE_ASC",
+      "updatedAt": "2026-09-13T09:40:30Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730522579171",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/soundcore-liberty-4-nc-white-clean.jpg?v=1789292430",
+        "altText": "Soundcore Liberty 5 wireless earbuds",
+        "width": 3200,
+        "height": 3200
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "TYPE",
+            "relation": "EQUALS",
+            "condition": "Wireless Earbuds"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9650856001763"
+          },
+          {
+            "id": "gid://shopify/Product/9650856034531"
+          },
+          {
+            "id": "gid://shopify/Product/9600708378851"
+          },
+          {
+            "id": "gid://shopify/Product/9650856067299"
+          },
+          {
+            "id": "gid://shopify/Product/9650856100067"
+          },
+          {
+            "id": "gid://shopify/Product/9650856198371"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzYyMzA0MTg2NTksImxhc3RfdmFsdWUiOiI0NzYyMzA0MTg2NTkifQ=="
+  }
+}
