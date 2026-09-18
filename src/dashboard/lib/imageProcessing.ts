@@ -53,19 +53,48 @@ function webpName(name: string) {
   return `${stem || "product-image"}.webp`;
 }
 
-export async function convertProductImageToWebp(
-  source: File,
-  resolution: ProductImageResolution,
-) {
+export type ProductImageSourceInfo = {
+  name: string;
+  mimeType: string;
+  width: number;
+  height: number;
+  bytes: number;
+};
+
+export type ProductImageConversionResult = {
+  file: File;
+  source: ProductImageSourceInfo;
+  output: ProductImageSourceInfo;
+};
+
+export async function inspectProductImageSource(source: File): Promise<ProductImageSourceInfo> {
   const allowed = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
   if (!allowed.has(source.type)) throw new Error("Use JPG, PNG, WebP or AVIF images.");
   if (source.size <= 0) throw new Error("The selected image is empty.");
   if (source.size > MAX_SOURCE_BYTES) throw new Error("Image must be 20 MB or smaller.");
 
   const image = await loadImage(source);
-  const sourceWidth = image.naturalWidth || image.width;
-  const sourceHeight = image.naturalHeight || image.height;
-  if (!sourceWidth || !sourceHeight) throw new Error("Invalid image dimensions.");
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
+  if (!width || !height) throw new Error("Invalid image dimensions.");
+
+  return {
+    name: source.name,
+    mimeType: source.type,
+    width,
+    height,
+    bytes: source.size,
+  };
+}
+
+export async function convertProductImageToWebp(
+  source: File,
+  resolution: ProductImageResolution,
+): Promise<ProductImageConversionResult> {
+  const sourceInfo = await inspectProductImageSource(source);
+  const sourceWidth = sourceInfo.width;
+  const sourceHeight = sourceInfo.height;
+  const image = await loadImage(source);
 
   const requested =
     resolution === "original" ? Math.max(sourceWidth, sourceHeight) : Number(resolution);
@@ -89,8 +118,20 @@ export async function convertProductImageToWebp(
   );
   if (!blob) throw new Error("WebP conversion failed.");
 
-  return new File([blob], webpName(source.name), {
+  const file = new File([blob], webpName(source.name), {
     type: "image/webp",
     lastModified: Date.now(),
   });
+
+  return {
+    file,
+    source: sourceInfo,
+    output: {
+      name: file.name,
+      mimeType: file.type,
+      width,
+      height,
+      bytes: file.size,
+    },
+  };
 }
