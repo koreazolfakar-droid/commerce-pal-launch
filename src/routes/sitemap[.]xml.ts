@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-import { fetchCatalogProducts, fetchCollections } from "@/lib/nativeStore";
+import { fetchCatalogProducts, fetchCollections } from "@/lib/storefrontData";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 import { absoluteUrl } from "@/lib/seo";
 import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";
