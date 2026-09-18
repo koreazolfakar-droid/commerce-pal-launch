@@ -67,19 +67,19 @@ test("no-Shopify staging adapter is local-only and keeps brand queries short-liv
   assert.doesNotMatch(queries, /brand-logo-cache-v4/);
 });
 
-test("homepage catalog survives transient Shopify failures across repeated refreshes", async () => {
+test("homepage catalog survives transient storefront failures across repeated refreshes", async () => {
   const queries = await source("src/lib/queries.ts");
 
   assert.match(queries, /CATALOG_REFRESH_FALLBACK_TTL_MS = 5 \* 60 \* 1000/);
   assert.match(queries, /CATALOG_REFRESH_FALLBACK_STORAGE_KEY = "space-call-catalog-refresh-fallback-v1"/);
   assert.match(queries, /window\.sessionStorage\.setItem\(CATALOG_REFRESH_FALLBACK_STORAGE_KEY/);
   assert.match(queries, /window\.sessionStorage\.getItem\(CATALOG_REFRESH_FALLBACK_STORAGE_KEY/);
-  assert.match(queries, /Shopify catalog refresh failed; keeping the last successful catalog for this tab/);
+  assert.match(queries, /Storefront catalog refresh failed; keeping the last successful catalog for this tab/);
   assert.match(queries, /allowing React Query to retry instead of caching an empty catalog/);
   assert.doesNotMatch(queries, /return buildCatalogIndex\(\[\]\)/);
-  assert.match(queries, /SHOPIFY_QUERY_RETRY_COUNT = 3/);
-  assert.match(queries, /retry: SHOPIFY_QUERY_RETRY_COUNT/);
-  assert.match(queries, /retryDelay: shopifyRetryDelay/);
+  assert.match(queries, /STOREFRONT_QUERY_RETRY_COUNT = 3/);
+  assert.match(queries, /retry: STOREFRONT_QUERY_RETRY_COUNT/);
+  assert.match(queries, /retryDelay: storefrontRetryDelay/);
 });
 
 test("shared footer stays lightweight and hides technical build data", async () => {
@@ -106,17 +106,15 @@ test("HTML documents cannot remain stale across deploys", async () => {
   assert.doesNotMatch(server, /stale-while-revalidate|s-maxage=/);
 });
 
-test("account links stay branded before the Shopify hand-off", async () => {
+test("account support stays Space Call owned with no Shopify hand-off", async () => {
   const config = await source("src/lib/storeConfig.ts");
   const infoPage = await source("src/components/InfoPage.tsx");
 
   assert.match(config, /SHOP_ACCOUNT_URL = `\$\{SITE_URL\}\/help#account-orders`/);
-  assert.match(
-    config,
-    /SHOPIFY_ACCOUNT_URL = `https:\/\/\$\{STORE_CONFIG\.shopifyDomain\}\/account`/,
-  );
+  assert.doesNotMatch(config, /SHOPIFY_|shopifyDomain|shopifyApiVersion|myshopify/);
   assert.match(infoPage, /id="account-orders"/);
-  assert.match(infoPage, /secure Shopify account page/);
+  assert.match(infoPage, /generalWhatsAppUrl\(\)/);
+  assert.doesNotMatch(infoPage, /SHOPIFY_ACCOUNT_URL|secure Shopify account page|myshopify/);
 });
 
 test("homepage hero is Shopify-first, inert, high-resolution, and refresh-resilient", async () => {
