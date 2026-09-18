@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { convertProductImageToWebp, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -414,4 +415,210 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
 
   invalidateNativeStoreCache();
   return { id: productId, handle, variantManagedSeparately, brandName: brand?.name ?? "" };
+}
+
+
+export type DashboardProductImage = {
+  id: string;
+  productId: string;
+  url: string;
+  altText: string;
+  sortOrder: number;
+  isPrimary: boolean;
+  createdAt: string;
+};
+
+const PRODUCT_IMAGE_BUCKET = "cms-media";
+const PRODUCT_IMAGE_PREFIX = "products";
+const MAX_PRODUCT_IMAGE_BYTES = 10 * 1024 * 1024;
+
+function mapProductImage(row: ImageRow): DashboardProductImage {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    url: row.url,
+    altText: row.alt_text ?? "",
+    sortOrder: row.sort_order,
+    isPrimary: row.is_primary,
+    createdAt: row.created_at,
+  };
+}
+
+export async function listDashboardProductImages(productId: string): Promise<DashboardProductImage[]> {
+  await requireDashboardRole();
+  const { data, error } = await supabase
+    .from("store_product_images")
+    .select("*")
+    .eq("product_id", productId)
+    .order("is_primary", { ascending: false })
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  throwIfError(error, "Loading product images failed");
+  return ((data ?? []) as ImageRow[]).map(mapProductImage);
+}
+
+function productStoragePathFromUrl(url: string) {
+  const marker = `/storage/v1/object/public/${PRODUCT_IMAGE_BUCKET}/`;
+  const index = url.indexOf(marker);
+  if (index < 0) return null;
+  const path = decodeURIComponent(url.slice(index + marker.length));
+  return path.startsWith(`${PRODUCT_IMAGE_PREFIX}/`) ? path : null;
+}
+
+async function uploadProductImageFile(
+  productId: string,
+  source: File,
+  resolution: ProductImageResolution,
+) {
+  const file = await convertProductImageToWebp(source, resolution);
+  if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
+    throw new Error("Converted product image must be 10 MB or smaller.");
+  }
+
+  const unique =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const objectPath = `${PRODUCT_IMAGE_PREFIX}/${productId}/${unique}.webp`;
+
+  const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).upload(objectPath, file, {
+    cacheControl: "31536000",
+    upsert: false,
+    contentType: "image/webp",
+  });
+  throwIfError(error, "Uploading product image failed");
+
+  const { data } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(objectPath);
+  return { url: data.publicUrl, objectPath };
+}
+
+async function removeOwnedProductImageFile(url: string) {
+  const objectPath = productStoragePathFromUrl(url);
+  if (!objectPath) return;
+  const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([objectPath]);
+  throwIfError(error, "Deleting product image file failed");
+}
+
+export async function uploadDashboardProductImage(
+  productId: string,
+  source: File,
+  resolution: ProductImageResolution,
+  altText = "",
+): Promise<DashboardProductImage[]> {
+  await requireDashboardRole();
+
+  const current = await listDashboardProductImages(productId);
+  const nextOrder = current.reduce((max, image) => Math.max(max, image.sortOrder), -1) + 1;
+  const shouldBePrimary = !current.some((image) => image.isPrimary);
+  const uploaded = await uploadProductImageFile(productId, source, resolution);
+
+  try {
+    const { error } = await supabase.from("store_product_images").insert({
+      product_id: productId,
+      url: uploaded.url,
+      alt_text: altText.trim() || source.name.replace(/\.[^.]+$/, ""),
+      sort_order: nextOrder,
+      is_primary: shouldBePrimary,
+    });
+    throwIfError(error, "Saving product image failed");
+  } catch (error) {
+    await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([uploaded.objectPath]);
+    throw error;
+  }
+
+  invalidateNativeStoreCache();
+  return listDashboardProductImages(productId);
+}
+
+export async function replaceDashboardProductImage(
+  image: DashboardProductImage,
+  source: File,
+  resolution: ProductImageResolution,
+): Promise<DashboardProductImage[]> {
+  await requireDashboardRole();
+  const uploaded = await uploadProductImageFile(image.productId, source, resolution);
+
+  try {
+    const { error } = await supabase
+      .from("store_product_images")
+      .update({
+        url: uploaded.url,
+        alt_text: source.name.replace(/\.[^.]+$/, ""),
+      })
+      .eq("id", image.id)
+      .eq("product_id", image.productId);
+    throwIfError(error, "Replacing product image failed");
+  } catch (error) {
+    await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([uploaded.objectPath]);
+    throw error;
+  }
+
+  await removeOwnedProductImageFile(image.url).catch(() => undefined);
+  invalidateNativeStoreCache();
+  return listDashboardProductImages(image.productId);
+}
+
+export async function setDashboardPrimaryProductImage(
+  productId: string,
+  imageId: string,
+): Promise<DashboardProductImage[]> {
+  await requireDashboardRole();
+
+  const { error: resetError } = await supabase
+    .from("store_product_images")
+    .update({ is_primary: false })
+    .eq("product_id", productId);
+  throwIfError(resetError, "Resetting primary product image failed");
+
+  const { error } = await supabase
+    .from("store_product_images")
+    .update({ is_primary: true })
+    .eq("id", imageId)
+    .eq("product_id", productId);
+  throwIfError(error, "Setting primary product image failed");
+
+  invalidateNativeStoreCache();
+  return listDashboardProductImages(productId);
+}
+
+export async function deleteDashboardProductImage(
+  image: DashboardProductImage,
+): Promise<DashboardProductImage[]> {
+  await requireDashboardRole();
+
+  const { error } = await supabase
+    .from("store_product_images")
+    .delete()
+    .eq("id", image.id)
+    .eq("product_id", image.productId);
+  throwIfError(error, "Deleting product image failed");
+
+  await removeOwnedProductImageFile(image.url).catch(() => undefined);
+
+  const remaining = await listDashboardProductImages(image.productId);
+  if (image.isPrimary && remaining[0]) {
+    return setDashboardPrimaryProductImage(image.productId, remaining[0].id);
+  }
+
+  invalidateNativeStoreCache();
+  return remaining;
+}
+
+export async function reorderDashboardProductImages(
+  productId: string,
+  orderedIds: string[],
+): Promise<DashboardProductImage[]> {
+  await requireDashboardRole();
+
+  for (let index = 0; index < orderedIds.length; index += 1) {
+    const { error } = await supabase
+      .from("store_product_images")
+      .update({ sort_order: index })
+      .eq("id", orderedIds[index])
+      .eq("product_id", productId);
+    throwIfError(error, "Reordering product images failed");
+  }
+
+  invalidateNativeStoreCache();
+  return listDashboardProductImages(productId);
 }
