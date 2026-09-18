@@ -8,8 +8,12 @@ import { brokeredPreviewStorage } from "./previewAuthStorage";
 const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
 
-function isNewSupabaseApiKey(value: string): boolean {
-  return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
+function isPublishableSupabaseApiKey(value: string): boolean {
+  return value.startsWith("sb_publishable_");
+}
+
+function isAllowedBrowserSupabaseKey(value: string): boolean {
+  return value.startsWith("sb_publishable_") || value.startsWith("eyJ");
 }
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
@@ -24,7 +28,7 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
     // New Supabase API keys are opaque strings, not bearer JWTs.
     if (
-      isNewSupabaseApiKey(supabaseKey) &&
+      isPublishableSupabaseApiKey(supabaseKey) &&
       headers.get("Authorization") === `Bearer ${supabaseKey}`
     ) {
       headers.delete("Authorization");
@@ -39,13 +43,17 @@ function getSupabaseEnv() {
   const viteEnv = import.meta.env as Record<string, string | undefined>;
   const nodeEnv = typeof process !== "undefined" ? process.env : undefined;
 
-  return {
-    url: viteEnv["VITE_SUPABASE_URL"] || nodeEnv?.["SUPABASE_URL"] || DEFAULT_SUPABASE_URL,
-    publishableKey:
-      viteEnv["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-      nodeEnv?.["SUPABASE_PUBLISHABLE_KEY"] ||
-      DEFAULT_SUPABASE_PUBLISHABLE_KEY,
-  };
+  const url = viteEnv["VITE_SUPABASE_URL"] || nodeEnv?.["SUPABASE_URL"] || DEFAULT_SUPABASE_URL;
+  const publishableKey =
+    viteEnv["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    nodeEnv?.["SUPABASE_PUBLISHABLE_KEY"] ||
+    DEFAULT_SUPABASE_PUBLISHABLE_KEY;
+
+  if (publishableKey && !isAllowedBrowserSupabaseKey(publishableKey)) {
+    throw new Error("Supabase browser configuration requires a publishable or legacy anon key.");
+  }
+
+  return { url, publishableKey };
 }
 
 export function isSupabaseClientConfigured(): boolean {
