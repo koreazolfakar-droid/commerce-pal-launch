@@ -1,0 +1,294 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "collections",
+  "page": 7,
+  "data": [
+    {
+      "id": "gid://shopify/Collection/476493316323",
+      "title": "Smart Watches",
+      "handle": "smart-watches",
+      "descriptionHtml": "<h1>Smart Watches &amp; Fitness Trackers</h1><p>Shop smart watches and fitness trackers from leading brands including Samsung, Huawei, Xiaomi, Black Shark and CMF. Discover stylish wearables for everyday activity, workouts and connected living.</p>",
+      "sortOrder": "MANUAL",
+      "updatedAt": "2026-09-13T09:40:09Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730598011107",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/icon_watch8_40mm_graphite.jpg?v=1789292409",
+        "altText": "Samsung Galaxy Watch 8 smartwatch",
+        "width": 1000,
+        "height": 1000
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9658213368035"
+          },
+          {
+            "id": "gid://shopify/Product/9658213531875"
+          },
+          {
+            "id": "gid://shopify/Product/9658213695715"
+          },
+          {
+            "id": "gid://shopify/Product/9658213826787"
+          },
+          {
+            "id": "gid://shopify/Product/9658213957859"
+          },
+          {
+            "id": "gid://shopify/Product/9658214056163"
+          },
+          {
+            "id": "gid://shopify/Product/9658214285539"
+          },
+          {
+            "id": "gid://shopify/Product/9658214482147"
+          },
+          {
+            "id": "gid://shopify/Product/9658214580451"
+          },
+          {
+            "id": "gid://shopify/Product/9658214842595"
+          },
+          {
+            "id": "gid://shopify/Product/9658215006435"
+          },
+          {
+            "id": "gid://shopify/Product/9658215137507"
+          },
+          {
+            "id": "gid://shopify/Product/9658215399651"
+          },
+          {
+            "id": "gid://shopify/Product/9658215497955"
+          },
+          {
+            "id": "gid://shopify/Product/9658215694563"
+          },
+          {
+            "id": "gid://shopify/Product/9658215825635"
+          },
+          {
+            "id": "gid://shopify/Product/9658215989475"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/476493349091",
+      "title": "Backpacks",
+      "handle": "backpacks",
+      "descriptionHtml": "<p>Selected backpacks and laptop bags.</p>",
+      "sortOrder": "MANUAL",
+      "updatedAt": "2026-09-15T15:04:00Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730598043875",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/upload-1788758920644.webp?v=1789292435",
+        "altText": "Mark Ryden AeroShield laptop backpack",
+        "width": 800,
+        "height": 800
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9658218971363"
+          },
+          {
+            "id": "gid://shopify/Product/9658219102435"
+          },
+          {
+            "id": "gid://shopify/Product/9658219430115"
+          },
+          {
+            "id": "gid://shopify/Product/9658219626723"
+          },
+          {
+            "id": "gid://shopify/Product/9658219856099"
+          },
+          {
+            "id": "gid://shopify/Product/9658220118243"
+          },
+          {
+            "id": "gid://shopify/Product/9658220478691"
+          },
+          {
+            "id": "gid://shopify/Product/9658221297891"
+          },
+          {
+            "id": "gid://shopify/Product/9658221494499"
+          },
+          {
+            "id": "gid://shopify/Product/9658221625571"
+          },
+          {
+            "id": "gid://shopify/Product/9658221756643"
+          },
+          {
+            "id": "gid://shopify/Product/9658221986019"
+          },
+          {
+            "id": "gid://shopify/Product/9658222149859"
+          },
+          {
+            "id": "gid://shopify/Product/9658222444771"
+          },
+          {
+            "id": "gid://shopify/Product/9658222969059"
+          },
+          {
+            "id": "gid://shopify/Product/9658223198435"
+          },
+          {
+            "id": "gid://shopify/Product/9658223460579"
+          },
+          {
+            "id": "gid://shopify/Product/9658223722723"
+          },
+          {
+            "id": "gid://shopify/Product/9658223886563"
+          },
+          {
+            "id": "gid://shopify/Product/9658224050403"
+          },
+          {
+            "id": "gid://shopify/Product/9658225623267"
+          },
+          {
+            "id": "gid://shopify/Product/9658225983715"
+          },
+          {
+            "id": "gid://shopify/Product/9658226180323"
+          },
+          {
+            "id": "gid://shopify/Product/9658226311395"
+          },
+          {
+            "id": "gid://shopify/Product/9658226475235"
+          },
+          {
+            "id": "gid://shopify/Product/9658226606307"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477072621795",
+      "title": "Homepage Hero",
+      "handle": "homepage-hero",
+      "descriptionHtml": "<p>Homepage hero campaign image managed from Shopify.</p>",
+      "sortOrder": "MANUAL",
+      "updatedAt": "2026-09-17T18:00:17Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730598469859",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/space-call-homepage-hero-s26-ultra.jpg?v=1789322435",
+        "altText": "Space Call iPhone 18 Pro Max hero banner",
+        "width": 1536,
+        "height": 864
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9668758307043"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477125542115",
+      "title": "ACEFAST",
+      "handle": "acefast",
+      "descriptionHtml": "<p>Shop ACEFAST products at Space Call.</p>",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T11:24:09Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730604990691",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/acefast-logo.jpg?v=1789382228",
+        "altText": "ACEFAST logo",
+        "width": 1536,
+        "height": 1536
+      },
+      "ruleSet": {
+        "appliedDisjunctively": false,
+        "rules": [
+          {
+            "column": "VENDOR",
+            "relation": "EQUALS",
+            "condition": "ACEFAST"
+          }
+        ]
+      },
+      "products": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Product/9669584126179"
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": []
+      }
+    },
+    {
+      "id": "gid://shopify/Collection/477131407587",
+      "title": "Brand Logo — Anker",
+      "handle": "logo-anker",
+      "descriptionHtml": "",
+      "sortOrder": "BEST_SELLING",
+      "updatedAt": "2026-09-14T12:01:38Z",
+      "templateSuffix": null,
+      "seo": {
+        "title": null,
+        "description": null
+      },
+      "image": {
+        "id": "gid://shopify/CollectionImage/1730608267491",
+        "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/collections/brand-anker-1024.png?v=1789387193",
+        "altText": "Anker logo on white background",
+        "width": 1024,
+        "height": 1024
+      },
+      "ruleSet": null,
+      "products": {
+        "nodes": []
+      },
+      "metafields": {
+        "nodes": []
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo0NzcxMzE0MDc1ODcsImxhc3RfdmFsdWUiOiI0NzcxMzE0MDc1ODcifQ=="
+  }
+}
