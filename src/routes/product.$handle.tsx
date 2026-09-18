@@ -30,12 +30,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
-import {
-  discountPercent,
-  fetchProductByHandle,
-  formatPrice,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { fetchProductByHandle } from "@/lib/nativeStore";
+import { discountPercent, formatPrice, type ShopifyProduct } from "@/lib/shopify";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
