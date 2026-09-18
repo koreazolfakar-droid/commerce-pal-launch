@@ -1,4 +1,4 @@
-import { fetchCollectionByHandle, fetchCollections } from "@/lib/nativeStore";
+import { fetchCollectionByHandle, fetchCollections } from "@/lib/storefrontData";
 
 export interface ShowcaseCollection {
   handle: string;
