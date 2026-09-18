@@ -596,6 +596,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           is_blocked: boolean
+          is_profile_managed: boolean
           is_vip: boolean
           last_order_at: string | null
           name: string
@@ -614,6 +615,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           is_blocked?: boolean
+          is_profile_managed?: boolean
           is_vip?: boolean
           last_order_at?: string | null
           name: string
@@ -632,6 +634,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           is_blocked?: boolean
+          is_profile_managed?: boolean
           is_vip?: boolean
           last_order_at?: string | null
           name?: string
@@ -1091,6 +1094,44 @@ export type Database = {
           reset_at: string
         }[]
       }
+      create_store_customer: {
+        Args: {
+          p_city?: string
+          p_default_address?: string
+          p_email?: string
+          p_internal_notes?: string
+          p_is_blocked?: boolean
+          p_is_vip?: boolean
+          p_name: string
+          p_phone: string
+          p_tags?: string[]
+        }
+        Returns: {
+          city: string | null
+          created_at: string
+          default_address: string | null
+          email: string | null
+          id: string
+          internal_notes: string | null
+          is_blocked: boolean
+          is_profile_managed: boolean
+          is_vip: boolean
+          last_order_at: string | null
+          name: string
+          phone: string
+          phone_normalized: string
+          tags: string[]
+          total_orders: number
+          total_spent: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_customers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_store_order_internal: { Args: { payload: Json }; Returns: Json }
       delete_store_brand: {
         Args: { p_brand_id: string; p_destination_brand_id?: string }
@@ -1099,6 +1140,37 @@ export type Database = {
       delete_store_category: {
         Args: { p_category_id: string; p_destination_category_id?: string }
         Returns: undefined
+      }
+      get_store_customer_orders: {
+        Args: { p_customer_id: string; p_limit?: number }
+        Returns: {
+          city: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          customer_reference: string | null
+          delivery_address: string | null
+          discount_total: number
+          id: string
+          notes: string | null
+          order_number: number
+          payment_method: string
+          payment_status: string
+          shipping_total: number
+          source: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "store_orders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_categories: { Args: { p_items: Json }; Returns: undefined }
@@ -1129,6 +1201,44 @@ export type Database = {
           p_sort_order: number
         }
         Returns: undefined
+      }
+      update_store_customer_profile: {
+        Args: {
+          p_city?: string
+          p_customer_id: string
+          p_default_address?: string
+          p_email?: string
+          p_internal_notes?: string
+          p_is_blocked?: boolean
+          p_is_vip?: boolean
+          p_name: string
+          p_tags?: string[]
+        }
+        Returns: {
+          city: string | null
+          created_at: string
+          default_address: string | null
+          email: string | null
+          id: string
+          internal_notes: string | null
+          is_blocked: boolean
+          is_profile_managed: boolean
+          is_vip: boolean
+          last_order_at: string | null
+          name: string
+          phone: string
+          phone_normalized: string
+          tags: string[]
+          total_orders: number
+          total_spent: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_customers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       update_store_order_payment_status: {
         Args: { p_order_id: string; p_payment_status: string }

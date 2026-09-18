@@ -61,6 +61,7 @@ Products, Brands, Categories, Inventory and dashboard authentication use Supabas
 Completed on this branch:
 - Phase 1: Dashboard Home now uses truthful Supabase metrics and empty states.
 - Phase 2: Orders list/detail/status/payment management now use Supabase. Order cancellation restores tracked stock atomically and logs a release movement.
+- Phase 3: Customers CRM now uses Supabase with search, filtering, profile editing, tags, VIP/block flags, internal notes, customer creation and order history. Staff-managed profile fields are protected from being overwritten by future order syncs.
 
 Next planned phase:
-- Phase 3: Customers.
+- Phase 4: Collections.
