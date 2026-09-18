@@ -1,0 +1,3079 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "products",
+  "page": 5,
+  "data": [
+    {
+      "id": "gid://shopify/Product/9652545093859",
+      "title": "HONOR X9d 5G 12GB/256GB",
+      "handle": "honor-x9d-5g-12gb-256gb",
+      "descriptionHtml": "<p><strong>HONOR X9d 5G</strong> combines a durable design with a large 8300mAh battery, 108MP OIS camera and Snapdragon 6 Gen 4 performance.</p><ul>\n<li>6.79-inch OLED display, 2640 × 1200, up to 120Hz</li>\n<li>Snapdragon 6 Gen 4 mobile platform</li>\n<li>12GB RAM + 256GB storage</li>\n<li>108MP main camera with OIS + 5MP wide camera</li>\n<li>16MP front camera</li>\n<li>8300mAh typical battery with 66W HONOR SuperCharge</li>\n<li>IP66 / IP68 / IP69 / IP69K protection under specified laboratory standards</li>\n<li>Up to 2.5m drop resistance in HONOR laboratory testing conditions</li>\n<li>5G, Wi-Fi 6, Bluetooth 5.2 and NFC</li>\n<li>Available colors: Midnight Black, Reddish Brown, Sunrise Gold, Forest Green</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "HONOR",
+      "productType": "Smartphone",
+      "tags": [
+        "12GB",
+        "256GB",
+        "5G",
+        "HONOR",
+        "HONOR X9d",
+        "New",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-03T17:58:33Z",
+      "updatedAt": "2026-09-06T11:48:40Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49665819246819",
+            "title": "12GB / 256GB / Midnight Black",
+            "sku": "HONOR-X9D-12-256",
+            "barcode": null,
+            "price": "420.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "12GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Midnight Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51837621928163",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51837621928163",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49665854144739",
+            "title": "12GB / 256GB / Forest Green",
+            "sku": "HONOR-X9D-12-256",
+            "barcode": null,
+            "price": "420.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "12GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Forest Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51837656858851",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51837656858851",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49665854177507",
+            "title": "12GB / 256GB / Sunrise Gold",
+            "sku": "HONOR-X9D-12-256",
+            "barcode": null,
+            "price": "420.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "12GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Sunrise Gold"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51837656891619",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51837656891619",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49665854210275",
+            "title": "12GB / 256GB / Reddish Brown",
+            "sku": "HONOR-X9D-12-256",
+            "barcode": null,
+            "price": "420.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "12GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Reddish Brown"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51837656924387",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51837656924387",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39882278207715",
+            "alt": "HONOR X9d 5G 12GB 256GB smartphone",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39882278207715",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/honor-x9d-red.jpg?v=1788458308",
+              "altText": "HONOR X9d 5G 12GB 256GB smartphone",
+              "width": 1000,
+              "height": 1000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39882502078691",
+            "alt": "HONOR X9d Midnight Black",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39882502078691",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/honor-x9d-midnight-black.png?v=1788458676",
+              "altText": "HONOR X9d Midnight Black",
+              "width": 800,
+              "height": 800
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39882497491171",
+            "alt": "HONOR X9d Forest Green",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39882497491171",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/honor-x9d-forest-green.png?v=1788458668",
+              "altText": "HONOR X9d Forest Green",
+              "width": 800,
+              "height": 800
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39882506240227",
+            "alt": "HONOR X9d Sunrise Gold",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39882506240227",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/honor-x9d-sunrise-gold.png?v=1788458685",
+              "altText": "HONOR X9d Sunrise Gold",
+              "width": 800,
+              "height": 800
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39882494673123",
+            "alt": "HONOR X9d Reddish Brown",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39882494673123",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/honor-x9d-reddish-brown.png?v=1788458663",
+              "altText": "HONOR X9d Reddish Brown",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164272619747",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "HONOR X9d 5G 12GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164272652515",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop HONOR X9d 5G with 12GB RAM, 256GB storage, 8300mAh battery, 108MP OIS camera and Snapdragon 6 Gen 4."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597252323",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.79-inch OLED, 2640 × 1200, up to 120Hz\",\"Processor\":\"Snapdragon 6 Gen 4\",\"RAM\":\"12GB\",\"Storage\":\"256GB\",\"Rear Cameras\":\"108MP OIS + 5MP wide\",\"Front Camera\":\"16MP\",\"Battery\":\"8300mAh\",\"Charging\":\"66W HONOR SuperCharge\",\"Protection\":\"IP66/IP68/IP69/IP69K\",\"Drop Resistance\":\"Up to 2.5m under HONOR laboratory conditions\",\"Connectivity\":\"5G, Wi-Fi 6, Bluetooth 5.2, NFC\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194329198819",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "OLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9652977500387",
+      "title": "Honor Watch 4",
+      "handle": "honor-watch-4",
+      "descriptionHtml": "<h2>HONOR Watch 4</h2><p>Smartwatch with a 1.75-inch AMOLED display, GPS, Bluetooth 5.2, speaker and microphone, 5ATM water resistance, and compatibility with Android 9.0+ and iOS 11.0+.</p><ul>\n<li>Display: 1.75-inch AMOLED, 450 × 390 pixels</li>\n<li>Weight: approximately 32g without strap</li>\n<li>GPS: Supported</li>\n<li>Bluetooth: 5.2</li>\n<li>Water resistance: 5ATM</li>\n<li>Color: Black</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "HONOR",
+      "productType": "Smart Watch",
+      "tags": [
+        "HONOR",
+        "Honor Watch 4",
+        "Smart Watch",
+        "Wearables"
+      ],
+      "createdAt": "2026-09-04T03:45:16Z",
+      "updatedAt": "2026-09-06T11:48:40Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49667406135523",
+            "title": "Black",
+            "sku": null,
+            "barcode": null,
+            "price": "95.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Band color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51839211077859",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51839211077859",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39897726124259",
+            "alt": "HONOR Watch 4 Black smartwatch on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39897726124259",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/honor-watch-4-black-front-angle.png?v=1788493586",
+              "altText": "HONOR Watch 4 Black smartwatch on white background",
+              "width": 721,
+              "height": 721
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39897727238371",
+            "alt": "HONOR Watch 4 Black smartwatch rear view on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39897727238371",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/honor-watch-4-black-back-angle.png?v=1788493591",
+              "altText": "HONOR Watch 4 Black smartwatch rear view on white background",
+              "width": 721,
+              "height": 721
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39897730285795",
+            "alt": "HONOR Watch 4 Black smartwatch front view on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39897730285795",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/honor-watch-4-black-front.jpg?v=1788493596",
+              "altText": "HONOR Watch 4 Black smartwatch front view on white background",
+              "width": 1200,
+              "height": 1200
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164262297827",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "HONOR Watch 4 Smart Watch | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164262330595",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop HONOR Watch 4 with 1.75-inch AMOLED display, GPS, Bluetooth 5.2 and 5ATM water resistance."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597285091",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"1.75-inch AMOLED\",\"Resolution\":\"450 × 390\",\"Weight\":\"Approx. 32g without strap\",\"GPS\":\"Supported\",\"Bluetooth\":\"5.2\",\"Water Resistance\":\"5ATM\",\"Compatibility\":\"Android 9.0+ and iOS 11.0+\",\"Speaker\":\"Built-in\",\"Microphone\":\"Built-in\",\"Color\":\"Black\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194329166051",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9654432497891",
+      "title": "Samsung Galaxy Tab S11 Ultra",
+      "handle": "samsung-galaxy-tab-s11-ultra",
+      "descriptionHtml": "<h2>Samsung Galaxy Tab S11 Ultra</h2><p>A premium flagship tablet with a large Dynamic AMOLED 2X display, slim design, and high-end performance for productivity and entertainment.</p><ul>\n<li>Display: 14.6-inch Dynamic AMOLED 2X</li>\n<li>Resolution: 2960 × 1848</li>\n<li>Includes S Pen support</li>\n<li>Designed for professional productivity and entertainment</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Samsung",
+      "productType": "Tablet",
+      "tags": [
+        "Galaxy Tab",
+        "S Pen",
+        "Samsung",
+        "أحدث الإصدارات",
+        "تابلت"
+      ],
+      "createdAt": "2026-09-05T05:45:25Z",
+      "updatedAt": "2026-09-06T11:49:50Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49671740326115",
+            "title": "Default Title",
+            "sku": "SAM-TABS11U-256",
+            "barcode": null,
+            "price": "1099.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51843657138403",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51843657138403",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39917014384867",
+            "alt": "Samsung Galaxy Tab S11 Ultra",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39917014384867",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/samsung-galaxy-tab-s11-ultra-gray-1-638949165701731361.jpg?v=1788587131",
+              "altText": "Samsung Galaxy Tab S11 Ultra",
+              "width": 1020,
+              "height": 680
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39917014417635",
+            "alt": "Samsung Galaxy Tab S11 Ultra - back view",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39917014417635",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/samsung-galaxy-tab-s11-ultra-gray-2-638949165694038837.jpg?v=1788587132",
+              "altText": "Samsung Galaxy Tab S11 Ultra - back view",
+              "width": 1020,
+              "height": 680
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164264231139",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Samsung Galaxy Tab S11 Ultra | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164264263907",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Samsung Galaxy Tab S11 Ultra with 14.6-inch Dynamic AMOLED 2X display, premium performance and S Pen support."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597317859",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"14.6-inch Dynamic AMOLED 2X\",\"Resolution\":\"2960 × 1848\",\"Stylus\":\"S Pen support\",\"Type\":\"Premium Tablet\",\"Use\":\"Productivity and entertainment\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336375011",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Dynamic AMOLED 2X"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9654432596195",
+      "title": "Xiaomi Pad 7",
+      "handle": "xiaomi-pad-7",
+      "descriptionHtml": "<h2>Xiaomi Pad 7</h2><p>A powerful tablet combining a high-resolution display with smooth performance in a slim, modern design.</p><ul>\n<li>Display: 11.2-inch LCD</li>\n<li>Resolution: 3200 × 2136 (3.2K)</li>\n<li>High refresh rate display</li>\n<li>Designed for entertainment, productivity, and everyday use</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Xiaomi",
+      "productType": "Tablet",
+      "tags": [
+        "Pad 7",
+        "Xiaomi",
+        "أحدث الإصدارات",
+        "تابلت"
+      ],
+      "createdAt": "2026-09-05T05:45:40Z",
+      "updatedAt": "2026-09-06T11:50:05Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49671740424419",
+            "title": "Default Title",
+            "sku": "XIA-PAD7-128",
+            "barcode": null,
+            "price": "429.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51843657236707",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51843657236707",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39917014745315",
+            "alt": "Xiaomi Pad 7",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39917014745315",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/xiaomi-pad-7-xanh-la-1-638775431787010243.jpg?v=1788587147",
+              "altText": "Xiaomi Pad 7",
+              "width": 1020,
+              "height": 680
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39917014778083",
+            "alt": "Xiaomi Pad 7 - back view",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39917014778083",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/xiaomi-pad-7-xanh-la-2-638775431792691959.jpg?v=1788587146",
+              "altText": "Xiaomi Pad 7 - back view",
+              "width": 1020,
+              "height": 680
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164264362211",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Xiaomi Pad 7 11.2 inch Tablet | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164264394979",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Xiaomi Pad 7 with 11.2-inch 3.2K display, high refresh rate and smooth performance for productivity and entertainment."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597350627",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"11.2-inch LCD\",\"Resolution\":\"3200 × 2136 (3.2K)\",\"Refresh Rate\":\"High refresh rate\",\"Type\":\"Tablet\",\"Use\":\"Entertainment, productivity and everyday use\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194339422435",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LCD"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9654432694499",
+      "title": "Apple iPad Pro 11\" (M5)",
+      "handle": "apple-ipad-pro-11-m5",
+      "descriptionHtml": "<h2>Apple iPad Pro 11-inch (M5)</h2><p>A professional-grade tablet powered by the Apple M5 chip, combining an ultra-thin design with an advanced Ultra Retina XDR display.</p><ul>\n<li>Chip: Apple M5</li>\n<li>Display: 11-inch Ultra Retina XDR</li>\n<li>Resolution: 2420 × 1668</li>\n<li>Storage: 256GB</li>\n<li>Supports Apple Pencil Pro and Magic Keyboard</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Apple",
+      "productType": "Tablet",
+      "tags": [
+        "Apple",
+        "iPad Pro",
+        "M5",
+        "أحدث الإصدارات",
+        "تابلت"
+      ],
+      "createdAt": "2026-09-05T05:45:56Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49671740522723",
+            "title": "Default Title",
+            "sku": "APL-IPADPRO11-M5-256",
+            "barcode": null,
+            "price": "979.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51843657335011",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51843657335011",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39918234468579",
+            "alt": "Apple iPad Pro 11-inch M5 on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39918234468579",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/ipad-pro-11-m5-white-background.png?v=1788590494",
+              "altText": "Apple iPad Pro 11-inch M5 on white background",
+              "width": 434,
+              "height": 434
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164263805155",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Apple iPad Pro 11 M5 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164263837923",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Apple iPad Pro 11-inch with M5 chip, Ultra Retina XDR display, 256GB storage and support for Apple Pencil Pro and Magic Keyboard."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597383395",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"11-inch Ultra Retina XDR\",\"Resolution\":\"2420 × 1668\",\"Chip\":\"Apple M5\",\"Storage\":\"256GB\",\"Accessories\":\"Apple Pencil Pro, Magic Keyboard support\",\"Type\":\"Professional Tablet\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328674531",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Ultra Retina XDR OLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9654432858339",
+      "title": "Black Shark Gaming Tablet",
+      "handle": "black-shark-gaming-tablet",
+      "descriptionHtml": "<h2>Black Shark Gaming Tablet</h2><p>A gaming-focused tablet built for smooth gameplay, high-resolution visuals, and portable performance.</p><ul>\n<li>Display: 8.8-inch IPS</li>\n<li>Resolution: 2560 × 1600 (2.5K)</li>\n<li>Refresh rate: up to 144Hz</li>\n<li>Designed for gaming and entertainment</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Black Shark",
+      "productType": "Gaming Tablet",
+      "tags": [
+        "Black Shark",
+        "أحدث الإصدارات",
+        "تابلت",
+        "تابلت ألعاب"
+      ],
+      "createdAt": "2026-09-05T05:46:11Z",
+      "updatedAt": "2026-09-06T15:13:04Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49671744127203",
+            "title": "Default Title",
+            "sku": "BS-GAMTAB-256",
+            "barcode": null,
+            "price": "599.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51843660939491",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51843660939491",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39917016416483",
+            "alt": "Black Shark Gaming Tablet",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39917016416483",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/black-shark-gaming-tablet.jpg?v=1788587235",
+              "altText": "Black Shark Gaming Tablet",
+              "width": 160,
+              "height": 212
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164264165603",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Black Shark Gaming Tablet 8.8 inch | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164264198371",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Black Shark Gaming Tablet with 8.8-inch 2.5K display, up to 144Hz refresh rate and gaming-focused performance."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597416163",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"8.8-inch IPS\",\"Resolution\":\"2560 × 1600 (2.5K)\",\"Refresh Rate\":\"Up to 144Hz\",\"Type\":\"Gaming Tablet\",\"Use\":\"Gaming and entertainment\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194329100515",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "IPS LCD"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9654432923875",
+      "title": "RedMagic Astra Gaming Tablet",
+      "handle": "redmagic-astra-gaming-tablet",
+      "descriptionHtml": "<h2>RedMagic Astra Gaming Tablet</h2><p>A compact high-performance gaming tablet with a sharp OLED display and a high refresh rate for smooth gameplay.</p><ul>\n<li>Display: 9.06-inch OLED</li>\n<li>Resolution: 2400 × 1504 (2.4K)</li>\n<li>High refresh rate</li>\n<li>Designed for gaming and entertainment</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "RedMagic",
+      "productType": "Gaming Tablet",
+      "tags": [
+        "RedMagic",
+        "أحدث الإصدارات",
+        "تابلت",
+        "تابلت ألعاب"
+      ],
+      "createdAt": "2026-09-05T05:46:27Z",
+      "updatedAt": "2026-09-06T11:49:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49671744192739",
+            "title": "Default Title",
+            "sku": "RM-ASTRA-256",
+            "barcode": null,
+            "price": "479.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51843661005027",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51843661005027",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39917015498979",
+            "alt": "RedMagic Astra Gaming Tablet",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39917015498979",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/03_600x600_f3de68aa-6af7-4a8d-a10d-9866c790a135.png?v=1788587189",
+              "altText": "RedMagic Astra Gaming Tablet",
+              "width": 600,
+              "height": 600
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39917015531747",
+            "alt": "RedMagic Astra Gaming Tablet - back view",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39917015531747",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/08_600x600_835d58ce-6c83-4cf2-8b3a-d2b00e534a7a.png?v=1788587189",
+              "altText": "RedMagic Astra Gaming Tablet - back view",
+              "width": 600,
+              "height": 600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164264100067",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "RedMagic Astra Gaming Tablet | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164264132835",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop RedMagic Astra Gaming Tablet with 9.06-inch 2.4K OLED display and high refresh rate for gaming and entertainment."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597448931",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"9.06-inch OLED\",\"Resolution\":\"2400 × 1504 (2.4K)\",\"Refresh Rate\":\"High refresh rate\",\"Type\":\"Gaming Tablet\",\"Use\":\"Gaming and entertainment\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334671075",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "OLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9654434889955",
+      "title": "Sony PlayStation 5 (PS5)",
+      "handle": "sony-playstation-5-ps5",
+      "descriptionHtml": "<h2>Sony PlayStation 5 (PS5)</h2><p>A powerful home gaming console featuring fast SSD storage, advanced graphics, immersive 3D audio, and the DualSense wireless controller.</p><ul>\n<li>CPU: AMD Zen 2, 8-core</li>\n<li>Graphics: AMD RDNA 2 with ray tracing</li>\n<li>Memory: 16GB GDDR6</li>\n<li>Storage: 1TB SSD</li>\n<li>Supports 4K gaming up to 120fps</li>\n<li>Includes Ultra HD Blu-ray disc drive and DualSense controller</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Sony",
+      "productType": "Gaming Console",
+      "tags": [
+        "PS5",
+        "Sony",
+        "أجهزة ألعاب",
+        "بلايستيشن"
+      ],
+      "createdAt": "2026-09-05T05:50:34Z",
+      "updatedAt": "2026-09-06T11:49:50Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49671752024291",
+            "title": "Default Title",
+            "sku": "SONY-PS5-DISC-1TB",
+            "barcode": null,
+            "price": "549.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51843668836579",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51843668836579",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39917024346339",
+            "alt": "PlayStation 5 Slim Console Disc Edition",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39917024346339",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/Sony-PlayStation-5-Slim-Console-Disc-Edition.jpg?v=1788587437",
+              "altText": "PlayStation 5 Slim Console Disc Edition",
+              "width": 3600,
+              "height": 2400
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164263968995",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Sony PlayStation 5 PS5 1TB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164264001763",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Sony PlayStation 5 with 1TB SSD, 4K gaming support, ray tracing, 3D audio and DualSense wireless controller."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597481699",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"CPU\":\"AMD Zen 2, 8-core\",\"GPU\":\"AMD RDNA 2 with ray tracing\",\"Memory\":\"16GB GDDR6\",\"Storage\":\"1TB SSD\",\"Gaming\":\"4K up to 120fps\",\"Drive\":\"Ultra HD Blu-ray\",\"Controller\":\"DualSense wireless controller\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336506083",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9654434922723",
+      "title": "Sony PlayStation 5 Pro (PS5 Pro)",
+      "handle": "sony-playstation-5-pro-ps5-pro",
+      "descriptionHtml": "<h2>Sony PlayStation 5 Pro</h2><p>The PlayStation 5 Pro is Sony's high-performance gaming console, designed for enhanced graphics, smoother gameplay, and a premium console gaming experience.</p><ul>\n<li>Model: PS5 Pro</li>\n<li>Storage: 2TB</li>\n<li>Designed for high-resolution gaming and advanced graphics</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Sony",
+      "productType": "Gaming Console",
+      "tags": [
+        "PS5 Pro",
+        "Sony",
+        "أجهزة ألعاب",
+        "أحدث الإصدارات",
+        "بلايستيشن"
+      ],
+      "createdAt": "2026-09-05T05:50:51Z",
+      "updatedAt": "2026-09-06T11:49:50Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49671752057059",
+            "title": "Default Title",
+            "sku": "SONY-PS5PRO-2TB",
+            "barcode": null,
+            "price": "749.99",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default Title"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51843668869347",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51843668869347",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39918232502499",
+            "alt": "Sony PlayStation 5 Pro console on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39918232502499",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/ps5-pro-white-background.jpg?v=1788590471",
+              "altText": "Sony PlayStation 5 Pro console on white background",
+              "width": 1600,
+              "height": 1600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164264034531",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Sony PlayStation 5 Pro 2TB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164264067299",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Sony PlayStation 5 Pro with 2TB storage, enhanced graphics and high-performance console gaming."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597514467",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Model\":\"PlayStation 5 Pro\",\"Storage\":\"2TB\",\"Type\":\"Gaming Console\",\"Focus\":\"Enhanced graphics, smoother gameplay, high-resolution gaming\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194336538851",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9654435545315",
+      "title": "iPhone 13 Pro 128GB — مستعمل (تجريبي)",
+      "handle": "iphone-13-pro-128gb-مستعمل-تجريبي",
+      "descriptionHtml": "<h2>iPhone 13 Pro 128GB — Used</h2><p>Used device in very good condition, suitable for customers looking for a reliable premium iPhone at a lower price.</p><ul>\n<li>Storage: 128GB</li>\n<li>Battery health: 88%</li>\n<li>Color: Graphite</li>\n<li>Condition: Very good</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Apple",
+      "productType": "هاتف مستعمل",
+      "tags": [
+        "used",
+        "تجريبي",
+        "مستعمل"
+      ],
+      "createdAt": "2026-09-05T05:52:50Z",
+      "updatedAt": "2026-09-06T11:48:40Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49671753335011",
+            "title": "Default",
+            "sku": "USED-TEST-IP13P-128",
+            "barcode": null,
+            "price": "299.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51843670147299",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51843670147299",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39918233223395",
+            "alt": "iPhone 13 Pro 128GB Graphite front and back on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39918233223395",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-13-pro-graphite-white-background_743e196e-bef8-45ed-880b-1789a9d8c425.jpg?v=1788590482",
+              "altText": "iPhone 13 Pro 128GB Graphite front and back on white background",
+              "width": 400,
+              "height": 400
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164262166755",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Apple iPhone 13 Pro 128GB Used | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164262199523",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Apple iPhone 13 Pro 128GB used in very good condition. Graphite finish, 88% battery health and 128GB storage."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597547235",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Condition\":\"Very good\",\"Storage\":\"128GB\",\"Battery Health\":\"88%\",\"Color\":\"Graphite\",\"Type\":\"Used iPhone 13 Pro\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194329428195",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Super Retina XDR OLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9655493886179",
+      "title": "realme GT 8 Pro 5G (China)",
+      "handle": "realme-gt-8-pro-5g-china",
+      "descriptionHtml": "<p>The realme GT 8 Pro 5G (China) is a flagship smartphone built around the Snapdragon 8 Elite Gen 5 platform, a 6.79-inch QHD+ AMOLED display with up to 144Hz refresh rate, and a 7000mAh battery with 120W wired and 50W wireless charging.</p><p>Its RICOH GR camera system combines a 50MP main camera, 50MP ultra-wide camera, and 200MP periscope telephoto camera. The phone also features Wi-Fi 7, Bluetooth 6.0, NFC, ultrasonic fingerprint sensing, and realme UI 7.0 based on Android 16.</p><p><strong>Display:</strong> 6.79-inch AMOLED, 3136 × 1440 QHD+, 144Hz<br><strong>Processor:</strong> Snapdragon 8 Elite Gen 5 + R1 gaming chip<br><strong>Rear cameras:</strong> 50MP + 50MP + 200MP periscope telephoto<br><strong>Front camera:</strong> 32MP<br><strong>Battery:</strong> 7000mAh<br><strong>Charging:</strong> 120W wired, 50W wireless<br><strong>OS:</strong> realme UI 7.0 / Android 16<br><strong>Connectivity:</strong> 5G, Wi-Fi 7, Bluetooth 6.0, NFC</p>",
+      "status": "ACTIVE",
+      "vendor": "realme",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "China",
+        "Flagship",
+        "GT 8 Pro",
+        "realme"
+      ],
+      "createdAt": "2026-09-05T11:54:42Z",
+      "updatedAt": "2026-09-06T11:49:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49674315694307",
+            "title": "12GB / 256GB / Diary White",
+            "sku": null,
+            "barcode": null,
+            "price": "561.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "12GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Diary White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846232899811",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846232899811",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674315727075",
+            "title": "12GB / 256GB / Urban Blue",
+            "sku": null,
+            "barcode": null,
+            "price": "561.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "12GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Urban Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846232932579",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846232932579",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674315759843",
+            "title": "12GB / 256GB / Green",
+            "sku": null,
+            "barcode": null,
+            "price": "561.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "12GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846232965347",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846232965347",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674315792611",
+            "title": "16GB / 256GB / Diary White",
+            "sku": null,
+            "barcode": null,
+            "price": "603.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "16GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Diary White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846232998115",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846232998115",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674315825379",
+            "title": "16GB / 256GB / Urban Blue",
+            "sku": null,
+            "barcode": null,
+            "price": "603.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "16GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Urban Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233030883",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233030883",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674315858147",
+            "title": "16GB / 256GB / Green",
+            "sku": null,
+            "barcode": null,
+            "price": "603.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "16GB / 256GB"
+              },
+              {
+                "name": "Color",
+                "value": "Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233063651",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233063651",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674315890915",
+            "title": "12GB / 512GB / Diary White",
+            "sku": null,
+            "barcode": null,
+            "price": "631.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "12GB / 512GB"
+              },
+              {
+                "name": "Color",
+                "value": "Diary White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233096419",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233096419",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674315923683",
+            "title": "12GB / 512GB / Urban Blue",
+            "sku": null,
+            "barcode": null,
+            "price": "631.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "12GB / 512GB"
+              },
+              {
+                "name": "Color",
+                "value": "Urban Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233129187",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233129187",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674315956451",
+            "title": "12GB / 512GB / Green",
+            "sku": null,
+            "barcode": null,
+            "price": "631.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "12GB / 512GB"
+              },
+              {
+                "name": "Color",
+                "value": "Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233161955",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233161955",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674315989219",
+            "title": "16GB / 512GB / Diary White",
+            "sku": null,
+            "barcode": null,
+            "price": "660.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "16GB / 512GB"
+              },
+              {
+                "name": "Color",
+                "value": "Diary White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233194723",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233194723",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674316021987",
+            "title": "16GB / 512GB / Urban Blue",
+            "sku": null,
+            "barcode": null,
+            "price": "660.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "16GB / 512GB"
+              },
+              {
+                "name": "Color",
+                "value": "Urban Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233227491",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233227491",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674316054755",
+            "title": "16GB / 512GB / Green",
+            "sku": null,
+            "barcode": null,
+            "price": "660.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "16GB / 512GB"
+              },
+              {
+                "name": "Color",
+                "value": "Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233260259",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233260259",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674316087523",
+            "title": "16GB / 1TB / Diary White",
+            "sku": null,
+            "barcode": null,
+            "price": "730.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "16GB / 1TB"
+              },
+              {
+                "name": "Color",
+                "value": "Diary White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233293027",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233293027",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674316120291",
+            "title": "16GB / 1TB / Urban Blue",
+            "sku": null,
+            "barcode": null,
+            "price": "730.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "16GB / 1TB"
+              },
+              {
+                "name": "Color",
+                "value": "Urban Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233325795",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233325795",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49674316153059",
+            "title": "16GB / 1TB / Green",
+            "sku": null,
+            "barcode": null,
+            "price": "730.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "RAM + Storage",
+                "value": "16GB / 1TB"
+              },
+              {
+                "name": "Color",
+                "value": "Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846233358563",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846233358563",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39920797581539",
+            "alt": "realme GT 8 Pro Diary White",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920797581539",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/realme-gt-8-pro-diary-white.webp?v=1788609259",
+              "altText": "realme GT 8 Pro Diary White",
+              "width": 2000,
+              "height": 2000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39920798302435",
+            "alt": "realme GT 8 Pro Urban Blue",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920798302435",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/realme-gt-8-pro-urban-blue.webp?v=1788609264",
+              "altText": "realme GT 8 Pro Urban Blue",
+              "width": 2000,
+              "height": 2000
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39920800858339",
+            "alt": "realme GT 8 Pro Green back",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920800858339",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/realme-gt-8-pro-green-back.jpg?v=1788609306",
+              "altText": "realme GT 8 Pro Green back",
+              "width": 653,
+              "height": 654
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164262363363",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "realme GT 8 Pro 5G China | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164262396131",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop realme GT 8 Pro 5G with QHD+ AMOLED up to 144Hz, Snapdragon 8 Elite Gen 5, 7000mAh battery and 200MP telephoto."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597580003",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.79-inch AMOLED, 3136 × 1440 QHD+, 144Hz\",\"Processor\":\"Snapdragon 8 Elite Gen 5 + R1 gaming chip\",\"Rear Cameras\":\"50MP + 50MP + 200MP periscope telephoto\",\"Front Camera\":\"32MP\",\"Battery\":\"7000mAh\",\"Charging\":\"120W wired + 50W wireless\",\"OS\":\"realme UI 7.0 / Android 16\",\"Connectivity\":\"5G, Wi-Fi 7, Bluetooth 6.0, NFC\",\"Fingerprint\":\"Ultrasonic\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334638307",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9655578001635",
+      "title": "Honor MagicPad 4 Tablet 256GB with Smart Touch Keyboard",
+      "handle": "honor-magicpad-4-tablet-256gb-with-smart-touch-keyboard",
+      "descriptionHtml": "<p>The HONOR MagicPad4 combines an ultra-slim 4.8mm design with a 12.3-inch 165Hz OLED display, Snapdragon 8 Gen 5 performance and PC-class productivity features.</p><ul>\n<li>12.3-inch 165Hz OLED display</li>\n<li>12GB RAM + 256GB storage</li>\n<li>Snapdragon 8 Gen 5 platform</li>\n<li>4.8mm slim design, approx. 450g</li>\n<li>10100mAh battery with 66W wired charging</li>\n<li>8 speakers with HONOR Spatial Audio</li>\n<li>Wi-Fi 7</li>\n<li>HONOR MagicPad4 Smart Touch Keyboard included</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Honor",
+      "productType": "Tablet",
+      "tags": [
+        "256GB",
+        "Honor",
+        "Keyboard",
+        "MagicPad 4",
+        "Tablet"
+      ],
+      "createdAt": "2026-09-05T14:52:48Z",
+      "updatedAt": "2026-09-06T11:48:40Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49675026563299",
+            "title": "Default",
+            "sku": null,
+            "barcode": null,
+            "price": "999.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51846944456931",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51846944456931",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39921389273315",
+            "alt": "",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39921389273315",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/rn-image_picker_lib_temp_9d0df4f2-1a9f-4fa7-96dc-64d70004d0cb.jpg?v=1788620437",
+              "altText": "",
+              "width": 510,
+              "height": 510
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39921389240547",
+            "alt": "",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39921389240547",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/rn-image_picker_lib_temp_de5073b3-6d0d-4910-bc88-06ec0ed6142b.jpg?v=1788620437",
+              "altText": "",
+              "width": 1080,
+              "height": 1080
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39921396515043",
+            "alt": "",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39921396515043",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/rn-image_picker_lib_temp_609cc1f1-6e5c-4683-b49f-a1b043ba1d08.jpg?v=1788620532",
+              "altText": "",
+              "width": 1365,
+              "height": 1229
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164262232291",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "HONOR MagicPad 4 256GB Tablet | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164262265059",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop HONOR MagicPad 4 with 12.3-inch 165Hz OLED, 12GB RAM, 256GB storage and Smart Touch Keyboard included."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597612771",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"12.3-inch OLED, 165Hz\",\"Processor\":\"Snapdragon 8 Gen 5\",\"RAM\":\"12GB\",\"Storage\":\"256GB\",\"Thickness\":\"4.8mm\",\"Weight\":\"Approx. 450g\",\"Battery\":\"10100mAh\",\"Charging\":\"66W wired\",\"Audio\":\"8 speakers with HONOR Spatial Audio\",\"Connectivity\":\"Wi-Fi 7\",\"Included\":\"HONOR MagicPad4 Smart Touch Keyboard\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194329133283",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "OLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656428527843",
+      "title": "Anker 322 USB-A to USB-C Braided Cable (3ft / 0.9m)",
+      "handle": "anker-322-usb-a-to-usb-c-braided-cable-3ft-0-9m",
+      "descriptionHtml": "<p>Durable braided charging and data cable for USB-C devices.</p><ul>\n<li>USB-A to USB-C</li>\n<li>Length: 3ft / 0.9m</li>\n<li>Durable braided design</li>\n<li>Supports charging and data transfer</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Cable",
+      "tags": [
+        "3ft",
+        "Anker",
+        "Braided",
+        "Cable",
+        "USB-A",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-06T03:27:14Z",
+      "updatedAt": "2026-09-06T12:25:21Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680736288995",
+            "title": "Black",
+            "sku": null,
+            "barcode": null,
+            "price": "8.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852661293283",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852661293283",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49680736321763",
+            "title": "White",
+            "sku": null,
+            "barcode": null,
+            "price": "8.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852661326051",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852661326051",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925052276963",
+            "alt": "Anker 322 USB-A to USB-C braided cable, white, 3ft",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925052276963",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-322-usb-a-to-usb-c-white-3ft.jpg?v=1788665419",
+              "altText": "Anker 322 USB-A to USB-C braided cable, white, 3ft",
+              "width": 520,
+              "height": 520
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194328183011",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194396963043",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker 322 USB-A to USB-C Cable 3ft | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194396995811",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker 322 braided USB-A to USB-C cable, 3ft (0.9m), for reliable charging and data transfer."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656428560611",
+      "title": "Anker 322 USB-A to USB-C Braided Cable (6ft / 1.8m)",
+      "handle": "anker-322-usb-a-to-usb-c-braided-cable-6ft-1-8m",
+      "descriptionHtml": "<p>Premium braided USB-A to USB-C cable designed for reliable charging and data transfer.</p><ul>\n<li>Length: 6ft / 1.8m</li>\n<li>Durable braided nylon</li>\n<li>USB-C device compatibility</li>\n<li>Up to 480 Mbps data transfer</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Cable",
+      "tags": [
+        "6ft",
+        "A81H6H11",
+        "Anker",
+        "Braided",
+        "Cable",
+        "USB-A",
+        "USB-C"
+      ],
+      "createdAt": "2026-09-06T03:27:19Z",
+      "updatedAt": "2026-09-06T13:04:37Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680736354531",
+            "title": "Black",
+            "sku": null,
+            "barcode": null,
+            "price": "9.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852661358819",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852661358819",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49680736387299",
+            "title": "White",
+            "sku": null,
+            "barcode": null,
+            "price": "9.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852661391587",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852661391587",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925054537955",
+            "alt": "Anker 322 USB-A to USB-C braided cable, white, 6ft",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925054537955",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-322-usb-a-to-usb-c-white-6ft_cf8ccc25-441c-4084-ba5b-81e2cec96d0a.jpg?v=1788665490",
+              "altText": "Anker 322 USB-A to USB-C braided cable, white, 6ft",
+              "width": 1200,
+              "height": 1200
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194328215779",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397061347",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker 322 USB-A to USB-C Cable 6ft | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397126883",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker 322 braided USB-A to USB-C cable, 6ft (1.8m), with durable nylon design for charging and data transfer."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656428593379",
+      "title": "Anker 322 USB-C to USB-C Cable (60W, 3ft)",
+      "handle": "anker-322-usb-c-to-usb-c-cable-60w-3ft",
+      "descriptionHtml": "<p>Reliable USB-C to USB-C braided cable supporting fast charging and everyday connectivity.</p><ul>\n<li>USB-C to USB-C</li>\n<li>60W charging support</li>\n<li>Length: 3ft</li>\n<li>Built to withstand up to 12,000 bends</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Cable",
+      "tags": [
+        "3ft",
+        "60W",
+        "Anker",
+        "Braided",
+        "Cable",
+        "USB-C",
+        "USB-C to USB-C"
+      ],
+      "createdAt": "2026-09-06T03:27:24Z",
+      "updatedAt": "2026-09-06T20:49:29Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680736420067",
+            "title": "White",
+            "sku": null,
+            "barcode": null,
+            "price": "8.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852661424355",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852661424355",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925055160547",
+            "alt": "Anker 322 USB-C to USB-C braided cable, white, 3ft",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925055160547",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-322-usb-c-to-usb-c-white-3ft.jpg?v=1788665520",
+              "altText": "Anker 322 USB-C to USB-C braided cable, white, 3ft",
+              "width": 1250,
+              "height": 1250
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194328248547",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397159651",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker 322 USB-C to USB-C Cable 60W 3ft | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397192419",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker 322 USB-C to USB-C cable with 60W charging support, 3ft length and durable braided design."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656428626147",
+      "title": "Anker 322 USB-C to USB-C Nylon Cable (60W, 6ft)",
+      "handle": "anker-322-usb-c-to-usb-c-nylon-cable-60w-6ft",
+      "descriptionHtml": "<p>Premium nylon braided USB-C to USB-C cable for fast charging and reliable data transfer.</p><ul>\n<li>60W fast charging support</li>\n<li>Length: 6ft</li>\n<li>Durable nylon braided design</li>\n<li>Reinforced connectors</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Anker",
+      "productType": "Cable",
+      "tags": [
+        "60W",
+        "6ft",
+        "A8753H11",
+        "Anker",
+        "Cable",
+        "Nylon",
+        "USB-C",
+        "USB-C to USB-C"
+      ],
+      "createdAt": "2026-09-06T03:27:28Z",
+      "updatedAt": "2026-09-06T11:59:42Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680736452835",
+            "title": "Black",
+            "sku": null,
+            "barcode": null,
+            "price": "9.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 0,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852661457123",
+              "tracked": false,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852661457123",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925055062243",
+            "alt": "Anker 322 USB-C to USB-C braided cable, white, 6ft",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925055062243",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/anker-322-usb-c-to-usb-c-white-6ft_016ec0cf-470b-429b-b9f8-4148ece71a1d.jpg?v=1788665497",
+              "altText": "Anker 322 USB-C to USB-C braided cable, white, 6ft",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194328281315",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "No Display"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397225187",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Anker 322 USB-C to USB-C Nylon Cable 60W 6ft | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397257955",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Anker 322 USB-C to USB-C nylon cable with 60W fast charging support, 6ft length and reinforced connectors."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656429641955",
+      "title": "Infinix Smart 9",
+      "handle": "infinix-smart-9",
+      "descriptionHtml": "<p><strong>Infinix Smart 9</strong> is an affordable smartphone designed for smooth everyday use, social media, calls, and entertainment. Its large 6.7-inch display and long-lasting battery make it a practical choice for daily mobile needs.</p><ul>\n<li>6.7-inch IPS display with 120Hz refresh rate</li>\n<li>MediaTek Helio G81 processor</li>\n<li>13MP rear camera and 8MP front camera</li>\n<li>5000mAh long-lasting battery</li>\n<li>Available in several modern colors</li>\n</ul><p>Buy the Infinix Smart 9 for reliable everyday performance, a smooth display, and excellent value at an affordable price.</p>",
+      "status": "ACTIVE",
+      "vendor": "Infinix",
+      "productType": "هواتف ذكية",
+      "tags": [
+        "Infinix",
+        "Smart Series",
+        "اقتصادي",
+        "هواتف"
+      ],
+      "createdAt": "2026-09-06T03:34:05Z",
+      "updatedAt": "2026-09-06T20:37:39Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680739139811",
+            "title": "Default",
+            "sku": "INF-SMART9",
+            "barcode": null,
+            "price": "89.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852664144099",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852664144099",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925076984035",
+            "alt": "Infinix Smart 9 - لون 1",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925076984035",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-smart9-1.jpg?v=1788666034",
+              "altText": "Infinix Smart 9 - لون 1",
+              "width": 710,
+              "height": 543
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39925077016803",
+            "alt": "Infinix Smart 9 - لون 2",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925077016803",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-smart9-2.jpg?v=1788666034",
+              "altText": "Infinix Smart 9 - لون 2",
+              "width": 710,
+              "height": 566
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194329362659",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "IPS LCD"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397651171",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Infinix Smart 9 | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397683939",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Infinix Smart 9 with 6.7-inch 120Hz display, Helio G81 processor, 5000mAh battery and reliable everyday performance."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656429674723",
+      "title": "Infinix Hot 60 Pro",
+      "handle": "infinix-hot-60-pro",
+      "descriptionHtml": "<p><strong>Infinix Hot 60 Pro</strong> is a sleek and powerful smartphone designed for smooth everyday performance, entertainment, and mobile photography. Its large 6.78-inch AMOLED display with a 144Hz refresh rate delivers vibrant visuals and ultra-smooth scrolling.</p><ul>\n<li>6.78-inch AMOLED display with 144Hz refresh rate</li>\n<li>MediaTek Helio G200 processor for reliable performance</li>\n<li>8GB RAM and up to 256GB storage</li>\n<li>50MP rear camera for detailed photos</li>\n<li>5160mAh battery with 45W fast charging</li>\n<li>Available in multiple stylish colors</li>\n</ul><p>Shop the Infinix Hot 60 Pro for a premium display, dependable performance, long battery life, and excellent value.</p>",
+      "status": "ACTIVE",
+      "vendor": "Infinix",
+      "productType": "هواتف ذكية",
+      "tags": [
+        "AMOLED",
+        "Hot Series",
+        "Infinix",
+        "هواتف"
+      ],
+      "createdAt": "2026-09-06T03:34:18Z",
+      "updatedAt": "2026-09-06T21:29:08Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680739205347",
+            "title": "Default",
+            "sku": "INF-HOT60PRO",
+            "barcode": null,
+            "price": "149.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852664209635",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852664209635",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925061091555",
+            "alt": "Infinix Hot 60 Pro - الألوان",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925061091555",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-hot-60-pro-2.jpg?v=1788665661",
+              "altText": "Infinix Hot 60 Pro - الألوان",
+              "width": 710,
+              "height": 575
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194329264355",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397454563",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Infinix Hot 60 Pro 8GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397487331",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Infinix Hot 60 Pro with 6.78-inch 144Hz AMOLED display, Helio G200, 8GB RAM, up to 256GB storage and 45W charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656429707491",
+      "title": "Infinix Note Edge",
+      "handle": "infinix-note-edge",
+      "descriptionHtml": "<p><strong>Infinix Note Edge</strong> combines an elegant curved design with a bright, immersive AMOLED display and long battery life. It is built for users who want modern style, smooth performance, and dependable all-day power.</p><ul>\n<li>6.78-inch curved 1.5K AMOLED display with 120Hz refresh rate</li>\n<li>Up to 4500 nits peak brightness</li>\n<li>MediaTek Dimensity 7100 processor</li>\n<li>8GB RAM and up to 256GB storage</li>\n<li>50MP rear camera</li>\n<li>6500mAh battery with 45W fast charging</li>\n<li>IP65 water resistance</li>\n</ul><p>Shop the Infinix Note Edge for a premium curved display, strong battery life, modern performance, and everyday durability.</p>",
+      "status": "ACTIVE",
+      "vendor": "Infinix",
+      "productType": "هواتف ذكية",
+      "tags": [
+        "AMOLED",
+        "Infinix",
+        "Note Series",
+        "متوسط",
+        "هواتف"
+      ],
+      "createdAt": "2026-09-06T03:34:31Z",
+      "updatedAt": "2026-09-06T20:46:30Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680739238115",
+            "title": "Default",
+            "sku": "INF-NOTEEDGE",
+            "barcode": null,
+            "price": "199.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852664242403",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852664242403",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925061714147",
+            "alt": "Infinix Note Edge - لون 1",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925061714147",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-note-edge-1.jpg?v=1788665674",
+              "altText": "Infinix Note Edge - لون 1",
+              "width": 557,
+              "height": 602
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39925061746915",
+            "alt": "Infinix Note Edge - لون 2",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925061746915",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-note-edge-2.jpg?v=1788665674",
+              "altText": "Infinix Note Edge - لون 2",
+              "width": 710,
+              "height": 597
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39925061779683",
+            "alt": "Infinix Note Edge - لون 3",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925061779683",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-note-edge-3.jpg?v=1788665674",
+              "altText": "Infinix Note Edge - لون 3",
+              "width": 710,
+              "height": 744
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194329329891",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Curved AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397585635",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Infinix Note Edge 8GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397618403",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Infinix Note Edge with curved 1.5K 120Hz AMOLED display, Dimensity 7100, up to 256GB storage and 6500mAh battery."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9656429871331",
+      "title": "Infinix Note 50 Pro+",
+      "handle": "infinix-note-50-pro",
+      "descriptionHtml": "<p><strong>Infinix Note 50 Pro+</strong> is an advanced 5G smartphone that delivers flagship-inspired performance, premium visuals, and powerful charging. Its 144Hz AMOLED display and MediaTek Dimensity processor make it ideal for demanding everyday use.</p><ul>\n<li>6.78-inch AMOLED display with 144Hz refresh rate</li>\n<li>MediaTek Dimensity 8350 processor</li>\n<li>12GB RAM and 256GB storage</li>\n<li>Advanced 50MP rear camera system with optical zoom</li>\n<li>5200mAh silicon-carbon battery</li>\n<li>Up to 100W ultra-fast charging and wireless charging</li>\n</ul><p>Choose the Infinix Note 50 Pro+ for fast 5G performance, a smooth AMOLED display, advanced cameras, and ultra-fast charging.</p>",
+      "status": "ACTIVE",
+      "vendor": "Infinix",
+      "productType": "هواتف ذكية",
+      "tags": [
+        "5G",
+        "Infinix",
+        "Note Series",
+        "فئة عليا",
+        "هواتف"
+      ],
+      "createdAt": "2026-09-06T03:34:42Z",
+      "updatedAt": "2026-09-06T21:11:43Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49680739401955",
+            "title": "Default",
+            "sku": "INF-NOTE50PROPLUS",
+            "barcode": null,
+            "price": "279.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Title",
+                "value": "Default"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51852664406243",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51852664406243",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39925077901539",
+            "alt": "Infinix Note 50 Pro+ - لون 1",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925077901539",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-note50-pro-plus-5g-x6856-2.jpg?v=1788666059",
+              "altText": "Infinix Note 50 Pro+ - لون 1",
+              "width": 710,
+              "height": 609
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39925077934307",
+            "alt": "Infinix Note 50 Pro+ - لون 2",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39925077934307",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/infinix-note50-pro-plus-5g-x6856-3.jpg?v=1788666059",
+              "altText": "Infinix Note 50 Pro+ - لون 2",
+              "width": 564,
+              "height": 626
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52194329297123",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397520099",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Infinix Note 50 Pro+ 5G 12GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194397552867",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Infinix Note 50 Pro+ with 144Hz AMOLED display, Dimensity 8350, 12GB RAM, 256GB storage and up to 100W charging."
+          }
+        ]
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo5NjU2NDI5ODcxMzMxLCJsYXN0X3ZhbHVlIjoiOTY1NjQyOTg3MTMzMSJ9"
+  }
+}
