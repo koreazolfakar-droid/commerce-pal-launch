@@ -1060,7 +1060,7 @@ export default function CategoriesPage() {
       {moveProduct && (
         <ModalShell
           title="Move Product"
-          subtitle={moveProduct.name + " will stay intact; only Product.category changes."}
+          subtitle={moveProduct.name + " will stay intact; only its Supabase category assignment changes."}
           onClose={() => {
             setMoveProduct(null);
             setMoveDestination("");
