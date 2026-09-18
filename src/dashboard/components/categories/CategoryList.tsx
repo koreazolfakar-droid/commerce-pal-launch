@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
-import type { CatalogCategory } from "@/dashboard/mock/catalog";
+import type { CatalogCategory } from "@/dashboard/data/categories";
 
 type CategoryActionProps = {
   category: CatalogCategory;
