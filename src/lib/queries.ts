@@ -16,7 +16,7 @@ import {
   fetchProductsByHandles,
   fetchProductsByVendor,
   searchStorefront,
-} from "@/lib/nativeStore";
+} from "@/lib/storefrontData";
 import type { ShopifyProduct } from "@/lib/shopify";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
