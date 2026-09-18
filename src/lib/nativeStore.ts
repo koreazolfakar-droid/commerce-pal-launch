@@ -1,5 +1,5 @@
-import { publicSupabase } from "@/integrations/publicSupabase/publicClient";
-import type { Json, Tables } from "@/integrations/publicSupabase/types";
+import { publicSupabase } from "@/integrations/supabase/publicClient";
+import type { Json, Tables } from "@/integrations/supabase/types";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 
 type ProductRow = Tables<"store_products">;
