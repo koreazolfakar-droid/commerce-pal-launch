@@ -1,6 +1,4 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
-
 import { CatalogView } from "@/components/CatalogView";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { StoreLayout } from "@/components/StoreLayout";
