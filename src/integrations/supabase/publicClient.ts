@@ -17,19 +17,32 @@ function publicSupabaseConfig() {
   };
 }
 
-const { url, key } = publicSupabaseConfig();
+function createPublicSupabaseClient() {
+  const { url, key } = publicSupabaseConfig();
+  return createClient<Database>(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
+
+let publicClient: ReturnType<typeof createPublicSupabaseClient> | undefined;
 
 /**
  * Public storefront client.
  *
- * This client deliberately has no browser auth storage and no session refresh.
- * It is safe to use from TanStack Start SSR loaders and public browser queries.
- * Dashboard authentication continues to use the normal authenticated client.
+ * The client is created lazily so SSR module evaluation never depends on
+ * Supabase initialization. Any initialization/request failure happens inside
+ * the storefront data try/catch and can safely fall back to Shopify.
  */
-export const publicSupabase = createClient<Database>(url, key, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false,
+export const publicSupabase = new Proxy(
+  {} as ReturnType<typeof createPublicSupabaseClient>,
+  {
+    get(_, prop, receiver) {
+      if (!publicClient) publicClient = createPublicSupabaseClient();
+      return Reflect.get(publicClient, prop, receiver);
+    },
   },
-});
+);
