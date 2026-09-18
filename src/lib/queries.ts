@@ -119,6 +119,7 @@ export const catalogQueryOptions = () =>
   queryOptions({
     queryKey: ["storefront", "catalog"],
     queryFn: fetchCatalogIndexSafely,
+    meta: { ssrSerializable: false },
     staleTime: CATALOG_STALE_TIME,
     retry: STOREFRONT_QUERY_RETRY_COUNT,
     retryDelay: storefrontRetryDelay,
