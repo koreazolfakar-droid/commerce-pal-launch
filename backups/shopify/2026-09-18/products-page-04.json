@@ -1,0 +1,4513 @@
+{
+  "snapshot": "2026-09-18",
+  "resource": "products",
+  "page": 4,
+  "data": [
+    {
+      "id": "gid://shopify/Product/9650960335075",
+      "title": "Apple iPhone 16 Pro",
+      "handle": "apple-iphone-16-pro",
+      "descriptionHtml": "<p>iPhone 16 Pro features a 6.3-inch ProMotion display, A18 Pro chip and a 48MP Pro camera system with 5x Telephoto.</p><ul>\n<li>Display: 6.3-inch Super Retina XDR OLED, 2622×1206, 460 ppi, Always-On, ProMotion up to 120Hz</li>\n<li>Chip: A18 Pro</li>\n<li>Cameras: 48MP Fusion Main, 48MP Ultra Wide, 12MP 5x Telephoto; 12MP TrueDepth front</li>\n<li>Battery: up to 27 hours video playback</li>\n<li>Connectivity: 5G, Wi‑Fi 7, Bluetooth 5.3, USB‑C, MagSafe</li>\n<li>OS: iOS</li>\n<li>Water resistance: IP68</li>\n<li>Box: iPhone 16 Pro, USB‑C Charge Cable, documentation</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Apple",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Apple",
+        "iPhone",
+        "iPhone 16",
+        "iPhone 16 Pro",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-02T17:34:24Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660761276643",
+            "title": "Black Titanium / 128GB",
+            "sku": "IP16P-BT-128",
+            "barcode": null,
+            "price": "1099.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "128GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832471716067",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832471716067",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761309411",
+            "title": "Black Titanium / 256GB",
+            "sku": "IP16P-BT-256",
+            "barcode": null,
+            "price": "1249.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832471748835",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832471748835",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761342179",
+            "title": "Black Titanium / 512GB",
+            "sku": "IP16P-BT-512",
+            "barcode": null,
+            "price": "1499.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832471781603",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832471781603",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761374947",
+            "title": "Black Titanium / 1TB",
+            "sku": "IP16P-BT-1TB",
+            "barcode": null,
+            "price": "1699.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "1TB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832471814371",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832471814371",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761407715",
+            "title": "White Titanium / 128GB",
+            "sku": "IP16P-WT-128",
+            "barcode": null,
+            "price": "1099.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "128GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832471847139",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832471847139",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761440483",
+            "title": "White Titanium / 256GB",
+            "sku": "IP16P-WT-256",
+            "barcode": null,
+            "price": "1249.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832471879907",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832471879907",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761473251",
+            "title": "White Titanium / 512GB",
+            "sku": "IP16P-WT-512",
+            "barcode": null,
+            "price": "1499.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832471912675",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832471912675",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761506019",
+            "title": "White Titanium / 1TB",
+            "sku": "IP16P-WT-1TB",
+            "barcode": null,
+            "price": "1699.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "1TB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832471945443",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832471945443",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761538787",
+            "title": "Natural Titanium / 128GB",
+            "sku": "IP16P-NT-128",
+            "barcode": null,
+            "price": "1099.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Natural Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "128GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832471978211",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832471978211",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761571555",
+            "title": "Natural Titanium / 256GB",
+            "sku": "IP16P-NT-256",
+            "barcode": null,
+            "price": "1249.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Natural Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472010979",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472010979",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761604323",
+            "title": "Natural Titanium / 512GB",
+            "sku": "IP16P-NT-512",
+            "barcode": null,
+            "price": "1499.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Natural Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472043747",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472043747",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761637091",
+            "title": "Natural Titanium / 1TB",
+            "sku": "IP16P-NT-1TB",
+            "barcode": null,
+            "price": "1699.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Natural Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "1TB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472076515",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472076515",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761669859",
+            "title": "Desert Titanium / 128GB",
+            "sku": "IP16P-DT-128",
+            "barcode": null,
+            "price": "1099.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Desert Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "128GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472109283",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472109283",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761702627",
+            "title": "Desert Titanium / 256GB",
+            "sku": "IP16P-DT-256",
+            "barcode": null,
+            "price": "1249.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Desert Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472142051",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472142051",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761735395",
+            "title": "Desert Titanium / 512GB",
+            "sku": "IP16P-DT-512",
+            "barcode": null,
+            "price": "1499.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Desert Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472174819",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472174819",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660761768163",
+            "title": "Desert Titanium / 1TB",
+            "sku": "IP16P-DT-1TB",
+            "barcode": null,
+            "price": "1699.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Desert Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "1TB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472207587",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472207587",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39920778608867",
+            "alt": "Apple iPhone 16 Pro front and back on clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920778608867",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-16-pro-clean-white-2.jpg?v=1788608996",
+              "altText": "Apple iPhone 16 Pro front and back on clean white background",
+              "width": 2048,
+              "height": 2048
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52076289982691",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Apple iPhone 16 Pro | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52076290015459",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Buy Apple iPhone 16 Pro in Lebanon with verified colors, storage options, competitive USD pricing and tracked stock."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164593975523",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.3-inch Super Retina XDR OLED\",\"Resolution\":\"2622 × 1206, 460 ppi\",\"Refresh Rate\":\"ProMotion up to 120Hz\",\"Chip\":\"Apple A18 Pro\",\"Rear Cameras\":\"48MP Fusion Main + 48MP Ultra Wide + 12MP 5x Telephoto\",\"Front Camera\":\"12MP TrueDepth\",\"Battery\":\"Up to 27 hours video playback\",\"Connectivity\":\"5G, Wi-Fi 7, Bluetooth 5.3, USB-C, MagSafe\",\"Water Resistance\":\"IP68\",\"Storage\":\"128GB / 256GB / 512GB / 1TB\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328772835",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO Super Retina XDR OLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650960892131",
+      "title": "Apple iPhone 16 Pro Max",
+      "handle": "apple-iphone-16-pro-max",
+      "descriptionHtml": "<p>iPhone 16 Pro Max features a 6.9-inch ProMotion display, A18 Pro chip and a 48MP Pro camera system with 5x Telephoto.</p><ul>\n<li>Display: 6.9-inch Super Retina XDR OLED, 2868×1320, 460 ppi, Always-On, ProMotion up to 120Hz</li>\n<li>Chip: A18 Pro</li>\n<li>Cameras: 48MP Fusion Main, 48MP Ultra Wide, 12MP 5x Telephoto; 12MP TrueDepth front</li>\n<li>Battery: up to 33 hours video playback</li>\n<li>Connectivity: 5G, Wi‑Fi 7, Bluetooth 5.3, USB‑C, MagSafe</li>\n<li>OS: iOS</li>\n<li>Water resistance: IP68</li>\n<li>Box: iPhone 16 Pro Max, USB‑C Charge Cable, documentation</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Apple",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Apple",
+        "iPhone",
+        "iPhone 16",
+        "iPhone 16 Pro Max",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-02T17:34:34Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660762325219",
+            "title": "Black Titanium / 256GB",
+            "sku": "IP16PM-BT-256",
+            "barcode": null,
+            "price": "1199.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472764643",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472764643",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762357987",
+            "title": "Black Titanium / 512GB",
+            "sku": "IP16PM-BT-512",
+            "barcode": null,
+            "price": "1399.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472797411",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472797411",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762390755",
+            "title": "Black Titanium / 1TB",
+            "sku": "IP16PM-BT-1TB",
+            "barcode": null,
+            "price": "1599.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "1TB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472830179",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472830179",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762423523",
+            "title": "White Titanium / 256GB",
+            "sku": "IP16PM-WT-256",
+            "barcode": null,
+            "price": "1199.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472862947",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472862947",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762456291",
+            "title": "White Titanium / 512GB",
+            "sku": "IP16PM-WT-512",
+            "barcode": null,
+            "price": "1399.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472895715",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472895715",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762489059",
+            "title": "White Titanium / 1TB",
+            "sku": "IP16PM-WT-1TB",
+            "barcode": null,
+            "price": "1599.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "1TB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472928483",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472928483",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762521827",
+            "title": "Natural Titanium / 256GB",
+            "sku": "IP16PM-NT-256",
+            "barcode": null,
+            "price": "1199.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Natural Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472961251",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472961251",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762554595",
+            "title": "Natural Titanium / 512GB",
+            "sku": "IP16PM-NT-512",
+            "barcode": null,
+            "price": "1399.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Natural Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832472994019",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832472994019",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762587363",
+            "title": "Natural Titanium / 1TB",
+            "sku": "IP16PM-NT-1TB",
+            "barcode": null,
+            "price": "1599.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Natural Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "1TB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473026787",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473026787",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762620131",
+            "title": "Desert Titanium / 256GB",
+            "sku": "IP16PM-DT-256",
+            "barcode": null,
+            "price": "1199.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Desert Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473059555",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473059555",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762652899",
+            "title": "Desert Titanium / 512GB",
+            "sku": "IP16PM-DT-512",
+            "barcode": null,
+            "price": "1399.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Desert Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473092323",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473092323",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660762685667",
+            "title": "Desert Titanium / 1TB",
+            "sku": "IP16PM-DT-1TB",
+            "barcode": null,
+            "price": "1599.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Desert Titanium"
+              },
+              {
+                "name": "Storage",
+                "value": "1TB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473125091",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473125091",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39920774807779",
+            "alt": "Apple iPhone 16 Pro Max front and back on clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920774807779",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-16-pro-max-clean-white-2.jpg?v=1788608961",
+              "altText": "Apple iPhone 16 Pro Max front and back on clean white background",
+              "width": 665,
+              "height": 665
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52076290080995",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Apple iPhone 16 Pro Max | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52076290113763",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Buy Apple iPhone 16 Pro Max in Lebanon with verified colors, storage options, competitive USD pricing and tracked stock."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164594008291",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.9-inch Super Retina XDR OLED\",\"Resolution\":\"2868 × 1320, 460 ppi\",\"Refresh Rate\":\"ProMotion up to 120Hz\",\"Chip\":\"Apple A18 Pro\",\"Rear Cameras\":\"48MP Fusion Main + 48MP Ultra Wide + 12MP 5x Telephoto\",\"Front Camera\":\"12MP TrueDepth\",\"Battery\":\"Up to 33 hours video playback\",\"Connectivity\":\"5G, Wi-Fi 7, Bluetooth 5.3, USB-C, MagSafe\",\"Water Resistance\":\"IP68\",\"Storage\":\"256GB / 512GB / 1TB\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328805603",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO Super Retina XDR OLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9650961219811",
+      "title": "Apple iPhone 16e",
+      "handle": "apple-iphone-16e",
+      "descriptionHtml": "<p>iPhone 16e combines a 6.1-inch Super Retina XDR display, A18 chip and a 48MP Fusion camera system with 2x Telephoto.</p><ul>\n<li>Display: 6.1-inch Super Retina XDR OLED, 2532×1170, 460 ppi</li>\n<li>Chip: A18</li>\n<li>Camera: 48MP Fusion Main with 2x Telephoto; 12MP TrueDepth front</li>\n<li>Battery: up to 26 hours video playback</li>\n<li>Connectivity: 5G, Wi‑Fi 6, Bluetooth 5.3, USB‑C</li>\n<li>OS: iOS</li>\n<li>Water resistance: IP68</li>\n<li>Box: iPhone 16e, USB‑C Charge Cable, documentation</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Apple",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "Apple",
+        "iPhone",
+        "iPhone 16",
+        "iPhone 16e",
+        "Smartphone"
+      ],
+      "createdAt": "2026-09-02T17:34:41Z",
+      "updatedAt": "2026-09-06T11:48:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660763013347",
+            "title": "Black / 128GB",
+            "sku": "IP16E-BLK-128",
+            "barcode": null,
+            "price": "699.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              },
+              {
+                "name": "Storage",
+                "value": "128GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473452771",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473452771",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660763046115",
+            "title": "Black / 256GB",
+            "sku": "IP16E-BLK-256",
+            "barcode": null,
+            "price": "799.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473485539",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473485539",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660763078883",
+            "title": "Black / 512GB",
+            "sku": "IP16E-BLK-512",
+            "barcode": null,
+            "price": "999.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473518307",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473518307",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660763111651",
+            "title": "White / 128GB",
+            "sku": "IP16E-WHT-128",
+            "barcode": null,
+            "price": "699.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              },
+              {
+                "name": "Storage",
+                "value": "128GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473551075",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473551075",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660763144419",
+            "title": "White / 256GB",
+            "sku": "IP16E-WHT-256",
+            "barcode": null,
+            "price": "799.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              },
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473583843",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473583843",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660763177187",
+            "title": "White / 512GB",
+            "sku": "IP16E-WHT-512",
+            "barcode": null,
+            "price": "999.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              },
+              {
+                "name": "Storage",
+                "value": "512GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832473616611",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832473616611",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39920770482403",
+            "alt": "Apple iPhone 16e front and back on clean white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920770482403",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/iphone-16e-clean-white.jpg?v=1788608934",
+              "altText": "Apple iPhone 16e front and back on clean white background",
+              "width": 3200,
+              "height": 3200
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52076290179299",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Apple iPhone 16e | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52076290244835",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Buy Apple iPhone 16e in Lebanon with verified colors, storage options, competitive USD pricing and tracked stock."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164594041059",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.1-inch Super Retina XDR OLED\",\"Resolution\":\"2532 × 1170, 460 ppi\",\"Chip\":\"Apple A18\",\"Rear Camera\":\"48MP Fusion with 2x Telephoto\",\"Front Camera\":\"12MP TrueDepth\",\"Battery\":\"Up to 26 hours video playback\",\"Connectivity\":\"5G, Wi-Fi 6, Bluetooth 5.3, USB-C\",\"OS\":\"iOS\",\"Water Resistance\":\"IP68\",\"Storage\":\"128GB / 256GB / 512GB\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194328838371",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "Super Retina XDR OLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651057787107",
+      "title": "POCO C85 256GB",
+      "handle": "poco-c85-256gb",
+      "descriptionHtml": "<p>6.9″ 120Hz display, Helio G81-Ultra, 8GB RAM, 256GB storage, 50MP dual camera, 6000mAh battery, 33W charging, IP64, HyperOS 2.</p><p>Colors: Black, Purple, Green.</p>",
+      "status": "ACTIVE",
+      "vendor": "POCO",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "POCO",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:14:30Z",
+      "updatedAt": "2026-09-06T12:00:21Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660914958563",
+            "title": "Black",
+            "sku": "POCO-C85-256-BLK",
+            "barcode": null,
+            "price": "200.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832625397987",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832625397987",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660914991331",
+            "title": "Purple",
+            "sku": "POCO-C85-256-PUR",
+            "barcode": null,
+            "price": "200.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Purple"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832625430755",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832625430755",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660915024099",
+            "title": "Green",
+            "sku": "POCO-C85-256-GRN",
+            "barcode": null,
+            "price": "200.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832625463523",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832625463523",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39837998383331",
+            "alt": "POCO C85 256GB",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39837998383331",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/poco-c85.png?v=1788372793",
+              "altText": "POCO C85 256GB",
+              "width": 700,
+              "height": 700
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164594073827",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.9-inch 120Hz IPS LCD\",\"Processor\":\"MediaTek Helio G81-Ultra\",\"RAM\":\"8GB\",\"Storage\":\"256GB\",\"Rear Camera\":\"50MP dual camera\",\"Battery\":\"6000mAh\",\"Charging\":\"33W\",\"Protection\":\"IP64\",\"OS\":\"HyperOS 2\",\"Colors\":\"Black, Purple, Green\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334474467",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "IPS LCD"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483503331",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "POCO C85 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483536099",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop POCO C85 256GB with large display, reliable performance, long battery life and generous storage at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651058082019",
+      "title": "POCO F8 Pro 5G 512GB",
+      "handle": "poco-f8-pro-5g-512gb",
+      "descriptionHtml": "<p>6.59″ AMOLED 120Hz, Snapdragon 8 Elite, 12GB RAM, 512GB storage, 50MP+50MP+8MP cameras, 6210mAh battery, 100W charging, IP68, HyperOS 3.</p><p>Colors: Black, Blue, Titanium Silver.</p>",
+      "status": "ACTIVE",
+      "vendor": "POCO",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "POCO",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:14:41Z",
+      "updatedAt": "2026-09-06T12:00:21Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660915417315",
+            "title": "Black",
+            "sku": "POCO-F8-PRO-512-BLK",
+            "barcode": null,
+            "price": "660.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832625856739",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832625856739",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660915450083",
+            "title": "Blue",
+            "sku": "POCO-F8-PRO-512-BLU",
+            "barcode": null,
+            "price": "660.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832625889507",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832625889507",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660915482851",
+            "title": "Titanium Silver",
+            "sku": "POCO-F8-PRO-512-SLV",
+            "barcode": null,
+            "price": "660.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Titanium Silver"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832625922275",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832625922275",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838002938083",
+            "alt": "POCO F8 Pro 5G 512GB",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838002938083",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/poco-f8-pro.webp?v=1788372799",
+              "altText": "POCO F8 Pro 5G 512GB",
+              "width": 612,
+              "height": 612
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164594106595",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.59-inch AMOLED, 120Hz\",\"Processor\":\"Snapdragon 8 Elite\",\"RAM\":\"12GB\",\"Storage\":\"512GB\",\"Rear Cameras\":\"50MP + 50MP + 8MP\",\"Battery\":\"6210mAh\",\"Charging\":\"100W\",\"Protection\":\"IP68\",\"OS\":\"HyperOS 3\",\"Network\":\"5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334507235",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483568867",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "POCO F8 Pro 5G 512GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483601635",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop POCO F8 Pro 5G 512GB with flagship performance, high-quality display, advanced cameras and fast charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651058770147",
+      "title": "POCO X8 Pro 5G 512GB",
+      "handle": "poco-x8-pro-5g-512gb",
+      "descriptionHtml": "<p>6.59″ 1.5K AMOLED 120Hz, Dimensity 8500-Ultra, 12GB RAM, 512GB storage, 50MP OIS + 8MP ultra-wide, 20MP selfie, 6500mAh, 100W HyperCharge, IP68, HyperOS 3.</p><p>Colors: Black, White, Green.</p>",
+      "status": "ACTIVE",
+      "vendor": "POCO",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "POCO",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:14:46Z",
+      "updatedAt": "2026-09-06T12:00:21Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660916793571",
+            "title": "Black",
+            "sku": "POCO-X8-PRO-512-BLK",
+            "barcode": null,
+            "price": "520.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832627232995",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832627232995",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660916826339",
+            "title": "White",
+            "sku": "POCO-X8-PRO-512-WHT",
+            "barcode": null,
+            "price": "520.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832627265763",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832627265763",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660916859107",
+            "title": "Green",
+            "sku": "POCO-X8-PRO-512-GRN",
+            "barcode": null,
+            "price": "520.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832627298531",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832627298531",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838065885411",
+            "alt": "POCO X8 Pro 5G 512GB",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838065885411",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/poco-x8-pro.jpg?v=1788372878",
+              "altText": "POCO X8 Pro 5G 512GB",
+              "width": 1000,
+              "height": 1000
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164594139363",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.59-inch 1.5K AMOLED, 120Hz\",\"Processor\":\"Dimensity 8500-Ultra\",\"RAM\":\"12GB\",\"Storage\":\"512GB\",\"Rear Cameras\":\"50MP OIS + 8MP Ultra Wide\",\"Front Camera\":\"20MP\",\"Battery\":\"6500mAh\",\"Charging\":\"100W HyperCharge\",\"Protection\":\"IP68\",\"OS\":\"HyperOS 3\",\"Network\":\"5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334572771",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483699939",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "POCO X8 Pro 5G 512GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483732707",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop POCO X8 Pro 5G 512GB with powerful performance, high-refresh-rate display, advanced cameras and fast charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651059032291",
+      "title": "POCO F8 Ultra",
+      "handle": "poco-f8-ultra",
+      "descriptionHtml": "<p>6.9″ AMOLED 120Hz, Snapdragon 8 Elite Gen 5, 16GB RAM, 512GB storage, 50MP triple camera, 32MP selfie, 6500mAh battery, 100W wired + 50W wireless charging, IP68, HyperOS 3.</p>",
+      "status": "ACTIVE",
+      "vendor": "POCO",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "POCO",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:14:58Z",
+      "updatedAt": "2026-09-06T12:00:21Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660917317859",
+            "title": "Black",
+            "sku": "POCO-F8-ULTRA-BLK",
+            "barcode": null,
+            "price": "1000.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832627757283",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832627757283",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838079975651",
+            "alt": "POCO F8 Ultra",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838079975651",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/poco-f8-ultra.png?v=1788372894",
+              "altText": "POCO F8 Ultra",
+              "width": 1964,
+              "height": 1964
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164594172131",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.9-inch AMOLED, 120Hz\",\"Processor\":\"Snapdragon 8 Elite Gen 5\",\"RAM\":\"16GB\",\"Storage\":\"512GB\",\"Rear Camera\":\"50MP triple camera\",\"Front Camera\":\"32MP\",\"Battery\":\"6500mAh\",\"Charging\":\"100W wired + 50W wireless\",\"Protection\":\"IP68\",\"OS\":\"HyperOS 3\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334540003",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483634403",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "POCO F8 Ultra | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483667171",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop POCO F8 Ultra with flagship-class performance, premium display, advanced cameras and fast charging at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651060179171",
+      "title": "Xiaomi 17T 512GB",
+      "handle": "xiaomi-17t-512gb",
+      "descriptionHtml": "<p>6.59″ AMOLED 120Hz, Dimensity 8500-Ultra, 12GB RAM + 12GB extended, 512GB, Leica 50MP + 50MP telephoto + 12MP ultra-wide, 32MP selfie, 6500mAh, 67W HyperCharge, IP68, HyperOS 3.</p><p>Colors: Black, Violet, Opal White.</p>",
+      "status": "ACTIVE",
+      "vendor": "Xiaomi",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "Xiaomi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:15:49Z",
+      "updatedAt": "2026-09-06T11:50:05Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660919349475",
+            "title": "Black",
+            "sku": "XIAOMI-17T-512-BLK",
+            "barcode": null,
+            "price": "685.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832629788899",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832629788899",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660919382243",
+            "title": "Violet",
+            "sku": "XIAOMI-17T-512-VIO",
+            "barcode": null,
+            "price": "685.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Violet"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832629821667",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832629821667",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660919415011",
+            "title": "Opal White",
+            "sku": "XIAOMI-17T-512-WHT",
+            "barcode": null,
+            "price": "685.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Opal White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832629854435",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832629854435",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39919945744611",
+            "alt": "Xiaomi 17T product image on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39919945744611",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/xiaomi-17t-clean.jpg?v=1788603269",
+              "altText": "Xiaomi 17T product image on white background",
+              "width": 600,
+              "height": 600
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164263575779",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Xiaomi 17T 512GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164263608547",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Xiaomi 17T 512GB with 6.59-inch 120Hz AMOLED, 12GB RAM, Leica cameras, 6500mAh battery and 67W HyperCharge."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164594204899",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.59-inch AMOLED, 120Hz\",\"Processor\":\"Dimensity 8500-Ultra\",\"RAM\":\"12GB + 12GB extended\",\"Storage\":\"512GB\",\"Rear Cameras\":\"Leica 50MP + 50MP telephoto + 12MP ultra-wide\",\"Front Camera\":\"32MP\",\"Battery\":\"6500mAh\",\"Charging\":\"67W HyperCharge\",\"Protection\":\"IP68\",\"OS\":\"HyperOS 3\",\"Network\":\"5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194339356899",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651060343011",
+      "title": "Xiaomi 17 512GB",
+      "handle": "xiaomi-17-512gb",
+      "descriptionHtml": "<p>6.3″ LTPO AMOLED 120Hz, Snapdragon 8 Elite Gen 5, 12GB RAM, 512GB storage, Leica triple 50MP cameras, 50MP selfie, 6330mAh battery, 100W wired + 50W wireless charging, IP68, HyperOS 3.</p><p>Colors: Black, White, Green.</p>",
+      "status": "ACTIVE",
+      "vendor": "Xiaomi",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "Xiaomi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:15:54Z",
+      "updatedAt": "2026-09-06T12:00:40Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660919578851",
+            "title": "Black",
+            "sku": "XIAOMI-17-512-BLK",
+            "barcode": null,
+            "price": "875.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630018275",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630018275",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660919611619",
+            "title": "White",
+            "sku": "XIAOMI-17-512-WHT",
+            "barcode": null,
+            "price": "875.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630051043",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630051043",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660919644387",
+            "title": "Green",
+            "sku": "XIAOMI-17-512-GRN",
+            "barcode": null,
+            "price": "875.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630083811",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630083811",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838043734243",
+            "alt": "Xiaomi 17 512GB",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838043734243",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/xiaomi-17.png?v=1788372851",
+              "altText": "Xiaomi 17 512GB",
+              "width": 456,
+              "height": 542
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164594237667",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.3-inch LTPO AMOLED, 120Hz\",\"Processor\":\"Snapdragon 8 Elite Gen 5\",\"RAM\":\"12GB\",\"Storage\":\"512GB\",\"Rear Cameras\":\"Leica triple 50MP\",\"Front Camera\":\"50MP\",\"Battery\":\"6330mAh\",\"Charging\":\"100W wired + 50W wireless\",\"Protection\":\"IP68\",\"OS\":\"HyperOS 3\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194339258595",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486780131",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Xiaomi 17 512GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486812899",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Xiaomi 17 512GB with premium display, powerful performance, advanced cameras and fast charging at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651060539619",
+      "title": "Xiaomi 17 Ultra",
+      "handle": "xiaomi-17-ultra",
+      "descriptionHtml": "<p>6.9″ LTPO AMOLED 120Hz, Snapdragon 8 Elite Gen 5, 16GB RAM, 512GB, Leica 50MP + 200MP periscope + 50MP, 50MP selfie, 6000mAh, 90W wired + 50W wireless, IP68/IP69, HyperOS 3.</p><p>Colors: Black, White, Starlit Green.</p>",
+      "status": "ACTIVE",
+      "vendor": "Xiaomi",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "Leica",
+        "Xiaomi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:15:59Z",
+      "updatedAt": "2026-09-06T11:50:05Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660920004835",
+            "title": "Black",
+            "sku": "XIAOMI-17-ULTRA-BLK",
+            "barcode": null,
+            "price": "1385.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630444259",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630444259",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660920037603",
+            "title": "White",
+            "sku": "XIAOMI-17-ULTRA-WHT",
+            "barcode": null,
+            "price": "1385.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630477027",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630477027",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660920070371",
+            "title": "Starlit Green",
+            "sku": "XIAOMI-17-ULTRA-GRN",
+            "barcode": null,
+            "price": "1385.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Starlit Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630509795",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630509795",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39920717856995",
+            "alt": "Xiaomi 17 Ultra clean white product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920717856995",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/xiaomi-17-ultra-clean-white.jpg?v=1788608583",
+              "altText": "Xiaomi 17 Ultra clean white product image",
+              "width": 800,
+              "height": 800
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164262723811",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Xiaomi 17 Ultra 512GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164262756579",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Xiaomi 17 Ultra with 6.9-inch 120Hz AMOLED, 16GB RAM, 512GB storage, Leica cameras and 6000mAh battery."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164594270435",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.9-inch LTPO AMOLED, 120Hz\",\"Processor\":\"Snapdragon 8 Elite Gen 5\",\"RAM\":\"16GB\",\"Storage\":\"512GB\",\"Rear Cameras\":\"Leica 50MP + 200MP periscope + 50MP\",\"Front Camera\":\"50MP\",\"Battery\":\"6000mAh\",\"Charging\":\"90W wired + 50W wireless\",\"Protection\":\"IP68/IP69\",\"OS\":\"HyperOS 3\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194339291363",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO AMOLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651060670691",
+      "title": "Xiaomi 17T Pro 1TB",
+      "handle": "xiaomi-17t-pro-1tb",
+      "descriptionHtml": "<p>6.83″ AMOLED 144Hz, Dimensity 9500, 12GB RAM + 12GB extended, 1TB storage, Leica triple camera, 32MP selfie, 7000mAh, 100W wired + 50W wireless, IP68, Wi‑Fi 7, HyperOS 3.</p><p>Colors: Black, Deep Blue, Deep Violet.</p>",
+      "status": "ACTIVE",
+      "vendor": "Xiaomi",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "Leica",
+        "Xiaomi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:16:04Z",
+      "updatedAt": "2026-09-06T12:00:40Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660920201443",
+            "title": "Black",
+            "sku": "XIAOMI-17T-PRO-1TB-BLK",
+            "barcode": null,
+            "price": "960.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630640867",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630640867",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660920234211",
+            "title": "Deep Blue",
+            "sku": "XIAOMI-17T-PRO-1TB-BLU",
+            "barcode": null,
+            "price": "960.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Deep Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630673635",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630673635",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660920266979",
+            "title": "Deep Violet",
+            "sku": "XIAOMI-17T-PRO-1TB-VIO",
+            "barcode": null,
+            "price": "960.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Deep Violet"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630706403",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630706403",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838117167331",
+            "alt": "Xiaomi 17T Pro 1TB",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838117167331",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/xiaomi-17t-pro-1tb.jpg?v=1788372946",
+              "altText": "Xiaomi 17T Pro 1TB",
+              "width": 560,
+              "height": 560
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164594303203",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.83-inch AMOLED, 144Hz\",\"Processor\":\"Dimensity 9500\",\"RAM\":\"12GB + 12GB extended\",\"Storage\":\"1TB\",\"Rear Camera\":\"Leica triple camera\",\"Front Camera\":\"32MP\",\"Battery\":\"7000mAh\",\"Charging\":\"100W wired + 50W wireless\",\"Protection\":\"IP68\",\"Connectivity\":\"Wi-Fi 7\",\"OS\":\"HyperOS 3\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194339389667",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486911203",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Xiaomi 17T Pro 1TB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486943971",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Xiaomi 17T Pro 1TB with high-performance hardware, premium display, advanced cameras and generous storage."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651060834531",
+      "title": "Xiaomi 17 Ultra Package",
+      "handle": "xiaomi-17-ultra-package",
+      "descriptionHtml": "<p>Premium Xiaomi 17 Ultra package: 6.9″ LTPO AMOLED 120Hz, Snapdragon 8 Elite Gen 5, 16GB RAM, 512GB storage, Leica 50MP + 200MP + 50MP cameras, 6000mAh, 90W wired + 50W wireless, IP68/IP69.</p><p>Package includes Redmi Buds 8 Pro. Colors: Black, White, Starlit Green.</p>",
+      "status": "ACTIVE",
+      "vendor": "Xiaomi",
+      "productType": "Smartphone Bundle",
+      "tags": [
+        "5G",
+        "Bundle",
+        "HyperOS",
+        "Leica",
+        "Xiaomi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:16:10Z",
+      "updatedAt": "2026-09-15T12:17:04Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660920430819",
+            "title": "Black",
+            "sku": "XIAOMI-17-ULTRA-PACK-BLK",
+            "barcode": null,
+            "price": "1460.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630870243",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630870243",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660920463587",
+            "title": "White",
+            "sku": "XIAOMI-17-ULTRA-PACK-WHT",
+            "barcode": null,
+            "price": "1460.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "White"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630903011",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630903011",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660920496355",
+            "title": "Starlit Green",
+            "sku": "XIAOMI-17-ULTRA-PACK-GRN",
+            "barcode": null,
+            "price": "1460.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Starlit Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832630935779",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832630935779",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838290444515",
+            "alt": "Xiaomi 17 Ultra Package",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838290444515",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/xiaomi-17-ultra-package-store.jpg?v=1788373248",
+              "altText": "Xiaomi 17 Ultra Package",
+              "width": 2000,
+              "height": 1336
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164594335971",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.9-inch LTPO AMOLED, 120Hz\",\"Processor\":\"Snapdragon 8 Elite Gen 5\",\"RAM\":\"16GB\",\"Storage\":\"512GB\",\"Rear Cameras\":\"Leica 50MP + 200MP + 50MP\",\"Battery\":\"6000mAh\",\"Charging\":\"90W wired + 50W wireless\",\"Protection\":\"IP68/IP69\",\"Included\":\"Redmi Buds 8 Pro\",\"Bundle\":\"Xiaomi 17 Ultra Package\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194339324131",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "LTPO AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486845667",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Xiaomi 17 Ultra Package in Lebanon | Space Call"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194486878435",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Xiaomi 17 Ultra Package in Lebanon with Leica cameras, Snapdragon 8 Elite Gen 5, 16GB RAM, 512GB storage, 6000mAh battery and 90W HyperCharge."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651061129443",
+      "title": "Redmi Note 15 Pro 5G 256GB",
+      "handle": "redmi-note-15-pro-5g-256gb",
+      "descriptionHtml": "<p>6.83″ 1.5K AMOLED 120Hz, Dimensity 7400-Ultra, 8GB RAM, 256GB, 200MP OIS + 8MP ultra-wide, 20MP selfie, 6580mAh, 45W charging, IP68/IP69K, HyperOS 2.</p>",
+      "status": "ACTIVE",
+      "vendor": "Redmi",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "Redmi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:16:39Z",
+      "updatedAt": "2026-09-06T12:00:22Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660921217251",
+            "title": "Titanium",
+            "sku": "REDMI-N15-PRO-5G-256-TIT",
+            "barcode": null,
+            "price": "375.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Titanium"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832631656675",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832631656675",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921250019",
+            "title": "Black",
+            "sku": "REDMI-N15-PRO-5G-256-BLK",
+            "barcode": null,
+            "price": "375.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832631689443",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832631689443",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921282787",
+            "title": "Blue",
+            "sku": "REDMI-N15-PRO-5G-256-BLU",
+            "barcode": null,
+            "price": "375.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832631722211",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832631722211",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838140039395",
+            "alt": "Redmi Note 15 Pro 5G 256GB",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838140039395",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/redmi-note-15-pro-5g.png?v=1788372976",
+              "altText": "Redmi Note 15 Pro 5G 256GB",
+              "width": 1200,
+              "height": 1200
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164594368739",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.83-inch 1.5K AMOLED, 120Hz\",\"Processor\":\"Dimensity 7400-Ultra\",\"RAM\":\"8GB\",\"Storage\":\"256GB\",\"Rear Cameras\":\"200MP OIS + 8MP Ultra Wide\",\"Front Camera\":\"20MP\",\"Battery\":\"6580mAh\",\"Charging\":\"45W\",\"Protection\":\"IP68/IP69K\",\"OS\":\"HyperOS 2\",\"Network\":\"5G\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334900451",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484060387",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Redmi Note 15 Pro 5G 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484093155",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Redmi Note 15 Pro 5G 256GB with high-quality display, advanced cameras, powerful performance and long battery life."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651061162211",
+      "title": "Redmi Note 15 Pro 4G 512GB",
+      "handle": "redmi-note-15-pro-4g-512gb",
+      "descriptionHtml": "<p>6.77″ AMOLED 120Hz, Helio G200 Ultra, 12GB RAM + 12GB extended, 512GB, 200MP + 8MP, 32MP selfie, 6500mAh, 45W, IP65, HyperOS 2.</p><p>Colors: Black, Glacier Blue, Titanium.</p>",
+      "status": "ACTIVE",
+      "vendor": "Redmi",
+      "productType": "Smartphone",
+      "tags": [
+        "4G",
+        "HyperOS",
+        "Redmi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:16:44Z",
+      "updatedAt": "2026-09-06T11:49:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660921348323",
+            "title": "Black",
+            "sku": "REDMI-N15-PRO-4G-512-BLK",
+            "barcode": null,
+            "price": "390.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832631787747",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832631787747",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921381091",
+            "title": "Glacier Blue",
+            "sku": "REDMI-N15-PRO-4G-512-BLU",
+            "barcode": null,
+            "price": "390.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Glacier Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832631820515",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832631820515",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921413859",
+            "title": "Titanium",
+            "sku": "REDMI-N15-PRO-4G-512-TIT",
+            "barcode": null,
+            "price": "390.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Titanium"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832631853283",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832631853283",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39920722018531",
+            "alt": "Redmi Note 15 Pro 4G 512GB clean white product image",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39920722018531",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/redmi-note-15-pro-clean-white_73b19159-2e82-4d8c-b0a9-390c1da1f82e.png?v=1788608605",
+              "altText": "Redmi Note 15 Pro 4G 512GB clean white product image",
+              "width": 432,
+              "height": 411
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164262428899",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Redmi Note 15 Pro 4G 512GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164262461667",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Redmi Note 15 Pro 4G with 512GB storage, 12GB RAM, 200MP camera, 6500mAh battery and 120Hz AMOLED display."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164594401507",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.77-inch AMOLED, 120Hz\",\"Processor\":\"Helio G200 Ultra\",\"RAM\":\"12GB + 12GB extended\",\"Storage\":\"512GB\",\"Rear Cameras\":\"200MP + 8MP\",\"Front Camera\":\"32MP\",\"Battery\":\"6500mAh\",\"Charging\":\"45W\",\"Protection\":\"IP65\",\"OS\":\"HyperOS 2\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334867683",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651061227747",
+      "title": "Redmi 15C 4G 8GB 256GB",
+      "handle": "redmi-15c-4g-8gb-256gb",
+      "descriptionHtml": "<p>6.9″ 120Hz IPS LCD, Helio G81 Ultra, 8GB RAM + 8GB extended, 256GB, 50MP main, 8MP selfie, 6000mAh, 33W charging, IP64, HyperOS 2.</p><p>Colors: Midnight Black, Mint Green, Moonlight Blue, Twilight Orange.</p>",
+      "status": "ACTIVE",
+      "vendor": "Redmi",
+      "productType": "Smartphone",
+      "tags": [
+        "4G",
+        "HyperOS",
+        "Redmi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:16:50Z",
+      "updatedAt": "2026-09-06T12:00:22Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660921479395",
+            "title": "Midnight Black",
+            "sku": "REDMI-15C-256-BLK",
+            "barcode": null,
+            "price": "190.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Midnight Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832631918819",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832631918819",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921512163",
+            "title": "Mint Green",
+            "sku": "REDMI-15C-256-GRN",
+            "barcode": null,
+            "price": "190.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Mint Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832631951587",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832631951587",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921544931",
+            "title": "Moonlight Blue",
+            "sku": "REDMI-15C-256-BLU",
+            "barcode": null,
+            "price": "190.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Moonlight Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832631984355",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832631984355",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921577699",
+            "title": "Twilight Orange",
+            "sku": "REDMI-15C-256-ORG",
+            "barcode": null,
+            "price": "190.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Twilight Orange"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632017123",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632017123",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838145413347",
+            "alt": "Redmi 15C 4G 8GB 256GB",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838145413347",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/redmi-15c.jpg?v=1788372985",
+              "altText": "Redmi 15C 4G 8GB 256GB",
+              "width": 1500,
+              "height": 1500
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164597055715",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.9-inch 120Hz IPS LCD\",\"Processor\":\"Helio G81 Ultra\",\"RAM\":\"8GB + 8GB extended\",\"Storage\":\"256GB\",\"Rear Camera\":\"50MP\",\"Front Camera\":\"8MP\",\"Battery\":\"6000mAh\",\"Charging\":\"33W\",\"Protection\":\"IP64\",\"OS\":\"HyperOS 2\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334736611",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "IPS LCD"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483798243",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Redmi 15C 4G 8GB 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483831011",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Redmi 15C 4G with 8GB RAM, 256GB storage, large display and long battery life at Space Cell Lebanon."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651061260515",
+      "title": "Redmi A7 Pro 64GB",
+      "handle": "redmi-a7-pro-64gb",
+      "descriptionHtml": "<p>6.9″ IPS LCD 120Hz, Unisoc T7250, 8GB RAM (4GB+4GB), 64GB storage, 13MP main, 8MP selfie, 6000mAh, 15W charging, side fingerprint, 3.5mm jack, FM, HyperOS 3.</p><p>Colors: Black, Mist Blue, Palm Green.</p>",
+      "status": "ACTIVE",
+      "vendor": "Redmi",
+      "productType": "Smartphone",
+      "tags": [
+        "4G",
+        "HyperOS",
+        "Redmi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:16:55Z",
+      "updatedAt": "2026-09-06T12:00:22Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660921610467",
+            "title": "Black",
+            "sku": "REDMI-A7-PRO-64-BLK",
+            "barcode": null,
+            "price": "140.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632049891",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632049891",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921643235",
+            "title": "Mist Blue",
+            "sku": "REDMI-A7-PRO-64-BLU",
+            "barcode": null,
+            "price": "140.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Mist Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632082659",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632082659",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921676003",
+            "title": "Palm Green",
+            "sku": "REDMI-A7-PRO-64-GRN",
+            "barcode": null,
+            "price": "140.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Palm Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632115427",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632115427",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838148853987",
+            "alt": "Redmi A7 Pro 128GB",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838148853987",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/redmi-a7-pro.jpg?v=1788372991",
+              "altText": "Redmi A7 Pro 128GB",
+              "width": 900,
+              "height": 900
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164597088483",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.9-inch IPS LCD, 120Hz\",\"Processor\":\"Unisoc T7250\",\"RAM\":\"8GB (4GB + 4GB)\",\"Storage\":\"64GB\",\"Rear Camera\":\"13MP\",\"Front Camera\":\"8MP\",\"Battery\":\"6000mAh\",\"Charging\":\"15W\",\"Features\":\"Side fingerprint, 3.5mm jack, FM\",\"OS\":\"HyperOS 3\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334802147",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "IPS LCD"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483929315",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Redmi A7 Pro 64GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483962083",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Redmi A7 Pro 64GB with smooth display, reliable performance, long battery life and practical storage."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651061358819",
+      "title": "Redmi A7 Pro 128GB",
+      "handle": "redmi-a7-pro-128gb",
+      "descriptionHtml": "<p>6.9″ IPS LCD 120Hz, Unisoc T7250, 8GB RAM (4GB+4GB), 128GB storage, 13MP main, 8MP selfie, 6000mAh, 15W charging, side fingerprint, 3.5mm jack, FM, HyperOS 3.</p><p>Colors: Black, Mist Blue, Palm Green.</p>",
+      "status": "ACTIVE",
+      "vendor": "Redmi",
+      "productType": "Smartphone",
+      "tags": [
+        "4G",
+        "HyperOS",
+        "Redmi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:17:01Z",
+      "updatedAt": "2026-09-06T12:00:22Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660921807075",
+            "title": "Black",
+            "sku": "REDMI-A7-PRO-128-BLK",
+            "barcode": null,
+            "price": "150.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632246499",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632246499",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921839843",
+            "title": "Mist Blue",
+            "sku": "REDMI-A7-PRO-128-BLU",
+            "barcode": null,
+            "price": "150.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Mist Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632279267",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632279267",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921872611",
+            "title": "Palm Green",
+            "sku": "REDMI-A7-PRO-128-GRN",
+            "barcode": null,
+            "price": "150.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Palm Green"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632312035",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632312035",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39838148853987",
+            "alt": "Redmi A7 Pro 128GB",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39838148853987",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/redmi-a7-pro.jpg?v=1788372991",
+              "altText": "Redmi A7 Pro 128GB",
+              "width": 900,
+              "height": 900
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164597121251",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.9-inch IPS LCD, 120Hz\",\"Processor\":\"Unisoc T7250\",\"RAM\":\"8GB (4GB + 4GB)\",\"Storage\":\"128GB\",\"Rear Camera\":\"13MP\",\"Front Camera\":\"8MP\",\"Battery\":\"6000mAh\",\"Charging\":\"15W\",\"Features\":\"Side fingerprint, 3.5mm jack, FM\",\"OS\":\"HyperOS 3\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334769379",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "IPS LCD"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483863779",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Redmi A7 Pro 128GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483896547",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Redmi A7 Pro 128GB with smooth display, reliable performance, long battery life and generous storage."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651061391587",
+      "title": "REDMI 15 4G 256GB 2 Years Warranty",
+      "handle": "redmi-15-4g-256gb-2-years-warranty",
+      "descriptionHtml": "<p>256GB 4G smartphone with 8GB RAM, large display, long battery life and Xiaomi HyperOS. Includes 2-year warranty and 6-month screen warranty.</p><p>Site price: $210. Colors/variants can be expanded when confirmed from the source listing.</p>",
+      "status": "ACTIVE",
+      "vendor": "Redmi",
+      "productType": "Smartphone",
+      "tags": [
+        "4G",
+        "HyperOS",
+        "Redmi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:17:06Z",
+      "updatedAt": "2026-09-06T11:49:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660921905379",
+            "title": "256GB",
+            "sku": "REDMI-15-4G-256",
+            "barcode": null,
+            "price": "210.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Storage",
+                "value": "256GB"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632344803",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632344803",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39919943287011",
+            "alt": "REDMI 15 4G product image on white background",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39919943287011",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/redmi-15-4g-clean.png?v=1788603242",
+              "altText": "REDMI 15 4G product image on white background",
+              "width": 960,
+              "height": 930
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164263674083",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Redmi 15 4G 256GB 2 Year Warranty | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164263706851",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Redmi 15 4G 256GB with 8GB RAM, long battery life, Xiaomi HyperOS, 2-year warranty and 6-month screen warranty."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597154019",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Network\":\"4G\",\"RAM\":\"8GB\",\"Storage\":\"256GB\",\"OS\":\"Xiaomi HyperOS\",\"Warranty\":\"2 years\",\"Screen Warranty\":\"6 months\",\"Type\":\"Smartphone\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334703843",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "IPS LCD"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9651061424355",
+      "title": "Redmi Note 14 Pro Plus 5G 256GB",
+      "handle": "redmi-note-14-pro-plus-5g-256gb",
+      "descriptionHtml": "<p>6.67″ AMOLED 120Hz HDR10+ 3000 nits, Snapdragon 7s Gen 3, 12GB RAM, 256GB, 200MP + 8MP + 2MP triple camera, 20MP selfie, 5110mAh, 120W wired charging, IP68/IP69K, HyperOS.</p><p>Colors: Black, Blue, Purple.</p>",
+      "status": "ACTIVE",
+      "vendor": "Redmi",
+      "productType": "Smartphone",
+      "tags": [
+        "5G",
+        "HyperOS",
+        "Redmi",
+        "xiaomi-phone"
+      ],
+      "createdAt": "2026-09-02T18:17:11Z",
+      "updatedAt": "2026-09-06T12:00:22Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49660921938147",
+            "title": "Black",
+            "sku": "REDMI-N14-PRO-PLUS-256-BLK",
+            "barcode": null,
+            "price": "360.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632377571",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632377571",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660921970915",
+            "title": "Blue",
+            "sku": "REDMI-N14-PRO-PLUS-256-BLU",
+            "barcode": null,
+            "price": "360.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Blue"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632410339",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632410339",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/ProductVariant/49660922003683",
+            "title": "Purple",
+            "sku": "REDMI-N14-PRO-PLUS-256-PUR",
+            "barcode": null,
+            "price": "360.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Purple"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51832632443107",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51832632443107",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39857399759075",
+            "alt": "",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39857399759075",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/rn-image_picker_lib_temp_a2690f57-fd7b-4ac7-8ef9-c4eb37bd1ec5.png?v=1788411069",
+              "altText": "",
+              "width": 1600,
+              "height": 1600
+            }
+          },
+          {
+            "id": "gid://shopify/MediaImage/39857401888995",
+            "alt": "",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39857401888995",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/rn-image_picker_lib_temp_8ea69cbe-4781-4117-b8bc-770429f58a6a.jpg?v=1788411088",
+              "altText": "",
+              "width": 1200,
+              "height": 802
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164597186787",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Display\":\"6.67-inch AMOLED, 120Hz, HDR10+, 3000 nits\",\"Processor\":\"Snapdragon 7s Gen 3\",\"RAM\":\"12GB\",\"Storage\":\"256GB\",\"Rear Cameras\":\"200MP + 8MP + 2MP\",\"Front Camera\":\"20MP\",\"Battery\":\"5110mAh\",\"Charging\":\"120W wired\",\"Protection\":\"IP68/IP69K\",\"OS\":\"HyperOS\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334834915",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "AMOLED"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194483994851",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Redmi Note 14 Pro+ 5G 256GB | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194484027619",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Redmi Note 14 Pro Plus 5G 256GB with AMOLED display, advanced cameras, powerful performance and fast charging."
+          }
+        ]
+      }
+    },
+    {
+      "id": "gid://shopify/Product/9652287242467",
+      "title": "Powerology MagVolt 10000mAh Magnetic Power Bank - Black",
+      "handle": "powerology-magvolt-10000mah-magnetic-power-bank-black",
+      "descriptionHtml": "<p>The Powerology MagVolt 10000mAh Magnetic Power Bank combines portable high-capacity power with fast wired and wireless charging.</p><ul>\n<li>10000mAh battery capacity</li>\n<li>20W USB-C Power Delivery fast charging</li>\n<li>Up to 15W Qi2 wireless charging</li>\n<li>MagSafe-compatible N54 magnetic attachment</li>\n<li>2.5W max Apple Watch charging</li>\n<li>Smart TFT &amp; LED display</li>\n<li>Premium aluminum alloy, ultra-slim design</li>\n<li>USB-C input/output: 5V/3A, 9V/2.22A, 12V/1.67A, PD 20W</li>\n<li>Wireless output: 5W / 7.5W / 10W / 15W max</li>\n<li>Operating temperature: 0°C–40°C</li>\n</ul>",
+      "status": "ACTIVE",
+      "vendor": "Powerology",
+      "productType": "Power Bank",
+      "tags": [
+        "10000mAh",
+        "20W PD",
+        "Magnetic Power Bank",
+        "MagSafe",
+        "Power Bank",
+        "Powerology",
+        "Qi2",
+        "Wireless Charging"
+      ],
+      "createdAt": "2026-09-03T12:26:28Z",
+      "updatedAt": "2026-09-06T11:49:35Z",
+      "variants": {
+        "nodes": [
+          {
+            "id": "gid://shopify/ProductVariant/49664866156771",
+            "title": "Black",
+            "sku": "PPBCHA75BK-SD25-K",
+            "barcode": null,
+            "price": "32.00",
+            "compareAtPrice": null,
+            "inventoryQuantity": 1,
+            "taxable": true,
+            "selectedOptions": [
+              {
+                "name": "Color",
+                "value": "Black"
+              }
+            ],
+            "inventoryItem": {
+              "id": "gid://shopify/InventoryItem/51836659663075",
+              "tracked": true,
+              "inventoryLevels": {
+                "nodes": [
+                  {
+                    "id": "gid://shopify/InventoryLevel/128316276963?inventory_item_id=51836659663075",
+                    "location": {
+                      "id": "gid://shopify/Location/90341507299",
+                      "name": "Shop location"
+                    },
+                    "quantities": [
+                      {
+                        "name": "available",
+                        "quantity": 1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "media": {
+        "nodes": [
+          {
+            "id": "gid://shopify/MediaImage/39871546065123",
+            "alt": "Powerology MagVolt 10000mAh Magnetic Power Bank Black",
+            "mediaContentType": "IMAGE",
+            "image": {
+              "id": "gid://shopify/ImageSource/39871546065123",
+              "url": "https://cdn.shopify.com/s/files/1/0813/4023/6003/files/powerology-magvolt-10000mah-black.webp?v=1788438433",
+              "altText": "Powerology MagVolt 10000mAh Magnetic Power Bank Black",
+              "width": 1080,
+              "height": 1080
+            }
+          }
+        ]
+      },
+      "metafields": {
+        "nodes": [
+          {
+            "id": "gid://shopify/Metafield/52164272554211",
+            "namespace": "global",
+            "key": "title_tag",
+            "type": "string",
+            "value": "Powerology MagVolt 10000mAh Magnetic Power Bank | Lebanon"
+          },
+          {
+            "id": "gid://shopify/Metafield/52164272586979",
+            "namespace": "global",
+            "key": "description_tag",
+            "type": "string",
+            "value": "Shop Powerology MagVolt 10,000mAh magnetic power bank with 20W USB-C PD, up to 15W Qi2 wireless charging and MagSafe compatibility."
+          },
+          {
+            "id": "gid://shopify/Metafield/52164597219555",
+            "namespace": "custom",
+            "key": "specifications",
+            "type": "json",
+            "value": "{\"Capacity\":\"10000mAh\",\"Wired Charging\":\"20W USB-C PD\",\"Wireless Charging\":\"Up to 15W Qi2\",\"Compatibility\":\"MagSafe compatible\",\"Apple Watch Charging\":\"2.5W max\",\"Display\":\"Smart TFT & LED\",\"Material\":\"Aluminum alloy\",\"USB-C\":\"Input/Output\",\"Operating Temperature\":\"0°C–40°C\"}"
+          },
+          {
+            "id": "gid://shopify/Metafield/52194334605539",
+            "namespace": "custom",
+            "key": "display_technology",
+            "type": "single_line_text_field",
+            "value": "TFT LCD"
+          }
+        ]
+      }
+    }
+  ],
+  "pageInfo": {
+    "hasNextPage": true,
+    "endCursor": "eyJsYXN0X2lkIjo5NjUyMjg3MjQyNDY3LCJsYXN0X3ZhbHVlIjoiOTY1MjI4NzI0MjQ2NyJ9"
+  }
+}
