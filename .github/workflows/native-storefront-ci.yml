@@ -5,9 +5,6 @@ on:
     branches:
       - "staging/no-shopify-dashboard"
       - main
-  push:
-    branches:
-      - "integration/no-shopify-dashboard-unified"
 
 concurrency:
   group: native-storefront-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
