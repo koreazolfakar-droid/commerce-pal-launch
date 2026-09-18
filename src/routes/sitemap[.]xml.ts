@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-import { storefrontApiRequest, type ShopifyCollection, type ShopifyProduct } from "@/lib/shopify";
-import { COLLECTIONS_QUERY, PRODUCTS_QUERY } from "@/lib/shopifyDocuments";
+import { fetchCatalogProducts, fetchCollections } from "@/lib/nativeStore";
+import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 import { absoluteUrl } from "@/lib/seo";
 import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";
 
@@ -10,10 +10,6 @@ interface SitemapEntry {
   path: string;
   lastmod?: string;
 }
-
-const PAGE_SIZE = 100;
-const MAX_PRODUCT_PAGES = 490;
-const MAX_COLLECTION_PAGES = 100;
 
 function escapeXml(value: string) {
   return value
@@ -24,55 +20,8 @@ function escapeXml(value: string) {
     .replace(/'/g, "&apos;");
 }
 
-async function fetchAllProductsForSitemap(): Promise<ShopifyProduct[]> {
-  const products: ShopifyProduct[] = [];
-  let after: string | null = null;
-
-  for (let page = 0; page < MAX_PRODUCT_PAGES; page += 1) {
-    const response = await storefrontApiRequest(PRODUCTS_QUERY, {
-      first: PAGE_SIZE,
-      after,
-    });
-    const connection = response?.data?.products;
-    const edges = Array.isArray(connection?.edges) ? connection.edges : [];
-    products.push(...edges);
-
-    const nextCursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
-    if (!nextCursor) break;
-    after = nextCursor;
-  }
-
-  return products;
-}
-
-async function fetchAllCollectionsForSitemap(): Promise<ShopifyCollection[]> {
-  const collections: ShopifyCollection[] = [];
-  let after: string | null = null;
-
-  for (let page = 0; page < MAX_COLLECTION_PAGES; page += 1) {
-    const response = await storefrontApiRequest(COLLECTIONS_QUERY, {
-      first: PAGE_SIZE,
-      after,
-    });
-    const connection = response?.data?.collections;
-    const edges = Array.isArray(connection?.edges) ? connection.edges : [];
-    collections.push(...edges.map((edge: { node: ShopifyCollection }) => edge.node));
-
-    const nextCursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
-    if (!nextCursor) break;
-    after = nextCursor;
-  }
-
-  return collections;
-}
-
 function productLastmod(product: ShopifyProduct) {
-  const node = product.node as ShopifyProduct["node"] & { updatedAt?: string };
-  return (node.updatedAt || node.createdAt)?.slice(0, 10);
-}
-
-function collectionLastmod(collection: ShopifyCollection) {
-  return (collection as ShopifyCollection & { updatedAt?: string }).updatedAt?.slice(0, 10);
+  return (product.node.updatedAt || product.node.createdAt)?.slice(0, 10);
 }
 
 function buildStaticEntries(): SitemapEntry[] {
@@ -103,12 +52,13 @@ export const Route = createFileRoute("/sitemap.xml")({
     handlers: {
       GET: async () => {
         const [productsResult, collectionsResult] = await Promise.allSettled([
-          fetchAllProductsForSitemap(),
-          fetchAllCollectionsForSitemap(),
+          fetchCatalogProducts(500),
+          fetchCollections(500),
         ]);
 
         const products = productsResult.status === "fulfilled" ? productsResult.value : [];
-        const collections = collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+        const collections: ShopifyCollection[] =
+          collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
 
         let dynamicEntries: SitemapEntry[] = [];
 
@@ -117,17 +67,12 @@ export const Route = createFileRoute("/sitemap.xml")({
           dynamicEntries = [
             ...catalog.categories
               .filter((category) => category.count > 0)
-              .map((category) => ({
-                path: `/category/${encodeURIComponent(category.slug)}`,
-              })),
+              .map((category) => ({ path: `/category/${encodeURIComponent(category.slug)}` })),
             ...catalog.brands
               .filter((brand) => brand.count > 0)
-              .map((brand) => ({
-                path: `/brand/${encodeURIComponent(brand.slug)}`,
-              })),
+              .map((brand) => ({ path: `/brand/${encodeURIComponent(brand.slug)}` })),
             ...displayCollections(collections).map((collection) => ({
               path: `/collections/${encodeURIComponent(collection.handle)}`,
-              lastmod: collectionLastmod(collection),
             })),
             ...products.map((product) => ({
               path: `/product/${encodeURIComponent(product.node.handle)}`,
