@@ -17,7 +17,7 @@ const REASONS = [
   {
     icon: Boxes,
     title: "Live catalogue",
-    detail: "Products and availability are synchronized with Shopify.",
+    detail: "Products and availability are synchronized with the Space Call inventory.",
   },
   {
     icon: SlidersHorizontal,
@@ -27,7 +27,7 @@ const REASONS = [
   {
     icon: CreditCard,
     title: "Secure payment",
-    detail: "Checkout is completed securely through Shopify.",
+    detail: "Checkout is completed directly through Space Call.",
   },
   {
     icon: Tags,
