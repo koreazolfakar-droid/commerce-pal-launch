@@ -103,6 +103,11 @@ Deno.serve(async (req) => {
   const token = bearerToken(req);
   if (!token) return json({ error: "authentication_required" }, 401);
 
+  const declaredLength = Number(req.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > 4096) {
+    return json({ error: "request_too_large" }, 413);
+  }
+
   let body: { password?: unknown };
   try {
     body = await req.json();
@@ -133,19 +138,20 @@ Deno.serve(async (req) => {
     return json({ error: "aal2_required" }, 403);
   }
 
-  const { data: roleRow, error: roleError } = await admin
+  const { data: roleRows, error: roleError } = await admin
     .from("user_roles")
     .select("role,mfa_required,mfa_enrolled_at")
-    .eq("user_id", user.id)
-    .maybeSingle();
+    .eq("user_id", user.id);
 
   if (roleError) return json({ error: "authorization_unavailable" }, 503);
-  if (
-    !roleRow ||
-    (roleRow.role !== "admin" && roleRow.role !== "editor") ||
-    roleRow.mfa_required !== true ||
-    !roleRow.mfa_enrolled_at
-  ) {
+
+  const hasEnforcedStaffRole = (roleRows ?? []).some(
+    (row) =>
+      (row.role === "admin" || row.role === "editor") &&
+      row.mfa_required === true &&
+      Boolean(row.mfa_enrolled_at),
+  );
+  if (!hasEnforcedStaffRole) {
     return json({ error: "dashboard_access_required" }, 403);
   }
 
