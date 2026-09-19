@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { buildContentSecurityPolicy } from "./lib/contentSecurityPolicy";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -304,29 +305,13 @@ export function withSecurityHeaders(response: Response): Response {
   headers.set("Cross-Origin-Resource-Policy", "same-site");
   headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
 
-  if (headers.get("content-type")?.toLowerCase().includes("text/html")) {
-    headers.set(
-      "Content-Security-Policy",
-      [
-        "default-src 'self'",
-        "base-uri 'self'",
-        "object-src 'none'",
-        "frame-ancestors 'self'",
-        "form-action 'self' https://*.myshopify.com https://checkout.shopify.com",
-        "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
-        "script-src-attr 'none'",
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "style-src-attr 'unsafe-inline'",
-        "font-src 'self' data: https://fonts.gstatic.com",
-        "img-src 'self' data: blob: https://cdn.shopify.com https://*.shopifycdn.com https://rtwyankpxtffqqrasyzw.supabase.co https://images.unsplash.com",
-        "media-src 'self' https://cdn.shopify.com https://*.shopifycdn.com",
-        "connect-src 'self' https://*.myshopify.com https://cdn.shopify.com https://rtwyankpxtffqqrasyzw.supabase.co wss://rtwyankpxtffqqrasyzw.supabase.co https://challenges.cloudflare.com https://api.pwnedpasswords.com",
-        "frame-src 'self' https://*.myshopify.com https://checkout.shopify.com https://maps.google.com https://www.google.com https://challenges.cloudflare.com",
-        "worker-src 'self' blob:",
-        "manifest-src 'self'",
-        "upgrade-insecure-requests",
-      ].join("; "),
-    );
+  if (
+    headers.get("content-type")?.toLowerCase().includes("text/html") &&
+    !headers.has("Content-Security-Policy")
+  ) {
+    // Normal SSR documents receive a request-scoped nonce CSP from the root route.
+    // This strict fallback is for catastrophic/error HTML that contains no scripts.
+    headers.set("Content-Security-Policy", buildContentSecurityPolicy());
   }
 
   return new Response(response.body, {
