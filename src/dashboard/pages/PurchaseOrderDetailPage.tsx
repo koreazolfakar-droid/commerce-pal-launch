@@ -18,7 +18,7 @@ import {
   closePurchaseOrder,
   deleteProcurementAttachment,
   issuePurchaseOrder,
-  loadReceivingWorkspace,
+  loadPurchaseOrderDetail,
   rejectPurchaseOrder,
   reopenPurchaseOrder,
   submitPurchaseOrder,
@@ -77,19 +77,14 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
   const load = useCallback(async (manual = false) => {
     manual ? setRefreshing(true) : setLoading(true);
     try {
-      const workspace = await loadReceivingWorkspace();
-      const found = workspace.purchaseOrders.find((item) => item.id === id) ?? null;
-      setPo(found);
-      setSupplier(found ? workspace.suppliers.find((item) => item.id === found.supplierId) ?? null : null);
-      setEvents(
-        workspace.events
-          .filter((event) => event.purchaseOrderId === id)
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-      );
-      setAttachments(workspace.attachments.filter((attachment) => attachment.purchaseOrderId === id));
-      setIsAdmin(workspace.role === "admin");
-      setError(found ? "" : "Purchase order was not found.");
-      if (manual && found) toast.success("Purchase order refreshed.");
+      const detail = await loadPurchaseOrderDetail(id);
+      setPo(detail.purchaseOrder);
+      setSupplier(detail.supplier);
+      setEvents(detail.events);
+      setAttachments(detail.attachments);
+      setIsAdmin(detail.role === "admin");
+      setError(detail.purchaseOrder ? "" : "Purchase order was not found.");
+      if (manual && detail.purchaseOrder) toast.success("Purchase order refreshed.");
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Unable to load purchase order.";
       setError(message);
