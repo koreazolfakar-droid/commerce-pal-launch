@@ -86,7 +86,7 @@ function normalizeInput(input: DashboardNavigationInput) {
     area: input.area,
     label,
     label_en: labelEn || null,
-    label_ar: labelAr || null,
+    label_ar: labelAr || labelEn || label,
     icon_type: input.iconType,
     icon_value: input.iconType === "none" ? null : input.iconValue.trim() || null,
     href: normalizeHref(input.href) || null,
