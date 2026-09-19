@@ -91,6 +91,25 @@ test("receiving dashboard exposes required operational fields and approval flow"
   assert.match(page, /purchaseOrderProgress/);
 });
 
+test("purchase orders expose Toters-style operational filters and actions", () => {
+  for (const label of [
+    "Purchase order filters",
+    "All statuses",
+    "All suppliers",
+    "Clear filters",
+    "PO number",
+    "Created date",
+    "Issued date",
+    "Amount",
+    "Actions",
+  ]) {
+    assert.match(page, new RegExp(label, "i"));
+  }
+  assert.match(page, /poStatusFilter/);
+  assert.match(page, /poSupplierFilter/);
+  assert.match(page, /Receive PO/);
+});
+
 test("purchase orders and receiving are separate routed workspaces", () => {
   assert.match(app, /import PurchaseOrdersPage from/);
   assert.match(app, /import ReceivingPage from/);

@@ -130,6 +130,8 @@ export default function ReceivingPage({
   const [error, setError] = useState("");
   const [panel, setPanel] = useState<Panel>(null);
   const [query, setQuery] = useState("");
+  const [poStatusFilter, setPoStatusFilter] = useState("all");
+  const [poSupplierFilter, setPoSupplierFilter] = useState("all");
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
 
   const [supplierName, setSupplierName] = useState("");
@@ -179,11 +181,15 @@ export default function ReceivingPage({
 
   const filteredPurchaseOrders = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return purchaseOrders;
-    return purchaseOrders.filter((po) =>
-      `${po.poNumber} ${po.supplierName} ${po.status}`.toLowerCase().includes(needle),
-    );
-  }, [purchaseOrders, query]);
+    return purchaseOrders.filter((po) => {
+      const matchesSearch =
+        !needle ||
+        `${po.poNumber} ${po.supplierName} ${po.status}`.toLowerCase().includes(needle);
+      const matchesStatus = poStatusFilter === "all" || po.status === poStatusFilter;
+      const matchesSupplier = poSupplierFilter === "all" || po.supplierId === poSupplierFilter;
+      return matchesSearch && matchesStatus && matchesSupplier;
+    });
+  }, [poStatusFilter, poSupplierFilter, purchaseOrders, query]);
 
   const filteredReceivings = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -936,26 +942,104 @@ export default function ReceivingPage({
         </div>
       ) : null}
 
-      <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center">
-        <div className="relative min-w-0 flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={
-              purchaseOrdersMode
-                ? "Search supplier, PO number, or status"
-                : "Search supplier, PO, invoice, receipt, or employee"
-            }
-            className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[11px] outline-none focus:border-indigo-400"
-          />
+      {purchaseOrdersMode ? (
+        <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-3 flex flex-col gap-2 border-b border-slate-100 pb-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-[12px] font-bold text-[#14203a]">Purchase order filters</div>
+              <div className="mt-1 text-[10px] text-slate-400">
+                Filter the PO list before opening an order for receiving.
+              </div>
+            </div>
+            <div className="text-[10px] font-semibold text-slate-400">
+              {filteredPurchaseOrders.length} of {purchaseOrders.length} purchase orders
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[minmax(220px,1.4fr)_minmax(170px,.8fr)_minmax(190px,1fr)_auto]">
+            <label className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search PO number or supplier"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-[11px] outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100/60"
+              />
+            </label>
+
+            <select
+              value={poStatusFilter}
+              onChange={(event) => setPoStatusFilter(event.target.value)}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-indigo-400"
+              aria-label="Filter purchase orders by status"
+            >
+              <option value="all">All statuses</option>
+              <option value="draft">Draft</option>
+              <option value="ordered">Issued</option>
+              <option value="partially_received">Partially received</option>
+              <option value="received">Received</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+
+            <select
+              value={poSupplierFilter}
+              onChange={(event) => setPoSupplierFilter(event.target.value)}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-indigo-400"
+              aria-label="Filter purchase orders by supplier"
+            >
+              <option value="all">All suppliers</option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setPoStatusFilter("all");
+                setPoSupplierFilter("all");
+              }}
+              disabled={!query && poStatusFilter === "all" && poSupplierFilter === "all"}
+              className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-[11px] font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Clear filters
+            </button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[9px] font-semibold text-slate-400">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-violet-500" /> Issued
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-blue-500" /> Partially received
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-emerald-500" /> Received
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-amber-500" /> Draft
+            </span>
+          </div>
         </div>
-        <div className="text-[10px] text-slate-400">
-          {purchaseOrdersMode
-            ? "Draft → submit PO → open Receiving from the PO action"
-            : "Select issued PO → create receiving → approve → stock movement"}
+      ) : (
+        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search supplier, PO, invoice, receipt, or employee"
+              className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[11px] outline-none focus:border-indigo-400"
+            />
+          </div>
+          <div className="text-[10px] text-slate-400">
+            Select issued PO → create receiving → approve → stock movement
+          </div>
         </div>
-      </div>
+      )}
 
       {purchaseOrdersMode ? (
       <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
@@ -1037,59 +1121,75 @@ export default function ReceivingPage({
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[1020px] text-left">
+          <table className="w-full min-w-[1120px] text-left">
             <thead className="bg-[#fafbfe] text-[9px] uppercase tracking-[.1em] text-slate-400">
               <tr>
-                <th className="px-5 py-3">PO</th>
+                <th className="px-5 py-3">PO number</th>
+                <th className="px-3 py-3">Created date</th>
                 <th className="px-3 py-3">Supplier</th>
-                <th className="px-3 py-3">Expected</th>
-                <th className="px-3 py-3">Received</th>
-                <th className="px-3 py-3">Remaining</th>
-                <th className="px-3 py-3">Progress</th>
-                <th className="px-3 py-3">Expected cost</th>
+                <th className="px-3 py-3">Issued date</th>
                 <th className="px-3 py-3">Status</th>
-                <th className="px-5 py-3">Date / Action</th>
+                <th className="px-3 py-3">Amount</th>
+                <th className="px-3 py-3">Progress</th>
+                <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredPurchaseOrders.map((po) => (
-                <tr key={po.id} className="border-t border-slate-100">
-                  <td className="px-5 py-3 text-[11px] font-bold text-indigo-600">{po.poNumber}</td>
-                  <td className="px-3 py-3 text-[11px] font-semibold text-slate-700">{po.supplierName}</td>
-                  <td className="px-3 py-3 text-[11px] text-slate-600">{po.expectedUnits}</td>
-                  <td className="px-3 py-3 text-[11px] text-emerald-600">{po.receivedUnits}</td>
-                  <td className="px-3 py-3 text-[11px] font-bold text-slate-700">{po.remainingUnits}</td>
+                <tr key={po.id} className="border-t border-slate-100 transition hover:bg-[#fbfcff]">
+                  <td className="px-5 py-3">
+                    <div className="text-[11px] font-bold text-indigo-600">{po.poNumber}</div>
+                    <div className="mt-0.5 text-[9px] text-slate-400">{po.expectedUnits} ordered units</div>
+                  </td>
+                  <td className="px-3 py-3 text-[10px] text-slate-500">
+                    {new Date(po.createdAt).toLocaleString()}
+                  </td>
                   <td className="px-3 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-100">
+                    <div className="text-[11px] font-semibold text-slate-700">{po.supplierName}</div>
+                    <div className="mt-0.5 text-[9px] text-slate-400">{po.currency}</div>
+                  </td>
+                  <td className="px-3 py-3 text-[10px] text-slate-500">
+                    {po.orderedAt ? new Date(po.orderedAt).toLocaleString() : "—"}
+                  </td>
+                  <td className="px-3 py-3"><StatusBadge status={po.status} /></td>
+                  <td className="px-3 py-3 text-[11px] font-bold text-slate-700">
+                    {money(po.expectedCost, po.currency)}
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="min-w-32">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="text-[9px] font-bold text-slate-500">{purchaseOrderProgress(po)}%</span>
+                        <span className="text-[9px] text-slate-400">
+                          {po.receivedUnits} received · {po.remainingUnits} left
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
                         <div
                           className="h-full rounded-full bg-indigo-500"
                           style={{ width: `${purchaseOrderProgress(po)}%` }}
                         />
                       </div>
-                      <span className="text-[9px] font-bold text-slate-500">{purchaseOrderProgress(po)}%</span>
                     </div>
                   </td>
-                  <td className="px-3 py-3 text-[11px] text-slate-600">{money(po.expectedCost, po.currency)}</td>
-                  <td className="px-3 py-3"><StatusBadge status={po.status} /></td>
-                  <td className="px-5 py-3">
-                    <div className="text-[9px] text-slate-400">{new Date(po.createdAt).toLocaleString()}</div>
+                  <td className="px-5 py-3 text-right">
                     {po.status === "draft" ? (
                       <button
                         onClick={() => void submitPo(po)}
                         disabled={saving}
-                        className="mt-1 text-[10px] font-bold text-indigo-600 hover:underline disabled:opacity-50"
+                        className="rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-[10px] font-bold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
                       >
                         Submit PO
                       </button>
                     ) : po.status === "ordered" || po.status === "partially_received" ? (
                       <button
                         onClick={() => navigate(`/dashboard/receiving/${po.id}`)}
-                        className="mt-1 text-[10px] font-bold text-indigo-600 hover:underline"
+                        className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white hover:bg-[#4f5edb]"
                       >
                         Receive
                       </button>
-                    ) : null}
+                    ) : (
+                      <span className="text-[9px] font-semibold text-slate-400">No action</span>
+                    )}
                   </td>
                 </tr>
               ))}
