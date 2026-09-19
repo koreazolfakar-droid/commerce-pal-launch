@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [workflow, hardening, data, page, app, nav, inventory, drawer, types] = await Promise.all([
+const [workflow, hardening, data, page, purchaseOrdersPage, app, nav, inventory, drawer, types] = await Promise.all([
   readFile(new URL("../supabase/migrations/20260919123000_procurement_receiving_workflows.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919124500_harden_procurement_rpc_exposure.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/receiving.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ReceivingPage.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/pages/PurchaseOrdersPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/mock/data.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/inventory.ts", import.meta.url), "utf8"),
@@ -90,10 +91,17 @@ test("receiving dashboard exposes required operational fields and approval flow"
   assert.match(page, /purchaseOrderProgress/);
 });
 
-test("receiving is routed and inventory history recognizes purchase receipts", () => {
+test("purchase orders and receiving are separate routed workspaces", () => {
+  assert.match(app, /import PurchaseOrdersPage from/);
   assert.match(app, /import ReceivingPage from/);
+  assert.match(app, /route === "\/dashboard\/purchase-orders"/);
   assert.match(app, /route === "\/dashboard\/receiving"/);
-  assert.match(nav, /href: "\/dashboard\/receiving"/);
+  assert.match(app, /receivingPoDetail/);
+  assert.match(nav, /label: "Purchase Orders", href: "\/dashboard\/purchase-orders"/);
+  assert.match(nav, /label: "Receiving", href: "\/dashboard\/receiving"/);
+  assert.match(purchaseOrdersPage, /mode="purchase-orders"/);
+  assert.match(page, /mode = "receiving"/);
+  assert.match(page, /navigate\(\`\/dashboard\/receiving\/\$\{po\.id\}\`\)/);
   assert.match(inventory, /"receiving"/);
   assert.match(drawer, /Receiving \/ purchase/);
 });
