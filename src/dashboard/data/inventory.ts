@@ -49,6 +49,15 @@ export const INVENTORY_REFERENCE_TYPES = [
 
 export type InventoryReferenceType = (typeof INVENTORY_REFERENCE_TYPES)[number];
 
+export function sanitizeInventoryMovementSearch(value?: string) {
+  return (value ?? "")
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N}\s#_-]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+}
+
 export type DashboardInventoryMovement = {
   id: string;
   productId: string;
@@ -185,6 +194,7 @@ export async function listDashboardInventoryMovements(input: {
   variantId: string;
   movementType?: InventoryMovementType;
   referenceType?: InventoryReferenceType;
+  search?: string;
   createdSince?: string;
   page?: number;
   pageSize?: number;
@@ -210,6 +220,11 @@ export async function listDashboardInventoryMovements(input: {
 
   if (input.referenceType) {
     query = query.eq("reference_type", input.referenceType);
+  }
+
+  const search = sanitizeInventoryMovementSearch(input.search);
+  if (search) {
+    query = query.or(`reference_id.ilike.%${search}%,note.ilike.%${search}%`);
   }
 
   if (input.createdSince) {
