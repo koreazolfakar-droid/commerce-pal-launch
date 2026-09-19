@@ -5,11 +5,11 @@ import { ArrowRight } from "lucide-react";
 
 import { cdnImage } from "@/lib/image";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import { productsByHandlesQueryOptions } from "@/lib/queries";
 import { useLanguage } from "@/lib/i18n";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
-import type { ShopifyProduct } from "@/lib/shopify";
 
 const BENEFITS = [
   { icon: Bike, title: "benefitFreeDelivery", detail: "benefitEligibleOrders", fastDelivery: true },
@@ -146,12 +146,11 @@ export function ServicesStrip() {
 }
 
 /** Real products previously opened by this shopper; never invents history. */
-export function RecentlyViewed({ products }: { products: ShopifyProduct[] }) {
+export function RecentlyViewed() {
   const { t } = useLanguage();
   const handles = useRecentlyViewedStore((state) => state.handles);
-  const recent = handles
-    .map((handle) => products.find((p) => p.node.handle === handle))
-    .filter(Boolean) as ShopifyProduct[];
+  const requestedHandles = handles.slice(0, 6);
+  const { data: recent = [] } = useQuery(productsByHandlesQueryOptions(requestedHandles));
   if (!recent.length) return null;
   return (
     <section aria-labelledby="recently-viewed">
