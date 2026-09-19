@@ -83,3 +83,4 @@ The Playwright server uses `dev:e2e` and an isolated Shopify fixture transport. 
 Shipping, refund, privacy and terms bodies/links come from Shopify policies. Until configured, the corresponding pages show a contact fallback. Shopify exposes no native warranty policy field, so `/warranty` retains that fallback. Configure official store policies and social URLs in the merchant settings/source when available.
 
 AI defaults: `OPENAI_MODEL=gpt-4o` and `GEMINI_MODEL=gemini-3.6-flash`. Gemini 2.0 Flash was shut down on June 1, 2026; 3.6 Flash is Google's listed replacement ([official deprecations](https://ai.google.dev/gemini-api/docs/deprecations)). Model access and API keys are deployment settings; no live AI request was made during these local checks.
+<!-- CircleCI smoke test: 2026-09-19 -->
