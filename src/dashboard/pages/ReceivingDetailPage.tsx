@@ -278,7 +278,7 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
     );
   }
 
-  if (error || !receipt || !workspace) {
+  if (error || !receipt) {
     return (
       <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6">
         <div className="text-sm font-bold text-rose-700">Receiving could not be opened.</div>
