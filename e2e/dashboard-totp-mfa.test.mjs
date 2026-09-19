@@ -43,7 +43,7 @@ test("password login transitions into mandatory MFA", () => {
 
 test("TOTP enrollment keeps setup credentials transient and hidden by default", () => {
   assert.match(mfa, /beginDashboardTotpEnrollment/);
-  assert.match(mfa, /Space Call authenticator QR code/);
+  assert.match(mfa, /Authenticator setup QR code/);
   assert.match(mfa, /secretRevealed \? enrollment\.secret/);
   assert.match(mfa, /setup key is hidden by default/);
   assert.match(mfa, /MFA_SECRET_REVEAL_MS = 15 \* 1000/);
