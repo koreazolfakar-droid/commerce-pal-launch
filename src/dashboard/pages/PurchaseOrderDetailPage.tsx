@@ -517,19 +517,21 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                     {attachment.sizeBytes != null ? ` · ${Math.ceil(attachment.sizeBytes / 1024)} KB` : ""}
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    if (!window.confirm("Delete this attachment?")) return;
-                    setSaving(true);
-                    void deleteProcurementAttachment(attachment)
-                      .then(() => load(false))
-                      .catch((cause) => toast.error(cause instanceof Error ? cause.message : "Delete failed."))
-                      .finally(() => setSaving(false));
-                  }}
-                  className="text-[10px] font-bold text-rose-600"
-                >
-                  Delete
-                </button>
+                {isAdmin ? (
+                  <button
+                    onClick={() => {
+                      if (!window.confirm("Delete this attachment?")) return;
+                      setSaving(true);
+                      void deleteProcurementAttachment(attachment)
+                        .then(() => load(false))
+                        .catch((cause) => toast.error(cause instanceof Error ? cause.message : "Delete failed."))
+                        .finally(() => setSaving(false));
+                    }}
+                    className="text-[10px] font-bold text-rose-600"
+                  >
+                    Delete
+                  </button>
+                ) : null}
               </div>
             ))}
             {!attachments.length ? (
