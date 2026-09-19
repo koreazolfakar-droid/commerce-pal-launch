@@ -83,7 +83,7 @@ test("inventory movement search sanitizes raw PostgREST OR input", () => {
   assert.match(inventoryData, /sanitizeInventoryMovementSearch\(input\.search\)/);
   assert.match(inventoryData, /normalize\("NFKC"\)/);
   assert.match(inventoryData, /slice\(0, 80\)/);
-  assert.match(inventoryData, /reference_id\.ilike\.\.%\$\{search\}%,note\.ilike\.\.%\$\{search\}%/);
+  assert.match(inventoryData, /reference_id\.ilike\.%\$\{search\}%,note\.ilike\.%\$\{search\}%/);
   assert.doesNotMatch(inventoryData, /reference_id\.ilike\.[^\n]*input\.search/);
   assert.doesNotMatch(inventoryData, /note\.ilike\.[^\n]*input\.search/);
 });
