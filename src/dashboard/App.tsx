@@ -1,9 +1,9 @@
 import { navSections } from "@/dashboard/config/navigation";
 import {
   getDashboardMfaStatus,
-  listDashboardProducts,
+  listDashboardProductSearchIndex,
   signOutDashboard,
-  type DashboardProduct,
+  type DashboardProductSearchItem,
 } from "@/dashboard/data/catalog";
 import { LanguageContext, useLanguage } from "@/dashboard/i18n";
 import BrandsPage from "@/dashboard/pages/BrandsPage";
@@ -72,7 +72,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Route, Switch, useLocation } from "wouter";
 
@@ -256,7 +256,10 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [, navigate] = useLocation();
-  const [headerProducts, setHeaderProducts] = useState<DashboardProduct[]>([]);
+  const [headerProducts, setHeaderProducts] = useState<DashboardProductSearchItem[]>([]);
+  const [searchIndexLoading, setSearchIndexLoading] = useState(false);
+  const searchIndexRequested = useRef(false);
+  const headerMounted = useRef(true);
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
@@ -270,18 +273,29 @@ function Header({ onMenu }: { onMenu: () => void }) {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    listDashboardProducts()
-      .then((rows) => {
-        if (!cancelled) setHeaderProducts(rows);
-      })
-      .catch(() => undefined);
     return () => {
-      cancelled = true;
+      headerMounted.current = false;
     };
   }, []);
 
-  const results: DashboardProduct[] = query
+  useEffect(() => {
+    if (!query.trim() || searchIndexRequested.current) return;
+
+    searchIndexRequested.current = true;
+    setSearchIndexLoading(true);
+    listDashboardProductSearchIndex()
+      .then((rows) => {
+        if (headerMounted.current) setHeaderProducts(rows);
+      })
+      .catch(() => {
+        searchIndexRequested.current = false;
+      })
+      .finally(() => {
+        if (headerMounted.current) setSearchIndexLoading(false);
+      });
+  }, [query]);
+
+  const results: DashboardProductSearchItem[] = query
     ? headerProducts
         .filter((product) =>
           `${product.name} ${product.brand} ${product.sku}`
@@ -353,7 +367,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                 ))
               ) : (
                 <div className="px-3 py-4 text-center text-xs text-slate-400">
-                  No matching Supabase products
+                  {searchIndexLoading ? "Loading products…" : "No matching Supabase products"}
                 </div>
               )}
             </div>
@@ -492,7 +506,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                 ))
               ) : (
                 <div className="px-3 py-4 text-center text-xs text-slate-400">
-                  No matching products
+                  {searchIndexLoading ? "Loading products…" : "No matching products"}
                 </div>
               )}
             </div>
