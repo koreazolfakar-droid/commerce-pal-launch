@@ -17,7 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/dashboard/i18n";
-import { useTheme } from "@/hooks/useTheme";
+import { useTheme } from "@/dashboard/contexts/ThemeContext";
 import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
 import TurnstileChallenge from "@/dashboard/components/auth/TurnstileChallenge";
 import {
@@ -29,8 +29,6 @@ import {
 } from "@/dashboard/data/catalog";
 
 type LoginView = "signin" | "forgot" | "recovery" | "mfa";
-type LoginTheme = "light" | "dark";
-
 const EMAIL_STORAGE_KEY = "spacecall-dashboard-email";
 
 const loginCopy = {
@@ -340,8 +338,7 @@ export default function LoginPage() {
   const [privacyShielded, setPrivacyShielded] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
-  const { resolvedTheme, mounted: themeMounted, toggleTheme } = useTheme();
-  const theme: LoginTheme = themeMounted ? resolvedTheme : "dark";
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const shield = () => setPrivacyShielded(true);
