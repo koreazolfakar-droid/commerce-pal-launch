@@ -395,7 +395,7 @@ export async function fetchCollections(first = 100): Promise<ShopifyCollection[]
 
 const SMALL_COLLECTION_FAST_PATH_MAX = 12;
 
-function mapCollection(row: CollectionRow): ShopifyCollection {
+function mapCollection(row: StorefrontCollectionRow): ShopifyCollection {
   return {
     id: row.id,
     handle: row.handle,
