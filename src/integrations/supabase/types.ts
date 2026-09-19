@@ -1007,6 +1007,7 @@ export type Database = {
       store_product_variants: {
         Row: {
           allow_backorder: boolean
+          average_cost: number
           barcode: string | null
           compare_at_price: number | null
           created_at: string
@@ -1025,6 +1026,7 @@ export type Database = {
         }
         Insert: {
           allow_backorder?: boolean
+          average_cost?: number
           barcode?: string | null
           compare_at_price?: number | null
           created_at?: string
@@ -1043,6 +1045,7 @@ export type Database = {
         }
         Update: {
           allow_backorder?: boolean
+          average_cost?: number
           barcode?: string | null
           compare_at_price?: number | null
           created_at?: string
@@ -1072,6 +1075,7 @@ export type Database = {
       store_products: {
         Row: {
           allow_backorder: boolean
+          average_cost: number
           barcode: string | null
           base_price: number
           best_seller: boolean
@@ -1103,6 +1107,7 @@ export type Database = {
         }
         Insert: {
           allow_backorder?: boolean
+          average_cost?: number
           barcode?: string | null
           base_price?: number
           best_seller?: boolean
@@ -1134,6 +1139,7 @@ export type Database = {
         }
         Update: {
           allow_backorder?: boolean
+          average_cost?: number
           barcode?: string | null
           base_price?: number
           best_seller?: boolean
