@@ -54,6 +54,7 @@ function referenceName(value: InventoryReferenceType) {
   if (value === "manual_dashboard") return "Manual dashboard";
   if (value === "variant_manager") return "Variant manager";
   if (value === "order") return "Web order";
+  if (value === "receiving") return "Receiving / purchase";
   return "Order cancellation";
 }
 
