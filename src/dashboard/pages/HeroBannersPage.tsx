@@ -527,20 +527,21 @@ export default function HeroBannersPage() {
 
             <div className="grid gap-4 lg:grid-cols-2">
               <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Eyebrow text</span>
+                <input
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                  value={language === "ar" ? form.eyebrowAr : form.eyebrowEn}
+                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, eyebrowAr: e.target.value } : { ...current, eyebrowEn: e.target.value })}
+                  placeholder={language === "ar" ? "مثال: وصل حديثاً" : "e.g. New arrival"}
+                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                />
+              </label>
+              <label className="block">
                 <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Title</span>
                 <input
                   dir={language === "ar" ? "rtl" : "ltr"}
                   value={language === "ar" ? form.titleAr : form.titleEn}
                   onChange={(e) => setForm((current) => language === "ar" ? { ...current, titleAr: e.target.value } : { ...current, titleEn: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button label</span>
-                <input
-                  dir={language === "ar" ? "rtl" : "ltr"}
-                  value={language === "ar" ? form.buttonLabelAr : form.buttonLabelEn}
-                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, buttonLabelAr: e.target.value } : { ...current, buttonLabelEn: e.target.value })}
                   className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
                 />
               </label>
@@ -551,6 +552,25 @@ export default function HeroBannersPage() {
                   value={language === "ar" ? form.subtitleAr : form.subtitleEn}
                   onChange={(e) => setForm((current) => language === "ar" ? { ...current, subtitleAr: e.target.value } : { ...current, subtitleEn: e.target.value })}
                   className="min-h-20 w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Primary button label</span>
+                <input
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                  value={language === "ar" ? form.buttonLabelAr : form.buttonLabelEn}
+                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, buttonLabelAr: e.target.value } : { ...current, buttonLabelEn: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Secondary button label</span>
+                <input
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                  value={language === "ar" ? form.secondaryButtonLabelAr : form.secondaryButtonLabelEn}
+                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, secondaryButtonLabelAr: e.target.value } : { ...current, secondaryButtonLabelEn: e.target.value })}
+                  placeholder={language === "ar" ? "اختياري" : "Optional"}
+                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
                 />
               </label>
             </div>
@@ -716,7 +736,15 @@ export default function HeroBannersPage() {
                   <option value="end">End</option>
                 </select>
               </label>
-              <label className="lg:col-span-2">
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content theme</span>
+                <select value={form.contentTheme} onChange={(e) => setForm((current) => ({ ...current, contentTheme: e.target.value as HeroContentTheme }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="light">Light text</option>
+                  <option value="dark">Dark text</option>
+                  <option value="glass">Glass panel</option>
+                </select>
+              </label>
+              <label>
                 <span className="mb-1.5 flex justify-between text-[11px] font-bold text-slate-600"><span>Overlay opacity</span><span>{form.overlayOpacity}%</span></span>
                 <input type="range" min="0" max="90" step="5" value={form.overlayOpacity} onChange={(e) => setForm((current) => ({ ...current, overlayOpacity: Number(e.target.value) }))} className="w-full" />
               </label>
