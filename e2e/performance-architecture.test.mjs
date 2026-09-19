@@ -56,3 +56,24 @@ test("homepage hero refresh never replays stale local fallback", async () => {
   assert.doesNotMatch(hero, /readStoredHero|storeHero|sessionStorage/);
   assert.match(cms, /cache:\s*"no-store"/);
 });
+
+
+test("native storefront data path avoids wildcard payloads", async () => {
+  const nativeStore = await read("src/lib/nativeStore.ts");
+
+  assert.doesNotMatch(nativeStore, /\.select\("\*"\)/);
+  assert.match(nativeStore, /STOREFRONT_PRODUCT_SELECT/);
+  assert.match(nativeStore, /STOREFRONT_VARIANT_SELECT/);
+  assert.match(nativeStore, /STOREFRONT_IMAGE_SELECT/);
+  assert.match(nativeStore, /STOREFRONT_COLLECTION_SELECT/);
+  assert.match(nativeStore, /STOREFRONT_COLLECTION_LINK_SELECT/);
+  assert.match(nativeStore, /STOREFRONT_BRAND_SELECT/);
+  assert.match(
+    nativeStore,
+    /export async function fetchCollections[\s\S]*?\.from\("store_collections"\)[\s\S]*?\.limit\(Math\.max\(0, first\)\)/,
+  );
+  assert.doesNotMatch(
+    nativeStore,
+    /export async function fetchCollections[\s\S]*?loadSnapshot\(\)/,
+  );
+});
