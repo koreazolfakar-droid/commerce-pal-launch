@@ -24,6 +24,20 @@ import {
 const PAGE_SIZE = 25;
 
 type MovementTypeFilter = "all" | InventoryMovementType;
+type MovementPeriod = "all" | "7d" | "30d" | "90d";
+
+const MOVEMENT_PERIOD_DAYS: Record<Exclude<MovementPeriod, "all">, number> = {
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+};
+
+function movementCreatedSince(period: MovementPeriod) {
+  if (period === "all") return undefined;
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - MOVEMENT_PERIOD_DAYS[period]);
+  return date.toISOString();
+}
 
 function movementName(value: string) {
   return value
@@ -121,6 +135,7 @@ export default function InventoryMovementHistoryDrawer({
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [movementType, setMovementType] = useState<MovementTypeFilter>("all");
+  const [period, setPeriod] = useState<MovementPeriod>("all");
   const requestId = useRef(0);
 
   const loadPage = useCallback(
@@ -139,6 +154,7 @@ export default function InventoryMovementHistoryDrawer({
           productId: row.productId,
           variantId: row.variantId,
           movementType: movementType === "all" ? undefined : movementType,
+          createdSince: movementCreatedSince(period),
           page: nextPage,
           pageSize: PAGE_SIZE,
         });
@@ -162,7 +178,7 @@ export default function InventoryMovementHistoryDrawer({
         }
       }
     },
-    [movementType, row],
+    [movementType, period, row],
   );
 
   useEffect(() => {
@@ -214,28 +230,41 @@ export default function InventoryMovementHistoryDrawer({
           </SheetHeader>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5" aria-live="polite">
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-3">
-              <div className="min-w-0">
+            <div className="mb-4 rounded-2xl border border-slate-100 bg-white p-3">
+              <div>
                 <div className="text-[10px] font-bold uppercase tracking-[.12em] text-slate-400">
-                  Movement type
+                  History filters
                 </div>
                 <div className="mt-0.5 text-[9px] text-slate-400">
-                  Filtered directly from Supabase
+                  Applied directly in Supabase before pagination
                 </div>
               </div>
-              <select
-                value={movementType}
-                onChange={(event) => setMovementType(event.target.value as MovementTypeFilter)}
-                className="h-10 min-w-[150px] rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
-                aria-label="Filter inventory movement history by type"
-              >
-                <option value="all">All movements</option>
-                {INVENTORY_MOVEMENT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {movementName(type)}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <select
+                  value={movementType}
+                  onChange={(event) => setMovementType(event.target.value as MovementTypeFilter)}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                  aria-label="Filter inventory movement history by type"
+                >
+                  <option value="all">All movement types</option>
+                  {INVENTORY_MOVEMENT_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {movementName(type)}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={period}
+                  onChange={(event) => setPeriod(event.target.value as MovementPeriod)}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                  aria-label="Filter inventory movement history by date range"
+                >
+                  <option value="all">All time</option>
+                  <option value="7d">Last 7 days</option>
+                  <option value="30d">Last 30 days</option>
+                  <option value="90d">Last 90 days</option>
+                </select>
+              </div>
             </div>
 
             {loading ? (
@@ -271,14 +300,14 @@ export default function InventoryMovementHistoryDrawer({
                     <History className="size-5" />
                   </div>
                   <div className="mt-4 text-sm font-bold text-slate-700">
-                    {movementType === "all"
+                    {movementType === "all" && period === "all"
                       ? "No inventory movements yet"
-                      : "No " + movementName(movementType).toLowerCase() + " movements"}
+                      : "No movements match these filters"}
                   </div>
                   <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                    {movementType === "all"
+                    {movementType === "all" && period === "all"
                       ? "Stock changes for this variant will appear here automatically."
-                      : "Try another movement type or switch back to all movements."}
+                      : "Try a broader movement type or time range."}
                   </p>
                 </div>
               </div>
