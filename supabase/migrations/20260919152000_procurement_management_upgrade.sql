@@ -1369,10 +1369,27 @@ using ((select private.is_dashboard_staff()))
 with check ((select private.is_dashboard_staff()));
 
 drop policy if exists store_procurement_attachments_staff_all on public.store_procurement_attachments;
-create policy store_procurement_attachments_staff_all
-on public.store_procurement_attachments for all to authenticated
+drop policy if exists store_procurement_attachments_staff_select on public.store_procurement_attachments;
+drop policy if exists store_procurement_attachments_staff_insert on public.store_procurement_attachments;
+drop policy if exists store_procurement_attachments_staff_update on public.store_procurement_attachments;
+drop policy if exists store_procurement_attachments_admin_delete on public.store_procurement_attachments;
+
+create policy store_procurement_attachments_staff_select
+on public.store_procurement_attachments for select to authenticated
+using ((select private.is_dashboard_staff()));
+
+create policy store_procurement_attachments_staff_insert
+on public.store_procurement_attachments for insert to authenticated
+with check ((select private.is_dashboard_staff()));
+
+create policy store_procurement_attachments_staff_update
+on public.store_procurement_attachments for update to authenticated
 using ((select private.is_dashboard_staff()))
 with check ((select private.is_dashboard_staff()));
+
+create policy store_procurement_attachments_admin_delete
+on public.store_procurement_attachments for delete to authenticated
+using ((select private.is_dashboard_admin()));
 
 drop policy if exists store_receiving_serials_staff_select on public.store_receiving_serials;
 create policy store_receiving_serials_staff_select
