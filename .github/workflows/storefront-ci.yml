@@ -2,28 +2,16 @@ name: Storefront CI
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - ready_for_review
 
 permissions:
   contents: read
 
 concurrency:
-  group: storefront-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: storefront-ci-manual-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   validate:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
