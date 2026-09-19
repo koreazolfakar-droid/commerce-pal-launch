@@ -530,7 +530,7 @@ export async function updateDashboardPassword(password: string) {
     throw new Error("Secure password update failed.");
   }
 
-  await logDashboardSecurityEvent("password_changed");
+  // The Edge Function records the authoritative password_changed security event.
 
   // Supabase may already revoke sessions after a security-sensitive password
   // change. Still request a global sign-out, then always clear the local session.
