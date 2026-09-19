@@ -791,6 +791,15 @@ export async function issuePurchaseOrder(purchaseOrderId: string) {
   return data;
 }
 
+export async function closePurchaseOrder(purchaseOrderId: string) {
+  await requireDashboardStaff();
+  const { data, error } = await supabase.rpc("close_store_purchase_order", {
+    p_purchase_order_id: purchaseOrderId,
+  });
+  throwIfError(error, "Closing purchase order failed");
+  return data;
+}
+
 export async function rejectPurchaseOrder(purchaseOrderId: string, reason: string) {
   await requireDashboardStaff();
   const cleanReason = reason.trim();
@@ -900,9 +909,8 @@ export async function replaceReceivingSerials(
   serials: ReceivingSerialDraft[],
 ) {
   await requireDashboardStaff();
-  const cleaned = serials
+  const payload: Json = serials
     .map((serial) => ({
-      receiving_item_id: receivingItemId,
       serial_number: serial.serialNumber?.trim() || null,
       imei1: serial.imei1?.trim() || null,
       imei2: serial.imei2?.trim() || null,
@@ -910,20 +918,12 @@ export async function replaceReceivingSerials(
     }))
     .filter((serial) => serial.serial_number || serial.imei1 || serial.imei2);
 
-  const { error: deleteError } = await supabase
-    .from("store_receiving_serials")
-    .delete()
-    .eq("receiving_item_id", receivingItemId);
-  throwIfError(deleteError, "Replacing serials failed");
-
-  if (!cleaned.length) return [] as ReceivingSerialRow[];
-
-  const { data, error } = await supabase
-    .from("store_receiving_serials")
-    .insert(cleaned)
-    .select("id,receiving_item_id,serial_number,imei1,imei2,condition,inventory_status");
+  const { data, error } = await supabase.rpc("replace_store_receiving_serials", {
+    p_receiving_item_id: receivingItemId,
+    p_serials: payload,
+  });
   throwIfError(error, "Saving serial / IMEI data failed");
-  return (data ?? []) as ReceivingSerialRow[];
+  return data;
 }
 
 const PROCUREMENT_MEDIA_BUCKET = "procurement-private";
@@ -1104,6 +1104,8 @@ export type ReorderSuggestion = {
   currentStock: number;
   onOrder: number;
   suggestedQuantity: number;
+  recommendedSupplierId: string | null;
+  recommendedSupplierName: string | null;
 };
 
 export function buildReorderSuggestions(
@@ -1123,6 +1125,12 @@ export function buildReorderSuggestions(
     .map((option) => {
       const onOrder = onOrderByKey.get(option.key) ?? 0;
       const projected = option.currentStock + onOrder;
+      const lastPo = [...workspace.purchaseOrders]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .find((po) =>
+          !["cancelled", "rejected"].includes(po.status) &&
+          po.items.some((line) => (line.variantId ?? line.productId) === option.key),
+        );
       return {
         key: option.key,
         productId: option.productId,
@@ -1132,6 +1140,8 @@ export function buildReorderSuggestions(
         currentStock: option.currentStock,
         onOrder,
         suggestedQuantity: Math.max(0, targetStock - projected),
+        recommendedSupplierId: lastPo?.supplierId ?? null,
+        recommendedSupplierName: lastPo?.supplierName ?? null,
       };
     })
     .filter((item) => item.suggestedQuantity > 0)
