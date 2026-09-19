@@ -89,8 +89,18 @@ export default function ProcurementAnalyticsPage() {
           </div>
           <div className="divide-y divide-slate-100">
             {analytics.supplierSpend.slice(0, 12).map((supplier) => (
-              <div key={supplier.supplierId} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 p-4">
-                <div className="text-[11px] font-bold text-slate-700">{supplier.supplierName}</div>
+              <div key={supplier.supplierId} className="grid gap-3 p-4 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center">
+                <div>
+                  <div className="text-[11px] font-bold text-slate-700">{supplier.supplierName}</div>
+                  <div className="mt-1 text-[9px] text-slate-400">
+                    {supplier.poCount} POs · {supplier.completedPoCount} completed · {supplier.damagedUnits} damaged units
+                  </div>
+                </div>
+                <div className="text-[10px] text-slate-500">
+                  On-time <b className={supplier.completedPoCount > 0 && supplier.onTimeRate < 0.8 ? "text-amber-600" : "text-emerald-600"}>
+                    {(supplier.onTimeRate * 100).toFixed(0)}%
+                  </b>
+                </div>
                 <div className="text-[10px] text-slate-400">{supplier.poCount} POs</div>
                 <div className="text-[11px] font-bold text-slate-700">{money(supplier.spend)}</div>
               </div>
