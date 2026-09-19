@@ -853,6 +853,177 @@ begin
 end;
 $$;
 
+create or replace function private.update_store_receiving_draft_internal(
+  p_receiving_id uuid,
+  p_invoice_number text,
+  p_receiving_employee_label text,
+  p_notes text,
+  p_lines jsonb
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_actor uuid := auth.uid();
+  v_po_id uuid;
+  v_status text;
+  v_po_status text;
+  v_supplier_id uuid;
+  v_line jsonb;
+  v_receiving_item_id uuid;
+  v_po_item_id uuid;
+  v_expected integer;
+  v_remaining integer;
+  v_already_received integer;
+  v_received integer;
+  v_damaged integer;
+  v_delivered integer;
+  v_unit_cost numeric(12,2);
+  v_confirmed boolean;
+  v_reason text;
+  v_seen uuid[] := '{}'::uuid[];
+  v_existing_count integer;
+begin
+  if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if btrim(coalesce(p_invoice_number, '')) = '' then raise exception 'invoice number is required'; end if;
+  if jsonb_typeof(p_lines) <> 'array' or jsonb_array_length(p_lines) = 0 then
+    raise exception 'receiving requires at least one line';
+  end if;
+
+  select r.purchase_order_id, r.status, r.supplier_id, po.status
+    into v_po_id, v_status, v_supplier_id, v_po_status
+  from public.store_receivings r
+  join public.store_purchase_orders po on po.id = r.purchase_order_id
+  where r.id = p_receiving_id
+  for update of r, po;
+
+  if v_po_id is null then raise exception 'receiving not found'; end if;
+  if v_status <> 'draft' then raise exception 'only draft receiving can be edited'; end if;
+  if v_po_status not in ('ordered', 'partially_received') then
+    raise exception 'purchase order is not open for receiving';
+  end if;
+
+  select count(*)::integer into v_existing_count
+  from public.store_receiving_items
+  where receiving_id = p_receiving_id;
+
+  if jsonb_array_length(p_lines) <> v_existing_count then
+    raise exception 'all receiving lines must be included when editing a draft';
+  end if;
+
+  update public.store_receivings
+  set invoice_number = btrim(p_invoice_number),
+      receiving_employee_label = nullif(btrim(coalesce(p_receiving_employee_label, '')), ''),
+      notes = nullif(btrim(coalesce(p_notes, '')), ''),
+      updated_at = now()
+  where id = p_receiving_id;
+
+  for v_line in select value from jsonb_array_elements(p_lines)
+  loop
+    begin
+      v_receiving_item_id := nullif(v_line->>'receiving_item_id', '')::uuid;
+      v_received := coalesce((v_line->>'received_quantity')::integer, 0);
+      v_damaged := coalesce((v_line->>'damaged_quantity')::integer, 0);
+      v_unit_cost := (v_line->>'unit_cost')::numeric(12,2);
+      v_confirmed := coalesce((v_line->>'overage_confirmed')::boolean, false);
+      v_reason := nullif(btrim(coalesce(v_line->>'overage_reason', '')), '');
+    exception when others then
+      raise exception 'invalid receiving draft line payload';
+    end;
+
+    if v_receiving_item_id is null then raise exception 'receiving item id is required'; end if;
+    if v_receiving_item_id = any(v_seen) then raise exception 'duplicate receiving line'; end if;
+    v_seen := array_append(v_seen, v_receiving_item_id);
+
+    select ri.purchase_order_item_id, poi.expected_quantity
+      into v_po_item_id, v_expected
+    from public.store_receiving_items ri
+    join public.store_purchase_order_items poi on poi.id = ri.purchase_order_item_id
+    where ri.id = v_receiving_item_id
+      and ri.receiving_id = p_receiving_id
+      and poi.purchase_order_id = v_po_id
+    for update of ri, poi;
+
+    if v_po_item_id is null then raise exception 'receiving line not found'; end if;
+    if v_received < 0 or v_damaged < 0 then raise exception 'receiving quantities cannot be negative'; end if;
+    v_delivered := v_received + v_damaged;
+    if v_delivered <= 0 then raise exception 'each receiving line requires at least one received or damaged unit'; end if;
+    if v_unit_cost is null or v_unit_cost < 0 then raise exception 'unit cost must be zero or greater'; end if;
+
+    select coalesce(sum(ri.received_quantity), 0)::integer
+      into v_already_received
+    from public.store_receiving_items ri
+    join public.store_receivings r on r.id = ri.receiving_id
+    where ri.purchase_order_item_id = v_po_item_id
+      and r.status = 'approved';
+
+    v_remaining := greatest(0, v_expected - v_already_received);
+
+    if v_delivered > v_remaining then
+      if not v_confirmed or v_reason is null then
+        raise exception 'excess delivery requires confirmation and a reason';
+      end if;
+      if char_length(v_reason) > 500 then raise exception 'excess delivery reason must be 500 characters or fewer'; end if;
+    else
+      v_confirmed := false;
+      v_reason := null;
+    end if;
+
+    update public.store_receiving_items
+    set expected_quantity_snapshot = v_expected,
+        remaining_quantity_before = v_remaining,
+        received_quantity = v_received,
+        damaged_quantity = v_damaged,
+        unit_cost = v_unit_cost,
+        overage_confirmed = v_confirmed,
+        overage_reason = v_reason
+    where id = v_receiving_item_id;
+  end loop;
+
+  insert into public.store_procurement_events (purchase_order_id, receiving_id, event_type, details, actor_id)
+  values (
+    v_po_id,
+    p_receiving_id,
+    'receiving_draft_updated',
+    jsonb_build_object('invoice_number', btrim(p_invoice_number), 'line_count', jsonb_array_length(p_lines)),
+    v_actor
+  );
+
+  return p_receiving_id;
+end;
+$;
+
+revoke all on function private.update_store_receiving_draft_internal(uuid,text,text,text,jsonb)
+from public, anon, authenticated;
+grant execute on function private.update_store_receiving_draft_internal(uuid,text,text,text,jsonb)
+to authenticated;
+
+create or replace function public.update_store_receiving_draft(
+  p_receiving_id uuid,
+  p_invoice_number text,
+  p_receiving_employee_label text,
+  p_notes text,
+  p_lines jsonb
+)
+returns uuid
+language sql
+security invoker
+set search_path = ''
+as $
+  select private.update_store_receiving_draft_internal(
+    p_receiving_id,
+    p_invoice_number,
+    p_receiving_employee_label,
+    p_notes,
+    p_lines
+  );
+$;
+
+revoke all on function public.update_store_receiving_draft(uuid,text,text,text,jsonb) from public, anon;
+grant execute on function public.update_store_receiving_draft(uuid,text,text,text,jsonb) to authenticated;
+
 create or replace function private.void_store_receiving_internal(
   p_receiving_id uuid,
   p_reason text
