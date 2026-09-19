@@ -74,6 +74,11 @@ test("homepage uses bounded product reads and keeps brand shelves lazy", async (
   assert.ok(bestStart >= 0 && bestEnd > bestStart);
   assert.doesNotMatch(nativeStore.slice(bestStart, bestEnd), /loadSnapshot/);
 
+  const vendorStart = bestEnd;
+  const vendorEnd = nativeStore.indexOf("export async function fetchAllProductsByVendor", vendorStart);
+  assert.ok(vendorStart >= 0 && vendorEnd > vendorStart);
+  assert.doesNotMatch(nativeStore.slice(vendorStart, vendorEnd), /loadSnapshot/);
+
   assert.match(homeSections, /productsByHandlesQueryOptions/);
   assert.match(homeSections, /handles\.slice\(0, 6\)/);
 });
