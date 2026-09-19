@@ -314,12 +314,128 @@ export default function InventoryManagerPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-        <div className="flex items-center justify-between border-b border-slate-100 p-4">
-          <div className="text-[13px] font-bold text-[#14203a]">Inventory variants</div>
-          <span className="text-[11px] text-slate-400">{filtered.length} shown</span>
+        <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
+          <div>
+            <div className="text-[15px] font-bold text-[#14203a]">Inventory variants</div>
+            <div className="mt-1 text-[10px] text-slate-400">Products, variants, and live stock controls</div>
+          </div>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">{filtered.length} shown</span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1120px] text-left">
+
+        <div className="divide-y divide-slate-100 lg:hidden">
+          {filtered.map((row) => {
+            const status = statusFor(row.stock, threshold, row.trackInventory);
+            const saving = savingId === row.variantId;
+            return (
+              <article key={row.variantId} className="p-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+                    {row.image ? (
+                      <img
+                        src={row.image}
+                        alt={row.productName}
+                        className="size-full object-contain p-1"
+                      />
+                    ) : (
+                      <Package className="size-5 text-slate-400" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="line-clamp-2 text-[14px] font-extrabold leading-[1.35] text-slate-800">
+                          {row.productName}
+                        </h3>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] font-medium text-slate-400">
+                          <span>{row.brand || "No brand"}</span>
+                          <span>•</span>
+                          <span>{row.variantTitle || "Default"}</span>
+                        </div>
+                      </div>
+                      <Badge status={status} />
+                    </div>
+
+                    {row.optionsLabel && (
+                      <div className="mt-2 line-clamp-2 text-[10px] leading-4 text-slate-500">
+                        {row.optionsLabel}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-slate-50 px-3 py-2.5">
+                    <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">SKU</div>
+                    <div className="mt-1 truncate font-mono text-[10px] font-semibold text-slate-600">{row.sku || "—"}</div>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 px-3 py-2.5">
+                    <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">On hand</div>
+                    <div className="mt-0.5 text-[18px] font-black leading-none text-slate-800">{row.stock}</div>
+                  </div>
+                </div>
+
+                <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-700">Stock control</div>
+                      <div className="mt-0.5 text-[9px] text-slate-400">
+                        {row.trackInventory ? "Tap − / + or enter the exact quantity" : "Inventory tracking is disabled"}
+                      </div>
+                    </div>
+                    {saving && <Loader2 className="size-4 animate-spin text-indigo-500" />}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => void changeBy(row, -1)}
+                      disabled={saving || !row.trackInventory || row.stock <= 0}
+                      className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
+                      aria-label={`Decrease stock for ${row.productName}`}
+                    >
+                      <Minus className="size-4" />
+                    </button>
+                    <input
+                      value={draftStocks[row.variantId] ?? String(row.stock)}
+                      onChange={(event) =>
+                        setDraftStocks((current) => ({
+                          ...current,
+                          [row.variantId]: event.target.value,
+                        }))
+                      }
+                      onBlur={() => void commitAbsolute(row)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") event.currentTarget.blur();
+                      }}
+                      disabled={saving || !row.trackInventory}
+                      className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-center text-[15px] font-black text-slate-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400"
+                      type="number"
+                      min={0}
+                      step={1}
+                      inputMode="numeric"
+                    />
+                    <button
+                      onClick={() => void changeBy(row, 1)}
+                      disabled={saving || !row.trackInventory}
+                      className="grid size-11 shrink-0 place-items-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
+                      aria-label={`Increase stock for ${row.productName}`}
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-start gap-1.5 text-[9px] leading-4 text-slate-400">
+                  <History className="mt-0.5 size-3 shrink-0" />
+                  <span>Last movement: {movementLabel(row)}</span>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="hidden overflow-x-auto lg:block">
+          <table className="w-full min-w-[1180px] text-left">
             <thead className="bg-[#fafbfe]">
               <tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.12em] text-slate-400">
                 <th className="px-5 py-3">Item</th>
@@ -338,31 +454,31 @@ export default function InventoryManagerPage() {
                 const saving = savingId === row.variantId;
                 return (
                   <tr key={row.variantId} className="border-b border-slate-50 hover:bg-[#fafbff]">
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
                           {row.image ? (
                             <img
                               src={row.image}
                               alt={row.productName}
-                              className="size-full object-contain"
+                              className="size-full object-contain p-1"
                             />
                           ) : (
                             <Package className="size-4 text-slate-400" />
                           )}
                         </div>
                         <div className="min-w-0">
-                          <div className="max-w-[260px] truncate text-[12px] font-bold text-slate-700">
+                          <div className="max-w-[280px] truncate text-[13px] font-extrabold text-slate-800">
                             {row.productName}
                           </div>
-                          <div className="mt-1 text-[10px] text-slate-400">
+                          <div className="mt-1.5 text-[10px] font-medium text-slate-400">
                             {row.brand || "No brand"} · {row.productStatus}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-3.5">
-                      <div className="max-w-[220px] text-[11px] font-semibold text-slate-600">
+                      <div className="max-w-[220px] text-[12px] font-bold text-slate-700">
                         {row.variantTitle || "Default"}
                       </div>
                       {row.optionsLabel && (
@@ -384,7 +500,7 @@ export default function InventoryManagerPage() {
                         <button
                           onClick={() => void changeBy(row, -1)}
                           disabled={saving || !row.trackInventory || row.stock <= 0}
-                          className="grid size-7 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
+                          className="grid size-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
                           aria-label={`Decrease stock for ${row.productName}`}
                         >
                           <Minus className="size-3" />
@@ -402,7 +518,7 @@ export default function InventoryManagerPage() {
                             if (event.key === "Enter") event.currentTarget.blur();
                           }}
                           disabled={saving || !row.trackInventory}
-                          className="h-8 w-16 rounded-lg border border-slate-200 text-center text-[11px] font-bold outline-none focus:border-indigo-400 disabled:bg-slate-50 disabled:text-slate-400"
+                          className="h-9 w-[72px] rounded-xl border border-slate-200 text-center text-[13px] font-black text-slate-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400"
                           type="number"
                           min={0}
                           step={1}
@@ -410,14 +526,14 @@ export default function InventoryManagerPage() {
                         <button
                           onClick={() => void changeBy(row, 1)}
                           disabled={saving || !row.trackInventory}
-                          className="grid size-7 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
+                          className="grid size-9 place-items-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-35"
                           aria-label={`Increase stock for ${row.productName}`}
                         >
                           {saving ? <Loader2 className="size-3 animate-spin" /> : <Plus className="size-3" />}
                         </button>
                       </div>
                     </td>
-                    <td className="px-3 py-3.5 text-[12px] font-bold text-slate-700">{row.stock}</td>
+                    <td className="px-3 py-4"><span className="inline-flex min-w-12 items-center justify-center rounded-xl bg-slate-100 px-2.5 py-1.5 text-[14px] font-black text-slate-800">{row.stock}</span></td>
                     <td className="px-3 py-3.5">
                       <div className="flex max-w-[230px] items-start gap-1.5 text-[9px] leading-4 text-slate-400">
                         <History className="mt-0.5 size-3 shrink-0" />
