@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassword";
 import type { Tables } from "@/integrations/supabase/types";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
 import { convertProductImageToWebp, type ProductImageConversionResult, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
@@ -497,6 +498,8 @@ export async function updateDashboardPassword(password: string) {
   if (password.length < 10) {
     throw new Error("Use at least 10 characters for the new password.");
   }
+
+  await assertDashboardPasswordNotPwned(password);
 
   const { error } = await supabase.auth.updateUser({ password });
   throwIfError(error, "Password update failed");
