@@ -52,5 +52,9 @@ test("inventory movement history drawer is paginated and resilient", () => {
   assert.match(movementDrawer, /Retry/);
   assert.match(movementDrawer, /Load more/);
   assert.match(movementDrawer, /loadPage\(page \+ 1, true\)/);
+  assert.match(movementDrawer, /INVENTORY_MOVEMENT_TYPES/);
+  assert.match(movementDrawer, /Filter inventory movement history by type/);
+  assert.match(inventoryData, /movementType\?: InventoryMovementType/);
+  assert.match(inventoryData, /query = query\.eq\("movement_type", input\.movementType\)/);
   assert.doesNotMatch(movementDrawer, /service_role|SUPABASE_SERVICE_ROLE|sb_secret_/);
 });
