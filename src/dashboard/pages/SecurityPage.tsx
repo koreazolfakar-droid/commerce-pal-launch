@@ -1,22 +1,31 @@
 import {
   AlertTriangle,
   CheckCircle2,
+  Fingerprint,
   KeyRound,
   Laptop,
   Loader2,
   LogOut,
+  Pencil,
   RefreshCw,
   ShieldCheck,
   Smartphone,
+  Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import {
+  deleteDashboardPasskey,
   getDashboardSecuritySnapshot,
+  isDashboardPasskeySupported,
+  listDashboardPasskeys,
+  registerDashboardPasskey,
+  renameDashboardPasskey,
   signOutAllDashboardSessions,
   signOutDashboard,
   signOutOtherDashboardSessions,
+  type DashboardPasskey,
   type DashboardSecurityEvent,
   type DashboardSecuritySnapshot,
 } from "@/dashboard/data/catalog";
@@ -30,6 +39,9 @@ function eventLabel(type: string) {
     signout_local: "Current session signed out",
     signout_others: "Other sessions revoked",
     signout_global: "All sessions revoked",
+    passkey_registered: "Passkey added",
+    passkey_renamed: "Passkey renamed",
+    passkey_deleted: "Passkey removed",
   };
   return labels[type] ?? type.replaceAll("_", " ");
 }
@@ -75,17 +87,39 @@ export default function SecurityPage() {
   const [snapshot, setSnapshot] = useState<DashboardSecuritySnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState<"local" | "others" | "global" | null>(null);
+  const [passkeys, setPasskeys] = useState<DashboardPasskey[]>([]);
+  const [passkeyError, setPasskeyError] = useState("");
+  const [passkeyAction, setPasskeyAction] = useState<string | null>(null);
+  const [editingPasskeyId, setEditingPasskeyId] = useState<string | null>(null);
+  const [passkeyName, setPasskeyName] = useState("");
+
+  const loadPasskeys = useCallback(async () => {
+    if (!isDashboardPasskeySupported()) {
+      setPasskeys([]);
+      setPasskeyError("Passkeys are not supported by this browser or secure context.");
+      return;
+    }
+
+    try {
+      setPasskeys(await listDashboardPasskeys());
+      setPasskeyError("");
+    } catch (cause) {
+      setPasskeys([]);
+      setPasskeyError(cause instanceof Error ? cause.message : "Unable to load passkeys.");
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       setSnapshot(await getDashboardSecuritySnapshot());
+      await loadPasskeys();
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Unable to load security center.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadPasskeys]);
 
   useEffect(() => {
     void load();
@@ -136,6 +170,53 @@ export default function SecurityPage() {
     }
   };
 
+  const addPasskey = async () => {
+    setPasskeyAction("register");
+    try {
+      const passkey = await registerDashboardPasskey();
+      toast.success(`Passkey added${passkey.friendlyName ? `: ${passkey.friendlyName}` : "."}`);
+      await Promise.all([loadPasskeys(), load()]);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Could not add passkey.");
+    } finally {
+      setPasskeyAction(null);
+    }
+  };
+
+  const beginRenamePasskey = (passkey: DashboardPasskey) => {
+    setEditingPasskeyId(passkey.id);
+    setPasskeyName(passkey.friendlyName || "My device");
+  };
+
+  const savePasskeyName = async (passkeyId: string) => {
+    setPasskeyAction(`rename:${passkeyId}`);
+    try {
+      await renameDashboardPasskey(passkeyId, passkeyName);
+      toast.success("Passkey renamed.");
+      setEditingPasskeyId(null);
+      setPasskeyName("");
+      await Promise.all([loadPasskeys(), load()]);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Could not rename passkey.");
+    } finally {
+      setPasskeyAction(null);
+    }
+  };
+
+  const removePasskey = async (passkey: DashboardPasskey) => {
+    if (!window.confirm(`Remove ${passkey.friendlyName || "this passkey"}? You will no longer be able to use it to sign in.`)) return;
+    setPasskeyAction(`delete:${passkey.id}`);
+    try {
+      await deleteDashboardPasskey(passkey.id);
+      toast.success("Passkey removed.");
+      await Promise.all([loadPasskeys(), load()]);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Could not remove passkey.");
+    } finally {
+      setPasskeyAction(null);
+    }
+  };
+
   if (loading && !snapshot) {
     return <div className="grid min-h-[460px] place-items-center"><Loader2 className="size-6 animate-spin text-[#5968ea]" /></div>;
   }
@@ -161,7 +242,7 @@ export default function SecurityPage() {
         </button>
       </div>
 
-      <div className="mb-4 grid gap-4 md:grid-cols-3">
+      <div className="mb-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-emerald-100 bg-white p-5">
           <div className="flex items-center justify-between">
             <div className="text-[11px] font-bold text-slate-500">MFA protection</div>
@@ -188,7 +269,139 @@ export default function SecurityPage() {
           <div className="mt-3 truncate text-[13px] font-bold text-[#14203a]">{snapshot.email}</div>
           <div className="mt-1 text-[10px] text-slate-400">Access token expiry: {sessionExpiry}</div>
         </div>
+
+        <div className="rounded-2xl border border-indigo-100 bg-white p-5">
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] font-bold text-slate-500">Passkeys</div>
+            <Fingerprint className="size-5 text-indigo-500" />
+          </div>
+          <div className="mt-3 text-xl font-bold text-[#14203a]">{passkeyError ? "Needs attention" : `${passkeys.length} registered`}</div>
+          <div className="mt-1 text-[10px] text-slate-400">{passkeyError ? "Passkey service is not ready on this device or project." : "Phishing-resistant sign-in credentials."}</div>
+        </div>
       </div>
+
+      <section className="mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-[13px] font-bold text-[#14203a]">
+              <Fingerprint className="size-4 text-indigo-500" /> Passkeys & biometrics
+            </div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              Use fingerprint, face unlock, device PIN or a hardware security key. Biometrics stay on your device.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => void addPasskey()}
+            disabled={passkeyAction !== null || Boolean(passkeyError)}
+            className="flex h-10 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-sm transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {passkeyAction === "register" ? <Loader2 className="size-3.5 animate-spin" /> : <Fingerprint className="size-3.5" />}
+            Add passkey
+          </button>
+        </div>
+
+        {passkeyError ? (
+          <div className="m-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[11px] leading-5 text-amber-800">
+            {passkeyError}
+          </div>
+        ) : passkeys.length ? (
+          <div className="divide-y divide-slate-100">
+            {passkeys.map((passkey) => {
+              const renaming = editingPasskeyId === passkey.id;
+              const busy = passkeyAction?.endsWith(passkey.id) ?? false;
+              return (
+                <div key={passkey.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                  <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+                    <Fingerprint className="size-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    {renaming ? (
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                          value={passkeyName}
+                          onChange={(event) => setPasskeyName(event.target.value)}
+                          maxLength={120}
+                          autoFocus
+                          className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") void savePasskeyName(passkey.id);
+                            if (event.key === "Escape") {
+                              setEditingPasskeyId(null);
+                              setPasskeyName("");
+                            }
+                          }}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={busy || !passkeyName.trim()}
+                            onClick={() => void savePasskeyName(passkey.id)}
+                            className="h-9 rounded-lg bg-slate-900 px-3 text-[10px] font-bold text-white disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => {
+                              setEditingPasskeyId(null);
+                              setPasskeyName("");
+                            }}
+                            className="h-9 rounded-lg border border-slate-200 px-3 text-[10px] font-bold text-slate-600"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="truncate text-[12px] font-bold text-slate-700">
+                          {passkey.friendlyName || "Passkey"}
+                        </div>
+                        <div className="mt-1 text-[10px] text-slate-400">
+                          Added {new Date(passkey.createdAt).toLocaleString()}
+                          {passkey.lastUsedAt ? ` · Last used ${new Date(passkey.lastUsedAt).toLocaleString()}` : ""}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {!renaming ? (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={busy || passkeyAction === "register"}
+                        onClick={() => beginRenamePasskey(passkey)}
+                        className="grid size-9 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
+                        aria-label="Rename passkey"
+                        title="Rename passkey"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy || passkeyAction === "register"}
+                        onClick={() => void removePasskey(passkey)}
+                        className="grid size-9 place-items-center rounded-lg border border-rose-200 text-rose-500 transition hover:bg-rose-50 disabled:opacity-50"
+                        aria-label="Remove passkey"
+                        title="Remove passkey"
+                      >
+                        {passkeyAction === `delete:${passkey.id}` ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="px-5 py-10 text-center">
+            <Fingerprint className="mx-auto size-7 text-slate-300" />
+            <div className="mt-3 text-[12px] font-bold text-slate-600">No passkeys registered</div>
+            <div className="mt-1 text-[10px] text-slate-400">Add one after MFA verification to enable passwordless sign-in.</div>
+          </div>
+        )}
+      </section>
 
       <div className="grid gap-4 xl:grid-cols-[.9fr_1.1fr]">
         <section className="rounded-2xl border border-slate-200 bg-white">
