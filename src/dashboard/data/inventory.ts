@@ -29,6 +29,55 @@ export type InventoryRow = {
   lastMovementDelta: number | null;
 };
 
+export const INVENTORY_MOVEMENT_TYPES = [
+  "purchase",
+  "sale",
+  "return",
+  "adjustment",
+  "reservation",
+  "release",
+] as const;
+
+export type InventoryMovementType = (typeof INVENTORY_MOVEMENT_TYPES)[number];
+
+export const INVENTORY_REFERENCE_TYPES = [
+  "manual_dashboard",
+  "variant_manager",
+  "order",
+  "order_cancel",
+] as const;
+
+export type InventoryReferenceType = (typeof INVENTORY_REFERENCE_TYPES)[number];
+
+export function sanitizeInventoryMovementSearch(value?: string) {
+  return (value ?? "")
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N}\s#_-]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+}
+
+export type DashboardInventoryMovement = {
+  id: string;
+  productId: string;
+  variantId: string | null;
+  movementType: string;
+  quantityDelta: number;
+  referenceType: string | null;
+  referenceId: string | null;
+  note: string | null;
+  createdBy: string | null;
+  createdAt: string;
+};
+
+export type DashboardInventoryMovementPage = {
+  items: DashboardInventoryMovement[];
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+};
+
 function throwIfError(error: { message: string } | null, label: string) {
   if (error) throw new Error(`${label}: ${error.message}`);
 }
@@ -138,6 +187,89 @@ export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
       };
     })
     .filter((row): row is InventoryRow => Boolean(row));
+}
+
+export async function listDashboardInventoryMovements(input: {
+  productId: string;
+  variantId: string;
+  movementType?: InventoryMovementType;
+  referenceType?: InventoryReferenceType;
+  search?: string;
+  createdSince?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<DashboardInventoryMovementPage> {
+  await requireDashboardStaff();
+
+  const page = Math.max(1, Math.trunc(input.page ?? 1));
+  const pageSize = Math.min(50, Math.max(1, Math.trunc(input.pageSize ?? 25)));
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+
+  let query = supabase
+    .from("store_inventory_movements")
+    .select(
+      "id,product_id,variant_id,movement_type,quantity_delta,reference_type,reference_id,note,created_by,created_at",
+    )
+    .eq("product_id", input.productId)
+    .eq("variant_id", input.variantId);
+
+  if (input.movementType) {
+    query = query.eq("movement_type", input.movementType);
+  }
+
+  if (input.referenceType) {
+    query = query.eq("reference_type", input.referenceType);
+  }
+
+  const search = sanitizeInventoryMovementSearch(input.search);
+  if (search) {
+    query = query.or(`reference_id.ilike.%${search}%,note.ilike.%${search}%`);
+  }
+
+  if (input.createdSince) {
+    query = query.gte("created_at", input.createdSince);
+  }
+
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(start, end);
+
+  throwIfError(error, "Loading inventory movement history failed");
+
+  const rows = (data ?? []) as Pick<
+    MovementRow,
+    | "id"
+    | "product_id"
+    | "variant_id"
+    | "movement_type"
+    | "quantity_delta"
+    | "reference_type"
+    | "reference_id"
+    | "note"
+    | "created_by"
+    | "created_at"
+  >[];
+  const hasMore = rows.length > pageSize;
+
+  return {
+    items: rows.slice(0, pageSize).map((row) => ({
+      id: row.id,
+      productId: row.product_id,
+      variantId: row.variant_id,
+      movementType: row.movement_type,
+      quantityDelta: row.quantity_delta,
+      referenceType: row.reference_type,
+      referenceId: row.reference_id,
+      note: row.note,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+    })),
+    page,
+    pageSize,
+    hasMore,
+  };
 }
 
 export async function adjustInventoryDelta(
