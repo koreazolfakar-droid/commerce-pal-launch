@@ -2,7 +2,8 @@
 
 ## Implemented in code and Supabase
 
-- Mandatory TOTP MFA / AAL2 for protected dashboard sessions.
+- Mandatory TOTP MFA / AAL2 for all dashboard staff/admin data access at the database authorization boundary.
+- `user_roles` keeps a narrow self-read bootstrap path at AAL1 so a staff account can discover its role and complete TOTP enrollment; this does not grant dashboard data access.
 - Cloudflare Turnstile client integration for dashboard sign-in and password recovery.
 - Native Supabase Auth `captchaToken` forwarding.
 - Pre-auth Edge Function throttling with opaque SHA-256 buckets:

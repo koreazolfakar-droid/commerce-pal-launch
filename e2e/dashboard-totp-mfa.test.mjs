@@ -19,6 +19,10 @@ const migration = await readFile(
   new URL("../supabase/migrations/20260919054000_dashboard_totp_mfa_enforcement.sql", import.meta.url),
   "utf8",
 );
+const aal2Migration = await readFile(
+  new URL("../supabase/migrations/20260919094500_enforce_dashboard_aal2.sql", import.meta.url),
+  "utf8",
+);
 
 test("dashboard gate requires a ready AAL2 MFA session", () => {
   assert.match(app, /getDashboardMfaStatus\(\)/);
@@ -53,14 +57,20 @@ test("TOTP verification upgrades to AAL2 and activates DB enforcement", () => {
   assert.match(catalog, /status\?\.ready/);
 });
 
-test("database authorization requires aal2 after staff MFA activation", () => {
-  assert.match(migration, /mfa_required boolean not null default false/);
-  assert.match(migration, /auth\.jwt\(\) ->> 'aal'/);
-  assert.match(migration, /= 'aal2'/);
-  assert.match(migration, /mfa_required = false[\s\S]+has_dashboard_aal2/);
+test("database authorization requires aal2 for every dashboard staff request", () => {
   assert.match(migration, /aal2 authentication required/);
   assert.match(migration, /update public\.user_roles[\s\S]+mfa_required = true/);
   assert.match(migration, /grant execute on function public\.activate_dashboard_mfa\(\) to authenticated/);
+
+  assert.match(aal2Migration, /alter column mfa_required set default true/);
+  assert.match(aal2Migration, /check \(mfa_required = true\)/);
+  assert.match(aal2Migration, /private\.has_dashboard_aal2\(\)/);
+  assert.match(aal2Migration, /role in \('admin', 'editor'\)/);
+  assert.match(aal2Migration, /role = 'admin'/);
+  assert.doesNotMatch(
+    aal2Migration,
+    /mfa_required = false[\s\S]+has_dashboard_aal2/,
+  );
 });
 
 test("MFA cancellation signs out the partial Supabase session", () => {
