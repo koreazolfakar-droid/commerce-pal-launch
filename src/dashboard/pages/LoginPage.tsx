@@ -149,84 +149,48 @@ const loginCopy = {
 } as const;
 
 function BrandLockup() {
+  const { lang } = useLanguage();
+  const copy = loginCopy[lang];
   return (
-    <div className="flex items-center gap-3">
-      <div className="grid size-11 place-items-center overflow-hidden rounded-[15px] border border-white/10 bg-white/[.08] shadow-[0_14px_40px_rgba(54,68,173,.3)]">
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="login-logo-tile grid size-11 shrink-0 place-items-center overflow-hidden rounded-[15px] border border-white/10 bg-white/[.08] shadow-[0_14px_40px_rgba(54,68,173,.3)]">
         <img src="/logo.svg" alt="" className="h-7 w-auto max-w-8 object-contain" />
       </div>
-      <div>
-        <div className="text-[16px] font-bold tracking-[-.03em] text-white">Space Call</div>
-        <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[.18em] text-slate-400">
-          Admin control center
+      <div className="min-w-0">
+        <div className="login-heading truncate text-[16px] font-bold tracking-[-.03em] text-white">
+          Space Call
+        </div>
+        <div className="login-muted mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[.18em] text-slate-400">
+          {copy.brandSubtitle}
         </div>
       </div>
-    </div>
-  );
-}
-
-function SecurityPoint({ children }: { children: string }) {
-  return (
-    <div className="flex items-center gap-2.5 text-[11px] font-medium text-slate-300">
-      <span className="grid size-5 shrink-0 place-items-center rounded-full border border-emerald-300/15 bg-emerald-400/10 text-emerald-300 shadow-[0_0_24px_rgba(52,211,153,.08)]">
-        <CheckCircle2 className="size-3" />
-      </span>
-      {children}
     </div>
   );
 }
 
 function WorkspacePreview() {
+  const { lang } = useLanguage();
+  const copy = loginCopy[lang];
   return (
-    <div className="relative overflow-hidden rounded-[24px] border border-white/[.08] bg-[#0d172b]/72 p-4 shadow-[0_24px_80px_rgba(0,0,0,.22)] backdrop-blur-xl">
+    <div className="login-soft relative overflow-hidden rounded-[24px] border border-white/[.08] bg-[#0d172b]/72 p-5 shadow-[0_24px_80px_rgba(0,0,0,.22)] backdrop-blur-xl">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/35 to-transparent" />
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="grid size-11 shrink-0 place-items-center rounded-2xl border border-indigo-300/15 bg-indigo-300/[.08] text-indigo-200">
+          <LockKeyhole className="size-5" />
+        </div>
         <div>
-          <div className="text-[9px] font-bold uppercase tracking-[.18em] text-slate-500">
-            Workspace status
-          </div>
-          <div className="mt-1 text-[14px] font-bold tracking-[-.03em] text-white">
-            Space Call Operations
-          </div>
-        </div>
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-2.5 py-1 text-[9px] font-bold text-emerald-200">
-          <span className="size-1.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,.8)]" />
-          Protected
+          <div className="login-heading text-[13px] font-bold text-white">{copy.protectedWorkspace}</div>
+          <div className="login-muted mt-1 text-[10px] leading-4 text-slate-400">{copy.protectedBody}</div>
         </div>
       </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        {[
-          ["Catalog", "Live"],
-          ["Inventory", "Synced"],
-          ["Security", "AAL2"],
-        ].map(([label, value]) => (
-          <div
-            key={label}
-            className="rounded-2xl border border-white/[.07] bg-white/[.035] px-3 py-3"
-          >
-            <div className="text-[8px] font-semibold uppercase tracking-[.13em] text-slate-500">
-              {label}
-            </div>
-            <div className="mt-1.5 text-[12px] font-bold text-slate-100">{value}</div>
-          </div>
-        ))}
+      <div className="mt-5 grid grid-cols-[1.25fr_.75fr] gap-2" aria-hidden="true">
+        <div className="login-placeholder h-16 rounded-2xl bg-white/[.035]" />
+        <div className="login-placeholder h-16 rounded-2xl bg-white/[.025]" />
       </div>
-
-      <div className="mt-3 rounded-2xl border border-white/[.07] bg-white/[.025] p-3">
-        <div className="flex items-center justify-between text-[9px] text-slate-500">
-          <span>Secure access chain</span>
-          <span className="font-semibold text-slate-300">3 layers</span>
-        </div>
-        <div className="mt-2 flex items-center gap-2">
-          <div className="h-1.5 flex-1 rounded-full bg-indigo-400/90" />
-          <div className="h-1.5 flex-1 rounded-full bg-violet-400/75" />
-          <div className="h-1.5 flex-1 rounded-full bg-emerald-400/80" />
-        </div>
-        <div className="mt-2 grid grid-cols-3 gap-2 text-[8px] font-semibold text-slate-500">
-          <span>Identity</span>
-          <span className="text-center">MFA</span>
-          <span className="text-right">Role access</span>
-        </div>
+      <div className="mt-2 grid grid-cols-3 gap-2" aria-hidden="true">
+        <div className="login-placeholder h-10 rounded-xl bg-white/[.025]" />
+        <div className="login-placeholder h-10 rounded-xl bg-white/[.04]" />
+        <div className="login-placeholder h-10 rounded-xl bg-white/[.025]" />
       </div>
     </div>
   );
