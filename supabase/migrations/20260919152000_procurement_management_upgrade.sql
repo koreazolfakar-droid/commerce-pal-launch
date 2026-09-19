@@ -123,7 +123,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   if new.status = 'approved'
      and old.status = 'draft'
@@ -140,7 +140,7 @@ begin
 
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists store_receivings_guard_overage_approval on public.store_receivings;
 create trigger store_receivings_guard_overage_approval
@@ -162,7 +162,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_line record;
   v_current_stock integer;
@@ -243,7 +243,7 @@ begin
 
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists store_receivings_update_average_cost on public.store_receivings;
 create trigger store_receivings_update_average_cost
@@ -258,7 +258,7 @@ returns integer
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_actor uuid := auth.uid();
   v_receiving_id uuid;
@@ -332,7 +332,7 @@ begin
 
   return v_count;
 end;
-$;
+$$;
 
 revoke all on function private.replace_store_receiving_serials_internal(uuid,jsonb)
 from public, anon, authenticated;
@@ -347,9 +347,9 @@ returns integer
 language sql
 security invoker
 set search_path = ''
-as $
+as $$
   select private.replace_store_receiving_serials_internal(p_receiving_item_id, p_serials);
-$;
+$$;
 
 revoke all on function public.replace_store_receiving_serials(uuid,jsonb) from public, anon;
 grant execute on function public.replace_store_receiving_serials(uuid,jsonb) to authenticated;
@@ -645,7 +645,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_po_id uuid;
 begin
@@ -674,7 +674,7 @@ begin
 
   return v_po_id;
 end;
-$;
+$$;
 
 revoke all on function private.create_store_purchase_order_v2_internal(
   uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
@@ -700,13 +700,13 @@ returns uuid
 language sql
 security invoker
 set search_path = ''
-as $
+as $$
   select private.create_store_purchase_order_v2_internal(
     p_supplier_id, p_location_id, p_po_number, p_currency, p_expected_at,
     p_discount_amount, p_tax_amount, p_shipping_amount, p_exchange_rate,
     p_notes, p_items
   );
-$;
+$$;
 
 revoke all on function public.create_store_purchase_order_v2(
   uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
@@ -915,7 +915,7 @@ returns text
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_actor uuid := auth.uid();
   v_status text;
@@ -941,7 +941,7 @@ begin
 
   return 'deleted';
 end;
-$;
+$$;
 
 create or replace function private.close_store_purchase_order_internal(
   p_purchase_order_id uuid
@@ -950,7 +950,7 @@ returns text
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_actor uuid := auth.uid();
   v_status text;
@@ -975,7 +975,7 @@ begin
 
   return 'closed';
 end;
-$;
+$$;
 
 create or replace function private.cancel_store_purchase_order_internal(
   p_purchase_order_id uuid,
@@ -1037,7 +1037,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_actor uuid := auth.uid();
   v_po_id uuid;
@@ -1166,7 +1166,7 @@ begin
 
   return p_receiving_id;
 end;
-$;
+$$;
 
 revoke all on function private.update_store_receiving_draft_internal(uuid,text,text,text,jsonb)
 from public, anon, authenticated;
@@ -1184,7 +1184,7 @@ returns uuid
 language sql
 security invoker
 set search_path = ''
-as $
+as $$
   select private.update_store_receiving_draft_internal(
     p_receiving_id,
     p_invoice_number,
@@ -1192,7 +1192,7 @@ as $
     p_notes,
     p_lines
   );
-$;
+$$;
 
 revoke all on function public.update_store_receiving_draft(uuid,text,text,text,jsonb) from public, anon;
 grant execute on function public.update_store_receiving_draft(uuid,text,text,text,jsonb) to authenticated;
