@@ -20,6 +20,10 @@ export function fetchBrandVendors(): Promise<string[]> {
   return nativeStore.fetchBrandVendors();
 }
 
+export function fetchNavigationCatalogFacets() {
+  return nativeStore.fetchNavigationCatalogFacets();
+}
+
 export function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
   return nativeStore.fetchProductByHandle(handle);
 }
