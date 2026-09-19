@@ -10,6 +10,7 @@ import {
   fetchCatalogProducts,
   fetchCollectionByHandle,
   fetchCollections,
+  fetchHomepageProducts,
   fetchNewestProducts,
   fetchNavigationCatalogFacets,
   fetchProductByHandle,
@@ -79,6 +80,19 @@ function writeCatalogRefreshFallback(products: ShopifyProduct[], vendors: string
   }
 }
 
+async function fetchHomepageCatalogIndex() {
+  const [products, facets] = await Promise.all([
+    fetchHomepageProducts(48),
+    fetchNavigationCatalogFacets(),
+  ]);
+  const catalog = buildCatalogIndex(products);
+  return {
+    ...catalog,
+    categories: facets.categories,
+    brands: facets.brands,
+  };
+}
+
 async function fetchCatalogIndexSafely() {
   try {
     const [products, vendors] = await Promise.all([
@@ -103,6 +117,15 @@ export const catalogQueryOptions = () =>
   queryOptions({
     queryKey: ["supabase", "catalog"],
     queryFn: fetchCatalogIndexSafely,
+    staleTime: CATALOG_STALE_TIME,
+    retry: QUERY_RETRY_COUNT,
+    retryDelay,
+  });
+
+export const homepageCatalogQueryOptions = () =>
+  queryOptions({
+    queryKey: ["supabase", "homepage-catalog"],
+    queryFn: fetchHomepageCatalogIndex,
     staleTime: CATALOG_STALE_TIME,
     retry: QUERY_RETRY_COUNT,
     retryDelay,
