@@ -34,8 +34,8 @@ let publicClient: ReturnType<typeof createPublicSupabaseClient> | undefined;
  * Public storefront client.
  *
  * The client is created lazily so SSR module evaluation never depends on
- * Supabase initialization. Any initialization/request failure happens inside
- * the storefront data try/catch and can safely fall back to Shopify.
+ * Supabase initialization. Requests begin only when the native storefront
+ * data layer actually needs the public client.
  */
 export const publicSupabase = new Proxy(
   {} as ReturnType<typeof createPublicSupabaseClient>,
