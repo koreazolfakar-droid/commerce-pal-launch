@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { dashboardTurnstileSiteKey } from "@/dashboard/data/catalog";
+import { useLanguage } from "@/dashboard/i18n";
 
 type TurnstileApi = {
   render: (
@@ -61,10 +62,13 @@ function loadTurnstileScript() {
 export default function TurnstileChallenge({
   onTokenChange,
   resetNonce,
+  theme = "dark",
 }: {
   onTokenChange: (token: string | null) => void;
   resetNonce: number;
+  theme?: "light" | "dark";
 }) {
+  const { lang } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
 
@@ -83,7 +87,7 @@ export default function TurnstileChallenge({
 
         widgetIdRef.current = window.turnstile.render(containerRef.current, {
           sitekey: dashboardTurnstileSiteKey,
-          theme: "dark",
+          theme,
           size: "flexible",
           appearance: "interaction-only",
           callback: (token) => onTokenChange(token),
@@ -101,7 +105,7 @@ export default function TurnstileChallenge({
         widgetIdRef.current = null;
       }
     };
-  }, [onTokenChange]);
+  }, [onTokenChange, theme]);
 
   useEffect(() => {
     if (!dashboardTurnstileSiteKey) return;
@@ -117,7 +121,7 @@ export default function TurnstileChallenge({
     <div
       data-testid="dashboard-turnstile"
       className="min-h-8 overflow-hidden rounded-xl"
-      aria-label="Bot protection"
+      aria-label={lang === "ar" ? "تحقق أمني" : "Security check"}
     >
       <div ref={containerRef} className="w-full" />
     </div>
