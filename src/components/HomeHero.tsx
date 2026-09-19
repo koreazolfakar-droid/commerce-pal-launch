@@ -159,10 +159,6 @@ export function HomeHero({
     (language === "ar" ? cmsSlide?.image_alt_ar : cmsSlide?.image_alt_en) ||
     cmsSlide?.title ||
     "Space Call";
-  const cmsMobileAlt =
-    (language === "ar" ? cmsSlide?.mobile_image_alt_ar : cmsSlide?.mobile_image_alt_en) ||
-    cmsDesktopAlt;
-
   const cmsDesktopImage = cmsSlide?.image_url?.trim() || undefined;
   const cmsMobileImage = cmsSlide?.mobile_image_url?.trim() || undefined;
 
