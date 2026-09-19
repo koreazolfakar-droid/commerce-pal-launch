@@ -1,21 +1,17 @@
 version: 2.1
 
-jobs:
-  storefront-ci:
+executors:
+  node-bun:
     docker:
       - image: cimg/node:lts
     resource_class: small
     working_directory: ~/project
     environment:
       BUN_INSTALL: /home/circleci/.bun
+
+commands:
+  install-bun:
     steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-            - bun-deps-v1-{{ checksum "bun.lock" }}
-            - bun-deps-v1-
-
       - run:
           name: Install Bun
           command: |
@@ -25,35 +21,83 @@ jobs:
             source "$BASH_ENV"
             bun --version
 
+  restore-project:
+    steps:
+      - checkout
+      - install-bun
+      - attach_workspace:
+          at: ~/project
+
+jobs:
+  setup:
+    executor: node-bun
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - bun-deps-v2-{{ checksum "bun.lock" }}
+            - bun-deps-v2-
+      - install-bun
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
-
       - save_cache:
-          key: bun-deps-v1-{{ checksum "bun.lock" }}
+          key: bun-deps-v2-{{ checksum "bun.lock" }}
           paths:
             - ~/.bun/install/cache
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - node_modules
 
+  typecheck:
+    executor: node-bun
+    steps:
+      - restore-project
       - run:
           name: TypeScript
           command: bun run typecheck
 
+  lint:
+    executor: node-bun
+    steps:
+      - restore-project
       - run:
           name: ESLint
           command: bun run lint
 
+  dashboard-tests:
+    executor: node-bun
+    steps:
+      - restore-project
       - run:
           name: Dashboard security regression tests
           command: node --test e2e/dashboard-*.test.mjs
 
+  unit-tests:
+    executor: node-bun
+    steps:
+      - restore-project
       - run:
           name: Unit and architecture tests
           command: bun run test:unit
 
+  build:
+    executor: node-bun
+    steps:
+      - restore-project
       - run:
           name: Production build
           command: bun run build
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .output
 
+  ssr:
+    executor: node-bun
+    steps:
+      - restore-project
       - run:
           name: SSR smoke test
           command: bun run test:ssr
@@ -61,8 +105,20 @@ jobs:
 workflows:
   storefront-validation:
     jobs:
-      - storefront-ci:
+      - setup:
           filters:
             branches:
               only:
                 - /^important\/.*/
+      - typecheck:
+          requires: [setup]
+      - lint:
+          requires: [setup]
+      - dashboard-tests:
+          requires: [setup]
+      - unit-tests:
+          requires: [setup]
+      - build:
+          requires: [setup]
+      - ssr:
+          requires: [build]
