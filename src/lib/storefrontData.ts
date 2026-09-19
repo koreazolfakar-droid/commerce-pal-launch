@@ -4,9 +4,9 @@ import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 /**
  * Native Space Call storefront gateway.
  *
- * Supabase is the only live commerce source. There is intentionally no remote
- * Shopify fallback here: failures surface to the existing React Query/session
- * fallback instead of waiting for a second commerce backend.
+ * Supabase is the only live commerce source. There is intentionally no remote commerce fallback here: failures surface to
+ * the existing React Query/session fallback instead of waiting for a second
+ * commerce backend.
  */
 export function invalidateNativeStoreCache() {
   nativeStore.invalidateNativeStoreCache();
