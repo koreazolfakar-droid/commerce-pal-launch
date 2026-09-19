@@ -1,9 +1,18 @@
-import { Check, Image as ImageIcon, X } from "lucide-react";
-import { useState } from "react";
+import { Check, Image as ImageIcon, Loader2, Trash2, Upload, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { normalizeCategorySlug, type CatalogCategory } from "@/dashboard/data/categories";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
 import { categoryIconOptions } from "@/dashboard/components/categories/category-icons";
+import {
+  inspectProductImageSource,
+  type ProductImageSourceInfo,
+} from "@/dashboard/lib/imageProcessing";
+
+export type CategoryImageChange = {
+  file?: File;
+  remove?: boolean;
+};
 
 function TextField({
   label,
@@ -74,6 +83,12 @@ function ToggleRow({
   );
 }
 
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
 export default function CategoryForm({
   category,
   categories,
@@ -85,15 +100,49 @@ export default function CategoryForm({
   categories: CatalogCategory[];
   mode: "create" | "edit";
   onClose: () => void;
-  onSave: (category: CatalogCategory) => void;
+  onSave: (category: CatalogCategory, imageChange: CategoryImageChange) => Promise<void>;
 }) {
   const [draft, setDraft] = useState<CatalogCategory>({ ...category });
+  const [pendingImage, setPendingImage] = useState<File | null>(null);
+  const [sourceInfo, setSourceInfo] = useState<ProductImageSourceInfo | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!pendingImage) {
+      setPreviewUrl("");
+      return;
+    }
+    const next = URL.createObjectURL(pendingImage);
+    setPreviewUrl(next);
+    return () => URL.revokeObjectURL(next);
+  }, [pendingImage]);
 
   const patch = (next: Partial<CatalogCategory>) => {
     setDraft((current) => ({ ...current, ...next }));
   };
 
-  const submit = () => {
+  const selectImage = async (file?: File) => {
+    if (!file) return;
+    try {
+      const info = await inspectProductImageSource(file);
+      setPendingImage(file);
+      setSourceInfo(info);
+      setRemoveImage(false);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Unable to read image.");
+    }
+  };
+
+  const clearImage = () => {
+    setPendingImage(null);
+    setSourceInfo(null);
+    setRemoveImage(true);
+    patch({ image: undefined });
+  };
+
+  const submit = async () => {
     const name = draft.name.trim();
     if (!name) {
       toast.error("Category name is required.");
@@ -121,28 +170,43 @@ export default function CategoryForm({
     }
 
     const now = new Date().toISOString();
-    onSave({
-      ...draft,
-      name,
-      slug,
-      description: draft.description.trim(),
-      icon: draft.icon || "LayoutGrid",
-      order: Math.floor(order),
-      featured: Boolean(draft.featured),
-      active: Boolean(draft.active),
-      image: draft.image?.trim() || undefined,
-      seoTitle: draft.seoTitle?.trim() || undefined,
-      seoDescription: draft.seoDescription?.trim() || undefined,
-      createdAt: draft.createdAt || now,
-      updatedAt: now,
-    });
+    setSaving(true);
+    try {
+      await onSave(
+        {
+          ...draft,
+          name,
+          slug,
+          description: draft.description.trim(),
+          icon: draft.icon || "LayoutGrid",
+          order: Math.floor(order),
+          featured: Boolean(draft.featured),
+          active: Boolean(draft.active),
+          image: draft.image?.trim() || undefined,
+          seoTitle: draft.seoTitle?.trim() || undefined,
+          seoDescription: draft.seoDescription?.trim() || undefined,
+          createdAt: draft.createdAt || now,
+          updatedAt: now,
+        },
+        {
+          ...(pendingImage ? { file: pendingImage } : {}),
+          ...(removeImage ? { remove: true } : {}),
+        },
+      );
+    } catch {
+      // The parent shows the actionable Supabase/Storage error.
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const activePreview = previewUrl || (!removeImage ? draft.image || "" : "");
 
   return (
     <div
       className="fixed inset-0 z-[90] grid place-items-end bg-slate-950/45 p-0 backdrop-blur-[2px] sm:place-items-center sm:p-4"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget && !saving) onClose();
       }}
     >
       <div className="max-h-[94vh] w-full overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[28px]">
@@ -161,8 +225,9 @@ export default function CategoryForm({
           <button
             type="button"
             onClick={onClose}
+            disabled={saving}
             aria-label="Close category form"
-            className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50"
+            className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 disabled:opacity-50"
           >
             <X className="size-4" />
           </button>
@@ -244,16 +309,83 @@ export default function CategoryForm({
               </div>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-              <TextField
-                label="Image URL / Cover Image"
-                value={draft.image || ""}
-                onChange={(value) => patch({ image: value })}
-                placeholder="https://..."
-              />
-              <div className="flex h-11 min-w-28 items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 text-[10px] font-semibold text-slate-400">
-                <ImageIcon className="size-4" />
-                Optional
+            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+              <div className="grid gap-4 p-4 sm:grid-cols-[150px_1fr]">
+                <div className="grid aspect-square place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  {activePreview ? (
+                    <img
+                      src={activePreview}
+                      alt=""
+                      className="h-full w-full object-contain p-2"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-slate-300">
+                      <ImageIcon className="size-7" />
+                      <span className="text-[9px] font-bold">No category image</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="text-[11px] font-black text-slate-700">Category image</div>
+                  <p className="mt-1 text-[10px] leading-4 text-slate-400">
+                    JPG, PNG, WebP or AVIF. On save it is converted to WebP before upload,
+                    with a maximum 1080 px edge.
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-[#5968ea] px-3.5 text-[10px] font-bold text-white shadow-sm">
+                      <Upload className="size-4" />
+                      {activePreview ? "Replace image" : "Upload image"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/avif"
+                        className="sr-only"
+                        disabled={saving}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          void selectImage(file);
+                          event.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
+                    {activePreview ? (
+                      <button
+                        type="button"
+                        onClick={clearImage}
+                        disabled={saving}
+                        className="inline-flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-white px-3.5 text-[10px] font-bold text-rose-600 disabled:opacity-50"
+                      >
+                        <Trash2 className="size-4" />
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {sourceInfo ? (
+                    <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2 text-[9px] leading-4 text-indigo-700">
+                      <div className="font-bold">Ready for WebP conversion</div>
+                      <div>
+                        Source: {sourceInfo.width}×{sourceInfo.height} · {formatBytes(sourceInfo.bytes)}
+                      </div>
+                      <div>Output: WebP · max 1080 px edge · optimized before Storage upload</div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 bg-white p-3.5">
+                <TextField
+                  label="Image URL (advanced)"
+                  value={removeImage ? "" : draft.image || ""}
+                  onChange={(value) => {
+                    setPendingImage(null);
+                    setSourceInfo(null);
+                    setRemoveImage(false);
+                    patch({ image: value });
+                  }}
+                  placeholder="https://..."
+                />
               </div>
             </div>
           </section>
@@ -330,17 +462,25 @@ export default function CategoryForm({
           <button
             type="button"
             onClick={onClose}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
+            disabled={saving}
+            className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="button"
-            onClick={submit}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)]"
+            onClick={() => void submit()}
+            disabled={saving}
+            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <Check className="size-4" />
-            {mode === "create" ? "Create Category" : "Save Category"}
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+            {saving
+              ? pendingImage
+                ? "Optimizing & saving..."
+                : "Saving..."
+              : mode === "create"
+                ? "Create Category"
+                : "Save Category"}
           </button>
         </div>
       </div>
