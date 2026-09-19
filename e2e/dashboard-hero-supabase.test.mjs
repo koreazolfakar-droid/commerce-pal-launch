@@ -80,6 +80,11 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", (
   assert.ok(hero.includes('media="(min-width: 640px)"'));
   assert.match(hero, /cmsSlide\.overlay_opacity/);
   assert.match(hero, /cmsSlide\.open_in_new_tab/);
+  assert.ok(hero.includes("h-[clamp(15rem,62vw,20rem)]"));
+  assert.ok(hero.includes("sm:h-[22rem]"));
+  assert.ok(hero.includes("md:h-[24rem]"));
+  assert.ok(hero.includes("lg:h-[28rem]"));
+  assert.ok(hero.includes("xl:h-[30rem]"));
 });
 
 test("hero changes are auditable", () => {
