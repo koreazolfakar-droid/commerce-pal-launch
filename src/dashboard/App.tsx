@@ -6,6 +6,7 @@ import {
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
 import { LanguageContext, useLanguage } from "@/dashboard/i18n";
+import { useTheme } from "@/dashboard/contexts/ThemeContext";
 import BrandsPage from "@/dashboard/pages/BrandsPage";
 import CategoriesPage from "@/dashboard/pages/CategoriesPage";
 import CollectionDetailPageLive from "@/dashboard/pages/CollectionDetailPage";
@@ -56,6 +57,7 @@ import {
   Mail,
   Megaphone,
   Menu,
+  Moon,
   Package,
   PanelLeftClose,
   PanelLeftOpen,
@@ -66,6 +68,7 @@ import {
   ShoppingBag,
   Sparkles,
   Star,
+  Sun,
   Tags,
   TicketPercent,
   UserCog,
@@ -250,6 +253,7 @@ function Sidebar({
 
 function Header({ onMenu }: { onMenu: () => void }) {
   const { lang, setLang, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const { enabled: auth0Enabled, logoutAuth0 } = useDashboardAuth0();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -292,11 +296,11 @@ function Header({ onMenu }: { onMenu: () => void }) {
     : [];
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-slate-200/80 bg-[#f7f9fc]/95 px-3 py-2 backdrop-blur-xl sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
+    <header className="sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-xl sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           onClick={onMenu}
-          className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition active:scale-95 lg:hidden"
+          className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 lg:hidden"
           aria-label="Open dashboard menu"
         >
           <Menu className="size-5" />
@@ -304,14 +308,14 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           type="button"
           onClick={() => setMobileSearchOpen((current) => !current)}
-          className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition active:scale-95 sm:hidden"
+          className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 sm:hidden"
           aria-label={t("Search products...")}
           aria-expanded={mobileSearchOpen}
         >
           {mobileSearchOpen ? <X className="size-5" /> : <Search className="size-5" />}
         </button>
         <div className="relative hidden max-w-[480px] flex-1 sm:block">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             id="global-search"
             value={query}
@@ -321,13 +325,13 @@ function Header({ onMenu }: { onMenu: () => void }) {
             }}
             onFocus={() => setOpen(true)}
             placeholder={t("Search products...")}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-14 text-[13px] text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#6872ee] focus:ring-4 focus:ring-[#6872ee]/10"
+            className="h-11 w-full rounded-xl border border-input bg-card pl-10 pr-14 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
-          <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+          <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
             <Command className="size-3" />K
           </div>
           {open && query && (
-            <div className="absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden rounded-2xl border border-border bg-popover p-2 text-popover-foreground shadow-xl">
               {results.length ? (
                 results.map((item) => (
                   <button
@@ -336,23 +340,23 @@ function Header({ onMenu }: { onMenu: () => void }) {
                       setOpen(false);
                       navigate(`/dashboard/products/${item.id}`);
                     }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-slate-50"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-muted"
                   >
-                    <div className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
+                    <div className="grid size-8 place-items-center rounded-lg bg-accent text-primary">
                       <Package className="size-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate text-[12px] font-semibold text-slate-800">
+                      <div className="truncate text-[12px] font-semibold text-foreground">
                         {item.name}
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-muted-foreground">
                         {`${item.brand || "No brand"} · ${item.category || "Uncategorized"}`}
                       </div>
                     </div>
                   </button>
                 ))
               ) : (
-                <div className="px-3 py-4 text-center text-xs text-slate-400">
+                <div className="px-3 py-4 text-center text-xs text-muted-foreground">
                   No matching Supabase products
                 </div>
               )}
@@ -364,16 +368,25 @@ function Header({ onMenu }: { onMenu: () => void }) {
       <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         <button
           onClick={() => navigate("/dashboard/activity")}
-          className="grid size-10 place-items-center rounded-xl text-slate-500 hover:bg-white hover:text-slate-800"
+          className="grid size-10 place-items-center rounded-xl text-muted-foreground transition hover:bg-card hover:text-foreground"
           aria-label={t("Activity logs")}
           title={t("Activity logs")}
         >
           <Bell className="size-[18px]" />
         </button>
-        <div className="hidden h-8 w-px bg-slate-200 sm:block" />
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="grid size-10 place-items-center rounded-xl border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
+          aria-label={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
+          title={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
+        >
+          {theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
+        </button>
+        <div className="hidden h-8 w-px bg-border sm:block" />
         <button
           onClick={() => setLang(lang === "en" ? "ar" : "en")}
-          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-500 hover:text-indigo-600"
+          className="rounded-lg border border-border bg-card px-2 py-1.5 text-[10px] font-bold text-muted-foreground transition hover:text-primary"
           title={lang === "en" ? "العربية" : "English"}
         >
           {lang === "en" ? "AR" : "EN"}
@@ -382,25 +395,25 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <div className="relative">
           <button
             onClick={() => setProfileOpen((current) => !current)}
-            className="flex items-center gap-2.5 rounded-xl p-1.5 pr-2 hover:bg-white"
+            className="flex items-center gap-2.5 rounded-xl p-1.5 pr-2 transition hover:bg-card"
             aria-haspopup="menu"
             aria-expanded={profileOpen}
           >
-            <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-white">
+            <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-background">
               SC
             </div>
             <div className="hidden text-left sm:block">
-              <div className="text-[12px] font-bold text-slate-800">Space Call Staff</div>
-              <div className="text-[10px] font-medium text-slate-400">
+              <div className="text-[12px] font-bold text-foreground">Space Call Staff</div>
+              <div className="text-[10px] font-medium text-muted-foreground">
                 {lang === "ar" ? "فريق المتجر" : "Store staff"}
               </div>
             </div>
-            <ChevronDown className="hidden size-4 text-slate-400 sm:block" />
+            <ChevronDown className="hidden size-4 text-muted-foreground sm:block" />
           </button>
 
           {profileOpen && (
             <div
-              className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-2xl border border-slate-200 bg-white p-2 text-left shadow-xl"
+              className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-2xl border border-border bg-popover p-2 text-left text-popover-foreground shadow-xl"
               role="menu"
             >
               <button
@@ -408,7 +421,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                   setProfileOpen(false);
                   navigate("/dashboard/security");
                 }}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground"
                 role="menuitem"
               >
                 <LockKeyhole className="size-3.5" /> {t("Security")}
@@ -433,7 +446,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                   }
                   navigate("/dashboard/login");
                 }}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-rose-600 hover:bg-rose-50"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-rose-600 transition hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30"
                 role="menuitem"
               >
                 <LogOut className="size-3.5" /> Sign out
@@ -446,20 +459,20 @@ function Header({ onMenu }: { onMenu: () => void }) {
       {mobileSearchOpen && (
         <div className="order-last w-full pt-2 sm:hidden">
           <div className="relative">
-            <Search className="pointer-events-none absolute start-3.5 top-[22px] size-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute start-3.5 top-[22px] size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               id="mobile-global-search"
               autoFocus
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("Search products...")}
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white pe-10 ps-10 text-[13px] text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#6872ee] focus:ring-4 focus:ring-[#6872ee]/10"
+              className="h-11 w-full rounded-xl border border-input bg-card pe-10 ps-10 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
             {query ? (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="absolute end-2 top-[22px] grid size-8 -translate-y-1/2 place-items-center rounded-lg text-slate-400 active:bg-slate-100"
+                className="absolute end-2 top-[22px] grid size-8 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground active:bg-muted"
                 aria-label="Clear search"
               >
                 <X className="size-4" />
@@ -467,7 +480,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
             ) : null}
           </div>
           {query ? (
-            <div className="mt-2 max-h-[42dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="mt-2 max-h-[42dvh] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-popover p-2 text-popover-foreground shadow-xl">
               {results.length ? (
                 results.map((item) => (
                   <button
@@ -477,16 +490,16 @@ function Header({ onMenu }: { onMenu: () => void }) {
                       setQuery("");
                       navigate(`/dashboard/products/${item.id}`);
                     }}
-                    className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start active:bg-slate-50"
+                    className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start active:bg-muted"
                   >
-                    <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
+                    <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-primary">
                       <Package className="size-4" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[12px] font-semibold text-slate-800">
                         {item.name}
                       </div>
-                      <div className="truncate text-[11px] text-slate-400">{`${item.brand || "No brand"} · ${item.sku || "No SKU"}`}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">{`${item.brand || "No brand"} · ${item.sku || "No SKU"}`}</div>
                     </div>
                   </button>
                 ))
@@ -515,7 +528,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_rgba(15,23,42,.08)] backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/90 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_rgba(15,23,42,.08)] backdrop-blur-xl lg:hidden"
       aria-label="Dashboard mobile navigation"
     >
       <div className="grid min-h-[64px] grid-cols-5">
@@ -529,11 +542,11 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
               key={href}
               type="button"
               onClick={() => navigate(href)}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold transition active:scale-95 ${active ? "text-[#5361ef]" : "text-slate-500"}`}
+              className={`flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold transition active:scale-95 ${active ? "text-primary" : "text-muted-foreground"}`}
               aria-current={active ? "page" : undefined}
             >
               <span
-                className={`grid size-8 place-items-center rounded-xl ${active ? "bg-indigo-50" : ""}`}
+                className={`grid size-8 place-items-center rounded-xl ${active ? "bg-accent" : ""}`}
               >
                 <Icon className="size-[18px]" strokeWidth={active ? 2.2 : 1.8} />
               </span>
@@ -544,7 +557,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
         <button
           type="button"
           onClick={onMore}
-          className="flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold text-slate-500 transition active:scale-95"
+          className="flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold text-muted-foreground transition active:scale-95"
         >
           <span className="grid size-8 place-items-center rounded-xl">
             <Menu className="size-[18px]" />
@@ -615,7 +628,7 @@ function DashboardGate() {
 
   if (state !== "ready") {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#f7f9fc]">
+      <div className="grid min-h-screen place-items-center bg-background">
         {state === "loading" ? <Loader2 className="size-6 animate-spin text-[#5968ea]" /> : null}
       </div>
     );
@@ -676,7 +689,7 @@ function DashboardLayout() {
     content = <HomepageBuilderPage />;
   else content = <WorkspacePage key={route} path={route} />;
   return (
-    <div className="min-h-screen min-h-[100dvh] overflow-x-hidden bg-[#f7f9fc]">
+    <div className="dashboard-theme-scope min-h-screen min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
       <Sidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}
@@ -697,6 +710,7 @@ function DashboardLayout() {
 }
 
 export default function App() {
+  const { theme } = useTheme();
   const [lang, setLang] = useState<"en" | "ar">(
     () => (localStorage.getItem("spacecall-language") as "en" | "ar") || "en",
   );
@@ -750,6 +764,8 @@ export default function App() {
             "Notifications are not connected yet.": "الإشعارات غير مربوطة بعد.",
             "View store": "عرض المتجر",
             "Collapse sidebar": "طي الشريط الجانبي",
+            "Switch to dark mode": "تفعيل الوضع الليلي",
+            "Switch to light mode": "تفعيل الوضع النهاري",
             More: "المزيد",
           }
         : {};
@@ -762,7 +778,7 @@ export default function App() {
           <Route path="/dashboard/login" component={LoginPage} />
           <Route component={DashboardGate} />
         </Switch>
-        <Toaster position="bottom-right" richColors />
+        <Toaster position="bottom-right" richColors theme={theme} />
       </>
     </LanguageContext.Provider>
   );
