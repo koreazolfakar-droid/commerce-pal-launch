@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
   approveReceiving,
@@ -110,7 +111,18 @@ function purchaseOrderProgress(po: PurchaseOrderSummary) {
   return Math.min(100, Math.round((po.receivedUnits / po.expectedUnits) * 100));
 }
 
-export default function ReceivingPage() {
+export type ProcurementPageMode = "purchase-orders" | "receiving";
+
+export default function ReceivingPage({
+  mode = "receiving",
+  purchaseOrderId,
+}: {
+  mode?: ProcurementPageMode;
+  purchaseOrderId?: string;
+}) {
+  const [, navigate] = useLocation();
+  const purchaseOrdersMode = mode === "purchase-orders";
+  const receivingMode = mode === "receiving";
   const [workspace, setWorkspace] = useState<ReceivingWorkspace | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -222,6 +234,18 @@ export default function ReceivingPage() {
     }
     setReceivingLines(next);
   };
+
+  useEffect(() => {
+    if (!receivingMode || !purchaseOrderId || !workspace) return;
+    const po = workspace.purchaseOrders.find(
+      (item) =>
+        item.id === purchaseOrderId &&
+        (item.status === "ordered" || item.status === "partially_received"),
+    );
+    if (!po) return;
+    setPanel("receive");
+    selectReceivingPo(po.id);
+  }, [purchaseOrderId, receivingMode, workspace]);
 
   const saveSupplier = async () => {
     if (!supplierName.trim()) return toast.error("Supplier name is required.");
@@ -422,11 +446,12 @@ export default function ReceivingPage() {
             Commerce / Operations
           </div>
           <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-            Purchase Orders / Receiving
+            {purchaseOrdersMode ? "Purchase Orders" : "Receiving"}
           </h1>
           <p className="mt-1.5 max-w-3xl text-sm text-slate-500">
-            Receive supplier invoices safely. Usable quantity increases stock only after approval;
-            damaged quantity remains separate and excess delivery requires confirmation plus a reason.
+            {purchaseOrdersMode
+              ? "Create, submit, filter and track supplier purchase orders before stock intake."
+              : "Receive supplier invoices against issued POs. Stock changes only after explicit approval."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -438,40 +463,66 @@ export default function ReceivingPage() {
             <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
             Refresh
           </button>
-          <button
-            onClick={() => openPanel("supplier")}
-            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-700"
-          >
-            <Truck className="size-3.5" />
-            Supplier
-          </button>
-          <button
-            onClick={() => openPanel("po")}
-            disabled={!suppliers.length || !productOptions.length}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-3.5 text-[11px] font-bold text-white disabled:opacity-40"
-          >
-            <ClipboardList className="size-3.5" />
-            New PO
-          </button>
-          <button
-            onClick={() => openPanel("receive")}
-            disabled={!openPurchaseOrders.length}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-3.5 text-[11px] font-bold text-white disabled:opacity-40"
-          >
-            <PackageCheck className="size-3.5" />
-            Receive PO
-          </button>
+          {purchaseOrdersMode ? (
+            <>
+              <button
+                onClick={() => openPanel("supplier")}
+                className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-700"
+              >
+                <Truck className="size-3.5" />
+                Supplier
+              </button>
+              <button
+                onClick={() => openPanel("po")}
+                disabled={!suppliers.length || !productOptions.length}
+                className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-3.5 text-[11px] font-bold text-white disabled:opacity-40"
+              >
+                <ClipboardList className="size-3.5" />
+                New PO
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => openPanel("receive")}
+              disabled={!openPurchaseOrders.length}
+              className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-3.5 text-[11px] font-bold text-white disabled:opacity-40"
+            >
+              <PackageCheck className="size-3.5" />
+              Receive PO
+            </button>
+          )}
         </div>
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={ClipboardList} label="Open purchase orders" value={openPos} detail="Ordered or partially received" />
-        <StatCard icon={ReceiptText} label="Awaiting approval" value={draftReceipts} detail="Draft receiving records" />
-        <StatCard icon={Boxes} label="Approved stock units" value={receivedUnits} detail="Usable units received" />
-        <StatCard icon={Truck} label="Active suppliers" value={suppliers.length} detail="Available for new POs" />
+        {purchaseOrdersMode ? (
+          <>
+            <StatCard icon={ClipboardList} label="Open purchase orders" value={openPos} detail="Ordered or partially received" />
+            <StatCard icon={Truck} label="Active suppliers" value={suppliers.length} detail="Available for new POs" />
+            <StatCard
+              icon={Boxes}
+              label="Expected units"
+              value={purchaseOrders.reduce((sum, po) => sum + po.expectedUnits, 0)}
+              detail="Across loaded purchase orders"
+            />
+            <StatCard
+              icon={ReceiptText}
+              label="Draft POs"
+              value={purchaseOrders.filter((po) => po.status === "draft").length}
+              detail="Waiting to be submitted"
+            />
+          </>
+        ) : (
+          <>
+            <StatCard icon={ClipboardList} label="Open purchase orders" value={openPos} detail="Available for receiving" />
+            <StatCard icon={ReceiptText} label="Awaiting approval" value={draftReceipts} detail="Draft receiving records" />
+            <StatCard icon={Boxes} label="Approved stock units" value={receivedUnits} detail="Usable units received" />
+            <StatCard icon={Truck} label="Active suppliers" value={suppliers.length} detail="Linked suppliers" />
+          </>
+        )}
       </div>
 
-      {panel ? (
+      {panel && ((purchaseOrdersMode && panel !== "receive") || (receivingMode && panel === "receive")) ? (
         <div className="mb-5 rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_10px_28px_rgba(59,72,160,.07)] sm:p-5">
           <div className="mb-4 flex items-center justify-between">
             <div>
@@ -877,15 +928,22 @@ export default function ReceivingPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search supplier, PO, invoice, receipt, or employee"
+            placeholder={
+              purchaseOrdersMode
+                ? "Search supplier, PO number, or status"
+                : "Search supplier, PO, invoice, receipt, or employee"
+            }
             className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[11px] outline-none focus:border-indigo-400"
           />
         </div>
         <div className="text-[10px] text-slate-400">
-          Draft → submit PO → create receiving → approve → stock movement
+          {purchaseOrdersMode
+            ? "Draft → submit PO → open Receiving from the PO action"
+            : "Select issued PO → create receiving → approve → stock movement"}
         </div>
       </div>
 
+      {purchaseOrdersMode ? (
       <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
         <div className="flex items-center justify-between border-b border-slate-100 p-4">
           <div>
@@ -952,10 +1010,7 @@ export default function ReceivingPage() {
                     </button>
                   ) : po.status === "ordered" || po.status === "partially_received" ? (
                     <button
-                      onClick={() => {
-                        openPanel("receive");
-                        selectReceivingPo(po.id);
-                      }}
+                      onClick={() => navigate(`/dashboard/receiving/${po.id}`)}
                       className="h-8 rounded-lg bg-[#5968ea] px-3 text-[10px] font-bold text-white"
                     >
                       Receive PO
@@ -1015,10 +1070,7 @@ export default function ReceivingPage() {
                       </button>
                     ) : po.status === "ordered" || po.status === "partially_received" ? (
                       <button
-                        onClick={() => {
-                          openPanel("receive");
-                          selectReceivingPo(po.id);
-                        }}
+                        onClick={() => navigate(`/dashboard/receiving/${po.id}`)}
                         className="mt-1 text-[10px] font-bold text-indigo-600 hover:underline"
                       >
                         Receive
@@ -1034,7 +1086,9 @@ export default function ReceivingPage() {
           <div className="px-6 py-10 text-center text-[11px] text-slate-400">No purchase orders yet.</div>
         ) : null}
       </div>
+      ) : null}
 
+      {receivingMode ? (
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
         <div className="flex items-center justify-between border-b border-slate-100 p-4">
           <div>
@@ -1153,8 +1207,9 @@ export default function ReceivingPage() {
           <div className="px-6 py-10 text-center text-[11px] text-slate-400">No receiving history yet.</div>
         ) : null}
       </div>
+      ) : null}
 
-      {selectedReceipt ? (
+      {receivingMode && selectedReceipt ? (
         <div className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
           <div className="flex items-start justify-between border-b border-slate-100 p-4">
             <div>
