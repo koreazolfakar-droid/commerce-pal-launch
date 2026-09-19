@@ -1952,6 +1952,10 @@ export type Database = {
         Args: { p_variant_id: string }
         Returns: undefined
       }
+      delete_store_purchase_order_draft: {
+        Args: { p_purchase_order_id: string }
+        Returns: string
+      }
       duplicate_store_product: {
         Args: { p_product_id: string }
         Returns: string
