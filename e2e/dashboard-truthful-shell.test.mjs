@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
+const settings = await readFile(new URL("../src/dashboard/pages/SettingsPage.tsx", import.meta.url), "utf8");
 
 test("dashboard shell exposes only truthful live actions", () => {
   assert.match(app, /import \{ SITE_URL, STORE_CONFIG \} from "@\/lib\/storeConfig"/);
@@ -13,14 +14,16 @@ test("dashboard shell exposes only truthful live actions", () => {
   assert.doesNotMatch(app, /You are all caught up/);
 });
 
-test("settings no longer pretends to persist mock configuration", () => {
-  assert.match(app, /Current storefront configuration/);
-  assert.match(app, /No fake saves/);
-  assert.match(app, /Live connections/);
-  assert.doesNotMatch(app, /Settings saved to the local mock workspace/);
-  assert.doesNotMatch(app, /hello@spacecall\.demo/);
-  assert.doesNotMatch(app, /Visual placeholders only\. Nothing is connected/);
-  assert.doesNotMatch(app, /Standalone dashboard using mock\/demo data only/);
+test("settings route uses the real Supabase-backed settings page", () => {
+  assert.match(app, /import SettingsPage from "@\/dashboard\/pages\/SettingsPage"/);
+  assert.match(app, /route === "\/dashboard\/settings"[\s\S]+<SettingsPage \/>/);
+  assert.match(settings, /loadDashboardSiteSettings/);
+  assert.match(settings, /saveDashboardSiteSettings/);
+  assert.match(settings, /uploadDashboardStoreLogo/);
+  assert.match(settings, /Store settings saved to Supabase/);
+  assert.doesNotMatch(settings, /Settings saved to the local mock workspace/);
+  assert.doesNotMatch(settings, /hello@spacecall\.demo/);
+  assert.doesNotMatch(settings, /Standalone dashboard using mock\/demo data only/);
 });
 
 test("account menu uses separate valid action buttons", () => {
