@@ -111,7 +111,7 @@ function purchaseOrderProgress(po: PurchaseOrderSummary) {
   return Math.min(100, Math.round((po.receivedUnits / po.expectedUnits) * 100));
 }
 
-export type ProcurementPageMode = "purchase-orders" | "receiving";
+export type ProcurementPageMode = "purchase-orders" | "purchase-order-create" | "receiving";
 
 export default function ReceivingPage({
   mode = "receiving",
@@ -122,13 +122,14 @@ export default function ReceivingPage({
 }) {
   const [, navigate] = useLocation();
   const purchaseOrdersMode = mode === "purchase-orders";
+  const purchaseOrderCreateMode = mode === "purchase-order-create";
   const receivingMode = mode === "receiving";
   const [workspace, setWorkspace] = useState<ReceivingWorkspace | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [panel, setPanel] = useState<Panel>(null);
+  const [panel, setPanel] = useState<Panel>(() => (purchaseOrderCreateMode ? "po" : null));
   const [query, setQuery] = useState("");
   const [poStatusFilter, setPoStatusFilter] = useState("all");
   const [poSupplierFilter, setPoSupplierFilter] = useState("all");
@@ -211,6 +212,25 @@ export default function ReceivingPage({
         : [],
     );
   };
+
+  useEffect(() => {
+    if (!purchaseOrderCreateMode || !workspace) return;
+
+    const firstSupplier = workspace.suppliers.find((supplier) => supplier.isActive);
+    if (!poSupplierId && firstSupplier) setPoSupplierId(firstSupplier.id);
+
+    const firstProduct = workspace.productOptions[0];
+    if (!poLines.length && firstProduct) {
+      setPoLines([
+        {
+          id: crypto.randomUUID(),
+          optionKey: firstProduct.key,
+          expectedQuantity: "1",
+          unitCost: "0",
+        },
+      ]);
+    }
+  }, [poLines.length, poSupplierId, purchaseOrderCreateMode, workspace]);
 
   const openPanel = (next: Exclude<Panel, null>) => {
     setPanel(next);
@@ -318,6 +338,10 @@ export default function ReceivingPage({
         items,
       });
       toast.success("Purchase order draft created.");
+      if (purchaseOrderCreateMode) {
+        navigate("/dashboard/purchase-orders");
+        return;
+      }
       setPanel(null);
       await load(false);
     } catch (cause) {
@@ -466,24 +490,40 @@ export default function ReceivingPage({
             Commerce / Operations
           </div>
           <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-            {purchaseOrdersMode ? "Purchase Orders" : "Receiving"}
+            {purchaseOrderCreateMode
+              ? "Create Purchase Order"
+              : purchaseOrdersMode
+                ? "Purchase Orders"
+                : "Receiving"}
           </h1>
           <p className="mt-1.5 max-w-3xl text-sm text-slate-500">
-            {purchaseOrdersMode
-              ? "Create, submit, filter and track supplier purchase orders before stock intake."
-              : "Receive supplier invoices against issued POs. Stock changes only after explicit approval."}
+            {purchaseOrderCreateMode
+              ? "Create a supplier purchase order with products, ordered quantities and unit costs."
+              : purchaseOrdersMode
+                ? "Create, submit, filter and track supplier purchase orders before stock intake."
+                : "Receive supplier invoices against issued POs. Stock changes only after explicit approval."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => void load(true)}
-            disabled={refreshing}
-            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600 disabled:opacity-50"
-          >
-            <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
-          {purchaseOrdersMode ? (
+          {!purchaseOrderCreateMode ? (
+            <button
+              onClick={() => void load(true)}
+              disabled={refreshing}
+              className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600 disabled:opacity-50"
+            >
+              <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          ) : null}
+
+          {purchaseOrderCreateMode ? (
+            <button
+              onClick={() => navigate("/dashboard/purchase-orders")}
+              className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
+            >
+              Back to Purchase Orders
+            </button>
+          ) : purchaseOrdersMode ? (
             <>
               <button
                 onClick={() => openPanel("supplier")}
@@ -493,7 +533,7 @@ export default function ReceivingPage({
                 Supplier
               </button>
               <button
-                onClick={() => openPanel("po")}
+                onClick={() => navigate("/dashboard/purchase-orders/new")}
                 disabled={!suppliers.length || !productOptions.length}
                 className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-3.5 text-[11px] font-bold text-white disabled:opacity-40"
               >
@@ -514,6 +554,7 @@ export default function ReceivingPage({
         </div>
       </div>
 
+      {!purchaseOrderCreateMode ? (
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {purchaseOrdersMode ? (
           <>
@@ -541,8 +582,13 @@ export default function ReceivingPage({
           </>
         )}
       </div>
+      ) : null}
 
-      {panel && ((purchaseOrdersMode && panel !== "receive") || (receivingMode && panel === "receive")) ? (
+      {panel && (
+        (purchaseOrdersMode && panel === "supplier") ||
+        (purchaseOrderCreateMode && panel === "po") ||
+        (receivingMode && panel === "receive")
+      ) ? (
         <div className="mb-5 rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_10px_28px_rgba(59,72,160,.07)] sm:p-5">
           <div className="mb-4 flex items-center justify-between">
             <div>
@@ -555,7 +601,15 @@ export default function ReceivingPage({
                   : "All records are saved directly to Supabase."}
               </div>
             </div>
-            <button onClick={() => setPanel(null)} className="grid size-8 place-items-center rounded-lg hover:bg-slate-100">
+            <button
+              onClick={() =>
+                purchaseOrderCreateMode
+                  ? navigate("/dashboard/purchase-orders")
+                  : setPanel(null)
+              }
+              className="grid size-8 place-items-center rounded-lg hover:bg-slate-100"
+              aria-label={purchaseOrderCreateMode ? "Back to purchase orders" : "Close panel"}
+            >
               <X className="size-4 text-slate-500" />
             </button>
           </div>
@@ -1024,7 +1078,7 @@ export default function ReceivingPage({
             </span>
           </div>
         </div>
-      ) : (
+      ) : receivingMode ? (
         <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -1039,7 +1093,7 @@ export default function ReceivingPage({
             Select issued PO → create receiving → approve → stock movement
           </div>
         </div>
-      )}
+      ) : null}
 
       {purchaseOrdersMode ? (
       <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">

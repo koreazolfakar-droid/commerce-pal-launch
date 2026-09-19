@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [workflow, hardening, data, page, purchaseOrdersPage, app, nav, inventory, drawer, types] = await Promise.all([
+const [workflow, hardening, data, page, purchaseOrdersPage, purchaseOrderCreatePage, app, nav, inventory, drawer, types] = await Promise.all([
   readFile(new URL("../supabase/migrations/20260919123000_procurement_receiving_workflows.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919124500_harden_procurement_rpc_exposure.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/receiving.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ReceivingPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/PurchaseOrdersPage.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/pages/PurchaseOrderCreatePage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/mock/data.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/inventory.ts", import.meta.url), "utf8"),
@@ -108,6 +109,18 @@ test("purchase orders expose Toters-style operational filters and actions", () =
   assert.match(page, /poStatusFilter/);
   assert.match(page, /poSupplierFilter/);
   assert.match(page, /Receive PO/);
+});
+
+test("purchase order creation uses its own dedicated route", () => {
+  assert.match(app, /import PurchaseOrderCreatePage from/);
+  assert.match(app, /route === "\/dashboard\/purchase-orders\/new"/);
+  assert.match(purchaseOrderCreatePage, /mode="purchase-order-create"/);
+  assert.match(page, /purchaseOrderCreateMode/);
+  assert.match(page, /navigate\("\/dashboard\/purchase-orders\/new"\)/);
+  assert.match(page, /Back to Purchase Orders/);
+  assert.match(page, /Create Purchase Order/);
+  assert.match(page, /Purchase order draft created/);
+  assert.match(page, /navigate\("\/dashboard\/purchase-orders"\)/);
 });
 
 test("purchase orders and receiving are separate routed workspaces", () => {
