@@ -16,6 +16,19 @@ export type HeroTargetType = "url" | "product" | "collection" | "none";
 export type HeroAlignment = "start" | "center" | "end";
 export type HeroButtonStyle = "primary" | "secondary" | "light" | "dark";
 export type HeroContentTheme = "light" | "dark" | "glass";
+export type HeroVisualConfig = {
+  vertical: "top" | "center" | "bottom";
+  titleSize: "compact" | "standard" | "large";
+  contentWidth: "narrow" | "standard" | "wide";
+  buttonRadius: "soft" | "rounded" | "pill";
+};
+
+export const DEFAULT_HERO_VISUAL_CONFIG: HeroVisualConfig = {
+  vertical: "bottom",
+  titleSize: "standard",
+  contentWidth: "standard",
+  buttonRadius: "rounded",
+};
 
 export type DashboardHeroSlide = {
   id: string;
@@ -50,6 +63,7 @@ export type DashboardHeroSlide = {
   contentTheme: HeroContentTheme;
   openInNewTab: boolean;
   secondaryOpenInNewTab: boolean;
+  visualConfig: HeroVisualConfig;
   createdAt: string;
   updatedAt: string;
 };
@@ -132,6 +146,18 @@ async function requireDashboardStaff() {
   return role;
 }
 
+function normalizeHeroVisualConfig(value: unknown): HeroVisualConfig {
+  const input = value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  return {
+    vertical: input.vertical === "top" || input.vertical === "center" ? input.vertical : "bottom",
+    titleSize: input.titleSize === "compact" || input.titleSize === "large" ? input.titleSize : "standard",
+    contentWidth: input.contentWidth === "narrow" || input.contentWidth === "wide" ? input.contentWidth : "standard",
+    buttonRadius: input.buttonRadius === "soft" || input.buttonRadius === "pill" ? input.buttonRadius : "rounded",
+  };
+}
+
 function mapHero(row: HeroRow): DashboardHeroSlide {
   return {
     id: row.id,
@@ -166,6 +192,7 @@ function mapHero(row: HeroRow): DashboardHeroSlide {
     contentTheme: row.content_theme as HeroContentTheme,
     openInNewTab: row.open_in_new_tab,
     secondaryOpenInNewTab: row.secondary_open_in_new_tab,
+    visualConfig: normalizeHeroVisualConfig(row.visual_config),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -232,7 +259,13 @@ export async function createDashboardHeroSlide(
   await requireDashboardStaff();
   const { data, error } = await supabase.rpc("create_cms_hero_slide_v2", heroRpcPayload(input));
   throwIfError(error, "Creating hero slide failed");
-  return data ? mapHero(data as HeroRow) : null;
+  if (!data) return null;
+  const { data: visualData, error: visualError } = await supabase.rpc("set_cms_hero_visual_config", {
+    p_slide_id: (data as HeroRow).id,
+    p_visual_config: input.visualConfig,
+  });
+  throwIfError(visualError, "Saving hero visual config failed");
+  return visualData ? mapHero(visualData as HeroRow) : mapHero(data as HeroRow);
 }
 
 export async function updateDashboardHeroSlide(
@@ -245,7 +278,13 @@ export async function updateDashboardHeroSlide(
     ...heroRpcPayload(input),
   });
   throwIfError(error, "Updating hero slide failed");
-  return data ? mapHero(data as HeroRow) : null;
+  if (!data) return null;
+  const { data: visualData, error: visualError } = await supabase.rpc("set_cms_hero_visual_config", {
+    p_slide_id: id,
+    p_visual_config: input.visualConfig,
+  });
+  throwIfError(visualError, "Saving hero visual config failed");
+  return visualData ? mapHero(visualData as HeroRow) : mapHero(data as HeroRow);
 }
 
 export async function deleteDashboardHeroSlide(id: string): Promise<void> {
