@@ -51,6 +51,8 @@ const mfaCopy = {
     revealBeforeCopy: "Reveal the setup key before copying it.",
     copied: "Setup key copied and hidden again.",
     copyFailed: "Could not copy the setup key.",
+    setupKeyLabel: "Authenticator setup key",
+    qrAlt: "Authenticator setup QR code",
   },
   ar: {
     setupTitle: "إعداد التحقق",
@@ -79,6 +81,8 @@ const mfaCopy = {
     revealBeforeCopy: "أظهر مفتاح الإعداد قبل نسخه.",
     copied: "تم نسخ مفتاح الإعداد وإخفاؤه مجددًا.",
     copyFailed: "تعذر نسخ مفتاح الإعداد.",
+    setupKeyLabel: "مفتاح إعداد المصادقة",
+    qrAlt: "رمز QR لإعداد المصادقة",
   },
 } as const;
 
@@ -126,7 +130,11 @@ export default function DashboardMfaStep({
 
     try {
       const status = await getDashboardMfaStatus();
-      if (!status) throw new Error("Your dashboard session has expired.");
+      if (!status) {
+        await signOutDashboard().catch(() => undefined);
+        onCancel();
+        return;
+      }
 
       if (!status.ready) {
         const authenticatedAt = status.authenticatedAt
@@ -168,13 +176,11 @@ export default function DashboardMfaStep({
       setEnrollment(nextEnrollment);
       setFactorId(nextEnrollment.factorId);
       setMode("enroll");
-    } catch (cause) {
-      const message =
-        cause instanceof Error ? cause.message : "Unable to prepare multi-factor authentication.";
-      setError(message);
+    } catch {
+      setError(copy.notReady);
       setMode("challenge");
     }
-  }, [onCancel, onSuccess]);
+  }, [copy.notReady, onCancel, onSuccess]);
 
   useEffect(() => {
     void initialize();
@@ -299,7 +305,7 @@ export default function DashboardMfaStep({
       <div className="grid min-h-[260px] place-items-center">
         <div className="text-center">
           <Loader2 className="mx-auto size-6 animate-spin text-[#8d96ff]" />
-          <div className="mt-3 text-[11px] font-semibold text-slate-400">
+          <div className="login-muted mt-3 text-[11px] font-semibold text-slate-400">
             {copy.preparing}
           </div>
         </div>
@@ -310,7 +316,7 @@ export default function DashboardMfaStep({
   return (
     <div data-testid="dashboard-mfa-step" data-theme={theme}>
       <div className="mb-6">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-emerald-200">
+        <div className="login-badge mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-emerald-200">
           <ShieldCheck className="size-3.5" />
           {copy.badge}
         </div>
@@ -323,20 +329,20 @@ export default function DashboardMfaStep({
           <div className="mx-auto grid w-full max-w-[220px] place-items-center overflow-hidden rounded-2xl bg-white p-3">
             <img
               src={qrSource}
-              alt="Space Call authenticator QR code"
+              alt={copy.qrAlt}
               className="aspect-square w-full object-contain"
               draggable={false}
             />
           </div>
 
-          <div className="mt-4 text-center text-[10px] font-semibold text-slate-400">
+          <div className="login-muted mt-4 text-center text-[10px] font-semibold text-slate-400">
             {copy.cannotScan}
           </div>
-          <div className="mt-2 rounded-xl border border-white/10 bg-[#0b1427] p-2.5">
+          <div className="login-secret mt-2 rounded-xl border border-white/10 bg-[#0b1427] p-2.5">
             <div className="flex items-center gap-2">
               <code
                 className="min-w-0 flex-1 break-all text-[10px] font-semibold tracking-[.08em] text-slate-200"
-                aria-label="Authenticator setup key"
+                aria-label={copy.setupKeyLabel}
               >
                 {secretRevealed ? enrollment.secret : "•••• •••• •••• ••••"}
               </code>
@@ -366,7 +372,7 @@ export default function DashboardMfaStep({
           {enrollment.uri.startsWith("otpauth://") ? (
             <a
               href={enrollment.uri}
-              className="mt-3 flex h-10 items-center justify-center gap-2 rounded-xl border border-indigo-300/15 bg-indigo-300/[.07] text-[10px] font-bold text-indigo-200"
+              className="login-secondary mt-3 flex h-10 items-center justify-center gap-2 rounded-xl border border-indigo-300/15 bg-indigo-300/[.07] text-[10px] font-bold text-indigo-200"
             >
               <Smartphone className="size-3.5" />
               {copy.openApp}
@@ -376,7 +382,7 @@ export default function DashboardMfaStep({
       ) : null}
 
       <label className="block">
-        <span className="mb-2 block text-[11px] font-bold text-slate-300">
+        <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">
           {copy.codeLabel}
         </span>
         <div className="relative">
@@ -429,7 +435,7 @@ export default function DashboardMfaStep({
         type="button"
         onClick={() => void cancel()}
         disabled={loading}
-        className="mt-2 flex h-10 w-full items-center justify-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
+        className="login-muted mt-2 flex h-10 w-full items-center justify-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
       >
         <LogOut className="size-3.5" />
         {copy.signOut}
