@@ -953,6 +953,41 @@ grant execute on function public.reopen_store_purchase_order(uuid) to authentica
 grant execute on function public.cancel_store_purchase_order(uuid,text) to authenticated;
 grant execute on function public.void_store_receiving(uuid,text) to authenticated;
 
+-- Private procurement document storage. Supplier invoices must never use a public bucket.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'procurement-private',
+  'procurement-private',
+  false,
+  20971520,
+  array['application/pdf','image/jpeg','image/png','image/webp','image/heic','image/heif']::text[]
+)
+on conflict (id) do update
+set public = false,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists procurement_documents_staff_read on storage.objects;
+create policy procurement_documents_staff_read
+on storage.objects for select to authenticated
+using (bucket_id = 'procurement-private' and (select private.is_dashboard_staff()));
+
+drop policy if exists procurement_documents_staff_insert on storage.objects;
+create policy procurement_documents_staff_insert
+on storage.objects for insert to authenticated
+with check (bucket_id = 'procurement-private' and (select private.is_dashboard_staff()));
+
+drop policy if exists procurement_documents_staff_update on storage.objects;
+create policy procurement_documents_staff_update
+on storage.objects for update to authenticated
+using (bucket_id = 'procurement-private' and (select private.is_dashboard_staff()))
+with check (bucket_id = 'procurement-private' and (select private.is_dashboard_staff()));
+
+drop policy if exists procurement_documents_admin_delete on storage.objects;
+create policy procurement_documents_admin_delete
+on storage.objects for delete to authenticated
+using (bucket_id = 'procurement-private' and (select private.is_dashboard_admin()));
+
 -- ---------------------------------------------------------------------------
 -- RLS for new tables
 -- ---------------------------------------------------------------------------
