@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import type { ShopifyBrand } from "@/lib/brandDirectory";
 import { orderedBrands } from "@/lib/homeMerchandising";
+import { localizeSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 
@@ -35,9 +36,12 @@ function brandSlotWidth(brand: ShopifyBrand) {
  *   interacts with it.
  */
 export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
-  const cmsTitle = cms?.sections.find((section) => section.section_key === "brands")?.title?.trim();
+  const cmsSection = cms?.sections.find(
+    (section) => section.page_slug === "home" && section.section_key === "brands",
+  );
+  const cmsTitle = cmsSection ? localizeSection(cmsSection, language).title?.trim() : "";
   const sectionTitle = cmsTitle || t("topBrands");
   const railRef = useRef<HTMLDivElement>(null);
   const autoFrameRef = useRef<number | null>(null);
