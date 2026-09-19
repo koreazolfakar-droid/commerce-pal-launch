@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
   const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   const outcome = String(payload.outcome ?? "");
   if (!email || email.length > 320 || !email.includes("@")) return json({ error: "invalid_request" }, 400);
-  if (!["check", "failure"].includes(outcome)) return json({ error: "invalid_request" }, 400);
+  if (!["check", "failure", "success"].includes(outcome)) return json({ error: "invalid_request" }, 400);
 
   const ip = clientIp(req);
   const [pairKeyHash, ipKeyHash] = await Promise.all([
@@ -155,6 +155,23 @@ Deno.serve(async (req) => {
         resetExpired(pairKeyHash, pairBucket, now),
         resetExpired(ipKeyHash, ipBucket, now),
       ]);
+      return json({ allowed: true, retryAfter: 0 });
+    }
+
+    if (outcome === "success") {
+      await supabase
+        .from("dashboard_login_throttle")
+        .delete()
+        .eq("key_hash", pairKeyHash);
+
+      // Keep the IP-wide bucket so password-spraying attempts across multiple
+      // accounts still accumulate. Opportunistically prune stale rows only
+      // after successful authentication to keep request overhead low.
+      await supabase
+        .from("dashboard_login_throttle")
+        .delete()
+        .lt("last_attempt_at", new Date(now - 48 * 60 * 60 * 1000).toISOString());
+
       return json({ allowed: true, retryAfter: 0 });
     }
 
