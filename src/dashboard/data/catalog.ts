@@ -131,6 +131,34 @@ export async function signOutDashboard() {
   throwIfError(error, "Sign out failed");
 }
 
+export async function requestDashboardPasswordReset(email: string) {
+  const normalizedEmail = email.trim();
+  if (!normalizedEmail) throw new Error("Enter your dashboard email first.");
+
+  const redirectTo =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/dashboard/login?mode=recovery`
+      : undefined;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+    ...(redirectTo ? { redirectTo } : {}),
+  });
+  throwIfError(error, "Password reset request failed");
+}
+
+export async function updateDashboardPassword(password: string) {
+  if (password.length < 10) {
+    throw new Error("Use at least 10 characters for the new password.");
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+  throwIfError(error, "Password update failed");
+
+  const { error: signOutError } = await supabase.auth.signOut();
+  throwIfError(signOutError, "Password updated, but sign out failed");
+}
+
+
 export async function listDashboardBrands(): Promise<DashboardBrand[]> {
   await requireDashboardRole();
   const { data, error } = await supabase
