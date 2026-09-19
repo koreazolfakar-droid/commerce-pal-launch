@@ -14,6 +14,9 @@ export type CmsHeroSlide = {
   subtitle: string | null;
   subtitle_en?: string | null;
   subtitle_ar?: string | null;
+  eyebrow?: string | null;
+  eyebrow_en?: string | null;
+  eyebrow_ar?: string | null;
   image_url: string;
   mobile_image_url: string | null;
   image_alt_en?: string | null;
@@ -25,11 +28,19 @@ export type CmsHeroSlide = {
   button_label_ar?: string | null;
   target_type: "url" | "product" | "collection" | "none";
   target_value: string | null;
+  secondary_button_label?: string | null;
+  secondary_button_label_en?: string | null;
+  secondary_button_label_ar?: string | null;
+  secondary_target_type?: "url" | "product" | "collection" | "none";
+  secondary_target_value?: string | null;
   sort_order: number;
   content_alignment?: "start" | "center" | "end";
   overlay_opacity?: number;
   button_style?: "primary" | "secondary" | "light" | "dark";
+  secondary_button_style?: "primary" | "secondary" | "light" | "dark";
+  content_theme?: "light" | "dark" | "glass";
   open_in_new_tab?: boolean;
+  secondary_open_in_new_tab?: boolean;
 };
 
 export type CmsSection = {
@@ -201,12 +212,20 @@ export function localizeHeroSlide(slide: CmsHeroSlide, language: CmsLocale): Cms
     title: localizedCmsText(language, slide.title_en, slide.title_ar, slide.title) ?? null,
     subtitle:
       localizedCmsText(language, slide.subtitle_en, slide.subtitle_ar, slide.subtitle) ?? null,
+    eyebrow: localizedCmsText(language, slide.eyebrow_en, slide.eyebrow_ar, slide.eyebrow) ?? null,
     button_label:
       localizedCmsText(
         language,
         slide.button_label_en,
         slide.button_label_ar,
         slide.button_label,
+      ) ?? null,
+    secondary_button_label:
+      localizedCmsText(
+        language,
+        slide.secondary_button_label_en,
+        slide.secondary_button_label_ar,
+        slide.secondary_button_label,
       ) ?? null,
   };
 }
