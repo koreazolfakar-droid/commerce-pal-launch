@@ -76,6 +76,65 @@ test("Security Center exposes guarded passkey enrollment", () => {
   assert.match(securityPage, /registerDashboardPasskey/);
   assert.match(securityPage, /isDashboardPasskeySupported/);
   assert.match(securityPage, /Passkeys & biometrics/);
-  assert.match(securityPage, /disabled=\{action !== null \|\| !passkeySupported\}/);
+  assert.match(securityPage, /disabled=\{passkeyAction !== null \|\| Boolean\(passkeyError\) \|\| !passkeySupported\}/);
   assert.match(securityPage, /Your biometric data never leaves your device\./);
+  assert.match(securityPage, /listDashboardPasskeys/);
+  assert.match(securityPage, /renameDashboardPasskey/);
+  assert.match(securityPage, /deleteDashboardPasskey/);
+});
+
+
+const login = await readFile(
+  new URL("../src/dashboard/pages/LoginPage.tsx", import.meta.url),
+  "utf8",
+);
+const passkeyMigration = await readFile(
+  new URL("../supabase/migrations/20260919234000_dashboard_passkey_security_events.sql", import.meta.url),
+  "utf8",
+);
+
+test("Supabase config targets the live Space Call project before config push", () => {
+  assert.match(supabaseConfig, /project_id\s*=\s*"rtwyankpxtffqqrasyzw"/);
+  assert.doesNotMatch(supabaseConfig, /bzkbjkduealajwrkefif/);
+});
+
+test("dashboard login exposes passkey sign-in only on supported secure clients", () => {
+  assert.match(login, /Fingerprint/);
+  assert.match(login, /isDashboardPasskeySupported/);
+  assert.match(login, /signInDashboardWithPasskey\(\)/);
+  assert.match(login, /passkeySupported \?/);
+  assert.match(login, /الدخول بالبصمة \/ Passkey/);
+  assert.match(login, /Sign in with fingerprint \/ passkey/);
+});
+
+test("passkey login still transitions through the existing MFA gate", () => {
+  assert.match(
+    login,
+    /const submitPasskey = async \(\) => \{[\s\S]+signInDashboardWithPasskey\(\)[\s\S]+getDashboardMfaStatus\(\)[\s\S]+setView\("mfa"\)/,
+  );
+  assert.match(login, /window\.history\.replaceState\(\{\}, "", "\/dashboard\/login\?mode=mfa"\)/);
+});
+
+test("security center supports complete passkey lifecycle management", () => {
+  assert.match(catalog, /export async function listDashboardPasskeys/);
+  assert.match(catalog, /auth\.passkey\.list\(\)/);
+  assert.match(catalog, /export async function renameDashboardPasskey/);
+  assert.match(catalog, /auth\.passkey\.update\(\{/);
+  assert.match(catalog, /export async function deleteDashboardPasskey/);
+  assert.match(catalog, /auth\.passkey\.delete\(\{ passkeyId \}\)/);
+  assert.match(catalog, /Complete MFA verification before managing passkeys/);
+  assert.match(securityPage, /maxLength=\{120\}/);
+});
+
+test("passkey lifecycle events are constrained and audited at AAL2", () => {
+  assert.match(passkeyMigration, /passkey_registered/);
+  assert.match(passkeyMigration, /passkey_renamed/);
+  assert.match(passkeyMigration, /passkey_deleted/);
+  assert.match(passkeyMigration, /private\.is_dashboard_staff\(\)/);
+  assert.match(passkeyMigration, /security definer/);
+  assert.match(passkeyMigration, /revoke all on function private\.log_dashboard_security_event_internal/);
+
+  assert.match(catalog, /logDashboardSecurityEvent\("passkey_registered"/);
+  assert.match(catalog, /logDashboardSecurityEvent\("passkey_renamed"/);
+  assert.match(catalog, /logDashboardSecurityEvent\("passkey_deleted"/);
 });
