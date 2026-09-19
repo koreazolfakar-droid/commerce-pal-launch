@@ -65,6 +65,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
   const [supplier, setSupplier] = useState<ReceivingSupplier | null>(null);
   const [events, setEvents] = useState<ProcurementEventSummary[]>([]);
   const [attachments, setAttachments] = useState<ProcurementAttachment[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [attachmentType, setAttachmentType] = useState<"purchase_order" | "supplier_invoice" | "packing_list" | "other">("purchase_order");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -84,6 +85,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
       );
       setAttachments(workspace.attachments.filter((attachment) => attachment.purchaseOrderId === id));
+      setIsAdmin(workspace.role === "admin");
       setError(found ? "" : "Purchase order was not found.");
       if (manual && found) toast.success("Purchase order refreshed.");
     } catch (cause) {
@@ -246,7 +248,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             </>
           ) : null}
 
-          {po.status === "pending_approval" ? (
+          {po.status === "pending_approval" && isAdmin ? (
             <>
               <button
                 onClick={() => void runLifecycle("reject")}
@@ -265,7 +267,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             </>
           ) : null}
 
-          {po.status === "approved" ? (
+          {po.status === "approved" && isAdmin ? (
             <button
               onClick={() => void runLifecycle("issue")}
               disabled={saving}
@@ -275,7 +277,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             </button>
           ) : null}
 
-          {po.status === "rejected" ? (
+          {po.status === "rejected" && isAdmin ? (
             <button
               onClick={() => void runLifecycle("reopen")}
               disabled={saving}
@@ -295,7 +297,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             </button>
           ) : null}
 
-          {["draft", "pending_approval", "approved", "ordered"].includes(po.status) ? (
+          {isAdmin && ["draft", "pending_approval", "approved", "ordered"].includes(po.status) ? (
             <button
               onClick={() => void runLifecycle("cancel")}
               disabled={saving}
