@@ -16,7 +16,6 @@ import {
   listDashboardCollections,
   listDashboardProducts,
   saveDashboardProduct,
-  signInDashboard,
   signOutDashboard,
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
@@ -32,6 +31,7 @@ import CustomerDetailPageLive from "@/dashboard/pages/CustomerDetailPage";
 import CollectionsPageLive from "@/dashboard/pages/CollectionsPage";
 import CollectionDetailPageLive from "@/dashboard/pages/CollectionDetailPage";
 import HeroBannersPageLive from "@/dashboard/pages/HeroBannersPage";
+import LoginPage from "@/dashboard/pages/LoginPage";
 import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 import { useDashboardAuth0 } from "@/dashboard/security/Auth0DashboardSecurity";
 
@@ -637,85 +637,6 @@ function InventoryPage() { const rows = products.map(p => ({ ...p, reserved: Mat
 function SettingsPage() { const [tab, setTab] = useState("General"); const tabs = ["General", "Store identity", "Contact", "Social media", "WhatsApp", "SEO", "Localization", "Appearance", "Integrations", "Security"]; return <div><PageHeader meta={pageMeta["/dashboard/settings"]} action={<button onClick={() => toast.success("Settings saved to the local mock workspace.")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"><Check className="size-4" /> Save changes</button>} /><div className="grid gap-4 xl:grid-cols-[220px_1fr]"><div className="rounded-2xl border border-slate-200/80 bg-white p-2 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="space-y-1">{tabs.map(t => <button key={t} onClick={() => setTab(t)} className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-[11px] font-semibold transition ${tab === t ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50"}`}>{t}</button>)}</div></div><div className="space-y-4"><SmallPanel title={tab} subtitle={tab === "Integrations" ? "Visual placeholders only. Nothing is connected." : "Manage your workspace preferences."}>{tab === "Integrations" ? <div className="space-y-3 px-5 py-5">{[["Shopify", "Not connected", "Storefront and admin APIs are intentionally disabled."], ["Supabase", "Not connected", "Database sync is intentionally disabled."], ["Space Call Store", "Integration pending", "Live store connection will be planned in a later phase."]].map(([name, status, desc]) => <div key={name} className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center"><div className="grid size-10 place-items-center rounded-xl bg-slate-100 text-slate-500"><Cloud className="size-5" /></div><div className="flex-1"><div className="text-[12px] font-bold text-slate-700">{name}</div><div className="mt-1 text-[11px] text-slate-400">{desc}</div></div><span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700">{status}</span><button onClick={() => toast.info(`${name} is intentionally unavailable in standalone phase.`)} className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-500">Details</button></div>)}</div> : <div className="grid gap-4 px-5 py-5 sm:grid-cols-2"><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Store name</span><input defaultValue="Space Call" className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400" /></label><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Store email</span><input defaultValue="hello@spacecall.demo" className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400" /></label><label className="block sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Workspace note</span><textarea defaultValue="Standalone dashboard using mock/demo data only." rows={4} className="w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400" /></label></div>}</SmallPanel><div className="rounded-2xl border border-[#dfe2ff] bg-[#f5f6ff] p-4 text-[11px] leading-5 text-[#5962b8]"><div className="flex items-center gap-2 font-bold"><LockKeyhole className="size-4" /> Integration guardrail</div><p className="mt-1">This workspace is intentionally isolated. Shopify, Supabase, production APIs, storage, and live authentication are not connected.</p></div></div></div></div>; }
 
 function GenericPage({ path }: { path: string }) { const meta = pageMeta[path] ?? { eyebrow: "Workspace", title: "Coming soon", description: "This workspace module is staged for the next iteration." }; const [enabled, setEnabled] = useState(true); return <div><PageHeader meta={meta} action={<button onClick={() => toast.success("Mock changes saved.")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"><Check className="size-4" /> Save changes</button>} /><div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]"><SmallPanel title="Workspace overview" subtitle="A practical starting point for the next management workflow"><div className="space-y-4 px-5 py-5"><div className="rounded-2xl bg-gradient-to-br from-[#17223f] to-[#3446a5] p-6 text-white"><div className="mb-8 flex items-center justify-between"><div className="grid size-10 place-items-center rounded-xl bg-white/10"><Sparkles className="size-5 text-[#bfc5ff]" /></div><span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-[#d5d9ff]">Mock module</span></div><div className="text-[22px] font-bold tracking-[-.04em]">{meta.title}</div><p className="mt-2 max-w-md text-[12px] leading-5 text-indigo-100/75">This screen is connected to the standalone navigation and ready for real data contracts in a future phase.</p></div><div className="grid gap-3 sm:grid-cols-3">{[["Records", "128"], ["Published", "96"], ["Needs review", "12"]].map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 p-4"><div className="text-[10px] text-slate-400">{label}</div><div className="mt-1 text-xl font-bold text-[#14203a]">{value}</div></div>)}</div></div></SmallPanel><SmallPanel title="Module settings"><div className="space-y-4 px-5 py-5"><div className="flex items-center justify-between rounded-xl border border-slate-200 p-4"><div><div className="text-[12px] font-bold text-slate-700">Enable module</div><div className="mt-1 text-[11px] text-slate-400">Show this module in the admin workspace.</div></div><button onClick={() => setEnabled(!enabled)} className={`relative h-6 w-11 rounded-full transition ${enabled ? "bg-[#5968ea]" : "bg-slate-200"}`}><span className={`absolute top-1 size-4 rounded-full bg-white shadow transition ${enabled ? "left-6" : "left-1"}`} /></button></div><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Internal note</span><textarea rows={4} defaultValue={`Mock configuration for ${meta.title}.`} className="w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400" /></label><button onClick={() => toast.info("Preview refreshed from mock state.")} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600"><Eye className="size-3.5" /> Preview module</button></div></SmallPanel></div></div>; }
-
-function LoginPage() {
-  const [, navigate] = useLocation();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const submit = async () => {
-    if (!email.trim() || !password) {
-      toast.error("Enter your Supabase dashboard email and password.");
-      return;
-    }
-    setLoading(true);
-    try {
-      await signInDashboard(email, password);
-      navigate("/dashboard");
-    } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Sign in failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="grid min-h-screen place-items-center bg-[#101b32] p-5">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -left-24 -top-24 size-[420px] rounded-full bg-[#5968ea]/20 blur-[90px]" />
-        <div className="absolute -bottom-32 -right-20 size-[460px] rounded-full bg-[#8d57d7]/20 blur-[100px]" />
-      </div>
-      <div className="relative w-full max-w-[400px] rounded-[28px] border border-white/10 bg-white/[.07] p-7 shadow-2xl backdrop-blur-xl sm:p-9">
-        <Logo />
-        <div className="mt-10">
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#aeb5ff]">
-            Admin workspace
-          </div>
-          <h1 className="text-[28px] font-bold tracking-[-.05em] text-white">Welcome back</h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Sign in with an authorized Space Call Supabase account.
-          </p>
-        </div>
-        <div className="mt-8 space-y-4">
-          <label className="block">
-            <span className="mb-2 block text-[11px] font-bold text-slate-300">Email</span>
-            <input
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              type="email"
-              autoComplete="username"
-              className="h-11 w-full rounded-xl border border-white/10 bg-white/[.07] px-3 text-[12px] text-white outline-none placeholder:text-slate-500 focus:border-[#7b86ff]"
-            />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-[11px] font-bold text-slate-300">Password</span>
-            <input
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              type="password"
-              autoComplete="current-password"
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void submit();
-              }}
-              className="h-11 w-full rounded-xl border border-white/10 bg-white/[.07] px-3 text-[12px] text-white outline-none focus:border-[#7b86ff]"
-            />
-          </label>
-          <button
-            onClick={() => void submit()}
-            disabled={loading}
-            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#6874f5] text-[12px] font-bold text-white shadow-[0_10px_24px_rgba(104,116,245,.28)] hover:bg-[#7a84ff] disabled:opacity-60"
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : "Sign in to dashboard"}
-          </button>
-        </div>
-        <div className="mt-7 flex items-center justify-center gap-2 text-[10px] text-slate-500">
-          <LockKeyhole className="size-3" /> Supabase Auth + staff role required
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function DashboardGate() {
   const [, navigate] = useLocation();
