@@ -541,6 +541,7 @@ declare
   v_status text;
 begin
   if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if not private.is_dashboard_admin() then raise exception 'dashboard admin required'; end if;
 
   select status into v_status
   from public.store_purchase_orders
@@ -572,6 +573,7 @@ declare
   v_status text;
 begin
   if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if not private.is_dashboard_admin() then raise exception 'dashboard admin required'; end if;
 
   select status into v_status
   from public.store_purchase_orders
@@ -607,6 +609,7 @@ declare
   v_reason text := nullif(btrim(coalesce(p_reason, '')), '');
 begin
   if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if not private.is_dashboard_admin() then raise exception 'dashboard admin required'; end if;
   if v_reason is null then raise exception 'rejection reason is required'; end if;
 
   select status into v_status
@@ -643,6 +646,7 @@ declare
   v_status text;
 begin
   if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if not private.is_dashboard_admin() then raise exception 'dashboard admin required'; end if;
 
   select status into v_status
   from public.store_purchase_orders
@@ -682,6 +686,7 @@ declare
   v_reason text := nullif(btrim(coalesce(p_reason, '')), '');
 begin
   if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if not private.is_dashboard_admin() then raise exception 'dashboard admin required'; end if;
   if v_reason is null then raise exception 'cancellation reason is required'; end if;
 
   select status into v_status
