@@ -48,15 +48,19 @@ type ReceivingDraftLine = {
 
 function StatusBadge({ status }: { status: string }) {
   const tone =
-    status === "received" || status === "approved"
+    status === "received" || status === "approved" || status === "closed"
       ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
       : status === "partially_received"
         ? "bg-blue-50 text-blue-700 ring-blue-100"
         : status === "ordered"
           ? "bg-violet-50 text-violet-700 ring-violet-100"
-          : status === "draft"
-            ? "bg-amber-50 text-amber-700 ring-amber-100"
-            : "bg-slate-100 text-slate-600 ring-slate-200";
+          : status === "pending_approval"
+            ? "bg-cyan-50 text-cyan-700 ring-cyan-100"
+            : status === "rejected" || status === "cancelled" || status === "voided"
+              ? "bg-rose-50 text-rose-700 ring-rose-100"
+              : status === "draft"
+                ? "bg-amber-50 text-amber-700 ring-amber-100"
+                : "bg-slate-100 text-slate-600 ring-slate-200";
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${tone}`}>
       {status.replaceAll("_", " ")}
@@ -133,13 +137,21 @@ export default function ReceivingPage({
   const [query, setQuery] = useState("");
   const [poStatusFilter, setPoStatusFilter] = useState("all");
   const [poSupplierFilter, setPoSupplierFilter] = useState("all");
+  const [poDeliveryFilter, setPoDeliveryFilter] = useState("all");
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
 
   const [supplierName, setSupplierName] = useState("");
   const [supplierCode, setSupplierCode] = useState("");
 
   const [poSupplierId, setPoSupplierId] = useState("");
+  const [poLocationId, setPoLocationId] = useState("");
   const [poNumber, setPoNumber] = useState("");
+  const [poCurrency, setPoCurrency] = useState("USD");
+  const [poExpectedAt, setPoExpectedAt] = useState("");
+  const [poDiscount, setPoDiscount] = useState("0");
+  const [poTax, setPoTax] = useState("0");
+  const [poShipping, setPoShipping] = useState("0");
+  const [poExchangeRate, setPoExchangeRate] = useState("1");
   const [poNotes, setPoNotes] = useState("");
   const [poLines, setPoLines] = useState<PoDraftLine[]>([]);
 
@@ -171,6 +183,7 @@ export default function ReceivingPage({
   }, [load]);
 
   const suppliers = workspace?.suppliers.filter((supplier) => supplier.isActive) ?? [];
+  const locations = workspace?.locations.filter((location) => location.isActive) ?? [];
   const purchaseOrders = workspace?.purchaseOrders ?? [];
   const receivings = workspace?.receivings ?? [];
   const productOptions = workspace?.productOptions ?? [];
@@ -188,9 +201,21 @@ export default function ReceivingPage({
         `${po.poNumber} ${po.supplierName} ${po.status}`.toLowerCase().includes(needle);
       const matchesStatus = poStatusFilter === "all" || po.status === poStatusFilter;
       const matchesSupplier = poSupplierFilter === "all" || po.supplierId === poSupplierFilter;
-      return matchesSearch && matchesStatus && matchesSupplier;
+      const now = new Date();
+      const expected = po.expectedAt ? new Date(po.expectedAt) : null;
+      const endOfToday = new Date(now);
+      endOfToday.setHours(23, 59, 59, 999);
+      const nextSevenDays = new Date(now);
+      nextSevenDays.setDate(nextSevenDays.getDate() + 7);
+      const matchesDelivery =
+        poDeliveryFilter === "all" ||
+        (poDeliveryFilter === "overdue" && expected != null && expected < now && !["received", "closed", "cancelled"].includes(po.status)) ||
+        (poDeliveryFilter === "today" && expected != null && expected >= new Date(now.getFullYear(), now.getMonth(), now.getDate()) && expected <= endOfToday) ||
+        (poDeliveryFilter === "next7" && expected != null && expected >= now && expected <= nextSevenDays) ||
+        (poDeliveryFilter === "unscheduled" && expected == null);
+      return matchesSearch && matchesStatus && matchesSupplier && matchesDelivery;
     });
-  }, [poStatusFilter, poSupplierFilter, purchaseOrders, query]);
+  }, [poDeliveryFilter, poStatusFilter, poSupplierFilter, purchaseOrders, query]);
 
   const filteredReceivings = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -204,7 +229,14 @@ export default function ReceivingPage({
 
   const resetPo = () => {
     setPoSupplierId(suppliers[0]?.id ?? "");
+    setPoLocationId(locations[0]?.id ?? "");
     setPoNumber("");
+    setPoCurrency("USD");
+    setPoExpectedAt("");
+    setPoDiscount("0");
+    setPoTax("0");
+    setPoShipping("0");
+    setPoExchangeRate("1");
     setPoNotes("");
     setPoLines(
       productOptions[0]
@@ -219,6 +251,9 @@ export default function ReceivingPage({
     const firstSupplier = workspace.suppliers.find((supplier) => supplier.isActive);
     if (!poSupplierId && firstSupplier) setPoSupplierId(firstSupplier.id);
 
+    const firstLocation = workspace.locations.find((location) => location.isActive);
+    if (!poLocationId && firstLocation) setPoLocationId(firstLocation.id);
+
     const firstProduct = workspace.productOptions[0];
     if (!poLines.length && firstProduct) {
       setPoLines([
@@ -230,7 +265,7 @@ export default function ReceivingPage({
         },
       ]);
     }
-  }, [poLines.length, poSupplierId, purchaseOrderCreateMode, workspace]);
+  }, [poLines.length, poLocationId, poSupplierId, purchaseOrderCreateMode, workspace]);
 
   const openPanel = (next: Exclude<Panel, null>) => {
     setPanel(next);
@@ -307,6 +342,7 @@ export default function ReceivingPage({
   const savePo = async () => {
     if (!poSupplierId) return toast.error("Select a supplier.");
     if (!poNumber.trim()) return toast.error("PO number is required.");
+    if (!poLocationId) return toast.error("Select a store / warehouse.");
     if (!poLines.length) return toast.error("Add at least one product.");
 
     const used = new Set<string>();
@@ -333,7 +369,14 @@ export default function ReceivingPage({
     try {
       await createPurchaseOrder({
         supplierId: poSupplierId,
+        locationId: poLocationId,
         poNumber,
+        currency: poCurrency,
+        expectedAt: poExpectedAt ? new Date(poExpectedAt).toISOString() : null,
+        discountAmount: Number(poDiscount || 0),
+        taxAmount: Number(poTax || 0),
+        shippingAmount: Number(poShipping || 0),
+        exchangeRate: Number(poExchangeRate || 1),
         notes: poNotes,
         items,
       });
@@ -352,11 +395,11 @@ export default function ReceivingPage({
   };
 
   const submitPo = async (po: PurchaseOrderSummary) => {
-    if (!window.confirm(`Submit PO ${po.poNumber}? Draft lines will become locked for receiving.`)) return;
+    if (!window.confirm(`Submit PO ${po.poNumber} for approval? Draft lines will be locked until review.`)) return;
     setSaving(true);
     try {
       await submitPurchaseOrder(po.id);
-      toast.success(`PO ${po.poNumber} is ready for receiving.`);
+      toast.success(`PO ${po.poNumber} submitted for approval.`);
       await load(false);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "PO submission failed.");
@@ -408,21 +451,21 @@ export default function ReceivingPage({
       if (!lines.length) throw new Error("Enter at least one received or damaged quantity.");
 
       setSaving(true);
-      await createReceiving({
+      const receivingId = await createReceiving({
         purchaseOrderId: selectedReceivingPo.id,
         invoiceNumber,
         employeeLabel,
         notes: receivingNotes,
         lines,
       });
-      toast.success("Receiving draft created. Review it, then approve to update stock.");
+      toast.success("Receiving draft created. Review serials, invoice matching, then approve.");
       setPanel(null);
       setInvoiceNumber("");
       setEmployeeLabel("");
       setReceivingNotes("");
       setReceivingPoId("");
       setReceivingLines({});
-      await load(false);
+      navigate(`/dashboard/receivings/${receivingId}`);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Receiving draft creation failed.");
     } finally {
@@ -598,7 +641,9 @@ export default function ReceivingPage({
               <div className="mt-1 text-[10px] text-slate-400">
                 {panel === "receive"
                   ? "Create a draft first. Stock changes only when the draft is explicitly approved."
-                  : "All records are saved directly to Supabase."}
+                  : panel === "po"
+                    ? "Set supplier, destination, delivery date and commercial terms before saving the draft."
+                    : "All records are saved directly to Supabase."}
               </div>
             </div>
             <button
@@ -646,7 +691,7 @@ export default function ReceivingPage({
 
           {panel === "po" ? (
             <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <label>
                   <FieldLabel>Supplier</FieldLabel>
                   <select
@@ -661,6 +706,21 @@ export default function ReceivingPage({
                   </select>
                 </label>
                 <label>
+                  <FieldLabel>Store / Warehouse</FieldLabel>
+                  <select
+                    value={poLocationId}
+                    onChange={(event) => setPoLocationId(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  >
+                    <option value="">Select destination</option>
+                    {locations.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.name} · {location.code}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
                   <FieldLabel>PO number</FieldLabel>
                   <input
                     value={poNumber}
@@ -670,6 +730,38 @@ export default function ReceivingPage({
                   />
                 </label>
                 <label>
+                  <FieldLabel>Expected delivery</FieldLabel>
+                  <input
+                    type="datetime-local"
+                    value={poExpectedAt}
+                    onChange={(event) => setPoExpectedAt(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                </label>
+                <label>
+                  <FieldLabel>Currency</FieldLabel>
+                  <select
+                    value={poCurrency}
+                    onChange={(event) => setPoCurrency(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="LBP">LBP</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </label>
+                <label>
+                  <FieldLabel>Exchange rate</FieldLabel>
+                  <input
+                    type="number"
+                    min="0.000001"
+                    step="0.000001"
+                    value={poExchangeRate}
+                    onChange={(event) => setPoExchangeRate(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+                  />
+                </label>
+                <label className="md:col-span-2">
                   <FieldLabel>Notes</FieldLabel>
                   <input
                     value={poNotes}
@@ -740,6 +832,62 @@ export default function ReceivingPage({
                     </button>
                   </div>
                 ))}
+              </div>
+
+              <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-2 lg:grid-cols-5">
+                <label>
+                  <FieldLabel>Discount</FieldLabel>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={poDiscount}
+                    onChange={(event) => setPoDiscount(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  />
+                </label>
+                <label>
+                  <FieldLabel>VAT / Tax</FieldLabel>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={poTax}
+                    onChange={(event) => setPoTax(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  />
+                </label>
+                <label>
+                  <FieldLabel>Shipping</FieldLabel>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={poShipping}
+                    onChange={(event) => setPoShipping(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  />
+                </label>
+                <div className="rounded-xl bg-white p-3 sm:col-span-2">
+                  <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">Estimated total</div>
+                  <div className="mt-1 text-lg font-bold text-[#14203a]">
+                    {money(
+                      Math.max(
+                        0,
+                        poLines.reduce((sum, line) => {
+                          const qty = Number(line.expectedQuantity || 0);
+                          const cost = Number(line.unitCost || 0);
+                          return sum + (Number.isFinite(qty) ? qty : 0) * (Number.isFinite(cost) ? cost : 0);
+                        }, 0) -
+                          Number(poDiscount || 0) +
+                          Number(poTax || 0) +
+                          Number(poShipping || 0),
+                      ),
+                      poCurrency,
+                    )}
+                  </div>
+                  <div className="mt-1 text-[9px] text-slate-400">Subtotal − discount + tax + shipping</div>
+                </div>
               </div>
 
               <div className="flex flex-wrap justify-between gap-2">
@@ -1010,7 +1158,7 @@ export default function ReceivingPage({
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-[minmax(220px,1.4fr)_minmax(170px,.8fr)_minmax(190px,1fr)_auto]">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(220px,1.4fr)_minmax(150px,.8fr)_minmax(180px,1fr)_minmax(160px,.8fr)_auto]">
             <label className="relative">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -1029,9 +1177,13 @@ export default function ReceivingPage({
             >
               <option value="all">All statuses</option>
               <option value="draft">Draft</option>
+              <option value="pending_approval">Pending approval</option>
+              <option value="approved">Approved</option>
               <option value="ordered">Issued</option>
               <option value="partially_received">Partially received</option>
               <option value="received">Received</option>
+              <option value="closed">Closed</option>
+              <option value="rejected">Rejected</option>
               <option value="cancelled">Cancelled</option>
             </select>
 
@@ -1049,14 +1201,28 @@ export default function ReceivingPage({
               ))}
             </select>
 
+            <select
+              value={poDeliveryFilter}
+              onChange={(event) => setPoDeliveryFilter(event.target.value)}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-indigo-400"
+              aria-label="Filter purchase orders by expected delivery"
+            >
+              <option value="all">All delivery dates</option>
+              <option value="overdue">Overdue</option>
+              <option value="today">Due today</option>
+              <option value="next7">Next 7 days</option>
+              <option value="unscheduled">No delivery date</option>
+            </select>
+
             <button
               type="button"
               onClick={() => {
                 setQuery("");
                 setPoStatusFilter("all");
                 setPoSupplierFilter("all");
+                setPoDeliveryFilter("all");
               }}
-              disabled={!query && poStatusFilter === "all" && poSupplierFilter === "all"}
+              disabled={!query && poStatusFilter === "all" && poSupplierFilter === "all" && poDeliveryFilter === "all"}
               className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-[11px] font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Clear filters
@@ -1121,6 +1287,9 @@ export default function ReceivingPage({
                       {po.poNumber}
                     </button>
                     <div className="mt-1 truncate text-[10px] font-semibold text-slate-600">{po.supplierName}</div>
+                    <div className="mt-1 text-[9px] text-slate-400">
+                      {po.locationName} · Expected {po.expectedAt ? new Date(po.expectedAt).toLocaleDateString() : "not scheduled"}
+                    </div>
                   </div>
                   <StatusBadge status={po.status} />
                 </div>
@@ -1181,12 +1350,13 @@ export default function ReceivingPage({
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[1120px] text-left">
+          <table className="w-full min-w-[1240px] text-left">
             <thead className="bg-[#fafbfe] text-[9px] uppercase tracking-[.1em] text-slate-400">
               <tr>
                 <th className="px-5 py-3">PO number</th>
                 <th className="px-3 py-3">Created date</th>
                 <th className="px-3 py-3">Supplier</th>
+                <th className="px-3 py-3">Expected delivery</th>
                 <th className="px-3 py-3">Issued date</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-3 py-3">Amount</th>
@@ -1212,7 +1382,17 @@ export default function ReceivingPage({
                   </td>
                   <td className="px-3 py-3">
                     <div className="text-[11px] font-semibold text-slate-700">{po.supplierName}</div>
-                    <div className="mt-0.5 text-[9px] text-slate-400">{po.currency}</div>
+                    <div className="mt-0.5 text-[9px] text-slate-400">{po.locationName} · {po.currency}</div>
+                  </td>
+                  <td className="px-3 py-3 text-[10px] text-slate-500">
+                    {po.expectedAt ? (
+                      <div>
+                        <div>{new Date(po.expectedAt).toLocaleString()}</div>
+                        {new Date(po.expectedAt).getTime() < Date.now() && !["received", "closed", "cancelled"].includes(po.status) ? (
+                          <div className="mt-1 text-[9px] font-bold text-rose-600">Overdue</div>
+                        ) : null}
+                      </div>
+                    ) : "—"}
                   </td>
                   <td className="px-3 py-3 text-[10px] text-slate-500">
                     {po.orderedAt ? new Date(po.orderedAt).toLocaleString() : "—"}
@@ -1287,7 +1467,13 @@ export default function ReceivingPage({
             <article key={receipt.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[12px] font-bold text-slate-800">Receipt #{receipt.receiptNumber}</div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/dashboard/receivings/${receipt.id}`)}
+                    className="text-left text-[12px] font-bold text-indigo-600 hover:underline"
+                  >
+                    Receipt #{receipt.receiptNumber}
+                  </button>
                   <div className="mt-1 text-[10px] text-slate-400">
                     {receipt.supplierName} · PO {receipt.poNumber} · Invoice {receipt.invoiceNumber}
                   </div>
@@ -1310,10 +1496,10 @@ export default function ReceivingPage({
               </div>
               <div className="mt-3 flex items-center justify-between">
                 <button
-                  onClick={() => setSelectedReceiptId(receipt.id)}
+                  onClick={() => navigate(`/dashboard/receivings/${receipt.id}`)}
                   className="text-[10px] font-bold text-indigo-600"
                 >
-                  View line details
+                  Open receiving
                 </button>
                 {receipt.status === "draft" ? (
                   <button
@@ -1347,7 +1533,15 @@ export default function ReceivingPage({
             <tbody>
               {filteredReceivings.map((receipt) => (
                 <tr key={receipt.id} className="border-t border-slate-100">
-                  <td className="px-5 py-3 text-[11px] font-bold text-indigo-600">#{receipt.receiptNumber}</td>
+                  <td className="px-5 py-3">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/dashboard/receivings/${receipt.id}`)}
+                      className="text-[11px] font-bold text-indigo-600 hover:underline"
+                    >
+                      #{receipt.receiptNumber}
+                    </button>
+                  </td>
                   <td className="px-3 py-3">
                     <div className="text-[11px] font-semibold text-slate-700">{receipt.supplierName}</div>
                     <div className="text-[9px] text-slate-400">PO {receipt.poNumber}</div>
@@ -1361,10 +1555,10 @@ export default function ReceivingPage({
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => setSelectedReceiptId(receipt.id)}
+                        onClick={() => navigate(`/dashboard/receivings/${receipt.id}`)}
                         className="text-[10px] font-bold text-indigo-600 hover:underline"
                       >
-                        Details
+                        Open
                       </button>
                       {receipt.status === "draft" ? (
                         <button

@@ -2,14 +2,19 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [workflow, hardening, data, page, purchaseOrdersPage, purchaseOrderCreatePage, purchaseOrderDetailPage, app, nav, inventory, drawer, types] = await Promise.all([
+const [workflow, hardening, upgrade, data, page, purchaseOrdersPage, purchaseOrderCreatePage, purchaseOrderDetailPage, purchaseOrderEditPage, receivingDetailPage, suppliersPage, analyticsPage, app, nav, inventory, drawer, types] = await Promise.all([
   readFile(new URL("../supabase/migrations/20260919123000_procurement_receiving_workflows.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919124500_harden_procurement_rpc_exposure.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260919152000_procurement_management_upgrade.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/receiving.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ReceivingPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/PurchaseOrdersPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/PurchaseOrderCreatePage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/PurchaseOrderDetailPage.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/pages/PurchaseOrderEditPage.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/pages/ReceivingDetailPage.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/pages/SuppliersPage.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/pages/ProcurementAnalyticsPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/mock/data.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/inventory.ts", import.meta.url), "utf8"),
@@ -60,7 +65,7 @@ test("dashboard data layer uses real procurement tables and RPCs", () => {
   ]) {
     assert.match(data, new RegExp(`from\\("${table}"\\)`));
   }
-  assert.match(data, /rpc\("create_store_purchase_order"/);
+  assert.match(data, /rpc\("create_store_purchase_order_v2"/);
   assert.match(data, /rpc\("submit_store_purchase_order"/);
   assert.match(data, /rpc\("create_store_receiving"/);
   assert.match(data, /rpc\("approve_store_receiving"/);
@@ -151,6 +156,115 @@ test("purchase orders and receiving are separate routed workspaces", () => {
   assert.match(drawer, /Receiving \/ purchase/);
 });
 
+test("procurement upgrade adds commercial terms, locations and duplicate invoice protection", () => {
+  for (const token of [
+    "store_procurement_locations",
+    "location_id",
+    "expected_at",
+    "discount_amount",
+    "tax_amount",
+    "shipping_amount",
+    "exchange_rate",
+    "store_receivings_supplier_invoice_unique",
+  ]) {
+    assert.match(upgrade, new RegExp(token));
+  }
+  assert.match(upgrade, /supplier_id, lower\(btrim\(invoice_number\)\)/);
+  assert.match(page, /Store \/ Warehouse/);
+  assert.match(page, /Expected delivery/);
+  assert.match(page, /VAT \/ Tax/);
+  assert.match(page, /Exchange rate/);
+  assert.match(page, /Overdue/);
+});
+
+test("PO lifecycle requires approval before issue and admin protects privileged decisions", () => {
+  for (const rpc of [
+    "approve_store_purchase_order",
+    "issue_store_purchase_order",
+    "reject_store_purchase_order",
+    "reopen_store_purchase_order",
+    "cancel_store_purchase_order",
+    "close_store_purchase_order",
+    "delete_store_purchase_order_draft",
+  ]) {
+    assert.match(upgrade, new RegExp(rpc));
+    assert.match(data, new RegExp(rpc));
+  }
+  assert.match(upgrade, /status = 'pending_approval'/);
+  assert.match(upgrade, /status = 'approved'/);
+  assert.match(upgrade, /status = 'ordered'/);
+  assert.match(upgrade, /private\.is_dashboard_admin\(\)/);
+  assert.match(purchaseOrderDetailPage, /Submit for approval/);
+  assert.match(purchaseOrderDetailPage, /Approve PO/);
+  assert.match(purchaseOrderDetailPage, /Issue PO/);
+  assert.match(purchaseOrderDetailPage, /Close PO/);
+  assert.match(purchaseOrderDetailPage, /Cancel PO/);
+});
+
+test("draft PO editing, deletion and expected delivery are routed separately", () => {
+  assert.match(app, /PurchaseOrderEditPage/);
+  assert.match(app, /purchaseOrderEdit/);
+  assert.match(purchaseOrderEditPage, /Edit Purchase Order/);
+  assert.match(purchaseOrderEditPage, /Save draft changes/);
+  assert.match(purchaseOrderEditPage, /Delete draft/);
+  assert.match(purchaseOrderEditPage, /Expected delivery/);
+  assert.match(purchaseOrderEditPage, /updatePurchaseOrderDraft/);
+  assert.match(purchaseOrderEditPage, /deletePurchaseOrderDraft/);
+});
+
+test("receiving review supports editable drafts, invoice matching, serials and void", () => {
+  assert.match(app, /ReceivingDetailPage/);
+  assert.match(app, /receivingDetail/);
+  assert.match(receivingDetailPage, /Draft receiving details/);
+  assert.match(receivingDetailPage, /Save draft/);
+  assert.match(receivingDetailPage, /updateReceivingDraft/);
+  assert.match(receivingDetailPage, /Supplier invoice value/);
+  assert.match(receivingDetailPage, /Price variance/);
+  assert.match(receivingDetailPage, /Serial \/ IMEI tracking/);
+  assert.match(receivingDetailPage, /replaceReceivingSerials/);
+  assert.match(receivingDetailPage, /Void draft/);
+  assert.match(upgrade, /update_store_receiving_draft/);
+  assert.match(upgrade, /replace_store_receiving_serials/);
+  assert.match(upgrade, /admin approval is required for excess delivery/);
+});
+
+test("approved receiving updates stock, serial state and weighted average cost with FX", () => {
+  assert.match(upgrade, /average_cost numeric\(12,2\)/);
+  assert.match(upgrade, /update_average_cost_after_receiving_approval/);
+  assert.match(upgrade, /v_line\.unit_cost \* coalesce\(v_line\.exchange_rate, 1\)/);
+  assert.match(upgrade, /sync_receiving_serial_inventory_status/);
+  assert.match(upgrade, /inventory_status = case when s\.condition = 'usable' then 'in_stock' else 'damaged' end/);
+});
+
+test("procurement documents are private and audit timelines are exposed", () => {
+  assert.match(upgrade, /'procurement-private'/);
+  assert.match(upgrade, /public,\s*file_size_limit/);
+  assert.match(upgrade, /procurement_documents_staff_read/);
+  assert.match(upgrade, /procurement_documents_admin_delete/);
+  assert.match(data, /createSignedUrl/);
+  assert.match(purchaseOrderDetailPage, /Documents & attachments/);
+  assert.match(purchaseOrderDetailPage, /PO timeline/);
+  assert.match(receivingDetailPage, /Receiving documents/);
+  assert.match(receivingDetailPage, /Receiving timeline/);
+  assert.match(purchaseOrderDetailPage, /Print \/ PDF/);
+});
+
+test("supplier management, analytics and reorder suggestions are live modules", () => {
+  assert.match(app, /SuppliersPage/);
+  assert.match(app, /ProcurementAnalyticsPage/);
+  assert.match(nav, /label: "Suppliers", href: "\/dashboard\/suppliers"/);
+  assert.match(nav, /label: "Procurement", href: "\/dashboard\/procurement"/);
+  assert.match(suppliersPage, /Suppliers & Locations/);
+  assert.match(suppliersPage, /Phone/);
+  assert.match(suppliersPage, /Email/);
+  assert.match(analyticsPage, /Procurement Analytics/);
+  assert.match(analyticsPage, /Suggested reorder/);
+  assert.match(analyticsPage, /Suggested supplier/);
+  assert.match(data, /buildProcurementAnalytics/);
+  assert.match(data, /buildReorderSuggestions/);
+  assert.match(data, /recommendedSupplierName/);
+});
+
 test("generated Supabase types include procurement tables and functions", () => {
   for (const name of [
     "store_suppliers",
@@ -159,10 +273,21 @@ test("generated Supabase types include procurement tables and functions", () => 
     "store_receivings",
     "store_receiving_items",
     "store_procurement_events",
+    "store_procurement_locations",
+    "store_procurement_attachments",
+    "store_receiving_serials",
     "create_store_purchase_order",
+    "create_store_purchase_order_v2",
+    "update_store_purchase_order_draft",
     "submit_store_purchase_order",
+    "approve_store_purchase_order",
+    "issue_store_purchase_order",
+    "close_store_purchase_order",
     "create_store_receiving",
+    "update_store_receiving_draft",
+    "replace_store_receiving_serials",
     "approve_store_receiving",
+    "void_store_receiving",
   ]) {
     assert.match(types, new RegExp(name));
   }

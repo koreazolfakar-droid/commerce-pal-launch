@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Loader2,
   PackageCheck,
+  Printer,
   RefreshCw,
   Truck,
 } from "lucide-react";
@@ -12,9 +13,20 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
+  approvePurchaseOrder,
+  cancelPurchaseOrder,
+  closePurchaseOrder,
+  deleteProcurementAttachment,
+  issuePurchaseOrder,
   loadReceivingWorkspace,
+  rejectPurchaseOrder,
+  reopenPurchaseOrder,
   submitPurchaseOrder,
+  uploadProcurementAttachment,
+  type ProcurementAttachment,
+  type ProcurementEventSummary,
   type PurchaseOrderSummary,
+  type ReceivingSupplier,
 } from "@/dashboard/data/receiving";
 
 function money(value: number, currency = "USD") {
@@ -52,6 +64,11 @@ function InfoItem({ label, value }: { label: string; value: ReactNode }) {
 export default function PurchaseOrderDetailPage({ id }: { id: string }) {
   const [, navigate] = useLocation();
   const [po, setPo] = useState<PurchaseOrderSummary | null>(null);
+  const [supplier, setSupplier] = useState<ReceivingSupplier | null>(null);
+  const [events, setEvents] = useState<ProcurementEventSummary[]>([]);
+  const [attachments, setAttachments] = useState<ProcurementAttachment[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [attachmentType, setAttachmentType] = useState<"purchase_order" | "supplier_invoice" | "packing_list" | "other">("purchase_order");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -63,6 +80,14 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
       const workspace = await loadReceivingWorkspace();
       const found = workspace.purchaseOrders.find((item) => item.id === id) ?? null;
       setPo(found);
+      setSupplier(found ? workspace.suppliers.find((item) => item.id === found.supplierId) ?? null : null);
+      setEvents(
+        workspace.events
+          .filter((event) => event.purchaseOrderId === id)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+      );
+      setAttachments(workspace.attachments.filter((attachment) => attachment.purchaseOrderId === id));
+      setIsAdmin(workspace.role === "admin");
       setError(found ? "" : "Purchase order was not found.");
       if (manual && found) toast.success("Purchase order refreshed.");
     } catch (cause) {
@@ -86,10 +111,65 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
     setSaving(true);
     try {
       await submitPurchaseOrder(po.id);
-      toast.success(`PO ${po.poNumber} is ready for receiving.`);
+      toast.success(`PO ${po.poNumber} submitted for approval.`);
       await load(false);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "PO submission failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const runLifecycle = async (
+    action: "approve" | "issue" | "reject" | "reopen" | "cancel" | "close",
+  ) => {
+    if (!po) return;
+    setSaving(true);
+    try {
+      if (action === "approve") {
+        await approvePurchaseOrder(po.id);
+        toast.success(`PO ${po.poNumber} approved.`);
+      } else if (action === "issue") {
+        await issuePurchaseOrder(po.id);
+        toast.success(`PO ${po.poNumber} issued and ready for receiving.`);
+      } else if (action === "reopen") {
+        await reopenPurchaseOrder(po.id);
+        toast.success(`PO ${po.poNumber} reopened as draft.`);
+      } else if (action === "reject") {
+        const reason = window.prompt("Reason for rejecting this purchase order?")?.trim();
+        if (!reason) return;
+        await rejectPurchaseOrder(po.id, reason);
+        toast.success(`PO ${po.poNumber} rejected.`);
+      } else if (action === "close") {
+        await closePurchaseOrder(po.id);
+        toast.success(`PO ${po.poNumber} closed.`);
+      } else {
+        const reason = window.prompt("Reason for cancelling this purchase order?")?.trim();
+        if (!reason) return;
+        await cancelPurchaseOrder(po.id, reason);
+        toast.success(`PO ${po.poNumber} cancelled.`);
+      }
+      await load(false);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Purchase order action failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const uploadAttachment = async (file: File | null) => {
+    if (!po || !file) return;
+    setSaving(true);
+    try {
+      await uploadProcurementAttachment({
+        file,
+        purchaseOrderId: po.id,
+        attachmentType,
+      });
+      toast.success("Attachment uploaded.");
+      await load(false);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Attachment upload failed.");
     } finally {
       setSaving(false);
     }
@@ -147,6 +227,14 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
 
         <div className="flex flex-wrap gap-2">
           <button
+            onClick={() => window.print()}
+            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600"
+          >
+            <Printer className="size-3.5" />
+            Print / PDF
+          </button>
+
+          <button
             onClick={() => void load(true)}
             disabled={refreshing}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600 disabled:opacity-50"
@@ -156,12 +244,59 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           </button>
 
           {po.status === "draft" ? (
+            <>
+              <button
+                onClick={() => navigate(`/dashboard/purchase-orders/${po.id}/edit`)}
+                className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
+              >
+                Edit PO
+              </button>
+              <button
+                onClick={() => void submit()}
+                disabled={saving}
+                className="h-10 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-50"
+              >
+                Submit for approval
+              </button>
+            </>
+          ) : null}
+
+          {po.status === "pending_approval" && isAdmin ? (
+            <>
+              <button
+                onClick={() => void runLifecycle("reject")}
+                disabled={saving}
+                className="h-10 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold text-rose-700 disabled:opacity-50"
+              >
+                Reject
+              </button>
+              <button
+                onClick={() => void runLifecycle("approve")}
+                disabled={saving}
+                className="h-10 rounded-xl bg-emerald-600 px-4 text-[11px] font-bold text-white disabled:opacity-50"
+              >
+                Approve PO
+              </button>
+            </>
+          ) : null}
+
+          {po.status === "approved" && isAdmin ? (
             <button
-              onClick={() => void submit()}
+              onClick={() => void runLifecycle("issue")}
               disabled={saving}
-              className="h-10 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-50"
+              className="h-10 rounded-xl bg-violet-600 px-4 text-[11px] font-bold text-white disabled:opacity-50"
             >
-              Submit PO
+              Issue PO
+            </button>
+          ) : null}
+
+          {po.status === "rejected" && isAdmin ? (
+            <button
+              onClick={() => void runLifecycle("reopen")}
+              disabled={saving}
+              className="h-10 rounded-xl border border-amber-200 bg-amber-50 px-4 text-[11px] font-bold text-amber-700 disabled:opacity-50"
+            >
+              Reopen draft
             </button>
           ) : null}
 
@@ -174,14 +309,50 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
               Receive PO
             </button>
           ) : null}
+
+          {isAdmin && po.status === "received" ? (
+            <button
+              onClick={() => void runLifecycle("close")}
+              disabled={saving}
+              className="h-10 rounded-xl bg-slate-700 px-4 text-[11px] font-bold text-white disabled:opacity-50"
+            >
+              Close PO
+            </button>
+          ) : null}
+
+          {isAdmin && ["draft", "pending_approval", "approved", "ordered"].includes(po.status) ? (
+            <button
+              onClick={() => void runLifecycle("cancel")}
+              disabled={saving}
+              className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-500 disabled:opacity-50"
+            >
+              Cancel PO
+            </button>
+          ) : null}
         </div>
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <InfoItem label="Supplier" value={po.supplierName} />
+        <InfoItem
+          label="Supplier"
+          value={
+            <div>
+              <div>{po.supplierName}</div>
+              {supplier?.phone || supplier?.email ? (
+                <div className="mt-1 text-[9px] font-medium text-slate-400">
+                  {[supplier.phone, supplier.email].filter(Boolean).join(" · ")}
+                </div>
+              ) : null}
+            </div>
+          }
+        />
+        <InfoItem label="Store / Warehouse" value={po.locationName} />
         <InfoItem label="Created date" value={new Date(po.createdAt).toLocaleString()} />
+        <InfoItem label="Expected delivery" value={po.expectedAt ? new Date(po.expectedAt).toLocaleString() : "—"} />
         <InfoItem label="Issued date" value={po.orderedAt ? new Date(po.orderedAt).toLocaleString() : "—"} />
-        <InfoItem label="Expected amount" value={money(po.expectedCost, po.currency)} />
+        <InfoItem label="Approved date" value={po.approvedAt ? new Date(po.approvedAt).toLocaleString() : "—"} />
+        <InfoItem label="Currency / FX" value={`${po.currency} · ${po.exchangeRate.toLocaleString()}`} />
+        <InfoItem label="Final total" value={money(po.grandTotal, po.currency)} />
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
@@ -207,6 +378,25 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           <div className="mt-2 text-2xl font-bold text-indigo-700">{po.remainingUnits}</div>
         </div>
       </div>
+
+      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <InfoItem label="Subtotal" value={money(po.subtotal, po.currency)} />
+        <InfoItem label="Discount" value={money(po.discountAmount, po.currency)} />
+        <InfoItem label="VAT / Tax" value={money(po.taxAmount, po.currency)} />
+        <InfoItem label="Shipping" value={money(po.shippingAmount, po.currency)} />
+      </div>
+
+      {po.rejectionReason ? (
+        <div className="mb-5 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-[11px] text-rose-700">
+          <b>Rejection reason:</b> {po.rejectionReason}
+        </div>
+      ) : null}
+
+      {po.cancellationReason ? (
+        <div className="mb-5 rounded-2xl border border-slate-200 bg-slate-100 p-4 text-[11px] text-slate-600">
+          <b>Cancellation reason:</b> {po.cancellationReason}
+        </div>
+      ) : null}
 
       <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4">
         <div className="mb-2 flex items-center justify-between">
@@ -297,6 +487,106 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             <div className="mt-1 text-[11px] text-slate-600">{po.notes}</div>
           </div>
         ) : null}
+      </div>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
+        <div className="rounded-2xl border border-slate-200 bg-white">
+          <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-[14px] font-bold text-[#14203a]">Documents & attachments</div>
+              <div className="mt-1 text-[10px] text-slate-400">PO, supplier invoice and packing-list files.</div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <select
+                value={attachmentType}
+                onChange={(event) => setAttachmentType(event.target.value as typeof attachmentType)}
+                className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[10px]"
+              >
+                <option value="purchase_order">Purchase order</option>
+                <option value="supplier_invoice">Supplier invoice</option>
+                <option value="packing_list">Packing list</option>
+                <option value="other">Other</option>
+              </select>
+              <label className="cursor-pointer rounded-lg bg-[#14203a] px-3 py-2 text-[10px] font-bold text-white">
+                Upload file
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="application/pdf,image/*"
+                  disabled={saving}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    void uploadAttachment(file);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {attachments.map((attachment) => (
+              <div key={attachment.id} className="flex items-center justify-between gap-3 p-4">
+                <div className="min-w-0">
+                  <a
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block truncate text-[11px] font-bold text-indigo-600 hover:underline"
+                  >
+                    {attachment.fileName}
+                  </a>
+                  <div className="mt-1 text-[9px] text-slate-400">
+                    {attachment.attachmentType.replaceAll("_", " ")}
+                    {attachment.sizeBytes != null ? ` · ${Math.ceil(attachment.sizeBytes / 1024)} KB` : ""}
+                  </div>
+                </div>
+                {isAdmin ? (
+                  <button
+                    onClick={() => {
+                      if (!window.confirm("Delete this attachment?")) return;
+                      setSaving(true);
+                      void deleteProcurementAttachment(attachment)
+                        .then(() => load(false))
+                        .catch((cause) => toast.error(cause instanceof Error ? cause.message : "Delete failed."))
+                        .finally(() => setSaving(false));
+                    }}
+                    className="text-[10px] font-bold text-rose-600"
+                  >
+                    Delete
+                  </button>
+                ) : null}
+              </div>
+            ))}
+            {!attachments.length ? (
+              <div className="p-6 text-center text-[10px] text-slate-400">No documents uploaded yet.</div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 p-4">
+            <div className="text-[14px] font-bold text-[#14203a]">PO timeline</div>
+            <div className="mt-1 text-[10px] text-slate-400">Immutable procurement audit events.</div>
+          </div>
+          <div className="max-h-[420px] overflow-y-auto p-4">
+            <div className="space-y-4">
+              {events.map((event) => (
+                <div key={event.id} className="relative pl-5">
+                  <span className="absolute left-0 top-1 size-2 rounded-full bg-indigo-500" />
+                  <div className="text-[10px] font-bold text-slate-700">
+                    {event.type.replaceAll("_", " ")}
+                  </div>
+                  <div className="mt-1 text-[9px] text-slate-400">
+                    {new Date(event.createdAt).toLocaleString()}
+                  </div>
+                </div>
+              ))}
+              {!events.length ? (
+                <div className="py-6 text-center text-[10px] text-slate-400">No audit events yet.</div>
+              ) : null}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

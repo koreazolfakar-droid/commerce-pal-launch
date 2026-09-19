@@ -1007,6 +1007,7 @@ export type Database = {
       store_product_variants: {
         Row: {
           allow_backorder: boolean
+          average_cost: number
           barcode: string | null
           compare_at_price: number | null
           created_at: string
@@ -1025,6 +1026,7 @@ export type Database = {
         }
         Insert: {
           allow_backorder?: boolean
+          average_cost?: number
           barcode?: string | null
           compare_at_price?: number | null
           created_at?: string
@@ -1043,6 +1045,7 @@ export type Database = {
         }
         Update: {
           allow_backorder?: boolean
+          average_cost?: number
           barcode?: string | null
           compare_at_price?: number | null
           created_at?: string
@@ -1072,6 +1075,7 @@ export type Database = {
       store_products: {
         Row: {
           allow_backorder: boolean
+          average_cost: number
           barcode: string | null
           base_price: number
           best_seller: boolean
@@ -1103,6 +1107,7 @@ export type Database = {
         }
         Insert: {
           allow_backorder?: boolean
+          average_cost?: number
           barcode?: string | null
           base_price?: number
           best_seller?: boolean
@@ -1134,6 +1139,7 @@ export type Database = {
         }
         Update: {
           allow_backorder?: boolean
+          average_cost?: number
           barcode?: string | null
           base_price?: number
           best_seller?: boolean
@@ -1176,6 +1182,140 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "store_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_procurement_attachments: {
+        Row: {
+          attachment_type: string
+          created_at: string
+          file_name: string
+          id: string
+          mime_type: string | null
+          purchase_order_id: string | null
+          receiving_id: string | null
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          attachment_type?: string
+          created_at?: string
+          file_name: string
+          id?: string
+          mime_type?: string | null
+          purchase_order_id?: string | null
+          receiving_id?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          attachment_type?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime_type?: string | null
+          purchase_order_id?: string | null
+          receiving_id?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_procurement_attachments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "store_purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_procurement_attachments_receiving_id_fkey"
+            columns: ["receiving_id"]
+            isOneToOne: false
+            referencedRelation: "store_receivings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_procurement_locations: {
+        Row: {
+          address: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      store_receiving_serials: {
+        Row: {
+          condition: string
+          created_at: string
+          created_by: string | null
+          id: string
+          imei1: string | null
+          imei2: string | null
+          inventory_status: string
+          receiving_item_id: string
+          serial_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          condition?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imei1?: string | null
+          imei2?: string | null
+          inventory_status?: string
+          receiving_item_id: string
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imei1?: string | null
+          imei2?: string | null
+          inventory_status?: string
+          receiving_item_id?: string
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_receiving_serials_receiving_item_id_fkey"
+            columns: ["receiving_item_id"]
+            isOneToOne: false
+            referencedRelation: "store_receiving_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1240,45 +1380,91 @@ export type Database = {
       }
       store_purchase_orders: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           created_by: string | null
           currency: string
+          discount_amount: number
+          exchange_rate: number
           expected_at: string | null
           id: string
+          location_id: string | null
           notes: string | null
           ordered_at: string | null
           po_number: string
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          shipping_amount: number
           status: string
           supplier_id: string
+          tax_amount: number
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
+          discount_amount?: number
+          exchange_rate?: number
           expected_at?: string | null
           id?: string
+          location_id?: string | null
           notes?: string | null
           ordered_at?: string | null
           po_number: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          shipping_amount?: number
           status?: string
           supplier_id: string
+          tax_amount?: number
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
+          discount_amount?: number
+          exchange_rate?: number
           expected_at?: string | null
           id?: string
+          location_id?: string | null
           notes?: string | null
           ordered_at?: string | null
           po_number?: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          shipping_amount?: number
           status?: string
           supplier_id?: string
+          tax_amount?: number
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "store_purchase_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "store_procurement_locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "store_purchase_orders_supplier_id_fkey"
             columns: ["supplier_id"]
@@ -1371,6 +1557,7 @@ export type Database = {
           received_by: string
           receiving_employee_label: string | null
           status: string
+          supplier_id: string
           updated_at: string
         }
         Insert: {
@@ -1386,6 +1573,7 @@ export type Database = {
           received_by?: string
           receiving_employee_label?: string | null
           status?: string
+          supplier_id?: string
           updated_at?: string
         }
         Update: {
@@ -1401,6 +1589,7 @@ export type Database = {
           received_by?: string
           receiving_employee_label?: string | null
           status?: string
+          supplier_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -1409,6 +1598,13 @@ export type Database = {
             columns: ["purchase_order_id"]
             isOneToOne: false
             referencedRelation: "store_purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_receivings_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "store_suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -1501,6 +1697,14 @@ export type Database = {
           new_stock: number
         }[]
       }
+      approve_store_purchase_order: {
+        Args: { p_purchase_order_id: string }
+        Returns: string
+      }
+      cancel_store_purchase_order: {
+        Args: { p_purchase_order_id: string; p_reason: string }
+        Returns: string
+      }
       approve_store_receiving: {
         Args: { p_receiving_id: string }
         Returns: {
@@ -1510,6 +1714,10 @@ export type Database = {
           receiving_id: string
           stock_units_added: number
         }[]
+      }
+      close_store_purchase_order: {
+        Args: { p_purchase_order_id: string }
+        Returns: string
       }
       consume_edge_rate_limit: {
         Args: { _key: string; _limit: number; _window_seconds: number }
@@ -1704,6 +1912,22 @@ export type Database = {
         }
         Returns: string
       }
+      create_store_purchase_order_v2: {
+        Args: {
+          p_currency: string
+          p_discount_amount: number
+          p_exchange_rate: number
+          p_expected_at: string | null
+          p_items: Json
+          p_location_id: string | null
+          p_notes: string | null
+          p_po_number: string
+          p_shipping_amount: number
+          p_supplier_id: string
+          p_tax_amount: number
+        }
+        Returns: string
+      }
       create_store_receiving: {
         Args: {
           p_invoice_number: string
@@ -1737,6 +1961,10 @@ export type Database = {
       delete_store_product_variant_safe: {
         Args: { p_variant_id: string }
         Returns: undefined
+      }
+      delete_store_purchase_order_draft: {
+        Args: { p_purchase_order_id: string }
+        Returns: string
       }
       duplicate_store_product: {
         Args: { p_product_id: string }
@@ -1803,6 +2031,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      replace_store_receiving_serials: {
+        Args: { p_receiving_item_id: string; p_serials: Json }
+        Returns: number
+      }
       reorder_cms_hero_slides: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_categories: { Args: { p_items: Json }; Returns: undefined }
@@ -1835,8 +2067,51 @@ export type Database = {
         Args: { p_product_ids: string[]; p_status: string }
         Returns: number
       }
+      issue_store_purchase_order: {
+        Args: { p_purchase_order_id: string }
+        Returns: string
+      }
+      reject_store_purchase_order: {
+        Args: { p_purchase_order_id: string; p_reason: string }
+        Returns: string
+      }
+      reopen_store_purchase_order: {
+        Args: { p_purchase_order_id: string }
+        Returns: string
+      }
       submit_store_purchase_order: {
         Args: { p_purchase_order_id: string }
+        Returns: string
+      }
+      update_store_purchase_order_draft: {
+        Args: {
+          p_currency: string
+          p_discount_amount: number
+          p_exchange_rate: number
+          p_expected_at: string | null
+          p_items: Json
+          p_location_id: string | null
+          p_notes: string | null
+          p_po_number: string
+          p_purchase_order_id: string
+          p_shipping_amount: number
+          p_supplier_id: string
+          p_tax_amount: number
+        }
+        Returns: string
+      }
+      update_store_receiving_draft: {
+        Args: {
+          p_invoice_number: string
+          p_lines: Json
+          p_notes: string | null
+          p_receiving_employee_label: string | null
+          p_receiving_id: string
+        }
+        Returns: string
+      }
+      void_store_receiving: {
+        Args: { p_reason: string; p_receiving_id: string }
         Returns: string
       }
       update_cms_hero_slide: {
