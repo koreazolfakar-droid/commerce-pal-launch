@@ -54,10 +54,11 @@ test("password Edge Function authenticates, authorizes, and rechecks HIBP server
   assert.match(passwordEdge, /admin\.auth\.getUser\(token\)/);
   assert.match(passwordEdge, /claims\.aal !== "aal2"/);
   assert.match(passwordEdge, /from\("user_roles"\)/);
-  assert.match(passwordEdge, /roleRow\.role !== "admin"/);
-  assert.match(passwordEdge, /roleRow\.role !== "editor"/);
-  assert.match(passwordEdge, /mfa_required !== true/);
-  assert.match(passwordEdge, /mfa_enrolled_at/);
+  assert.match(passwordEdge, /row\.role === "admin"/);
+  assert.match(passwordEdge, /row\.role === "editor"/);
+  assert.match(passwordEdge, /row\.mfa_required === true/);
+  assert.match(passwordEdge, /Boolean\(row\.mfa_enrolled_at\)/);
+  assert.match(passwordEdge, /request_too_large/);
 
   assert.match(passwordEdge, /crypto\.subtle\.digest\("SHA-1"/);
   assert.match(passwordEdge, /digest\.slice\(0, 5\)/);
@@ -81,6 +82,7 @@ test("password Edge Function authenticates, authorizes, and rechecks HIBP server
 });
 
 test("recovery flow requires MFA before exposing the password update path", () => {
+  assert.match(login, /recoveryMode \|\| mfaMode \? "mfa" : "signin"/);
   assert.match(login, /if \(recoveryMode\)[\s\S]+setView\("recovery"\)/);
   assert.match(login, /setView\("mfa"\)/);
   assert.match(login, /if \(recoveryMode\)[\s\S]+\/dashboard\/login\?mode=recovery/);
