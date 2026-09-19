@@ -64,5 +64,5 @@ workflows:
       - storefront-ci:
           filters:
             branches:
-              ignore:
-                - main
+              only:
+                - /^important\/.*/
