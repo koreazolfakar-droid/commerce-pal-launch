@@ -4,11 +4,11 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
   deletePurchaseOrderDraft,
-  loadReceivingWorkspace,
+  loadPurchaseOrderEditData,
   updatePurchaseOrderDraft,
   type ProcurementProductOption,
   type PurchaseOrderSummary,
-  type ReceivingWorkspace,
+  type PurchaseOrderEditData,
 } from "@/dashboard/data/receiving";
 
 type DraftLine = {
@@ -39,7 +39,7 @@ function optionKeyForLine(
 
 export default function PurchaseOrderEditPage({ id }: { id: string }) {
   const [, navigate] = useLocation();
-  const [workspace, setWorkspace] = useState<ReceivingWorkspace | null>(null);
+  const [editData, setEditData] = useState<PurchaseOrderEditData | null>(null);
   const [po, setPo] = useState<PurchaseOrderSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,12 +60,12 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const next = await loadReceivingWorkspace();
-      const found = next.purchaseOrders.find((item) => item.id === id) ?? null;
+      const next = await loadPurchaseOrderEditData(id);
+      const found = next.purchaseOrder;
       if (!found) throw new Error("Purchase order was not found.");
       if (found.status !== "draft") throw new Error("Only draft purchase orders can be edited.");
 
-      setWorkspace(next);
+      setEditData(next);
       setPo(found);
       setSupplierId(found.supplierId);
       setLocationId(found.locationId ?? next.locations.find((location) => location.isActive)?.id ?? "");
@@ -107,7 +107,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
   }, [discount, lines, shipping, tax]);
 
   const save = async () => {
-    if (!workspace || !po) return;
+    if (!editData || !po) return;
     if (!supplierId) return toast.error("Select a supplier.");
     if (!locationId) return toast.error("Select a store / warehouse.");
     if (!poNumber.trim()) return toast.error("PO number is required.");
@@ -115,7 +115,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
 
     const used = new Set<string>();
     const items = lines.map((line) => {
-      const option = workspace.productOptions.find((item) => item.key === line.optionKey);
+      const option = editData.productOptions.find((item) => item.key === line.optionKey);
       if (!option) throw new Error("Select a valid product.");
       if (used.has(option.key)) throw new Error("The same product / variant cannot be added twice.");
       used.add(option.key);
@@ -168,7 +168,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
     );
   }
 
-  if (error || !workspace || !po) {
+  if (error || !editData || !po) {
     return (
       <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6">
         <div className="text-sm font-bold text-rose-700">Purchase order cannot be edited.</div>
@@ -183,8 +183,8 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
     );
   }
 
-  const suppliers = workspace.suppliers.filter((supplier) => supplier.isActive);
-  const locations = workspace.locations.filter((location) => location.isActive);
+  const suppliers = editData.suppliers.filter((supplier) => supplier.isActive);
+  const locations = editData.locations.filter((location) => location.isActive);
 
   return (
     <div>
@@ -252,7 +252,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
                   onChange={(e) => setLines((current) => current.map((item) => item.id === line.id ? { ...item, optionKey: e.target.value } : item))}
                   className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
                 >
-                  {workspace.productOptions.map((option) => (
+                  {editData.productOptions.map((option) => (
                     <option key={option.key} value={option.key}>{option.title} {option.sku ? `· ${option.sku}` : ""} · stock {option.currentStock}</option>
                   ))}
                 </select>
@@ -272,7 +272,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
 
         <button
           onClick={() => {
-            const option = workspace.productOptions[0];
+            const option = editData.productOptions[0];
             if (!option) return;
             setLines((current) => [...current, { id: crypto.randomUUID(), optionKey: option.key, expectedQuantity: "1", unitCost: "0" }]);
           }}
