@@ -30,3 +30,14 @@ test("router preloads only after navigation intent", async () => {
   assert.match(router, /defaultPreload:\s*"intent"/);
   assert.match(router, /defaultPreloadStaleTime:\s*30_000/);
 });
+
+
+test("small storefront collections avoid hydrating the full native snapshot", async () => {
+  const nativeStore = await read("src/lib/nativeStore.ts");
+
+  assert.match(nativeStore, /SMALL_COLLECTION_FAST_PATH_MAX\s*=\s*12/);
+  assert.match(nativeStore, /pageSize <= SMALL_COLLECTION_FAST_PATH_MAX/);
+  assert.match(nativeStore, /fetchSmallCollectionByHandle\(handle, pageSize\)/);
+  assert.match(nativeStore, /\.eq\("collection_id", row\.id\)/);
+  assert.match(nativeStore, /\.in\("product_id", activeProductIds\)/);
+});

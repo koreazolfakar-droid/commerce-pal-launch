@@ -326,10 +326,150 @@ export async function fetchCollections(first = 100): Promise<ShopifyCollection[]
   }));
 }
 
+const SMALL_COLLECTION_FAST_PATH_MAX = 12;
+
+function mapCollection(row: CollectionRow): ShopifyCollection {
+  return {
+    id: row.id,
+    handle: row.handle,
+    title: row.title,
+    description: row.description,
+    image: row.image_url ? { url: row.image_url, altText: row.title } : null,
+  };
+}
+
+async function fetchSmallCollectionByHandle(
+  handle: string,
+  pageSize: number,
+): Promise<{ collection: ShopifyCollection; products: ShopifyProduct[] } | null> {
+  const normalizedHandle = handle.trim().toLowerCase();
+  if (!normalizedHandle) return null;
+
+  const collectionResult = await publicSupabase
+    .from("store_collections")
+    .select("*")
+    .eq("handle", normalizedHandle)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (collectionResult.error) {
+    throw new Error(`Supabase collection failed: ${collectionResult.error.message}`);
+  }
+
+  const row = collectionResult.data as CollectionRow | null;
+  if (!row) return null;
+
+  const collection = mapCollection(row);
+  if (pageSize <= 0) return { collection, products: [] };
+
+  const linkResult = await publicSupabase
+    .from("store_collection_products")
+    .select("*")
+    .eq("collection_id", row.id)
+    .order("sort_order", { ascending: true });
+  const orderedLinks = assertResult(linkResult, "collection links");
+  if (!orderedLinks.length) return { collection, products: [] };
+
+  const linkedProductIds = [...new Set(orderedLinks.map((link) => link.product_id))];
+  const productResult = await publicSupabase
+    .from("store_products")
+    .select("*")
+    .in("id", linkedProductIds)
+    .eq("status", "active");
+  const productRows = assertResult(productResult, "collection products");
+  const productRowsById = new Map(productRows.map((product) => [product.id, product]));
+  const selectedRows = orderedLinks
+    .map((link) => productRowsById.get(link.product_id))
+    .filter((product): product is ProductRow => Boolean(product))
+    .slice(0, pageSize);
+
+  if (!selectedRows.length) return { collection, products: [] };
+
+  const activeProductIds = selectedRows.map((product) => product.id);
+  const [variantResult, imageResult, productLinkResult] = await Promise.all([
+    publicSupabase
+      .from("store_product_variants")
+      .select("*")
+      .in("product_id", activeProductIds)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_product_images")
+      .select("*")
+      .in("product_id", activeProductIds)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_collection_products")
+      .select("*")
+      .in("product_id", activeProductIds)
+      .order("sort_order", { ascending: true }),
+  ]);
+
+  const variants = assertResult(variantResult, "collection product variants");
+  const images = assertResult(imageResult, "collection product images");
+  const productLinks = assertResult(productLinkResult, "collection product links");
+  const variantsByProduct = groupByProduct(variants);
+  const imagesByProduct = groupByProduct(images);
+  const linksByProduct = groupByProduct(productLinks);
+
+  const relatedCollectionIds = [
+    ...new Set(productLinks.map((link) => link.collection_id).filter((id) => id !== row.id)),
+  ];
+  let relatedCollections: CollectionRow[] = [];
+  if (relatedCollectionIds.length) {
+    const relatedCollectionResult = await publicSupabase
+      .from("store_collections")
+      .select("*")
+      .in("id", relatedCollectionIds)
+      .eq("is_active", true);
+    relatedCollections = assertResult(relatedCollectionResult, "related collections");
+  }
+  const collectionsById = new Map<string, CollectionRow>([
+    [row.id, row],
+    ...relatedCollections.map((related) => [related.id, related] as const),
+  ]);
+
+  const brandIds = [
+    ...new Set(
+      selectedRows
+        .map((product) => product.brand_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  let brands: BrandRow[] = [];
+  if (brandIds.length) {
+    const brandResult = await publicSupabase
+      .from("cms_brands")
+      .select("*")
+      .in("id", brandIds)
+      .eq("is_visible", true);
+    brands = assertResult(brandResult, "collection product brands");
+  }
+  const brandsById = new Map(brands.map((brand) => [brand.id, brand]));
+
+  const products = selectedRows.map((productRow) => {
+    const productCollections = (linksByProduct.get(productRow.id) ?? [])
+      .map((link) => collectionsById.get(link.collection_id))
+      .filter((entry): entry is CollectionRow => Boolean(entry));
+    return buildProduct(
+      productRow,
+      variantsByProduct.get(productRow.id) ?? [],
+      imagesByProduct.get(productRow.id) ?? [],
+      productCollections,
+      productRow.brand_id ? brandsById.get(productRow.brand_id) : undefined,
+    );
+  });
+
+  return { collection, products };
+}
+
 export async function fetchCollectionByHandle(
   handle: string,
   pageSize = 48,
 ): Promise<{ collection: ShopifyCollection; products: ShopifyProduct[] } | null> {
+  if (pageSize <= SMALL_COLLECTION_FAST_PATH_MAX) {
+    return fetchSmallCollectionByHandle(handle, pageSize);
+  }
+
   const snapshot = await loadSnapshot();
   const row = snapshot.collections.find(
     (collection) => collection.handle.toLowerCase() === handle.trim().toLowerCase(),
@@ -346,16 +486,7 @@ export async function fetchCollectionByHandle(
     .filter((product): product is ShopifyProduct => Boolean(product))
     .slice(0, Math.max(0, pageSize));
 
-  return {
-    collection: {
-      id: row.id,
-      handle: row.handle,
-      title: row.title,
-      description: row.description,
-      image: row.image_url ? { url: row.image_url, altText: row.title } : null,
-    },
-    products,
-  };
+  return { collection: mapCollection(row), products };
 }
 
 export async function fetchNewestProducts(first = 12) {
