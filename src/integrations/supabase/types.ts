@@ -102,8 +102,11 @@ export type Database = {
           button_label_en: string | null
           button_style: string
           content_alignment: string
+          content_theme: string
           created_at: string
           ends_at: string | null
+          eyebrow_ar: string | null
+          eyebrow_en: string | null
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
@@ -114,6 +117,12 @@ export type Database = {
           mobile_image_url: string | null
           open_in_new_tab: boolean
           overlay_opacity: number
+          secondary_button_label_ar: string | null
+          secondary_button_label_en: string | null
+          secondary_button_style: string
+          secondary_open_in_new_tab: boolean
+          secondary_target_type: string
+          secondary_target_value: string | null
           sort_order: number
           starts_at: string | null
           subtitle: string | null
@@ -132,8 +141,11 @@ export type Database = {
           button_label_en?: string | null
           button_style?: string
           content_alignment?: string
+          content_theme?: string
           created_at?: string
           ends_at?: string | null
+          eyebrow_ar?: string | null
+          eyebrow_en?: string | null
           id?: string
           image_alt_ar?: string | null
           image_alt_en?: string | null
@@ -144,6 +156,12 @@ export type Database = {
           mobile_image_url?: string | null
           open_in_new_tab?: boolean
           overlay_opacity?: number
+          secondary_button_label_ar?: string | null
+          secondary_button_label_en?: string | null
+          secondary_button_style?: string
+          secondary_open_in_new_tab?: boolean
+          secondary_target_type?: string
+          secondary_target_value?: string | null
           sort_order?: number
           starts_at?: string | null
           subtitle?: string | null
@@ -162,8 +180,11 @@ export type Database = {
           button_label_en?: string | null
           button_style?: string
           content_alignment?: string
+          content_theme?: string
           created_at?: string
           ends_at?: string | null
+          eyebrow_ar?: string | null
+          eyebrow_en?: string | null
           id?: string
           image_alt_ar?: string | null
           image_alt_en?: string | null
@@ -174,6 +195,12 @@ export type Database = {
           mobile_image_url?: string | null
           open_in_new_tab?: boolean
           overlay_opacity?: number
+          secondary_button_label_ar?: string | null
+          secondary_button_label_en?: string | null
+          secondary_button_style?: string
+          secondary_open_in_new_tab?: boolean
+          secondary_target_type?: string
+          secondary_target_value?: string | null
           sort_order?: number
           starts_at?: string | null
           subtitle?: string | null
@@ -921,6 +948,60 @@ export type Database = {
         }
         Relationships: []
       }
+      store_procurement_attachments: {
+        Row: {
+          attachment_type: string
+          created_at: string
+          file_name: string
+          id: string
+          mime_type: string | null
+          purchase_order_id: string | null
+          receiving_id: string | null
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          attachment_type?: string
+          created_at?: string
+          file_name: string
+          id?: string
+          mime_type?: string | null
+          purchase_order_id?: string | null
+          receiving_id?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          attachment_type?: string
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime_type?: string | null
+          purchase_order_id?: string | null
+          receiving_id?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_procurement_attachments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "store_purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_procurement_attachments_receiving_id_fkey"
+            columns: ["receiving_id"]
+            isOneToOne: false
+            referencedRelation: "store_receivings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_procurement_events: {
         Row: {
           actor_id: string | null
@@ -965,6 +1046,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      store_procurement_locations: {
+        Row: {
+          address: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       store_product_images: {
         Row: {
@@ -1182,140 +1296,6 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "store_categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      store_procurement_attachments: {
-        Row: {
-          attachment_type: string
-          created_at: string
-          file_name: string
-          id: string
-          mime_type: string | null
-          purchase_order_id: string | null
-          receiving_id: string | null
-          size_bytes: number | null
-          storage_path: string
-          uploaded_by: string | null
-        }
-        Insert: {
-          attachment_type?: string
-          created_at?: string
-          file_name: string
-          id?: string
-          mime_type?: string | null
-          purchase_order_id?: string | null
-          receiving_id?: string | null
-          size_bytes?: number | null
-          storage_path: string
-          uploaded_by?: string | null
-        }
-        Update: {
-          attachment_type?: string
-          created_at?: string
-          file_name?: string
-          id?: string
-          mime_type?: string | null
-          purchase_order_id?: string | null
-          receiving_id?: string | null
-          size_bytes?: number | null
-          storage_path?: string
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "store_procurement_attachments_purchase_order_id_fkey"
-            columns: ["purchase_order_id"]
-            isOneToOne: false
-            referencedRelation: "store_purchase_orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "store_procurement_attachments_receiving_id_fkey"
-            columns: ["receiving_id"]
-            isOneToOne: false
-            referencedRelation: "store_receivings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      store_procurement_locations: {
-        Row: {
-          address: string | null
-          code: string
-          created_at: string
-          created_by: string | null
-          id: string
-          is_active: boolean
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          address?: string | null
-          code: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_active?: boolean
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          address?: string | null
-          code?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_active?: boolean
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      store_receiving_serials: {
-        Row: {
-          condition: string
-          created_at: string
-          created_by: string | null
-          id: string
-          imei1: string | null
-          imei2: string | null
-          inventory_status: string
-          receiving_item_id: string
-          serial_number: string | null
-          updated_at: string
-        }
-        Insert: {
-          condition?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          imei1?: string | null
-          imei2?: string | null
-          inventory_status?: string
-          receiving_item_id: string
-          serial_number?: string | null
-          updated_at?: string
-        }
-        Update: {
-          condition?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          imei1?: string | null
-          imei2?: string | null
-          inventory_status?: string
-          receiving_item_id?: string
-          serial_number?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "store_receiving_serials_receiving_item_id_fkey"
-            columns: ["receiving_item_id"]
-            isOneToOne: false
-            referencedRelation: "store_receiving_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1543,6 +1523,53 @@ export type Database = {
           },
         ]
       }
+      store_receiving_serials: {
+        Row: {
+          condition: string
+          created_at: string
+          created_by: string | null
+          id: string
+          imei1: string | null
+          imei2: string | null
+          inventory_status: string
+          receiving_item_id: string
+          serial_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          condition?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imei1?: string | null
+          imei2?: string | null
+          inventory_status?: string
+          receiving_item_id: string
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imei1?: string | null
+          imei2?: string | null
+          inventory_status?: string
+          receiving_item_id?: string
+          serial_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_receiving_serials_receiving_item_id_fkey"
+            columns: ["receiving_item_id"]
+            isOneToOne: false
+            referencedRelation: "store_receiving_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_receivings: {
         Row: {
           approved_at: string | null
@@ -1573,7 +1600,7 @@ export type Database = {
           received_by?: string
           receiving_employee_label?: string | null
           status?: string
-          supplier_id?: string
+          supplier_id: string
           updated_at?: string
         }
         Update: {
@@ -1701,10 +1728,6 @@ export type Database = {
         Args: { p_purchase_order_id: string }
         Returns: string
       }
-      cancel_store_purchase_order: {
-        Args: { p_purchase_order_id: string; p_reason: string }
-        Returns: string
-      }
       approve_store_receiving: {
         Args: { p_receiving_id: string }
         Returns: {
@@ -1714,6 +1737,10 @@ export type Database = {
           receiving_id: string
           stock_units_added: number
         }[]
+      }
+      cancel_store_purchase_order: {
+        Args: { p_purchase_order_id: string; p_reason: string }
+        Returns: string
       }
       close_store_purchase_order: {
         Args: { p_purchase_order_id: string }
@@ -1757,8 +1784,11 @@ export type Database = {
           button_label_en: string | null
           button_style: string
           content_alignment: string
+          content_theme: string
           created_at: string
           ends_at: string | null
+          eyebrow_ar: string | null
+          eyebrow_en: string | null
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
@@ -1769,6 +1799,91 @@ export type Database = {
           mobile_image_url: string | null
           open_in_new_tab: boolean
           overlay_opacity: number
+          secondary_button_label_ar: string | null
+          secondary_button_label_en: string | null
+          secondary_button_style: string
+          secondary_open_in_new_tab: boolean
+          secondary_target_type: string
+          secondary_target_value: string | null
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          subtitle_ar: string | null
+          subtitle_en: string | null
+          target_type: string
+          target_value: string | null
+          title: string | null
+          title_ar: string | null
+          title_en: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cms_hero_slides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_cms_hero_slide_v2: {
+        Args: {
+          p_button_label_ar?: string
+          p_button_label_en?: string
+          p_button_style?: string
+          p_content_alignment?: string
+          p_content_theme?: string
+          p_ends_at?: string
+          p_eyebrow_ar?: string
+          p_eyebrow_en?: string
+          p_image_alt_ar?: string
+          p_image_alt_en?: string
+          p_image_url?: string
+          p_is_published?: boolean
+          p_mobile_image_alt_ar?: string
+          p_mobile_image_alt_en?: string
+          p_mobile_image_url?: string
+          p_open_in_new_tab?: boolean
+          p_overlay_opacity?: number
+          p_secondary_button_label_ar?: string
+          p_secondary_button_label_en?: string
+          p_secondary_button_style?: string
+          p_secondary_open_in_new_tab?: boolean
+          p_secondary_target_type?: string
+          p_secondary_target_value?: string
+          p_starts_at?: string
+          p_subtitle_ar?: string
+          p_subtitle_en?: string
+          p_target_type?: string
+          p_target_value?: string
+          p_title_ar?: string
+          p_title_en?: string
+        }
+        Returns: {
+          button_label: string | null
+          button_label_ar: string | null
+          button_label_en: string | null
+          button_style: string
+          content_alignment: string
+          content_theme: string
+          created_at: string
+          ends_at: string | null
+          eyebrow_ar: string | null
+          eyebrow_en: string | null
+          id: string
+          image_alt_ar: string | null
+          image_alt_en: string | null
+          image_url: string | null
+          is_published: boolean
+          mobile_image_alt_ar: string | null
+          mobile_image_alt_en: string | null
+          mobile_image_url: string | null
+          open_in_new_tab: boolean
+          overlay_opacity: number
+          secondary_button_label_ar: string | null
+          secondary_button_label_en: string | null
+          secondary_button_style: string
+          secondary_open_in_new_tab: boolean
+          secondary_target_type: string
+          secondary_target_value: string | null
           sort_order: number
           starts_at: string | null
           subtitle: string | null
@@ -1879,6 +1994,7 @@ export type Database = {
         }
         Returns: {
           allow_backorder: boolean
+          average_cost: number
           barcode: string | null
           compare_at_price: number | null
           created_at: string
@@ -1917,10 +2033,10 @@ export type Database = {
           p_currency: string
           p_discount_amount: number
           p_exchange_rate: number
-          p_expected_at: string | null
+          p_expected_at: string
           p_items: Json
-          p_location_id: string | null
-          p_notes: string | null
+          p_location_id: string
+          p_notes: string
           p_po_number: string
           p_shipping_amount: number
           p_supplier_id: string
@@ -2001,6 +2117,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      issue_store_purchase_order: {
+        Args: { p_purchase_order_id: string }
+        Returns: string
+      }
       log_dashboard_security_event: {
         Args: { p_event_type: string; p_metadata?: Json }
         Returns: string
@@ -2031,9 +2151,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      replace_store_receiving_serials: {
-        Args: { p_receiving_item_id: string; p_serials: Json }
-        Returns: number
+      reject_store_purchase_order: {
+        Args: { p_purchase_order_id: string; p_reason: string }
+        Returns: string
+      }
+      reopen_store_purchase_order: {
+        Args: { p_purchase_order_id: string }
+        Returns: string
       }
       reorder_cms_hero_slides: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
@@ -2042,6 +2166,10 @@ export type Database = {
       reorder_store_product_variants: {
         Args: { p_items: Json }
         Returns: undefined
+      }
+      replace_store_receiving_serials: {
+        Args: { p_receiving_item_id: string; p_serials: Json }
+        Returns: number
       }
       set_store_collection_products: {
         Args: { p_collection_id: string; p_product_ids: string[] }
@@ -2067,51 +2195,8 @@ export type Database = {
         Args: { p_product_ids: string[]; p_status: string }
         Returns: number
       }
-      issue_store_purchase_order: {
-        Args: { p_purchase_order_id: string }
-        Returns: string
-      }
-      reject_store_purchase_order: {
-        Args: { p_purchase_order_id: string; p_reason: string }
-        Returns: string
-      }
-      reopen_store_purchase_order: {
-        Args: { p_purchase_order_id: string }
-        Returns: string
-      }
       submit_store_purchase_order: {
         Args: { p_purchase_order_id: string }
-        Returns: string
-      }
-      update_store_purchase_order_draft: {
-        Args: {
-          p_currency: string
-          p_discount_amount: number
-          p_exchange_rate: number
-          p_expected_at: string | null
-          p_items: Json
-          p_location_id: string | null
-          p_notes: string | null
-          p_po_number: string
-          p_purchase_order_id: string
-          p_shipping_amount: number
-          p_supplier_id: string
-          p_tax_amount: number
-        }
-        Returns: string
-      }
-      update_store_receiving_draft: {
-        Args: {
-          p_invoice_number: string
-          p_lines: Json
-          p_notes: string | null
-          p_receiving_employee_label: string | null
-          p_receiving_id: string
-        }
-        Returns: string
-      }
-      void_store_receiving: {
-        Args: { p_reason: string; p_receiving_id: string }
         Returns: string
       }
       update_cms_hero_slide: {
@@ -2145,8 +2230,11 @@ export type Database = {
           button_label_en: string | null
           button_style: string
           content_alignment: string
+          content_theme: string
           created_at: string
           ends_at: string | null
+          eyebrow_ar: string | null
+          eyebrow_en: string | null
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
@@ -2157,6 +2245,92 @@ export type Database = {
           mobile_image_url: string | null
           open_in_new_tab: boolean
           overlay_opacity: number
+          secondary_button_label_ar: string | null
+          secondary_button_label_en: string | null
+          secondary_button_style: string
+          secondary_open_in_new_tab: boolean
+          secondary_target_type: string
+          secondary_target_value: string | null
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          subtitle_ar: string | null
+          subtitle_en: string | null
+          target_type: string
+          target_value: string | null
+          title: string | null
+          title_ar: string | null
+          title_en: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cms_hero_slides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_cms_hero_slide_v2: {
+        Args: {
+          p_button_label_ar?: string
+          p_button_label_en?: string
+          p_button_style?: string
+          p_content_alignment?: string
+          p_content_theme?: string
+          p_ends_at?: string
+          p_eyebrow_ar?: string
+          p_eyebrow_en?: string
+          p_image_alt_ar?: string
+          p_image_alt_en?: string
+          p_image_url?: string
+          p_is_published?: boolean
+          p_mobile_image_alt_ar?: string
+          p_mobile_image_alt_en?: string
+          p_mobile_image_url?: string
+          p_open_in_new_tab?: boolean
+          p_overlay_opacity?: number
+          p_secondary_button_label_ar?: string
+          p_secondary_button_label_en?: string
+          p_secondary_button_style?: string
+          p_secondary_open_in_new_tab?: boolean
+          p_secondary_target_type?: string
+          p_secondary_target_value?: string
+          p_slide_id: string
+          p_starts_at?: string
+          p_subtitle_ar?: string
+          p_subtitle_en?: string
+          p_target_type?: string
+          p_target_value?: string
+          p_title_ar?: string
+          p_title_en?: string
+        }
+        Returns: {
+          button_label: string | null
+          button_label_ar: string | null
+          button_label_en: string | null
+          button_style: string
+          content_alignment: string
+          content_theme: string
+          created_at: string
+          ends_at: string | null
+          eyebrow_ar: string | null
+          eyebrow_en: string | null
+          id: string
+          image_alt_ar: string | null
+          image_alt_en: string | null
+          image_url: string | null
+          is_published: boolean
+          mobile_image_alt_ar: string | null
+          mobile_image_alt_en: string | null
+          mobile_image_url: string | null
+          open_in_new_tab: boolean
+          overlay_opacity: number
+          secondary_button_label_ar: string | null
+          secondary_button_label_en: string | null
+          secondary_button_style: string
+          secondary_open_in_new_tab: boolean
+          secondary_target_type: string
+          secondary_target_value: string | null
           sort_order: number
           starts_at: string | null
           subtitle: string | null
@@ -2345,6 +2519,7 @@ export type Database = {
         }
         Returns: {
           allow_backorder: boolean
+          average_cost: number
           barcode: string | null
           compare_at_price: number | null
           created_at: string
@@ -2367,6 +2542,37 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      update_store_purchase_order_draft: {
+        Args: {
+          p_currency: string
+          p_discount_amount: number
+          p_exchange_rate: number
+          p_expected_at: string
+          p_items: Json
+          p_location_id: string
+          p_notes: string
+          p_po_number: string
+          p_purchase_order_id: string
+          p_shipping_amount: number
+          p_supplier_id: string
+          p_tax_amount: number
+        }
+        Returns: string
+      }
+      update_store_receiving_draft: {
+        Args: {
+          p_invoice_number: string
+          p_lines: Json
+          p_notes: string
+          p_receiving_employee_label: string
+          p_receiving_id: string
+        }
+        Returns: string
+      }
+      void_store_receiving: {
+        Args: { p_reason: string; p_receiving_id: string }
+        Returns: string
       }
     }
     Enums: {
