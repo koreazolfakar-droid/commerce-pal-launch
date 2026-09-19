@@ -32,6 +32,6 @@ export const PURCHASE_ASSURANCES: Assurance[] = [
   {
     icon: ShieldCheck,
     title: "Secure payment",
-    detail: "Encrypted checkout by Shopify",
+    detail: "Protected checkout by Space Call",
   },
 ];
