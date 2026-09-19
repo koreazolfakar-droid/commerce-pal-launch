@@ -72,7 +72,7 @@ export const navSections = [
   { label: "Store content", items: [{ label: "Homepage", href: "/dashboard/homepage", icon: "PanelsTopLeft" }, { label: "Hero banners", href: "/dashboard/homepage/hero", icon: "Image" }, { label: "Brands", href: "/dashboard/brands", icon: "Badge" }, { label: "Navigation", href: "/dashboard/navigation", icon: "Menu" }, { label: "Promotions", href: "/dashboard/promotions", icon: "BadgePercent" }] },
   { label: "Marketing", items: [{ label: "Campaigns", href: "/dashboard/marketing", icon: "Megaphone" }, { label: "Coupons", href: "/dashboard/coupons", icon: "TicketPercent" }, { label: "SEO", href: "/dashboard/seo", icon: "SearchCheck" }] },
   { label: "Management", items: [{ label: "Analytics", href: "/dashboard/analytics", icon: "ChartNoAxesCombined" }, { label: "Messages", href: "/dashboard/messages", icon: "Mail", badge: "3" }, { label: "Reviews", href: "/dashboard/reviews", icon: "Star" }, { label: "Media library", href: "/dashboard/media", icon: "FolderOpen" }] },
-  { label: "System", items: [{ label: "Users", href: "/dashboard/users", icon: "UserCog" }, { label: "Activity logs", href: "/dashboard/activity", icon: "ScrollText" }, { label: "Settings", href: "/dashboard/settings", icon: "Settings2" }] },
+  { label: "System", items: [{ label: "Users", href: "/dashboard/users", icon: "UserCog" }, { label: "Activity logs", href: "/dashboard/activity", icon: "ScrollText" }, { label: "Security", href: "/dashboard/security", icon: "LockKeyhole" }, { label: "Settings", href: "/dashboard/settings", icon: "Settings2" }] },
 ];
 
 export const pageMeta: Record<string, { eyebrow: string; title: string; description: string }> = {
@@ -93,5 +93,6 @@ export const pageMeta: Record<string, { eyebrow: string; title: string; descript
   "/dashboard/seo": { eyebrow: "Marketing / Discoverability", title: "SEO", description: "Prepare search and social metadata before integration." },
   "/dashboard/users": { eyebrow: "System / Access", title: "Users", description: "Manage admin team members and access roles." },
   "/dashboard/activity": { eyebrow: "System / Audit", title: "Activity logs", description: "Review the latest changes across the admin workspace." },
+  "/dashboard/security": { eyebrow: "System / Security", title: "Security Center", description: "Review MFA, session controls, bot protection and security activity." },
   "/dashboard/settings": { eyebrow: "System / Workspace", title: "Settings", description: "Configure the mock store workspace and future integrations." },
 };
