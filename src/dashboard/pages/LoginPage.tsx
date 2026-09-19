@@ -17,7 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/dashboard/i18n";
-import { useTheme } from "@/dashboard/contexts/ThemeContext";
+import { useTheme, type Theme } from "@/dashboard/contexts/ThemeContext";
 import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
 import TurnstileChallenge from "@/dashboard/components/auth/TurnstileChallenge";
 import {
@@ -200,7 +200,7 @@ function ThemeLanguageControls({
   theme,
   onThemeToggle,
 }: {
-  theme: LoginTheme;
+  theme: Theme;
   onThemeToggle: () => void;
 }) {
   const { lang, setLang } = useLanguage();
