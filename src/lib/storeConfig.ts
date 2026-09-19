@@ -14,6 +14,27 @@ const generatedVersion = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION_
 const defaultStoreName = value("VITE_STORE_NAME", "Space Call");
 const defaultWhatsappNumber = value("VITE_WHATSAPP_NUMBER", "96181813805");
 
+/** Public, non-secret Space Call settings. Secrets remain server-only environment variables. */
+export const STORE_CONFIG = Object.freeze({
+  socialInstagram: value("VITE_SOCIAL_INSTAGRAM", ""),
+  socialFacebook: value("VITE_SOCIAL_FACEBOOK", ""),
+  socialX: value("VITE_SOCIAL_X", ""),
+  socialYoutube: value("VITE_SOCIAL_YOUTUBE", ""),
+  name: defaultStoreName,
+  version: generatedVersion,
+  siteUrl: normalizedOrigin(value("VITE_SITE_URL", "https://spacecallapp.store")),
+  whatsappNumber: defaultWhatsappNumber.replace(/\D/g, ""),
+  invoiceLegalName: value("VITE_INVOICE_LEGAL_NAME", defaultStoreName),
+  invoiceAddress: value("VITE_INVOICE_ADDRESS", "Lebanon"),
+  invoicePhone: value("VITE_INVOICE_PHONE", defaultWhatsappNumber),
+  invoiceEmail: value("VITE_INVOICE_EMAIL", ""),
+});
+
+export const STORE_NAME = STORE_CONFIG.name;
+export const STORE_VERSION = STORE_CONFIG.version;
+export const SITE_URL = STORE_CONFIG.siteUrl;
+
+/** Customer order support stays on the Space Call domain. */
 export const SHOP_ACCOUNT_URL = `${SITE_URL}/help#account-orders`;
 
 export function storeUrl(path = "/") {
