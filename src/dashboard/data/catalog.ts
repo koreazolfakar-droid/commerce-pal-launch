@@ -38,6 +38,7 @@ export type DashboardMfaStatus = {
   role: DashboardRole;
   required: boolean;
   enrolledAt: string | null;
+  authenticatedAt: string | null;
   currentLevel: "aal1" | "aal2" | null;
   nextLevel: "aal1" | "aal2" | null;
   verifiedFactorId: string | null;
@@ -305,6 +306,7 @@ export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null
     role: roleRow.role,
     required: roleRow.mfa_required,
     enrolledAt: roleRow.mfa_enrolled_at,
+    authenticatedAt: user.last_sign_in_at ?? null,
     currentLevel,
     nextLevel,
     verifiedFactorId: verifiedFactor?.id ?? null,
