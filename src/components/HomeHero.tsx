@@ -97,7 +97,10 @@ export function HomeHero({
   );
 
   const usingCms = localizedCmsSlides.length > 0;
-  const slideCount = usingCms ? localizedCmsSlides.length : shopifySlides.length;
+  // CMS is the only visual source for the storefront hero. Never replay legacy
+  // Shopify artwork while CMS is loading or temporarily unavailable.
+  const legacyFallbackEnabled = false;
+  const slideCount = localizedCmsSlides.length;
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -119,7 +122,7 @@ export function HomeHero({
     ? localizedCmsSlides[activeIndex] ?? localizedCmsSlides[0]
     : undefined;
 
-  const shopifySlide = !usingCms
+  const shopifySlide = legacyFallbackEnabled && !usingCms
     ? shopifySlides[activeIndex] ?? shopifySlides[0]
     : undefined;
   const shopifyImage = shopifySlide?.image;
@@ -127,9 +130,11 @@ export function HomeHero({
     shopifySlide && shopifyImage && failedShopifySlideId !== shopifySlide.id,
   );
 
-  const heroFallbackProduct = effectiveHeroCollection?.products.find((product) =>
-    Boolean(product.node.images.edges[0]?.node.url),
-  );
+  const heroFallbackProduct = legacyFallbackEnabled
+    ? effectiveHeroCollection?.products.find((product) =>
+        Boolean(product.node.images.edges[0]?.node.url),
+      )
+    : undefined;
   const heroFallbackImage = heroFallbackProduct?.node.images.edges[0]?.node;
 
   const heroSource = cmsSlide
