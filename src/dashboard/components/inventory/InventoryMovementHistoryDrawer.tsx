@@ -3,6 +3,8 @@ import {
   History,
   Loader2,
   RefreshCw,
+  Search,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -147,7 +149,14 @@ export default function InventoryMovementHistoryDrawer({
   const [movementType, setMovementType] = useState<MovementTypeFilter>("all");
   const [referenceType, setReferenceType] = useState<ReferenceTypeFilter>("all");
   const [period, setPeriod] = useState<MovementPeriod>("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const requestId = useRef(0);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedSearch(searchInput), 300);
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
 
   const loadPage = useCallback(
     async (nextPage: number, append: boolean) => {
@@ -166,6 +175,7 @@ export default function InventoryMovementHistoryDrawer({
           variantId: row.variantId,
           movementType: movementType === "all" ? undefined : movementType,
           referenceType: referenceType === "all" ? undefined : referenceType,
+          search: debouncedSearch,
           createdSince: movementCreatedSince(period),
           page: nextPage,
           pageSize: PAGE_SIZE,
@@ -190,7 +200,7 @@ export default function InventoryMovementHistoryDrawer({
         }
       }
     },
-    [movementType, period, referenceType, row],
+    [debouncedSearch, movementType, period, referenceType, row],
   );
 
   useEffect(() => {
@@ -210,10 +220,37 @@ export default function InventoryMovementHistoryDrawer({
     };
   }, [loadPage, open, row]);
 
+  useEffect(() => {
+    if (open) return;
+    setItems([]);
+    setPage(1);
+    setHasMore(false);
+    setError("");
+    setMovementType("all");
+    setReferenceType("all");
+    setPeriod("all");
+    setSearchInput("");
+    setDebouncedSearch("");
+  }, [open]);
+
   const retry = () => {
     if (items.length && hasMore) void loadPage(page + 1, true);
     else void loadPage(1, false);
   };
+
+  const resetFilters = () => {
+    setMovementType("all");
+    setReferenceType("all");
+    setPeriod("all");
+    setSearchInput("");
+    setDebouncedSearch("");
+  };
+
+  const filtersActive =
+    movementType !== "all" ||
+    referenceType !== "all" ||
+    period !== "all" ||
+    searchInput.trim().length > 0;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -241,17 +278,57 @@ export default function InventoryMovementHistoryDrawer({
             </SheetDescription>
           </SheetHeader>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5" aria-live="polite">
+          <div
+            className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5"
+            aria-live="polite"
+            aria-busy={loading || loadingMore}
+          >
             <div className="mb-4 rounded-2xl border border-slate-100 bg-white p-3">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-[.12em] text-slate-400">
-                  History filters
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[.12em] text-slate-400">
+                    History filters
+                  </div>
+                  <div className="mt-0.5 text-[9px] text-slate-400">
+                    Applied directly in Supabase before pagination
+                  </div>
                 </div>
-                <div className="mt-0.5 text-[9px] text-slate-400">
-                  Applied directly in Supabase before pagination
-                </div>
+                {filtersActive ? (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="min-h-9 shrink-0 rounded-xl px-3 text-[10px] font-bold text-indigo-600 transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                  >
+                    Reset
+                  </button>
+                ) : null}
               </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <div className="relative mt-3">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  maxLength={80}
+                  autoComplete="off"
+                  placeholder="Search reference ID or note"
+                  aria-label="Search inventory movement history"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-10 text-[11px] font-semibold text-slate-700 outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                />
+                {searchInput ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchInput("");
+                      setDebouncedSearch("");
+                    }}
+                    aria-label="Clear inventory movement history search"
+                    className="absolute right-1.5 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                ) : null}
+              </div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
                 <select
                   value={movementType}
                   onChange={(event) => setMovementType(event.target.value as MovementTypeFilter)}
@@ -327,14 +404,20 @@ export default function InventoryMovementHistoryDrawer({
                     <History className="size-5" />
                   </div>
                   <div className="mt-4 text-sm font-bold text-slate-700">
-                    {movementType === "all" && referenceType === "all" && period === "all"
+                    {movementType === "all" &&
+                    referenceType === "all" &&
+                    period === "all" &&
+                    !debouncedSearch
                       ? "No inventory movements yet"
                       : "No movements match these filters"}
                   </div>
                   <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                    {movementType === "all" && referenceType === "all" && period === "all"
+                    {movementType === "all" &&
+                    referenceType === "all" &&
+                    period === "all" &&
+                    !debouncedSearch
                       ? "Stock changes for this variant will appear here automatically."
-                      : "Try a broader movement type, source, or time range."}
+                      : "Try clearing the search or using a broader movement type, source, or time range."}
                   </p>
                 </div>
               </div>
