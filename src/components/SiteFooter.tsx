@@ -7,13 +7,6 @@ import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import { STORE_CONFIG, STORE_NAME } from "@/lib/storeConfig";
 
-const SOCIALS = [
-  { label: "Instagram", Icon: Instagram, href: STORE_CONFIG.socialInstagram },
-  { label: "Facebook", Icon: Facebook, href: STORE_CONFIG.socialFacebook },
-  { label: "X", Icon: Twitter, href: STORE_CONFIG.socialX },
-  { label: "YouTube", Icon: Youtube, href: STORE_CONFIG.socialYoutube },
-];
-
 const FOOTER_SHOP_LINKS = [
   { slug: "smartphones", en: "Smartphones", ar: "الهواتف الذكية" },
   { slug: "tablets", en: "Tablets", ar: "الأجهزة اللوحية" },
