@@ -72,7 +72,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: { collapsed: boolean; setCollapsed: (v: boolean) => void; mobileOpen: boolean; setMobileOpen: (v: boolean) => void }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [location, navigate] = useLocation();
   const isActive = (href: string) => location === href || (href !== "/dashboard" && location.startsWith(href));
 
@@ -85,14 +85,23 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: { colla
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [mobileOpen, setMobileOpen]);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
+
   return <>
-    {mobileOpen && <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden" />}
-    <aside className={`fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col bg-[#101b32] text-white shadow-2xl transition-all duration-200 lg:translate-x-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
-      <div className={`flex h-[92px] items-center border-b border-white/[.07] px-5 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}><Logo compact={collapsed} /></div>
-      <div className="flex-1 overflow-y-auto px-3 py-5 scrollbar-none">
+    {mobileOpen && <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 touch-none bg-slate-950/45 backdrop-blur-[2px] lg:hidden" />}
+    <aside className={`fixed inset-y-0 start-0 z-50 flex w-[min(86vw,320px)] flex-col overscroll-contain bg-[#101b32] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-2xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}>
+      <div className={`flex h-[76px] items-center border-b border-white/[.07] px-5 lg:h-[92px] ${collapsed ? "lg:justify-center lg:px-0" : ""}`}><Logo compact={collapsed} /></div>
+      <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none lg:py-5">
         {navSections.map((section) => <div key={section.label} className="mb-6">
           {!collapsed && <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.18em] text-slate-500">{t(section.label)}</div>}
-          <div className="space-y-1">{section.items.map((item) => { const Icon = iconMap[item.icon] ?? LayoutDashboard; const active = isActive(item.href); return <button key={item.href} title={collapsed ? t(item.label) : undefined} onClick={() => { navigate(item.href); setMobileOpen(false); }} className={`group flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 text-left text-[13px] font-medium transition ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-[#5361ef] text-white shadow-[0_7px_20px_rgba(83,97,239,.32)]" : "text-slate-400 hover:bg-white/[.07] hover:text-white"}`}><Icon className={`size-[17px] shrink-0 ${active ? "text-white" : "text-slate-500 group-hover:text-slate-200"}`} strokeWidth={1.8} />{!collapsed && <><span className="min-w-0 flex-1 truncate">{t(item.label)}</span>{item.badge && <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${active ? "bg-white/15 text-white" : "bg-white/[.08] text-slate-300"}`}>{item.badge}</span>}</>}</button>; })}</div>
+          <div className="space-y-1">{section.items.map((item) => { const Icon = iconMap[item.icon] ?? LayoutDashboard; const active = isActive(item.href); return <button key={item.href} title={collapsed ? t(item.label) : undefined} onClick={() => { navigate(item.href); setMobileOpen(false); }} className={`group flex w-full items-center gap-3 rounded-[11px] px-3 py-3 text-left text-[13px] font-medium transition active:scale-[.99] lg:py-2.5 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-[#5361ef] text-white shadow-[0_7px_20px_rgba(83,97,239,.32)]" : "text-slate-400 hover:bg-white/[.07] hover:text-white"}`}><Icon className={`size-[17px] shrink-0 ${active ? "text-white" : "text-slate-500 group-hover:text-slate-200"}`} strokeWidth={1.8} />{!collapsed && <><span className="min-w-0 flex-1 truncate">{t(item.label)}</span>{item.badge && <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${active ? "bg-white/15 text-white" : "bg-white/[.08] text-slate-300"}`}>{item.badge}</span>}</>}</button>; })}</div>
         </div>)}
       </div>
       <div className="border-t border-white/[.07] p-4">
@@ -109,6 +118,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [, navigate] = useLocation();
   const [headerProducts, setHeaderProducts] = useState<DashboardProduct[]>([]);
 
@@ -146,14 +156,23 @@ function Header({ onMenu }: { onMenu: () => void }) {
     : [];
 
   return (
-    <header className="sticky top-0 z-30 flex h-[78px] items-center justify-between border-b border-slate-200/80 bg-[#f7f9fc]/90 px-4 backdrop-blur-xl sm:px-6 lg:px-10">
+    <header className="sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-slate-200/80 bg-[#f7f9fc]/95 px-3 py-2 backdrop-blur-xl sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           onClick={onMenu}
-          className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 lg:hidden"
+          className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition active:scale-95 lg:hidden"
           aria-label="Open dashboard menu"
         >
           <Menu className="size-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileSearchOpen((current) => !current)}
+          className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition active:scale-95 sm:hidden"
+          aria-label={t("Search products...")}
+          aria-expanded={mobileSearchOpen}
+        >
+          {mobileSearchOpen ? <X className="size-5" /> : <Search className="size-5" />}
         </button>
         <div className="relative hidden max-w-[480px] flex-1 sm:block">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -283,7 +302,104 @@ function Header({ onMenu }: { onMenu: () => void }) {
           )}
         </div>
       </div>
+
+      {mobileSearchOpen && (
+        <div className="order-last w-full pt-2 sm:hidden">
+          <div className="relative">
+            <Search className="pointer-events-none absolute start-3.5 top-[22px] size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              id="mobile-global-search"
+              autoFocus
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("Search products...")}
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white pe-10 ps-10 text-[13px] text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#6872ee] focus:ring-4 focus:ring-[#6872ee]/10"
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="absolute end-2 top-[22px] grid size-8 -translate-y-1/2 place-items-center rounded-lg text-slate-400 active:bg-slate-100"
+                aria-label="Clear search"
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
+          </div>
+          {query ? (
+            <div className="mt-2 max-h-[42dvh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+              {results.length ? results.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setMobileSearchOpen(false);
+                    setQuery("");
+                    navigate(`/dashboard/products/${item.id}`);
+                  }}
+                  className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start active:bg-slate-50"
+                >
+                  <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
+                    <Package className="size-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[12px] font-semibold text-slate-800">{item.name}</div>
+                    <div className="truncate text-[11px] text-slate-400">{`${item.brand || "No brand"} · ${item.sku || "No SKU"}`}</div>
+                  </div>
+                </button>
+              )) : (
+                <div className="px-3 py-4 text-center text-xs text-slate-400">No matching products</div>
+              )}
+            </div>
+          ) : null}
+        </div>
+      )}
     </header>
+  );
+}
+
+function MobileBottomNav({ onMore }: { onMore: () => void }) {
+  const { t } = useLanguage();
+  const [location, navigate] = useLocation();
+  const items = [
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
+    { label: "Products", href: "/dashboard/products", icon: Package },
+    { label: "Inventory", href: "/dashboard/inventory", icon: Boxes },
+  ];
+
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_rgba(15,23,42,.08)] backdrop-blur-xl lg:hidden"
+      aria-label="Dashboard mobile navigation"
+    >
+      <div className="grid min-h-[64px] grid-cols-5">
+        {items.map(({ label, href, icon: Icon }) => {
+          const active = href === "/dashboard" ? location === href || location === "/dashboard/" : location.startsWith(href);
+          return (
+            <button
+              key={href}
+              type="button"
+              onClick={() => navigate(href)}
+              className={`flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold transition active:scale-95 ${active ? "text-[#5361ef]" : "text-slate-500"}`}
+              aria-current={active ? "page" : undefined}
+            >
+              <span className={`grid size-8 place-items-center rounded-xl ${active ? "bg-indigo-50" : ""}`}>
+                <Icon className="size-[18px]" strokeWidth={active ? 2.2 : 1.8} />
+              </span>
+              <span className="max-w-full truncate">{t(label)}</span>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={onMore}
+          className="flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold text-slate-500 transition active:scale-95"
+        >
+          <span className="grid size-8 place-items-center rounded-xl"><Menu className="size-[18px]" /></span>
+          <span>{t("More")}</span>
+        </button>
+      </div>
+    </nav>
   );
 }
 
@@ -906,10 +1022,10 @@ function DashboardGate() {
   return <DashboardLayout />;
 }
 
-function DashboardLayout() { const [location] = useLocation(); const [collapsed, setCollapsed] = useState(() => localStorage.getItem("spacecall-sidebar") === "collapsed"); const [mobileOpen, setMobileOpen] = useState(false); useEffect(() => { localStorage.setItem("spacecall-sidebar", collapsed ? "collapsed" : "expanded"); }, [collapsed]); const route = location.replace(/\/$/, "") || "/dashboard"; const productDetail = route.match(/^\/dashboard\/products\/([^/]+)$/); const orderDetail = route.match(/^\/dashboard\/orders\/([^/]+)$/); const customerDetail = route.match(/^\/dashboard\/customers\/([^/]+)$/); const collectionDetail = route.match(/^\/dashboard\/collections\/([^/]+)$/); const purchaseOrderEdit = route.match(/^\/dashboard\/purchase-orders\/([^/]+)\/edit$/); const purchaseOrderDetail = route.match(/^\/dashboard\/purchase-orders\/([^/]+)$/); const receivingPoDetail = route.match(/^\/dashboard\/receiving\/([^/]+)$/); const receivingDetail = route.match(/^\/dashboard\/receivings\/([^/]+)$/); let content: React.ReactNode; if (route === "/dashboard" || route === "/dashboard/") content = <DashboardHomePage />; else if (route === "/dashboard/orders") content = <OrdersPageLive />; else if (orderDetail) content = <OrderDetailPageLive id={orderDetail[1]} />; else if (route === "/dashboard/collections") content = <CollectionsPageLive />; else if (collectionDetail) content = <CollectionDetailPageLive id={collectionDetail[1]} />; else if (route === "/dashboard/products") content = <ProductsPageLive />; else if (route === "/dashboard/products/new") content = <ProductFormPageLive />; else if (productDetail) content = <ProductFormPageLive id={productDetail[1]} />; else if (route === "/dashboard/customers") content = <CustomersPageLive />; else if (customerDetail) content = <CustomerDetailPageLive id={customerDetail[1]} />; else if (route === "/dashboard/inventory") content = <InventoryManagerPage />; else if (route === "/dashboard/procurement") content = <ProcurementAnalyticsPage />; else if (route === "/dashboard/suppliers") content = <SuppliersPage />; else if (route === "/dashboard/purchase-orders") content = <PurchaseOrdersPage />; else if (route === "/dashboard/purchase-orders/new") content = <PurchaseOrderCreatePage />; else if (purchaseOrderEdit) content = <PurchaseOrderEditPage id={purchaseOrderEdit[1]} />; else if (purchaseOrderDetail) content = <PurchaseOrderDetailPage id={purchaseOrderDetail[1]} />; else if (route === "/dashboard/receiving") content = <ReceivingPage />; else if (receivingPoDetail) content = <ReceivingPage purchaseOrderId={receivingPoDetail[1]} />; else if (receivingDetail) content = <ReceivingDetailPage id={receivingDetail[1]} />; else if (route === "/dashboard/categories") content = <CategoriesPage />; else if (route === "/dashboard/brands") content = <BrandsPage />; else if (route === "/dashboard/security") content = <SecurityPage />; else if (route === "/dashboard/settings") content = <SettingsPage />; else if (route === "/dashboard/navigation") content = <NavigationPage />; else if (route === "/dashboard/media") content = <MediaLibraryPage />; else if (route === "/dashboard/seo") content = <SeoPage />; else if (route === "/dashboard/homepage/hero") content = <HeroBannersPageLive />; else if (route === "/dashboard/homepage" || route === "/dashboard/homepage/sections") content = <HomepageBuilderPage />; else content = <GenericPage path={route} />; return <div className="min-h-screen bg-[#f7f9fc]"><Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} /><div className={`min-h-screen transition-[padding] duration-200 ${collapsed ? "lg:pl-[82px]" : "lg:pl-[260px]"}`}><Header onMenu={() => setMobileOpen(true)} /><main className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-9">{content}</main></div></div>; }
+function DashboardLayout() { const [location] = useLocation(); const [collapsed, setCollapsed] = useState(() => localStorage.getItem("spacecall-sidebar") === "collapsed"); const [mobileOpen, setMobileOpen] = useState(false); useEffect(() => { localStorage.setItem("spacecall-sidebar", collapsed ? "collapsed" : "expanded"); }, [collapsed]); const route = location.replace(/\/$/, "") || "/dashboard"; const productDetail = route.match(/^\/dashboard\/products\/([^/]+)$/); const orderDetail = route.match(/^\/dashboard\/orders\/([^/]+)$/); const customerDetail = route.match(/^\/dashboard\/customers\/([^/]+)$/); const collectionDetail = route.match(/^\/dashboard\/collections\/([^/]+)$/); const purchaseOrderEdit = route.match(/^\/dashboard\/purchase-orders\/([^/]+)\/edit$/); const purchaseOrderDetail = route.match(/^\/dashboard\/purchase-orders\/([^/]+)$/); const receivingPoDetail = route.match(/^\/dashboard\/receiving\/([^/]+)$/); const receivingDetail = route.match(/^\/dashboard\/receivings\/([^/]+)$/); let content: React.ReactNode; if (route === "/dashboard" || route === "/dashboard/") content = <DashboardHomePage />; else if (route === "/dashboard/orders") content = <OrdersPageLive />; else if (orderDetail) content = <OrderDetailPageLive id={orderDetail[1]} />; else if (route === "/dashboard/collections") content = <CollectionsPageLive />; else if (collectionDetail) content = <CollectionDetailPageLive id={collectionDetail[1]} />; else if (route === "/dashboard/products") content = <ProductsPageLive />; else if (route === "/dashboard/products/new") content = <ProductFormPageLive />; else if (productDetail) content = <ProductFormPageLive id={productDetail[1]} />; else if (route === "/dashboard/customers") content = <CustomersPageLive />; else if (customerDetail) content = <CustomerDetailPageLive id={customerDetail[1]} />; else if (route === "/dashboard/inventory") content = <InventoryManagerPage />; else if (route === "/dashboard/procurement") content = <ProcurementAnalyticsPage />; else if (route === "/dashboard/suppliers") content = <SuppliersPage />; else if (route === "/dashboard/purchase-orders") content = <PurchaseOrdersPage />; else if (route === "/dashboard/purchase-orders/new") content = <PurchaseOrderCreatePage />; else if (purchaseOrderEdit) content = <PurchaseOrderEditPage id={purchaseOrderEdit[1]} />; else if (purchaseOrderDetail) content = <PurchaseOrderDetailPage id={purchaseOrderDetail[1]} />; else if (route === "/dashboard/receiving") content = <ReceivingPage />; else if (receivingPoDetail) content = <ReceivingPage purchaseOrderId={receivingPoDetail[1]} />; else if (receivingDetail) content = <ReceivingDetailPage id={receivingDetail[1]} />; else if (route === "/dashboard/categories") content = <CategoriesPage />; else if (route === "/dashboard/brands") content = <BrandsPage />; else if (route === "/dashboard/security") content = <SecurityPage />; else if (route === "/dashboard/settings") content = <SettingsPage />; else if (route === "/dashboard/navigation") content = <NavigationPage />; else if (route === "/dashboard/media") content = <MediaLibraryPage />; else if (route === "/dashboard/seo") content = <SeoPage />; else if (route === "/dashboard/homepage/hero") content = <HeroBannersPageLive />; else if (route === "/dashboard/homepage" || route === "/dashboard/homepage/sections") content = <HomepageBuilderPage />; else content = <GenericPage path={route} />; return <div className="min-h-screen min-h-[100dvh] overflow-x-hidden bg-[#f7f9fc]"><Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} /><div className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? "lg:pl-[82px]" : "lg:pl-[260px]"}`}><Header onMenu={() => setMobileOpen(true)} /><main className="mx-auto min-w-0 max-w-[1600px] p-3 pb-24 sm:p-6 sm:pb-24 lg:p-9">{content}</main><MobileBottomNav onMore={() => setMobileOpen(true)} /></div></div>; }
 
 export default function App() {
   const [lang, setLang] = useState<"en" | "ar">(() => (localStorage.getItem("spacecall-language") as "en" | "ar") || "en");
   useEffect(() => { document.documentElement.lang = lang; document.documentElement.dir = lang === "ar" ? "rtl" : "ltr"; localStorage.setItem("spacecall-language", lang); }, [lang]);
-  const t = (key: string) => { const dictionary = lang === "ar" ? { "Overview": "نظرة عامة", "Commerce": "التجارة", "Store content": "محتوى المتجر", "Marketing": "التسويق", "Management": "الإدارة", "System": "النظام", "Dashboard": "لوحة التحكم", "Orders": "الطلبات", "Products": "المنتجات", "Collections": "المجموعات", "Categories": "التصنيفات", "Inventory": "المخزون", "Procurement": "المشتريات", "Purchase Orders": "أوامر الشراء", "Receiving": "الاستلام", "Suppliers": "الموردون", "Customers": "العملاء", "Homepage": "الصفحة الرئيسية", "Hero banners": "البنرات الرئيسية", "Brands": "العلامات التجارية", "Navigation": "التنقل", "Promotions": "العروض", "Campaigns": "الحملات", "Coupons": "القسائم", "SEO": "تحسين الظهور", "Analytics": "التحليلات", "Messages": "الرسائل", "Reviews": "المراجعات", "Media library": "مكتبة الوسائط", "Users": "المستخدمون", "Activity logs": "سجل النشاط", "Security": "الأمان", "Settings": "الإعدادات", "Search products...": "ابحث في المنتجات...", "Store Manager": "مدير المتجر", "Export report": "تصدير التقرير", "Live workspace": "مساحة مباشرة", "Supabase data connected.": "بيانات Supabase متصلة.", "Notifications are not connected yet.": "الإشعارات غير مربوطة بعد.", "View store": "عرض المتجر", "Collapse sidebar": "طي الشريط الجانبي" } : {}; return dictionary[key as keyof typeof dictionary] || key; };
+  const t = (key: string) => { const dictionary = lang === "ar" ? { "Overview": "نظرة عامة", "Commerce": "التجارة", "Store content": "محتوى المتجر", "Marketing": "التسويق", "Management": "الإدارة", "System": "النظام", "Dashboard": "لوحة التحكم", "Orders": "الطلبات", "Products": "المنتجات", "Collections": "المجموعات", "Categories": "التصنيفات", "Inventory": "المخزون", "Procurement": "المشتريات", "Purchase Orders": "أوامر الشراء", "Receiving": "الاستلام", "Suppliers": "الموردون", "Customers": "العملاء", "Homepage": "الصفحة الرئيسية", "Hero banners": "البنرات الرئيسية", "Brands": "العلامات التجارية", "Navigation": "التنقل", "Promotions": "العروض", "Campaigns": "الحملات", "Coupons": "القسائم", "SEO": "تحسين الظهور", "Analytics": "التحليلات", "Messages": "الرسائل", "Reviews": "المراجعات", "Media library": "مكتبة الوسائط", "Users": "المستخدمون", "Activity logs": "سجل النشاط", "Security": "الأمان", "Settings": "الإعدادات", "Search products...": "ابحث في المنتجات...", "Store Manager": "مدير المتجر", "Export report": "تصدير التقرير", "Live workspace": "مساحة مباشرة", "Supabase data connected.": "بيانات Supabase متصلة.", "Notifications are not connected yet.": "الإشعارات غير مربوطة بعد.", "View store": "عرض المتجر", "Collapse sidebar": "طي الشريط الجانبي", "More": "المزيد" } : {}; return dictionary[key as keyof typeof dictionary] || key; };
   return <LanguageContext.Provider value={{ lang, setLang, t }}><><Switch><Route path="/dashboard/login" component={LoginPage} /><Route component={DashboardGate} /></Switch><Toaster position="bottom-right" richColors /></></LanguageContext.Provider>; }
