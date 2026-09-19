@@ -29,6 +29,17 @@ export type InventoryRow = {
   lastMovementDelta: number | null;
 };
 
+export const INVENTORY_MOVEMENT_TYPES = [
+  "purchase",
+  "sale",
+  "return",
+  "adjustment",
+  "reservation",
+  "release",
+] as const;
+
+export type InventoryMovementType = (typeof INVENTORY_MOVEMENT_TYPES)[number];
+
 export type DashboardInventoryMovement = {
   id: string;
   productId: string;
@@ -163,6 +174,7 @@ export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
 export async function listDashboardInventoryMovements(input: {
   productId: string;
   variantId: string;
+  movementType?: InventoryMovementType;
   page?: number;
   pageSize?: number;
 }): Promise<DashboardInventoryMovementPage> {
@@ -173,13 +185,19 @@ export async function listDashboardInventoryMovements(input: {
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("store_inventory_movements")
     .select(
       "id,product_id,variant_id,movement_type,quantity_delta,reference_type,reference_id,note,created_by,created_at",
     )
     .eq("product_id", input.productId)
-    .eq("variant_id", input.variantId)
+    .eq("variant_id", input.variantId);
+
+  if (input.movementType) {
+    query = query.eq("movement_type", input.movementType);
+  }
+
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .range(start, end);
