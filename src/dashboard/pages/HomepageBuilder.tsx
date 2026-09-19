@@ -1,15 +1,112 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BadgeCheck, Check, ChevronDown, CreditCard, Copy, GripVertical, Layers3, Loader2, Monitor, MoreHorizontal, Pencil, Plus, Save, Smartphone, Tablet, Trash2, X, Zap } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  BadgeCheck,
+  Check,
+  ChevronDown,
+  CreditCard,
+  Copy,
+  GripVertical,
+  Layers3,
+  Loader2,
+  Monitor,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Save,
+  Smartphone,
+  Tablet,
+  Trash2,
+  X,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
-import { products, topBrands } from "@/dashboard/mock/data";
-import { createSection, isSectionWithinSchedule, sectionTypeDescriptions, sectionTypeLabels, type DisplayMode, type HomepageSection, type SectionType } from "@/dashboard/mock/homepageSections";
-import { deleteDashboardHomepageSection, loadDashboardHomepageWorkspace, saveDashboardHomepageSections } from "@/dashboard/data/homepage";
+import { listDashboardBrands, type DashboardBrand } from "@/dashboard/data/catalog";
+import { loadHomepagePreviewProducts, type PreviewProduct } from "@/dashboard/data/homepagePreview";
+import {
+  createSection,
+  isSectionWithinSchedule,
+  sectionTypeDescriptions,
+  sectionTypeLabels,
+  type DisplayMode,
+  type HomepageSection,
+  type SectionType,
+} from "@/dashboard/data/homepageSections";
+import {
+  deleteDashboardHomepageSection,
+  loadDashboardHomepageWorkspace,
+  saveDashboardHomepageSections,
+} from "@/dashboard/data/homepage";
 import { DashboardMediaPicker } from "@/dashboard/components/DashboardMediaPicker";
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) { return <button onClick={() => onChange(!checked)} className={`relative h-6 w-11 rounded-full transition ${checked ? "bg-[#5968ea]" : "bg-slate-200"}`}><span className={`absolute top-1 size-4 rounded-full bg-white shadow transition ${checked ? "left-6" : "left-1"}`} /></button>; }
-function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) { return <label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span><input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10" /></label>; }
-function TextareaField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span><textarea value={value} onChange={e => onChange(e.target.value)} rows={4} className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-[12px] outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10" /></label>; }
-function RichTextField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className={`relative h-6 w-11 rounded-full transition ${checked ? "bg-[#5968ea]" : "bg-slate-200"}`}
+    >
+      <span
+        className={`absolute top-1 size-4 rounded-full bg-white shadow transition ${checked ? "left-6" : "left-1"}`}
+      />
+    </button>
+  );
+}
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
+      />
+    </label>
+  );
+}
+function TextareaField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={4}
+        className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-[12px] outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
+      />
+    </label>
+  );
+}
+function RichTextField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const wrap = (before: string, after = before) => {
     const el = ref.current;
@@ -19,21 +116,925 @@ function RichTextField({ label, value, onChange }: { label: string; value: strin
     const selected = value.slice(start, end) || "your text";
     const next = `${value.slice(0, start)}${before}${selected}${after}${value.slice(end)}`;
     onChange(next);
-    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(start + before.length, start + before.length + selected.length); });
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + before.length, start + before.length + selected.length);
+    });
   };
-  return <div><span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span><div className="overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#6974eb] focus-within:ring-4 focus-within:ring-[#6974eb]/10"><div className="flex flex-wrap gap-1 border-b border-slate-100 bg-slate-50 p-2"><button type="button" onClick={() => wrap("**")} className="rounded-md px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-white">B</button><button type="button" onClick={() => wrap("_")} className="rounded-md px-2 py-1 text-[10px] italic text-slate-600 hover:bg-white">I</button><button type="button" onClick={() => wrap("## ", "")} className="rounded-md px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-white">H2</button><button type="button" onClick={() => wrap("- ", "")} className="rounded-md px-2 py-1 text-[10px] text-slate-600 hover:bg-white">List</button><button type="button" onClick={() => wrap("[", "](https://)")} className="rounded-md px-2 py-1 text-[10px] text-slate-600 hover:bg-white">Link</button><span className="ml-auto px-2 py-1 text-[9px] text-slate-400">Safe rich text markers only</span></div><textarea ref={ref} value={value} onChange={e => onChange(e.target.value)} rows={6} className="w-full resize-none border-0 p-3 text-[12px] outline-none" /></div></div>;
+  return (
+    <div>
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#6974eb] focus-within:ring-4 focus-within:ring-[#6974eb]/10">
+        <div className="flex flex-wrap gap-1 border-b border-slate-100 bg-slate-50 p-2">
+          <button
+            type="button"
+            onClick={() => wrap("**")}
+            className="rounded-md px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-white"
+          >
+            B
+          </button>
+          <button
+            type="button"
+            onClick={() => wrap("_")}
+            className="rounded-md px-2 py-1 text-[10px] italic text-slate-600 hover:bg-white"
+          >
+            I
+          </button>
+          <button
+            type="button"
+            onClick={() => wrap("## ", "")}
+            className="rounded-md px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-white"
+          >
+            H2
+          </button>
+          <button
+            type="button"
+            onClick={() => wrap("- ", "")}
+            className="rounded-md px-2 py-1 text-[10px] text-slate-600 hover:bg-white"
+          >
+            List
+          </button>
+          <button
+            type="button"
+            onClick={() => wrap("[", "](https://)")}
+            className="rounded-md px-2 py-1 text-[10px] text-slate-600 hover:bg-white"
+          >
+            Link
+          </button>
+          <span className="ml-auto px-2 py-1 text-[9px] text-slate-400">
+            Safe rich text markers only
+          </span>
+        </div>
+        <textarea
+          ref={ref}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={6}
+          className="w-full resize-none border-0 p-3 text-[12px] outline-none"
+        />
+      </div>
+    </div>
+  );
 }
 
-function SectionCard({ section, selected, onSelect, onToggle, onDuplicate, onDelete, onMove }: { section: HomepageSection; selected: boolean; onSelect: () => void; onToggle: () => void; onDuplicate: () => void; onDelete: () => void; onMove: (direction: "up" | "down") => void }) { return <div draggable onDragStart={e => e.dataTransfer.setData("section-id", section.id)} onDragOver={e => e.preventDefault()} onDrop={e => { const source = e.dataTransfer.getData("section-id"); window.dispatchEvent(new CustomEvent("homepage-reorder", { detail: { source, target: section.id } })); }} className={`group rounded-2xl border bg-white p-3 shadow-[0_8px_24px_rgba(33,47,82,.04)] transition ${selected ? "border-[#6874f5] ring-4 ring-[#6874f5]/10" : "border-slate-200/80 hover:border-slate-300"} ${!section.enabled ? "opacity-60" : ""}`}><div className="flex items-start gap-3"><div className="mt-1 cursor-grab text-slate-300"><GripVertical className="size-4" /></div><div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600"><Layers3 className="size-4" /></div><button onClick={onSelect} className="min-w-0 flex-1 text-left"><div className="truncate text-[12px] font-bold text-slate-700">{section.name}</div><div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400"><span>{sectionTypeLabels[section.type]}</span><span>·</span><span>#{section.order}</span>{section.status === "published" && <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 font-bold text-emerald-600">Published</span>}</div></button><div className="flex shrink-0 items-center gap-1"><button title="Move up" onClick={() => onMove("up")} className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"><ArrowUp className="size-3.5" /></button><button title="Move down" onClick={() => onMove("down")} className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"><ArrowDown className="size-3.5" /></button><button title="Duplicate" onClick={onDuplicate} className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"><Copy className="size-3.5" /></button><button title="Delete" onClick={onDelete} className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500"><Trash2 className="size-3.5" /></button></div></div><div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-[10px] font-semibold text-slate-400">{section.enabled ? "Visible in preview" : "Hidden from preview"}</span><Toggle checked={section.enabled} onChange={onToggle} /></div></div>; }
+function SectionCard({
+  section,
+  selected,
+  onSelect,
+  onToggle,
+  onDuplicate,
+  onDelete,
+  onMove,
+}: {
+  section: HomepageSection;
+  selected: boolean;
+  onSelect: () => void;
+  onToggle: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onMove: (direction: "up" | "down") => void;
+}) {
+  return (
+    <div
+      draggable
+      onDragStart={(e) => e.dataTransfer.setData("section-id", section.id)}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        const source = e.dataTransfer.getData("section-id");
+        window.dispatchEvent(
+          new CustomEvent("homepage-reorder", {
+            detail: { source, target: section.id },
+          }),
+        );
+      }}
+      className={`group rounded-2xl border bg-white p-3 shadow-[0_8px_24px_rgba(33,47,82,.04)] transition ${selected ? "border-[#6874f5] ring-4 ring-[#6874f5]/10" : "border-slate-200/80 hover:border-slate-300"} ${!section.enabled ? "opacity-60" : ""}`}
+    >
+      <div className="flex items-start gap-3">
+        <div className="mt-1 cursor-grab text-slate-300">
+          <GripVertical className="size-4" />
+        </div>
+        <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+          <Layers3 className="size-4" />
+        </div>
+        <button onClick={onSelect} className="min-w-0 flex-1 text-left">
+          <div className="truncate text-[12px] font-bold text-slate-700">{section.name}</div>
+          <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
+            <span>{sectionTypeLabels[section.type]}</span>
+            <span>·</span>
+            <span>#{section.order}</span>
+            {section.status === "published" && (
+              <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 font-bold text-emerald-600">
+                Published
+              </span>
+            )}
+          </div>
+        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            title="Move up"
+            onClick={() => onMove("up")}
+            className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
+          >
+            <ArrowUp className="size-3.5" />
+          </button>
+          <button
+            title="Move down"
+            onClick={() => onMove("down")}
+            className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
+          >
+            <ArrowDown className="size-3.5" />
+          </button>
+          <button
+            title="Duplicate"
+            onClick={onDuplicate}
+            className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
+          >
+            <Copy className="size-3.5" />
+          </button>
+          <button
+            title="Delete"
+            onClick={onDelete}
+            className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+        <span className="text-[10px] font-semibold text-slate-400">
+          {section.enabled ? "Visible in preview" : "Hidden from preview"}
+        </span>
+        <Toggle checked={section.enabled} onChange={onToggle} />
+      </div>
+    </div>
+  );
+}
 
-function TrustItems({ section, update }: { section: HomepageSection; update: (patch: Partial<HomepageSection>) => void }) { const items = (section.settings.items as { icon: string; title: string; description: string }[]) ?? []; const setItems = (next: typeof items) => update({ settings: { ...section.settings, items: next } }); return <div className="space-y-3">{items.map((item, index) => <div key={`${item.title}-${index}`} className="rounded-xl border border-slate-200 p-3"><div className="grid gap-2 sm:grid-cols-[100px_1fr_1fr_32px]"><input value={item.icon} onChange={e => setItems(items.map((x, i) => i === index ? { ...x, icon: e.target.value } : x))} className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]" placeholder="Icon" /><input value={item.title} onChange={e => setItems(items.map((x, i) => i === index ? { ...x, title: e.target.value } : x))} className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]" placeholder="Title" /><input value={item.description} onChange={e => setItems(items.map((x, i) => i === index ? { ...x, description: e.target.value } : x))} className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]" placeholder="Description" /><button onClick={() => setItems(items.filter((_, i) => i !== index))} className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500"><X className="size-3.5" /></button></div></div>)}<button onClick={() => setItems([...items, { icon: "Zap", title: "New benefit", description: "Describe this customer benefit." }])} className="flex items-center gap-1 text-[11px] font-bold text-[#5968ea]"><Plus className="size-3.5" /> Add item</button></div>; }
-function FaqItems({ section, update }: { section: HomepageSection; update: (patch: Partial<HomepageSection>) => void }) { const items = (section.settings.items as { question: string; answer: string }[]) ?? []; const setItems = (next: typeof items) => update({ settings: { ...section.settings, items: next } }); return <div className="space-y-3">{items.map((item, index) => <div key={`${item.question}-${index}`} className="rounded-xl border border-slate-200 p-3"><div className="flex gap-2"><div className="flex-1 space-y-2"><input value={item.question} onChange={e => setItems(items.map((x, i) => i === index ? { ...x, question: e.target.value } : x))} className="h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]" placeholder="Question" /><textarea value={item.answer} onChange={e => setItems(items.map((x, i) => i === index ? { ...x, answer: e.target.value } : x))} rows={2} className="w-full rounded-lg border border-slate-200 p-2 text-[11px]" placeholder="Answer" /></div><button onClick={() => setItems(items.filter((_, i) => i !== index))} className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500"><X className="size-3.5" /></button></div></div>)}<button onClick={() => setItems([...items, { question: "New question", answer: "Add a helpful answer." }])} className="flex items-center gap-1 text-[11px] font-bold text-[#5968ea]"><Plus className="size-3.5" /> Add FAQ</button></div>; }
+function TrustItems({
+  section,
+  update,
+}: {
+  section: HomepageSection;
+  update: (patch: Partial<HomepageSection>) => void;
+}) {
+  const items =
+    (section.settings.items as {
+      icon: string;
+      title: string;
+      description: string;
+    }[]) ?? [];
+  const setItems = (next: typeof items) =>
+    update({ settings: { ...section.settings, items: next } });
+  return (
+    <div className="space-y-3">
+      {items.map((item, index) => (
+        <div key={`${item.title}-${index}`} className="rounded-xl border border-slate-200 p-3">
+          <div className="grid gap-2 sm:grid-cols-[100px_1fr_1fr_32px]">
+            <input
+              value={item.icon}
+              onChange={(e) =>
+                setItems(items.map((x, i) => (i === index ? { ...x, icon: e.target.value } : x)))
+              }
+              className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]"
+              placeholder="Icon"
+            />
+            <input
+              value={item.title}
+              onChange={(e) =>
+                setItems(items.map((x, i) => (i === index ? { ...x, title: e.target.value } : x)))
+              }
+              className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]"
+              placeholder="Title"
+            />
+            <input
+              value={item.description}
+              onChange={(e) =>
+                setItems(
+                  items.map((x, i) => (i === index ? { ...x, description: e.target.value } : x)),
+                )
+              }
+              className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]"
+              placeholder="Description"
+            />
+            <button
+              onClick={() => setItems(items.filter((_, i) => i !== index))}
+              className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      ))}
+      <button
+        onClick={() =>
+          setItems([
+            ...items,
+            {
+              icon: "Zap",
+              title: "New benefit",
+              description: "Describe this customer benefit.",
+            },
+          ])
+        }
+        className="flex items-center gap-1 text-[11px] font-bold text-[#5968ea]"
+      >
+        <Plus className="size-3.5" /> Add item
+      </button>
+    </div>
+  );
+}
+function FaqItems({
+  section,
+  update,
+}: {
+  section: HomepageSection;
+  update: (patch: Partial<HomepageSection>) => void;
+}) {
+  const items = (section.settings.items as { question: string; answer: string }[]) ?? [];
+  const setItems = (next: typeof items) =>
+    update({ settings: { ...section.settings, items: next } });
+  return (
+    <div className="space-y-3">
+      {items.map((item, index) => (
+        <div key={`${item.question}-${index}`} className="rounded-xl border border-slate-200 p-3">
+          <div className="flex gap-2">
+            <div className="flex-1 space-y-2">
+              <input
+                value={item.question}
+                onChange={(e) =>
+                  setItems(
+                    items.map((x, i) => (i === index ? { ...x, question: e.target.value } : x)),
+                  )
+                }
+                className="h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
+                placeholder="Question"
+              />
+              <textarea
+                value={item.answer}
+                onChange={(e) =>
+                  setItems(
+                    items.map((x, i) => (i === index ? { ...x, answer: e.target.value } : x)),
+                  )
+                }
+                rows={2}
+                className="w-full rounded-lg border border-slate-200 p-2 text-[11px]"
+                placeholder="Answer"
+              />
+            </div>
+            <button
+              onClick={() => setItems(items.filter((_, i) => i !== index))}
+              className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      ))}
+      <button
+        onClick={() =>
+          setItems([...items, { question: "New question", answer: "Add a helpful answer." }])
+        }
+        className="flex items-center gap-1 text-[11px] font-bold text-[#5968ea]"
+      >
+        <Plus className="size-3.5" /> Add FAQ
+      </button>
+    </div>
+  );
+}
 
-function Editor({ section, update }: { section: HomepageSection; update: (patch: Partial<HomepageSection>) => void }) { const set = (key: keyof HomepageSection, value: unknown) => update({ [key]: value }); const settings = section.settings; const setSetting = (key: string, value: unknown) => update({ settings: { ...settings, [key]: value } }); return <div className="space-y-4"><div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 flex items-center justify-between"><div><div className="text-[13px] font-bold text-[#14203a]">Section settings</div><div className="mt-1 text-[11px] text-slate-400">Common fields shared by every section type.</div></div><span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold text-indigo-600">{sectionTypeLabels[section.type]}</span></div><div className="grid gap-4 sm:grid-cols-2"><Field label="Internal name" value={section.name} onChange={v => set("name", v)} />{["hero", "categories", "brands", "featured_products", "trust"].includes(section.sectionId) ? <label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Section ID</span><input value={section.sectionId} readOnly className="h-10 w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-500 outline-none" /><span className="mt-1 block text-[9px] text-slate-400">Core storefront key — locked for safety.</span></label> : <Field label="Section ID" value={section.sectionId} onChange={v => set("sectionId", v)} />}<Field label="Display order" value={String(section.order)} onChange={v => set("order", Number(v) || 1)} /><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Status</span><select value={section.status} onChange={e => set("status", e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none"><option value="draft">Draft</option><option value="published">Published</option></select></label><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Background style</span><select value={section.background} onChange={e => set("background", e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none"><option value="surface">White surface</option><option value="mist">Soft gray</option><option value="navy">Dark navy</option><option value="purple">Purple campaign</option></select></label><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Text alignment</span><select value={section.alignment} onChange={e => set("alignment", e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{[["showOnStorefront", "Show on storefront"], ["showOnDesktop", "Show on desktop"], ["showOnTablet", "Show on tablet"], ["showOnMobile", "Show on mobile"]].map(([key, label]) => <div key={key} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5"><span className="text-[11px] font-semibold text-slate-600">{label}</span><Toggle checked={Boolean(section[key as keyof HomepageSection])} onChange={v => set(key as keyof HomepageSection, v)} /></div>)}</div><div className="mt-4 grid gap-4 sm:grid-cols-2"><Field label="Start date (optional)" value={section.startDate} onChange={v => set("startDate", v)} placeholder="2026-11-27" /><Field label="End date (optional)" value={section.endDate} onChange={v => set("endDate", v)} placeholder="2026-12-01" /></div></div><div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Content and CTAs</div><div className="space-y-4"><Field label="Small label / eyebrow" value={section.eyebrow} onChange={v => set("eyebrow", v)} /><Field label="Title" value={section.title} onChange={v => set("title", v)} /><Field label="Subtitle" value={section.subtitle} onChange={v => set("subtitle", v)} /><RichTextField label="Description / rich text" value={section.description} onChange={v => set("description", v)} /><div className="grid gap-4 sm:grid-cols-2"><Field label="Button text" value={section.buttonText} onChange={v => set("buttonText", v)} /><Field label="Button link" value={section.buttonLink} onChange={v => set("buttonLink", v)} /><Field label="Secondary button" value={section.secondaryButtonText} onChange={v => set("secondaryButtonText", v)} /><Field label="Secondary link" value={section.secondaryButtonLink} onChange={v => set("secondaryButtonLink", v)} /></div></div></div>{["hero", "text", "image-text", "banner", "promo", "custom"].includes(section.type) && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Media</div><div className="grid gap-4 sm:grid-cols-2"><DashboardMediaPicker label="Desktop image" value={String(settings.media ?? "")} onChange={v => setSetting("media", v)} /><DashboardMediaPicker label="Mobile image (optional)" value={String(settings.mobileMedia ?? "")} onChange={v => setSetting("mobileMedia", v)} /></div><div className="mt-4 grid gap-4 sm:grid-cols-2"><Field label="Overlay opacity" value={String(settings.overlay ?? 0)} onChange={v => setSetting("overlay", Number(v) || 0)} /><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Image position</span><select value={String(settings.imagePosition ?? "right")} onChange={e => setSetting("imagePosition", e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"><option>left</option><option>right</option></select></label></div></div>}{["product-carousel", "featured-products"].includes(section.type) && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Product source</div><div className="grid gap-4 sm:grid-cols-2"><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Products source</span><select value={String(settings.source ?? "collection")} onChange={e => setSetting("source", e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"><option value="manual">Manual products</option><option value="collection">Collection</option><option value="brand">Brand</option><option value="category">Category</option></select></label><Field label="Source" value={String(settings.sourceValue ?? "Best Sellers")} onChange={v => setSetting("sourceValue", v)} placeholder="e.g. Apple or Best Sellers" /><Field label="Number of products" value={String(settings.count ?? 5)} onChange={v => setSetting("count", Number(v) || 1)} /><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Display layout</span><select value={String(settings.layout ?? "carousel")} onChange={e => setSetting("layout", e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"><option value="carousel">Horizontal carousel</option><option value="grid">Product grid</option></select></label></div></div>}{["collection", "collection-grid"].includes(section.type) && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Collection source</div><div className="grid gap-4 sm:grid-cols-3"><Field label="Collection" value={String(settings.collection ?? "iPhone")} onChange={v => setSetting("collection", v)} /><Field label="Number of products" value={String(settings.count ?? 8)} onChange={v => setSetting("count", Number(v) || 1)} /><Field label="Layout" value={String(settings.layout ?? "carousel")} onChange={v => setSetting("layout", v)} /></div></div>}{section.type === "brands" && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Brands selection</div><div className="grid gap-2 sm:grid-cols-2">{["Apple", "Samsung", "Xiaomi", "Anker", "Spigen", "Nothing"].map(brand => { const selected = ((settings.brands as string[]) ?? []).includes(brand); return <label key={brand} className="flex items-center gap-2 rounded-xl border border-slate-100 p-3 text-[11px] font-semibold text-slate-600"><input type="checkbox" checked={selected} onChange={() => setSetting("brands", selected ? ((settings.brands as string[]) ?? []).filter(x => x !== brand) : [...((settings.brands as string[]) ?? []), brand])} />{brand}</label>; })}</div><div className="mt-4 grid gap-4 sm:grid-cols-2"><Field label="Layout" value={String(settings.layout ?? "grid")} onChange={v => setSetting("layout", v)} /><Field label="Logo size" value={String(settings.logoSize ?? "medium")} onChange={v => setSetting("logoSize", v)} /></div></div>}{section.type === "categories" && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Categories selection</div><Field label="Categories (comma separated)" value={((settings.categories as string[]) ?? []).join(", ")} onChange={v => setSetting("categories", v.split(",").map(x => x.trim()).filter(Boolean))} /><div className="mt-4 grid gap-4 sm:grid-cols-2"><Field label="Grid columns" value={String(settings.columns ?? 4)} onChange={v => setSetting("columns", Number(v) || 2)} /><div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3"><span className="text-[11px] font-semibold text-slate-600">Horizontal scroll on mobile</span><Toggle checked={Boolean(settings.mobileScroll)} onChange={v => setSetting("mobileScroll", v)} /></div></div></div>}{section.type === "trust" && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Benefits</div><TrustItems section={section} update={update} /></div>}{section.type === "announcement" && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Announcement settings</div><div className="grid gap-4 sm:grid-cols-2"><Field label="Icon name" value={String(settings.icon ?? "Zap")} onChange={v => setSetting("icon", v)} /><Field label="Link" value={String(settings.link ?? "#") } onChange={v => setSetting("link", v)} /><Field label="Background" value={String(settings.background ?? "navy")} onChange={v => setSetting("background", v)} /><Field label="Text color" value={String(settings.textColor ?? "light")} onChange={v => setSetting("textColor", v)} /></div></div>}{section.type === "countdown" && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Countdown settings</div><div className="grid gap-4 sm:grid-cols-2"><Field label="Target date and time" value={String(settings.targetDate ?? "2026-12-01T00:00")} onChange={v => setSetting("targetDate", v)} /><Field label="Timezone label" value={String(settings.timezone ?? "Local time")} onChange={v => setSetting("timezone", v)} /></div></div>}{section.type === "video" && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">Video settings</div><Field label="Safe video URL" value={String(settings.videoUrl ?? "")} onChange={v => setSetting("videoUrl", v)} placeholder="https://video.example.com/..." /></div>}{section.type === "faq" && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="mb-4 text-[13px] font-bold text-[#14203a]">FAQ items</div><FaqItems section={section} update={update} /></div>}</div>; }
+function Editor({
+  section,
+  update,
+  brands,
+}: {
+  brands: DashboardBrand[];
+  section: HomepageSection;
+  update: (patch: Partial<HomepageSection>) => void;
+}) {
+  const set = (key: keyof HomepageSection, value: unknown) => update({ [key]: value });
+  const settings = section.settings;
+  const setSetting = (key: string, value: unknown) =>
+    update({ settings: { ...settings, [key]: value } });
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <div className="text-[13px] font-bold text-[#14203a]">Section settings</div>
+            <div className="mt-1 text-[11px] text-slate-400">
+              Common fields shared by every section type.
+            </div>
+          </div>
+          <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold text-indigo-600">
+            {sectionTypeLabels[section.type]}
+          </span>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Internal name" value={section.name} onChange={(v) => set("name", v)} />
+          {["hero", "categories", "brands", "featured_products", "trust"].includes(
+            section.sectionId,
+          ) ? (
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Section ID</span>
+              <input
+                value={section.sectionId}
+                readOnly
+                className="h-10 w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-500 outline-none"
+              />
+              <span className="mt-1 block text-[9px] text-slate-400">
+                Core storefront key — locked for safety.
+              </span>
+            </label>
+          ) : (
+            <Field
+              label="Section ID"
+              value={section.sectionId}
+              onChange={(v) => set("sectionId", v)}
+            />
+          )}
+          <Field
+            label="Display order"
+            value={String(section.order)}
+            onChange={(v) => set("order", Number(v) || 1)}
+          />
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Status</span>
+            <select
+              value={section.status}
+              onChange={(e) => set("status", e.target.value)}
+              className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none"
+            >
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+              Background style
+            </span>
+            <select
+              value={section.background}
+              onChange={(e) => set("background", e.target.value)}
+              className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none"
+            >
+              <option value="surface">White surface</option>
+              <option value="mist">Soft gray</option>
+              <option value="navy">Dark navy</option>
+              <option value="purple">Purple campaign</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+              Text alignment
+            </span>
+            <select
+              value={section.alignment}
+              onChange={(e) => set("alignment", e.target.value)}
+              className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </label>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {[
+            ["showOnStorefront", "Show on storefront"],
+            ["showOnDesktop", "Show on desktop"],
+            ["showOnTablet", "Show on tablet"],
+            ["showOnMobile", "Show on mobile"],
+          ].map(([key, label]) => (
+            <div
+              key={key}
+              className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5"
+            >
+              <span className="text-[11px] font-semibold text-slate-600">{label}</span>
+              <Toggle
+                checked={Boolean(section[key as keyof HomepageSection])}
+                onChange={(v) => set(key as keyof HomepageSection, v)}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Start date (optional)"
+            value={section.startDate}
+            onChange={(v) => set("startDate", v)}
+            placeholder="2026-11-27"
+          />
+          <Field
+            label="End date (optional)"
+            value={section.endDate}
+            onChange={(v) => set("endDate", v)}
+            placeholder="2026-12-01"
+          />
+        </div>
+      </div>
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+        <div className="mb-4 text-[13px] font-bold text-[#14203a]">Content and CTAs</div>
+        <div className="space-y-4">
+          <Field
+            label="Small label / eyebrow"
+            value={section.eyebrow}
+            onChange={(v) => set("eyebrow", v)}
+          />
+          <Field label="Title" value={section.title} onChange={(v) => set("title", v)} />
+          <Field label="Subtitle" value={section.subtitle} onChange={(v) => set("subtitle", v)} />
+          <RichTextField
+            label="Description / rich text"
+            value={section.description}
+            onChange={(v) => set("description", v)}
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Button text"
+              value={section.buttonText}
+              onChange={(v) => set("buttonText", v)}
+            />
+            <Field
+              label="Button link"
+              value={section.buttonLink}
+              onChange={(v) => set("buttonLink", v)}
+            />
+            <Field
+              label="Secondary button"
+              value={section.secondaryButtonText}
+              onChange={(v) => set("secondaryButtonText", v)}
+            />
+            <Field
+              label="Secondary link"
+              value={section.secondaryButtonLink}
+              onChange={(v) => set("secondaryButtonLink", v)}
+            />
+          </div>
+        </div>
+      </div>
+      {["hero", "text", "image-text", "banner", "promo", "custom"].includes(section.type) && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Media</div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DashboardMediaPicker
+              label="Desktop image"
+              value={String(settings.media ?? "")}
+              onChange={(v) => setSetting("media", v)}
+            />
+            <DashboardMediaPicker
+              label="Mobile image (optional)"
+              value={String(settings.mobileMedia ?? "")}
+              onChange={(v) => setSetting("mobileMedia", v)}
+            />
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Overlay opacity"
+              value={String(settings.overlay ?? 0)}
+              onChange={(v) => setSetting("overlay", Number(v) || 0)}
+            />
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                Image position
+              </span>
+              <select
+                value={String(settings.imagePosition ?? "right")}
+                onChange={(e) => setSetting("imagePosition", e.target.value)}
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+              >
+                <option>left</option>
+                <option>right</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      )}
+      {["product-carousel", "featured-products"].includes(section.type) && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Product source</div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                Products source
+              </span>
+              <select
+                value={String(settings.source ?? "collection")}
+                onChange={(e) => setSetting("source", e.target.value)}
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+              >
+                <option value="manual">Manual products</option>
+                <option value="collection">Collection</option>
+                <option value="brand">Brand</option>
+                <option value="category">Category</option>
+              </select>
+            </label>
+            <Field
+              label="Source"
+              value={String(settings.sourceValue ?? "")}
+              onChange={(v) => setSetting("sourceValue", v)}
+              placeholder="Name, slug, or comma-separated product IDs"
+            />
+            <Field
+              label="Number of products"
+              value={String(settings.count ?? 5)}
+              onChange={(v) => setSetting("count", Number(v) || 1)}
+            />
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                Display layout
+              </span>
+              <select
+                value={String(settings.layout ?? "carousel")}
+                onChange={(e) => setSetting("layout", e.target.value)}
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+              >
+                <option value="carousel">Horizontal carousel</option>
+                <option value="grid">Product grid</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      )}
+      {["collection", "collection-grid"].includes(section.type) && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Collection source</div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field
+              label="Collection"
+              value={String(settings.collection ?? "")}
+              onChange={(v) => setSetting("collection", v)}
+            />
+            <Field
+              label="Number of products"
+              value={String(settings.count ?? 8)}
+              onChange={(v) => setSetting("count", Number(v) || 1)}
+            />
+            <Field
+              label="Layout"
+              value={String(settings.layout ?? "carousel")}
+              onChange={(v) => setSetting("layout", v)}
+            />
+          </div>
+        </div>
+      )}
+      {section.type === "brands" && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Brands selection</div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {brands
+              .map((item) => item.name)
+              .map((brand) => {
+                const selected = ((settings.brands as string[]) ?? []).includes(brand);
+                return (
+                  <label
+                    key={brand}
+                    className="flex items-center gap-2 rounded-xl border border-slate-100 p-3 text-[11px] font-semibold text-slate-600"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() =>
+                        setSetting(
+                          "brands",
+                          selected
+                            ? ((settings.brands as string[]) ?? []).filter((x) => x !== brand)
+                            : [...((settings.brands as string[]) ?? []), brand],
+                        )
+                      }
+                    />
+                    {brand}
+                  </label>
+                );
+              })}
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Layout"
+              value={String(settings.layout ?? "grid")}
+              onChange={(v) => setSetting("layout", v)}
+            />
+            <Field
+              label="Logo size"
+              value={String(settings.logoSize ?? "medium")}
+              onChange={(v) => setSetting("logoSize", v)}
+            />
+          </div>
+        </div>
+      )}
+      {section.type === "categories" && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Categories selection</div>
+          <Field
+            label="Categories (comma separated)"
+            value={((settings.categories as string[]) ?? []).join(", ")}
+            onChange={(v) =>
+              setSetting(
+                "categories",
+                v
+                  .split(",")
+                  .map((x) => x.trim())
+                  .filter(Boolean),
+              )
+            }
+          />
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Grid columns"
+              value={String(settings.columns ?? 4)}
+              onChange={(v) => setSetting("columns", Number(v) || 2)}
+            />
+            <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3">
+              <span className="text-[11px] font-semibold text-slate-600">
+                Horizontal scroll on mobile
+              </span>
+              <Toggle
+                checked={Boolean(settings.mobileScroll)}
+                onChange={(v) => setSetting("mobileScroll", v)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      {section.type === "trust" && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Benefits</div>
+          <TrustItems section={section} update={update} />
+        </div>
+      )}
+      {section.type === "announcement" && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Announcement settings</div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Icon name"
+              value={String(settings.icon ?? "Zap")}
+              onChange={(v) => setSetting("icon", v)}
+            />
+            <Field
+              label="Link"
+              value={String(settings.link ?? "#")}
+              onChange={(v) => setSetting("link", v)}
+            />
+            <Field
+              label="Background"
+              value={String(settings.background ?? "navy")}
+              onChange={(v) => setSetting("background", v)}
+            />
+            <Field
+              label="Text color"
+              value={String(settings.textColor ?? "light")}
+              onChange={(v) => setSetting("textColor", v)}
+            />
+          </div>
+        </div>
+      )}
+      {section.type === "countdown" && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Countdown settings</div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Target date and time"
+              value={String(settings.targetDate ?? "")}
+              onChange={(v) => setSetting("targetDate", v)}
+            />
+            <Field
+              label="Timezone label"
+              value={String(settings.timezone ?? "Local time")}
+              onChange={(v) => setSetting("timezone", v)}
+            />
+          </div>
+        </div>
+      )}
+      {section.type === "video" && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Video settings</div>
+          <Field
+            label="Safe video URL"
+            value={String(settings.videoUrl ?? "")}
+            onChange={(v) => setSetting("videoUrl", v)}
+            placeholder="https://video.example.com/..."
+          />
+        </div>
+      )}
+      {section.type === "faq" && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">FAQ items</div>
+          <FaqItems section={section} update={update} />
+        </div>
+      )}
+    </div>
+  );
+}
 
-function HomepageSectionRenderer({ section, mode }: { section: HomepageSection; mode: DisplayMode }) { const settings = section.settings; const isDark = section.background === "navy" || section.background === "purple"; const align = section.alignment === "center" ? "text-center items-center" : section.alignment === "right" ? "text-right items-end" : "text-left items-start"; const productsToShow = products.slice(0, Number(settings.count ?? 5)); const media = String(settings.media ?? ""); if (section.type === "announcement") return <div className="bg-[#14203a] px-4 py-2 text-center text-[11px] font-semibold text-white">{section.title} <span className="ml-2 text-indigo-200">{section.buttonText}</span></div>; return <div className={`relative overflow-hidden rounded-2xl p-6 sm:p-8 ${section.background === "mist" ? "bg-[#f4f6fb]" : section.background === "navy" ? "bg-[#14203a]" : section.background === "purple" ? "bg-gradient-to-br from-[#4a3ba6] to-[#8b54cf]" : "bg-white border border-slate-200"} ${isDark ? "text-white" : "text-[#14203a]"}`} style={{ minHeight: section.type === "hero" || section.type === "promo" ? 210 : undefined }}><div className={`relative z-10 flex max-w-2xl flex-col ${align} ${section.spacing === "spacious" ? "gap-4 py-8" : section.spacing === "compact" ? "gap-1" : "gap-2"} ${section.type === "image-text" && String(settings.imagePosition ?? "right") === "right" ? "sm:mr-[42%]" : ""}`}>{section.eyebrow && <div className={`text-[10px] font-bold uppercase tracking-[.18em] ${isDark ? "text-indigo-200" : "text-indigo-600"}`}>{section.eyebrow}</div>}<h3 className="text-[22px] font-bold tracking-[-.04em]">{section.title}</h3>{section.subtitle && <div className={`text-[12px] font-semibold ${isDark ? "text-indigo-100" : "text-slate-500"}`}>{section.subtitle}</div>}<p className={`max-w-xl text-[12px] leading-5 ${isDark ? "text-indigo-100/80" : "text-slate-500"}`}>{section.description}</p><div className="mt-2 flex flex-wrap gap-2"><button className={`rounded-lg px-3 py-2 text-[10px] font-bold ${isDark ? "bg-white text-[#25315c]" : "bg-[#5968ea] text-white"}`}>{section.buttonText || "Explore section"}</button>{section.secondaryButtonText && <button className={`rounded-lg border px-3 py-2 text-[10px] font-bold ${isDark ? "border-white/30 text-white" : "border-slate-200 text-slate-600"}`}>{section.secondaryButtonText}</button>}</div></div>{media && ["hero", "promo", "banner", "image-text"].includes(section.type) && <img src={media} alt="Section media" className={`absolute inset-y-0 h-full w-[42%] object-cover ${section.type === "image-text" && String(settings.imagePosition ?? "right") === "left" ? "left-0" : "right-0"}`} style={{ opacity: .84 }} />}{section.type === "brands" && <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">{((settings.brands as string[]) ?? []).map(brand => <div key={brand} className="rounded-xl border border-slate-200 bg-white/80 p-3 text-center text-[11px] font-bold text-slate-600">{brand}</div>)}</div>}{["product-carousel", "featured-products", "collection", "collection-grid"].includes(section.type) && <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">{productsToShow.map(product => <div key={product.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white"><img src={product.image} alt="" className="h-20 w-full object-cover" /><div className="p-2"><div className="truncate text-[10px] font-bold text-slate-700">{product.name}</div><div className="mt-1 text-[10px] text-slate-500">${product.price}</div></div></div>)}</div>}{section.type === "categories" && <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">{((settings.categories as string[]) ?? []).map(category => <div key={category} className="rounded-xl bg-[#eef0ff] p-4 text-[11px] font-bold text-indigo-700">{category}</div>)}</div>}{section.type === "trust" && <div className="mt-5 grid gap-3 sm:grid-cols-4">{((settings.items as { icon: string; title: string; description: string }[]) ?? []).map(item => <div key={item.title} className="rounded-xl border border-slate-200 bg-white/80 p-3"><div className="mb-2 grid size-7 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><BadgeCheck className="size-4" /></div><div className="text-[11px] font-bold text-slate-700">{item.title}</div><div className="mt-1 text-[10px] leading-4 text-slate-400">{item.description}</div></div>)}</div>}{section.type === "faq" && <div className="mt-5 space-y-2">{((settings.items as { question: string; answer: string }[]) ?? []).map(item => <div key={item.question} className="rounded-xl border border-slate-200 bg-white/70 p-3"><div className="text-[11px] font-bold text-slate-700">{item.question}</div><div className="mt-1 text-[10px] text-slate-500">{item.answer}</div></div>)}</div>}<div className="absolute right-3 top-3 rounded-full bg-black/5 px-2 py-1 text-[9px] font-bold uppercase tracking-wider opacity-70">{mode}</div></div>; }
+function HomepageSectionRenderer({
+  section,
+  mode,
+}: {
+  section: HomepageSection;
+  mode: DisplayMode;
+}) {
+  const settings = section.settings;
+  const isDark = section.background === "navy" || section.background === "purple";
+  const align =
+    section.alignment === "center"
+      ? "text-center items-center"
+      : section.alignment === "right"
+        ? "text-right items-end"
+        : "text-left items-start";
+  const [productsToShow, setProductsToShow] = useState<PreviewProduct[]>([]);
+  const [previewError, setPreviewError] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const productSection = [
+    "product-carousel",
+    "featured-products",
+    "collection",
+    "collection-grid",
+  ].includes(section.type);
+  useEffect(() => {
+    if (!productSection) return;
+    let cancelled = false;
+    setPreviewLoading(true);
+    setPreviewError("");
+    setProductsToShow([]);
+    loadHomepagePreviewProducts(section)
+      .then((rows) => {
+        if (!cancelled) setProductsToShow(rows);
+      })
+      .catch(() => {
+        if (!cancelled)
+          setPreviewError("Unable to load products. Close and reopen the preview to retry.");
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [section, productSection]);
+  const media = String(settings.media ?? "");
+  if (section.type === "announcement")
+    return (
+      <div className="bg-[#14203a] px-4 py-2 text-center text-[11px] font-semibold text-white">
+        {section.title} <span className="ml-2 text-indigo-200">{section.buttonText}</span>
+      </div>
+    );
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl p-6 sm:p-8 ${section.background === "mist" ? "bg-[#f4f6fb]" : section.background === "navy" ? "bg-[#14203a]" : section.background === "purple" ? "bg-gradient-to-br from-[#4a3ba6] to-[#8b54cf]" : "bg-white border border-slate-200"} ${isDark ? "text-white" : "text-[#14203a]"}`}
+      style={{
+        minHeight: section.type === "hero" || section.type === "promo" ? 210 : undefined,
+      }}
+    >
+      <div
+        className={`relative z-10 flex max-w-2xl flex-col ${align} ${section.spacing === "spacious" ? "gap-4 py-8" : section.spacing === "compact" ? "gap-1" : "gap-2"} ${section.type === "image-text" && String(settings.imagePosition ?? "right") === "right" ? "sm:mr-[42%]" : ""}`}
+      >
+        {section.eyebrow && (
+          <div
+            className={`text-[10px] font-bold uppercase tracking-[.18em] ${isDark ? "text-indigo-200" : "text-indigo-600"}`}
+          >
+            {section.eyebrow}
+          </div>
+        )}
+        <h3 className="text-[22px] font-bold tracking-[-.04em]">{section.title}</h3>
+        {section.subtitle && (
+          <div
+            className={`text-[12px] font-semibold ${isDark ? "text-indigo-100" : "text-slate-500"}`}
+          >
+            {section.subtitle}
+          </div>
+        )}
+        <p
+          className={`max-w-xl text-[12px] leading-5 ${isDark ? "text-indigo-100/80" : "text-slate-500"}`}
+        >
+          {section.description}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            className={`rounded-lg px-3 py-2 text-[10px] font-bold ${isDark ? "bg-white text-[#25315c]" : "bg-[#5968ea] text-white"}`}
+          >
+            {section.buttonText || "Explore section"}
+          </button>
+          {section.secondaryButtonText && (
+            <button
+              className={`rounded-lg border px-3 py-2 text-[10px] font-bold ${isDark ? "border-white/30 text-white" : "border-slate-200 text-slate-600"}`}
+            >
+              {section.secondaryButtonText}
+            </button>
+          )}
+        </div>
+      </div>
+      {media && ["hero", "promo", "banner", "image-text"].includes(section.type) && (
+        <img
+          src={media}
+          alt="Section media"
+          className={`absolute inset-y-0 h-full w-[42%] object-cover ${section.type === "image-text" && String(settings.imagePosition ?? "right") === "left" ? "left-0" : "right-0"}`}
+          style={{ opacity: 0.84 }}
+        />
+      )}
+      {section.type === "brands" && (
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {((settings.brands as string[]) ?? []).map((brand) => (
+            <div
+              key={brand}
+              className="rounded-xl border border-slate-200 bg-white/80 p-3 text-center text-[11px] font-bold text-slate-600"
+            >
+              {brand}
+            </div>
+          ))}
+        </div>
+      )}
+      {["product-carousel", "featured-products", "collection", "collection-grid"].includes(
+        section.type,
+      ) && (
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {previewLoading ? (
+            <p role="status">Loading products…</p>
+          ) : previewError ? (
+            <p role="alert">{previewError}</p>
+          ) : !productsToShow.length ? (
+            <p>No matching active products. Choose an existing source.</p>
+          ) : (
+            productsToShow.map((product) => (
+              <div
+                key={product.id}
+                className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+              >
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="h-20 w-full object-contain"
+                  />
+                ) : (
+                  <div className="h-20 p-3 text-xs text-slate-400">No image</div>
+                )}
+                <div className="p-2">
+                  <div className="truncate text-[10px] font-bold text-slate-700">
+                    {product.name}
+                  </div>
+                  <div className="mt-1 text-[10px] text-slate-500">
+                    {product.currency} {product.price}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+      {section.type === "categories" && (
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {((settings.categories as string[]) ?? []).map((category) => (
+            <div
+              key={category}
+              className="rounded-xl bg-[#eef0ff] p-4 text-[11px] font-bold text-indigo-700"
+            >
+              {category}
+            </div>
+          ))}
+        </div>
+      )}
+      {section.type === "trust" && (
+        <div className="mt-5 grid gap-3 sm:grid-cols-4">
+          {(
+            (settings.items as {
+              icon: string;
+              title: string;
+              description: string;
+            }[]) ?? []
+          ).map((item) => (
+            <div key={item.title} className="rounded-xl border border-slate-200 bg-white/80 p-3">
+              <div className="mb-2 grid size-7 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
+                <BadgeCheck className="size-4" />
+              </div>
+              <div className="text-[11px] font-bold text-slate-700">{item.title}</div>
+              <div className="mt-1 text-[10px] leading-4 text-slate-400">{item.description}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {section.type === "faq" && (
+        <div className="mt-5 space-y-2">
+          {((settings.items as { question: string; answer: string }[]) ?? []).map((item) => (
+            <div key={item.question} className="rounded-xl border border-slate-200 bg-white/70 p-3">
+              <div className="text-[11px] font-bold text-slate-700">{item.question}</div>
+              <div className="mt-1 text-[10px] text-slate-500">{item.answer}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="absolute right-3 top-3 rounded-full bg-black/5 px-2 py-1 text-[9px] font-bold uppercase tracking-wider opacity-70">
+        {mode}
+      </div>
+    </div>
+  );
+}
 
-const CORE_HOMEPAGE_SECTION_KEYS = new Set(["hero", "categories", "brands", "featured_products", "trust"]);
+const CORE_HOMEPAGE_SECTION_KEYS = new Set([
+  "hero",
+  "categories",
+  "brands",
+  "featured_products",
+  "trust",
+]);
 
 function createHomepageUuid() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
@@ -50,6 +1051,9 @@ function createHomepageSectionKey(type: string, suffix = Date.now()) {
 }
 
 export default function HomepageBuilderPage() {
+  const [brands, setBrands] = useState<DashboardBrand[]>([]);
+  const [loadError, setLoadError] = useState("");
+  const [reload, setReload] = useState(0);
   const [sections, setSections] = useState<HomepageSection[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [persistedIds, setPersistedIds] = useState<Set<string>>(new Set());
@@ -67,9 +1071,11 @@ export default function HomepageBuilderPage() {
     let cancelled = false;
     setLoading(true);
 
-    loadDashboardHomepageWorkspace()
-      .then(({ sections: liveSections, role }) => {
+    setLoadError("");
+    Promise.all([loadDashboardHomepageWorkspace(), listDashboardBrands()])
+      .then(([{ sections: liveSections, role }, liveBrands]) => {
         if (cancelled) return;
+        setBrands(liveBrands);
         setSections(liveSections);
         setPersistedIds(new Set(liveSections.map((section) => section.id)));
         setSelectedId(liveSections[0]?.id ?? "");
@@ -78,6 +1084,7 @@ export default function HomepageBuilderPage() {
       })
       .catch((cause) => {
         if (!cancelled) {
+          setLoadError("Unable to load homepage. Check your connection and retry.");
           toast.error(cause instanceof Error ? cause.message : "Unable to load homepage sections.");
         }
       })
@@ -88,7 +1095,7 @@ export default function HomepageBuilderPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reload]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -141,7 +1148,9 @@ export default function HomepageBuilderPage() {
     setSelectedId(item.id);
     setShowAdd(false);
     setDirty(true);
-    toast.success(`${sectionTypeLabels[type]} added as a CMS draft.`);
+    toast.success(
+      `${sectionTypeLabels[type]} added as an unsaved draft. Save changes to persist it.`,
+    );
   };
 
   const duplicate = (section: HomepageSection) => {
@@ -150,7 +1159,10 @@ export default function HomepageBuilderPage() {
       id: createHomepageUuid(),
       name: `${section.name} copy`,
       sectionId: createHomepageSectionKey(
-        section.sectionId.slice(0, 48).replace(/[^a-z0-9]+/gi, "_").toLowerCase() || section.type,
+        section.sectionId
+          .slice(0, 48)
+          .replace(/[^a-z0-9]+/gi, "_")
+          .toLowerCase() || section.type,
       ),
       order: sections.length + 1,
       status: "draft",
@@ -159,7 +1171,7 @@ export default function HomepageBuilderPage() {
     setSections((current) => [...current, copy]);
     setSelectedId(copy.id);
     setDirty(true);
-    toast.success("Section duplicated as a CMS draft.");
+    toast.success("Section duplicated locally. Save changes to persist it.");
   };
 
   const removeFromState = (id: string) => {
@@ -232,7 +1244,10 @@ export default function HomepageBuilderPage() {
   const saveChanges = () => persist(sections, "Homepage changes saved to Supabase.");
 
   const publishAll = async () => {
-    const next = sections.map((section) => ({ ...section, status: "published" as const }));
+    const next = sections.map((section) => ({
+      ...section,
+      status: "published" as const,
+    }));
     setSections(next);
     setDirty(true);
     await persist(next, "Homepage sections published to the live CMS.");
@@ -251,6 +1266,19 @@ export default function HomepageBuilderPage() {
       ),
     [sections, mode],
   );
+
+  if (loadError)
+    return (
+      <div role="alert" className="rounded-2xl border bg-white p-6">
+        <p>{loadError}</p>
+        <button
+          className="mt-4 rounded-xl border px-4 py-2"
+          onClick={() => setReload((n) => n + 1)}
+        >
+          Retry
+        </button>
+      </div>
+    );
 
   if (loading) {
     return (
@@ -362,7 +1390,7 @@ export default function HomepageBuilderPage() {
           </div>
           <div>
             {selected ? (
-              <Editor section={selected} update={updateSelected} />
+              <Editor brands={brands} section={selected} update={updateSelected} />
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-400">
                 Select a section to edit it.
@@ -410,7 +1438,9 @@ export default function HomepageBuilderPage() {
                     </div>
                     <Plus className="size-4 text-slate-300 group-hover:text-indigo-500" />
                   </div>
-                  <div className="text-[12px] font-bold text-slate-700">{sectionTypeLabels[type]}</div>
+                  <div className="text-[12px] font-bold text-slate-700">
+                    {sectionTypeLabels[type]}
+                  </div>
                   <div className="mt-1 text-[10px] leading-4 text-slate-400">
                     {sectionTypeDescriptions[type]}
                   </div>

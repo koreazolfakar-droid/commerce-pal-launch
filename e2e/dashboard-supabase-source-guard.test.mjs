@@ -33,7 +33,7 @@ test("migrated catalog pages do not import dashboard mock data", () => {
 
 test("products page and global product search are Supabase-backed", () => {
   assert.match(files.app, /listDashboardProducts\(\)/);
-  assert.match(files.app, /Products are loaded directly from the Space Call Supabase catalog/);
+  assert.match(files.app, /import ProductsPageLive from "@\/dashboard\/pages\/ProductsPage"/);
   assert.doesNotMatch(
     files.app,
     /pageMeta\["\/dashboard\/products"\]/,
@@ -52,3 +52,4 @@ test("migrated data layers read and write Supabase tables directly", () => {
   assert.match(files.categoryData, /\.from\("store_categories"\)/);
   assert.match(files.inventoryData, /\.from\("store_product_variants"\)/);
 });
+
