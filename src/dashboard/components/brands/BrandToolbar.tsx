@@ -1,4 +1,4 @@
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, RotateCcw, Search } from "lucide-react";
 
 function Select({
   label,
@@ -39,6 +39,7 @@ export default function BrandToolbar({
   onHomepageChange,
   sort,
   onSortChange,
+  onReset,
 }: {
   query: string;
   onQueryChange: (value: string) => void;
@@ -48,10 +49,12 @@ export default function BrandToolbar({
   onHomepageChange: (value: string) => void;
   sort: string;
   onSortChange: (value: string) => void;
+  onReset: () => void;
 }) {
+  const hasFilters = Boolean(query.trim()) || status !== "all" || homepage !== "all" || sort !== "order";
   return (
     <div className="mb-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_150px_160px_170px]">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_150px_160px_170px_auto]">
         <label className="relative sm:col-span-2 xl:col-span-1">
           <span className="sr-only">Search Brands</span>
           <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -93,6 +96,16 @@ export default function BrandToolbar({
             { value: "updated", label: "Last Updated" },
           ]}
         />
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50"
+          >
+            <RotateCcw className="size-3.5" />
+            Reset
+          </button>
+        )}
       </div>
     </div>
   );

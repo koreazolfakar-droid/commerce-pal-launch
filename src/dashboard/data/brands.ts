@@ -6,6 +6,7 @@ import {
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { convertProductImageToWebp } from "@/dashboard/lib/imageProcessing";
 
 type BrandRow = Tables<"cms_brands">;
 
@@ -34,6 +35,48 @@ async function requireDashboardStaff() {
   const role = await getDashboardRole();
   if (!role) throw new Error("Dashboard authentication is required.");
   return role;
+}
+
+const BRAND_MEDIA_BUCKET = "cms-media";
+const BRAND_MEDIA_PREFIX = "brands";
+const MAX_BRAND_MEDIA_BYTES = 10 * 1024 * 1024;
+
+function brandStoragePathFromUrl(url: string) {
+  const marker = `/storage/v1/object/public/${BRAND_MEDIA_BUCKET}/`;
+  const index = url.indexOf(marker);
+  if (index < 0) return null;
+  const path = decodeURIComponent(url.slice(index + marker.length));
+  return path.startsWith(`${BRAND_MEDIA_PREFIX}/`) ? path : null;
+}
+
+export async function uploadDashboardBrandImage(source: File, kind: "logo" | "cover") {
+  await requireDashboardStaff();
+  const conversion = await convertProductImageToWebp(source, kind === "logo" ? "1080" : "1920");
+  if (conversion.file.size > MAX_BRAND_MEDIA_BYTES) {
+    throw new Error("The optimized image must be 10 MB or smaller.");
+  }
+
+  const unique =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const objectPath = `${BRAND_MEDIA_PREFIX}/${kind}s/${unique}.webp`;
+  const { error } = await supabase.storage.from(BRAND_MEDIA_BUCKET).upload(
+    objectPath,
+    conversion.file,
+    { cacheControl: "31536000", upsert: false, contentType: "image/webp" },
+  );
+  throwIfError(error, `Uploading brand ${kind} failed`);
+  const { data } = supabase.storage.from(BRAND_MEDIA_BUCKET).getPublicUrl(objectPath);
+  return data.publicUrl;
+}
+
+export async function removeDashboardBrandImage(url: string) {
+  const objectPath = brandStoragePathFromUrl(url);
+  if (!objectPath) return;
+  await requireDashboardStaff();
+  const { error } = await supabase.storage.from(BRAND_MEDIA_BUCKET).remove([objectPath]);
+  throwIfError(error, "Removing unused brand image failed");
 }
 
 function mapBrand(row: BrandRow): CatalogBrand {
