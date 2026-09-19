@@ -1,4 +1,5 @@
 version: 2.1
+
 executors:
   node-bun:
     docker:
@@ -7,6 +8,7 @@ executors:
     working_directory: ~/project
     environment:
       BUN_INSTALL: /home/circleci/.bun
+
 commands:
   install-bun:
     steps:
@@ -24,40 +26,7 @@ commands:
       - install-bun
       - attach_workspace:
           at: ~/project
-  tsc-range:
-    parameters:
-      file:
-        type: string
-      min:
-        type: integer
-      max:
-        type: integer
-    steps:
-      - run:
-          name: Scoped TypeScript line diagnostic
-          command: |
-            bun run routes:generate
-            set +e
-            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
-            code=$?
-            set -e
-            if [ "$code" -eq 0 ]; then exit 0; fi
-            python3 - <<'PY'
-            import re, sys
-            file = "<< parameters.file >>"
-            lo = << parameters.min >>
-            hi = << parameters.max >>
-            text = open("/tmp/tsc.log", encoding="utf-8").read().splitlines()
-            found = False
-            for line in text:
-                if file not in line:
-                    continue
-                m = re.search(r"\((\d+),(\d+)\)", line)
-                if m and lo <= int(m.group(1)) <= hi:
-                    found = True
-                    break
-            sys.exit(1 if found else 0)
-            PY
+
 jobs:
   setup:
     executor: node-bun
@@ -73,153 +42,159 @@ jobs:
           command: bun install --frozen-lockfile
       - save_cache:
           key: bun-deps-v2-{{ checksum "bun.lock" }}
-          paths: [~/.bun/install/cache]
+          paths:
+            - ~/.bun/install/cache
       - persist_to_workspace:
           root: ~/project
-          paths: [node_modules]
+          paths:
+            - node_modules
 
-  tsc-catalog-pre:
+  tsc-catalog:
     executor: node-bun
-    steps: [restore-project, { tsc-range: { file: "src/dashboard/data/catalog.ts", min: 1, max: 748 } }]
-  tsc-catalog-list:
-    executor: node-bun
-    steps: [restore-project, { tsc-range: { file: "src/dashboard/data/catalog.ts", min: 749, max: 825 } }]
-  tsc-catalog-search:
-    executor: node-bun
-    steps: [restore-project, { tsc-range: { file: "src/dashboard/data/catalog.ts", min: 826, max: 867 } }]
-  tsc-catalog-get:
-    executor: node-bun
-    steps: [restore-project, { tsc-range: { file: "src/dashboard/data/catalog.ts", min: 868, max: 957 } }]
-  tsc-catalog-rest:
-    executor: node-bun
-    steps: [restore-project, { tsc-range: { file: "src/dashboard/data/catalog.ts", min: 958, max: 2000 } }]
+    steps:
+      - restore-project
+      - run:
+          name: Catalog TypeScript
+          command: |
+            bun run routes:generate
+            set +e
+            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
+            set -e
+            grep -E 'src/dashboard/data/catalog\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
 
-  tsc-receiving-workspace:
+  tsc-receiving:
     executor: node-bun
-    steps: [restore-project, { tsc-range: { file: "src/dashboard/data/receiving.ts", min: 1, max: 584 } }]
-  tsc-receiving-detail:
-    executor: node-bun
-    steps: [restore-project, { tsc-range: { file: "src/dashboard/data/receiving.ts", min: 585, max: 847 } }]
-  tsc-receiving-rest:
-    executor: node-bun
-    steps: [restore-project, { tsc-range: { file: "src/dashboard/data/receiving.ts", min: 848, max: 2000 } }]
+    steps:
+      - restore-project
+      - run:
+          name: Receiving TypeScript
+          command: |
+            bun run routes:generate
+            set +e
+            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
+            set -e
+            grep -E 'src/dashboard/data/receiving\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
 
   tsc-other-data-a:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: Other data A TypeScript
           command: |
             bun run routes:generate
             set +e
             ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
             set -e
-            grep -E 'src/dashboard/data/(brands|categories|collections|customers|hero)\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
+            grep -E 'src/dashboard/data/(brands|categories|collections|customers|hero|home|homepage)\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
+
   tsc-other-data-b:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: Other data B TypeScript
           command: |
             bun run routes:generate
             set +e
             ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
             set -e
-            grep -E 'src/dashboard/data/(home|homepage|homepagePreview|homepageSections|media)\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
-  tsc-other-data-c:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: |
-            bun run routes:generate
-            set +e
-            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
-            set -e
-            grep -E 'src/dashboard/data/(navigation|orders|productManagement|receivingRules|seo|settings|workspace)\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
+            grep -E 'src/dashboard/data/(homepagePreview|homepageSections|media|navigation|orders|productManagement|receivingRules|seo|settings|workspace)\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
 
-  test-dashboard-auth0-security:
+  test-auth0-security:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: auth0-security
           command: node --test e2e/dashboard-auth0-security.test.mjs
 
-  test-dashboard-csp-session-ci:
+  test-csp-session:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: csp-session
           command: node --test e2e/dashboard-csp-session-ci.test.mjs
 
-  test-dashboard-login-ui:
+  test-login-ui:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: login-ui
           command: node --test e2e/dashboard-login-ui.test.mjs
 
-  test-dashboard-password-breach-screening:
+  test-password-breach:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: password-breach
           command: node --test e2e/dashboard-password-breach-screening.test.mjs
 
-  test-dashboard-security-hardening:
+  test-security-hardening:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: security-hardening
           command: node --test e2e/dashboard-security-hardening.test.mjs
 
-  test-dashboard-session-security:
+  test-session-security:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: session-security
           command: node --test e2e/dashboard-session-security.test.mjs
 
-  test-dashboard-totp-mfa:
+  test-totp-mfa:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: totp-mfa
           command: node --test e2e/dashboard-totp-mfa.test.mjs
 
-  test-dashboard-content-cms-step4:
+  test-content-cms:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: content-cms
           command: node --test e2e/dashboard-content-cms-step4.test.mjs
 
-  test-dashboard-hero-image-pipeline:
+  test-hero-image:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: hero-image
           command: node --test e2e/dashboard-hero-image-pipeline.test.mjs
 
-  test-dashboard-hero-supabase:
+  test-hero-supabase:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: hero-supabase
           command: node --test e2e/dashboard-hero-supabase.test.mjs
 
-  test-dashboard-home-supabase:
+  test-home-supabase:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: home-supabase
           command: node --test e2e/dashboard-home-supabase.test.mjs
 
-  test-dashboard-homepage-cms:
+  test-homepage-cms:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: homepage-cms
           command: node --test e2e/dashboard-homepage-cms.test.mjs
 
   test-architecture:
@@ -227,6 +202,7 @@ jobs:
     steps:
       - restore-project
       - run:
+          name: architecture
           command: node --test e2e/architecture.test.mjs
 
   test-catalog:
@@ -234,6 +210,7 @@ jobs:
     steps:
       - restore-project
       - run:
+          name: catalog
           command: node --test e2e/catalog.test.mjs
 
   test-cms-refresh:
@@ -241,6 +218,7 @@ jobs:
     steps:
       - restore-project
       - run:
+          name: cms-refresh
           command: node --test e2e/cms-refresh.test.mjs
 
   test-hybrid-storefront:
@@ -248,6 +226,7 @@ jobs:
     steps:
       - restore-project
       - run:
+          name: hybrid-storefront
           command: node --test e2e/hybrid-storefront.test.mjs
 
   test-inventory-supabase:
@@ -255,6 +234,7 @@ jobs:
     steps:
       - restore-project
       - run:
+          name: inventory-supabase
           command: node --test e2e/inventory-supabase.test.mjs
 
   test-performance-architecture:
@@ -262,13 +242,15 @@ jobs:
     steps:
       - restore-project
       - run:
+          name: performance-architecture
           command: node --test e2e/performance-architecture.test.mjs
 
-  test-product-add-edit-supabase:
+  test-product-add-edit:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: product-add-edit
           command: node --test e2e/product-add-edit-supabase.test.mjs
 
   test-seo-regression:
@@ -276,13 +258,15 @@ jobs:
     steps:
       - restore-project
       - run:
+          name: seo-regression
           command: node --test e2e/seo-regression.test.mjs
 
-  test-shopify-only-storefront:
+  test-shopify-only:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: shopify-only
           command: node --test e2e/shopify-only-storefront.test.mjs
 
   test-storefront-consistency:
@@ -290,20 +274,23 @@ jobs:
     steps:
       - restore-project
       - run:
+          name: storefront-consistency
           command: node --test e2e/storefront-consistency.test.mjs
 
-  test-storefront-supabase-failover:
+  test-storefront-failover:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: storefront-failover
           command: node --test e2e/storefront-supabase-failover.test.mjs
 
-  test-dashboard-truthful-shell:
+  test-truthful-shell:
     executor: node-bun
     steps:
       - restore-project
       - run:
+          name: truthful-shell
           command: node --test e2e/dashboard-truthful-shell.test.mjs
 
 workflows:
@@ -312,39 +299,61 @@ workflows:
       - setup:
           filters:
             branches:
-              only: [/^important\/.*/]
-      - tsc-catalog-pre: { requires: [setup] }
-      - tsc-catalog-list: { requires: [setup] }
-      - tsc-catalog-search: { requires: [setup] }
-      - tsc-catalog-get: { requires: [setup] }
-      - tsc-catalog-rest: { requires: [setup] }
-      - tsc-receiving-workspace: { requires: [setup] }
-      - tsc-receiving-detail: { requires: [setup] }
-      - tsc-receiving-rest: { requires: [setup] }
-      - tsc-other-data-a: { requires: [setup] }
-      - tsc-other-data-b: { requires: [setup] }
-      - tsc-other-data-c: { requires: [setup] }
-      - test-dashboard-auth0-security: { requires: [setup] }
-      - test-dashboard-csp-session-ci: { requires: [setup] }
-      - test-dashboard-login-ui: { requires: [setup] }
-      - test-dashboard-password-breach-screening: { requires: [setup] }
-      - test-dashboard-security-hardening: { requires: [setup] }
-      - test-dashboard-session-security: { requires: [setup] }
-      - test-dashboard-totp-mfa: { requires: [setup] }
-      - test-dashboard-content-cms-step4: { requires: [setup] }
-      - test-dashboard-hero-image-pipeline: { requires: [setup] }
-      - test-dashboard-hero-supabase: { requires: [setup] }
-      - test-dashboard-home-supabase: { requires: [setup] }
-      - test-dashboard-homepage-cms: { requires: [setup] }
-      - test-architecture: { requires: [setup] }
-      - test-catalog: { requires: [setup] }
-      - test-cms-refresh: { requires: [setup] }
-      - test-hybrid-storefront: { requires: [setup] }
-      - test-inventory-supabase: { requires: [setup] }
-      - test-performance-architecture: { requires: [setup] }
-      - test-product-add-edit-supabase: { requires: [setup] }
-      - test-seo-regression: { requires: [setup] }
-      - test-shopify-only-storefront: { requires: [setup] }
-      - test-storefront-consistency: { requires: [setup] }
-      - test-storefront-supabase-failover: { requires: [setup] }
-      - test-dashboard-truthful-shell: { requires: [setup] }
+              only:
+                - /^important\/.*/
+      - tsc-catalog:
+          requires: [setup]
+      - tsc-receiving:
+          requires: [setup]
+      - tsc-other-data-a:
+          requires: [setup]
+      - tsc-other-data-b:
+          requires: [setup]
+      - test-auth0-security:
+          requires: [setup]
+      - test-csp-session:
+          requires: [setup]
+      - test-login-ui:
+          requires: [setup]
+      - test-password-breach:
+          requires: [setup]
+      - test-security-hardening:
+          requires: [setup]
+      - test-session-security:
+          requires: [setup]
+      - test-totp-mfa:
+          requires: [setup]
+      - test-content-cms:
+          requires: [setup]
+      - test-hero-image:
+          requires: [setup]
+      - test-hero-supabase:
+          requires: [setup]
+      - test-home-supabase:
+          requires: [setup]
+      - test-homepage-cms:
+          requires: [setup]
+      - test-architecture:
+          requires: [setup]
+      - test-catalog:
+          requires: [setup]
+      - test-cms-refresh:
+          requires: [setup]
+      - test-hybrid-storefront:
+          requires: [setup]
+      - test-inventory-supabase:
+          requires: [setup]
+      - test-performance-architecture:
+          requires: [setup]
+      - test-product-add-edit:
+          requires: [setup]
+      - test-seo-regression:
+          requires: [setup]
+      - test-shopify-only:
+          requires: [setup]
+      - test-storefront-consistency:
+          requires: [setup]
+      - test-storefront-failover:
+          requires: [setup]
+      - test-truthful-shell:
+          requires: [setup]
