@@ -866,8 +866,76 @@ export async function listDashboardProductSearchIndex(): Promise<DashboardProduc
 }
 
 export async function getDashboardProduct(id: string): Promise<DashboardProduct | null> {
-  const products = await listDashboardProducts();
-  return products.find((product) => product.id === id) ?? null;
+  await requireDashboardRole();
+
+  const productResult = await supabase
+    .from("store_products")
+    .select(
+      "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  throwIfError(productResult.error, "Loading product failed");
+  if (!productResult.data) return null;
+
+  const row = productResult.data as ProductListRow;
+  const [variantResult, imageResult, brandResult, categoryResult] = await Promise.all([
+    supabase
+      .from("store_product_variants")
+      .select("product_id,price,compare_at_price,sku,barcode,sort_order")
+      .eq("product_id", id)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("store_product_images")
+      .select("product_id,url,is_primary,sort_order")
+      .eq("product_id", id)
+      .order("sort_order", { ascending: true }),
+    row.brand_id
+      ? supabase.from("cms_brands").select("name").eq("id", row.brand_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    row.category_id
+      ? supabase.from("store_categories").select("name").eq("id", row.category_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+
+  throwIfError(variantResult.error, "Loading product variants failed");
+  throwIfError(imageResult.error, "Loading product images failed");
+  throwIfError(brandResult.error, "Loading product brand failed");
+  throwIfError(categoryResult.error, "Loading product category failed");
+
+  const variants = (variantResult.data ?? []) as VariantListRow[];
+  const images = (imageResult.data ?? []) as ImageListRow[];
+  const primary = variants[0];
+  const image = firstImage(images);
+
+  return {
+    id: row.id,
+    handle: row.handle,
+    name: row.title,
+    description: row.description,
+    brand: row.brand_id ? brandResult.data?.name ?? "" : "",
+    brandId: row.brand_id,
+    category: row.category_id
+      ? categoryResult.data?.name ?? row.product_type ?? ""
+      : row.product_type ?? "",
+    categoryId: row.category_id,
+    price: primary ? Number(primary.price) : Number(row.base_price),
+    compareAt:
+      primary?.compare_at_price == null
+        ? row.compare_at_price == null
+          ? null
+          : Number(row.compare_at_price)
+        : Number(primary.compare_at_price),
+    stock: row.stock_quantity,
+    status: statusFromDb(row.status),
+    sku: primary?.sku ?? row.sku ?? "",
+    barcode: primary?.barcode ?? row.barcode ?? "",
+    image: image?.url ?? "",
+    seoTitle: row.seo_title ?? "",
+    seoDescription: row.seo_description ?? "",
+    variantCount: variants.length,
+  };
 }
 
 async function uniqueHandle(title: string, existingId?: string) {

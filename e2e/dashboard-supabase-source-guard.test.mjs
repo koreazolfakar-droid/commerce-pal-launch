@@ -55,6 +55,18 @@ test("dashboard catalog avoids eager heavy payloads", () => {
   );
 });
 
+test("single product editor does not load the full dashboard catalog", () => {
+  const start = files.catalogData.indexOf("export async function getDashboardProduct");
+  const end = files.catalogData.indexOf("async function uniqueHandle", start);
+  assert.ok(start >= 0 && end > start);
+
+  const source = files.catalogData.slice(start, end);
+  assert.doesNotMatch(source, /listDashboardProducts\(\)/);
+  assert.match(source, /\.from\("store_products"\)/);
+  assert.match(source, /\.eq\("id", id\)/);
+  assert.match(source, /\.eq\("product_id", id\)/);
+});
+
 test("inventory contains no synthetic reserved stock calculation", () => {
   assert.doesNotMatch(files.inventory, /reserved\s*=|stock\s*\*\s*\.18|Reserved<\/th>/);
   assert.match(files.inventoryData, /store_inventory_movements/);
