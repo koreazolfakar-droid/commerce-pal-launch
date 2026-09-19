@@ -117,6 +117,36 @@ create trigger store_receivings_fill_supplier
 before insert or update of purchase_order_id on public.store_receivings
 for each row execute function private.store_receiving_fill_supplier();
 
+-- Overage is operationally sensitive: staff may prepare it, but only an admin can approve it.
+create or replace function private.guard_receiving_overage_approval()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  if new.status = 'approved'
+     and old.status = 'draft'
+     and exists (
+       select 1
+       from public.store_receiving_items ri
+       where ri.receiving_id = new.id
+         and ri.delivered_quantity > ri.remaining_quantity_before
+     )
+     and not private.is_dashboard_admin()
+  then
+    raise exception 'admin approval is required for excess delivery';
+  end if;
+
+  return new;
+end;
+$;
+
+drop trigger if exists store_receivings_guard_overage_approval on public.store_receivings;
+create trigger store_receivings_guard_overage_approval
+before update of status on public.store_receivings
+for each row execute function private.guard_receiving_overage_approval();
+
 -- ---------------------------------------------------------------------------
 -- Weighted average inventory cost
 -- ---------------------------------------------------------------------------
@@ -148,10 +178,12 @@ begin
     select
       ri.received_quantity,
       ri.unit_cost,
+      po.exchange_rate,
       poi.product_id,
       poi.variant_id
     from public.store_receiving_items ri
     join public.store_purchase_order_items poi on poi.id = ri.purchase_order_item_id
+    join public.store_purchase_orders po on po.id = new.purchase_order_id
     where ri.receiving_id = new.id
       and ri.received_quantity > 0
   loop
@@ -165,7 +197,7 @@ begin
       v_old_stock := greatest(0, v_current_stock - v_line.received_quantity);
       if v_current_stock > 0 then
         v_new_average := round(
-          ((v_old_stock::numeric * v_old_average) + (v_line.received_quantity::numeric * v_line.unit_cost))
+          ((v_old_stock::numeric * v_old_average) + (v_line.received_quantity::numeric * v_line.unit_cost * coalesce(v_line.exchange_rate, 1)))
           / v_current_stock::numeric,
           2
         );
@@ -197,7 +229,7 @@ begin
       v_old_stock := greatest(0, v_current_stock - v_line.received_quantity);
       if v_current_stock > 0 then
         v_new_average := round(
-          ((v_old_stock::numeric * v_old_average) + (v_line.received_quantity::numeric * v_line.unit_cost))
+          ((v_old_stock::numeric * v_old_average) + (v_line.received_quantity::numeric * v_line.unit_cost * coalesce(v_line.exchange_rate, 1)))
           / v_current_stock::numeric,
           2
         );
@@ -217,6 +249,110 @@ drop trigger if exists store_receivings_update_average_cost on public.store_rece
 create trigger store_receivings_update_average_cost
 after update of status on public.store_receivings
 for each row execute function private.update_average_cost_after_receiving_approval();
+
+create or replace function private.replace_store_receiving_serials_internal(
+  p_receiving_item_id uuid,
+  p_serials jsonb
+)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_actor uuid := auth.uid();
+  v_receiving_id uuid;
+  v_status text;
+  v_serial jsonb;
+  v_serial_number text;
+  v_imei1 text;
+  v_imei2 text;
+  v_condition text;
+  v_count integer := 0;
+begin
+  if v_actor is null or not private.is_dashboard_staff() then
+    raise exception 'dashboard staff required';
+  end if;
+  if jsonb_typeof(p_serials) <> 'array' then
+    raise exception 'serial payload must be an array';
+  end if;
+
+  select ri.receiving_id, r.status
+    into v_receiving_id, v_status
+  from public.store_receiving_items ri
+  join public.store_receivings r on r.id = ri.receiving_id
+  where ri.id = p_receiving_item_id
+  for update of ri, r;
+
+  if v_receiving_id is null then raise exception 'receiving line not found'; end if;
+  if v_status <> 'draft' then raise exception 'serials can only be edited on draft receiving'; end if;
+
+  delete from public.store_receiving_serials
+  where receiving_item_id = p_receiving_item_id;
+
+  for v_serial in select value from jsonb_array_elements(p_serials)
+  loop
+    v_serial_number := nullif(btrim(coalesce(v_serial->>'serial_number', '')), '');
+    v_imei1 := nullif(btrim(coalesce(v_serial->>'imei1', '')), '');
+    v_imei2 := nullif(btrim(coalesce(v_serial->>'imei2', '')), '');
+    v_condition := coalesce(nullif(btrim(coalesce(v_serial->>'condition', '')), ''), 'usable');
+
+    if v_serial_number is null and v_imei1 is null and v_imei2 is null then
+      continue;
+    end if;
+    if v_condition not in ('usable', 'damaged') then
+      raise exception 'invalid serial condition';
+    end if;
+
+    insert into public.store_receiving_serials (
+      receiving_item_id, serial_number, imei1, imei2, condition, inventory_status, created_by
+    ) values (
+      p_receiving_item_id,
+      v_serial_number,
+      v_imei1,
+      v_imei2,
+      v_condition,
+      'pending',
+      v_actor
+    );
+    v_count := v_count + 1;
+  end loop;
+
+  insert into public.store_procurement_events (
+    purchase_order_id, receiving_id, event_type, details, actor_id
+  )
+  select
+    r.purchase_order_id,
+    r.id,
+    'receiving_serials_updated',
+    jsonb_build_object('receiving_item_id', p_receiving_item_id, 'count', v_count),
+    v_actor
+  from public.store_receivings r
+  where r.id = v_receiving_id;
+
+  return v_count;
+end;
+$;
+
+revoke all on function private.replace_store_receiving_serials_internal(uuid,jsonb)
+from public, anon, authenticated;
+grant execute on function private.replace_store_receiving_serials_internal(uuid,jsonb)
+to authenticated;
+
+create or replace function public.replace_store_receiving_serials(
+  p_receiving_item_id uuid,
+  p_serials jsonb
+)
+returns integer
+language sql
+security invoker
+set search_path = ''
+as $
+  select private.replace_store_receiving_serials_internal(p_receiving_item_id, p_serials);
+$;
+
+revoke all on function public.replace_store_receiving_serials(uuid,jsonb) from public, anon;
+grant execute on function public.replace_store_receiving_serials(uuid,jsonb) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Attachments and device serial / IMEI capture
@@ -796,11 +932,48 @@ begin
   if exists (select 1 from public.store_receivings where purchase_order_id = p_purchase_order_id) then
     raise exception 'purchase order with receiving history cannot be deleted';
   end if;
+  if exists (select 1 from public.store_procurement_attachments where purchase_order_id = p_purchase_order_id) then
+    raise exception 'delete PO attachments before deleting the draft';
+  end if;
 
   delete from public.store_procurement_events where purchase_order_id = p_purchase_order_id;
   delete from public.store_purchase_orders where id = p_purchase_order_id;
 
   return 'deleted';
+end;
+$;
+
+create or replace function private.close_store_purchase_order_internal(
+  p_purchase_order_id uuid
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+begin
+  if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if not private.is_dashboard_admin() then raise exception 'dashboard admin required'; end if;
+
+  select status into v_status
+  from public.store_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if v_status is null then raise exception 'purchase order not found'; end if;
+  if v_status <> 'received' then raise exception 'only fully received purchase orders can be closed'; end if;
+
+  update public.store_purchase_orders
+  set status = 'closed', updated_at = now()
+  where id = p_purchase_order_id;
+
+  insert into public.store_procurement_events (purchase_order_id, event_type, actor_id)
+  values (p_purchase_order_id, 'purchase_order_closed', v_actor);
+
+  return 'closed';
 end;
 $;
 
@@ -1065,6 +1238,7 @@ $$;
 
 -- Revoke private implementations from direct exposed use.
 revoke all on function private.delete_store_purchase_order_draft_internal(uuid) from public, anon, authenticated;
+revoke all on function private.close_store_purchase_order_internal(uuid) from public, anon, authenticated;
 revoke all on function private.approve_store_purchase_order_internal(uuid) from public, anon, authenticated;
 revoke all on function private.issue_store_purchase_order_internal(uuid) from public, anon, authenticated;
 revoke all on function private.reject_store_purchase_order_internal(uuid,text) from public, anon, authenticated;
@@ -1073,6 +1247,7 @@ revoke all on function private.cancel_store_purchase_order_internal(uuid,text) f
 revoke all on function private.void_store_receiving_internal(uuid,text) from public, anon, authenticated;
 
 grant execute on function private.delete_store_purchase_order_draft_internal(uuid) to authenticated;
+grant execute on function private.close_store_purchase_order_internal(uuid) to authenticated;
 grant execute on function private.approve_store_purchase_order_internal(uuid) to authenticated;
 grant execute on function private.issue_store_purchase_order_internal(uuid) to authenticated;
 grant execute on function private.reject_store_purchase_order_internal(uuid,text) to authenticated;
@@ -1100,6 +1275,10 @@ create or replace function public.reopen_store_purchase_order(p_purchase_order_i
 returns text language sql security invoker set search_path = ''
 as $$ select private.reopen_store_purchase_order_internal(p_purchase_order_id); $$;
 
+create or replace function public.close_store_purchase_order(p_purchase_order_id uuid)
+returns text language sql security invoker set search_path = ''
+as $ select private.close_store_purchase_order_internal(p_purchase_order_id); $;
+
 create or replace function public.cancel_store_purchase_order(p_purchase_order_id uuid, p_reason text)
 returns text language sql security invoker set search_path = ''
 as $$ select private.cancel_store_purchase_order_internal(p_purchase_order_id, p_reason); $$;
@@ -1109,6 +1288,7 @@ returns text language sql security invoker set search_path = ''
 as $$ select private.void_store_receiving_internal(p_receiving_id, p_reason); $$;
 
 revoke all on function public.delete_store_purchase_order_draft(uuid) from public, anon;
+revoke all on function public.close_store_purchase_order(uuid) from public, anon;
 revoke all on function public.approve_store_purchase_order(uuid) from public, anon;
 revoke all on function public.issue_store_purchase_order(uuid) from public, anon;
 revoke all on function public.reject_store_purchase_order(uuid,text) from public, anon;
@@ -1117,6 +1297,7 @@ revoke all on function public.cancel_store_purchase_order(uuid,text) from public
 revoke all on function public.void_store_receiving(uuid,text) from public, anon;
 
 grant execute on function public.delete_store_purchase_order_draft(uuid) to authenticated;
+grant execute on function public.close_store_purchase_order(uuid) to authenticated;
 grant execute on function public.approve_store_purchase_order(uuid) to authenticated;
 grant execute on function public.issue_store_purchase_order(uuid) to authenticated;
 grant execute on function public.reject_store_purchase_order(uuid,text) to authenticated;
