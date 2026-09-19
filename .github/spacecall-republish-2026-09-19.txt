@@ -1,0 +1,4 @@
+Space Call deployment sync marker
+Date: 2026-09-19
+Purpose: republish the current main snapshot after the Dashboard Purchase Orders / Receiving updates.
+Runtime behavior changed by this marker: none.
