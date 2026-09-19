@@ -20,7 +20,7 @@ const migration = await readFile(
   "utf8",
 );
 const customizationMigration = await readFile(
-  new URL("../supabase/migrations/20260919205500_expand_hero_customization.sql", import.meta.url),
+  new URL("../supabase/migrations/20260919210516_expand_hero_customization.sql", import.meta.url),
   "utf8",
 );
 const cmsGateway = await readFile(
