@@ -139,7 +139,14 @@ export default function ReceivingPage({
   const [supplierCode, setSupplierCode] = useState("");
 
   const [poSupplierId, setPoSupplierId] = useState("");
+  const [poLocationId, setPoLocationId] = useState("");
   const [poNumber, setPoNumber] = useState("");
+  const [poCurrency, setPoCurrency] = useState("USD");
+  const [poExpectedAt, setPoExpectedAt] = useState("");
+  const [poDiscount, setPoDiscount] = useState("0");
+  const [poTax, setPoTax] = useState("0");
+  const [poShipping, setPoShipping] = useState("0");
+  const [poExchangeRate, setPoExchangeRate] = useState("1");
   const [poNotes, setPoNotes] = useState("");
   const [poLines, setPoLines] = useState<PoDraftLine[]>([]);
 
@@ -171,6 +178,7 @@ export default function ReceivingPage({
   }, [load]);
 
   const suppliers = workspace?.suppliers.filter((supplier) => supplier.isActive) ?? [];
+  const locations = workspace?.locations.filter((location) => location.isActive) ?? [];
   const purchaseOrders = workspace?.purchaseOrders ?? [];
   const receivings = workspace?.receivings ?? [];
   const productOptions = workspace?.productOptions ?? [];
@@ -204,7 +212,14 @@ export default function ReceivingPage({
 
   const resetPo = () => {
     setPoSupplierId(suppliers[0]?.id ?? "");
+    setPoLocationId(locations[0]?.id ?? "");
     setPoNumber("");
+    setPoCurrency("USD");
+    setPoExpectedAt("");
+    setPoDiscount("0");
+    setPoTax("0");
+    setPoShipping("0");
+    setPoExchangeRate("1");
     setPoNotes("");
     setPoLines(
       productOptions[0]
@@ -219,6 +234,9 @@ export default function ReceivingPage({
     const firstSupplier = workspace.suppliers.find((supplier) => supplier.isActive);
     if (!poSupplierId && firstSupplier) setPoSupplierId(firstSupplier.id);
 
+    const firstLocation = workspace.locations.find((location) => location.isActive);
+    if (!poLocationId && firstLocation) setPoLocationId(firstLocation.id);
+
     const firstProduct = workspace.productOptions[0];
     if (!poLines.length && firstProduct) {
       setPoLines([
@@ -230,7 +248,7 @@ export default function ReceivingPage({
         },
       ]);
     }
-  }, [poLines.length, poSupplierId, purchaseOrderCreateMode, workspace]);
+  }, [poLines.length, poLocationId, poSupplierId, purchaseOrderCreateMode, workspace]);
 
   const openPanel = (next: Exclude<Panel, null>) => {
     setPanel(next);
@@ -307,6 +325,7 @@ export default function ReceivingPage({
   const savePo = async () => {
     if (!poSupplierId) return toast.error("Select a supplier.");
     if (!poNumber.trim()) return toast.error("PO number is required.");
+    if (!poLocationId) return toast.error("Select a store / warehouse.");
     if (!poLines.length) return toast.error("Add at least one product.");
 
     const used = new Set<string>();
@@ -333,7 +352,14 @@ export default function ReceivingPage({
     try {
       await createPurchaseOrder({
         supplierId: poSupplierId,
+        locationId: poLocationId,
         poNumber,
+        currency: poCurrency,
+        expectedAt: poExpectedAt ? new Date(poExpectedAt).toISOString() : null,
+        discountAmount: Number(poDiscount || 0),
+        taxAmount: Number(poTax || 0),
+        shippingAmount: Number(poShipping || 0),
+        exchangeRate: Number(poExchangeRate || 1),
         notes: poNotes,
         items,
       });
@@ -356,7 +382,7 @@ export default function ReceivingPage({
     setSaving(true);
     try {
       await submitPurchaseOrder(po.id);
-      toast.success(`PO ${po.poNumber} is ready for receiving.`);
+      toast.success(`PO ${po.poNumber} submitted for approval.`);
       await load(false);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "PO submission failed.");
@@ -598,7 +624,9 @@ export default function ReceivingPage({
               <div className="mt-1 text-[10px] text-slate-400">
                 {panel === "receive"
                   ? "Create a draft first. Stock changes only when the draft is explicitly approved."
-                  : "All records are saved directly to Supabase."}
+                  : panel === "po"
+                    ? "Set supplier, destination, delivery date and commercial terms before saving the draft."
+                    : "All records are saved directly to Supabase."}
               </div>
             </div>
             <button
@@ -646,7 +674,7 @@ export default function ReceivingPage({
 
           {panel === "po" ? (
             <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <label>
                   <FieldLabel>Supplier</FieldLabel>
                   <select
@@ -661,6 +689,21 @@ export default function ReceivingPage({
                   </select>
                 </label>
                 <label>
+                  <FieldLabel>Store / Warehouse</FieldLabel>
+                  <select
+                    value={poLocationId}
+                    onChange={(event) => setPoLocationId(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  >
+                    <option value="">Select destination</option>
+                    {locations.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.name} · {location.code}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
                   <FieldLabel>PO number</FieldLabel>
                   <input
                     value={poNumber}
@@ -670,6 +713,38 @@ export default function ReceivingPage({
                   />
                 </label>
                 <label>
+                  <FieldLabel>Expected delivery</FieldLabel>
+                  <input
+                    type="datetime-local"
+                    value={poExpectedAt}
+                    onChange={(event) => setPoExpectedAt(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                </label>
+                <label>
+                  <FieldLabel>Currency</FieldLabel>
+                  <select
+                    value={poCurrency}
+                    onChange={(event) => setPoCurrency(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="LBP">LBP</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </label>
+                <label>
+                  <FieldLabel>Exchange rate</FieldLabel>
+                  <input
+                    type="number"
+                    min="0.000001"
+                    step="0.000001"
+                    value={poExchangeRate}
+                    onChange={(event) => setPoExchangeRate(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+                  />
+                </label>
+                <label className="md:col-span-2">
                   <FieldLabel>Notes</FieldLabel>
                   <input
                     value={poNotes}
@@ -740,6 +815,62 @@ export default function ReceivingPage({
                     </button>
                   </div>
                 ))}
+              </div>
+
+              <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-2 lg:grid-cols-5">
+                <label>
+                  <FieldLabel>Discount</FieldLabel>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={poDiscount}
+                    onChange={(event) => setPoDiscount(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  />
+                </label>
+                <label>
+                  <FieldLabel>VAT / Tax</FieldLabel>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={poTax}
+                    onChange={(event) => setPoTax(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  />
+                </label>
+                <label>
+                  <FieldLabel>Shipping</FieldLabel>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={poShipping}
+                    onChange={(event) => setPoShipping(event.target.value)}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                  />
+                </label>
+                <div className="rounded-xl bg-white p-3 sm:col-span-2">
+                  <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">Estimated total</div>
+                  <div className="mt-1 text-lg font-bold text-[#14203a]">
+                    {money(
+                      Math.max(
+                        0,
+                        poLines.reduce((sum, line) => {
+                          const qty = Number(line.expectedQuantity || 0);
+                          const cost = Number(line.unitCost || 0);
+                          return sum + (Number.isFinite(qty) ? qty : 0) * (Number.isFinite(cost) ? cost : 0);
+                        }, 0) -
+                          Number(poDiscount || 0) +
+                          Number(poTax || 0) +
+                          Number(poShipping || 0),
+                      ),
+                      poCurrency,
+                    )}
+                  </div>
+                  <div className="mt-1 text-[9px] text-slate-400">Subtotal − discount + tax + shipping</div>
+                </div>
               </div>
 
               <div className="flex flex-wrap justify-between gap-2">
