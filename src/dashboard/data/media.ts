@@ -21,6 +21,7 @@ export type DashboardMediaAsset = {
 const BUCKET = "cms-media";
 const LIBRARY_PREFIX = "library";
 const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
+const MAX_STORED_BYTES = 10 * 1024 * 1024;
 
 function throwIfError(error: { message: string } | null, label: string) {
   if (error) throw new Error(`${label}: ${error.message}`);
@@ -73,6 +74,9 @@ export async function uploadDashboardMediaImage(
   if (file.size > MAX_SOURCE_BYTES) throw new Error("Image must be 20 MB or smaller.");
 
   const conversion = await convertProductImageToWebp(file, "1920");
+  if (conversion.file.size > MAX_STORED_BYTES) {
+    throw new Error("Optimized image must be 10 MB or smaller.");
+  }
   const unique =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
