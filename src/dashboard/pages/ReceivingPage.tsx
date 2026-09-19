@@ -1113,7 +1113,13 @@ export default function ReceivingPage({
               <article key={po.id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-[12px] font-bold text-indigo-600">{po.poNumber}</div>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/dashboard/purchase-orders/${po.id}`)}
+                      className="text-left text-[12px] font-bold text-indigo-600 hover:underline"
+                    >
+                      {po.poNumber}
+                    </button>
                     <div className="mt-1 truncate text-[10px] font-semibold text-slate-600">{po.supplierName}</div>
                   </div>
                   <StatusBadge status={po.status} />
@@ -1192,7 +1198,13 @@ export default function ReceivingPage({
               {filteredPurchaseOrders.map((po) => (
                 <tr key={po.id} className="border-t border-slate-100 transition hover:bg-[#fbfcff]">
                   <td className="px-5 py-3">
-                    <div className="text-[11px] font-bold text-indigo-600">{po.poNumber}</div>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/dashboard/purchase-orders/${po.id}`)}
+                      className="text-left text-[11px] font-bold text-indigo-600 hover:underline"
+                    >
+                      {po.poNumber}
+                    </button>
                     <div className="mt-0.5 text-[9px] text-slate-400">{po.expectedUnits} ordered units</div>
                   </td>
                   <td className="px-3 py-3 text-[10px] text-slate-500">

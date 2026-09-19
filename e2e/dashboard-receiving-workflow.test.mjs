@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [workflow, hardening, data, page, purchaseOrdersPage, purchaseOrderCreatePage, app, nav, inventory, drawer, types] = await Promise.all([
+const [workflow, hardening, data, page, purchaseOrdersPage, purchaseOrderCreatePage, purchaseOrderDetailPage, app, nav, inventory, drawer, types] = await Promise.all([
   readFile(new URL("../supabase/migrations/20260919123000_procurement_receiving_workflows.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919124500_harden_procurement_rpc_exposure.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/receiving.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ReceivingPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/PurchaseOrdersPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/PurchaseOrderCreatePage.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/pages/PurchaseOrderDetailPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/mock/data.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/inventory.ts", import.meta.url), "utf8"),
@@ -121,6 +122,18 @@ test("purchase order creation uses its own dedicated route", () => {
   assert.match(page, /Create Purchase Order/);
   assert.match(page, /Purchase order draft created/);
   assert.match(page, /navigate\("\/dashboard\/purchase-orders"\)/);
+});
+
+test("PO number opens a dedicated detail page and receiving stays separate", () => {
+  assert.match(app, /import PurchaseOrderDetailPage from/);
+  assert.match(app, /purchaseOrderDetail/);
+  assert.match(app, /PurchaseOrderDetailPage id=/);
+  assert.match(page, /dashboard\/purchase-orders\/\$\{po\.id\}/);
+  assert.match(purchaseOrderDetailPage, /Purchase order details and ordered items/);
+  assert.match(purchaseOrderDetailPage, /Purchase order items/);
+  assert.match(purchaseOrderDetailPage, /Receive PO/);
+  assert.match(purchaseOrderDetailPage, /dashboard\/receiving\/\$\{po\.id\}/);
+  assert.match(purchaseOrderDetailPage, /Back to Purchase Orders/);
 });
 
 test("purchase orders and receiving are separate routed workspaces", () => {
