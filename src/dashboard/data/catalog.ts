@@ -379,7 +379,7 @@ export type DashboardPasskey = {
   lastUsedAt: string | null;
 };
 
-type DashboardPasskeyAction = "signin" | "register";
+type DashboardPasskeyAction = "signin" | "register" | "manage";
 
 function dashboardPasskeyErrorMessage(
   error: DashboardAuthFailure,
@@ -413,9 +413,9 @@ function dashboardPasskeyErrorMessage(
     return "Passkey service is temporarily unavailable. Try again shortly.";
   }
 
-  return action === "register"
-    ? "Passkey could not be registered. Try again."
-    : "Passkey sign-in could not be completed.";
+  if (action === "register") return "Passkey could not be registered. Try again.";
+  if (action === "manage") return "Passkey settings could not be updated.";
+  return "Passkey sign-in could not be completed.";
 }
 
 function dashboardPasskeyThrownErrorMessage(
@@ -431,9 +431,9 @@ function dashboardPasskeyThrownErrorMessage(
     }
   }
 
-  return action === "register"
-    ? "Passkey could not be registered. Try again."
-    : "Passkey sign-in could not be completed.";
+  if (action === "register") return "Passkey could not be registered. Try again.";
+  if (action === "manage") return "Passkey settings could not be updated.";
+  return "Passkey sign-in could not be completed.";
 }
 
 export function isDashboardPasskeySupported() {
@@ -497,12 +497,69 @@ export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
     throw new Error("Passkey could not be registered. Try again.");
   }
 
-  return {
+  const passkey: DashboardPasskey = {
     id: result.data.id,
     friendlyName: result.data.friendly_name ?? null,
     createdAt: result.data.created_at,
     lastUsedAt: null,
   };
+  await logDashboardSecurityEvent("passkey_registered", { passkeyId: passkey.id });
+  return passkey;
+}
+
+
+async function requireDashboardPasskeyManagementSession() {
+  const status = await getDashboardMfaStatus();
+  if (!status?.ready) {
+    throw new Error("Complete MFA verification before managing passkeys.");
+  }
+  return status;
+}
+
+function mapDashboardPasskey(passkey: {
+  id: string;
+  friendly_name?: string | null;
+  created_at: string;
+  last_used_at?: string | null;
+}): DashboardPasskey {
+  return {
+    id: passkey.id,
+    friendlyName: passkey.friendly_name ?? null,
+    createdAt: passkey.created_at,
+    lastUsedAt: passkey.last_used_at ?? null,
+  };
+}
+
+export async function listDashboardPasskeys(): Promise<DashboardPasskey[]> {
+  await requireDashboardPasskeyManagementSession();
+  const { data, error } = await supabase.auth.passkey.list();
+  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
+  return (data ?? []).map(mapDashboardPasskey);
+}
+
+export async function renameDashboardPasskey(
+  passkeyId: string,
+  friendlyName: string,
+): Promise<void> {
+  await requireDashboardPasskeyManagementSession();
+  const normalizedName = friendlyName.trim();
+  if (!normalizedName || normalizedName.length > 120) {
+    throw new Error("Passkey name must be between 1 and 120 characters.");
+  }
+
+  const { error } = await supabase.auth.passkey.update({
+    passkeyId,
+    friendlyName: normalizedName,
+  });
+  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
+  await logDashboardSecurityEvent("passkey_renamed", { passkeyId });
+}
+
+export async function deleteDashboardPasskey(passkeyId: string): Promise<void> {
+  await requireDashboardPasskeyManagementSession();
+  const { error } = await supabase.auth.passkey.delete({ passkeyId });
+  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
+  await logDashboardSecurityEvent("passkey_deleted", { passkeyId });
 }
 
 export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null> {
