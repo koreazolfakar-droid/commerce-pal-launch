@@ -110,7 +110,7 @@ export default function LoginPage() {
   const storedEmail =
     typeof window !== "undefined" ? window.localStorage.getItem(EMAIL_STORAGE_KEY) ?? "" : "";
 
-  const [view, setView] = useState<LoginView>(recoveryMode ? "recovery" : mfaMode ? "mfa" : "signin");
+  const [view, setView] = useState<LoginView>(recoveryMode || mfaMode ? "mfa" : "signin");
   const [email, setEmail] = useState(storedEmail);
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -159,35 +159,19 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    if (recoveryMode) return;
 
+    let cancelled = false;
     getDashboardMfaStatus()
       .then((status) => {
-        if (cancelled) return;
-
-        if (!status) {
-          if (recoveryMode) {
-            setInlineError("Your recovery session is missing or expired. Request a new recovery link.");
-          }
-          return;
-        }
-
+        if (cancelled || !status) return;
         if (status.ready) {
-          if (recoveryMode) {
-            setView("recovery");
-            return;
-          }
           navigate("/dashboard");
           return;
         }
-
         setView("mfa");
       })
-      .catch(() => {
-        if (recoveryMode && !cancelled) {
-          setInlineError("Unable to verify the recovery session. Request a new recovery link.");
-        }
-      });
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;
