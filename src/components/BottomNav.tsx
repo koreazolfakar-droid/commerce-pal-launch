@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import type { CmsNavigationItem } from "@/lib/cms";
+import { localizeNavigationItem, type CmsNavigationItem } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -134,7 +134,7 @@ function CmsIcon({ item }: { item: CmsNavigationItem }) {
 
 /** Premium mobile-only primary navigation for the Space Call storefront. */
 export function BottomNav() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { data: cms } = useQuery(cmsQueryOptions());
   const cartCount = useCartStore((state) =>
@@ -145,21 +145,17 @@ export function BottomNav() {
       .filter((item) => item.area === "bottom" && item.href && item.href !== "/compare")
       .sort((a, b) => a.sort_order - b.sort_order) ?? [];
   const hasCmsConfig = cmsAreaItems.length > 0;
-  const cmsItems = cmsAreaItems.filter((item) => item.is_visible).slice(0, 4);
+  const cmsItems = cmsAreaItems
+    .filter((item) => item.is_visible)
+    .map((item) => localizeNavigationItem(item, language))
+    .filter((item): item is CmsNavigationItem => Boolean(item))
+    .slice(0, 4);
 
   const itemClass = (active: boolean) =>
     cn(
       "press relative flex h-16 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-1 px-0.5 text-center text-[10px] font-semibold leading-none transition-[color,transform] duration-200 ease-out active:scale-[.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/35",
       active ? "text-primary" : "text-muted-foreground hover:text-foreground",
     );
-
-  const knownLabel = (href: string | null, fallback: string) => {
-    if (href === "/") return t("home");
-    if (href === "/categories") return t("categoriesTitle");
-    if (href === "/search") return t("searchLabel");
-    if (href === "/cart") return t("bag");
-    return fallback;
-  };
 
   const actionIconClass =
     "relative grid h-8 w-10 place-items-center rounded-xl transition-[background-color,color] duration-200 ease-out";
@@ -180,7 +176,7 @@ export function BottomNav() {
           >
             {cmsItems.map((item) => {
               const active = routeActive(pathname, item.href);
-              const label = knownLabel(item.href, item.label);
+              const label = item.label;
               const isCart = item.href === "/cart";
               return (
                 <a
