@@ -86,7 +86,6 @@ export type PurchaseOrderLine = {
   approvedReceivedQuantity: number;
   remainingQuantity: number;
   unitCost: number;
-  serials: ReceivingSerial[];
 };
 
 export type PurchaseOrderSummary = {
@@ -135,6 +134,7 @@ export type ReceivingLineSummary = {
   overageQuantity: number;
   overageReason: string | null;
   unitCost: number;
+  serials: ReceivingSerial[];
 };
 
 export type ReceivingSummary = {
