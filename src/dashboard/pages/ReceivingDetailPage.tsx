@@ -15,15 +15,16 @@ import { toast } from "sonner";
 import {
   approveReceiving,
   deleteProcurementAttachment,
-  loadReceivingWorkspace,
+  loadReceivingDetail,
   replaceReceivingSerials,
   updateReceivingDraft,
   uploadProcurementAttachment,
   voidReceiving,
   type ProcurementAttachment,
+  type ProcurementEventSummary,
+  type ReceivingPurchaseOrderBaseline,
   type ReceivingSerialDraft,
   type ReceivingSummary,
-  type ReceivingWorkspace,
 } from "@/dashboard/data/receiving";
 
 type SerialDraftRow = ReceivingSerialDraft & { key: string };
@@ -48,8 +49,11 @@ function statusClass(status: string) {
 
 export default function ReceivingDetailPage({ id }: { id: string }) {
   const [, navigate] = useLocation();
-  const [workspace, setWorkspace] = useState<ReceivingWorkspace | null>(null);
   const [receipt, setReceipt] = useState<ReceivingSummary | null>(null);
+  const [po, setPo] = useState<ReceivingPurchaseOrderBaseline | null>(null);
+  const [events, setEvents] = useState<ProcurementEventSummary[]>([]);
+  const [attachments, setAttachments] = useState<ProcurementAttachment[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -63,11 +67,14 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const next = await loadReceivingWorkspace();
-      const found = next.receivings.find((item) => item.id === id) ?? null;
+      const detail = await loadReceivingDetail(id);
+      const found = detail.receipt;
       if (!found) throw new Error("Receiving record was not found.");
-      setWorkspace(next);
       setReceipt(found);
+      setPo(detail.purchaseOrder);
+      setEvents(detail.events);
+      setAttachments(detail.attachments);
+      setIsAdmin(detail.role === "admin");
       setInvoiceNumber(found.invoiceNumber);
       setEmployeeLabel(found.employee === "Authenticated staff" ? "" : found.employee);
       setReceivingNotes(found.notes ?? "");
@@ -110,24 +117,6 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const po = useMemo(
-    () => workspace?.purchaseOrders.find((item) => item.id === receipt?.purchaseOrderId) ?? null,
-    [receipt?.purchaseOrderId, workspace],
-  );
-
-  const attachments = useMemo(
-    () => workspace?.attachments.filter((attachment) => attachment.receivingId === id) ?? [],
-    [id, workspace],
-  );
-
-  const events = useMemo(
-    () =>
-      (workspace?.events ?? [])
-        .filter((event) => event.receivingId === id)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    [id, workspace],
-  );
 
   const invoiceTotal = useMemo(
     () => receipt?.items.reduce((sum, line) => sum + line.deliveredQuantity * line.unitCost, 0) ?? 0,
@@ -713,7 +702,7 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
                 <a href={attachment.url} target="_blank" rel="noreferrer" className="truncate text-[11px] font-bold text-indigo-600 hover:underline">
                   {attachment.fileName}
                 </a>
-                {workspace.role === "admin" ? (
+                {isAdmin ? (
                   <button
                     onClick={() => {
                       if (!window.confirm("Delete this attachment?")) return;
