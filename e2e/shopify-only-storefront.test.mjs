@@ -4,32 +4,22 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("public storefront queries use Shopify directly", async () => {
-  const queries = await read("src/lib/queries.ts");
-
-  assert.match(queries, /from "@\/lib\/shopify"/);
-  assert.doesNotMatch(queries, /@\/lib\/hybridStore|@\/lib\/nativeStore|@\/lib\/storefrontFacade/);
-  assert.match(queries, /fetchCatalogProducts/);
-  assert.match(queries, /fetchCollectionByHandle/);
-  assert.match(queries, /fetchProductByHandle/);
-  assert.match(queries, /fetchBrandVendors/);
+test("public storefront queries use the native Supabase facade", async () => {
+  const [queries, facade] = await Promise.all([
+    read("src/lib/queries.ts"),
+    read("src/lib/storefrontData.ts"),
+  ]);
+  assert.match(queries, /@\/lib\/storefrontData/);
+  assert.match(facade, /@\/lib\/nativeStore/);
+  assert.doesNotMatch(facade, /Shopify fallback|storefrontApiRequest|SHOPIFY_STOREFRONT/);
 });
 
-test("legacy CMS cannot become a second storefront runtime source of truth", async () => {
+test("public CMS is Supabase-backed and resilient", async () => {
   const [cms, cmsQuery] = await Promise.all([
     read("src/lib/cms.ts"),
     read("src/lib/cmsQuery.ts"),
   ]);
-
-  assert.match(
-    cms,
-    /export async function fetchCmsSnapshot\(\): Promise<CmsSnapshot> \{\s*return EMPTY_CMS;\s*\}/,
-  );
-  assert.doesNotMatch(
-    cms,
-    /createServerFn|functions\/v1\/public-cms|loadCmsSnapshot\s*\(|cmsSnapshotFn\s*\(/,
-  );
-  assert.match(cmsQuery, /queryFn: async \(\) => EMPTY_CMS/);
-  assert.match(cmsQuery, /staleTime: Number\.POSITIVE_INFINITY/);
-  assert.doesNotMatch(cmsQuery, /fetchCmsSnapshot|refetchOnMount: "always"/);
+  assert.match(cms, /functions\/v1\/public-cms/);
+  assert.match(cms, /return EMPTY_CMS/);
+  assert.match(cmsQuery, /fetchCmsSnapshot/);
 });

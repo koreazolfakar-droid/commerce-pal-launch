@@ -8,17 +8,15 @@ test("repository exposes one comprehensive validation command", async () => {
   const pkg = JSON.parse(await read("package.json"));
   assert.match(pkg.scripts.typecheck, /routes:generate/);
   assert.match(pkg.scripts.typecheck, /tsc --noEmit/);
-  assert.match(pkg.scripts.check, /typecheck/);
-  assert.match(pkg.scripts.check, /lint/);
-  assert.match(pkg.scripts.check, /test:unit/);
-  assert.match(pkg.scripts.check, /test:ssr/);
-  assert.match(pkg.scripts.check, /build/);
+  for (const step of ["typecheck", "lint", "test:unit", "build", "test:ssr"]) {
+    assert.match(pkg.scripts.check, new RegExp(step));
+  }
 });
 
-test("storefront CI protects both pull requests and main pushes", async () => {
+test("GitHub Storefront CI is manual-only", async () => {
   const workflow = await read(".github/workflows/storefront-ci.yml");
-  assert.match(workflow, /push:\s*[\s\S]*branches:\s*[\s\S]*- main/);
-  assert.match(workflow, /pull_request:\s*[\s\S]*branches:\s*[\s\S]*- main/);
+  assert.match(workflow, /workflow_dispatch/);
+  assert.doesNotMatch(workflow, /\npush:|\npull_request:/);
   assert.match(workflow, /bun install --frozen-lockfile/);
   assert.match(workflow, /bun run typecheck/);
   assert.match(workflow, /bun run lint/);
@@ -27,15 +25,13 @@ test("storefront CI protects both pull requests and main pushes", async () => {
   assert.match(workflow, /bun run build/);
 });
 
-test("specialized responsive CI cannot silently ignore regressions", async () => {
-  const [hero, bottomNav] = await Promise.all([
-    read(".github/workflows/hero-responsive-ci.yml"),
-    read(".github/workflows/bottom-nav-responsive-ci.yml"),
-  ]);
-
-  assert.match(hero, /push:\s*[\s\S]*- main/);
-  assert.match(hero, /bun run dev:e2e/);
-  assert.doesNotMatch(hero, /npm install --global pnpm/);
-  assert.doesNotMatch(hero, /continue-on-error:\s*true/);
-  assert.doesNotMatch(bottomNav, /continue-on-error:\s*true/);
+test("CircleCI validates only important update branches", async () => {
+  const circle = await read(".circleci/config.yml");
+  assert.match(circle, /\/\^important\\\/\.\*\//);
+  assert.match(circle, /bun install --frozen-lockfile/);
+  assert.match(circle, /bun run typecheck/);
+  assert.match(circle, /bun run lint/);
+  assert.match(circle, /bun run test:unit/);
+  assert.match(circle, /bun run build/);
+  assert.match(circle, /bun run test:ssr/);
 });

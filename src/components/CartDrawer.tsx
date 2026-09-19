@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  ExternalLink,
-  Loader2,
   MessageCircle,
   Minus,
   Plus,
@@ -48,11 +46,8 @@ export const CartDrawer = ({
   const {
     items,
     total,
-    isLoading,
-    isSyncing,
     updateQuantity,
     removeItem,
-    getCheckoutUrl,
     syncCart,
   } = useCartStore();
 
@@ -74,13 +69,6 @@ export const CartDrawer = ({
     return () => document.removeEventListener("space-cell:open-cart", open);
   }, [setIsOpen]);
 
-  const handleCheckout = () => {
-    const checkoutUrl = getCheckoutUrl();
-    if (checkoutUrl) {
-      window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-      setIsOpen(false);
-    }
-  };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -200,21 +188,11 @@ export const CartDrawer = ({
                   <span className="h-px flex-1 bg-border" />
                 </div>
 
-                <Button
-                  onClick={handleCheckout}
-                  variant="outline"
-                  className="min-h-12 w-full"
-                  size="lg"
-                  disabled={items.length === 0 || isLoading || isSyncing}
-                >
-                  {isLoading || isSyncing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      {t("checkoutShopify")}
-                    </>
-                  )}
+                <Button asChild variant="outline" className="min-h-12 w-full" size="lg">
+                  <a href="/cart" onClick={() => setIsOpen(false)}>
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    {language === "ar" ? "إكمال الطلب" : "Continue checkout"}
+                  </a>
                 </Button>
               </div>
             </>

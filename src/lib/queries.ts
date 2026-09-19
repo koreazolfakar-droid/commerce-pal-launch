@@ -214,10 +214,10 @@ export const storefrontSearchQueryOptions = (term: string) =>
     retryDelay,
   });
 
-/** Policies are legacy Shopify content until they are explicitly migrated to the CMS. */
+/** Detailed policies are read from the native Supabase CMS when configured. */
 export const shopPoliciesQueryOptions = () =>
   queryOptions({
-    queryKey: ["shopify", "policies"],
+    queryKey: ["supabase", "policies"],
     queryFn: () => fetchShopPolicies(),
     staleTime: POLICY_STALE_TIME,
     retry: false,

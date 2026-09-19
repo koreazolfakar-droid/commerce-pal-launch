@@ -20,11 +20,8 @@ import { cdnImage } from "@/lib/image";
 import { productsInCategory, productsOfBrand } from "@/lib/taxonomy";
 import { useProductViewMode } from "@/hooks/useProductViewMode";
 
-import {
-  fetchCollectionByHandle,
-  type ShopifyCollection,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import { fetchCollectionByHandle } from "@/lib/storefrontData";
+import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
 
 const HOME_BRAND_PRODUCT_TARGET = 4;

@@ -2,27 +2,25 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 
+const facade = fs.readFileSync("src/lib/storefrontData.ts", "utf8");
 const queries = fs.readFileSync("src/lib/queries.ts", "utf8");
 const productRoute = fs.readFileSync("src/routes/product.$handle.tsx", "utf8");
-const tsconfig = fs.readFileSync("tsconfig.json", "utf8");
+const compat = fs.readFileSync("src/lib/shopify.ts", "utf8");
 
-test("public storefront data reads resolve directly to Shopify", () => {
-  assert.match(queries, /from "@\/lib\/shopify"/);
-  assert.doesNotMatch(queries, /from "@\/lib\/hybridStore"|from "@\/lib\/nativeStore"/);
-  assert.match(productRoute, /from "@\/lib\/shopify"/);
+test("public storefront resolves through Supabase-native data facade", () => {
+  assert.match(queries, /from "@\/lib\/storefrontData"/);
+  assert.match(facade, /from "@\/lib\/nativeStore"/);
+  assert.doesNotMatch(facade, /withShopifyFallback|fetchShopify|storefrontApiRequest/);
 });
 
-test("the @/lib/shopify alias points at the real Shopify module", () => {
-  const config = JSON.parse(tsconfig);
-  assert.equal(config.compilerOptions.paths["@/lib/shopify"], undefined);
-  assert.deepEqual(config.compilerOptions.paths["@/*"], ["./src/*"]);
+test("legacy Shopify-named compatibility module contains types and pricing helpers only", () => {
+  assert.match(compat, /export interface ShopifyProduct/);
+  assert.match(compat, /from "@\/lib\/productPricing"/);
+  assert.doesNotMatch(compat, /fetch\(|createServerFn|GraphQL|STOREFRONT_URL|ACCESS_TOKEN/);
 });
 
-test("Shopify-only storefront path does not introduce Admin API writes or secrets", () => {
-  for (const source of [queries, productRoute]) {
-    assert.doesNotMatch(source, /SHOPIFY_ADMIN_API_TOKEN/);
-    assert.doesNotMatch(source, /X-Shopify-Access-Token/);
-    assert.doesNotMatch(source, /admin\/api/i);
-    assert.doesNotMatch(source, /\.insert\(|\.update\(|\.delete\(/);
+test("storefront path cannot introduce Shopify Admin or Storefront credentials", () => {
+  for (const source of [facade, queries, productRoute, compat]) {
+    assert.doesNotMatch(source, /SHOPIFY_ADMIN_API_TOKEN|SHOPIFY_STOREFRONT_TOKEN|X-Shopify-Access-Token|admin\/api/i);
   }
 });

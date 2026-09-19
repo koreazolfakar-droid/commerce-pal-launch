@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { storefrontApiRequest } from "@/lib/shopify";
-import { SHOP_POLICIES_QUERY } from "@/lib/storefrontDocuments";
+import { fetchCmsSnapshot, type CmsSettingValue } from "@/lib/cms";
 
 export interface ShopPolicy {
   title: string;
@@ -24,30 +23,37 @@ export function safePolicyUrl(value: string): string | null {
   }
 }
 
+function settingText(settings: Record<string, CmsSettingValue>, key: string) {
+  const value = settings[key];
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+async function policyFromCms(
+  settings: Record<string, CmsSettingValue>,
+  prefix: string,
+): Promise<ShopPolicy | null> {
+  const body = settingText(settings, `${prefix}_body`);
+  if (!body) return null;
+  const { sanitizePolicyHtml } = await import("@/lib/policyHtml");
+  const title = settingText(settings, `${prefix}_title`) || "Store policy";
+  const url = settingText(settings, `${prefix}_url`);
+  return {
+    title,
+    body: sanitizePolicyHtml(body),
+    url: url ? (safePolicyUrl(url) ?? "") : "",
+  };
+}
+
+/** Detailed policy content is now sourced only from the Space Call CMS/Supabase. */
 export const fetchShopPolicies = createServerFn({ method: "GET" }).handler(
-  async (): Promise<ShopPolicies | null> => {
-    try {
-      const response: { data?: { shop?: ShopPolicies } } =
-        await storefrontApiRequest(SHOP_POLICIES_QUERY);
-      const shop = response.data?.shop;
-      if (!shop) return null;
-      const { sanitizePolicyHtml } = await import("@/lib/policyHtml");
-      const clean = (policy: ShopPolicy | null): ShopPolicy | null =>
-        policy
-          ? {
-              ...policy,
-              body: sanitizePolicyHtml(policy.body),
-              url: safePolicyUrl(policy.url) ?? "",
-            }
-          : null;
-      return {
-        privacyPolicy: clean(shop.privacyPolicy),
-        refundPolicy: clean(shop.refundPolicy),
-        termsOfService: clean(shop.termsOfService),
-        shippingPolicy: clean(shop.shippingPolicy),
-      };
-    } catch {
-      return null;
-    }
+  async (): Promise<ShopPolicies> => {
+    const cms = await fetchCmsSnapshot();
+    const settings = cms.settings;
+    return {
+      privacyPolicy: await policyFromCms(settings, "privacy_policy"),
+      refundPolicy: await policyFromCms(settings, "refund_policy"),
+      termsOfService: await policyFromCms(settings, "terms_of_service"),
+      shippingPolicy: await policyFromCms(settings, "shipping_policy"),
+    };
   },
 );

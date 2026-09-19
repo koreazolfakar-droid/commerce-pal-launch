@@ -17,7 +17,7 @@ import {
   collectionQueryOptions,
   collectionsQueryOptions,
 } from "@/lib/queries";
-import { productDiscountPercent } from "@/lib/shopify";
+import { productDiscountPercent } from "@/lib/productPricing";
 import {
   canonicalLink,
   jsonLd,
@@ -71,7 +71,7 @@ type IdleCapableWindow = Window & {
 };
 
 /**
- * Keep below-the-fold JavaScript and secondary Shopify requests out of the
+ * Keep below-the-fold JavaScript and secondary catalogue requests out of the
  * startup critical path. They become available as soon as the browser reaches
  * an idle window, with a short fallback for browsers without requestIdleCallback.
  */

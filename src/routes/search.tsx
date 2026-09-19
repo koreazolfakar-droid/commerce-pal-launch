@@ -18,7 +18,7 @@ export const Route = createFileRoute("/search")({
       { title: `Search products — ${STORE_NAME}` },
       {
         name: "description",
-        content: `Search the ${STORE_NAME} catalogue of smartphones, tablets, audio, wearables and accessories with live Shopify pricing.`,
+        content: `Search the ${STORE_NAME} catalogue of smartphones, tablets, audio, wearables and accessories with live pricing and availability.`,
       },
       { property: "og:title", content: `Search products — ${STORE_NAME}` },
       {
@@ -52,7 +52,7 @@ function SearchPage() {
     <StoreLayout>
       <CatalogView
         title={filters.q ? `Results for “${filters.q}”` : "Search products"}
-        description={`${products.length} matching product${products.length === 1 ? "" : "s"} from the live Shopify catalogue.`}
+        description={`${products.length} matching product${products.length === 1 ? "" : "s"} from the live Space Call catalogue.`}
         products={products}
         total={catalog.products.length}
         filters={filters}
