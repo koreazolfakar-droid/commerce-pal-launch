@@ -44,9 +44,9 @@ test("storefront orders and hides homepage blocks from public CMS sections", () 
 });
 
 test("public CMS exposes only visible sections, navigation and brands", () => {
-  assert.match(publicCms, /from\\("cms_sections"\\)[\\s\\S]*?\\.eq\\("is_visible", true\\)/);
-  assert.match(publicCms, /from\\("cms_navigation_items"\\)[\\s\\S]*?\\.eq\\("is_visible", true\\)/);
-  assert.match(publicCms, /from\\("cms_brands"\\)[\\s\\S]*?\\.eq\\("is_visible", true\\)/);
+  assert.match(publicCms, /from\("cms_sections"\)[\s\S]*?\.eq\("is_visible", true\)/);
+  assert.match(publicCms, /from\("cms_navigation_items"\)[\s\S]*?\.eq\("is_visible", true\)/);
+  assert.match(publicCms, /from\("cms_brands"\)[\s\S]*?\.eq\("is_visible", true\)/);
   assert.match(categories, /localizeSection\\(cmsSection, language\\)/);
   assert.match(brands, /localizeSection\\(cmsSection, language\\)/);
   assert.match(trust, /localizeSection\\(section, language\\)/);
