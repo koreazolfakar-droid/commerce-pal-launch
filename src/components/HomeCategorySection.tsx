@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
 import { CategoryGlyph } from "@/components/CategoryGlyph";
+import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { cdnImage } from "@/lib/image";
 import { localizeSection } from "@/lib/cms";
@@ -11,9 +12,38 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 import type { ShopifyCollection } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
 
+type ManagedHomeCategory = {
+  name: string;
+  name_ar: string | null;
+  slug: string;
+  image_url: string | null;
+  sort_order: number;
+};
+
+type HomeCategoryItem = CatalogIndex["categories"][number] & {
+  managedImage?: string;
+  managedNameAr?: string | null;
+};
+
+async function fetchManagedHomeCategories(): Promise<ManagedHomeCategory[]> {
+  const { data, error } = await publicSupabase
+    .from("store_categories")
+    .select("name,name_ar,slug,image_url,sort_order")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) throw new Error(\`Loading storefront categories failed: \${error.message}\`);
+  return (data ?? []) as ManagedHomeCategory[];
+}
+
 /**
  * Critical homepage category rail kept in its own small module so the heavier
  * bundle/brand merchandising code can stay out of the initial homepage chunk.
+ *
+ * Dashboard-managed categories now control the visible set, display name,
+ * image and order. If the public category query fails, the existing dynamic
+ * catalog remains as a safe storefront fallback.
  */
 export function HomeCategorySection({
   catalog,
@@ -24,7 +54,38 @@ export function HomeCategorySection({
 }) {
   const { t, language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
-  if (!catalog.categories.length) return null;
+  const { data: managedCategories } = useQuery({
+    queryKey: ["storefront", "home-categories"],
+    queryFn: fetchManagedHomeCategories,
+    staleTime: 30_000,
+  });
+
+  const catalogBySlug = new Map(catalog.categories.map((category) => [category.slug, category]));
+  const catalogByName = new Map(
+    catalog.categories.map((category) => [category.label.trim().toLowerCase(), category]),
+  );
+
+  const categories: HomeCategoryItem[] = managedCategories
+    ? managedCategories.flatMap((managed) => {
+        const catalogCategory =
+          catalogBySlug.get(managed.slug) ??
+          catalogByName.get(managed.name.trim().toLowerCase());
+
+        if (!catalogCategory) return [];
+
+        return [
+          {
+            ...catalogCategory,
+            label: managed.name,
+            managedImage: managed.image_url || undefined,
+            managedNameAr: managed.name_ar,
+          },
+        ];
+      })
+    : catalog.categories;
+
+  if (!categories.length) return null;
+
   const cmsSection = cms?.sections.find(
     (section) => section.page_slug === "home" && section.section_key === "categories",
   );
@@ -60,14 +121,17 @@ export function HomeCategorySection({
           role="list"
           aria-label={title}
         >
-          {catalog.categories.map((category) => {
-            const label = categoryLabel(category, language);
+          {categories.map((category) => {
+            const label =
+              language === "ar" && category.managedNameAr?.trim()
+                ? category.managedNameAr.trim()
+                : categoryLabel(category, language);
             const artwork = findCategoryArtworkCollection(
               collections,
               category.slug,
               category.label,
             );
-            const imageUrl = cdnImage(artwork?.image?.url, 128);
+            const imageUrl = cdnImage(category.managedImage || artwork?.image?.url, 128);
 
             return (
               <Link
