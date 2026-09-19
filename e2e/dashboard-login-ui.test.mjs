@@ -30,7 +30,7 @@ test("login page exposes bilingual theme-aware mobile UX without public security
   assert.match(login, /Show password/);
   assert.match(login, /Hide password/);
   assert.match(login, /تسجيل الدخول/);
-  assert.match(login, /spacecall-login-theme/);
+  assert.match(login, /useTheme\(\)/);
   assert.match(login, /ThemeLanguageControls/);
   assert.match(login, /min-h-\[100dvh\]/);
   assert.match(login, /sm:text-\[13px\]/);
@@ -103,7 +103,7 @@ test("login supports Arabic RTL and a persisted light or dark appearance", () =>
   assert.match(login, /const \{ lang, setLang \} = useLanguage\(\)/);
   assert.match(login, /dir=\{isRtl \? "rtl" : "ltr"\}/);
   assert.match(login, /setLang\(lang === "en" \? "ar" : "en"\)/);
-  assert.match(login, /LOGIN_THEME_STORAGE_KEY/);
-  assert.match(login, /prefers-color-scheme: dark/);
+  assert.match(login, /useTheme\(\)/);
+  assert.match(login, /toggleTheme/);
   assert.match(login, /data-login-theme=\{theme\}/);
 });
