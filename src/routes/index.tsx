@@ -8,7 +8,7 @@ import { HomeCategorySection } from "@/components/HomeCategorySection";
 import { HomeHero } from "@/components/HomeHero";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
-import { cmsSeoPage, cmsText, EMPTY_CMS } from "@/lib/cms";
+import { cmsSeoPage, cmsText, EMPTY_CMS, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import {
   bestSellingQueryOptions,
@@ -253,6 +253,190 @@ function HomePromoTicker({ heading, details }: { heading: string; details: strin
   );
 }
 
+function cmsBuilderState(section: CmsSection) {
+  const content =
+    section.content && typeof section.content === "object" && !Array.isArray(section.content)
+      ? (section.content as Record<string, unknown>)
+      : {};
+  const builder =
+    content["builder"] && typeof content["builder"] === "object" && !Array.isArray(content["builder"])
+      ? (content["builder"] as Record<string, unknown>)
+      : {};
+
+  return builder;
+}
+
+function cmsSectionIsScheduled(section: CmsSection) {
+  const builder = cmsBuilderState(section);
+  const startDate = typeof builder["startDate"] === "string" ? builder["startDate"] : "";
+  const endDate = typeof builder["endDate"] === "string" ? builder["endDate"] : "";
+  const today = new Date().toISOString().slice(0, 10);
+  return (!startDate || today >= startDate) && (!endDate || today <= endDate);
+}
+
+function cmsSectionDeviceClass(section?: CmsSection) {
+  if (!section) return "";
+  const builder = cmsBuilderState(section);
+  const mobile = builder["showOnMobile"] !== false;
+  const tablet = builder["showOnTablet"] !== false;
+  const desktop = builder["showOnDesktop"] !== false;
+  return [
+    mobile ? "" : "max-sm:hidden",
+    tablet ? "" : "sm:max-lg:hidden",
+    desktop ? "" : "lg:hidden",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function safeCmsHref(value: unknown) {
+  if (typeof value !== "string") return undefined;
+  const href = value.trim();
+  if (!href) return undefined;
+  if (href.startsWith("/") || href.startsWith("#") || href.startsWith("https://")) return href;
+  return undefined;
+}
+
+function CmsBuilderSection({ section }: { section: CmsSection }) {
+  const { language } = useLanguage();
+  const localized = localizeSection(section, language);
+  const builder = cmsBuilderState(section);
+  const settings =
+    builder["settings"] && typeof builder["settings"] === "object" && !Array.isArray(builder["settings"])
+      ? (builder["settings"] as Record<string, unknown>)
+      : {};
+  const type =
+    typeof builder["type"] === "string"
+      ? builder["type"]
+      : typeof section.content["builderType"] === "string"
+        ? section.content["builderType"]
+        : section.section_type;
+  const displayTitle = localized.title || section.title || "";
+  const displaySubtitle = localized.subtitle || section.subtitle || "";
+  const description = typeof builder["description"] === "string" ? builder["description"] : "";
+  const eyebrow = typeof builder["eyebrow"] === "string" ? builder["eyebrow"] : "";
+  const buttonText = typeof builder["buttonText"] === "string" ? builder["buttonText"] : "";
+  const secondaryButtonText =
+    typeof builder["secondaryButtonText"] === "string" ? builder["secondaryButtonText"] : "";
+  const buttonLink = safeCmsHref(builder["buttonLink"]);
+  const secondaryButtonLink = safeCmsHref(builder["secondaryButtonLink"]);
+  const media = typeof settings["media"] === "string" ? settings["media"] : "";
+  const background = typeof builder["background"] === "string" ? builder["background"] : "surface";
+  const alignment = typeof builder["alignment"] === "string" ? builder["alignment"] : "left";
+  const dark = background === "navy" || background === "purple";
+  const alignmentClass =
+    alignment === "center"
+      ? "items-center text-center"
+      : alignment === "right"
+        ? "items-end text-right"
+        : "items-start text-left";
+
+  if (type === "announcement") {
+    return (
+      <section className="rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white">
+        {displayTitle || description}
+        {buttonText && buttonLink ? (
+          <a href={buttonLink} className="ms-2 font-bold text-indigo-200 hover:underline">
+            {buttonText}
+          </a>
+        ) : null}
+      </section>
+    );
+  }
+
+  const faqItems = Array.isArray(settings["items"])
+    ? settings["items"].filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === "object" && !Array.isArray(item),
+      )
+    : [];
+
+  return (
+    <section
+      className={`relative overflow-hidden rounded-3xl border p-5 shadow-card sm:p-8 ${
+        background === "navy"
+          ? "border-slate-800 bg-slate-950 text-white"
+          : background === "purple"
+            ? "border-violet-500/20 bg-gradient-to-br from-violet-700 to-indigo-700 text-white"
+            : background === "mist"
+              ? "bg-surface"
+              : "bg-card"
+      }`}
+      data-cms-section={section.section_key}
+    >
+      {media ? (
+        <img
+          src={media}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-y-0 end-0 h-full w-[42%] object-cover opacity-80"
+        />
+      ) : null}
+      <div className={`relative z-10 flex max-w-2xl flex-col gap-3 ${alignmentClass}`}>
+        {eyebrow ? (
+          <div className={`text-xs font-bold uppercase tracking-[.16em] ${dark ? "text-indigo-200" : "text-primary"}`}>
+            {eyebrow}
+          </div>
+        ) : null}
+        {displayTitle ? (
+          <h2 className="text-2xl font-black tracking-tight sm:text-3xl">{displayTitle}</h2>
+        ) : null}
+        {displaySubtitle ? (
+          <p className={`text-sm font-semibold ${dark ? "text-white/80" : "text-muted-foreground"}`}>
+            {displaySubtitle}
+          </p>
+        ) : null}
+        {description ? (
+          <p className={`max-w-xl text-sm leading-6 ${dark ? "text-white/75" : "text-muted-foreground"}`}>
+            {description}
+          </p>
+        ) : null}
+        {(buttonText && buttonLink) || (secondaryButtonText && secondaryButtonLink) ? (
+          <div className="mt-1 flex flex-wrap gap-2">
+            {buttonText && buttonLink ? (
+              <a
+                href={buttonLink}
+                className={`rounded-full px-5 py-2.5 text-xs font-bold ${
+                  dark ? "bg-white text-slate-950" : "bg-primary text-primary-foreground"
+                }`}
+              >
+                {buttonText}
+              </a>
+            ) : null}
+            {secondaryButtonText && secondaryButtonLink ? (
+              <a
+                href={secondaryButtonLink}
+                className={`rounded-full border px-5 py-2.5 text-xs font-bold ${
+                  dark ? "border-white/30 text-white" : "border-border"
+                }`}
+              >
+                {secondaryButtonText}
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      {type === "faq" && faqItems.length ? (
+        <div className="relative z-10 mt-6 space-y-2">
+          {faqItems.map((item, index) => {
+            const question = typeof item["question"] === "string" ? item["question"] : "";
+            const answer = typeof item["answer"] === "string" ? item["answer"] : "";
+            if (!question && !answer) return null;
+            return (
+              <details key={`${section.id}-faq-${index}`} className="rounded-2xl border bg-background/85 p-4">
+                <summary className="cursor-pointer text-sm font-bold">{question}</summary>
+                {answer ? <p className="mt-2 text-sm text-muted-foreground">{answer}</p> : null}
+              </details>
+            );
+          })}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function Index() {
   const { t, language } = useLanguage();
   const deferredWorkReady = useDeferredHomepageWork();
@@ -288,9 +472,6 @@ function Index() {
   const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
   const best = (bestSellers ?? []).filter(isHomepageMerchandise);
   const latest = newItems.filter(isHomepageMerchandise);
-  const isVisible = (key: string) =>
-    cms.sections.find((section) => section.section_key === key)?.is_visible ?? true;
-
   const tickerHeading =
     cmsText(cms, language === "ar" ? "home_ticker_heading_ar" : "home_ticker_heading_en") ??
     (language === "ar"
@@ -302,118 +483,193 @@ function Index() {
       ? "متجرك الموثوق للهواتف والإلكترونيات • توفر مباشر • أسعار واضحة • دفع آمن"
       : "Your trusted phones & electronics store • Live availability • Clear pricing • Secure checkout");
 
+  const homeSections = cms.sections.filter((section) => section.page_slug === "home");
+  const sectionByKey = new Map(homeSections.map((section) => [section.section_key, section]));
+  const coreKeys = new Set(["hero", "categories", "brands", "featured_products", "trust"]);
+  const coreSection = (key: string) => sectionByKey.get(key);
+  const isLive = (section: CmsSection | undefined, fallbackVisible = true) =>
+    section ? section.is_visible && cmsSectionIsScheduled(section) : fallbackVisible;
+  const orderOf = (key: string, fallback: number) => coreSection(key)?.sort_order ?? fallback;
+
+  const featuredSection = coreSection("featured_products");
+  const localizedFeaturedSection = featuredSection
+    ? localizeSection(featuredSection, language)
+    : undefined;
+  const featuredTitle =
+    localizedFeaturedSection?.title?.trim() || t("bestSellers");
+  const featuredSubtitle =
+    localizedFeaturedSection?.subtitle?.trim() || t("bestSellersDescription");
+
+  const blocks: Array<{
+    key: string;
+    order: number;
+    section?: CmsSection;
+    visible: boolean;
+    node: React.ReactNode;
+  }> = [
+    {
+      key: "hero",
+      order: orderOf("hero", 10),
+      section: coreSection("hero"),
+      visible: isLive(coreSection("hero")),
+      node: (
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
+          <HomePromoTicker heading={tickerHeading} details={tickerDetails} />
+          <HomeHero
+            products={products}
+            heroCollection={heroCollection}
+            cmsHeroSlides={cms.heroSlides}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "categories",
+      order: orderOf("categories", 15),
+      section: coreSection("categories"),
+      visible: isLive(coreSection("categories")),
+      node: catalog ? (
+        <HomeCategorySection catalog={catalog} collections={collections} />
+      ) : (
+        <div className="h-28 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+      ),
+    },
+    {
+      key: "brands",
+      order: orderOf("brands", 20),
+      section: coreSection("brands"),
+      visible: isLive(coreSection("brands")),
+      node: catalog ? (
+        <Suspense fallback={<SectionFallback className="h-24" />}>
+          <LazyTopBrands brands={brands} />
+        </Suspense>
+      ) : (
+        <div className="h-24 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+      ),
+    },
+    {
+      key: "featured_products",
+      order: orderOf("featured_products", 30),
+      section: featuredSection,
+      visible: isLive(featuredSection),
+      node: catalogReady ? (
+        <>
+          {best.length > 0 ? (
+            <section data-testid="best-sellers">
+              <SectionHeader title={featuredTitle} subtitle={featuredSubtitle} />
+              <Suspense fallback={<SectionFallback />}>
+                <LazyProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
+              </Suspense>
+            </section>
+          ) : null}
+
+          {deals.length > 0 ? (
+            <section id="deals" className="scroll-mt-24" data-testid="deals-section">
+              <SectionHeader
+                title={t("todaysDeals")}
+                subtitle={t("dealsDescription")}
+                action={<DealsCountdown />}
+              />
+              <Suspense fallback={<SectionFallback className="h-72" />}>
+                {deals.length <= 2 ? (
+                  <LazyDealSpotlight products={deals} />
+                ) : (
+                  <LazyProductRail products={deals} storageKey="space-cell-home-deals-view" />
+                )}
+              </Suspense>
+              <div className="mt-4">
+                <Link
+                  to="/shop"
+                  search={{ availability: "on-sale" }}
+                  className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary"
+                >
+                  {t("allDeals")} <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </section>
+          ) : null}
+
+          {latest.length > 0 ? (
+            <section data-testid="new-items">
+              <SectionHeader
+                title={t("newItems")}
+                subtitle={t("newItemsDescription")}
+                action={
+                  <Link
+                    to="/shop"
+                    search={{ sort: "newest" }}
+                    className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline"
+                  >
+                    {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
+                  </Link>
+                }
+              />
+              <Suspense fallback={<SectionFallback />}>
+                <LazyProductRail products={latest} storageKey="space-cell-home-new-items-view" />
+              </Suspense>
+            </section>
+          ) : null}
+
+          {deferredWorkReady ? (
+            <Suspense fallback={<SectionFallback className="h-64" />}>
+              <LazyBundleSection collections={collections} />
+              {homepageCatalog ? (
+                <LazyBrandShowcase catalog={homepageCatalog} collections={collections} />
+              ) : null}
+            </Suspense>
+          ) : null}
+        </>
+      ) : (
+        <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+      ),
+    },
+    {
+      key: "recently_viewed",
+      order: 35,
+      visible: deferredWorkReady,
+      node: (
+        <Suspense fallback={null}>
+          <LazyRecentlyViewed products={merchandiseProducts} />
+        </Suspense>
+      ),
+    },
+    {
+      key: "trust",
+      order: orderOf("trust", 40),
+      section: coreSection("trust"),
+      visible: deferredWorkReady && isLive(coreSection("trust")),
+      node: (
+        <Suspense fallback={null}>
+          <LazyServicesStrip />
+          <LazyWhyShop />
+        </Suspense>
+      ),
+    },
+    ...homeSections
+      .filter((section) => !coreKeys.has(section.section_key))
+      .map((section) => ({
+        key: section.section_key,
+        order: section.sort_order,
+        section,
+        visible: section.is_visible && cmsSectionIsScheduled(section),
+        node: <CmsBuilderSection section={section} />,
+      })),
+  ];
+
+  const orderedBlocks = blocks
+    .filter((block) => block.visible)
+    .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
+
   return (
     <StoreLayout>
       <div className="home-page">
-        {isVisible("hero") ? (
-          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
-            <HomePromoTicker heading={tickerHeading} details={tickerDetails} />
-            <HomeHero
-              products={products}
-              heroCollection={heroCollection}
-              cmsHeroSlides={cms.heroSlides}
-            />
+        {orderedBlocks.map((block) => (
+          <div key={block.key} className={cmsSectionDeviceClass(block.section)}>
+            {block.node}
           </div>
-        ) : null}
-
-        {catalog ? (
-          <HomeCategorySection catalog={catalog} collections={collections} />
-        ) : (
-          <div className="h-28 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
-        )}
-        {isVisible("brands") ? (
-          catalog ? (
-            <Suspense fallback={<SectionFallback className="h-24" />}>
-              <LazyTopBrands brands={brands} />
-            </Suspense>
-          ) : (
-            <div className="h-24 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
-          )
-        ) : null}
-
-        {catalogReady ? (
-          <>
-            {isVisible("featured_products") && best.length > 0 && (
-              <section data-testid="best-sellers">
-                <SectionHeader title={t("bestSellers")} subtitle={t("bestSellersDescription")} />
-                <Suspense fallback={<SectionFallback />}>
-                  <LazyProductRail products={best} storageKey="space-cell-home-best-sellers-view" />
-                </Suspense>
-              </section>
-            )}
-
-            {isVisible("featured_products") && deals.length > 0 && (
-              <section id="deals" className="scroll-mt-24" data-testid="deals-section">
-                <SectionHeader
-                  title={t("todaysDeals")}
-                  subtitle={t("dealsDescription")}
-                  action={<DealsCountdown />}
-                />
-                <Suspense fallback={<SectionFallback className="h-72" />}>
-                  {deals.length <= 2 ? (
-                    <LazyDealSpotlight products={deals} />
-                  ) : (
-                    <LazyProductRail products={deals} storageKey="space-cell-home-deals-view" />
-                  )}
-                </Suspense>
-                <div className="mt-4">
-                  <Link
-                    to="/shop"
-                    search={{ availability: "on-sale" }}
-                    className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary"
-                  >
-                    {t("allDeals")} <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </section>
-            )}
-
-            {isVisible("featured_products") && latest.length > 0 && (
-              <section data-testid="new-items">
-                <SectionHeader
-                  title={t("newItems")}
-                  subtitle={t("newItemsDescription")}
-                  action={
-                    <Link
-                      to="/shop"
-                      search={{ sort: "newest" }}
-                      className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary hover:underline"
-                    >
-                      {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
-                    </Link>
-                  }
-                />
-                <Suspense fallback={<SectionFallback />}>
-                  <LazyProductRail products={latest} storageKey="space-cell-home-new-items-view" />
-                </Suspense>
-              </section>
-            )}
-
-            {isVisible("featured_products") && deferredWorkReady ? (
-              <Suspense fallback={<SectionFallback className="h-64" />}>
-                <LazyBundleSection collections={collections} />
-                {homepageCatalog ? (
-                  <LazyBrandShowcase catalog={homepageCatalog} collections={collections} />
-                ) : null}
-              </Suspense>
-            ) : null}
-          </>
-        ) : (
-          <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
-        )}
-
-        {deferredWorkReady ? (
-          <Suspense fallback={null}>
-            <LazyRecentlyViewed products={merchandiseProducts} />
-            {isVisible("trust") ? (
-              <>
-                <LazyServicesStrip />
-                <LazyWhyShop />
-              </>
-            ) : null}
-          </Suspense>
-        ) : null}
+        ))}
       </div>
     </StoreLayout>
   );
+
 }
