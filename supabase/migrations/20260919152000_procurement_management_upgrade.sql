@@ -1,0 +1,795 @@
+-- Space Call procurement management upgrade.
+-- Adds operational PO management without changing approved stock mutation semantics.
+
+-- ---------------------------------------------------------------------------
+-- Purchase-order lifecycle, location and commercial terms
+-- ---------------------------------------------------------------------------
+
+alter table public.store_purchase_orders
+  drop constraint if exists store_purchase_orders_status_check;
+
+alter table public.store_purchase_orders
+  add constraint store_purchase_orders_status_check
+  check (
+    status in (
+      'draft',
+      'pending_approval',
+      'approved',
+      'rejected',
+      'ordered',
+      'partially_received',
+      'received',
+      'closed',
+      'cancelled'
+    )
+  );
+
+create table if not exists public.store_procurement_locations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (btrim(name) <> ''),
+  code text not null check (btrim(code) <> ''),
+  address text,
+  is_active boolean not null default true,
+  created_by uuid references auth.users(id) on delete set null default auth.uid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists store_procurement_locations_code_unique
+  on public.store_procurement_locations(lower(btrim(code)));
+create index if not exists store_procurement_locations_active_name_idx
+  on public.store_procurement_locations(is_active, name);
+
+insert into public.store_procurement_locations (name, code, is_active)
+values ('Main Store', 'MAIN', true)
+on conflict do nothing;
+
+alter table public.store_purchase_orders
+  add column if not exists location_id uuid references public.store_procurement_locations(id) on delete restrict,
+  add column if not exists approved_by uuid references auth.users(id) on delete set null,
+  add column if not exists approved_at timestamptz,
+  add column if not exists rejected_by uuid references auth.users(id) on delete set null,
+  add column if not exists rejected_at timestamptz,
+  add column if not exists rejection_reason text,
+  add column if not exists cancelled_by uuid references auth.users(id) on delete set null,
+  add column if not exists cancelled_at timestamptz,
+  add column if not exists cancellation_reason text,
+  add column if not exists discount_amount numeric(12,2) not null default 0 check (discount_amount >= 0),
+  add column if not exists tax_amount numeric(12,2) not null default 0 check (tax_amount >= 0),
+  add column if not exists shipping_amount numeric(12,2) not null default 0 check (shipping_amount >= 0),
+  add column if not exists exchange_rate numeric(14,6) not null default 1 check (exchange_rate > 0);
+
+update public.store_purchase_orders po
+set location_id = (
+  select l.id
+  from public.store_procurement_locations l
+  where lower(l.code) = 'main'
+  order by l.created_at
+  limit 1
+)
+where po.location_id is null;
+
+create index if not exists store_purchase_orders_location_status_idx
+  on public.store_purchase_orders(location_id, status, created_at desc);
+
+-- ---------------------------------------------------------------------------
+-- Supplier/invoice matching
+-- ---------------------------------------------------------------------------
+
+alter table public.store_receivings
+  add column if not exists supplier_id uuid references public.store_suppliers(id) on delete restrict;
+
+update public.store_receivings r
+set supplier_id = po.supplier_id
+from public.store_purchase_orders po
+where po.id = r.purchase_order_id
+  and r.supplier_id is null;
+
+alter table public.store_receivings
+  alter column supplier_id set not null;
+
+create unique index if not exists store_receivings_supplier_invoice_unique
+  on public.store_receivings(supplier_id, lower(btrim(invoice_number)))
+  where status <> 'voided';
+
+create or replace function private.store_receiving_fill_supplier()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  select po.supplier_id
+    into new.supplier_id
+  from public.store_purchase_orders po
+  where po.id = new.purchase_order_id;
+
+  if new.supplier_id is null then
+    raise exception 'purchase order supplier not found';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists store_receivings_fill_supplier on public.store_receivings;
+create trigger store_receivings_fill_supplier
+before insert or update of purchase_order_id on public.store_receivings
+for each row execute function private.store_receiving_fill_supplier();
+
+-- ---------------------------------------------------------------------------
+-- Attachments and device serial / IMEI capture
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.store_procurement_attachments (
+  id uuid primary key default gen_random_uuid(),
+  purchase_order_id uuid references public.store_purchase_orders(id) on delete cascade,
+  receiving_id uuid references public.store_receivings(id) on delete cascade,
+  file_name text not null check (btrim(file_name) <> ''),
+  storage_path text not null check (btrim(storage_path) <> ''),
+  mime_type text,
+  size_bytes bigint check (size_bytes is null or size_bytes >= 0),
+  attachment_type text not null default 'other'
+    check (attachment_type in ('purchase_order', 'supplier_invoice', 'packing_list', 'other')),
+  uploaded_by uuid references auth.users(id) on delete set null default auth.uid(),
+  created_at timestamptz not null default now(),
+  check (purchase_order_id is not null or receiving_id is not null)
+);
+
+create index if not exists store_procurement_attachments_po_idx
+  on public.store_procurement_attachments(purchase_order_id, created_at desc);
+create index if not exists store_procurement_attachments_receiving_idx
+  on public.store_procurement_attachments(receiving_id, created_at desc);
+
+create table if not exists public.store_receiving_serials (
+  id uuid primary key default gen_random_uuid(),
+  receiving_item_id uuid not null references public.store_receiving_items(id) on delete cascade,
+  serial_number text,
+  imei1 text,
+  imei2 text,
+  condition text not null default 'usable' check (condition in ('usable', 'damaged')),
+  inventory_status text not null default 'pending'
+    check (inventory_status in ('pending', 'in_stock', 'damaged', 'sold', 'returned', 'voided')),
+  created_by uuid references auth.users(id) on delete set null default auth.uid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (
+    btrim(coalesce(serial_number, '')) <> ''
+    or btrim(coalesce(imei1, '')) <> ''
+    or btrim(coalesce(imei2, '')) <> ''
+  )
+);
+
+create unique index if not exists store_receiving_serials_serial_unique
+  on public.store_receiving_serials(lower(btrim(serial_number)))
+  where serial_number is not null and btrim(serial_number) <> '';
+create unique index if not exists store_receiving_serials_imei1_unique
+  on public.store_receiving_serials(btrim(imei1))
+  where imei1 is not null and btrim(imei1) <> '';
+create unique index if not exists store_receiving_serials_imei2_unique
+  on public.store_receiving_serials(btrim(imei2))
+  where imei2 is not null and btrim(imei2) <> '';
+create index if not exists store_receiving_serials_receiving_item_idx
+  on public.store_receiving_serials(receiving_item_id);
+
+create or replace function private.sync_receiving_serial_inventory_status()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.status = 'approved' and old.status is distinct from new.status then
+    update public.store_receiving_serials s
+    set inventory_status = case when s.condition = 'usable' then 'in_stock' else 'damaged' end,
+        updated_at = now()
+    where s.receiving_item_id in (
+      select ri.id
+      from public.store_receiving_items ri
+      where ri.receiving_id = new.id
+    );
+  elsif new.status = 'voided' and old.status is distinct from new.status then
+    update public.store_receiving_serials s
+    set inventory_status = 'voided',
+        updated_at = now()
+    where s.receiving_item_id in (
+      select ri.id
+      from public.store_receiving_items ri
+      where ri.receiving_id = new.id
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists store_receivings_sync_serial_status on public.store_receivings;
+create trigger store_receivings_sync_serial_status
+after update of status on public.store_receivings
+for each row execute function private.sync_receiving_serial_inventory_status();
+
+-- ---------------------------------------------------------------------------
+-- PO draft editing
+-- ---------------------------------------------------------------------------
+
+create or replace function private.update_store_purchase_order_draft_internal(
+  p_purchase_order_id uuid,
+  p_supplier_id uuid,
+  p_location_id uuid,
+  p_po_number text,
+  p_currency text,
+  p_expected_at timestamptz,
+  p_discount_amount numeric,
+  p_tax_amount numeric,
+  p_shipping_amount numeric,
+  p_exchange_rate numeric,
+  p_notes text,
+  p_items jsonb
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+  v_item jsonb;
+  v_product_id uuid;
+  v_variant_id uuid;
+  v_variant_product_id uuid;
+  v_expected integer;
+  v_unit_cost numeric(12,2);
+  v_product_title text;
+  v_variant_title text;
+  v_sku text;
+begin
+  if v_actor is null or not private.is_dashboard_staff() then
+    raise exception 'dashboard staff required';
+  end if;
+
+  select status into v_status
+  from public.store_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if v_status is null then raise exception 'purchase order not found'; end if;
+  if v_status <> 'draft' then raise exception 'only draft purchase orders can be edited'; end if;
+
+  if not exists (select 1 from public.store_suppliers where id = p_supplier_id and is_active) then
+    raise exception 'active supplier not found';
+  end if;
+  if p_location_id is not null and not exists (
+    select 1 from public.store_procurement_locations where id = p_location_id and is_active
+  ) then
+    raise exception 'active location not found';
+  end if;
+  if btrim(coalesce(p_po_number, '')) = '' then raise exception 'PO number is required'; end if;
+  if char_length(coalesce(p_currency, '')) <> 3 then raise exception 'currency must be a 3-letter code'; end if;
+  if coalesce(p_discount_amount, 0) < 0 or coalesce(p_tax_amount, 0) < 0 or coalesce(p_shipping_amount, 0) < 0 then
+    raise exception 'commercial amounts cannot be negative';
+  end if;
+  if coalesce(p_exchange_rate, 0) <= 0 then raise exception 'exchange rate must be greater than zero'; end if;
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'purchase order requires at least one item';
+  end if;
+
+  update public.store_purchase_orders
+  set supplier_id = p_supplier_id,
+      location_id = p_location_id,
+      po_number = btrim(p_po_number),
+      currency = upper(p_currency),
+      expected_at = p_expected_at,
+      discount_amount = coalesce(p_discount_amount, 0),
+      tax_amount = coalesce(p_tax_amount, 0),
+      shipping_amount = coalesce(p_shipping_amount, 0),
+      exchange_rate = coalesce(p_exchange_rate, 1),
+      notes = nullif(btrim(coalesce(p_notes, '')), ''),
+      updated_at = now()
+  where id = p_purchase_order_id;
+
+  delete from public.store_purchase_order_items
+  where purchase_order_id = p_purchase_order_id;
+
+  for v_item in select value from jsonb_array_elements(p_items)
+  loop
+    begin
+      v_product_id := nullif(v_item->>'product_id', '')::uuid;
+      v_variant_id := nullif(v_item->>'variant_id', '')::uuid;
+      v_expected := (v_item->>'expected_quantity')::integer;
+      v_unit_cost := (v_item->>'unit_cost')::numeric(12,2);
+    exception when others then
+      raise exception 'invalid purchase order item payload';
+    end;
+
+    if v_product_id is null or v_expected is null or v_expected <= 0 then
+      raise exception 'each PO item needs a product and positive expected quantity';
+    end if;
+    if v_unit_cost is null or v_unit_cost < 0 then
+      raise exception 'unit cost must be zero or greater';
+    end if;
+
+    select title, sku
+      into v_product_title, v_sku
+    from public.store_products
+    where id = v_product_id
+      and track_inventory
+      and status <> 'archived';
+
+    if v_product_title is null then raise exception 'tracked product not found or archived'; end if;
+
+    if v_variant_id is not null then
+      select product_id, title, coalesce(sku, v_sku)
+        into v_variant_product_id, v_variant_title, v_sku
+      from public.store_product_variants
+      where id = v_variant_id and is_active and track_inventory;
+
+      if v_variant_product_id is null then raise exception 'tracked active variant not found'; end if;
+      if v_variant_product_id <> v_product_id then raise exception 'product and variant mismatch'; end if;
+      v_product_title := v_product_title || ' · ' || v_variant_title;
+    end if;
+
+    insert into public.store_purchase_order_items (
+      purchase_order_id, product_id, variant_id, sku_snapshot, title_snapshot,
+      expected_quantity, unit_cost
+    ) values (
+      p_purchase_order_id, v_product_id, v_variant_id, v_sku, v_product_title,
+      v_expected, v_unit_cost
+    );
+  end loop;
+
+  insert into public.store_procurement_events (purchase_order_id, event_type, details, actor_id)
+  values (
+    p_purchase_order_id,
+    'purchase_order_draft_updated',
+    jsonb_build_object('po_number', btrim(p_po_number), 'line_count', jsonb_array_length(p_items)),
+    v_actor
+  );
+
+  return p_purchase_order_id;
+end;
+$$;
+
+revoke all on function private.update_store_purchase_order_draft_internal(
+  uuid,uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
+) from public, anon, authenticated;
+grant execute on function private.update_store_purchase_order_draft_internal(
+  uuid,uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
+) to authenticated;
+
+create or replace function public.update_store_purchase_order_draft(
+  p_purchase_order_id uuid,
+  p_supplier_id uuid,
+  p_location_id uuid,
+  p_po_number text,
+  p_currency text,
+  p_expected_at timestamptz,
+  p_discount_amount numeric,
+  p_tax_amount numeric,
+  p_shipping_amount numeric,
+  p_exchange_rate numeric,
+  p_notes text,
+  p_items jsonb
+)
+returns uuid
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.update_store_purchase_order_draft_internal(
+    p_purchase_order_id, p_supplier_id, p_location_id, p_po_number, p_currency,
+    p_expected_at, p_discount_amount, p_tax_amount, p_shipping_amount,
+    p_exchange_rate, p_notes, p_items
+  );
+$$;
+
+revoke all on function public.update_store_purchase_order_draft(
+  uuid,uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
+) from public, anon;
+grant execute on function public.update_store_purchase_order_draft(
+  uuid,uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
+) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Approval / issue / reject / cancel lifecycle
+-- ---------------------------------------------------------------------------
+
+create or replace function private.submit_store_purchase_order_internal(
+  p_purchase_order_id uuid
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+  v_po_number text;
+begin
+  if v_actor is null or not private.is_dashboard_staff() then
+    raise exception 'dashboard staff required';
+  end if;
+
+  select status, po_number into v_status, v_po_number
+  from public.store_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if v_status is null then raise exception 'purchase order not found'; end if;
+  if v_status <> 'draft' then raise exception 'only draft purchase orders can be submitted'; end if;
+  if not exists (
+    select 1 from public.store_purchase_order_items where purchase_order_id = p_purchase_order_id
+  ) then raise exception 'purchase order requires at least one item'; end if;
+
+  update public.store_purchase_orders
+  set status = 'pending_approval',
+      rejected_by = null,
+      rejected_at = null,
+      rejection_reason = null,
+      updated_at = now()
+  where id = p_purchase_order_id;
+
+  insert into public.store_procurement_events (purchase_order_id, event_type, details, actor_id)
+  values (
+    p_purchase_order_id,
+    'purchase_order_submitted_for_approval',
+    jsonb_build_object('po_number', v_po_number),
+    v_actor
+  );
+
+  return 'pending_approval';
+end;
+$$;
+
+create or replace function private.approve_store_purchase_order_internal(p_purchase_order_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+begin
+  if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+
+  select status into v_status
+  from public.store_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if v_status is null then raise exception 'purchase order not found'; end if;
+  if v_status <> 'pending_approval' then raise exception 'purchase order is not pending approval'; end if;
+
+  update public.store_purchase_orders
+  set status = 'approved', approved_by = v_actor, approved_at = now(), updated_at = now()
+  where id = p_purchase_order_id;
+
+  insert into public.store_procurement_events (purchase_order_id, event_type, actor_id)
+  values (p_purchase_order_id, 'purchase_order_approved', v_actor);
+
+  return 'approved';
+end;
+$$;
+
+create or replace function private.issue_store_purchase_order_internal(p_purchase_order_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+begin
+  if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+
+  select status into v_status
+  from public.store_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if v_status is null then raise exception 'purchase order not found'; end if;
+  if v_status <> 'approved' then raise exception 'purchase order must be approved before issue'; end if;
+
+  update public.store_purchase_orders
+  set status = 'ordered', ordered_at = coalesce(ordered_at, now()), updated_at = now()
+  where id = p_purchase_order_id;
+
+  insert into public.store_procurement_events (purchase_order_id, event_type, actor_id)
+  values (p_purchase_order_id, 'purchase_order_issued', v_actor);
+
+  return 'ordered';
+end;
+$$;
+
+create or replace function private.reject_store_purchase_order_internal(
+  p_purchase_order_id uuid,
+  p_reason text
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+  v_reason text := nullif(btrim(coalesce(p_reason, '')), '');
+begin
+  if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if v_reason is null then raise exception 'rejection reason is required'; end if;
+
+  select status into v_status
+  from public.store_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if v_status is null then raise exception 'purchase order not found'; end if;
+  if v_status <> 'pending_approval' then raise exception 'purchase order is not pending approval'; end if;
+
+  update public.store_purchase_orders
+  set status = 'rejected',
+      rejected_by = v_actor,
+      rejected_at = now(),
+      rejection_reason = v_reason,
+      updated_at = now()
+  where id = p_purchase_order_id;
+
+  insert into public.store_procurement_events (purchase_order_id, event_type, details, actor_id)
+  values (p_purchase_order_id, 'purchase_order_rejected', jsonb_build_object('reason', v_reason), v_actor);
+
+  return 'rejected';
+end;
+$$;
+
+create or replace function private.reopen_store_purchase_order_internal(p_purchase_order_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+begin
+  if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+
+  select status into v_status
+  from public.store_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if v_status is null then raise exception 'purchase order not found'; end if;
+  if v_status <> 'rejected' then raise exception 'only rejected purchase orders can be reopened'; end if;
+
+  update public.store_purchase_orders
+  set status = 'draft',
+      rejected_by = null,
+      rejected_at = null,
+      rejection_reason = null,
+      updated_at = now()
+  where id = p_purchase_order_id;
+
+  insert into public.store_procurement_events (purchase_order_id, event_type, actor_id)
+  values (p_purchase_order_id, 'purchase_order_reopened', v_actor);
+
+  return 'draft';
+end;
+$$;
+
+create or replace function private.cancel_store_purchase_order_internal(
+  p_purchase_order_id uuid,
+  p_reason text
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+  v_reason text := nullif(btrim(coalesce(p_reason, '')), '');
+begin
+  if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if v_reason is null then raise exception 'cancellation reason is required'; end if;
+
+  select status into v_status
+  from public.store_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if v_status is null then raise exception 'purchase order not found'; end if;
+  if v_status not in ('draft', 'pending_approval', 'approved', 'ordered') then
+    raise exception 'purchase order cannot be cancelled in its current status';
+  end if;
+  if exists (
+    select 1 from public.store_receivings
+    where purchase_order_id = p_purchase_order_id and status = 'approved'
+  ) then
+    raise exception 'purchase order with approved receiving cannot be cancelled';
+  end if;
+
+  update public.store_purchase_orders
+  set status = 'cancelled',
+      cancelled_by = v_actor,
+      cancelled_at = now(),
+      cancellation_reason = v_reason,
+      updated_at = now()
+  where id = p_purchase_order_id;
+
+  insert into public.store_procurement_events (purchase_order_id, event_type, details, actor_id)
+  values (p_purchase_order_id, 'purchase_order_cancelled', jsonb_build_object('reason', v_reason), v_actor);
+
+  return 'cancelled';
+end;
+$$;
+
+create or replace function private.void_store_receiving_internal(
+  p_receiving_id uuid,
+  p_reason text
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+  v_po_id uuid;
+  v_reason text := nullif(btrim(coalesce(p_reason, '')), '');
+begin
+  if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+  if v_reason is null then raise exception 'void reason is required'; end if;
+
+  select status, purchase_order_id into v_status, v_po_id
+  from public.store_receivings
+  where id = p_receiving_id
+  for update;
+
+  if v_status is null then raise exception 'receiving not found'; end if;
+  if v_status <> 'draft' then raise exception 'only draft receiving can be voided'; end if;
+
+  update public.store_receivings
+  set status = 'voided',
+      notes = concat_ws(E'\n', notes, 'VOID: ' || v_reason),
+      updated_at = now()
+  where id = p_receiving_id;
+
+  insert into public.store_procurement_events (purchase_order_id, receiving_id, event_type, details, actor_id)
+  values (v_po_id, p_receiving_id, 'receiving_voided', jsonb_build_object('reason', v_reason), v_actor);
+
+  return 'voided';
+end;
+$$;
+
+-- Revoke private implementations from direct exposed use.
+revoke all on function private.approve_store_purchase_order_internal(uuid) from public, anon, authenticated;
+revoke all on function private.issue_store_purchase_order_internal(uuid) from public, anon, authenticated;
+revoke all on function private.reject_store_purchase_order_internal(uuid,text) from public, anon, authenticated;
+revoke all on function private.reopen_store_purchase_order_internal(uuid) from public, anon, authenticated;
+revoke all on function private.cancel_store_purchase_order_internal(uuid,text) from public, anon, authenticated;
+revoke all on function private.void_store_receiving_internal(uuid,text) from public, anon, authenticated;
+
+grant execute on function private.approve_store_purchase_order_internal(uuid) to authenticated;
+grant execute on function private.issue_store_purchase_order_internal(uuid) to authenticated;
+grant execute on function private.reject_store_purchase_order_internal(uuid,text) to authenticated;
+grant execute on function private.reopen_store_purchase_order_internal(uuid) to authenticated;
+grant execute on function private.cancel_store_purchase_order_internal(uuid,text) to authenticated;
+grant execute on function private.void_store_receiving_internal(uuid,text) to authenticated;
+
+create or replace function public.approve_store_purchase_order(p_purchase_order_id uuid)
+returns text language sql security invoker set search_path = ''
+as $$ select private.approve_store_purchase_order_internal(p_purchase_order_id); $$;
+
+create or replace function public.issue_store_purchase_order(p_purchase_order_id uuid)
+returns text language sql security invoker set search_path = ''
+as $$ select private.issue_store_purchase_order_internal(p_purchase_order_id); $$;
+
+create or replace function public.reject_store_purchase_order(p_purchase_order_id uuid, p_reason text)
+returns text language sql security invoker set search_path = ''
+as $$ select private.reject_store_purchase_order_internal(p_purchase_order_id, p_reason); $$;
+
+create or replace function public.reopen_store_purchase_order(p_purchase_order_id uuid)
+returns text language sql security invoker set search_path = ''
+as $$ select private.reopen_store_purchase_order_internal(p_purchase_order_id); $$;
+
+create or replace function public.cancel_store_purchase_order(p_purchase_order_id uuid, p_reason text)
+returns text language sql security invoker set search_path = ''
+as $$ select private.cancel_store_purchase_order_internal(p_purchase_order_id, p_reason); $$;
+
+create or replace function public.void_store_receiving(p_receiving_id uuid, p_reason text)
+returns text language sql security invoker set search_path = ''
+as $$ select private.void_store_receiving_internal(p_receiving_id, p_reason); $$;
+
+revoke all on function public.approve_store_purchase_order(uuid) from public, anon;
+revoke all on function public.issue_store_purchase_order(uuid) from public, anon;
+revoke all on function public.reject_store_purchase_order(uuid,text) from public, anon;
+revoke all on function public.reopen_store_purchase_order(uuid) from public, anon;
+revoke all on function public.cancel_store_purchase_order(uuid,text) from public, anon;
+revoke all on function public.void_store_receiving(uuid,text) from public, anon;
+
+grant execute on function public.approve_store_purchase_order(uuid) to authenticated;
+grant execute on function public.issue_store_purchase_order(uuid) to authenticated;
+grant execute on function public.reject_store_purchase_order(uuid,text) to authenticated;
+grant execute on function public.reopen_store_purchase_order(uuid) to authenticated;
+grant execute on function public.cancel_store_purchase_order(uuid,text) to authenticated;
+grant execute on function public.void_store_receiving(uuid,text) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- RLS for new tables
+-- ---------------------------------------------------------------------------
+
+alter table public.store_procurement_locations enable row level security;
+alter table public.store_procurement_attachments enable row level security;
+alter table public.store_receiving_serials enable row level security;
+
+revoke all on public.store_procurement_locations,
+  public.store_procurement_attachments,
+  public.store_receiving_serials
+from anon, authenticated;
+
+grant select, insert, update on public.store_procurement_locations to authenticated;
+grant select, insert, update, delete on public.store_procurement_attachments to authenticated;
+grant select, insert, update, delete on public.store_receiving_serials to authenticated;
+
+drop policy if exists store_procurement_locations_staff_select on public.store_procurement_locations;
+create policy store_procurement_locations_staff_select
+on public.store_procurement_locations for select to authenticated
+using ((select private.is_dashboard_staff()));
+
+drop policy if exists store_procurement_locations_staff_write on public.store_procurement_locations;
+create policy store_procurement_locations_staff_write
+on public.store_procurement_locations for all to authenticated
+using ((select private.is_dashboard_staff()))
+with check ((select private.is_dashboard_staff()));
+
+drop policy if exists store_procurement_attachments_staff_all on public.store_procurement_attachments;
+create policy store_procurement_attachments_staff_all
+on public.store_procurement_attachments for all to authenticated
+using ((select private.is_dashboard_staff()))
+with check ((select private.is_dashboard_staff()));
+
+drop policy if exists store_receiving_serials_staff_select on public.store_receiving_serials;
+create policy store_receiving_serials_staff_select
+on public.store_receiving_serials for select to authenticated
+using ((select private.is_dashboard_staff()));
+
+drop policy if exists store_receiving_serials_staff_write_draft on public.store_receiving_serials;
+create policy store_receiving_serials_staff_write_draft
+on public.store_receiving_serials for all to authenticated
+using (
+  (select private.is_dashboard_staff())
+  and exists (
+    select 1
+    from public.store_receiving_items ri
+    join public.store_receivings r on r.id = ri.receiving_id
+    where ri.id = receiving_item_id and r.status = 'draft'
+  )
+)
+with check (
+  (select private.is_dashboard_staff())
+  and exists (
+    select 1
+    from public.store_receiving_items ri
+    join public.store_receivings r on r.id = ri.receiving_id
+    where ri.id = receiving_item_id and r.status = 'draft'
+  )
+);
+
+drop trigger if exists store_procurement_locations_touch_updated_at on public.store_procurement_locations;
+create trigger store_procurement_locations_touch_updated_at
+before update on public.store_procurement_locations
+for each row execute function private.store_touch_updated_at();
+
+drop trigger if exists store_receiving_serials_touch_updated_at on public.store_receiving_serials;
+create trigger store_receiving_serials_touch_updated_at
+before update on public.store_receiving_serials
+for each row execute function private.store_touch_updated_at();
+
+-- Keep an explicit audit index for the PO timeline UI.
+create index if not exists store_procurement_events_po_timeline_idx
+  on public.store_procurement_events(purchase_order_id, created_at desc, event_type);
