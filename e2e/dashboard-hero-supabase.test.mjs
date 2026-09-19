@@ -74,6 +74,10 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", (
   assert.match(hero, /"shopify-collection"/);
   assert.match(hero, /hero-product-fallback/);
   assert.match(hero, /cmsSlide\.mobile_image_url/);
+  assert.match(hero, /const cmsDesktopImage = cmsSlide\\?\\.image_url/);
+  assert.match(hero, /const cmsMobileImage = cmsSlide\\?\\.mobile_image_url/);
+  assert.match(hero, /media="\\(max-width: 639px\\)"/);
+  assert.match(hero, /media="\\(min-width: 640px\\)"/);
   assert.match(hero, /cmsSlide\.overlay_opacity/);
   assert.match(hero, /cmsSlide\.open_in_new_tab/);
 });
