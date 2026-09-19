@@ -745,11 +745,29 @@ export async function fetchBestSellingProducts(first = 12) {
 
 export async function fetchProductsByVendor(vendor: string, first = 8) {
   const normalized = vendor.trim().toLowerCase();
-  if (!normalized) return [];
-  const products = publicProducts(await loadSnapshot()).filter(
-    (product) => product.node.vendor?.trim().toLowerCase() === normalized,
-  );
-  return products.slice(0, first);
+  if (!normalized || first <= 0) return [];
+
+  const brandResult = await publicSupabase
+    .from("cms_brands")
+    .select(STOREFRONT_BRAND_SELECT)
+    .eq("is_visible", true);
+  const brands = assertResult(brandResult, "vendor brands");
+  const brand = brands.find((entry) => entry.name.trim().toLowerCase() === normalized);
+  if (!brand) return [];
+
+  let productQuery = publicSupabase
+    .from("store_products")
+    .select(STOREFRONT_PRODUCT_SELECT)
+    .eq("status", "active")
+    .eq("brand_id", brand.id)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (Number.isFinite(first) && first < Number.MAX_SAFE_INTEGER) {
+    productQuery = productQuery.limit(first);
+  }
+
+  return hydrateProductRows(assertResult(await productQuery, "vendor products"));
 }
 
 export async function fetchAllProductsByVendor(vendor: string) {
