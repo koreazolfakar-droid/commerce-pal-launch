@@ -1,11 +1,22 @@
 Lovable sync trigger
-Triggered from ChatGPT on 2026-09-14 after security hardening round 3
+Triggered from ChatGPT on 2026-09-19 for the correct Space Call project.
 
-Production changes now applied:
-- Direct anon/authenticated SELECT access to CMS source tables removed.
-- public-cms is the only public CMS projection and filters publishable/visible content server-side.
-- NVIDIA and Gemini paid provider endpoints retired and no longer spend provider credits.
-- Public product pages no longer invoke on-demand paid OpenAI web research.
-- Supabase Security Advisor reports zero lints after the migration.
+Target repository:
+- koreazolfakar-droid/commerce-pal-launch
+- branch: main
+- Supabase project: rtwyankpxtffqqrasyzw
 
-Reason: force Lovable to pull the latest GitHub security fixes, rebuild, and refresh the Security scan so previously ignored/stale findings are re-evaluated against the current backend.
+Current dashboard category changes already present on main:
+- Add/Edit Category
+- category image upload from device
+- replace/remove image
+- browser-side WebP conversion before upload
+- max 1080px image edge
+- image preview and before/after optimization metadata
+- image_url persisted to store_categories
+- Active + Featured on Homepage controls
+- Arabic name, ordering and SEO controls
+- homepage Shop by Category reads Dashboard-managed category visibility/order/images
+
+Reason for this sync commit:
+Force the Lovable-connected branch to pull and rebuild the latest main snapshot so the live /dashboard/categories UI matches the code currently in commerce-pal-launch. Do not use the separate Deploy. Done. Lovable dashboard project for this sync.
