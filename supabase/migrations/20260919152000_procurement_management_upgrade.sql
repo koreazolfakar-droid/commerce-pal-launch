@@ -1273,7 +1273,7 @@ grant execute on function private.void_store_receiving_internal(uuid,text) to au
 
 create or replace function public.delete_store_purchase_order_draft(p_purchase_order_id uuid)
 returns text language sql security invoker set search_path = ''
-as $ select private.delete_store_purchase_order_draft_internal(p_purchase_order_id); $;
+as $$ select private.delete_store_purchase_order_draft_internal(p_purchase_order_id); $$;
 
 create or replace function public.approve_store_purchase_order(p_purchase_order_id uuid)
 returns text language sql security invoker set search_path = ''
@@ -1293,7 +1293,7 @@ as $$ select private.reopen_store_purchase_order_internal(p_purchase_order_id); 
 
 create or replace function public.close_store_purchase_order(p_purchase_order_id uuid)
 returns text language sql security invoker set search_path = ''
-as $ select private.close_store_purchase_order_internal(p_purchase_order_id); $;
+as $$ select private.close_store_purchase_order_internal(p_purchase_order_id); $$;
 
 create or replace function public.cancel_store_purchase_order(p_purchase_order_id uuid, p_reason text)
 returns text language sql security invoker set search_path = ''
