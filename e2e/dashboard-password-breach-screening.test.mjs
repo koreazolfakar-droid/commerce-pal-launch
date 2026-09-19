@@ -68,6 +68,9 @@ test("password Edge Function authenticates, authorizes, and rechecks HIBP server
   assert.match(passwordEdge, /compromised_password/);
 
   assert.match(passwordEdge, /auth\.admin\.updateUserById\(user\.id/);
+  assert.match(passwordEdge, /from\("dashboard_security_events"\)\.insert/);
+  assert.match(passwordEdge, /event_type: "password_changed"/);
+  assert.match(passwordEdge, /hibp_server_checked: true/);
   assert.doesNotMatch(passwordEdge, /console\.(log|debug|info)\([^\n]*password/i);
 
   const verifiedUser = passwordEdge.indexOf("await admin.auth.getUser(token)");
