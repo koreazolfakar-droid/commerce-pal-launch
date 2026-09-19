@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   CheckCircle2,
+  Fingerprint,
   KeyRound,
   Laptop,
   Loader2,
@@ -14,6 +15,8 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import {
   getDashboardSecuritySnapshot,
+  isDashboardPasskeySupported,
+  registerDashboardPasskey,
   signOutAllDashboardSessions,
   signOutDashboard,
   signOutOtherDashboardSessions,
@@ -74,7 +77,7 @@ export default function SecurityPage() {
   const [, navigate] = useLocation();
   const [snapshot, setSnapshot] = useState<DashboardSecuritySnapshot | null>(null);
   const [loading, setLoading] = useState(true);
-  const [action, setAction] = useState<"local" | "others" | "global" | null>(null);
+  const [action, setAction] = useState<"passkey" | "local" | "others" | "global" | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,6 +99,21 @@ export default function SecurityPage() {
     const expires = new Date(snapshot.expiresAt);
     return Number.isNaN(expires.getTime()) ? "Unavailable" : expires.toLocaleString();
   }, [snapshot?.expiresAt]);
+
+  const passkeySupported = useMemo(() => isDashboardPasskeySupported(), []);
+
+  const addPasskey = async () => {
+    setAction("passkey");
+    try {
+      const passkey = await registerDashboardPasskey();
+      const label = passkey.friendlyName ? ` “${passkey.friendlyName}”` : "";
+      toast.success(`Passkey${label} added to this dashboard account.`);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Could not add passkey.");
+    } finally {
+      setAction(null);
+    }
+  };
 
   const signOutCurrent = async () => {
     setAction("local");
@@ -154,7 +172,7 @@ export default function SecurityPage() {
         <div>
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">System / Security</div>
           <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Security Center</h1>
-          <p className="mt-1.5 text-sm text-slate-500">MFA, bot protection, session controls and security activity in one place.</p>
+          <p className="mt-1.5 text-sm text-slate-500">MFA, passkeys, bot protection, session controls and security activity in one place.</p>
         </div>
         <button onClick={() => void load()} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">
           <RefreshCw className="size-3.5" /> Refresh
@@ -189,6 +207,44 @@ export default function SecurityPage() {
           <div className="mt-1 text-[10px] text-slate-400">Access token expiry: {sessionExpiry}</div>
         </div>
       </div>
+
+      <section className="mb-4 overflow-hidden rounded-2xl border border-indigo-100 bg-white">
+        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-indigo-50 text-indigo-600">
+              <Fingerprint className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[13px] font-bold text-[#14203a]">Passkeys & biometrics</div>
+              <div className="mt-1 text-[10px] leading-5 text-slate-400">
+                Add a phishing-resistant passkey protected by your phone fingerprint, face unlock, screen lock, or hardware security key. Your biometric data never leaves your device.
+              </div>
+              <div className="mt-2 flex items-center gap-1.5 text-[10px] font-semibold">
+                {passkeySupported ? (
+                  <>
+                    <CheckCircle2 className="size-3.5 text-emerald-500" />
+                    <span className="text-emerald-600">Supported on this device</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="size-3.5 text-amber-500" />
+                    <span className="text-amber-600">Not available in this browser or context</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => void addPasskey()}
+            disabled={action !== null || !passkeySupported}
+            className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-sm transition hover:bg-[#4d5bdd] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {action === "passkey" ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />}
+            Add passkey
+          </button>
+        </div>
+      </section>
 
       <div className="grid gap-4 xl:grid-cols-[.9fr_1.1fr]">
         <section className="rounded-2xl border border-slate-200 bg-white">
