@@ -197,9 +197,7 @@ function ProductPage() {
       }
       toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
       if (checkout) {
-        const checkoutUrl = useCartStore.getState().getCheckoutUrl();
-        if (checkoutUrl) window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-        else toast.error(t("addToCartFailed"));
+        window.location.assign("/cart");
       }
     } catch {
       toast.error(t("addToCartFailed"));
@@ -254,13 +252,13 @@ function ProductPage() {
   }, [content.specs, selectedVariant, node.productType, node.vendor]);
 
   const similar = useMemo(() => {
-    const fromShopify = (recommended ?? []).filter(
+    const fromRecommendations = (recommended ?? []).filter(
       (candidate) => candidate.node.handle !== node.handle,
     );
-    if (fromShopify.length >= 4) return fromShopify.slice(0, 8);
-    const seen = new Set([node.handle, ...fromShopify.map((item) => item.node.handle)]);
+    if (fromRecommendations.length >= 4) return fromRecommendations.slice(0, 8);
+    const seen = new Set([node.handle, ...fromRecommendations.map((item) => item.node.handle)]);
     const fallback = (vendorProducts ?? []).filter((candidate) => !seen.has(candidate.node.handle));
-    return [...fromShopify, ...fallback].slice(0, 8);
+    return [...fromRecommendations, ...fallback].slice(0, 8);
   }, [recommended, vendorProducts, node.handle]);
 
   const hasOverview = content.overview.length > 0;

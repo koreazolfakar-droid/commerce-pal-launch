@@ -26,7 +26,7 @@ import { INFO_PAGES, POLICY_PAGES, POLICY_LINKS, type InfoPageName } from "@/lib
 import { useLanguage, type Language } from "@/lib/i18n";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { shopPoliciesQueryOptions } from "@/lib/queries";
-import { SHOPIFY_ACCOUNT_URL, STORE_NAME } from "@/lib/storeConfig";
+import { STORE_NAME } from "@/lib/storeConfig";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 
 type LocalizedText = { en: string; ar: string };
@@ -257,8 +257,8 @@ const PAGE_GUIDES: Partial<Record<InfoPageName, PageGuide>> = {
         icon: ShieldCheck,
         title: { en: "Checkout providers", ar: "مزودو الدفع والطلب" },
         body: {
-          en: "Checkout and account functions may be provided by Shopify and payment or delivery partners. Their systems may process information needed to complete your order.",
-          ar: "قد تتم وظائف الدفع والحساب عبر Shopify وشركاء الدفع أو التوصيل، وقد تعالج أنظمتهم البيانات اللازمة لإتمام الطلب.",
+          en: "Order details are processed by Space Call and the payment or delivery partners needed to complete your purchase.",
+          ar: "تتم معالجة تفاصيل الطلب عبر Space Call وشركاء الدفع أو التوصيل اللازمين لإكمال عملية الشراء.",
         },
       },
       {
@@ -271,8 +271,8 @@ const PAGE_GUIDES: Partial<Record<InfoPageName, PageGuide>> = {
       },
     ],
     note: {
-      en: "If a full Shopify privacy policy is published, it appears below and is the more detailed store policy.",
-      ar: "إذا كانت سياسة الخصوصية الكاملة منشورة عبر Shopify فستظهر أدناه وتكون المرجع الأكثر تفصيلاً للمتجر.",
+      en: "If a detailed privacy policy is published from the Space Call dashboard, it appears below as the store reference.",
+      ar: "إذا تم نشر سياسة خصوصية مفصلة من لوحة Space Call فستظهر أدناه باعتبارها مرجع المتجر.",
     },
   },
   terms: {
@@ -307,8 +307,8 @@ const PAGE_GUIDES: Partial<Record<InfoPageName, PageGuide>> = {
       },
     ],
     note: {
-      en: "If Shopify returns a published Terms of Service document, it appears below as the detailed store terms.",
-      ar: "إذا كانت شروط الخدمة منشورة عبر Shopify فستظهر أدناه باعتبارها الشروط التفصيلية للمتجر.",
+      en: "If detailed Terms of Service are published from the Space Call dashboard, they appear below as the store terms.",
+      ar: "إذا تم نشر شروط خدمة مفصلة من لوحة Space Call فستظهر أدناه باعتبارها شروط المتجر.",
     },
   },
 };
@@ -457,17 +457,17 @@ export function InfoPage({ page }: { page: InfoPageName }) {
               </p>
               <p className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm leading-6 text-muted-foreground">
                 {language === "ar"
-                  ? "عند المتابعة سيتم تحويلك إلى صفحة حساب Shopify الآمنة لإدارة الطلبات. هذا التحويل تابع لمزوّد الدفع والمتجر ولا يغيّر بيانات طلبك."
-                  : "When you continue, you’ll be redirected to the secure Shopify account page to manage your orders. This hand-off is provided by Shopify and does not change your order data."}
+                  ? "للمساعدة في طلب حالي أو متابعة حالة التوصيل، تواصل مباشرة مع Space Call عبر واتساب مع رقم الطلب."
+                  : "For help with an existing order or delivery status, contact Space Call directly on WhatsApp with your order number."}
               </p>
               <a
-                href={SHOPIFY_ACCOUNT_URL}
+                href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold hover:bg-accent"
               >
-                {t("openAccount")}
-                <ExternalLink className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4" />
+                {t("contactWhatsApp")}
               </a>
             </section>
           </div>
@@ -514,8 +514,8 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
                   {language === "ar"
-                    ? "عندما تكون سياسة Shopify منشورة، يتم عرضها هنا باعتبارها المرجع التفصيلي لهذه الصفحة."
-                    : "When Shopify provides a published policy, it is shown here as the detailed reference for this page."}
+                    ? "عندما يتم نشر سياسة مفصلة من لوحة Space Call، يتم عرضها هنا باعتبارها مرجع هذه الصفحة."
+                    : "When a detailed policy is published from the Space Call dashboard, it is shown here as the reference for this page."}
                 </p>
               </div>
             </div>

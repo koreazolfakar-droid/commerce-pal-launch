@@ -14,7 +14,7 @@ const generatedVersion = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION_
 const defaultStoreName = value("VITE_STORE_NAME", "Space Call");
 const defaultWhatsappNumber = value("VITE_WHATSAPP_NUMBER", "96181813805");
 
-/** Public, non-secret storefront settings. Secrets remain server-only environment variables. */
+/** Public, non-secret Space Call settings. Secrets remain server-only environment variables. */
 export const STORE_CONFIG = Object.freeze({
   socialInstagram: value("VITE_SOCIAL_INSTAGRAM", ""),
   socialFacebook: value("VITE_SOCIAL_FACEBOOK", ""),
@@ -23,10 +23,6 @@ export const STORE_CONFIG = Object.freeze({
   name: defaultStoreName,
   version: generatedVersion,
   siteUrl: normalizedOrigin(value("VITE_SITE_URL", "https://spacecallapp.store")),
-  shopifyDomain: value("VITE_SHOPIFY_STORE_DOMAIN", "dj6qeq-j9.myshopify.com")
-    .replace(/^https?:\/\//, "")
-    .replace(/\/+$/, ""),
-  shopifyApiVersion: value("VITE_SHOPIFY_API_VERSION", "2026-07"),
   whatsappNumber: defaultWhatsappNumber.replace(/\D/g, ""),
   invoiceLegalName: value("VITE_INVOICE_LEGAL_NAME", defaultStoreName),
   invoiceAddress: value("VITE_INVOICE_ADDRESS", "Lebanon"),
@@ -38,12 +34,8 @@ export const STORE_NAME = STORE_CONFIG.name;
 export const STORE_VERSION = STORE_CONFIG.version;
 export const SITE_URL = STORE_CONFIG.siteUrl;
 
-/**
- * Public navigation stays on the branded Space Call domain first. The Help
- * page explains the Shopify hand-off before the customer chooses to continue.
- */
+/** Customer order support stays on the Space Call domain. */
 export const SHOP_ACCOUNT_URL = `${SITE_URL}/help#account-orders`;
-export const SHOPIFY_ACCOUNT_URL = `https://${STORE_CONFIG.shopifyDomain}/account`;
 
 export function storeUrl(path = "/") {
   const normalized = path === "/" ? "/" : `/${path.replace(/^\/+|\/+$/g, "")}`;

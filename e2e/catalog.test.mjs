@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import ts from "typescript";
-import { products } from "./shopify-fixture.mjs";
+import { products } from "./catalog-fixture.mjs";
 
 // Execute production domain modules without loading the server transport or mocking their logic.
 const require = createRequire(import.meta.url);

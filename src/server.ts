@@ -32,8 +32,6 @@ function syncRuntimeEnv(env: unknown) {
   if (!env || typeof env !== "object") return;
   const runtime = env as Record<string, unknown>;
   for (const key of [
-    "SHOPIFY_STOREFRONT_TOKEN",
-    "SHOPIFY_STOREFRONT_ACCESS_TOKEN",
     "SUPABASE_URL",
     "SUPABASE_ANON_KEY",
     "SUPABASE_PUBLISHABLE_KEY",
@@ -189,7 +187,7 @@ export default {
 
     // Cloudflare/Lovable runtime bindings are passed through `env`; TanStack server
     // functions in this app read server-only secrets from process.env. Mirror only
-    // the known server-side bindings so Shopify and protected API gateways work in SSR.
+    // the known server-side Supabase bindings needed by SSR.
     syncRuntimeEnv(env);
 
     try {

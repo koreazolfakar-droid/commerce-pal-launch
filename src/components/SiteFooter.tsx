@@ -200,7 +200,7 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
         <div className="mt-10 border-t pt-6 text-center text-sm text-muted-foreground">
           <p>
             © {new Date().getFullYear()} {storeName}.{" "}
-            {isAr ? "الدفع الآمن عبر Shopify." : "Secure checkout powered by Shopify."}
+            {isAr ? "تسوّق آمن ودعم مباشر من Space Call." : "Secure shopping and direct support from Space Call."}
           </p>
         </div>
       </div>

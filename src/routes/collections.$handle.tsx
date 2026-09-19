@@ -6,7 +6,7 @@ import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/fil
 import { buildCatalogIndex } from "@/lib/taxonomy";
 import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
-import { fetchCollectionByHandle } from "@/lib/shopify";
+import { fetchCollectionByHandle } from "@/lib/storefrontData";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/collections/$handle")({
     const description =
       rawDescription.length >= 90
         ? rawDescription.slice(0, 155)
-        : `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and secure Shopify checkout.`;
+        : `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and direct Space Call checkout.`;
     const image = loaderData.collection.image?.url;
     const path = `/collections/${params.handle}`;
     return {
