@@ -361,11 +361,17 @@ export async function verifyDashboardTotp(
     throw new Error("MFA verification did not promote this session to AAL2.");
   }
 
+  const beforeActivation = await getDashboardMfaStatus();
   await activateDashboardMfaRequirement();
 
   const status = await getDashboardMfaStatus();
   if (!status?.ready) {
     throw new Error("Dashboard MFA activation is incomplete.");
+  }
+  if (!beforeActivation?.required) {
+    await logDashboardSecurityEvent("mfa_enabled", {
+      aal: status.currentLevel,
+    });
   }
   await logDashboardSecurityEvent("mfa_verified", {
     aal: status.currentLevel,
