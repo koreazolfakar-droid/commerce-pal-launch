@@ -341,7 +341,7 @@ export default function DashboardMfaStep({
           <div className="login-secret mt-2 rounded-xl border border-white/10 bg-[#0b1427] p-2.5">
             <div className="flex items-center gap-2">
               <code
-                className="min-w-0 flex-1 break-all text-[10px] font-semibold tracking-[.08em] text-slate-200"
+                className="login-heading min-w-0 flex-1 break-all text-[10px] font-semibold tracking-[.08em] text-slate-200"
                 aria-label={copy.setupKeyLabel}
               >
                 {secretRevealed ? enrollment.secret : "•••• •••• •••• ••••"}
@@ -349,7 +349,7 @@ export default function DashboardMfaStep({
               <button
                 type="button"
                 onClick={() => setSecretRevealed((value) => !value)}
-                className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10"
+                className="login-icon-button grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10"
                 aria-label={secretRevealed ? copy.hideKey : copy.revealKey}
               >
                 {secretRevealed ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
@@ -358,7 +358,7 @@ export default function DashboardMfaStep({
                 type="button"
                 onClick={() => void copySecret()}
                 disabled={!secretRevealed}
-                className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+                className="login-icon-button grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label={copy.copyKey}
               >
                 <Copy className="size-3.5" />
