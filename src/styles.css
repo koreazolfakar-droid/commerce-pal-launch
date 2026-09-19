@@ -858,3 +858,103 @@
     }
   }
 }
+
+
+/* Dashboard dark-mode compatibility layer.
+ * The admin UI predates the shared semantic color tokens in a number of screens.
+ * Keep these overrides scoped to the dashboard so the storefront is never affected.
+ * New dashboard code should prefer bg-card/bg-background/text-foreground/border-border.
+ */
+.dark .dashboard-theme-scope {
+  color-scheme: dark;
+}
+
+.dark .dashboard-theme-scope :where(
+  [class~="bg-white"],
+  [class~="bg-white/80"],
+  [class~="bg-white/90"],
+  [class~="bg-white/95"]
+) {
+  background-color: var(--color-card);
+}
+
+.dark .dashboard-theme-scope :where(
+  [class~="bg-slate-50"],
+  [class~="bg-slate-50/70"],
+  [class~="bg-slate-100"],
+  [class~="bg-[#f7f9fc]"]
+) {
+  background-color: var(--color-surface);
+}
+
+.dark .dashboard-theme-scope :where(
+  [class~="text-slate-950"],
+  [class~="text-slate-900"],
+  [class~="text-slate-800"],
+  [class~="text-slate-700"]
+) {
+  color: var(--color-foreground);
+}
+
+.dark .dashboard-theme-scope :where(
+  [class~="text-slate-600"],
+  [class~="text-slate-500"],
+  [class~="text-slate-400"],
+  [class~="text-slate-300"]
+) {
+  color: var(--color-muted-foreground);
+}
+
+.dark .dashboard-theme-scope :where(
+  [class~="border-slate-100"],
+  [class~="border-slate-100/80"],
+  [class~="border-slate-200"],
+  [class~="border-slate-200/80"],
+  [class~="border-slate-200/90"],
+  [class~="border-slate-300"]
+) {
+  border-color: var(--color-border);
+}
+
+.dark .dashboard-theme-scope :where([class~="bg-indigo-50"], [class~="bg-indigo-50/65"]) {
+  background-color: color-mix(in oklab, var(--color-primary) 14%, var(--color-card));
+}
+
+.dark .dashboard-theme-scope :where([class~="text-indigo-600"], [class~="text-indigo-700"]) {
+  color: var(--color-primary);
+}
+
+.dark .dashboard-theme-scope :where([class~="bg-emerald-50"], [class~="bg-green-50"]) {
+  background-color: color-mix(in oklab, var(--color-success) 13%, var(--color-card));
+}
+
+.dark .dashboard-theme-scope :where([class~="bg-amber-50"], [class~="bg-yellow-50"]) {
+  background-color: color-mix(in oklab, var(--color-warning) 14%, var(--color-card));
+}
+
+.dark .dashboard-theme-scope :where([class~="bg-rose-50"], [class~="bg-red-50"]) {
+  background-color: color-mix(in oklab, var(--color-destructive) 13%, var(--color-card));
+}
+
+.dark .dashboard-theme-scope :where(input, textarea, select) {
+  caret-color: var(--color-primary);
+}
+
+.dark .dashboard-theme-scope :where(select option) {
+  background: var(--color-popover);
+  color: var(--color-popover-foreground);
+}
+
+@media (hover: hover) {
+  .dark .dashboard-theme-scope :where(
+    [class~="hover:bg-slate-50"],
+    [class~="hover:bg-slate-50/70"],
+    [class~="hover:bg-slate-100"]
+  ):hover {
+    background-color: var(--color-muted);
+  }
+
+  .dark .dashboard-theme-scope :where([class~="hover:bg-white"]):hover {
+    background-color: var(--color-card);
+  }
+}

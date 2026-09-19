@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
 
 interface ThemeContextType {
   theme: Theme;
-  toggleTheme?: () => void;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
   switchable: boolean;
 }
 
@@ -14,42 +15,55 @@ interface ThemeProviderProps {
   children: React.ReactNode;
   defaultTheme?: Theme;
   switchable?: boolean;
+  storageKey?: string;
 }
+
+const DEFAULT_STORAGE_KEY = "spacecall-dashboard-theme";
 
 export function ThemeProvider({
   children,
   defaultTheme = "light",
   switchable = false,
+  storageKey = DEFAULT_STORAGE_KEY,
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (switchable) {
-      const stored = localStorage.getItem("theme");
-      return (stored as Theme) || defaultTheme;
-    }
-    return defaultTheme;
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (!switchable || typeof window === "undefined") return defaultTheme;
+    const stored = window.localStorage.getItem(storageKey);
+    return stored === "dark" || stored === "light" ? stored : defaultTheme;
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    root.classList.toggle("dark", theme === "dark");
+    root.dataset.dashboardTheme = theme;
+    root.style.colorScheme = theme;
 
     if (switchable) {
-      localStorage.setItem("theme", theme);
+      window.localStorage.setItem(storageKey, theme);
     }
-  }, [theme, switchable]);
+  }, [storageKey, switchable, theme]);
 
-  const toggleTheme = switchable
-    ? () => {
-        setTheme(prev => (prev === "light" ? "dark" : "light"));
-      }
-    : undefined;
+  useEffect(
+    () => () => {
+      const root = document.documentElement;
+      delete root.dataset.dashboardTheme;
+      root.style.removeProperty("color-scheme");
+      root.classList.remove("dark");
+    },
+    [],
+  );
+
+  const setTheme = (nextTheme: Theme) => {
+    if (switchable) setThemeState(nextTheme);
+  };
+  const toggleTheme = () => {
+    if (switchable) {
+      setThemeState((current) => (current === "light" ? "dark" : "light"));
+    }
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, switchable }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, switchable }}>
       {children}
     </ThemeContext.Provider>
   );
