@@ -6,7 +6,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   INVENTORY_MOVEMENT_TYPES,
@@ -55,6 +55,13 @@ function referenceName(value: InventoryReferenceType) {
   if (value === "variant_manager") return "Variant manager";
   if (value === "order") return "Web order";
   return "Order cancellation";
+}
+
+function displayReferenceName(value: string) {
+  if (INVENTORY_REFERENCE_TYPES.includes(value as InventoryReferenceType)) {
+    return referenceName(value as InventoryReferenceType);
+  }
+  return movementName(value);
 }
 
 function formatActor(value: string | null) {
@@ -121,7 +128,7 @@ function MovementCard({ movement }: { movement: DashboardInventoryMovement }) {
           <div className="font-bold uppercase tracking-[.12em] text-slate-400">Reference</div>
           <div className="mt-1 truncate font-semibold text-slate-600">
             {movement.referenceType
-              ? movement.referenceType +
+              ? displayReferenceName(movement.referenceType) +
                 (movement.referenceId ? " · " + movement.referenceId : "")
               : "Manual / none"}
           </div>
@@ -151,6 +158,7 @@ export default function InventoryMovementHistoryDrawer({
   const [period, setPeriod] = useState<MovementPeriod>("all");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const createdSince = useMemo(() => movementCreatedSince(period), [period]);
   const requestId = useRef(0);
 
   useEffect(() => {
@@ -176,7 +184,7 @@ export default function InventoryMovementHistoryDrawer({
           movementType: movementType === "all" ? undefined : movementType,
           referenceType: referenceType === "all" ? undefined : referenceType,
           search: debouncedSearch,
-          createdSince: movementCreatedSince(period),
+          createdSince,
           page: nextPage,
           pageSize: PAGE_SIZE,
         });
@@ -200,7 +208,7 @@ export default function InventoryMovementHistoryDrawer({
         }
       }
     },
-    [debouncedSearch, movementType, period, referenceType, row],
+    [createdSince, debouncedSearch, movementType, referenceType, row],
   );
 
   useEffect(() => {
