@@ -247,7 +247,7 @@ export default function LoginPage() {
     try {
       await requestDashboardPasswordReset(email, captchaToken ?? undefined);
       setResetSent(true);
-      toast.success("Password recovery email sent.");
+      toast.success("If this email is authorized, a recovery link will be sent.");
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Password reset request failed.";
       setInlineError(message);
@@ -488,9 +488,9 @@ export default function LoginPage() {
                       <div className="grid size-10 place-items-center rounded-full bg-emerald-300/10 text-emerald-300">
                         <Mail className="size-4" />
                       </div>
-                      <div className="mt-4 text-[14px] font-bold text-white">Check your inbox</div>
+                      <div className="mt-4 text-[14px] font-bold text-white">Recovery request received</div>
                       <p className="mt-1.5 text-[11px] leading-5 text-slate-400">
-                        A secure recovery link was requested for <span className="font-semibold text-slate-200">{email}</span>.
+                        If <span className="font-semibold text-slate-200">{email}</span> belongs to an authorized dashboard account, a secure recovery link will arrive shortly.
                       </p>
                     </div>
                   ) : (
