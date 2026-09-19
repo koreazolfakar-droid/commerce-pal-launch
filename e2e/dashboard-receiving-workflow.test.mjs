@@ -72,6 +72,16 @@ test("dashboard data layer uses real procurement tables and RPCs", () => {
   assert.match(data, /invalidateNativeStoreCache\(\)/);
 });
 
+test("procurement list pages skip unused heavy workspace payloads", () => {
+  assert.match(data, /ReceivingWorkspaceLoadOptions/);
+  assert.match(data, /includeProductOptions = options\.includeProductOptions !== false/);
+  assert.match(data, /includeAudit = options\.includeAudit !== false/);
+  assert.match(data, /includeSerials = options\.includeSerials !== false/);
+  assert.match(page, /includeProductOptions: !purchaseOrdersMode/);
+  assert.match(page, /includeAudit: false/);
+  assert.match(page, /includeSerials: false/);
+});
+
 test("receiving dashboard exposes required operational fields and approval flow", () => {
   for (const label of [
     "Supplier",
