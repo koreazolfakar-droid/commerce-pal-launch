@@ -65,14 +65,14 @@ test("public CMS uses an edge gateway with resilient empty fallback", () => {
   assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
 });
 
-test("homepage hydrates CMS once and renders CMS hero before legacy fallback", () => {
+test("homepage hydrates CMS once and renders only the native CMS hero", () => {
   assert.match(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
   assert.match(hero, /localizeHeroSlide/);
   assert.match(hero, /const usingCms = localizedCmsSlides\.length > 0/);
   assert.match(hero, /"supabase-cms"/);
-  assert.match(hero, /"shopify-collection"/);
-  assert.match(hero, /hero-product-fallback/);
+  assert.doesNotMatch(hero, /shopify-collection|hero-product-fallback|SHOPIFY_CDN|shopifySlides/);
+  assert.match(hero, /"placeholder"/);
   assert.match(hero, /cmsSlide\.mobile_image_url/);
   assert.match(hero, /cmsSlide\.overlay_opacity/);
   assert.match(hero, /cmsSlide\.open_in_new_tab/);
