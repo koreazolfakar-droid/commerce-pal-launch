@@ -4,6 +4,11 @@ export function buildContentSecurityPolicy(nonce?: string) {
     ...(nonce ? [`'nonce-${nonce}'`] : []),
     "https://challenges.cloudflare.com",
   ];
+  const styleSources = [
+    "'self'",
+    ...(nonce ? [`'nonce-${nonce}'`] : ["'unsafe-inline'"]),
+    "https://fonts.googleapis.com",
+  ];
 
   return [
     "default-src 'self'",
@@ -13,7 +18,7 @@ export function buildContentSecurityPolicy(nonce?: string) {
     "form-action 'self' https://*.myshopify.com https://checkout.shopify.com",
     `script-src ${scriptSources.join(" ")}`,
     "script-src-attr 'none'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    `style-src ${styleSources.join(" ")}`,
     "style-src-attr 'unsafe-inline'",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://cdn.shopify.com https://*.shopifycdn.com https://rtwyankpxtffqqrasyzw.supabase.co https://images.unsplash.com",
