@@ -599,6 +599,8 @@ export default function LoginPage() {
         [data-login-theme="light"] .login-secret { background: #f8fafc !important; border-color: #e2e8f0 !important; color: #334155 !important; }
         [data-login-theme="light"] .login-secondary { background: #eef2ff !important; border-color: #e0e7ff !important; color: #4338ca !important; }
         [data-login-theme="light"] .login-badge { background: #ecfdf5 !important; border-color: #d1fae5 !important; color: #047857 !important; }
+        [data-login-theme="light"] .login-accent { background: #eef2ff !important; border-color: #e0e7ff !important; color: #4338ca !important; }
+        [data-login-theme="light"] .login-link { color: #4f46e5 !important; }
         @media print {
           html, body { background: #0a1224 !important; }
           body * { visibility: hidden !important; }
@@ -639,13 +641,13 @@ export default function LoginPage() {
 
             <div className="relative flex items-center justify-between">
               <BrandLockup />
-              <div className="rounded-full border border-white/[.08] bg-white/[.035] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">
+              <div className="login-muted rounded-full border border-white/[.08] bg-white/[.035] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">
                 {copy.privateWorkspace}
               </div>
             </div>
 
             <div className="relative my-10 max-w-[500px]">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-indigo-200">
+              <div className="login-accent mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-indigo-200">
                 <ShieldCheck className="size-3.5" />
                 {copy.secureAccess}
               </div>
@@ -667,7 +669,7 @@ export default function LoginPage() {
                 <span className="size-1.5 rounded-full bg-emerald-300" />
                 Space Call Admin
               </span>
-              <a href="/" className="inline-flex items-center gap-1.5 font-semibold text-slate-300 transition hover:text-white">
+              <a href="/" className="login-link inline-flex items-center gap-1.5 font-semibold text-slate-300 transition hover:text-white">
                 {copy.openStorefront} <ArrowRight className={isRtl ? "size-3 rotate-180" : "size-3"} />
               </a>
             </div>
@@ -691,7 +693,7 @@ export default function LoginPage() {
               </div>
 
               <div className="mb-8">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.065] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#c7ccff]">
+                <div className="login-accent mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.065] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#c7ccff]">
                   <LockKeyhole className="size-3.5" />
                   {copy.authorizedOnly}
                 </div>
@@ -735,7 +737,7 @@ export default function LoginPage() {
                   />
 
                   <div className="flex items-center justify-between gap-3">
-                    <label className="flex cursor-pointer items-center gap-2 text-[10px] font-medium text-slate-400">
+                    <label className="login-muted flex cursor-pointer items-center gap-2 text-[10px] font-medium text-slate-400">
                       <input
                         type="checkbox"
                         checked={rememberEmail}
@@ -753,7 +755,7 @@ export default function LoginPage() {
                         resetCaptcha();
                         setView("forgot");
                       }}
-                      className="rounded-md px-1 py-0.5 text-[10px] font-bold text-[#b9c0ff] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+                      className="login-link rounded-md px-1 py-0.5 text-[10px] font-bold text-[#b9c0ff] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
                     >
                       {copy.forgotPassword}
                     </button>
@@ -765,7 +767,7 @@ export default function LoginPage() {
                   />
 
                   {inlineError ? (
-                    <div role="alert" className="rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
+                    <div role="alert" className="login-error rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
                       {inlineError}
                     </div>
                   ) : null}
@@ -794,7 +796,7 @@ export default function LoginPage() {
                         <Mail className="size-4" />
                       </div>
                       <div className="login-heading mt-4 text-[14px] font-bold text-white">{copy.recoveryReceived}</div>
-                      <p className="mt-1.5 text-[11px] leading-5 text-slate-400">
+                      <p className="login-muted mt-1.5 text-[11px] leading-5 text-slate-400">
                         {copy.recoveryBody}
                       </p>
                     </div>
@@ -829,7 +831,7 @@ export default function LoginPage() {
                       />
 
                       {inlineError ? (
-                        <div role="alert" className="rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
+                        <div role="alert" className="login-error rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
                           {inlineError}
                         </div>
                       ) : null}
@@ -847,7 +849,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={backToSignIn}
-                    className="flex h-10 w-full items-center justify-center gap-2 text-[11px] font-bold text-slate-400 transition hover:text-white"
+                    className="login-muted flex h-10 w-full items-center justify-center gap-2 text-[11px] font-bold text-slate-400 transition hover:text-white"
                   >
                     <ArrowLeft className={isRtl ? "size-3.5 rotate-180" : "size-3.5"} /> {copy.backToSignIn}
                   </button>
@@ -874,12 +876,12 @@ export default function LoginPage() {
                     onEnter={() => void saveNewPassword()}
                   />
 
-                  <div className="rounded-xl border border-white/[.08] bg-white/[.035] px-3.5 py-3 text-[10px] leading-5 text-slate-400">
+                  <div className="login-soft login-muted rounded-xl border border-white/[.08] bg-white/[.035] px-3.5 py-3 text-[10px] leading-5 text-slate-400">
                     {copy.passwordHint}
                   </div>
 
                   {inlineError ? (
-                    <div role="alert" className="rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
+                    <div role="alert" className="login-error rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
                       {inlineError}
                     </div>
                   ) : null}
