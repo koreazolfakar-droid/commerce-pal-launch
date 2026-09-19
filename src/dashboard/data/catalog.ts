@@ -9,6 +9,32 @@ type ImageRow = Tables<"store_product_images">;
 
 export type DashboardRole = "admin" | "editor";
 
+export type DashboardMfaStatus = {
+  role: DashboardRole;
+  required: boolean;
+  enrolledAt: string | null;
+  currentLevel: "aal1" | "aal2" | null;
+  nextLevel: "aal1" | "aal2" | null;
+  verifiedFactorId: string | null;
+  ready: boolean;
+};
+
+export type DashboardTotpEnrollment = {
+  factorId: string;
+  qrCode: string;
+  secret: string;
+  uri: string;
+};
+
+type DashboardMfaFactor = {
+  id: string;
+  status?: "verified" | "unverified";
+  factor_type?: "totp" | "phone";
+  friendly_name?: string | null;
+};
+
+
+
 export type DashboardBrand = {
   id: string;
   name: string;
@@ -124,6 +150,146 @@ export async function signInDashboard(email: string, password: string): Promise<
     throw new Error("This account does not have dashboard access.");
   }
   return role;
+}
+
+export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null> {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) return null;
+
+  const { data: roleRow, error: roleError } = await supabase
+    .from("user_roles")
+    .select("role,mfa_required,mfa_enrolled_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (roleError || !roleRow) return null;
+  if (roleRow.role !== "admin" && roleRow.role !== "editor") return null;
+
+  const [aalResult, factorsResult] = await Promise.all([
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+    supabase.auth.mfa.listFactors(),
+  ]);
+
+  throwIfError(aalResult.error, "Checking MFA assurance failed");
+  throwIfError(factorsResult.error, "Loading MFA factors failed");
+
+  const totpFactors = (factorsResult.data?.totp ?? []) as DashboardMfaFactor[];
+  const verifiedFactor =
+    totpFactors.find((factor) => factor.status === "verified") ??
+    totpFactors.find((factor) => !factor.status) ??
+    null;
+
+  const currentLevel = aalResult.data?.currentLevel ?? null;
+  const nextLevel = aalResult.data?.nextLevel ?? null;
+
+  return {
+    role: roleRow.role,
+    required: roleRow.mfa_required,
+    enrolledAt: roleRow.mfa_enrolled_at,
+    currentLevel,
+    nextLevel,
+    verifiedFactorId: verifiedFactor?.id ?? null,
+    ready:
+      currentLevel === "aal2" &&
+      Boolean(verifiedFactor?.id) &&
+      roleRow.mfa_required === true,
+  };
+}
+
+export async function beginDashboardTotpEnrollment(): Promise<DashboardTotpEnrollment> {
+  const role = await getDashboardRole();
+  if (!role) throw new Error("Dashboard staff access is required before MFA enrollment.");
+
+  const factorsResult = await supabase.auth.mfa.listFactors();
+  throwIfError(factorsResult.error, "Loading MFA factors failed");
+
+  const allFactors = (factorsResult.data?.all ?? []) as DashboardMfaFactor[];
+  const verifiedTotp = allFactors.find(
+    (factor) => factor.factor_type === "totp" && factor.status === "verified",
+  );
+
+  if (verifiedTotp) {
+    throw new Error("A verified authenticator factor already exists for this account.");
+  }
+
+  const staleUnverified = allFactors.filter(
+    (factor) => factor.factor_type === "totp" && factor.status === "unverified",
+  );
+  for (const factor of staleUnverified) {
+    await supabase.auth.mfa.unenroll({ factorId: factor.id }).catch(() => undefined);
+  }
+
+  const { data, error } = await supabase.auth.mfa.enroll({
+    factorType: "totp",
+    friendlyName: "Space Call Dashboard",
+  });
+  throwIfError(error, "Starting MFA enrollment failed");
+
+  const totp = data?.totp as
+    | { qr_code?: string; secret?: string; uri?: string }
+    | undefined;
+
+  if (!data?.id || !totp?.qr_code || !totp.secret || !totp.uri) {
+    throw new Error("Supabase did not return a complete TOTP enrollment.");
+  }
+
+  return {
+    factorId: data.id,
+    qrCode: totp.qr_code,
+    secret: totp.secret,
+    uri: totp.uri,
+  };
+}
+
+async function activateDashboardMfaRequirement() {
+  const { error } = await supabase.rpc("activate_dashboard_mfa");
+  throwIfError(error, "Activating dashboard MFA requirement failed");
+}
+
+export async function verifyDashboardTotp(
+  factorId: string,
+  code: string,
+): Promise<DashboardMfaStatus> {
+  const normalizedCode = code.replace(/\s+/g, "");
+  if (!/^\d{6,10}$/.test(normalizedCode)) {
+    throw new Error("Enter the numeric code from your authenticator app.");
+  }
+
+  const { error } = await supabase.auth.mfa.challengeAndVerify({
+    factorId,
+    code: normalizedCode,
+  });
+  throwIfError(error, "Authenticator code verification failed");
+
+  const assurance = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  throwIfError(assurance.error, "Checking MFA assurance failed");
+  if (assurance.data?.currentLevel !== "aal2") {
+    throw new Error("MFA verification did not promote this session to AAL2.");
+  }
+
+  await activateDashboardMfaRequirement();
+
+  const status = await getDashboardMfaStatus();
+  if (!status?.ready) {
+    throw new Error("Dashboard MFA activation is incomplete.");
+  }
+  return status;
+}
+
+export async function ensureDashboardMfaActivated(): Promise<DashboardMfaStatus> {
+  const status = await getDashboardMfaStatus();
+  if (!status) throw new Error("Dashboard authentication is required.");
+
+  if (status.currentLevel === "aal2" && status.verifiedFactorId) {
+    if (!status.required) await activateDashboardMfaRequirement();
+    const refreshed = await getDashboardMfaStatus();
+    if (refreshed?.ready) return refreshed;
+  }
+
+  throw new Error("Multi-factor authentication is required.");
 }
 
 export async function signOutDashboard() {
