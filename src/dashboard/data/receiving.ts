@@ -966,7 +966,16 @@ export type ProcurementAnalytics = {
   receivedUnits: number;
   damagedUnits: number;
   damageRate: number;
-  supplierSpend: Array<{ supplierId: string; supplierName: string; spend: number; poCount: number }>;
+  supplierSpend: Array<{
+    supplierId: string;
+    supplierName: string;
+    spend: number;
+    poCount: number;
+    completedPoCount: number;
+    onTimeCompletedCount: number;
+    onTimeRate: number;
+    damagedUnits: number;
+  }>;
 };
 
 export function buildProcurementAnalytics(workspace: ReceivingWorkspace): ProcurementAnalytics {
@@ -987,7 +996,15 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
     .filter((receipt) => receipt.status === "approved")
     .reduce((sum, receipt) => sum + receipt.damagedUnits, 0);
 
-  const supplierMap = new Map<string, { supplierId: string; supplierName: string; spend: number; poCount: number }>();
+  const supplierMap = new Map<string, {
+    supplierId: string;
+    supplierName: string;
+    spend: number;
+    poCount: number;
+    completedPoCount: number;
+    onTimeCompletedCount: number;
+    damagedUnits: number;
+  }>();
   for (const po of workspace.purchaseOrders) {
     if (["cancelled", "rejected"].includes(po.status)) continue;
     const current = supplierMap.get(po.supplierId) ?? {
@@ -995,9 +1012,29 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
       supplierName: po.supplierName,
       spend: 0,
       poCount: 0,
+      completedPoCount: 0,
+      onTimeCompletedCount: 0,
+      damagedUnits: 0,
     };
     current.spend += po.grandTotal;
     current.poCount += 1;
+
+    const poReceipts = workspace.receivings.filter(
+      (receipt) => receipt.purchaseOrderId === po.id && receipt.status === "approved",
+    );
+    current.damagedUnits += poReceipts.reduce((sum, receipt) => sum + receipt.damagedUnits, 0);
+
+    if (po.status === "received" || po.status === "closed") {
+      current.completedPoCount += 1;
+      const completedAt = poReceipts.reduce<string | null>((latest, receipt) => {
+        const stamp = receipt.approvedAt ?? receipt.receivedAt;
+        return !latest || new Date(stamp) > new Date(latest) ? stamp : latest;
+      }, null);
+      if (po.expectedAt && completedAt && new Date(completedAt) <= new Date(po.expectedAt)) {
+        current.onTimeCompletedCount += 1;
+      }
+    }
+
     supplierMap.set(po.supplierId, current);
   }
 
@@ -1009,7 +1046,15 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
     receivedUnits,
     damagedUnits,
     damageRate: receivedUnits + damagedUnits > 0 ? damagedUnits / (receivedUnits + damagedUnits) : 0,
-    supplierSpend: [...supplierMap.values()].sort((a, b) => b.spend - a.spend),
+    supplierSpend: [...supplierMap.values()]
+      .map((supplier) => ({
+        ...supplier,
+        onTimeRate:
+          supplier.completedPoCount > 0
+            ? supplier.onTimeCompletedCount / supplier.completedPoCount
+            : 0,
+      }))
+      .sort((a, b) => b.spend - a.spend),
   };
 }
 
