@@ -1,4 +1,4 @@
-import { getDashboardRole } from "@/dashboard/data/catalog";
+import { getDashboardRole, type DashboardRole } from "@/dashboard/data/catalog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
@@ -164,6 +164,7 @@ export type ProcurementProductOption = {
 };
 
 export type ReceivingWorkspace = {
+  role: DashboardRole;
   suppliers: ReceivingSupplier[];
   locations: ProcurementLocation[];
   purchaseOrders: PurchaseOrderSummary[];
@@ -179,7 +180,7 @@ function toNumber(value: number | string | null | undefined) {
 }
 
 export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
-  await requireDashboardStaff();
+  const role = await requireDashboardStaff();
 
   const [supplierResult, locationResult, poResult, receivingResult, productResult, variantResult, eventResult, attachmentResult] = await Promise.all([
     supabase
@@ -443,6 +444,7 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
   }
 
   return {
+    role,
     suppliers: suppliers.map((row) => ({
       id: row.id,
       name: row.name,
