@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Loader2,
   PackageCheck,
+  Printer,
   RefreshCw,
   Truck,
 } from "lucide-react";
@@ -221,6 +222,14 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => window.print()}
+            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600"
+          >
+            <Printer className="size-3.5" />
+            Print / PDF
+          </button>
+
           <button
             onClick={() => void load(true)}
             disabled={refreshing}
