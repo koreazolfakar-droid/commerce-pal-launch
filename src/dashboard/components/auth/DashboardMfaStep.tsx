@@ -47,7 +47,9 @@ export default function DashboardMfaStep({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [secretRevealed, setSecretRevealed] = useState(false);
-  const [challengeExpiresAt] = useState(() => Date.now() + MFA_CHALLENGE_WINDOW_MS);
+  const [challengeExpiresAt, setChallengeExpiresAt] = useState(
+    () => Date.now() + MFA_CHALLENGE_WINDOW_MS,
+  );
   const [remainingSeconds, setRemainingSeconds] = useState(() =>
     Math.ceil(MFA_CHALLENGE_WINDOW_MS / 1000),
   );
@@ -60,6 +62,24 @@ export default function DashboardMfaStep({
     try {
       const status = await getDashboardMfaStatus();
       if (!status) throw new Error("Your dashboard session has expired.");
+
+      if (!status.ready) {
+        const authenticatedAt = status.authenticatedAt
+          ? new Date(status.authenticatedAt).getTime()
+          : Number.NaN;
+        const deadline = authenticatedAt + MFA_CHALLENGE_WINDOW_MS;
+
+        if (!Number.isFinite(authenticatedAt) || Date.now() >= deadline) {
+          setCode("");
+          setEnrollment(null);
+          setSecretRevealed(false);
+          await signOutDashboard().catch(() => undefined);
+          onCancel();
+          return;
+        }
+
+        setChallengeExpiresAt(deadline);
+      }
 
       if (status.ready) {
         onSuccess();
@@ -89,7 +109,7 @@ export default function DashboardMfaStep({
       setError(message);
       setMode("challenge");
     }
-  }, [onSuccess]);
+  }, [onCancel, onSuccess]);
 
   useEffect(() => {
     void initialize();
@@ -159,10 +179,17 @@ export default function DashboardMfaStep({
       await verifyDashboardTotp(factorId, normalizedCode);
       toast.success("Multi-factor authentication verified.");
       onSuccess();
-    } catch {
-      const message = "Verification code could not be confirmed. Check the current code and try again.";
-      setError(message);
-      toast.error(message);
+    } catch (cause) {
+      const safeMessage =
+        cause instanceof Error &&
+        (
+          cause.message === "Too many verification attempts. Wait a moment and try again." ||
+          cause.message === "Verification service is temporarily unavailable. Try again shortly."
+        )
+          ? cause.message
+          : "Verification code could not be confirmed. Check the current code and try again.";
+      setError(safeMessage);
+      toast.error(safeMessage);
       setCode("");
     } finally {
       setLoading(false);
