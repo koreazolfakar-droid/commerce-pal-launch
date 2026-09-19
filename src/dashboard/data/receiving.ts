@@ -443,6 +443,16 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
     }
   }
 
+  const attachmentUrlByPath = new Map<string, string>();
+  await Promise.all(
+    attachmentRows.map(async (row) => {
+      const { data, error } = await supabase.storage
+        .from(PROCUREMENT_MEDIA_BUCKET)
+        .createSignedUrl(row.storage_path, 60 * 60);
+      if (!error && data?.signedUrl) attachmentUrlByPath.set(row.storage_path, data.signedUrl);
+    }),
+  );
+
   return {
     role,
     suppliers: suppliers.map((row) => ({
@@ -539,7 +549,7 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
       sizeBytes: row.size_bytes,
       attachmentType: row.attachment_type,
       createdAt: row.created_at,
-      url: supabase.storage.from("cms-media").getPublicUrl(row.storage_path).data.publicUrl,
+      url: attachmentUrlByPath.get(row.storage_path) ?? "",
     })),
   };
 }
@@ -879,7 +889,7 @@ export async function replaceReceivingSerials(
   return (data ?? []) as ReceivingSerialRow[];
 }
 
-const PROCUREMENT_MEDIA_BUCKET = "cms-media";
+const PROCUREMENT_MEDIA_BUCKET = "procurement-private";
 const PROCUREMENT_MEDIA_PREFIX = "procurement";
 const MAX_PROCUREMENT_FILE_BYTES = 20 * 1024 * 1024;
 
@@ -933,7 +943,8 @@ export async function uploadProcurementAttachment(input: {
 }
 
 export async function deleteProcurementAttachment(attachment: ProcurementAttachment) {
-  await requireDashboardStaff();
+  const role = await requireDashboardStaff();
+  if (role !== "admin") throw new Error("Only dashboard admins can delete procurement documents.");
   const { error } = await supabase
     .from("store_procurement_attachments")
     .delete()
