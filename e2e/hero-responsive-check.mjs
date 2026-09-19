@@ -43,15 +43,23 @@ try {
       metrics.scrollWidth <= metrics.viewportWidth,
       `${testCase.name}: horizontal overflow`,
     );
-    assert.equal(await hero.getAttribute("data-hero-source"), "shopify-collection");
-    assert.equal(await hero.getAttribute("data-hero-handle"), "homepage-hero");
-    assert.equal(await hero.locator("a").count(), 0);
-    assert.equal(await hero.locator('[data-testid="home-hero-content"]').count(), 0);
-    assert.equal(await hero.locator('[data-testid="home-hero-mobile-controls"]').count(), 0);
+    const source = await hero.getAttribute("data-hero-source");
+    assert.ok(
+      source === "supabase-cms" || source === "placeholder",
+      `${testCase.name}: unexpected hero source ${source}`,
+    );
+
+    const contentCount = await hero.locator('[data-testid="home-hero-content"]').count();
+    if (source === "supabase-cms") {
+      assert.equal(contentCount, 1, `${testCase.name}: CMS hero content missing`);
+    } else {
+      assert.equal(contentCount, 0, `${testCase.name}: placeholder should not render CMS content`);
+    }
 
     const image = hero.locator("img");
     await image.waitFor({ state: "visible" });
-    assert.equal(await image.getAttribute("alt"), "Merchant artwork homepage-hero");
+    const alt = await image.getAttribute("alt");
+    assert.ok(alt !== null, `${testCase.name}: hero image alt attribute missing`);
 
     const media = page.locator('[data-testid="home-hero-media"]');
     const mediaBox = await media.boundingBox();
@@ -66,10 +74,11 @@ try {
     );
 
     if (testCase.mobile) {
-      const ratio = metrics.height / metrics.width;
-      assert.ok(ratio > 0.55 && ratio < 0.575, `${testCase.name}: mobile hero is not 16:9`);
+      assert.ok(metrics.height >= 239, `${testCase.name}: mobile hero became too short`);
+      assert.ok(metrics.height <= 321, `${testCase.name}: mobile hero became too tall`);
     } else {
       assert.ok(metrics.height >= 400, `${testCase.name}: desktop hero became too short`);
+      assert.ok(metrics.height <= 500, `${testCase.name}: desktop hero became too tall`);
     }
 
     const before = page.url();
@@ -77,7 +86,7 @@ try {
     await page.waitForTimeout(100);
     assert.equal(page.url(), before, `${testCase.name}: hero media click changed route`);
 
-    console.log(`PASS ${testCase.name}: hero image/layout and inert media click OK`);
+    console.log(`PASS ${testCase.name}: responsive hero layout, CMS content and inert media click OK`);
     await page.close();
   }
 } finally {

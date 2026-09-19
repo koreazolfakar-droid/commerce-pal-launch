@@ -15,6 +15,7 @@ type CollectionRow = Pick<Tables<"store_collections">, "id" | "title" | "handle"
 export type HeroTargetType = "url" | "product" | "collection" | "none";
 export type HeroAlignment = "start" | "center" | "end";
 export type HeroButtonStyle = "primary" | "secondary" | "light" | "dark";
+export type HeroContentTheme = "light" | "dark" | "glass";
 
 export type DashboardHeroSlide = {
   id: string;
@@ -22,6 +23,8 @@ export type DashboardHeroSlide = {
   titleAr: string;
   subtitleEn: string;
   subtitleAr: string;
+  eyebrowEn: string;
+  eyebrowAr: string;
   imageUrl: string;
   mobileImageUrl: string;
   imageAltEn: string;
@@ -32,6 +35,10 @@ export type DashboardHeroSlide = {
   buttonLabelAr: string;
   targetType: HeroTargetType;
   targetValue: string;
+  secondaryButtonLabelEn: string;
+  secondaryButtonLabelAr: string;
+  secondaryTargetType: HeroTargetType;
+  secondaryTargetValue: string;
   sortOrder: number;
   isPublished: boolean;
   startsAt: string;
@@ -39,7 +46,10 @@ export type DashboardHeroSlide = {
   contentAlignment: HeroAlignment;
   overlayOpacity: number;
   buttonStyle: HeroButtonStyle;
+  secondaryButtonStyle: HeroButtonStyle;
+  contentTheme: HeroContentTheme;
   openInNewTab: boolean;
+  secondaryOpenInNewTab: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -129,6 +139,8 @@ function mapHero(row: HeroRow): DashboardHeroSlide {
     titleAr: row.title_ar ?? "",
     subtitleEn: row.subtitle_en ?? row.subtitle ?? "",
     subtitleAr: row.subtitle_ar ?? "",
+    eyebrowEn: row.eyebrow_en ?? "",
+    eyebrowAr: row.eyebrow_ar ?? "",
     imageUrl: row.image_url ?? "",
     mobileImageUrl: row.mobile_image_url ?? "",
     imageAltEn: row.image_alt_en ?? "",
@@ -139,6 +151,10 @@ function mapHero(row: HeroRow): DashboardHeroSlide {
     buttonLabelAr: row.button_label_ar ?? "",
     targetType: row.target_type as HeroTargetType,
     targetValue: row.target_value ?? "",
+    secondaryButtonLabelEn: row.secondary_button_label_en ?? "",
+    secondaryButtonLabelAr: row.secondary_button_label_ar ?? "",
+    secondaryTargetType: row.secondary_target_type as HeroTargetType,
+    secondaryTargetValue: row.secondary_target_value ?? "",
     sortOrder: row.sort_order,
     isPublished: row.is_published,
     startsAt: row.starts_at ?? "",
@@ -146,7 +162,10 @@ function mapHero(row: HeroRow): DashboardHeroSlide {
     contentAlignment: row.content_alignment as HeroAlignment,
     overlayOpacity: row.overlay_opacity,
     buttonStyle: row.button_style as HeroButtonStyle,
+    secondaryButtonStyle: row.secondary_button_style as HeroButtonStyle,
+    contentTheme: row.content_theme as HeroContentTheme,
     openInNewTab: row.open_in_new_tab,
+    secondaryOpenInNewTab: row.secondary_open_in_new_tab,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -166,6 +185,8 @@ function heroRpcPayload(input: DashboardHeroInput) {
     p_title_ar: input.titleAr || null,
     p_subtitle_en: input.subtitleEn || null,
     p_subtitle_ar: input.subtitleAr || null,
+    p_eyebrow_en: input.eyebrowEn || null,
+    p_eyebrow_ar: input.eyebrowAr || null,
     p_image_url: input.imageUrl || null,
     p_mobile_image_url: input.mobileImageUrl || null,
     p_image_alt_en: input.imageAltEn || null,
@@ -176,13 +197,20 @@ function heroRpcPayload(input: DashboardHeroInput) {
     p_button_label_ar: input.buttonLabelAr || null,
     p_target_type: input.targetType,
     p_target_value: input.targetType === "none" ? null : input.targetValue || null,
+    p_secondary_button_label_en: input.secondaryButtonLabelEn || null,
+    p_secondary_button_label_ar: input.secondaryButtonLabelAr || null,
+    p_secondary_target_type: input.secondaryTargetType,
+    p_secondary_target_value: input.secondaryTargetType === "none" ? null : input.secondaryTargetValue || null,
     p_is_published: input.isPublished,
     p_starts_at: normalizeOptionalTimestamp(input.startsAt),
     p_ends_at: normalizeOptionalTimestamp(input.endsAt),
     p_content_alignment: input.contentAlignment,
     p_overlay_opacity: input.overlayOpacity,
     p_button_style: input.buttonStyle,
+    p_secondary_button_style: input.secondaryButtonStyle,
+    p_content_theme: input.contentTheme,
     p_open_in_new_tab: input.openInNewTab,
+    p_secondary_open_in_new_tab: input.secondaryOpenInNewTab,
   };
 }
 
@@ -202,7 +230,7 @@ export async function createDashboardHeroSlide(
   input: DashboardHeroInput,
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("create_cms_hero_slide", heroRpcPayload(input));
+  const { data, error } = await supabase.rpc("create_cms_hero_slide_v2", heroRpcPayload(input));
   throwIfError(error, "Creating hero slide failed");
   return data ? mapHero(data as HeroRow) : null;
 }
@@ -212,7 +240,7 @@ export async function updateDashboardHeroSlide(
   input: DashboardHeroInput,
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("update_cms_hero_slide", {
+  const { data, error } = await supabase.rpc("update_cms_hero_slide_v2", {
     p_slide_id: id,
     ...heroRpcPayload(input),
   });

@@ -113,6 +113,8 @@ Deno.serve(async (req: Request) => {
       subtitle: row.subtitle ?? null,
       subtitle_en: row.subtitle_en ?? null,
       subtitle_ar: row.subtitle_ar ?? null,
+      eyebrow_en: row.eyebrow_en ?? null,
+      eyebrow_ar: row.eyebrow_ar ?? null,
       image_url: row.image_url,
       mobile_image_url: row.mobile_image_url ?? null,
       image_alt_en: row.image_alt_en ?? null,
@@ -124,11 +126,18 @@ Deno.serve(async (req: Request) => {
       button_label_ar: row.button_label_ar ?? null,
       target_type: row.target_type,
       target_value: row.target_value ?? null,
+      secondary_button_label_en: row.secondary_button_label_en ?? null,
+      secondary_button_label_ar: row.secondary_button_label_ar ?? null,
+      secondary_target_type: row.secondary_target_type ?? "none",
+      secondary_target_value: row.secondary_target_value ?? null,
       sort_order: row.sort_order,
       content_alignment: row.content_alignment ?? "start",
       overlay_opacity: row.overlay_opacity ?? 20,
       button_style: row.button_style ?? "primary",
+      secondary_button_style: row.secondary_button_style ?? "secondary",
+      content_theme: row.content_theme ?? "light",
       open_in_new_tab: row.open_in_new_tab ?? false,
+      secondary_open_in_new_tab: row.secondary_open_in_new_tab ?? false,
     }));
 
   const sections = (sectionsResult.data ?? []).map((row) => ({

@@ -19,6 +19,14 @@ const migration = await readFile(
   new URL("../supabase/migrations/20260918230000_harden_cms_hero_targets.sql", import.meta.url),
   "utf8",
 );
+const customizationMigration = await readFile(
+  new URL("../supabase/migrations/20260919210516_expand_hero_customization.sql", import.meta.url),
+  "utf8",
+);
+const cmsGateway = await readFile(
+  new URL("../supabase/functions/public-cms/index.ts", import.meta.url),
+  "utf8",
+);
 
 test("dedicated hero dashboard route uses the real CMS page", () => {
   assert.match(app, /HeroBannersPageLive/);
@@ -32,8 +40,8 @@ test("dedicated hero dashboard route uses the real CMS page", () => {
 
 test("hero dashboard supports real Supabase CRUD, storage upload and media library", () => {
   assert.match(data, /from\("cms_hero_slides"\)/);
-  assert.match(data, /rpc\("create_cms_hero_slide"/);
-  assert.match(data, /rpc\("update_cms_hero_slide"/);
+  assert.match(data, /rpc\("create_cms_hero_slide_v2"/);
+  assert.match(data, /rpc\("update_cms_hero_slide_v2"/);
   assert.match(data, /rpc\("delete_cms_hero_slide"/);
   assert.match(data, /rpc\("reorder_cms_hero_slides"/);
   assert.match(data, /storage\.from\(HERO_BUCKET\)\.upload/);
@@ -45,6 +53,11 @@ test("hero dashboard supports real Supabase CRUD, storage upload and media libra
   assert.match(page, /Starts at/);
   assert.match(page, /Ends at/);
   assert.match(page, /Design & live preview/);
+  assert.match(page, /Eyebrow text/);
+  assert.match(page, /Secondary CTA \(optional\)/);
+  assert.match(page, /Content theme/);
+  assert.match(data, /secondaryButtonStyle/);
+  assert.match(data, /contentTheme/);
 });
 
 test("hero CTA uses validated product, collection or safe URL targets", () => {
@@ -54,6 +67,19 @@ test("hero CTA uses validated product, collection or safe URL targets", () => {
   assert.match(migration, /c\.is_active = true/);
   assert.match(migration, /hero desktop image must use HTTPS/);
   assert.match(migration, /hero mobile image must use HTTPS/);
+});
+
+test("hero customization is persisted and exposed through the public CMS gateway", () => {
+  assert.match(customizationMigration, /add column if not exists eyebrow_en/);
+  assert.match(customizationMigration, /secondary_target_type/);
+  assert.match(customizationMigration, /content_theme/);
+  assert.match(customizationMigration, /create_cms_hero_slide_v2/);
+  assert.match(customizationMigration, /update_cms_hero_slide_v2/);
+  assert.match(customizationMigration, /from public, anon/);
+  assert.match(cmsGateway, /eyebrow_en: row\.eyebrow_en/);
+  assert.match(cmsGateway, /secondary_button_label_en/);
+  assert.match(cmsGateway, /secondary_target_type/);
+  assert.match(cmsGateway, /content_theme: row\.content_theme/);
 });
 
 test("public CMS uses an edge gateway with resilient empty fallback", () => {
@@ -85,11 +111,11 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", (
   assert.ok(hero.includes("md:h-[24rem]"));
   assert.ok(hero.includes("lg:h-[28rem]"));
   assert.ok(hero.includes("xl:h-[30rem]"));
-  assert.ok(hero.includes("p-4 text-white sm:p-8 lg:p-10"));
+  assert.ok(hero.includes("p-4 sm:p-8 lg:p-10"));
   assert.ok(hero.includes("max-w-[90%] sm:max-w-2xl"));
   assert.ok(hero.includes("text-xl font-black leading-[1.08]"));
   assert.ok(hero.includes("mt-1.5 max-w-[20rem] text-xs"));
-  assert.ok(hero.includes("mt-3 inline-flex min-h-10"));
+  assert.ok(hero.includes("mt-3 flex flex-wrap gap-2"));
 });
 
 test("hero changes are auditable", () => {
