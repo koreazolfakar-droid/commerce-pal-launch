@@ -1,6 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
+import {
+  convertProductImageToWebp,
+  type ProductImageSourceInfo,
+  type ProductImageResolution,
+} from "@/dashboard/lib/imageProcessing";
 
 type HeroRow = Tables<"cms_hero_slides">;
 type MediaRow = Tables<"cms_media_assets">;
@@ -62,9 +67,40 @@ export type DashboardHeroMediaAsset = {
   createdAt: string;
 };
 
+export type HeroImageTarget = "desktop" | "mobile";
+
+export type DashboardHeroImageInfo = {
+  name: string;
+  mimeType: string;
+  width: number | null;
+  height: number | null;
+  bytes: number;
+};
+
+export type DashboardHeroImageOptimization = {
+  target: HeroImageTarget;
+  mode: "webp" | "passthrough";
+  resolution: ProductImageResolution | null;
+  source: DashboardHeroImageInfo;
+  output: DashboardHeroImageInfo;
+  note: string;
+};
+
+export type DashboardHeroImageUploadResult = {
+  asset: DashboardHeroMediaAsset;
+  optimization: DashboardHeroImageOptimization;
+};
+
 const HERO_BUCKET = "cms-media";
 const HERO_PREFIX = "hero";
-const MAX_HERO_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_HERO_SOURCE_BYTES = 20 * 1024 * 1024;
+const MAX_HERO_STORED_BYTES = 10 * 1024 * 1024;
+const WEBP_CONVERTIBLE_HERO_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+]);
 const ALLOWED_HERO_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -270,37 +306,100 @@ function safeFileExtension(file: File) {
   return subtype || "bin";
 }
 
+function heroImageInfoFromConversion(info: ProductImageSourceInfo): DashboardHeroImageInfo {
+  return {
+    name: info.name,
+    mimeType: info.mimeType,
+    width: info.width,
+    height: info.height,
+    bytes: info.bytes,
+  };
+}
+
+function passthroughHeroImageInfo(file: File): DashboardHeroImageInfo {
+  return {
+    name: file.name,
+    mimeType: file.type,
+    width: null,
+    height: null,
+    bytes: file.size,
+  };
+}
+
 export async function uploadDashboardHeroImage(
   file: File,
   altText = "",
-): Promise<DashboardHeroMediaAsset> {
+  target: HeroImageTarget = "desktop",
+): Promise<DashboardHeroImageUploadResult> {
   await requireDashboardStaff();
 
   if (!ALLOWED_HERO_MIME_TYPES.has(file.type)) {
     throw new Error("Unsupported image type. Use JPG, PNG, WebP, AVIF, GIF, SVG, HEIC or HEIF.");
   }
   if (file.size <= 0) throw new Error("Image file is empty.");
-  if (file.size > MAX_HERO_FILE_SIZE) throw new Error("Hero images must be 10MB or smaller.");
+  if (file.size > MAX_HERO_SOURCE_BYTES) throw new Error("Hero source images must be 20MB or smaller.");
 
-  const extension = safeFileExtension(file);
+  const targetResolution: ProductImageResolution = target === "mobile" ? "1080" : "1920";
+  let storedFile = file;
+  let extension = safeFileExtension(file);
+  let optimization: DashboardHeroImageOptimization;
+
+  if (WEBP_CONVERTIBLE_HERO_MIME_TYPES.has(file.type)) {
+    // Conversion happens before Storage upload. If conversion fails, the original file is never uploaded.
+    const conversion = await convertProductImageToWebp(file, targetResolution);
+    storedFile = conversion.file;
+    extension = "webp";
+    optimization = {
+      target,
+      mode: "webp",
+      resolution: targetResolution,
+      source: heroImageInfoFromConversion(conversion.source),
+      output: heroImageInfoFromConversion(conversion.output),
+      note: `Converted to WebP before upload (max ${targetResolution}px edge).`,
+    };
+  } else {
+    const info = passthroughHeroImageInfo(file);
+    optimization = {
+      target,
+      mode: "passthrough",
+      resolution: null,
+      source: info,
+      output: info,
+      note:
+        file.type === "image/gif"
+          ? "GIF preserved to keep animation."
+          : file.type === "image/svg+xml"
+            ? "SVG preserved to keep vector quality."
+            : "HEIC/HEIF preserved because browser-side WebP conversion support is not reliable.",
+    };
+  }
+
+  if (storedFile.size > MAX_HERO_STORED_BYTES) {
+    throw new Error("Optimized hero image must be 10MB or smaller.");
+  }
+
   const unique = typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const objectPath = `${HERO_PREFIX}/${new Date().toISOString().slice(0, 10)}/${unique}.${extension}`;
 
-  const { error: uploadError } = await supabase.storage.from(HERO_BUCKET).upload(objectPath, file, {
-    cacheControl: "31536000",
-    upsert: false,
-    contentType: file.type,
-  });
+  const { error: uploadError } = await supabase.storage.from(HERO_BUCKET).upload(
+    objectPath,
+    storedFile,
+    {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: storedFile.type,
+    },
+  );
   throwIfError(uploadError, "Uploading hero image failed");
 
   try {
     const { data: asset, error: assetError } = await supabase.rpc("register_cms_media_asset", {
       p_object_path: objectPath,
-      p_file_name: file.name,
-      p_mime_type: file.type,
-      p_size_bytes: file.size,
+      p_file_name: storedFile.name,
+      p_mime_type: storedFile.type,
+      p_size_bytes: storedFile.size,
       p_alt_text: altText || null,
     });
     throwIfError(assetError, "Registering hero image failed");
@@ -308,14 +407,17 @@ export async function uploadDashboardHeroImage(
     const row = asset as MediaRow;
     const { data: publicUrl } = supabase.storage.from(HERO_BUCKET).getPublicUrl(objectPath);
     return {
-      id: row.id,
-      url: publicUrl.publicUrl,
-      objectPath,
-      fileName: row.file_name,
-      mimeType: row.mime_type ?? file.type,
-      sizeBytes: row.size_bytes,
-      altText: row.alt_text ?? altText,
-      createdAt: row.created_at,
+      asset: {
+        id: row.id,
+        url: publicUrl.publicUrl,
+        objectPath,
+        fileName: row.file_name,
+        mimeType: row.mime_type ?? storedFile.type,
+        sizeBytes: row.size_bytes,
+        altText: row.alt_text ?? altText,
+        createdAt: row.created_at,
+      },
+      optimization,
     };
   } catch (error) {
     await supabase.storage.from(HERO_BUCKET).remove([objectPath]);
