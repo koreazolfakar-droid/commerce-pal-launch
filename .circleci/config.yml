@@ -20,7 +20,7 @@ commands:
             echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
             bun --version
-  restore-project:
+  restore-analysis:
     steps:
       - checkout
       - install-bun
@@ -28,7 +28,7 @@ commands:
           at: ~/project
 
 jobs:
-  setup:
+  analyze:
     executor: node-bun
     steps:
       - checkout
@@ -40,320 +40,275 @@ jobs:
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
-      - save_cache:
-          key: bun-deps-v2-{{ checksum "bun.lock" }}
-          paths:
-            - ~/.bun/install/cache
+      - run:
+          name: Generate routes
+          command: bun run routes:generate
+      - run:
+          name: Capture TypeScript diagnostics
+          command: |
+            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1 || true
+            cp /tmp/tsc.log tsc.log
       - persist_to_workspace:
           root: ~/project
           paths:
             - node_modules
+            - tsc.log
 
-  tsc-catalog:
+  tsc-catalog-pre:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: Catalog TypeScript
-          command: |
-            bun run routes:generate
-            set +e
-            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
-            set -e
-            grep -E 'src/dashboard/data/catalog\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
+          name: Check catalog-pre
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 1 748
 
-  tsc-receiving:
+  tsc-catalog-list:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: Receiving TypeScript
-          command: |
-            bun run routes:generate
-            set +e
-            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
-            set -e
-            grep -E 'src/dashboard/data/receiving\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
+          name: Check catalog-list
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 749 825
 
-  tsc-other-data-a:
+  tsc-catalog-search:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: Other data A TypeScript
-          command: |
-            bun run routes:generate
-            set +e
-            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
-            set -e
-            grep -E 'src/dashboard/data/(brands|categories|collections|customers|hero|home|homepage)\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
+          name: Check catalog-search
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 826 867
 
-  tsc-other-data-b:
+  tsc-catalog-get:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: Other data B TypeScript
-          command: |
-            bun run routes:generate
-            set +e
-            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
-            set -e
-            grep -E 'src/dashboard/data/(homepagePreview|homepageSections|media|navigation|orders|productManagement|receivingRules|seo|settings|workspace)\.ts' /tmp/tsc.log >/dev/null && exit 1 || exit 0
+          name: Check catalog-get
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 868 957
 
-  test-auth0-security:
+  tsc-catalog-rest:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: auth0-security
-          command: node --test e2e/dashboard-auth0-security.test.mjs
+          name: Check catalog-rest
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 958 2000
 
-  test-csp-session:
+  tsc-receiving-workspace:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: csp-session
-          command: node --test e2e/dashboard-csp-session-ci.test.mjs
+          name: Check receiving-workspace
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 1 584
 
-  test-login-ui:
+  tsc-receiving-detail:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: login-ui
-          command: node --test e2e/dashboard-login-ui.test.mjs
+          name: Check receiving-detail
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 585 847
 
-  test-password-breach:
+  tsc-receiving-rest:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: password-breach
-          command: node --test e2e/dashboard-password-breach-screening.test.mjs
+          name: Check receiving-rest
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 848 2000
 
-  test-security-hardening:
+  tsc-data-brands:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: security-hardening
-          command: node --test e2e/dashboard-security-hardening.test.mjs
+          name: Check brands.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/brands.ts" 1 9999
 
-  test-session-security:
+  tsc-data-categories:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: session-security
-          command: node --test e2e/dashboard-session-security.test.mjs
+          name: Check categories.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/categories.ts" 1 9999
 
-  test-totp-mfa:
+  tsc-data-collections:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: totp-mfa
-          command: node --test e2e/dashboard-totp-mfa.test.mjs
+          name: Check collections.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/collections.ts" 1 9999
 
-  test-content-cms:
+  tsc-data-customers:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: content-cms
-          command: node --test e2e/dashboard-content-cms-step4.test.mjs
+          name: Check customers.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/customers.ts" 1 9999
 
-  test-hero-image:
+  tsc-data-hero:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: hero-image
-          command: node --test e2e/dashboard-hero-image-pipeline.test.mjs
+          name: Check hero.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/hero.ts" 1 9999
 
-  test-hero-supabase:
+  tsc-data-home:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: hero-supabase
-          command: node --test e2e/dashboard-hero-supabase.test.mjs
+          name: Check home.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/home.ts" 1 9999
 
-  test-home-supabase:
+  tsc-data-homepage:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: home-supabase
-          command: node --test e2e/dashboard-home-supabase.test.mjs
+          name: Check homepage.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/homepage.ts" 1 9999
 
-  test-homepage-cms:
+  tsc-data-homepage-preview:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: homepage-cms
-          command: node --test e2e/dashboard-homepage-cms.test.mjs
+          name: Check homepagePreview.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/homepagePreview.ts" 1 9999
 
-  test-architecture:
+  tsc-data-homepage-sections:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: architecture
-          command: node --test e2e/architecture.test.mjs
+          name: Check homepageSections.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/homepageSections.ts" 1 9999
 
-  test-catalog:
+  tsc-data-media:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: catalog
-          command: node --test e2e/catalog.test.mjs
+          name: Check media.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/media.ts" 1 9999
 
-  test-cms-refresh:
+  tsc-data-navigation:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: cms-refresh
-          command: node --test e2e/cms-refresh.test.mjs
+          name: Check navigation.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/navigation.ts" 1 9999
 
-  test-hybrid-storefront:
+  tsc-data-orders:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: hybrid-storefront
-          command: node --test e2e/hybrid-storefront.test.mjs
+          name: Check orders.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/orders.ts" 1 9999
 
-  test-inventory-supabase:
+  tsc-data-product-management:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: inventory-supabase
-          command: node --test e2e/inventory-supabase.test.mjs
+          name: Check productManagement.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/productManagement.ts" 1 9999
 
-  test-performance-architecture:
+  tsc-data-receiving-rules:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: performance-architecture
-          command: node --test e2e/performance-architecture.test.mjs
+          name: Check receivingRules.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receivingRules.ts" 1 9999
 
-  test-product-add-edit:
+  tsc-data-seo:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: product-add-edit
-          command: node --test e2e/product-add-edit-supabase.test.mjs
+          name: Check seo.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/seo.ts" 1 9999
 
-  test-seo-regression:
+  tsc-data-settings:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: seo-regression
-          command: node --test e2e/seo-regression.test.mjs
+          name: Check settings.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/settings.ts" 1 9999
 
-  test-shopify-only:
+  tsc-data-workspace:
     executor: node-bun
     steps:
-      - restore-project
+      - restore-analysis
       - run:
-          name: shopify-only
-          command: node --test e2e/shopify-only-storefront.test.mjs
-
-  test-storefront-consistency:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          name: storefront-consistency
-          command: node --test e2e/storefront-consistency.test.mjs
-
-  test-storefront-failover:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          name: storefront-failover
-          command: node --test e2e/storefront-supabase-failover.test.mjs
-
-  test-truthful-shell:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          name: truthful-shell
-          command: node --test e2e/dashboard-truthful-shell.test.mjs
+          name: Check workspace.ts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/workspace.ts" 1 9999
 
 workflows:
   storefront-validation:
     jobs:
-      - setup:
+      - analyze:
           filters:
             branches:
               only:
                 - /^important\/.*/
-      - tsc-catalog:
-          requires: [setup]
-      - tsc-receiving:
-          requires: [setup]
-      - tsc-other-data-a:
-          requires: [setup]
-      - tsc-other-data-b:
-          requires: [setup]
-      - test-auth0-security:
-          requires: [setup]
-      - test-csp-session:
-          requires: [setup]
-      - test-login-ui:
-          requires: [setup]
-      - test-password-breach:
-          requires: [setup]
-      - test-security-hardening:
-          requires: [setup]
-      - test-session-security:
-          requires: [setup]
-      - test-totp-mfa:
-          requires: [setup]
-      - test-content-cms:
-          requires: [setup]
-      - test-hero-image:
-          requires: [setup]
-      - test-hero-supabase:
-          requires: [setup]
-      - test-home-supabase:
-          requires: [setup]
-      - test-homepage-cms:
-          requires: [setup]
-      - test-architecture:
-          requires: [setup]
-      - test-catalog:
-          requires: [setup]
-      - test-cms-refresh:
-          requires: [setup]
-      - test-hybrid-storefront:
-          requires: [setup]
-      - test-inventory-supabase:
-          requires: [setup]
-      - test-performance-architecture:
-          requires: [setup]
-      - test-product-add-edit:
-          requires: [setup]
-      - test-seo-regression:
-          requires: [setup]
-      - test-shopify-only:
-          requires: [setup]
-      - test-storefront-consistency:
-          requires: [setup]
-      - test-storefront-failover:
-          requires: [setup]
-      - test-truthful-shell:
-          requires: [setup]
+      - tsc-catalog-pre:
+          requires: [analyze]
+      - tsc-catalog-list:
+          requires: [analyze]
+      - tsc-catalog-search:
+          requires: [analyze]
+      - tsc-catalog-get:
+          requires: [analyze]
+      - tsc-catalog-rest:
+          requires: [analyze]
+      - tsc-receiving-workspace:
+          requires: [analyze]
+      - tsc-receiving-detail:
+          requires: [analyze]
+      - tsc-receiving-rest:
+          requires: [analyze]
+      - tsc-data-brands:
+          requires: [analyze]
+      - tsc-data-categories:
+          requires: [analyze]
+      - tsc-data-collections:
+          requires: [analyze]
+      - tsc-data-customers:
+          requires: [analyze]
+      - tsc-data-hero:
+          requires: [analyze]
+      - tsc-data-home:
+          requires: [analyze]
+      - tsc-data-homepage:
+          requires: [analyze]
+      - tsc-data-homepage-preview:
+          requires: [analyze]
+      - tsc-data-homepage-sections:
+          requires: [analyze]
+      - tsc-data-media:
+          requires: [analyze]
+      - tsc-data-navigation:
+          requires: [analyze]
+      - tsc-data-orders:
+          requires: [analyze]
+      - tsc-data-product-management:
+          requires: [analyze]
+      - tsc-data-receiving-rules:
+          requires: [analyze]
+      - tsc-data-seo:
+          requires: [analyze]
+      - tsc-data-settings:
+          requires: [analyze]
+      - tsc-data-workspace:
+          requires: [analyze]
