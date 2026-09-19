@@ -238,6 +238,7 @@ function heroRpcPayload(input: DashboardHeroInput) {
     p_content_theme: input.contentTheme,
     p_open_in_new_tab: input.openInNewTab,
     p_secondary_open_in_new_tab: input.secondaryOpenInNewTab,
+    p_visual_config: input.visualConfig as unknown as Json,
   };
 }
 
@@ -257,15 +258,9 @@ export async function createDashboardHeroSlide(
   input: DashboardHeroInput,
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("create_cms_hero_slide_v2", heroRpcPayload(input));
+  const { data, error } = await supabase.rpc("create_cms_hero_slide_v3", heroRpcPayload(input));
   throwIfError(error, "Creating hero slide failed");
-  if (!data) return null;
-  const { data: visualData, error: visualError } = await supabase.rpc("set_cms_hero_visual_config", {
-    p_slide_id: (data as HeroRow).id,
-    p_visual_config: input.visualConfig as unknown as Json,
-  });
-  throwIfError(visualError, "Saving hero visual config failed");
-  return visualData ? mapHero(visualData as HeroRow) : mapHero(data as HeroRow);
+  return data ? mapHero(data as HeroRow) : null;
 }
 
 export async function updateDashboardHeroSlide(
@@ -273,18 +268,12 @@ export async function updateDashboardHeroSlide(
   input: DashboardHeroInput,
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("update_cms_hero_slide_v2", {
+  const { data, error } = await supabase.rpc("update_cms_hero_slide_v3", {
     p_slide_id: id,
     ...heroRpcPayload(input),
   });
   throwIfError(error, "Updating hero slide failed");
-  if (!data) return null;
-  const { data: visualData, error: visualError } = await supabase.rpc("set_cms_hero_visual_config", {
-    p_slide_id: id,
-    p_visual_config: input.visualConfig as unknown as Json,
-  });
-  throwIfError(visualError, "Saving hero visual config failed");
-  return visualData ? mapHero(visualData as HeroRow) : mapHero(data as HeroRow);
+  return data ? mapHero(data as HeroRow) : null;
 }
 
 export async function deleteDashboardHeroSlide(id: string): Promise<void> {
