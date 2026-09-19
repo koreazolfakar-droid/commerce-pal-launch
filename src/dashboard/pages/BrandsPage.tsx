@@ -265,7 +265,6 @@ export default function BrandsPage() {
         const created = await createDashboardBrand(nextBrand);
         setBrands((current) => [...current, created].sort((a, b) => a.order - b.order));
         setSelectedId(created.id);
-        setEditing(null);
         toast.success("Brand created successfully.");
         return true;
       }
@@ -275,7 +274,6 @@ export default function BrandsPage() {
         current.map((brand) => (brand.id === saved.id ? saved : brand)),
       );
       setSelectedId(saved.id);
-      setEditing(null);
       toast.success("Brand changes saved.");
       return true;
     } catch (cause) {

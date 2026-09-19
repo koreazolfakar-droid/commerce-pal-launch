@@ -1,8 +1,12 @@
-import { Check, Image as ImageIcon, X } from "lucide-react";
-import { useState } from "react";
+import { Check, Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
-import { normalizeBrandSlug, type CatalogBrand } from "@/dashboard/data/brands";
+import {
+  normalizeBrandSlug,
+  uploadDashboardBrandImage,
+  type CatalogBrand,
+} from "@/dashboard/data/brands";
 
 function Field({
   label,
@@ -83,12 +87,32 @@ export default function BrandForm({
   brands: CatalogBrand[];
   mode: "create" | "edit";
   onClose: () => void;
-  onSave: (brand: CatalogBrand) => void;
+  onSave: (brand: CatalogBrand) => Promise<boolean>;
 }) {
   const [draft, setDraft] = useState<CatalogBrand>({ ...brand });
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<"logo" | "cover" | null>(null);
+  const logoInput = useRef<HTMLInputElement>(null);
+  const coverInput = useRef<HTMLInputElement>(null);
   const patch = (next: Partial<CatalogBrand>) => setDraft((current) => ({ ...current, ...next }));
 
-  const submit = () => {
+  const uploadImage = async (file: File | undefined, kind: "logo" | "cover") => {
+    if (!file) return;
+    setUploading(kind);
+    try {
+      const url = await uploadDashboardBrandImage(file, kind);
+      patch(kind === "logo" ? { logo: url } : { coverImage: url });
+      toast.success(kind === "logo" ? "Logo uploaded." : "Cover image uploaded.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Image upload failed.");
+    } finally {
+      setUploading(null);
+      if (kind === "logo" && logoInput.current) logoInput.current.value = "";
+      if (kind === "cover" && coverInput.current) coverInput.current.value = "";
+    }
+  };
+
+  const submit = async () => {
     const name = draft.name.trim();
     if (!name) {
       toast.error("Brand name is required.");
@@ -116,7 +140,8 @@ export default function BrandForm({
     }
 
     const now = new Date().toISOString();
-    onSave({
+    setSaving(true);
+    const saved = await onSave({
       ...draft,
       name,
       slug,
@@ -132,6 +157,8 @@ export default function BrandForm({
       createdAt: draft.createdAt || now,
       updatedAt: now,
     });
+    setSaving(false);
+    if (saved) onClose();
   };
 
   return (
@@ -206,18 +233,75 @@ export default function BrandForm({
               Brand identity
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label="Logo URL"
-                value={draft.logo || ""}
-                onChange={(value) => patch({ logo: value })}
-                placeholder="https://..."
-              />
-              <Field
-                label="Cover Image URL"
-                value={draft.coverImage || ""}
-                onChange={(value) => patch({ coverImage: value })}
-                placeholder="https://..."
-              />
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
+                <div className="mb-2 text-[11px] font-bold text-slate-600">Logo</div>
+                <div className="flex items-center gap-3">
+                  <BrandMark brand={draft} className="size-16" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <input
+                      ref={logoInput}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/avif"
+                      className="sr-only"
+                      onChange={(event) => void uploadImage(event.target.files?.[0], "logo")}
+                    />
+                    <button
+                      type="button"
+                      disabled={uploading !== null}
+                      onClick={() => logoInput.current?.click()}
+                      className="flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:border-indigo-200 disabled:opacity-50"
+                    >
+                      {uploading === "logo" ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />}
+                      {draft.logo ? "Replace logo" : "Upload logo"}
+                    </button>
+                    {draft.logo && (
+                      <button type="button" onClick={() => patch({ logo: undefined })} className="text-[9px] font-bold text-rose-600">
+                        Remove logo
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3">
+                <div className="mb-2 text-[11px] font-bold text-slate-600">Cover image</div>
+                <div className="relative grid h-16 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  {draft.coverImage ? (
+                    <img src={draft.coverImage} alt="Brand cover preview" className="size-full object-cover" />
+                  ) : (
+                    <ImageIcon className="size-5 text-slate-300" />
+                  )}
+                </div>
+                <input
+                  ref={coverInput}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/avif"
+                  className="sr-only"
+                  onChange={(event) => void uploadImage(event.target.files?.[0], "cover")}
+                />
+                <div className="mt-2 flex items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={uploading !== null}
+                    onClick={() => coverInput.current?.click()}
+                    className="flex h-9 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:border-indigo-200 disabled:opacity-50"
+                  >
+                    {uploading === "cover" ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />}
+                    {draft.coverImage ? "Replace" : "Upload cover"}
+                  </button>
+                  {draft.coverImage && (
+                    <button type="button" onClick={() => patch({ coverImage: undefined })} className="text-[9px] font-bold text-rose-600">
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+              <details className="sm:col-span-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                <summary className="cursor-pointer text-[10px] font-bold text-slate-500">Use image URLs instead</summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <Field label="Logo URL" value={draft.logo || ""} onChange={(value) => patch({ logo: value })} placeholder="https://..." />
+                  <Field label="Cover Image URL" value={draft.coverImage || ""} onChange={(value) => patch({ coverImage: value })} placeholder="https://..." />
+                </div>
+              </details>
               <div className="sm:col-span-2">
                 <Field
                   label="Website"
@@ -229,8 +313,7 @@ export default function BrandForm({
             </div>
             <div className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-[10px] text-slate-400">
               <ImageIcon className="size-4 shrink-0" />
-              Brand identity URLs are stored in Supabase for the Space Call catalog.
-
+              JPG, PNG, WebP and AVIF are optimized automatically. Use a transparent square logo for best results.
             </div>
           </section>
 
@@ -306,17 +389,19 @@ export default function BrandForm({
           <button
             type="button"
             onClick={onClose}
+            disabled={saving || uploading !== null}
             className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
           >
             Cancel
           </button>
           <button
             type="button"
-            onClick={submit}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)]"
+            onClick={() => void submit()}
+            disabled={saving || uploading !== null}
+            className="flex h-10 min-w-32 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <Check className="size-4" />
-            {mode === "create" ? "Create Brand" : "Save Brand"}
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+            {saving ? "Saving…" : mode === "create" ? "Create Brand" : "Save Brand"}
           </button>
         </div>
       </div>
