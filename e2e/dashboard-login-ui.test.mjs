@@ -57,4 +57,24 @@ test("login provides accessible inline errors and loading states", () => {
   assert.match(login, /disabled=\{loading\}/);
   assert.match(login, /autoComplete="username"/);
   assert.match(login, /autoComplete="current-password"/);
+  assert.match(login, /spellCheck=\{false\}/);
+  assert.match(login, /getModifierState\("CapsLock"\)/);
+  assert.match(login, /Caps Lock is on\. Check your password before continuing\./);
+  assert.match(login, /Never share your password or authenticator code/);
+});
+
+
+test("login UI clears sensitive password state when changing authentication flows", () => {
+  assert.match(
+    login,
+    /Forgot password\?[\s\S]+setPassword\(""\)[\s\S]+setShowPassword\(false\)[\s\S]+setView\("forgot"\)/,
+  );
+  assert.match(
+    login,
+    /const backToSignIn = \(\) => \{[\s\S]+setPassword\(""\)[\s\S]+setNewPassword\(""\)[\s\S]+setConfirmPassword\(""\)/,
+  );
+  assert.match(
+    login,
+    /const handleMfaCancel = useCallback\(\(\) => \{[\s\S]+setPassword\(""\)[\s\S]+setNewPassword\(""\)[\s\S]+setConfirmPassword\(""\)/,
+  );
 });
