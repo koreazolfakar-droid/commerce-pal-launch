@@ -21,6 +21,7 @@ const securityPage = await readFile(
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
 const nav = await readFile(new URL("../src/dashboard/config/navigation.ts", import.meta.url), "utf8");
 const server = await readFile(new URL("../src/server.ts", import.meta.url), "utf8");
+const csp = await readFile(new URL("../src/lib/contentSecurityPolicy.ts", import.meta.url), "utf8");
 const env = await readFile(new URL("../.env.example", import.meta.url), "utf8");
 const throttle = await readFile(
   new URL("../supabase/functions/dashboard-auth-throttle/index.ts", import.meta.url),
