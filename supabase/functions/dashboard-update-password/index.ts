@@ -141,7 +141,8 @@ Deno.serve(async (req) => {
 
   if (roleError) return json({ error: "authorization_unavailable" }, 503);
   if (
-    (roleRow?.role !== "admin" && roleRow?.role !== "editor") ||
+    !roleRow ||
+    (roleRow.role !== "admin" && roleRow.role !== "editor") ||
     roleRow.mfa_required !== true ||
     !roleRow.mfa_enrolled_at
   ) {
