@@ -671,6 +671,38 @@ begin
 end;
 $$;
 
+create or replace function private.delete_store_purchase_order_draft_internal(
+  p_purchase_order_id uuid
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_actor uuid := auth.uid();
+  v_status text;
+begin
+  if v_actor is null or not private.is_dashboard_staff() then raise exception 'dashboard staff required'; end if;
+
+  select status into v_status
+  from public.store_purchase_orders
+  where id = p_purchase_order_id
+  for update;
+
+  if v_status is null then raise exception 'purchase order not found'; end if;
+  if v_status <> 'draft' then raise exception 'only draft purchase orders can be deleted'; end if;
+  if exists (select 1 from public.store_receivings where purchase_order_id = p_purchase_order_id) then
+    raise exception 'purchase order with receiving history cannot be deleted';
+  end if;
+
+  delete from public.store_procurement_events where purchase_order_id = p_purchase_order_id;
+  delete from public.store_purchase_orders where id = p_purchase_order_id;
+
+  return 'deleted';
+end;
+$;
+
 create or replace function private.cancel_store_purchase_order_internal(
   p_purchase_order_id uuid,
   p_reason text
@@ -760,6 +792,7 @@ end;
 $$;
 
 -- Revoke private implementations from direct exposed use.
+revoke all on function private.delete_store_purchase_order_draft_internal(uuid) from public, anon, authenticated;
 revoke all on function private.approve_store_purchase_order_internal(uuid) from public, anon, authenticated;
 revoke all on function private.issue_store_purchase_order_internal(uuid) from public, anon, authenticated;
 revoke all on function private.reject_store_purchase_order_internal(uuid,text) from public, anon, authenticated;
@@ -767,12 +800,17 @@ revoke all on function private.reopen_store_purchase_order_internal(uuid) from p
 revoke all on function private.cancel_store_purchase_order_internal(uuid,text) from public, anon, authenticated;
 revoke all on function private.void_store_receiving_internal(uuid,text) from public, anon, authenticated;
 
+grant execute on function private.delete_store_purchase_order_draft_internal(uuid) to authenticated;
 grant execute on function private.approve_store_purchase_order_internal(uuid) to authenticated;
 grant execute on function private.issue_store_purchase_order_internal(uuid) to authenticated;
 grant execute on function private.reject_store_purchase_order_internal(uuid,text) to authenticated;
 grant execute on function private.reopen_store_purchase_order_internal(uuid) to authenticated;
 grant execute on function private.cancel_store_purchase_order_internal(uuid,text) to authenticated;
 grant execute on function private.void_store_receiving_internal(uuid,text) to authenticated;
+
+create or replace function public.delete_store_purchase_order_draft(p_purchase_order_id uuid)
+returns text language sql security invoker set search_path = ''
+as $ select private.delete_store_purchase_order_draft_internal(p_purchase_order_id); $;
 
 create or replace function public.approve_store_purchase_order(p_purchase_order_id uuid)
 returns text language sql security invoker set search_path = ''
@@ -798,6 +836,7 @@ create or replace function public.void_store_receiving(p_receiving_id uuid, p_re
 returns text language sql security invoker set search_path = ''
 as $$ select private.void_store_receiving_internal(p_receiving_id, p_reason); $$;
 
+revoke all on function public.delete_store_purchase_order_draft(uuid) from public, anon;
 revoke all on function public.approve_store_purchase_order(uuid) from public, anon;
 revoke all on function public.issue_store_purchase_order(uuid) from public, anon;
 revoke all on function public.reject_store_purchase_order(uuid,text) from public, anon;
@@ -805,6 +844,7 @@ revoke all on function public.reopen_store_purchase_order(uuid) from public, ano
 revoke all on function public.cancel_store_purchase_order(uuid,text) from public, anon;
 revoke all on function public.void_store_receiving(uuid,text) from public, anon;
 
+grant execute on function public.delete_store_purchase_order_draft(uuid) to authenticated;
 grant execute on function public.approve_store_purchase_order(uuid) to authenticated;
 grant execute on function public.issue_store_purchase_order(uuid) to authenticated;
 grant execute on function public.reject_store_purchase_order(uuid,text) to authenticated;
