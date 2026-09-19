@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { StoreLayout } from "@/components/StoreLayout";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import {
   absoluteUrl,
@@ -62,6 +64,14 @@ export const Route = createFileRoute("/ar")({
 
 function ArabicLandingPage() {
   const { setLanguage } = useLanguage();
+  const { data: cms } = useQuery(cmsQueryOptions());
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsWhatsApp = cms?.settings["whatsapp_number"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const whatsappNumber =
+    typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
+  const whatsappHref = generalWhatsAppUrl(whatsappNumber, storeName);
 
   useEffect(() => {
     setLanguage("ar");
@@ -77,13 +87,13 @@ function ArabicLandingPage() {
     <StoreLayout>
       <main dir="rtl" lang="ar" className="mx-auto w-full max-w-6xl px-4 py-8 pb-28 sm:py-12">
         <section className="overflow-hidden rounded-[2rem] border bg-card p-6 shadow-card sm:p-10">
-          <p className="text-sm font-bold text-primary">Space Call لبنان</p>
+          <p className="text-sm font-bold text-primary">{storeName} لبنان</p>
           <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-5xl">
             هواتف وإلكترونيات مع معلومات واضحة واختيار أسهل
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
             تصفّح الهواتف الذكية والتابلت واللابتوبات والسماعات والشواحن والإكسسوارات في{" "}
-            {STORE_NAME}. راجع السعر والتوفر والمواصفات، واحصل على دعم مباشر قبل الطلب وبعده.
+            {storeName}. راجع السعر والتوفر والمواصفات، واحصل على دعم مباشر قبل الطلب وبعده.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
@@ -93,7 +103,7 @@ function ArabicLandingPage() {
               تصفّح المنتجات <ArrowLeft className="h-4 w-4" />
             </Link>
             <a
-              href={generalWhatsAppUrl()}
+              href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex min-h-12 items-center gap-2 rounded-full border px-6 py-3 font-bold hover:bg-accent"
