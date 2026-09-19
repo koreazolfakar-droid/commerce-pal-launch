@@ -175,6 +175,7 @@ export async function listDashboardInventoryMovements(input: {
   productId: string;
   variantId: string;
   movementType?: InventoryMovementType;
+  createdSince?: string;
   page?: number;
   pageSize?: number;
 }): Promise<DashboardInventoryMovementPage> {
@@ -195,6 +196,10 @@ export async function listDashboardInventoryMovements(input: {
 
   if (input.movementType) {
     query = query.eq("movement_type", input.movementType);
+  }
+
+  if (input.createdSince) {
+    query = query.gte("created_at", input.createdSince);
   }
 
   const { data, error } = await query
