@@ -68,11 +68,22 @@ Deno.serve(async (req: Request) => {
         .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
         .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
         .order("sort_order"),
-      db.from("cms_sections").select("*").order("page_slug").order("sort_order"),
-      db.from("cms_navigation_items").select("*").order("area").order("sort_order"),
+      db
+        .from("cms_sections")
+        .select("*")
+        .eq("is_visible", true)
+        .order("page_slug")
+        .order("sort_order"),
+      db
+        .from("cms_navigation_items")
+        .select("*")
+        .eq("is_visible", true)
+        .order("area")
+        .order("sort_order"),
       db
         .from("cms_brands")
         .select("id,name,slug,logo_url,href,sort_order,is_visible")
+        .eq("is_visible", true)
         .order("sort_order")
         .order("name"),
       db.from("cms_seo_pages").select("*").eq("is_public", true).order("page_slug"),
