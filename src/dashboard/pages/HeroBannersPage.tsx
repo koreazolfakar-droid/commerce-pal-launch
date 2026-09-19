@@ -26,12 +26,14 @@ import {
   reorderDashboardHeroSlides,
   updateDashboardHeroSlide,
   uploadDashboardHeroImage,
+  type DashboardHeroImageOptimization,
   type DashboardHeroInput,
   type DashboardHeroLinkOption,
   type DashboardHeroMediaAsset,
   type DashboardHeroSlide,
   type HeroAlignment,
   type HeroButtonStyle,
+  type HeroImageTarget,
   type HeroTargetType,
 } from "@/dashboard/data/hero";
 
@@ -115,6 +117,20 @@ function buttonClass(style: HeroButtonStyle) {
   return "bg-[#5968ea] text-white";
 }
 
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function formatImageDimensions(info: DashboardHeroImageOptimization["source"]) {
+  return info.width && info.height ? `${info.width} × ${info.height}px` : "Dimensions preserved";
+}
+
+function imageFormatLabel(mimeType: string) {
+  return mimeType.replace("image/", "").replace("svg+xml", "SVG").toUpperCase();
+}
+
 function MediaLibraryModal({
   assets,
   onSelect,
@@ -178,7 +194,10 @@ export default function HeroBannersPage() {
   const [mediaTarget, setMediaTarget] = useState<"desktop" | "mobile" | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState<"desktop" | "mobile" | null>(null);
+  const [uploading, setUploading] = useState<HeroImageTarget | null>(null);
+  const [lastOptimizations, setLastOptimizations] = useState<
+    Partial<Record<HeroImageTarget, DashboardHeroImageOptimization>>
+  >({});
   const desktopFileRef = useRef<HTMLInputElement>(null);
   const mobileFileRef = useRef<HTMLInputElement>(null);
 
@@ -219,6 +238,10 @@ export default function HeroBannersPage() {
     if (selected) setForm(fromSlide(selected));
   }, [selected]);
 
+  useEffect(() => {
+    setLastOptimizations({});
+  }, [selectedId]);
+
   const dirty = useMemo(() => {
     if (!selected) return JSON.stringify(form) !== JSON.stringify(EMPTY_FORM);
     return JSON.stringify(form) !== JSON.stringify(fromSlide(selected));
@@ -227,6 +250,7 @@ export default function HeroBannersPage() {
   const newSlide = () => {
     setSelectedId(null);
     setForm(EMPTY_FORM);
+    setLastOptimizations({});
     setLanguage("en");
   };
 
@@ -307,21 +331,32 @@ export default function HeroBannersPage() {
     }
   };
 
-  const upload = async (file: File | undefined, target: "desktop" | "mobile") => {
+  const upload = async (file: File | undefined, target: HeroImageTarget) => {
     if (!file) return;
     setUploading(target);
     try {
       const alt = target === "desktop"
         ? (language === "ar" ? form.imageAltAr : form.imageAltEn)
         : (language === "ar" ? form.mobileImageAltAr : form.mobileImageAltEn);
-      const asset = await uploadDashboardHeroImage(file, alt);
+      const result = await uploadDashboardHeroImage(file, alt, target);
+      const { asset, optimization } = result;
       setMedia((current) => [asset, ...current.filter((item) => item.id !== asset.id)]);
+      setLastOptimizations((current) => ({ ...current, [target]: optimization }));
       setForm((current) =>
         target === "desktop"
           ? { ...current, imageUrl: asset.url }
           : { ...current, mobileImageUrl: asset.url },
       );
-      toast.success(`${target === "desktop" ? "Desktop" : "Mobile"} hero image uploaded.`);
+
+      if (optimization.mode === "webp") {
+        toast.success(
+          `${target === "desktop" ? "Desktop" : "Mobile"} hero optimized to WebP · ${formatBytes(optimization.source.bytes)} → ${formatBytes(optimization.output.bytes)}.`,
+        );
+      } else {
+        toast.success(
+          `${target === "desktop" ? "Desktop" : "Mobile"} hero uploaded in its original format. ${optimization.note}`,
+        );
+      }
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image upload failed.");
     } finally {
@@ -338,6 +373,7 @@ export default function HeroBannersPage() {
         ? { ...current, imageUrl: asset.url }
         : { ...current, mobileImageUrl: asset.url },
     );
+    setLastOptimizations({});
     setMediaTarget(null);
   };
 
@@ -492,12 +528,16 @@ export default function HeroBannersPage() {
               const alt = isDesktop
                 ? (language === "ar" ? form.imageAltAr : form.imageAltEn)
                 : (language === "ar" ? form.mobileImageAltAr : form.mobileImageAltEn);
+              const optimization = lastOptimizations[target];
               return (
                 <div key={target} className="rounded-2xl border border-slate-200 bg-white p-5">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2 text-[12px] font-bold text-[#14203a]">{isDesktop ? <Monitor className="size-4" /> : <Smartphone className="size-4" />} {isDesktop ? "Desktop image" : "Mobile image"}</div>
                       <div className="mt-1 text-[10px] text-slate-400">{isDesktop ? "Required when published" : "Optional mobile-specific crop"}</div>
+                      <div className="mt-1 text-[9px] font-semibold text-emerald-600">
+                        JPG / PNG / WebP / AVIF → WebP · max {isDesktop ? "1920" : "1080"}px
+                      </div>
                     </div>
                   </div>
                   <div className={`mb-3 grid overflow-hidden rounded-xl bg-slate-100 ${isDesktop ? "aspect-[16/9]" : "aspect-[9/16] max-h-72"}`}>
@@ -517,8 +557,45 @@ export default function HeroBannersPage() {
                     <button onClick={() => setMediaTarget(target)} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600">
                       <ImageIcon className="size-3.5" /> Library
                     </button>
-                    {url ? <button onClick={() => setForm((current) => isDesktop ? { ...current, imageUrl: "" } : { ...current, mobileImageUrl: "" })} className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-500">Remove</button> : null}
+                    {url ? (
+                      <button
+                        onClick={() => {
+                          setForm((current) => isDesktop ? { ...current, imageUrl: "" } : { ...current, mobileImageUrl: "" });
+                          setLastOptimizations((current) => ({ ...current, [target]: undefined }));
+                        }}
+                        className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-500"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
                   </div>
+                  {optimization ? (
+                    <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold text-emerald-700">
+                          {optimization.mode === "webp" ? "Real WebP optimization complete" : "Original format preserved"}
+                        </span>
+                        <span className="rounded-full bg-white px-2 py-1 text-[9px] font-bold text-slate-500">
+                          {imageFormatLabel(optimization.output.mimeType)}
+                        </span>
+                      </div>
+                      <div className="mt-2 grid gap-2 text-[9px] text-slate-600 sm:grid-cols-2">
+                        <div className="rounded-lg bg-white/80 p-2">
+                          <span className="block font-bold text-slate-400">Before</span>
+                          <span className="mt-0.5 block font-semibold">
+                            {formatImageDimensions(optimization.source)} · {formatBytes(optimization.source.bytes)} · {imageFormatLabel(optimization.source.mimeType)}
+                          </span>
+                        </div>
+                        <div className="rounded-lg bg-white/80 p-2">
+                          <span className="block font-bold text-slate-400">After</span>
+                          <span className="mt-0.5 block font-semibold">
+                            {formatImageDimensions(optimization.output)} · {formatBytes(optimization.output.bytes)} · {imageFormatLabel(optimization.output.mimeType)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-[9px] font-medium text-emerald-700">{optimization.note}</div>
+                    </div>
+                  ) : null}
                   <label className="mt-3 block">
                     <span className="mb-1.5 block text-[10px] font-bold text-slate-500">Alt text ({language.toUpperCase()})</span>
                     <input
