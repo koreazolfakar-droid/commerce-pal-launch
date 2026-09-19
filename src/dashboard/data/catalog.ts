@@ -499,14 +499,46 @@ export async function updateDashboardPassword(password: string) {
     throw new Error("Use at least 10 characters for the new password.");
   }
 
+  const mfaStatus = await getDashboardMfaStatus();
+  if (!mfaStatus?.ready || mfaStatus.currentLevel !== "aal2") {
+    throw new Error("AAL2 multi-factor verification is required before changing the password.");
+  }
+
+  // Keep the browser-side k-anonymity check for fast UX, but do not trust it as
+  // the security boundary. The Edge Function repeats HIBP screening server-side.
   await assertDashboardPasswordNotPwned(password);
 
-  const { error } = await supabase.auth.updateUser({ password });
-  throwIfError(error, "Password update failed");
+  const { data, error } = await supabase.functions.invoke("dashboard-update-password", {
+    body: { password },
+  });
+  if (error) {
+    throw new Error("Secure password update was rejected. Verify MFA and try a different password.");
+  }
 
-  await logDashboardSecurityEvent("password_changed");
+  const payload = data as { ok?: boolean; error?: string } | null;
+  if (!payload?.ok) {
+    if (payload?.error === "compromised_password") {
+      throw new Error(
+        "This password appears in known breach data. Choose a unique password that you have never used elsewhere.",
+      );
+    }
+    if (payload?.error === "breach_screening_unavailable") {
+      throw new Error(
+        "Security check is temporarily unavailable. Your password was not changed. Try again shortly.",
+      );
+    }
+    throw new Error("Secure password update failed.");
+  }
+
+  // The Edge Function records the authoritative password_changed security event.
+
+  // Supabase may already revoke sessions after a security-sensitive password
+  // change. Still request a global sign-out, then always clear the local session.
   const { error: signOutError } = await supabase.auth.signOut({ scope: "global" });
-  throwIfError(signOutError, "Password updated, but global sign out failed");
+  if (signOutError) {
+    console.warn("[dashboard-security] global sign out after password change failed", signOutError.message);
+    await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+  }
 }
 
 

@@ -17,6 +17,8 @@
   - local session only
   - all other sessions
   - all sessions
+- Dashboard password changes require AAL2 and are routed through the protected `dashboard-update-password` Edge Function.
+- HIBP screening runs twice for dashboard password changes: browser-side k-anonymity for fast UX and server-side k-anonymity before the trusted Auth Admin mutation.
 - Password changes revoke all refresh sessions.
 - Security Center at `/dashboard/security`.
 - CSP allowlisting for Cloudflare Turnstile.
@@ -37,11 +39,13 @@ Do not commit the Turnstile Secret Key.
 
 The client intentionally does not claim Turnstile is fully enabled merely because the Site Key exists. Supabase must also have the matching provider Secret configured.
 
-## Production activation: leaked-password protection
+## Leaked-password protection
 
-In Supabase Dashboard Authentication password/security settings, enable **Leaked Password Protection**.
+The dashboard's supported password-change/recovery path is protected by the `dashboard-update-password` Edge Function. The function requires a validated dashboard user, AAL2, an admin/editor role, and server-side HIBP screening before calling the Supabase Auth Admin password mutation.
 
-This is an Auth service configuration and is not controlled by a SQL migration in this repository.
+The browser also performs the same HIBP k-anonymity screening for fast feedback. The new password is sent over TLS to the protected Space Call Edge Function because that trusted service performs the actual password mutation; it is not logged by application code. HIBP receives only the first five SHA-1 hex characters in both checks; the complete digest and plaintext password are never sent to HIBP.
+
+Supabase's native **Leaked Password Protection** is still recommended if the project is upgraded to a plan that supports it. On hosted Supabase Free, there is no Auth hook that intercepts every new-password assignment, so the native Auth endpoint remains a platform-level bypass of application-specific HIBP policy for a caller that deliberately avoids the dashboard flow. The application never uses that direct mutation path.
 
 ## Rate limiting
 
