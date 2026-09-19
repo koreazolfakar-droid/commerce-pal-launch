@@ -131,7 +131,7 @@ export default function ProcurementAnalyticsPage() {
           </label>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left">
+          <table className="w-full min-w-[900px] text-left">
             <thead className="bg-slate-50 text-[9px] uppercase tracking-[.08em] text-slate-400">
               <tr>
                 <th className="px-5 py-3">Product / Variant</th>
@@ -139,6 +139,7 @@ export default function ProcurementAnalyticsPage() {
                 <th className="px-3 py-3">Stock</th>
                 <th className="px-3 py-3">On order</th>
                 <th className="px-3 py-3">Projected</th>
+                <th className="px-3 py-3">Suggested supplier</th>
                 <th className="px-5 py-3 text-right">Suggested qty</th>
               </tr>
             </thead>
@@ -150,6 +151,7 @@ export default function ProcurementAnalyticsPage() {
                   <td className="px-3 py-3 text-[11px] font-bold text-rose-600">{item.currentStock}</td>
                   <td className="px-3 py-3 text-[11px] text-blue-600">{item.onOrder}</td>
                   <td className="px-3 py-3 text-[11px] text-slate-600">{item.currentStock + item.onOrder}</td>
+                  <td className="px-3 py-3 text-[10px] font-semibold text-slate-600">{item.recommendedSupplierName ?? "No supplier history"}</td>
                   <td className="px-5 py-3 text-right text-[11px] font-bold text-indigo-600">{item.suggestedQuantity}</td>
                 </tr>
               ))}
