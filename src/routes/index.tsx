@@ -490,10 +490,13 @@ function Index() {
   const orderOf = (key: string, fallback: number) => coreSection(key)?.sort_order ?? fallback;
 
   const featuredSection = coreSection("featured_products");
+  const localizedFeaturedSection = featuredSection
+    ? localizeSection(featuredSection, language)
+    : undefined;
   const featuredTitle =
-    featuredSection?.title?.trim() || t("bestSellers");
+    localizedFeaturedSection?.title?.trim() || t("bestSellers");
   const featuredSubtitle =
-    featuredSection?.subtitle?.trim() || t("bestSellersDescription");
+    localizedFeaturedSection?.subtitle?.trim() || t("bestSellersDescription");
 
   const blocks: Array<{
     key: string;
