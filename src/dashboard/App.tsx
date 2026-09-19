@@ -33,9 +33,10 @@ import CollectionDetailPageLive from "@/dashboard/pages/CollectionDetailPage";
 import HeroBannersPageLive from "@/dashboard/pages/HeroBannersPage";
 import LoginPage from "@/dashboard/pages/LoginPage";
 import SecurityPage from "@/dashboard/pages/SecurityPage";
+import SettingsPage from "@/dashboard/pages/SettingsPage";
 import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 import { useDashboardAuth0 } from "@/dashboard/security/Auth0DashboardSecurity";
-import { SITE_URL, STORE_CONFIG } from "@/lib/storeConfig";
+import { SITE_URL } from "@/lib/storeConfig";
 
 const iconMap: Record<string, typeof LayoutDashboard> = { LayoutDashboard, ShoppingBag, Package, Layers3, Tags, Boxes, Users, PanelsTopLeft, Image: ImageIcon, Badge: Star, Menu, BadgePercent: TicketPercent, Megaphone, TicketPercent, SearchCheck, ChartNoAxesCombined: BarChart3, Mail, Star, FolderOpen, UserCog, ScrollText: FileText, Settings2, LockKeyhole };
 
@@ -805,132 +806,6 @@ function ProductForm({ id }: { id?: string }) {
 function CustomersPage() { const [search, setSearch] = useState(""); const filtered = customers.filter(c => `${c.name} ${c.email} ${c.phone}`.toLowerCase().includes(search.toLowerCase())); return <div><PageHeader meta={pageMeta["/dashboard/customers"]} action={<button onClick={() => toast.success("Customer creation form is ready for mock testing.")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"><Plus className="size-4" /> Add customer</button>} /><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="text-[11px] text-slate-400">Total customers</div><div className="mt-2 text-2xl font-bold text-[#14203a]">1,206</div><div className="mt-1 text-[10px] font-semibold text-emerald-600">↑ 14.2% vs last month</div></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="text-[11px] text-slate-400">VIP customers</div><div className="mt-2 text-2xl font-bold text-[#14203a]">184</div><div className="mt-1 text-[10px] font-semibold text-emerald-600">↑ 8.7% vs last month</div></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="text-[11px] text-slate-400">Avg. lifetime value</div><div className="mt-2 text-2xl font-bold text-[#14203a]">$284.16</div><div className="mt-1 text-[10px] font-semibold text-emerald-600">↑ 5.1% vs last month</div></div></div><div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]"><TableToolbar value={search} setValue={setSearch} placeholder="Search customers" /><div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left"><thead className="bg-[#fafbfe]"><tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.12em] text-slate-400"><th className="px-5 py-3 font-semibold">Customer</th><th className="px-3 py-3 font-semibold">Phone</th><th className="px-3 py-3 font-semibold">Orders</th><th className="px-3 py-3 font-semibold">Total spent</th><th className="px-3 py-3 font-semibold">Last order</th><th className="px-5 py-3 font-semibold">Status</th></tr></thead><tbody>{filtered.map(c => <tr key={c.email} className="border-b border-slate-50 hover:bg-[#fafbff]"><td className="px-5 py-4"><div className="flex items-center gap-2.5"><div className="grid size-8 place-items-center rounded-full bg-indigo-50 text-[10px] font-bold text-indigo-600">{c.initials}</div><div><div className="text-[12px] font-bold text-slate-700">{c.name}</div><div className="text-[10px] text-slate-400">{c.email}</div></div></div></td><td className="px-3 py-4 text-[11px] text-slate-500">{c.phone}</td><td className="px-3 py-4 text-[12px] font-bold text-slate-700">{c.orders}</td><td className="px-3 py-4 text-[12px] font-bold text-slate-700">{money(c.spent)}</td><td className="px-3 py-4 text-[11px] text-slate-400">{c.lastOrder}</td><td className="px-5 py-4"><StatusBadge status={c.status} /></td></tr>)}</tbody></table></div></div></div>; }
 
 function InventoryPage() { const rows = products.map(p => ({ ...p, reserved: Math.max(1, Math.floor(p.stock * .18)), available: Math.max(0, p.stock - Math.max(1, Math.floor(p.stock * .18))) })); return <div><PageHeader meta={pageMeta["/dashboard/inventory"]} action={<button onClick={() => toast.success("Inventory sync simulation completed.")} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"><RefreshCw className="size-3.5" /> Sync mock inventory</button>} /><div className="mb-4 grid gap-3 sm:grid-cols-4"><div className="rounded-xl border border-slate-200 bg-white p-4"><div className="text-[11px] text-slate-400">Units in stock</div><div className="mt-1 text-xl font-bold text-[#14203a]">284</div></div><div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4"><div className="text-[11px] text-amber-700/70">Low stock</div><div className="mt-1 text-xl font-bold text-amber-700">18</div></div><div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4"><div className="text-[11px] text-rose-700/70">Out of stock</div><div className="mt-1 text-xl font-bold text-rose-700">12</div></div><div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="text-[11px] text-blue-700/70">On order</div><div className="mt-1 text-xl font-bold text-blue-700">42</div></div></div><div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white"><div className="flex items-center justify-between border-b border-slate-100 p-4"><div className="text-[13px] font-bold text-[#14203a]">Inventory levels</div><button onClick={() => toast.info("Inventory filters are in mock mode.")} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-600"><Filter className="size-3.5" /> Filter</button></div><div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left"><thead className="bg-[#fafbfe]"><tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.12em] text-slate-400"><th className="px-5 py-3 font-semibold">Product</th><th className="px-3 py-3 font-semibold">Variant</th><th className="px-3 py-3 font-semibold">SKU</th><th className="px-3 py-3 font-semibold">Stock</th><th className="px-3 py-3 font-semibold">Reserved</th><th className="px-3 py-3 font-semibold">Available</th><th className="px-5 py-3 font-semibold">Status</th></tr></thead><tbody>{rows.map(p => <tr key={p.id} className="border-b border-slate-50 hover:bg-[#fafbff]"><td className="px-5 py-3.5 text-[12px] font-bold text-slate-700">{p.name}</td><td className="px-3 py-3.5 text-[11px] text-slate-500">Standard</td><td className="px-3 py-3.5 font-mono text-[10px] text-slate-500">{p.sku}</td><td className="px-3 py-3.5 text-[12px] font-bold text-slate-700">{p.stock}</td><td className="px-3 py-3.5 text-[12px] text-slate-500">{p.reserved}</td><td className="px-3 py-3.5 text-[12px] font-bold text-slate-700">{p.available}</td><td className="px-5 py-3.5"><StatusBadge status={p.stock < 10 ? "Pending" : "Active"} /></td></tr>)}</tbody></table></div></div></div>; }
-
-function SettingsPage() {
-  const [tab, setTab] = useState<"Overview" | "Connections">("Overview");
-  const tabs = ["Overview", "Connections"] as const;
-  const whatsapp = STORE_CONFIG.whatsappNumber ? `+${STORE_CONFIG.whatsappNumber}` : "Not configured";
-  const overviewRows = [
-    ["Store name", STORE_CONFIG.name],
-    ["Live storefront", SITE_URL],
-    ["WhatsApp", whatsapp],
-    ["Invoice email", STORE_CONFIG.invoiceEmail || "Not configured"],
-  ];
-
-  return (
-    <div>
-      <PageHeader
-        meta={{
-          eyebrow: "System",
-          title: "Settings",
-          description: "Current Space Call storefront configuration and connection status.",
-        }}
-        action={
-          <button
-            onClick={() => window.open(SITE_URL, "_blank", "noopener,noreferrer")}
-            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
-          >
-            <ExternalLink className="size-3.5" /> View store
-          </button>
-        }
-      />
-
-      <div className="grid gap-4 xl:grid-cols-[220px_1fr]">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-2 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="space-y-1">
-            {tabs.map((item) => (
-              <button
-                key={item}
-                onClick={() => setTab(item)}
-                className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-[11px] font-semibold transition ${
-                  tab === item
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-slate-500 hover:bg-slate-50"
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {tab === "Overview" ? (
-            <SmallPanel
-              title="Current storefront configuration"
-              subtitle="Read-only in this cleanup step. Live editing will be connected in the next settings phase."
-            >
-              <div className="divide-y divide-slate-100 px-5 py-2">
-                {overviewRows.map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-                  >
-                    <span className="text-[11px] font-semibold text-slate-500">{label}</span>
-                    <span className="break-all text-[12px] font-bold text-slate-700">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </SmallPanel>
-          ) : (
-            <SmallPanel
-              title="Live connections"
-              subtitle="Truthful status for the services already used by this dashboard."
-            >
-              <div className="space-y-3 px-5 py-5">
-                {[
-                  [
-                    "Dashboard data",
-                    "Connected",
-                    "Products, orders, customers, inventory and supported CMS modules use authenticated Supabase data.",
-                  ],
-                  [
-                    "Public storefront",
-                    "Live",
-                    SITE_URL,
-                  ],
-                  [
-                    "Dashboard access",
-                    "Protected",
-                    "The current authentication and MFA security gate remains active.",
-                  ],
-                ].map(([name, status, description]) => (
-                  <div
-                    key={name}
-                    className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center"
-                  >
-                    <div className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
-                      <Cloud className="size-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[12px] font-bold text-slate-700">{name}</div>
-                      <div className="mt-1 break-all text-[11px] leading-5 text-slate-400">
-                        {description}
-                      </div>
-                    </div>
-                    <span className="w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
-                      {status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </SmallPanel>
-          )}
-
-          <div className="rounded-2xl border border-[#dfe2ff] bg-[#f5f6ff] p-4 text-[11px] leading-5 text-[#5962b8]">
-            <div className="flex items-center gap-2 font-bold">
-              <LockKeyhole className="size-4" /> No fake saves
-            </div>
-            <p className="mt-1">
-              This page now shows the current configuration without pretending to save changes.
-              Editable settings will be connected to the real CMS in the next dedicated step.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function GenericPage({ path }: { path: string }) { const meta = pageMeta[path] ?? { eyebrow: "Workspace", title: "Coming soon", description: "This workspace module is staged for the next iteration." }; const [enabled, setEnabled] = useState(true); return <div><PageHeader meta={meta} action={<button onClick={() => toast.success("Mock changes saved.")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"><Check className="size-4" /> Save changes</button>} /><div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]"><SmallPanel title="Workspace overview" subtitle="A practical starting point for the next management workflow"><div className="space-y-4 px-5 py-5"><div className="rounded-2xl bg-gradient-to-br from-[#17223f] to-[#3446a5] p-6 text-white"><div className="mb-8 flex items-center justify-between"><div className="grid size-10 place-items-center rounded-xl bg-white/10"><Sparkles className="size-5 text-[#bfc5ff]" /></div><span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-[#d5d9ff]">Mock module</span></div><div className="text-[22px] font-bold tracking-[-.04em]">{meta.title}</div><p className="mt-2 max-w-md text-[12px] leading-5 text-indigo-100/75">This screen is connected to the standalone navigation and ready for real data contracts in a future phase.</p></div><div className="grid gap-3 sm:grid-cols-3">{[["Records", "128"], ["Published", "96"], ["Needs review", "12"]].map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 p-4"><div className="text-[10px] text-slate-400">{label}</div><div className="mt-1 text-xl font-bold text-[#14203a]">{value}</div></div>)}</div></div></SmallPanel><SmallPanel title="Module settings"><div className="space-y-4 px-5 py-5"><div className="flex items-center justify-between rounded-xl border border-slate-200 p-4"><div><div className="text-[12px] font-bold text-slate-700">Enable module</div><div className="mt-1 text-[11px] text-slate-400">Show this module in the admin workspace.</div></div><button onClick={() => setEnabled(!enabled)} className={`relative h-6 w-11 rounded-full transition ${enabled ? "bg-[#5968ea]" : "bg-slate-200"}`}><span className={`absolute top-1 size-4 rounded-full bg-white shadow transition ${enabled ? "left-6" : "left-1"}`} /></button></div><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Internal note</span><textarea rows={4} defaultValue={`Mock configuration for ${meta.title}.`} className="w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400" /></label><button onClick={() => toast.info("Preview refreshed from mock state.")} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600"><Eye className="size-3.5" /> Preview module</button></div></SmallPanel></div></div>; }
 
