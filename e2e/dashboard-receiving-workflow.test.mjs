@@ -151,6 +151,23 @@ test("PO number opens a dedicated detail page and receiving stays separate", () 
   assert.match(purchaseOrderDetailPage, /Back to Purchase Orders/);
 });
 
+test("purchase order detail loads only the requested PO dataset", () => {
+  assert.match(data, /export async function loadPurchaseOrderDetail/);
+  const start = data.indexOf("export async function loadPurchaseOrderDetail");
+  const end = data.indexOf("export async function createReceivingSupplier", start);
+  assert.ok(start >= 0 && end > start);
+
+  const detailLoader = data.slice(start, end);
+  assert.match(detailLoader, /\.eq\("id", purchaseOrderId\)/);
+  assert.match(detailLoader, /\.eq\("purchase_order_id", purchaseOrderId\)/);
+  assert.match(detailLoader, /store_purchase_order_items/);
+  assert.match(detailLoader, /store_receivings/);
+  assert.match(detailLoader, /store_procurement_events/);
+  assert.match(detailLoader, /store_procurement_attachments/);
+  assert.doesNotMatch(purchaseOrderDetailPage, /loadReceivingWorkspace/);
+  assert.match(purchaseOrderDetailPage, /loadPurchaseOrderDetail\(id\)/);
+});
+
 test("purchase orders and receiving are separate routed workspaces", () => {
   assert.match(app, /import PurchaseOrdersPage from/);
   assert.match(app, /import ReceivingPage from/);
