@@ -51,7 +51,7 @@ function createHomepageUuid() {
   });
 }
 
-function createHomepageSectionKey(type: SectionType, suffix = Date.now()) {
+function createHomepageSectionKey(type: string, suffix = Date.now()) {
   const base = type.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "section";
   return `${base}_${suffix}`.slice(0, 80);
 }
