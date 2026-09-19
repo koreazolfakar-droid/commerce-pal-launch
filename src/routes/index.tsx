@@ -521,7 +521,7 @@ function Index() {
       node: (
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
           <HomePromoTicker heading={tickerHeading} details={tickerDetails} />
-          <HomeHero heroCollection={heroCollection} cmsHeroSlides={cms.heroSlides} />
+          <HomeHero cmsHeroSlides={cms.heroSlides} />
         </div>
       ),
     },
