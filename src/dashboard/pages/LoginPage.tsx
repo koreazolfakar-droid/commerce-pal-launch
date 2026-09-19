@@ -81,6 +81,7 @@ const loginCopy = {
     signedIn: "Signed in successfully.",
     resetRequested: "If this email is authorized, a recovery link will be sent.",
     passwordUpdated: "Password updated. Sign in with your new password.",
+    passwordRejected: "Choose a different strong, unique password.",
     verified: "Identity verified.",
     invalidEmail: "Enter a valid email address.",
     verificationRequired: "Complete the security check before continuing.",
@@ -137,6 +138,7 @@ const loginCopy = {
     signedIn: "تم تسجيل الدخول بنجاح.",
     resetRequested: "إذا كان البريد مصرحًا له، سيتم إرسال رابط الاستعادة.",
     passwordUpdated: "تم تحديث كلمة المرور. سجّل الدخول بكلمة المرور الجديدة.",
+    passwordRejected: "اختر كلمة مرور قوية وفريدة مختلفة.",
     verified: "تم تأكيد الهوية.",
     invalidEmail: "أدخل بريدًا إلكترونيًا صالحًا.",
     verificationRequired: "أكمل التحقق الأمني قبل المتابعة.",
@@ -412,7 +414,6 @@ export default function LoginPage() {
 
   const localizeAuthError = useCallback(
     (message: string) => {
-      if (lang === "en") return message;
       const normalized = message.toLowerCase();
       if (normalized.includes("valid dashboard email") || normalized.includes("valid email")) {
         return copy.invalidEmail;
@@ -427,6 +428,16 @@ export default function LoginPage() {
       }
       if (normalized.includes("password reset") || normalized.includes("recovery")) {
         return copy.resetFailed;
+      }
+      if (
+        normalized.includes("breach") ||
+        normalized.includes("compromised") ||
+        normalized.includes("unique password")
+      ) {
+        return copy.passwordRejected;
+      }
+      if (normalized.includes("aal2") || normalized.includes("multi-factor")) {
+        return copy.verificationRequired;
       }
       return copy.genericError;
     },
@@ -764,6 +775,7 @@ export default function LoginPage() {
                   <TurnstileChallenge
                     onTokenChange={handleCaptchaToken}
                     resetNonce={captchaResetNonce}
+                    theme={theme}
                   />
 
                   {inlineError ? (
@@ -828,6 +840,7 @@ export default function LoginPage() {
                       <TurnstileChallenge
                         onTokenChange={handleCaptchaToken}
                         resetNonce={captchaResetNonce}
+                        theme={theme}
                       />
 
                       {inlineError ? (
