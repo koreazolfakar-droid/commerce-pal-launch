@@ -9,6 +9,30 @@ type ImageRow = Tables<"store_product_images">;
 
 export type DashboardRole = "admin" | "editor";
 
+export const dashboardTurnstileSiteKey =
+  (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined)?.trim() ?? "";
+export const isDashboardTurnstileConfigured = Boolean(dashboardTurnstileSiteKey);
+
+export type DashboardSecurityEvent = {
+  id: string;
+  eventType: string;
+  userAgent: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type DashboardSecuritySnapshot = {
+  email: string;
+  expiresAt: string | null;
+  currentLevel: "aal1" | "aal2" | null;
+  nextLevel: "aal1" | "aal2" | null;
+  mfaRequired: boolean;
+  mfaEnrolledAt: string | null;
+  turnstileConfigured: boolean;
+  events: DashboardSecurityEvent[];
+};
+
+
 export type DashboardMfaStatus = {
   role: DashboardRole;
   required: boolean;
@@ -141,14 +165,80 @@ export async function getDashboardRole(): Promise<DashboardRole | null> {
   return data.role === "admin" || data.role === "editor" ? data.role : null;
 }
 
-export async function signInDashboard(email: string, password: string): Promise<DashboardRole> {
-  const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-  throwIfError(error, "Sign in failed");
+type DashboardThrottleDecision = {
+  allowed: boolean;
+  retryAfter: number;
+  remainingBeforeBlock?: number;
+};
+
+async function dashboardLoginThrottle(
+  email: string,
+  outcome: "check" | "failure",
+): Promise<DashboardThrottleDecision> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return { allowed: true, retryAfter: 0 };
+
+  const { data, error } = await supabase.functions.invoke("dashboard-auth-throttle", {
+    body: { email: normalizedEmail, outcome },
+  });
+
+  if (error) {
+    console.warn("[dashboard-security] login throttle unavailable", error.message);
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  const payload = data as Partial<DashboardThrottleDecision> | null;
+  return {
+    allowed: payload?.allowed !== false,
+    retryAfter:
+      typeof payload?.retryAfter === "number" && Number.isFinite(payload.retryAfter)
+        ? Math.max(0, payload.retryAfter)
+        : 0,
+    remainingBeforeBlock:
+      typeof payload?.remainingBeforeBlock === "number"
+        ? Math.max(0, payload.remainingBeforeBlock)
+        : undefined,
+  };
+}
+
+function throttleMessage(retryAfter: number) {
+  const minutes = Math.max(1, Math.ceil(retryAfter / 60));
+  return `Too many failed sign-in attempts. Try again in about ${minutes} minute${minutes === 1 ? "" : "s"}.`;
+}
+
+export async function signInDashboard(
+  email: string,
+  password: string,
+  captchaToken?: string,
+): Promise<DashboardRole> {
+  if (isDashboardTurnstileConfigured && !captchaToken) {
+    throw new Error("Complete the security verification before signing in.");
+  }
+
+  const throttle = await dashboardLoginThrottle(email, "check");
+  if (!throttle.allowed) {
+    throw new Error(throttleMessage(throttle.retryAfter));
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+    ...(captchaToken ? { options: { captchaToken } } : {}),
+  });
+
+  if (error) {
+    const failed = await dashboardLoginThrottle(email, "failure");
+    if (!failed.allowed) throw new Error(throttleMessage(failed.retryAfter));
+    throwIfError(error, "Sign in failed");
+  }
+
   const role = await getDashboardRole();
   if (!role) {
-    await supabase.auth.signOut();
+    await dashboardLoginThrottle(email, "failure");
+    await supabase.auth.signOut({ scope: "local" });
     throw new Error("This account does not have dashboard access.");
   }
+
   return role;
 }
 
@@ -270,12 +360,25 @@ export async function verifyDashboardTotp(
     throw new Error("MFA verification did not promote this session to AAL2.");
   }
 
+  const beforeActivation = await getDashboardMfaStatus();
   await activateDashboardMfaRequirement();
 
   const status = await getDashboardMfaStatus();
   if (!status?.ready) {
     throw new Error("Dashboard MFA activation is incomplete.");
   }
+  if (!beforeActivation?.required) {
+    await logDashboardSecurityEvent("mfa_enabled", {
+      aal: status.currentLevel,
+    });
+  }
+  await logDashboardSecurityEvent("mfa_verified", {
+    aal: status.currentLevel,
+  });
+  await logDashboardSecurityEvent("login_success", {
+    aal: status.currentLevel,
+    mfa: true,
+  });
   return status;
 }
 
@@ -292,14 +395,90 @@ export async function ensureDashboardMfaActivated(): Promise<DashboardMfaStatus>
   throw new Error("Multi-factor authentication is required.");
 }
 
+async function logDashboardSecurityEvent(
+  eventType: string,
+  metadata: Record<string, unknown> = {},
+) {
+  const { error } = await supabase.rpc("log_dashboard_security_event", {
+    p_event_type: eventType,
+    p_metadata: metadata,
+  });
+  if (error) console.warn("[dashboard-security] event log failed", error.message);
+}
+
 export async function signOutDashboard() {
-  const { error } = await supabase.auth.signOut();
+  await logDashboardSecurityEvent("signout_local");
+  const { error } = await supabase.auth.signOut({ scope: "local" });
   throwIfError(error, "Sign out failed");
 }
 
-export async function requestDashboardPasswordReset(email: string) {
+export async function signOutOtherDashboardSessions() {
+  await logDashboardSecurityEvent("signout_others");
+  const { error } = await supabase.auth.signOut({ scope: "others" });
+  throwIfError(error, "Signing out other sessions failed");
+}
+
+export async function signOutAllDashboardSessions() {
+  await logDashboardSecurityEvent("signout_global");
+  const { error } = await supabase.auth.signOut({ scope: "global" });
+  throwIfError(error, "Signing out all sessions failed");
+}
+
+export async function listDashboardSecurityEvents(limit = 30): Promise<DashboardSecurityEvent[]> {
+  const safeLimit = Math.min(100, Math.max(1, Math.trunc(limit)));
+  const { data, error } = await supabase
+    .from("dashboard_security_events")
+    .select("id,event_type,user_agent,metadata,created_at")
+    .order("created_at", { ascending: false })
+    .limit(safeLimit);
+  throwIfError(error, "Loading security activity failed");
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    eventType: row.event_type,
+    userAgent: row.user_agent ?? "",
+    metadata:
+      row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+        ? (row.metadata as Record<string, unknown>)
+        : {},
+    createdAt: row.created_at,
+  }));
+}
+
+export async function getDashboardSecuritySnapshot(): Promise<DashboardSecuritySnapshot> {
+  const [{ data: sessionData, error: sessionError }, mfaStatus, events] = await Promise.all([
+    supabase.auth.getSession(),
+    getDashboardMfaStatus(),
+    listDashboardSecurityEvents(30),
+  ]);
+  throwIfError(sessionError, "Loading dashboard session failed");
+  if (!sessionData.session || !mfaStatus) {
+    throw new Error("Dashboard security session is unavailable.");
+  }
+
+  return {
+    email: sessionData.session.user.email ?? "",
+    expiresAt: sessionData.session.expires_at
+      ? new Date(sessionData.session.expires_at * 1000).toISOString()
+      : null,
+    currentLevel: mfaStatus.currentLevel,
+    nextLevel: mfaStatus.nextLevel,
+    mfaRequired: mfaStatus.required,
+    mfaEnrolledAt: mfaStatus.enrolledAt,
+    turnstileConfigured: isDashboardTurnstileConfigured,
+    events,
+  };
+}
+
+export async function requestDashboardPasswordReset(
+  email: string,
+  captchaToken?: string,
+) {
   const normalizedEmail = email.trim();
   if (!normalizedEmail) throw new Error("Enter your dashboard email first.");
+  if (isDashboardTurnstileConfigured && !captchaToken) {
+    throw new Error("Complete the security verification before requesting a reset.");
+  }
 
   const redirectTo =
     typeof window !== "undefined"
@@ -308,6 +487,7 @@ export async function requestDashboardPasswordReset(email: string) {
 
   const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
     ...(redirectTo ? { redirectTo } : {}),
+    ...(captchaToken ? { captchaToken } : {}),
   });
   throwIfError(error, "Password reset request failed");
 }
@@ -320,8 +500,9 @@ export async function updateDashboardPassword(password: string) {
   const { error } = await supabase.auth.updateUser({ password });
   throwIfError(error, "Password update failed");
 
-  const { error: signOutError } = await supabase.auth.signOut();
-  throwIfError(signOutError, "Password updated, but sign out failed");
+  await logDashboardSecurityEvent("password_changed");
+  const { error: signOutError } = await supabase.auth.signOut({ scope: "global" });
+  throwIfError(signOutError, "Password updated, but global sign out failed");
 }
 
 
