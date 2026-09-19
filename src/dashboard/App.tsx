@@ -68,6 +68,16 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: { colla
   const { t } = useLanguage();
   const [location, navigate] = useLocation();
   const isActive = (href: string) => location === href || (href !== "/dashboard" && location.startsWith(href));
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileOpen, setMobileOpen]);
+
   return <>
     {mobileOpen && <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden" />}
     <aside className={`fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col bg-[#101b32] text-white shadow-2xl transition-all duration-200 lg:translate-x-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
