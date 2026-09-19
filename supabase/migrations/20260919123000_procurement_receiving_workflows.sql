@@ -474,8 +474,9 @@ begin
   end if;
 
   if not exists (
-    select 1 from public.store_receiving_items
-    where receiving_id = p_receiving_id
+    select 1
+    from public.store_receiving_items check_item
+    where check_item.receiving_id = p_receiving_id
   ) then
     raise exception 'receiving has no lines';
   end if;
