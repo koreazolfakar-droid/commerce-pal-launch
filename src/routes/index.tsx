@@ -441,8 +441,14 @@ function Index() {
   const { t, language } = useLanguage();
   const deferredWorkReady = useDeferredHomepageWork();
   const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
-  const { data: catalog } = useQuery(catalogQueryOptions());
-  const { data: collections = [] } = useQuery(collectionsQueryOptions());
+  const { data: catalog } = useQuery({
+    ...catalogQueryOptions(),
+    enabled: deferredWorkReady,
+  });
+  const { data: collections = [] } = useQuery({
+    ...collectionsQueryOptions(),
+    enabled: deferredWorkReady,
+  });
   const { data: heroCollection } = useQuery(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4));
   const catalogReady = Boolean(catalog);
   const secondaryQueriesReady = catalogReady && deferredWorkReady;
@@ -515,11 +521,7 @@ function Index() {
       node: (
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
           <HomePromoTicker heading={tickerHeading} details={tickerDetails} />
-          <HomeHero
-            products={products}
-            heroCollection={heroCollection}
-            cmsHeroSlides={cms.heroSlides}
-          />
+          <HomeHero heroCollection={heroCollection} cmsHeroSlides={cms.heroSlides} />
         </div>
       ),
     },
