@@ -6,7 +6,7 @@ import {
   type HomepageSection,
   type SectionStatus,
   type SectionType,
-} from "@/dashboard/mock/homepageSections";
+} from "@/dashboard/data/homepageSections";
 
 type CmsSectionRow = Tables<"cms_sections">;
 
@@ -74,10 +74,15 @@ const BUILDER_TO_DB_TYPE: Partial<Record<SectionType, string>> = {
   categories: "category_rail",
 };
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SECTION_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]{0,79}$/;
-const CORE_HOMEPAGE_SECTION_KEYS = new Set(["hero", "categories", "brands", "featured_products", "trust"]);
+const CORE_HOMEPAGE_SECTION_KEYS = new Set([
+  "hero",
+  "categories",
+  "brands",
+  "featured_products",
+  "trust",
+]);
 
 function throwIfError(error: { message: string } | null, label: string) {
   if (error) throw new Error(`${label}: ${error.message}`);
@@ -101,7 +106,10 @@ function readStatus(value: unknown): SectionStatus {
 
 function readType(value: unknown, dbType: string): SectionType {
   if (typeof value === "string" && SECTION_TYPE_SET.has(value)) return value as SectionType;
-  return DB_TYPE_TO_BUILDER[dbType] ?? (SECTION_TYPE_SET.has(dbType) ? (dbType as SectionType) : "custom");
+  return (
+    DB_TYPE_TO_BUILDER[dbType] ??
+    (SECTION_TYPE_SET.has(dbType) ? (dbType as SectionType) : "custom")
+  );
 }
 
 function readAlignment(value: unknown): HomepageSection["alignment"] {
@@ -274,8 +282,7 @@ export async function saveDashboardHomepageSections(
       subtitle_en: section.subtitle.trim() || null,
       content,
       sort_order: (index + 1) * 10,
-      is_visible:
-        section.status === "published" && section.enabled && section.showOnStorefront,
+      is_visible: section.status === "published" && section.enabled && section.showOnStorefront,
       updated_at: now,
     };
   });

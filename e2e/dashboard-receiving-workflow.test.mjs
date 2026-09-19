@@ -16,7 +16,7 @@ const [workflow, hardening, upgrade, data, page, purchaseOrdersPage, purchaseOrd
   readFile(new URL("../src/dashboard/pages/SuppliersPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProcurementAnalyticsPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../src/dashboard/mock/data.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/config/navigation.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/inventory.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/components/inventory/InventoryMovementHistoryDrawer.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/integrations/supabase/types.ts", import.meta.url), "utf8"),
@@ -147,8 +147,8 @@ test("purchase orders and receiving are separate routed workspaces", () => {
   assert.match(app, /route === "\/dashboard\/purchase-orders"/);
   assert.match(app, /route === "\/dashboard\/receiving"/);
   assert.match(app, /receivingPoDetail/);
-  assert.match(nav, /label: "Purchase Orders", href: "\/dashboard\/purchase-orders"/);
-  assert.match(nav, /label: "Receiving", href: "\/dashboard\/receiving"/);
+  assert.match(nav, /label: "Purchase Orders",\s+href: "\/dashboard\/purchase-orders"/);
+  assert.match(nav, /label: "Receiving",\s+href: "\/dashboard\/receiving"/);
   assert.match(purchaseOrdersPage, /mode="purchase-orders"/);
   assert.match(page, /mode = "receiving"/);
   assert.match(page, /navigate\(\`\/dashboard\/receiving\/\$\{po\.id\}\`\)/);
@@ -252,8 +252,8 @@ test("procurement documents are private and audit timelines are exposed", () => 
 test("supplier management, analytics and reorder suggestions are live modules", () => {
   assert.match(app, /SuppliersPage/);
   assert.match(app, /ProcurementAnalyticsPage/);
-  assert.match(nav, /label: "Suppliers", href: "\/dashboard\/suppliers"/);
-  assert.match(nav, /label: "Procurement", href: "\/dashboard\/procurement"/);
+  assert.match(nav, /label: "Suppliers",\s+href: "\/dashboard\/suppliers"/);
+  assert.match(nav, /label: "Procurement",\s+href: "\/dashboard\/procurement"/);
   assert.match(suppliersPage, /Suppliers & Locations/);
   assert.match(suppliersPage, /Phone/);
   assert.match(suppliersPage, /Email/);
@@ -292,3 +292,4 @@ test("generated Supabase types include procurement tables and functions", () => 
     assert.match(types, new RegExp(name));
   }
 });
+

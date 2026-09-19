@@ -19,7 +19,7 @@ const securityPage = await readFile(
   "utf8",
 );
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
-const nav = await readFile(new URL("../src/dashboard/mock/data.ts", import.meta.url), "utf8");
+const nav = await readFile(new URL("../src/dashboard/config/navigation.ts", import.meta.url), "utf8");
 const server = await readFile(new URL("../src/server.ts", import.meta.url), "utf8");
 const env = await readFile(new URL("../.env.example", import.meta.url), "utf8");
 const throttle = await readFile(
@@ -131,3 +131,4 @@ test("Security Center is a real route and reports security state precisely", () 
   assert.match(securityPage, /Client configured/);
   assert.match(securityPage, /Supabase Auth must also have Cloudflare Turnstile enabled/);
 });
+

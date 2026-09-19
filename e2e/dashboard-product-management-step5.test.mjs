@@ -14,9 +14,9 @@ const [app, catalog, data, variants, products, form, migration, types] = await P
 ]);
 
 test("dashboard routes use the Step 5 product pages", () => {
-  assert.match(app, /route === "\/dashboard\/products"\) content = <ProductsPageLive \/>/);
-  assert.match(app, /route === "\/dashboard\/products\/new"\) content = <ProductFormPageLive \/>/);
-  assert.match(app, /productDetail\) content = <ProductFormPageLive id=\{productDetail\[1\]\} \/>/);
+  assert.match(app, /route === "\/dashboard\/products"\)\s+content = <ProductsPageLive \/>/);
+  assert.match(app, /route === "\/dashboard\/products\/new"\)\s+content = <ProductFormPageLive \/>/);
+  assert.match(app, /productDetail\)\s+content = <ProductFormPageLive id=\{productDetail\[1\]\} \/>/);
 });
 
 test("multi-variant product save cannot overwrite variant-derived summaries", () => {
@@ -74,3 +74,4 @@ test("generated Supabase types include Step 5 RPC contracts", () => {
   assert.match(types, /set_store_products_status:/);
   assert.match(types, /delete_store_product_safe:/);
 });
+
