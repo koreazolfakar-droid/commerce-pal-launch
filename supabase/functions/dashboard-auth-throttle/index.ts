@@ -74,6 +74,31 @@ Deno.serve(async (req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  async function isAuthenticatedDashboardSuccess() {
+    const authorization = req.headers.get("authorization")?.trim() ?? "";
+    const match = /^Bearer\s+(.+)$/i.exec(authorization);
+    const token = match?.[1]?.trim() ?? "";
+    if (!token) return false;
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
+    if (userError || !user?.id) return false;
+
+    const authenticatedEmail = (user.email ?? "").trim().toLowerCase();
+    if (!authenticatedEmail || authenticatedEmail !== email) return false;
+
+    const { data: roleRow, error: roleError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (roleError || !roleRow) return false;
+    return roleRow.role === "admin" || roleRow.role === "editor";
+  }
+
   async function readBucket(keyHash: string): Promise<Bucket | null> {
     const { data, error } = await supabase
       .from("dashboard_login_throttle")
@@ -159,6 +184,9 @@ Deno.serve(async (req) => {
     }
 
     if (outcome === "success") {
+      const authenticated = await isAuthenticatedDashboardSuccess();
+      if (!authenticated) return json({ error: "unauthorized" }, 401);
+
       await supabase
         .from("dashboard_login_throttle")
         .delete()
