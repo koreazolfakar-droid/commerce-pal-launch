@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Json, Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 import {
   convertProductImageToWebp,
@@ -262,7 +262,7 @@ export async function createDashboardHeroSlide(
   if (!data) return null;
   const { data: visualData, error: visualError } = await supabase.rpc("set_cms_hero_visual_config", {
     p_slide_id: (data as HeroRow).id,
-    p_visual_config: input.visualConfig,
+    p_visual_config: input.visualConfig as unknown as Json,
   });
   throwIfError(visualError, "Saving hero visual config failed");
   return visualData ? mapHero(visualData as HeroRow) : mapHero(data as HeroRow);
@@ -281,7 +281,7 @@ export async function updateDashboardHeroSlide(
   if (!data) return null;
   const { data: visualData, error: visualError } = await supabase.rpc("set_cms_hero_visual_config", {
     p_slide_id: id,
-    p_visual_config: input.visualConfig,
+    p_visual_config: input.visualConfig as unknown as Json,
   });
   throwIfError(visualError, "Saving hero visual config failed");
   return visualData ? mapHero(visualData as HeroRow) : mapHero(data as HeroRow);
