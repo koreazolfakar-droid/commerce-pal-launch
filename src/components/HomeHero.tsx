@@ -16,14 +16,7 @@ type HomeHeroCollection =
   | null
   | undefined;
 
-type StoredHomeHero = {
-  cachedAt: number;
-  value: Exclude<HomeHeroCollection, null | undefined>;
-};
-
 const HERO_ROTATION_MS = 8000;
-const HERO_REFRESH_FALLBACK_TTL_MS = 10 * 60 * 1000;
-const HERO_REFRESH_FALLBACK_STORAGE_KEY = "space-call-home-hero-refresh-fallback-v1";
 const SHOPIFY_CDN = /cdn\.shopify\.com|shopifycdn\.(net|com)/;
 const HERO_IMAGE_WIDTHS = [640, 960, 1280, 1600, 1920, 2400, 2880] as const;
 
@@ -45,41 +38,6 @@ function heroCdnImage(url: string | undefined, width: number): string | undefine
 function heroCdnSrcSet(url: string | undefined): string | undefined {
   if (!url || !SHOPIFY_CDN.test(url)) return undefined;
   return HERO_IMAGE_WIDTHS.map((width) => `${heroCdnImage(url, width)} ${width}w`).join(", ");
-}
-
-function readStoredHero(): Exclude<HomeHeroCollection, null | undefined> | null {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.sessionStorage.getItem(HERO_REFRESH_FALLBACK_STORAGE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw) as Partial<StoredHomeHero>;
-    const valid =
-      typeof parsed.cachedAt === "number" &&
-      Boolean(parsed.value?.collection?.id) &&
-      Array.isArray(parsed.value?.products);
-
-    if (!valid || Date.now() - parsed.cachedAt! >= HERO_REFRESH_FALLBACK_TTL_MS) {
-      window.sessionStorage.removeItem(HERO_REFRESH_FALLBACK_STORAGE_KEY);
-      return null;
-    }
-
-    return parsed.value as Exclude<HomeHeroCollection, null | undefined>;
-  } catch {
-    return null;
-  }
-}
-
-function storeHero(value: Exclude<HomeHeroCollection, null | undefined>) {
-  if (typeof window === "undefined") return;
-
-  try {
-    const snapshot: StoredHomeHero = { cachedAt: Date.now(), value };
-    window.sessionStorage.setItem(HERO_REFRESH_FALLBACK_STORAGE_KEY, JSON.stringify(snapshot));
-  } catch {
-    // Storage may be unavailable in private/restricted browser contexts.
-  }
 }
 
 function cmsHeroHref(slide: CmsHeroSlide) {
@@ -108,26 +66,10 @@ export function HomeHero({
 }) {
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
-  const [storedHeroCollection, setStoredHeroCollection] = useState<
-    Exclude<HomeHeroCollection, null | undefined> | null
-  >(null);
   const [failedShopifySlideId, setFailedShopifySlideId] = useState<string>();
   const [failedCmsSlideIds, setFailedCmsSlideIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (heroCollection?.collection) {
-      storeHero(heroCollection);
-      setStoredHeroCollection(heroCollection);
-      return;
-    }
-
-    const fallback = readStoredHero();
-    if (fallback) setStoredHeroCollection(fallback);
-  }, [heroCollection]);
-
-  const effectiveHeroCollection = heroCollection?.collection
-    ? heroCollection
-    : storedHeroCollection;
+  const effectiveHeroCollection = heroCollection?.collection ? heroCollection : undefined;
 
   const cachedCollections = queryClient.getQueryData<ShopifyCollection[]>(
     collectionsQueryOptions().queryKey,
