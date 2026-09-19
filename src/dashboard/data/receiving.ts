@@ -175,6 +175,8 @@ export type ReceivingWorkspace = {
 };
 
 export type ReceivingWorkspaceLoadOptions = {
+  includePurchaseOrders?: boolean;
+  includeReceivings?: boolean;
   includeProductOptions?: boolean;
   includeAudit?: boolean;
   includeSerials?: boolean;
@@ -189,6 +191,8 @@ export async function loadReceivingWorkspace(
   options: ReceivingWorkspaceLoadOptions = {},
 ): Promise<ReceivingWorkspace> {
   const role = await requireDashboardStaff();
+  const includePurchaseOrders = options.includePurchaseOrders !== false;
+  const includeReceivings = options.includeReceivings !== false;
   const includeProductOptions = options.includeProductOptions !== false;
   const includeAudit = options.includeAudit !== false;
   const includeSerials = options.includeSerials !== false;
@@ -202,16 +206,20 @@ export async function loadReceivingWorkspace(
       .from("store_procurement_locations")
       .select("id,name,code,address,is_active")
       .order("name", { ascending: true }),
-    supabase
-      .from("store_purchase_orders")
-      .select("id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes")
-      .order("created_at", { ascending: false })
-      .limit(100),
-    supabase
-      .from("store_receivings")
-      .select("id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes")
-      .order("received_at", { ascending: false })
-      .limit(100),
+    includePurchaseOrders
+      ? supabase
+          .from("store_purchase_orders")
+          .select("id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes")
+          .order("created_at", { ascending: false })
+          .limit(100)
+      : Promise.resolve({ data: [], error: null }),
+    includeReceivings
+      ? supabase
+          .from("store_receivings")
+          .select("id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes")
+          .order("received_at", { ascending: false })
+          .limit(100)
+      : Promise.resolve({ data: [], error: null }),
     includeProductOptions
       ? supabase
           .from("store_products")
