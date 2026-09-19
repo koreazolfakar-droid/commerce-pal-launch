@@ -67,7 +67,7 @@ test("login provides accessible inline errors and loading states", () => {
 test("login UI clears sensitive password state when changing authentication flows", () => {
   assert.match(
     login,
-    /Forgot password\?[\s\S]+setPassword\(""\)[\s\S]+setShowPassword\(false\)[\s\S]+setView\("forgot"\)/,
+    /setPassword\(""\)[\s\S]+setShowPassword\(false\)[\s\S]+setView\("forgot"\)[\s\S]+Forgot password\?/,
   );
   assert.match(
     login,
