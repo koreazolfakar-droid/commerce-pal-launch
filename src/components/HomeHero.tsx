@@ -159,19 +159,25 @@ export function HomeHero({
     (language === "ar" ? cmsSlide?.image_alt_ar : cmsSlide?.image_alt_en) ||
     cmsSlide?.title ||
     "Space Call";
-  const cmsMobileAlt =
-    (language === "ar" ? cmsSlide?.mobile_image_alt_ar : cmsSlide?.mobile_image_alt_en) ||
-    cmsDesktopAlt;
+  const cmsDesktopImage = cmsSlide?.image_url?.trim() || undefined;
+  const cmsMobileImage = cmsSlide?.mobile_image_url?.trim() || undefined;
 
-  const cmsPicture = cmsSlide ? (
-    <picture>
-      {cmsSlide.mobile_image_url ? (
-        <source media="(max-width: 639px)" srcSet={cmsSlide.mobile_image_url} />
+  const cmsPicture = cmsSlide && cmsDesktopImage ? (
+    <picture className="absolute inset-0 block size-full">
+      {cmsMobileImage ? (
+        <source
+          media="(max-width: 639px)"
+          srcSet={cmsMobileImage}
+        />
       ) : null}
+      <source
+        media="(min-width: 640px)"
+        srcSet={cmsDesktopImage}
+      />
       <img
-        key={`${cmsSlide.id}:${cmsSlide.image_url}`}
-        src={cmsSlide.image_url}
-        alt={cmsSlide.mobile_image_url ? cmsMobileAlt : cmsDesktopAlt}
+        key={`${cmsSlide.id}:${cmsDesktopImage}:${cmsMobileImage ?? "desktop-fallback"}`}
+        src={cmsDesktopImage}
+        alt={cmsDesktopAlt}
         loading="eager"
         fetchPriority="high"
         decoding="async"
