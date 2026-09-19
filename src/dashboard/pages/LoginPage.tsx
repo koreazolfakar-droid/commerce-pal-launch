@@ -430,6 +430,8 @@ export default function LoginPage() {
       if (normalized.includes("security verification") || normalized.includes("captcha")) {
         return copy.verificationRequired;
       }
+      if (normalized.includes("too many")) return copy.tooMany;
+      if (normalized.includes("temporarily unavailable")) return copy.unavailable;
       if (normalized.includes("passkey")) {
         if (
           normalized.includes("not supported") ||
@@ -443,8 +445,6 @@ export default function LoginPage() {
         }
         return copy.passkeyFailed;
       }
-      if (normalized.includes("too many")) return copy.tooMany;
-      if (normalized.includes("temporarily unavailable")) return copy.unavailable;
       if (normalized.includes("unable to sign in") || normalized.includes("sign in failed")) {
         return copy.signInFailed;
       }
