@@ -54,8 +54,8 @@ test("password Edge Function authenticates, authorizes, and rechecks HIBP server
   assert.match(passwordEdge, /admin\.auth\.getUser\(token\)/);
   assert.match(passwordEdge, /claims\.aal !== "aal2"/);
   assert.match(passwordEdge, /from\("user_roles"\)/);
-  assert.match(passwordEdge, /roleRow\?\.role !== "admin"/);
-  assert.match(passwordEdge, /roleRow\?\.role !== "editor"/);
+  assert.match(passwordEdge, /roleRow\.role !== "admin"/);
+  assert.match(passwordEdge, /roleRow\.role !== "editor"/);
   assert.match(passwordEdge, /mfa_required !== true/);
   assert.match(passwordEdge, /mfa_enrolled_at/);
 
