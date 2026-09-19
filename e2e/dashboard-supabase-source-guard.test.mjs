@@ -72,6 +72,21 @@ test("inventory contains no synthetic reserved stock calculation", () => {
   assert.match(files.inventoryData, /store_inventory_movements/);
 });
 
+test("inventory renders before movement history hydration", () => {
+  const start = files.inventoryData.indexOf("export async function loadInventoryWorkspace");
+  const end = files.inventoryData.indexOf(
+    "export async function loadInventoryLatestMovements",
+    start,
+  );
+  assert.ok(start >= 0 && end > start);
+
+  const initialLoad = files.inventoryData.slice(start, end);
+  assert.doesNotMatch(initialLoad, /store_inventory_movements/);
+  assert.doesNotMatch(initialLoad, /select\("\*"\)/);
+  assert.match(files.inventoryData, /select\("variant_id,created_at,quantity_delta"\)/);
+  assert.match(files.inventory, /loadInventoryLatestMovements\(\)/);
+});
+
 test("migrated data layers read and write Supabase tables directly", () => {
   assert.match(files.catalogData, /\.from\("store_products"\)/);
   assert.match(files.brandData, /\.from\("cms_brands"\)/);
