@@ -705,6 +705,45 @@ export default function HeroBannersPage() {
               </label>
               <div className="self-end rounded-xl bg-slate-50 px-3 py-3 text-[10px] text-slate-500">Resolved path: {targetHref(form) || "No destination"}</div>
             </div>
+
+            <div className="my-5 border-t border-slate-100" />
+            <div className="mb-3 text-[11px] font-bold text-slate-500">Secondary CTA (optional)</div>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Target type</span>
+                <select value={form.secondaryTargetType} onChange={(e) => setForm((current) => ({ ...current, secondaryTargetType: e.target.value as HeroTargetType, secondaryTargetValue: "" }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="none">No second button</option>
+                  <option value="product">Product</option>
+                  <option value="collection">Collection</option>
+                  <option value="url">Custom URL</option>
+                </select>
+              </label>
+              <label className="lg:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Destination</span>
+                {form.secondaryTargetType === "product" || form.secondaryTargetType === "collection" ? (
+                  <select value={form.secondaryTargetValue} onChange={(e) => setForm((current) => ({ ...current, secondaryTargetValue: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                    <option value="">Choose {form.secondaryTargetType}</option>
+                    {secondaryLinkOptions.map((option) => <option key={option.id} value={option.value}>{option.label} · {option.status}</option>)}
+                  </select>
+                ) : (
+                  <input value={form.secondaryTargetValue} onChange={(e) => setForm((current) => ({ ...current, secondaryTargetValue: e.target.value }))} disabled={form.secondaryTargetType === "none"} placeholder="/shop or https://..." className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50" />
+                )}
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button style</span>
+                <select value={form.secondaryButtonStyle} onChange={(e) => setForm((current) => ({ ...current, secondaryButtonStyle: e.target.value as HeroButtonStyle }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="secondary">Secondary</option>
+                  <option value="primary">Primary</option>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-2 self-end rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-[11px] font-semibold text-slate-600">
+                <input type="checkbox" checked={form.secondaryOpenInNewTab} onChange={(e) => setForm((current) => ({ ...current, secondaryOpenInNewTab: e.target.checked }))} />
+                Open in new tab
+              </label>
+              <div className="self-end rounded-xl bg-slate-50 px-3 py-3 text-[10px] text-slate-500">Resolved path: {secondaryTargetHref(form) || "No destination"}</div>
+            </div>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -765,11 +804,17 @@ export default function HeroBannersPage() {
               <div className="relative size-full">
                 {previewImage ? <img src={previewImage} alt="" className="absolute inset-0 size-full object-cover" /> : <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950"><ImageIcon className="size-10 text-white/20" /></div>}
                 <div className="absolute inset-0 bg-black" style={{ opacity: form.overlayOpacity / 100 }} />
-                <div className={`relative z-10 flex size-full flex-col justify-end p-6 text-white sm:p-8 ${alignClass}`} dir={language === "ar" ? "rtl" : "ltr"}>
-                  <div className="max-w-2xl">
+                <div className={`relative z-10 flex size-full flex-col justify-end p-6 sm:p-8 ${alignClass}`} dir={language === "ar" ? "rtl" : "ltr"}>
+                  <div className={`max-w-2xl ${contentThemeClass(form.contentTheme)}`}>
+                    {previewEyebrow ? <div className="mb-2 text-[10px] font-black uppercase tracking-[.18em] opacity-80 sm:text-xs">{previewEyebrow}</div> : null}
                     {previewTitle ? <div className="text-2xl font-black sm:text-4xl">{previewTitle}</div> : null}
-                    {previewSubtitle ? <div className="mt-2 max-w-xl text-sm text-white/85 sm:text-base">{previewSubtitle}</div> : null}
-                    {previewButton && targetHref(form) ? <span className={`mt-4 inline-flex rounded-xl px-4 py-2.5 text-[11px] font-bold ${buttonClass(form.buttonStyle)}`}>{previewButton}</span> : null}
+                    {previewSubtitle ? <div className="mt-2 max-w-xl text-sm opacity-85 sm:text-base">{previewSubtitle}</div> : null}
+                    {(previewButton && targetHref(form)) || (previewSecondaryButton && secondaryTargetHref(form)) ? (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {previewButton && targetHref(form) ? <span className={`inline-flex rounded-xl px-4 py-2.5 text-[11px] font-bold ${buttonClass(form.buttonStyle)}`}>{previewButton}</span> : null}
+                        {previewSecondaryButton && secondaryTargetHref(form) ? <span className={`inline-flex rounded-xl px-4 py-2.5 text-[11px] font-bold ${buttonClass(form.secondaryButtonStyle)}`}>{previewSecondaryButton}</span> : null}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
