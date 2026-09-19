@@ -8,9 +8,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   INVENTORY_MOVEMENT_TYPES,
+  INVENTORY_REFERENCE_TYPES,
   listDashboardInventoryMovements,
   type DashboardInventoryMovement,
   type InventoryMovementType,
+  type InventoryReferenceType,
   type InventoryRow,
 } from "@/dashboard/data/inventory";
 import {
@@ -24,6 +26,7 @@ import {
 const PAGE_SIZE = 25;
 
 type MovementTypeFilter = "all" | InventoryMovementType;
+type ReferenceTypeFilter = "all" | InventoryReferenceType;
 type MovementPeriod = "all" | "7d" | "30d" | "90d";
 
 const MOVEMENT_PERIOD_DAYS: Record<Exclude<MovementPeriod, "all">, number> = {
@@ -43,6 +46,13 @@ function movementName(value: string) {
   return value
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function referenceName(value: InventoryReferenceType) {
+  if (value === "manual_dashboard") return "Manual dashboard";
+  if (value === "variant_manager") return "Variant manager";
+  if (value === "order") return "Web order";
+  return "Order cancellation";
 }
 
 function formatActor(value: string | null) {
@@ -135,6 +145,7 @@ export default function InventoryMovementHistoryDrawer({
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [movementType, setMovementType] = useState<MovementTypeFilter>("all");
+  const [referenceType, setReferenceType] = useState<ReferenceTypeFilter>("all");
   const [period, setPeriod] = useState<MovementPeriod>("all");
   const requestId = useRef(0);
 
@@ -154,6 +165,7 @@ export default function InventoryMovementHistoryDrawer({
           productId: row.productId,
           variantId: row.variantId,
           movementType: movementType === "all" ? undefined : movementType,
+          referenceType: referenceType === "all" ? undefined : referenceType,
           createdSince: movementCreatedSince(period),
           page: nextPage,
           pageSize: PAGE_SIZE,
@@ -178,7 +190,7 @@ export default function InventoryMovementHistoryDrawer({
         }
       }
     },
-    [movementType, period, row],
+    [movementType, period, referenceType, row],
   );
 
   useEffect(() => {
@@ -239,7 +251,7 @@ export default function InventoryMovementHistoryDrawer({
                   Applied directly in Supabase before pagination
                 </div>
               </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
                 <select
                   value={movementType}
                   onChange={(event) => setMovementType(event.target.value as MovementTypeFilter)}
@@ -250,6 +262,21 @@ export default function InventoryMovementHistoryDrawer({
                   {INVENTORY_MOVEMENT_TYPES.map((type) => (
                     <option key={type} value={type}>
                       {movementName(type)}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={referenceType}
+                  onChange={(event) =>
+                    setReferenceType(event.target.value as ReferenceTypeFilter)
+                  }
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                  aria-label="Filter inventory movement history by source"
+                >
+                  <option value="all">All sources</option>
+                  {INVENTORY_REFERENCE_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {referenceName(type)}
                     </option>
                   ))}
                 </select>
@@ -300,14 +327,14 @@ export default function InventoryMovementHistoryDrawer({
                     <History className="size-5" />
                   </div>
                   <div className="mt-4 text-sm font-bold text-slate-700">
-                    {movementType === "all" && period === "all"
+                    {movementType === "all" && referenceType === "all" && period === "all"
                       ? "No inventory movements yet"
                       : "No movements match these filters"}
                   </div>
                   <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                    {movementType === "all" && period === "all"
+                    {movementType === "all" && referenceType === "all" && period === "all"
                       ? "Stock changes for this variant will appear here automatically."
-                      : "Try a broader movement type or time range."}
+                      : "Try a broader movement type, source, or time range."}
                   </p>
                 </div>
               </div>
