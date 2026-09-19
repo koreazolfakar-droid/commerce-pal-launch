@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { collectionsQueryOptions, navigationCatalogQueryOptions } from "@/lib/queries";
 import { displayCollections } from "@/lib/taxonomy";
 import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
@@ -116,7 +116,7 @@ export function MobileMenu({
   const queryClient = useQueryClient();
   const router = useRouter();
   const { t, direction, language } = useLanguage();
-  const { data: catalog } = useQuery(catalogQueryOptions());
+  const { data: catalog } = useQuery(navigationCatalogQueryOptions());
   const { data: collections = [] } = useQuery(collectionsQueryOptions());
   const close = () => setOpen(false);
   const visibleCollections = displayCollections(collections).slice(0, 4);

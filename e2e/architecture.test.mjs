@@ -53,6 +53,29 @@ test("homepage brand shelves use bounded native catalog reads", async () => {
   assert.match(shelves, /IntersectionObserver/);
 });
 
+test("global navigation uses lightweight facets instead of the full catalog snapshot", async () => {
+  const [queries, header, menu, nativeStore] = await Promise.all([
+    read("src/lib/queries.ts"),
+    read("src/components/SiteHeader.tsx"),
+    read("src/components/MobileMenu.tsx"),
+    read("src/lib/nativeStore.ts"),
+  ]);
+
+  assert.match(queries, /navigationCatalogQueryOptions/);
+  assert.match(queries, /fetchNavigationCatalogFacets/);
+  assert.match(header, /navigationCatalogQueryOptions/);
+  assert.match(menu, /navigationCatalogQueryOptions/);
+  assert.doesNotMatch(header, /catalogQueryOptions/);
+  assert.doesNotMatch(menu, /catalogQueryOptions/);
+
+  const start = nativeStore.indexOf("export async function fetchNavigationCatalogFacets");
+  const end = nativeStore.indexOf("export async function fetchProductByHandle", start);
+  assert.ok(start >= 0 && end > start);
+  const navigationRead = nativeStore.slice(start, end);
+  assert.doesNotMatch(navigationRead, /store_product_variants|store_product_images/);
+  assert.doesNotMatch(navigationRead, /STOREFRONT_VARIANT_SELECT|STOREFRONT_IMAGE_SELECT/);
+});
+
 test("native cart keeps local totals and native checkout", async () => {
   const [store, drawer, productRoute] = await Promise.all([
     read("src/stores/cartStore.ts"),
