@@ -71,6 +71,8 @@ function PasswordField({
   autoComplete?: string;
   onEnter?: () => void;
 }) {
+  const [capsLockOn, setCapsLockOn] = useState(false);
+
   return (
     <label className="block">
       <span className="mb-2 block text-[11px] font-bold text-slate-300">{label}</span>
@@ -81,9 +83,15 @@ function PasswordField({
           onChange={(event) => onChange(event.target.value)}
           type={visible ? "text" : "password"}
           autoComplete={autoComplete}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           onKeyDown={(event) => {
+            setCapsLockOn(event.getModifierState("CapsLock"));
             if (event.key === "Enter") onEnter?.();
           }}
+          onKeyUp={(event) => setCapsLockOn(event.getModifierState("CapsLock"))}
+          onBlur={() => setCapsLockOn(false)}
           className="h-12 w-full rounded-[14px] border border-white/10 bg-white/[.065] pl-10 pr-11 text-[13px] text-white outline-none transition placeholder:text-slate-600 focus:border-[#7b86ff] focus:bg-white/[.09] focus:ring-4 focus:ring-[#6874f5]/10"
         />
         <button
@@ -95,6 +103,15 @@ function PasswordField({
           {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
       </div>
+      {capsLockOn ? (
+        <div
+          role="status"
+          className="mt-2 flex items-center gap-2 text-[10px] font-semibold text-amber-200"
+        >
+          <ShieldCheck className="size-3.5" />
+          Caps Lock is on. Check your password before continuing.
+        </div>
+      ) : null}
     </label>
   );
 }
@@ -227,7 +244,9 @@ export default function LoginPage() {
         window.history.replaceState({}, "", "/dashboard/login?mode=mfa");
       }
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Sign in failed.";
+      const message = cause instanceof Error ? cause.message : "Unable to sign in.";
+      setPassword("");
+      setShowPassword(false);
       setInlineError(message);
       toast.error(message);
     } finally {
@@ -247,7 +266,7 @@ export default function LoginPage() {
     try {
       await requestDashboardPasswordReset(email, captchaToken ?? undefined);
       setResetSent(true);
-      toast.success("Password recovery email sent.");
+      toast.success("If this email is authorized, a recovery link will be sent.");
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Password reset request failed.";
       setInlineError(message);
@@ -289,6 +308,12 @@ export default function LoginPage() {
   const backToSignIn = () => {
     setInlineError("");
     setResetSent(false);
+    setPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
     resetCaptcha();
     setView("signin");
   };
@@ -309,6 +334,12 @@ export default function LoginPage() {
 
   const handleMfaCancel = useCallback(() => {
     window.history.replaceState({}, "", "/dashboard/login");
+    setPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
     setView("signin");
     setInlineError("");
   }, []);
@@ -413,6 +444,7 @@ export default function LoginPage() {
                         inputMode="email"
                         autoCapitalize="none"
                         autoCorrect="off"
+                        spellCheck={false}
                         autoComplete="username"
                         placeholder="name@company.com"
                         onKeyDown={(event) => {
@@ -445,6 +477,8 @@ export default function LoginPage() {
                       type="button"
                       onClick={() => {
                         setInlineError("");
+                        setPassword("");
+                        setShowPassword(false);
                         resetCaptcha();
                         setView("forgot");
                       }}
@@ -488,9 +522,9 @@ export default function LoginPage() {
                       <div className="grid size-10 place-items-center rounded-full bg-emerald-300/10 text-emerald-300">
                         <Mail className="size-4" />
                       </div>
-                      <div className="mt-4 text-[14px] font-bold text-white">Check your inbox</div>
+                      <div className="mt-4 text-[14px] font-bold text-white">Recovery request received</div>
                       <p className="mt-1.5 text-[11px] leading-5 text-slate-400">
-                        A secure recovery link was requested for <span className="font-semibold text-slate-200">{email}</span>.
+                        If <span className="font-semibold text-slate-200">{email}</span> belongs to an authorized dashboard account, a secure recovery link will arrive shortly.
                       </p>
                     </div>
                   ) : (
@@ -503,6 +537,10 @@ export default function LoginPage() {
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
                             type="email"
+                            inputMode="email"
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
                             autoComplete="email"
                             placeholder="name@company.com"
                             onKeyDown={(event) => {
@@ -596,6 +634,9 @@ export default function LoginPage() {
                   <ShieldCheck className="size-3.5 text-emerald-400/70" />
                   Supabase Auth · staff role required · protected session
                 </div>
+                <p className="mt-2 text-center text-[9px] leading-4 text-slate-600">
+                  Never share your password or authenticator code. Space Call support will never ask for them.
+                </p>
               </div>
             </div>
           </section>

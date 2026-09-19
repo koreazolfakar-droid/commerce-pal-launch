@@ -42,9 +42,13 @@ test("password recovery flow is real and uses Supabase Auth", () => {
   assert.match(login, /updateDashboardPassword\(newPassword\)/);
   assert.match(login, /mode=recovery/);
   assert.match(catalog, /resetPasswordForEmail/);
-  assert.match(catalog, /updateUser\(\{ password \}\)/);
+  assert.match(catalog, /functions\.invoke\("dashboard-update-password"/);
+  assert.doesNotMatch(catalog, /auth\.updateUser\(\{ password \}\)/);
   assert.match(catalog, /\/dashboard\/login\?mode=recovery/);
   assert.match(catalog, /password\.length < 10/);
+  assert.match(catalog, /Enter a valid dashboard email address/);
+  assert.match(login, /If this email is authorized, a recovery link will be sent/);
+  assert.match(login, /belongs to an authorized dashboard account/);
 });
 
 test("login provides accessible inline errors and loading states", () => {
@@ -53,4 +57,39 @@ test("login provides accessible inline errors and loading states", () => {
   assert.match(login, /disabled=\{loading\}/);
   assert.match(login, /autoComplete="username"/);
   assert.match(login, /autoComplete="current-password"/);
+  assert.match(login, /spellCheck=\{false\}/);
+  assert.match(login, /getModifierState\("CapsLock"\)/);
+  assert.match(login, /Caps Lock is on\. Check your password before continuing\./);
+  assert.match(login, /Never share your password or authenticator code/);
+});
+
+
+test("login UI clears sensitive password state when changing authentication flows", () => {
+  assert.match(
+    login,
+    /setPassword\(""\)[\s\S]+setShowPassword\(false\)[\s\S]+setView\("forgot"\)[\s\S]+Forgot password\?/,
+  );
+  assert.match(
+    login,
+    /const backToSignIn = \(\) => \{[\s\S]+setPassword\(""\)[\s\S]+setNewPassword\(""\)[\s\S]+setConfirmPassword\(""\)/,
+  );
+  assert.match(
+    login,
+    /const handleMfaCancel = useCallback\(\(\) => \{[\s\S]+setPassword\(""\)[\s\S]+setNewPassword\(""\)[\s\S]+setConfirmPassword\(""\)/,
+  );
+});
+
+
+test("sign-in errors are sanitized and failed credentials are cleared", () => {
+  assert.match(catalog, /DASHBOARD_SIGNIN_DENIED_MESSAGE = "Unable to sign in with those credentials\."/);
+  assert.match(catalog, /dashboardSignInErrorMessage/);
+  assert.match(catalog, /code === "captcha_failed"/);
+  assert.match(catalog, /status === 429 \|\| code\.includes\("rate_limit"\)/);
+  assert.match(catalog, /status >= 500/);
+  assert.doesNotMatch(catalog, /throwIfError\(error, "Sign in failed"\)/);
+  assert.doesNotMatch(catalog, /This account does not have dashboard access\./);
+  assert.match(
+    login,
+    /catch \(cause\) \{[\s\S]+setPassword\(""\)[\s\S]+setShowPassword\(false\)[\s\S]+setInlineError\(message\)/,
+  );
 });
