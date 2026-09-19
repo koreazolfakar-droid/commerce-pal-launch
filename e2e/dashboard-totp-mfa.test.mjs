@@ -38,13 +38,14 @@ test("password login transitions into mandatory MFA", () => {
   assert.match(login, /setView\("mfa"\)/);
   assert.match(login, /DashboardMfaStep/);
   assert.match(login, /mode=mfa/);
+  assert.match(login, /theme=\{theme\}/);
 });
 
 test("TOTP enrollment keeps setup credentials transient and hidden by default", () => {
   assert.match(mfa, /beginDashboardTotpEnrollment/);
-  assert.match(mfa, /Space Call authenticator QR code/);
+  assert.match(mfa, /Authenticator setup QR code/);
   assert.match(mfa, /secretRevealed \? enrollment\.secret/);
-  assert.match(mfa, /manual setup key is hidden by default/);
+  assert.match(mfa, /setup key is hidden by default/);
   assert.match(mfa, /MFA_SECRET_REVEAL_MS = 15 \* 1000/);
   assert.match(mfa, /disabled=\{!secretRevealed\}/);
   assert.match(mfa, /setSecretRevealed\(false\)/);
@@ -53,6 +54,14 @@ test("TOTP enrollment keeps setup credentials transient and hidden by default", 
   assert.match(mfa, /autoComplete="one-time-code"/);
   assert.doesNotMatch(mfa, /localStorage|sessionStorage/);
   assert.doesNotMatch(catalog, /localStorage[\s\S]{0,100}(secret|factorId|qrCode)/i);
+});
+
+test("MFA UI is bilingual and does not expose internal assurance labels", () => {
+  assert.match(mfa, /useLanguage\(\)/);
+  assert.match(mfa, /تأكيد الهوية/);
+  assert.match(mfa, /Extra verification/);
+  assert.doesNotMatch(mfa, /TOTP · AAL2 required/);
+  assert.doesNotMatch(mfa, /Verification window:/);
 });
 
 test("TOTP verification upgrades to AAL2 and activates DB enforcement", () => {
@@ -86,7 +95,6 @@ test("MFA cancellation signs out the partial Supabase session", () => {
   assert.match(mfa, /Sign out/);
 });
 
-
 test("MFA challenge requires a fresh sign-in and expires after five minutes", () => {
   assert.match(mfa, /MFA_CHALLENGE_WINDOW_MS = 5 \* 60 \* 1000/);
   assert.match(catalog, /authenticatedAt: user\.last_sign_in_at \?\? null/);
@@ -94,7 +102,6 @@ test("MFA challenge requires a fresh sign-in and expires after five minutes", ()
   assert.match(mfa, /authenticatedAt \+ MFA_CHALLENGE_WINDOW_MS/);
   assert.match(mfa, /Date\.now\(\) >= deadline/);
   assert.match(mfa, /setChallengeExpired\(true\)/);
-  assert.match(mfa, /Verification window:/);
   assert.match(mfa, /disabled=\{challengeExpired\}/);
   assert.match(mfa, /disabled=\{loading \|\| challengeExpired\}/);
 });
@@ -102,7 +109,11 @@ test("MFA challenge requires a fresh sign-in and expires after five minutes", ()
 test("expired or cancelled MFA clears transient secrets and partial session", () => {
   assert.match(
     mfa,
-    /setCode\(""\)[\s\S]+setEnrollment\(null\)[\s\S]+setSecretRevealed\(false\)[\s\S]+signOutDashboard/,
+    /setCode\(" "\)|setCode\(""\)/,
+  );
+  assert.match(
+    mfa,
+    /setEnrollment\(null\)[\s\S]+setSecretRevealed\(false\)[\s\S]+signOutDashboard/,
   );
   assert.match(mfa, /if \(!challengeExpired\) return/);
   assert.match(mfa, /signOutDashboard\(\)[\s\S]+onCancel\(\)/);

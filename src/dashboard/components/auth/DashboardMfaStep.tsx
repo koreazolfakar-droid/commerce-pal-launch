@@ -1,5 +1,4 @@
 import {
-  Clock3,
   Copy,
   Eye,
   EyeOff,
@@ -11,6 +10,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useLanguage } from "@/dashboard/i18n";
 import {
   beginDashboardTotpEnrollment,
   ensureDashboardMfaActivated,
@@ -21,6 +21,70 @@ import {
 } from "@/dashboard/data/catalog";
 
 type MfaMode = "loading" | "enroll" | "challenge";
+type LoginTheme = "light" | "dark";
+
+const mfaCopy = {
+  en: {
+    setupTitle: "Set up verification",
+    verifyTitle: "Confirm your identity",
+    setupDescription: "Scan the QR code with your authenticator app, then enter the current code.",
+    verifyDescription: "Enter the current code from your authenticator app to continue.",
+    badge: "Extra verification",
+    preparing: "Preparing verification…",
+    cannotScan: "Can't scan the QR? The setup key is hidden by default.",
+    hideKey: "Hide setup key",
+    revealKey: "Reveal setup key",
+    copyKey: "Copy setup key",
+    keyNotice: "The setup key hides automatically. Never share the QR code or setup key.",
+    openApp: "Open authenticator app",
+    codeLabel: "Verification code",
+    enableContinue: "Enable and continue",
+    verifyContinue: "Verify and continue",
+    signOut: "Sign out",
+    expired: "Verification expired. Sign in again to continue.",
+    notReady: "Verification is not ready yet.",
+    invalidCode: "Enter the numeric code from your authenticator app.",
+    verified: "Identity verified.",
+    failed: "The code could not be confirmed. Check the current code and try again.",
+    tooMany: "Too many attempts. Wait a moment and try again.",
+    unavailable: "Verification is temporarily unavailable. Try again shortly.",
+    revealBeforeCopy: "Reveal the setup key before copying it.",
+    copied: "Setup key copied and hidden again.",
+    copyFailed: "Could not copy the setup key.",
+    setupKeyLabel: "Authenticator setup key",
+    qrAlt: "Authenticator setup QR code",
+  },
+  ar: {
+    setupTitle: "إعداد التحقق",
+    verifyTitle: "تأكيد الهوية",
+    setupDescription: "امسح رمز QR بتطبيق المصادقة ثم أدخل الرمز الحالي.",
+    verifyDescription: "أدخل الرمز الحالي من تطبيق المصادقة للمتابعة.",
+    badge: "تحقق إضافي",
+    preparing: "جارٍ تجهيز التحقق…",
+    cannotScan: "تعذر مسح رمز QR؟ مفتاح الإعداد مخفي افتراضيًا.",
+    hideKey: "إخفاء مفتاح الإعداد",
+    revealKey: "إظهار مفتاح الإعداد",
+    copyKey: "نسخ مفتاح الإعداد",
+    keyNotice: "يُخفى مفتاح الإعداد تلقائيًا. لا تشارك رمز QR أو مفتاح الإعداد.",
+    openApp: "فتح تطبيق المصادقة",
+    codeLabel: "رمز التحقق",
+    enableContinue: "تفعيل ومتابعة",
+    verifyContinue: "تحقق ومتابعة",
+    signOut: "تسجيل الخروج",
+    expired: "انتهت مهلة التحقق. سجّل الدخول من جديد للمتابعة.",
+    notReady: "التحقق غير جاهز بعد.",
+    invalidCode: "أدخل الرمز الرقمي من تطبيق المصادقة.",
+    verified: "تم تأكيد الهوية.",
+    failed: "تعذر تأكيد الرمز. تحقق من الرمز الحالي وحاول مجددًا.",
+    tooMany: "محاولات كثيرة. انتظر قليلًا ثم حاول مجددًا.",
+    unavailable: "التحقق غير متاح مؤقتًا. حاول بعد قليل.",
+    revealBeforeCopy: "أظهر مفتاح الإعداد قبل نسخه.",
+    copied: "تم نسخ مفتاح الإعداد وإخفاؤه مجددًا.",
+    copyFailed: "تعذر نسخ مفتاح الإعداد.",
+    setupKeyLabel: "مفتاح إعداد المصادقة",
+    qrAlt: "رمز QR لإعداد المصادقة",
+  },
+} as const;
 
 const MFA_CHALLENGE_WINDOW_MS = 5 * 60 * 1000;
 const MFA_SECRET_REVEAL_MS = 15 * 1000;
@@ -36,10 +100,15 @@ function qrImageSource(value: string) {
 export default function DashboardMfaStep({
   onSuccess,
   onCancel,
+  theme = "dark",
 }: {
   onSuccess: () => void;
   onCancel: () => void;
+  theme?: LoginTheme;
 }) {
+  const { lang } = useLanguage();
+  const copy = mfaCopy[lang];
+  const isRtl = lang === "ar";
   const [mode, setMode] = useState<MfaMode>("loading");
   const [factorId, setFactorId] = useState("");
   const [enrollment, setEnrollment] = useState<DashboardTotpEnrollment | null>(null);
@@ -61,7 +130,11 @@ export default function DashboardMfaStep({
 
     try {
       const status = await getDashboardMfaStatus();
-      if (!status) throw new Error("Your dashboard session has expired.");
+      if (!status) {
+        await signOutDashboard().catch(() => undefined);
+        onCancel();
+        return;
+      }
 
       if (!status.ready) {
         const authenticatedAt = status.authenticatedAt
@@ -103,13 +176,11 @@ export default function DashboardMfaStep({
       setEnrollment(nextEnrollment);
       setFactorId(nextEnrollment.factorId);
       setMode("enroll");
-    } catch (cause) {
-      const message =
-        cause instanceof Error ? cause.message : "Unable to prepare multi-factor authentication.";
-      setError(message);
+    } catch {
+      setError(copy.notReady);
       setMode("challenge");
     }
-  }, [onCancel, onSuccess]);
+  }, [copy.notReady, onCancel, onSuccess]);
 
   useEffect(() => {
     void initialize();
@@ -160,34 +231,34 @@ export default function DashboardMfaStep({
   const verify = async () => {
     setError("");
     if (challengeExpired || remainingSeconds <= 0) {
-      setError("This verification window has expired. Sign in again to continue.");
+      setError(copy.expired);
       return;
     }
     if (!factorId) {
-      setError("Authenticator setup is not ready yet.");
+      setError(copy.notReady);
       return;
     }
 
     const normalizedCode = code.replace(/\s+/g, "");
     if (!/^\d{6,10}$/.test(normalizedCode)) {
-      setError("Enter the numeric code from your authenticator app.");
+      setError(copy.invalidCode);
       return;
     }
 
     setLoading(true);
     try {
       await verifyDashboardTotp(factorId, normalizedCode);
-      toast.success("Multi-factor authentication verified.");
+      toast.success(copy.verified);
       onSuccess();
     } catch (cause) {
       const safeMessage =
         cause instanceof Error &&
-        (
-          cause.message === "Too many verification attempts. Wait a moment and try again." ||
-          cause.message === "Verification service is temporarily unavailable. Try again shortly."
-        )
-          ? cause.message
-          : "Verification code could not be confirmed. Check the current code and try again.";
+        cause.message === "Too many verification attempts. Wait a moment and try again."
+          ? copy.tooMany
+          : cause instanceof Error &&
+              cause.message === "Verification service is temporarily unavailable. Try again shortly."
+            ? copy.unavailable
+            : copy.failed;
       setError(safeMessage);
       toast.error(safeMessage);
       setCode("");
@@ -208,23 +279,21 @@ export default function DashboardMfaStep({
 
   const copySecret = async () => {
     if (!enrollment?.secret || !secretRevealed) {
-      toast.error("Reveal the setup key before copying it.");
+      toast.error(copy.revealBeforeCopy);
       return;
     }
     try {
       await navigator.clipboard.writeText(enrollment.secret);
       setSecretRevealed(false);
-      toast.success("Setup key copied and hidden again.");
+      toast.success(copy.copied);
     } catch {
-      toast.error("Could not copy the setup key.");
+      toast.error(copy.copyFailed);
     }
   };
 
-  const title = mode === "enroll" ? "Protect your admin account" : "Two-factor verification";
+  const title = mode === "enroll" ? copy.setupTitle : copy.verifyTitle;
   const description =
-    mode === "enroll"
-      ? "Scan the QR code with Google Authenticator, Microsoft Authenticator, 1Password, or another TOTP app."
-      : "Enter the current code from your authenticator app to continue.";
+    mode === "enroll" ? copy.setupDescription : copy.verifyDescription;
 
   const qrSource = useMemo(
     () => (enrollment?.qrCode ? qrImageSource(enrollment.qrCode) : ""),
@@ -236,8 +305,8 @@ export default function DashboardMfaStep({
       <div className="grid min-h-[260px] place-items-center">
         <div className="text-center">
           <Loader2 className="mx-auto size-6 animate-spin text-[#8d96ff]" />
-          <div className="mt-3 text-[11px] font-semibold text-slate-400">
-            Preparing secure authentication…
+          <div className="login-muted mt-3 text-[11px] font-semibold text-slate-400">
+            {copy.preparing}
           </div>
         </div>
       </div>
@@ -245,50 +314,43 @@ export default function DashboardMfaStep({
   }
 
   return (
-    <div data-testid="dashboard-mfa-step">
+    <div data-testid="dashboard-mfa-step" data-theme={theme}>
       <div className="mb-6">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-emerald-200">
+        <div className="login-badge mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-emerald-200">
           <ShieldCheck className="size-3.5" />
-          TOTP · AAL2 required
+          {copy.badge}
         </div>
-        <h2 className="text-[28px] font-black tracking-[-.05em] text-white">{title}</h2>
-        <p className="mt-2 text-[12px] leading-5 text-slate-400">{description}</p>
-        <div
-          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-white/[.08] bg-white/[.035] px-2.5 py-1.5 text-[9px] font-semibold text-slate-400"
-          aria-live="polite"
-        >
-          <Clock3 className="size-3.5" />
-          Verification window: {Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, "0")}
-        </div>
+        <h2 className="login-heading text-[28px] font-black tracking-[-.05em] text-white">{title}</h2>
+        <p className="login-muted mt-2 text-[12px] leading-5 text-slate-400">{description}</p>
       </div>
 
       {mode === "enroll" && enrollment ? (
-        <div className="mb-5 rounded-2xl border border-white/10 bg-white/[.04] p-4">
+        <div className="login-soft mb-5 rounded-2xl border border-white/10 bg-white/[.04] p-4">
           <div className="mx-auto grid w-full max-w-[220px] place-items-center overflow-hidden rounded-2xl bg-white p-3">
             <img
               src={qrSource}
-              alt="Space Call authenticator QR code"
+              alt={copy.qrAlt}
               className="aspect-square w-full object-contain"
               draggable={false}
             />
           </div>
 
-          <div className="mt-4 text-center text-[10px] font-semibold text-slate-400">
-            Can't scan the QR? The manual setup key is hidden by default.
+          <div className="login-muted mt-4 text-center text-[10px] font-semibold text-slate-400">
+            {copy.cannotScan}
           </div>
-          <div className="mt-2 rounded-xl border border-white/10 bg-[#0b1427] p-2.5">
+          <div className="login-secret mt-2 rounded-xl border border-white/10 bg-[#0b1427] p-2.5">
             <div className="flex items-center gap-2">
               <code
-                className="min-w-0 flex-1 break-all text-[10px] font-semibold tracking-[.08em] text-slate-200"
-                aria-label="Authenticator setup key"
+                className="login-heading min-w-0 flex-1 break-all text-[10px] font-semibold tracking-[.08em] text-slate-200"
+                aria-label={copy.setupKeyLabel}
               >
                 {secretRevealed ? enrollment.secret : "•••• •••• •••• ••••"}
               </code>
               <button
                 type="button"
                 onClick={() => setSecretRevealed((value) => !value)}
-                className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10"
-                aria-label={secretRevealed ? "Hide authenticator setup key" : "Reveal authenticator setup key"}
+                className="login-icon-button grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10"
+                aria-label={secretRevealed ? copy.hideKey : copy.revealKey}
               >
                 {secretRevealed ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
               </button>
@@ -296,35 +358,35 @@ export default function DashboardMfaStep({
                 type="button"
                 onClick={() => void copySecret()}
                 disabled={!secretRevealed}
-                className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
-                aria-label="Copy authenticator setup key"
+                className="login-icon-button grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+                aria-label={copy.copyKey}
               >
                 <Copy className="size-3.5" />
               </button>
             </div>
             <p className="mt-2 text-[9px] leading-4 text-slate-500">
-              The key auto-hides after 15 seconds and immediately after copying. Never share the QR code or setup key.
+              {copy.keyNotice}
             </p>
           </div>
 
           {enrollment.uri.startsWith("otpauth://") ? (
             <a
               href={enrollment.uri}
-              className="mt-3 flex h-10 items-center justify-center gap-2 rounded-xl border border-indigo-300/15 bg-indigo-300/[.07] text-[10px] font-bold text-indigo-200"
+              className="login-secondary mt-3 flex h-10 items-center justify-center gap-2 rounded-xl border border-indigo-300/15 bg-indigo-300/[.07] text-[10px] font-bold text-indigo-200"
             >
               <Smartphone className="size-3.5" />
-              Open authenticator app
+              {copy.openApp}
             </a>
           ) : null}
         </div>
       ) : null}
 
       <label className="block">
-        <span className="mb-2 block text-[11px] font-bold text-slate-300">
-          Authenticator code
+        <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">
+          {copy.codeLabel}
         </span>
         <div className="relative">
-          <KeyRound className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+          <KeyRound className={isRtl ? "absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" : "absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"} />
           <input
             value={code}
             onChange={(event) =>
@@ -338,8 +400,8 @@ export default function DashboardMfaStep({
             autoFocus
             disabled={challengeExpired}
             placeholder="000000"
-            aria-label="Authenticator code"
-            className="h-12 w-full rounded-[14px] border border-white/10 bg-white/[.065] pl-10 pr-3 text-center text-[18px] font-bold tracking-[.32em] text-white outline-none transition placeholder:text-slate-600 focus:border-[#7b86ff] focus:bg-white/[.09] focus:ring-4 focus:ring-[#6874f5]/10"
+            aria-label={copy.codeLabel}
+            className="login-input h-[54px] w-full rounded-[14px] border border-white/10 bg-white/[.065] px-10 text-center text-[18px] font-bold tracking-[.32em] text-white outline-none transition placeholder:text-slate-600 focus:border-[#7b86ff] focus:bg-white/[.09] focus:ring-4 focus:ring-[#6874f5]/10"
           />
         </div>
       </label>
@@ -347,7 +409,7 @@ export default function DashboardMfaStep({
       {error ? (
         <div
           role="alert"
-          className="mt-3 rounded-xl border border-rose-400/15 bg-rose-400/[.08] px-3.5 py-3 text-[11px] leading-5 text-rose-200"
+          className="login-error mt-3 rounded-xl border border-rose-400/15 bg-rose-400/[.08] px-3.5 py-3 text-[11px] leading-5 text-rose-200"
         >
           {error}
         </div>
@@ -364,7 +426,7 @@ export default function DashboardMfaStep({
         ) : (
           <>
             <ShieldCheck className="size-4" />
-            {mode === "enroll" ? "Enable MFA and continue" : "Verify and continue"}
+            {mode === "enroll" ? copy.enableContinue : copy.verifyContinue}
           </>
         )}
       </button>
@@ -373,10 +435,10 @@ export default function DashboardMfaStep({
         type="button"
         onClick={() => void cancel()}
         disabled={loading}
-        className="mt-2 flex h-10 w-full items-center justify-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
+        className="login-muted mt-2 flex h-10 w-full items-center justify-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
       >
         <LogOut className="size-3.5" />
-        Sign out
+        {copy.signOut}
       </button>
     </div>
   );
