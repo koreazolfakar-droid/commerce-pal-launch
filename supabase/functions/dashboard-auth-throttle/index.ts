@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
   if (!email || email.length > 320 || !email.includes("@")) {
     return json({ error: "invalid_request" }, 400);
   }
-  if (!["check", "failure", "success"].includes(String(outcome))) {
+  if (!["check", "failure"].includes(String(outcome))) {
     return json({ error: "invalid_request" }, 400);
   }
 
@@ -97,13 +97,6 @@ Deno.serve(async (req) => {
         .eq("key_hash", keyHash);
     }
 
-    return json({ allowed: true, retryAfter: 0 });
-  }
-
-  if (outcome === "success") {
-    if (row) {
-      await supabase.from("dashboard_login_throttle").delete().eq("key_hash", keyHash);
-    }
     return json({ allowed: true, retryAfter: 0 });
   }
 
