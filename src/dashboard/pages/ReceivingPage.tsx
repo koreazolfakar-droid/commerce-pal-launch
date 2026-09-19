@@ -105,6 +105,11 @@ function money(value: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
 }
 
+function purchaseOrderProgress(po: PurchaseOrderSummary) {
+  if (po.expectedUnits <= 0) return 0;
+  return Math.min(100, Math.round((po.receivedUnits / po.expectedUnits) * 100));
+}
+
 export default function ReceivingPage() {
   const [workspace, setWorkspace] = useState<ReceivingWorkspace | null>(null);
   const [loading, setLoading] = useState(true);
@@ -752,7 +757,27 @@ export default function ReceivingPage() {
                                 ) : null}
                               </td>
                               <td className="px-3 py-3 text-[11px] font-bold text-slate-600">{item.expectedQuantity}</td>
-                              <td className="px-3 py-3 text-[11px] font-bold text-indigo-600">{item.remainingQuantity}</td>
+                              <td className="px-3 py-3">
+                                <div className="text-[11px] font-bold text-indigo-600">{item.remainingQuantity}</div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setReceivingLines((current) => ({
+                                      ...current,
+                                      [item.id]: {
+                                        ...draft,
+                                        received: String(item.remainingQuantity),
+                                        damaged: "0",
+                                        overageConfirmed: false,
+                                        overageReason: "",
+                                      },
+                                    }))
+                                  }
+                                  className="mt-1 text-[9px] font-bold text-indigo-500 hover:text-indigo-700 hover:underline"
+                                >
+                                  Fill remaining
+                                </button>
+                              </td>
                               <td className="px-3 py-3">
                                 <input
                                   type="number"
@@ -871,8 +896,79 @@ export default function ReceivingPage() {
             {filteredPurchaseOrders.length}
           </span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-left">
+        <div className="divide-y divide-slate-100 lg:hidden">
+          {filteredPurchaseOrders.map((po) => {
+            const progress = purchaseOrderProgress(po);
+            return (
+              <article key={po.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[12px] font-bold text-indigo-600">{po.poNumber}</div>
+                    <div className="mt-1 truncate text-[10px] font-semibold text-slate-600">{po.supplierName}</div>
+                  </div>
+                  <StatusBadge status={po.status} />
+                </div>
+
+                <div className="mt-3">
+                  <div className="mb-1 flex items-center justify-between text-[9px] font-semibold text-slate-400">
+                    <span>Receiving progress</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-indigo-500 transition-[width]"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-lg bg-slate-50 p-2">
+                    <div className="text-[9px] text-slate-400">Expected</div>
+                    <div className="text-[12px] font-bold text-slate-700">{po.expectedUnits}</div>
+                  </div>
+                  <div className="rounded-lg bg-emerald-50 p-2">
+                    <div className="text-[9px] text-emerald-500">Received</div>
+                    <div className="text-[12px] font-bold text-emerald-700">{po.receivedUnits}</div>
+                  </div>
+                  <div className="rounded-lg bg-indigo-50 p-2">
+                    <div className="text-[9px] text-indigo-500">Remaining</div>
+                    <div className="text-[12px] font-bold text-indigo-700">{po.remainingUnits}</div>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[9px] text-slate-400">Expected cost</div>
+                    <div className="text-[11px] font-bold text-slate-700">{money(po.expectedCost, po.currency)}</div>
+                  </div>
+                  {po.status === "draft" ? (
+                    <button
+                      onClick={() => void submitPo(po)}
+                      disabled={saving}
+                      className="h-8 rounded-lg border border-indigo-100 bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 disabled:opacity-50"
+                    >
+                      Submit PO
+                    </button>
+                  ) : po.status === "ordered" || po.status === "partially_received" ? (
+                    <button
+                      onClick={() => {
+                        openPanel("receive");
+                        selectReceivingPo(po.id);
+                      }}
+                      className="h-8 rounded-lg bg-[#5968ea] px-3 text-[10px] font-bold text-white"
+                    >
+                      Receive PO
+                    </button>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="hidden overflow-x-auto lg:block">
+          <table className="w-full min-w-[1020px] text-left">
             <thead className="bg-[#fafbfe] text-[9px] uppercase tracking-[.1em] text-slate-400">
               <tr>
                 <th className="px-5 py-3">PO</th>
@@ -880,6 +976,7 @@ export default function ReceivingPage() {
                 <th className="px-3 py-3">Expected</th>
                 <th className="px-3 py-3">Received</th>
                 <th className="px-3 py-3">Remaining</th>
+                <th className="px-3 py-3">Progress</th>
                 <th className="px-3 py-3">Expected cost</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-5 py-3">Date / Action</th>
@@ -893,6 +990,17 @@ export default function ReceivingPage() {
                   <td className="px-3 py-3 text-[11px] text-slate-600">{po.expectedUnits}</td>
                   <td className="px-3 py-3 text-[11px] text-emerald-600">{po.receivedUnits}</td>
                   <td className="px-3 py-3 text-[11px] font-bold text-slate-700">{po.remainingUnits}</td>
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-indigo-500"
+                          style={{ width: `${purchaseOrderProgress(po)}%` }}
+                        />
+                      </div>
+                      <span className="text-[9px] font-bold text-slate-500">{purchaseOrderProgress(po)}%</span>
+                    </div>
+                  </td>
                   <td className="px-3 py-3 text-[11px] text-slate-600">{money(po.expectedCost, po.currency)}</td>
                   <td className="px-3 py-3"><StatusBadge status={po.status} /></td>
                   <td className="px-5 py-3">
