@@ -46,213 +46,308 @@ jobs:
       - run:
           name: Capture TypeScript diagnostics
           command: |
-            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1 || true
-            cp /tmp/tsc.log tsc.log
+            ./node_modules/.bin/tsc --noEmit --pretty false > tsc.log 2>&1 || true
       - persist_to_workspace:
           root: ~/project
           paths:
             - node_modules
             - tsc.log
 
-  tsc-catalog-pre:
+  tsc-catalog-bootstrap:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check catalog-pre
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 1 748
+          name: catalog-bootstrap
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 1 210
 
-  tsc-catalog-list:
+  tsc-catalog-role:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check catalog-list
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 749 825
+          name: catalog-role
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 211 335
 
-  tsc-catalog-search:
+  tsc-catalog-signin:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check catalog-search
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 826 867
+          name: catalog-signin
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 336 373
 
-  tsc-catalog-get:
+  tsc-catalog-mfa-status:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check catalog-get
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 868 957
+          name: catalog-mfa-status
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 374 421
 
-  tsc-catalog-rest:
+  tsc-catalog-mfa-enroll:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check catalog-rest
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 958 2000
+          name: catalog-mfa-enroll
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 422 471
 
-  tsc-receiving-workspace:
+  tsc-catalog-mfa-verify:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check receiving-workspace
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 1 584
+          name: catalog-mfa-verify
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 472 526
 
-  tsc-receiving-detail:
+  tsc-catalog-session:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check receiving-detail
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 585 847
+          name: catalog-session
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 527 617
 
-  tsc-receiving-rest:
+  tsc-catalog-password:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check receiving-rest
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 848 2000
+          name: catalog-password
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 618 693
 
-  tsc-data-brands:
+  tsc-catalog-lists:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check brands.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/brands.ts" 1 9999
+          name: catalog-lists
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/catalog.ts" 694 748
 
-  tsc-data-categories:
+  tsc-receiving-types:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check categories.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/categories.ts" 1 9999
+          name: receiving-types
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 1 187
 
-  tsc-data-collections:
+  tsc-receiving-load-a:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check collections.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/collections.ts" 1 9999
+          name: receiving-load-a
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 188 300
 
-  tsc-data-customers:
+  tsc-receiving-load-b:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check customers.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/customers.ts" 1 9999
+          name: receiving-load-b
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 301 450
 
-  tsc-data-hero:
+  tsc-receiving-load-c:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check hero.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/hero.ts" 1 9999
+          name: receiving-load-c
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 451 576
 
-  tsc-data-home:
+  tsc-receiving-create-po:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check home.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/home.ts" 1 9999
+          name: receiving-create-po
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 848 924
 
-  tsc-data-homepage:
+  tsc-receiving-drafts:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check homepage.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/homepage.ts" 1 9999
+          name: receiving-drafts
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 925 1010
 
-  tsc-data-homepage-preview:
+  tsc-receiving-actions:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check homepagePreview.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/homepagePreview.ts" 1 9999
+          name: receiving-actions
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 1011 1190
 
-  tsc-data-homepage-sections:
+  tsc-receiving-media:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check homepageSections.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/homepageSections.ts" 1 9999
+          name: receiving-media
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 1191 1308
 
-  tsc-data-media:
+  tsc-receiving-analytics:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check media.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/media.ts" 1 9999
+          name: receiving-analytics
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receiving.ts" 1309 1441
 
-  tsc-data-navigation:
+  tsc-pm-load:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check navigation.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/navigation.ts" 1 9999
+          name: pm-load
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/productManagement.ts" 1 116
 
-  tsc-data-orders:
+  tsc-pm-variants:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check orders.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/orders.ts" 1 9999
+          name: pm-variants
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/productManagement.ts" 117 183
 
-  tsc-data-product-management:
+  tsc-pm-images:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check productManagement.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/productManagement.ts" 1 9999
+          name: pm-images
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/productManagement.ts" 184 241
 
-  tsc-data-receiving-rules:
+  tsc-pm-collections:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check receivingRules.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/receivingRules.ts" 1 9999
+          name: pm-collections
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/productManagement.ts" 242 305
 
-  tsc-data-seo:
+  tsc-media-load:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check seo.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/seo.ts" 1 9999
+          name: media-load
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/media.ts" 1 67
 
-  tsc-data-settings:
+  tsc-media-upload:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check settings.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/settings.ts" 1 9999
+          name: media-upload
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/media.ts" 68 113
 
-  tsc-data-workspace:
+  tsc-media-mutate:
     executor: node-bun
     steps:
       - restore-analysis
       - run:
-          name: Check workspace.ts
-          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/workspace.ts" 1 9999
+          name: media-mutate
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/media.ts" 114 142
+
+  tsc-hero-types:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: hero-types
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/hero.ts" 1 188
+
+  tsc-hero-crud:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: hero-crud
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/hero.ts" 189 238
+
+  tsc-hero-options:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: hero-options
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/hero.ts" 239 328
+
+  tsc-hero-upload:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: hero-upload
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/hero.ts" 329 440
+
+  tsc-collections-list:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: collections-list
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/collections.ts" 1 88
+
+  tsc-collections-read:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: collections-read
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/collections.ts" 89 131
+
+  tsc-collections-detail:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: collections-detail
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/collections.ts" 132 195
+
+  tsc-collections-write:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: collections-write
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/collections.ts" 196 264
+
+  tsc-customers-types:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: customers-types
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/customers.ts" 1 126
+
+  tsc-customers-list:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: customers-list
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/customers.ts" 127 172
+
+  tsc-customers-detail:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: customers-detail
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/customers.ts" 173 203
+
+  tsc-customers-write:
+    executor: node-bun
+    steps:
+      - restore-analysis
+      - run:
+          name: customers-write
+          command: python3 scripts/ci-match-tsc.py "src/dashboard/data/customers.ts" 204 243
 
 workflows:
   storefront-validation:
@@ -262,53 +357,77 @@ workflows:
             branches:
               only:
                 - /^important\/.*/
-      - tsc-catalog-pre:
+      - tsc-catalog-bootstrap:
           requires: [analyze]
-      - tsc-catalog-list:
+      - tsc-catalog-role:
           requires: [analyze]
-      - tsc-catalog-search:
+      - tsc-catalog-signin:
           requires: [analyze]
-      - tsc-catalog-get:
+      - tsc-catalog-mfa-status:
           requires: [analyze]
-      - tsc-catalog-rest:
+      - tsc-catalog-mfa-enroll:
           requires: [analyze]
-      - tsc-receiving-workspace:
+      - tsc-catalog-mfa-verify:
           requires: [analyze]
-      - tsc-receiving-detail:
+      - tsc-catalog-session:
           requires: [analyze]
-      - tsc-receiving-rest:
+      - tsc-catalog-password:
           requires: [analyze]
-      - tsc-data-brands:
+      - tsc-catalog-lists:
           requires: [analyze]
-      - tsc-data-categories:
+      - tsc-receiving-types:
           requires: [analyze]
-      - tsc-data-collections:
+      - tsc-receiving-load-a:
           requires: [analyze]
-      - tsc-data-customers:
+      - tsc-receiving-load-b:
           requires: [analyze]
-      - tsc-data-hero:
+      - tsc-receiving-load-c:
           requires: [analyze]
-      - tsc-data-home:
+      - tsc-receiving-create-po:
           requires: [analyze]
-      - tsc-data-homepage:
+      - tsc-receiving-drafts:
           requires: [analyze]
-      - tsc-data-homepage-preview:
+      - tsc-receiving-actions:
           requires: [analyze]
-      - tsc-data-homepage-sections:
+      - tsc-receiving-media:
           requires: [analyze]
-      - tsc-data-media:
+      - tsc-receiving-analytics:
           requires: [analyze]
-      - tsc-data-navigation:
+      - tsc-pm-load:
           requires: [analyze]
-      - tsc-data-orders:
+      - tsc-pm-variants:
           requires: [analyze]
-      - tsc-data-product-management:
+      - tsc-pm-images:
           requires: [analyze]
-      - tsc-data-receiving-rules:
+      - tsc-pm-collections:
           requires: [analyze]
-      - tsc-data-seo:
+      - tsc-media-load:
           requires: [analyze]
-      - tsc-data-settings:
+      - tsc-media-upload:
           requires: [analyze]
-      - tsc-data-workspace:
+      - tsc-media-mutate:
+          requires: [analyze]
+      - tsc-hero-types:
+          requires: [analyze]
+      - tsc-hero-crud:
+          requires: [analyze]
+      - tsc-hero-options:
+          requires: [analyze]
+      - tsc-hero-upload:
+          requires: [analyze]
+      - tsc-collections-list:
+          requires: [analyze]
+      - tsc-collections-read:
+          requires: [analyze]
+      - tsc-collections-detail:
+          requires: [analyze]
+      - tsc-collections-write:
+          requires: [analyze]
+      - tsc-customers-types:
+          requires: [analyze]
+      - tsc-customers-list:
+          requires: [analyze]
+      - tsc-customers-detail:
+          requires: [analyze]
+      - tsc-customers-write:
           requires: [analyze]
