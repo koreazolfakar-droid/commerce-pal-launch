@@ -62,7 +62,7 @@ export default function BrandList({
             <button
               type="button"
               onClick={() => onSelect(brand)}
-              className="flex w-full items-center gap-3 p-3 pe-12 text-start"
+              className={`flex min-h-[68px] w-full items-center gap-3 p-3 text-start ${reorderMode ? "pe-20" : "pe-14"}`}
             >
               <BrandMark brand={brand} className="size-10" />
               <span className="min-w-0 flex-1">
@@ -102,7 +102,7 @@ export default function BrandList({
                     disabled={index === 0}
                     onClick={() => onMove(brand.id, -1)}
                     aria-label={"Move " + brand.name + " up"}
-                    className="grid size-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 disabled:opacity-35"
+                    className="grid size-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 disabled:opacity-35"
                   >
                     <ChevronUp className="size-3.5" />
                   </button>
@@ -111,7 +111,7 @@ export default function BrandList({
                     disabled={index === brands.length - 1}
                     onClick={() => onMove(brand.id, 1)}
                     aria-label={"Move " + brand.name + " down"}
-                    className="grid size-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 disabled:opacity-35"
+                    className="grid size-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 disabled:opacity-35"
                   >
                     <ChevronDown className="size-3.5" />
                   </button>
@@ -122,7 +122,7 @@ export default function BrandList({
                     type="button"
                     aria-label={"Actions for " + brand.name}
                     onClick={() => setMenuId((current) => (current === brand.id ? null : brand.id))}
-                    className="grid size-8 place-items-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-600"
+                    className="grid size-10 place-items-center rounded-xl text-slate-400 transition hover:bg-white hover:text-slate-600"
                   >
                     <MoreHorizontal className="size-4" />
                   </button>
@@ -133,7 +133,7 @@ export default function BrandList({
                         className="fixed inset-0 z-40 cursor-default"
                         onClick={() => setMenuId(null)}
                       />
-                      <div className="absolute end-0 top-9 z-50 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                      <div className="absolute end-0 top-11 z-50 w-48 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
                         {[
                           { label: "Edit", icon: Pencil, action: () => onEdit(brand) },
                           {
@@ -169,7 +169,7 @@ export default function BrandList({
                               setMenuId(null);
                               action();
                             }}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                            className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 py-2 text-start text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
                           >
                             <Icon className="size-3.5 text-slate-400" />
                             {label}
@@ -182,7 +182,7 @@ export default function BrandList({
                             setMenuId(null);
                             onDelete(brand);
                           }}
-                          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-semibold text-rose-600 transition hover:bg-rose-50"
+                          className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 py-2 text-start text-[10px] font-semibold text-rose-600 transition hover:bg-rose-50"
                         >
                           <Trash2 className="size-3.5" />
                           Delete
