@@ -1897,6 +1897,87 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_cms_hero_slide_v3: {
+        Args: {
+          p_button_label_ar?: string
+          p_button_label_en?: string
+          p_button_style?: string
+          p_content_alignment?: string
+          p_content_theme?: string
+          p_ends_at?: string
+          p_eyebrow_ar?: string
+          p_eyebrow_en?: string
+          p_image_alt_ar?: string
+          p_image_alt_en?: string
+          p_image_url?: string
+          p_is_published?: boolean
+          p_mobile_image_alt_ar?: string
+          p_mobile_image_alt_en?: string
+          p_mobile_image_url?: string
+          p_open_in_new_tab?: boolean
+          p_overlay_opacity?: number
+          p_secondary_button_label_ar?: string
+          p_secondary_button_label_en?: string
+          p_secondary_button_style?: string
+          p_secondary_open_in_new_tab?: boolean
+          p_secondary_target_type?: string
+          p_secondary_target_value?: string
+          p_starts_at?: string
+          p_subtitle_ar?: string
+          p_subtitle_en?: string
+          p_target_type?: string
+          p_target_value?: string
+          p_title_ar?: string
+          p_title_en?: string
+          p_visual_config?: Json
+        }
+        Returns: {
+          button_label: string | null
+          button_label_ar: string | null
+          button_label_en: string | null
+          button_style: string
+          content_alignment: string
+          content_theme: string
+          created_at: string
+          ends_at: string | null
+          eyebrow_ar: string | null
+          eyebrow_en: string | null
+          id: string
+          image_alt_ar: string | null
+          image_alt_en: string | null
+          image_url: string | null
+          is_published: boolean
+          mobile_image_alt_ar: string | null
+          mobile_image_alt_en: string | null
+          mobile_image_url: string | null
+          open_in_new_tab: boolean
+          overlay_opacity: number
+          secondary_button_label_ar: string | null
+          secondary_button_label_en: string | null
+          secondary_button_style: string
+          secondary_open_in_new_tab: boolean
+          secondary_target_type: string
+          secondary_target_value: string | null
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          subtitle_ar: string | null
+          subtitle_en: string | null
+          target_type: string
+          target_value: string | null
+          title: string | null
+          title_ar: string | null
+          title_en: string | null
+          updated_at: string
+          visual_config: Json
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cms_hero_slides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_store_collection: {
         Args: {
           p_description?: string
@@ -2367,6 +2448,88 @@ export type Database = {
           title_ar: string | null
           title_en: string | null
           updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cms_hero_slides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_cms_hero_slide_v3: {
+        Args: {
+          p_button_label_ar?: string
+          p_button_label_en?: string
+          p_button_style?: string
+          p_content_alignment?: string
+          p_content_theme?: string
+          p_ends_at?: string
+          p_eyebrow_ar?: string
+          p_eyebrow_en?: string
+          p_image_alt_ar?: string
+          p_image_alt_en?: string
+          p_image_url?: string
+          p_is_published?: boolean
+          p_mobile_image_alt_ar?: string
+          p_mobile_image_alt_en?: string
+          p_mobile_image_url?: string
+          p_open_in_new_tab?: boolean
+          p_overlay_opacity?: number
+          p_secondary_button_label_ar?: string
+          p_secondary_button_label_en?: string
+          p_secondary_button_style?: string
+          p_secondary_open_in_new_tab?: boolean
+          p_secondary_target_type?: string
+          p_secondary_target_value?: string
+          p_slide_id: string
+          p_starts_at?: string
+          p_subtitle_ar?: string
+          p_subtitle_en?: string
+          p_target_type?: string
+          p_target_value?: string
+          p_title_ar?: string
+          p_title_en?: string
+          p_visual_config?: Json
+        }
+        Returns: {
+          button_label: string | null
+          button_label_ar: string | null
+          button_label_en: string | null
+          button_style: string
+          content_alignment: string
+          content_theme: string
+          created_at: string
+          ends_at: string | null
+          eyebrow_ar: string | null
+          eyebrow_en: string | null
+          id: string
+          image_alt_ar: string | null
+          image_alt_en: string | null
+          image_url: string | null
+          is_published: boolean
+          mobile_image_alt_ar: string | null
+          mobile_image_alt_en: string | null
+          mobile_image_url: string | null
+          open_in_new_tab: boolean
+          overlay_opacity: number
+          secondary_button_label_ar: string | null
+          secondary_button_label_en: string | null
+          secondary_button_style: string
+          secondary_open_in_new_tab: boolean
+          secondary_target_type: string
+          secondary_target_value: string | null
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          subtitle_ar: string | null
+          subtitle_en: string | null
+          target_type: string
+          target_value: string | null
+          title: string | null
+          title_ar: string | null
+          title_en: string | null
+          updated_at: string
+          visual_config: Json
         }
         SetofOptions: {
           from: "*"
