@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
 import { CategoryGlyph } from "@/components/CategoryGlyph";
+import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { cdnImage } from "@/lib/image";
 import { localizeSection } from "@/lib/cms";
@@ -11,9 +12,48 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 import type { ShopifyCollection } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
 
+type ManagedHomeCategory = {
+  name: string;
+  name_ar: string | null;
+  slug: string;
+  image_url: string | null;
+  sort_order: number;
+};
+
+type HomeCategoryItem = {
+  slug: string;
+  label: string;
+  labelAr?: string | null;
+  image?: string;
+  glyphSlug: string;
+  count: number;
+};
+
+async function fetchManagedHomeCategories(): Promise<ManagedHomeCategory[]> {
+  const { data, error } = await publicSupabase
+    .from("store_categories")
+    .select("name,name_ar,slug,image_url,sort_order")
+    .eq("is_active", true)
+    .eq("is_featured", true)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) throw new Error(`Loading storefront categories failed: ${error.message}`);
+  return (data ?? []) as ManagedHomeCategory[];
+}
+
+function normalizeCategoryName(value: string | undefined) {
+  return value?.trim().toLocaleLowerCase() ?? "";
+}
+
 /**
  * Critical homepage category rail kept in its own small module so the heavier
  * bundle/brand merchandising code can stay out of the initial homepage chunk.
+ *
+ * When the Dashboard category query succeeds, Active + Featured rows are the
+ * source of truth for homepage visibility, naming, imagery and ordering.
+ * Existing catalog categories remain a safe fallback only when that query is
+ * unavailable.
  */
 export function HomeCategorySection({
   catalog,
@@ -24,7 +64,58 @@ export function HomeCategorySection({
 }) {
   const { t, language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
-  if (!catalog.categories.length) return null;
+  const { data: managedCategories, isError: managedCategoriesFailed } = useQuery({
+    queryKey: ["storefront", "home-categories"],
+    queryFn: fetchManagedHomeCategories,
+    staleTime: 30_000,
+  });
+
+  const productsByType = new Map<string, typeof catalog.products>();
+  for (const product of catalog.products) {
+    const productType = normalizeCategoryName(product.node.productType);
+    if (!productType) continue;
+    const existing = productsByType.get(productType);
+    if (existing) existing.push(product);
+    else productsByType.set(productType, [product]);
+  }
+
+  const managedItems: HomeCategoryItem[] =
+    managedCategories?.flatMap((category) => {
+      const matchingProducts = productsByType.get(normalizeCategoryName(category.name)) ?? [];
+      if (!matchingProducts.length) return [];
+
+      const firstProduct = matchingProducts[0];
+      const resolvedSlug =
+        catalog.categoryOf.get(firstProduct.node.handle)?.[0] ?? category.slug;
+
+      return [
+        {
+          slug: category.slug,
+          label: category.name,
+          labelAr: category.name_ar,
+          image: category.image_url || undefined,
+          glyphSlug: resolvedSlug,
+          count: matchingProducts.length,
+        },
+      ];
+    }) ?? [];
+
+  const fallbackItems: HomeCategoryItem[] = catalog.categories.map((category) => ({
+    slug: category.slug,
+    label: category.label,
+    glyphSlug: category.slug,
+    count: category.count,
+  }));
+
+  const categories =
+    managedCategories !== undefined
+      ? managedItems
+      : managedCategoriesFailed
+        ? fallbackItems
+        : fallbackItems;
+
+  if (!categories.length) return null;
+
   const cmsSection = cms?.sections.find(
     (section) => section.page_slug === "home" && section.section_key === "categories",
   );
@@ -60,14 +151,19 @@ export function HomeCategorySection({
           role="list"
           aria-label={title}
         >
-          {catalog.categories.map((category) => {
-            const label = categoryLabel(category, language);
+          {categories.map((category) => {
+            const label =
+              language === "ar" && category.labelAr?.trim()
+                ? category.labelAr.trim()
+                : managedCategories !== undefined
+                  ? category.label
+                  : categoryLabel(category, language);
             const artwork = findCategoryArtworkCollection(
               collections,
-              category.slug,
+              category.glyphSlug,
               category.label,
             );
-            const imageUrl = cdnImage(artwork?.image?.url, 128);
+            const imageUrl = cdnImage(category.image || artwork?.image?.url, 128);
 
             return (
               <Link
@@ -96,7 +192,7 @@ export function HomeCategorySection({
                     />
                   ) : (
                     <CategoryGlyph
-                      slug={category.slug}
+                      slug={category.glyphSlug}
                       className="relative h-[4.15rem] w-[4.15rem] transition-transform duration-300 ease-out group-hover:scale-[1.06] sm:h-[4.65rem] sm:w-[4.65rem] lg:h-[5rem] lg:w-[5rem]"
                     />
                   )}

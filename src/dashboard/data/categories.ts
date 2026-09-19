@@ -6,8 +6,42 @@ import {
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import {
+  convertProductImageToWebp,
+  type ProductImageConversionResult,
+  type ProductImageResolution,
+} from "@/dashboard/lib/imageProcessing";
 
 type CategoryRow = Tables<"store_categories">;
+
+const CATEGORY_IMAGE_BUCKET = "cms-media";
+const CATEGORY_IMAGE_PREFIX = "categories";
+const MAX_CATEGORY_IMAGE_BYTES = 10 * 1024 * 1024;
+const DEFAULT_CATEGORY_IMAGE_RESOLUTION: ProductImageResolution = "1080";
+
+function categoryStoragePathFromUrl(url: string) {
+  const marker = `/storage/v1/object/public/${CATEGORY_IMAGE_BUCKET}/`;
+  const index = url.indexOf(marker);
+  if (index < 0) return null;
+  const objectPath = decodeURIComponent(url.slice(index + marker.length));
+  return objectPath.startsWith(`${CATEGORY_IMAGE_PREFIX}/`) ? objectPath : null;
+}
+
+async function removeOwnedCategoryImageFile(url?: string | null) {
+  if (!url) return;
+  const objectPath = categoryStoragePathFromUrl(url);
+  if (!objectPath) return;
+  const { error } = await supabase.storage.from(CATEGORY_IMAGE_BUCKET).remove([objectPath]);
+  throwIfError(error, "Deleting category image file failed");
+}
+
+function formatCategoryImagePath(categoryId: string) {
+  const unique =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${CATEGORY_IMAGE_PREFIX}/${categoryId}/${unique}.webp`;
+}
 
 export type CatalogCategory = {
   id: string;
@@ -153,6 +187,16 @@ export async function createDashboardCategory(category: CatalogCategory) {
 
 export async function updateDashboardCategory(category: CatalogCategory) {
   await requireDashboardStaff();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("store_categories")
+    .select("image_url")
+    .eq("id", category.id)
+    .single();
+  throwIfError(existingError, "Loading category before update failed");
+  const previousImageUrl = existing?.image_url ?? null;
+  const nextImageUrl = category.image?.trim() || "";
+
   const { error } = await supabase.rpc("update_store_category", {
     p_category_id: category.id,
     p_name: category.name.trim(),
@@ -175,6 +219,86 @@ export async function updateDashboardCategory(category: CatalogCategory) {
     .single();
   throwIfError(readError, "Reloading category failed");
   if (!data) throw new Error("Updating category returned no record.");
+
+  if (previousImageUrl && previousImageUrl !== nextImageUrl) {
+    await removeOwnedCategoryImageFile(previousImageUrl).catch(() => undefined);
+  }
+
+  invalidateNativeStoreCache();
+  return mapCategory(data as CategoryRow);
+}
+
+export async function uploadDashboardCategoryImage(
+  category: CatalogCategory,
+  source: File,
+  resolution: ProductImageResolution = DEFAULT_CATEGORY_IMAGE_RESOLUTION,
+): Promise<{ category: CatalogCategory; conversion: ProductImageConversionResult }> {
+  await requireDashboardStaff();
+  if (!category.id) throw new Error("Save the category before uploading an image.");
+
+  // Conversion must finish before Storage upload. Original JPG/PNG/AVIF bytes
+  // never reach Storage through this category image path.
+  const conversion = await convertProductImageToWebp(source, resolution);
+  if (conversion.file.size > MAX_CATEGORY_IMAGE_BYTES) {
+    throw new Error("Converted category image must be 10 MB or smaller.");
+  }
+
+  const objectPath = formatCategoryImagePath(category.id);
+  const { error: uploadError } = await supabase.storage
+    .from(CATEGORY_IMAGE_BUCKET)
+    .upload(objectPath, conversion.file, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: "image/webp",
+    });
+  throwIfError(uploadError, "Uploading category image failed");
+
+  const { data: publicUrl } = supabase.storage
+    .from(CATEGORY_IMAGE_BUCKET)
+    .getPublicUrl(objectPath);
+
+  try {
+    const previousImageUrl = category.image;
+    const { data, error } = await supabase
+      .from("store_categories")
+      .update({ image_url: publicUrl.publicUrl })
+      .eq("id", category.id)
+      .select("*")
+      .single();
+    throwIfError(error, "Saving category image failed");
+    if (!data) throw new Error("Saving category image returned no record.");
+
+    if (previousImageUrl && previousImageUrl !== publicUrl.publicUrl) {
+      await removeOwnedCategoryImageFile(previousImageUrl).catch(() => undefined);
+    }
+
+    invalidateNativeStoreCache();
+    return {
+      category: mapCategory(data as CategoryRow),
+      conversion,
+    };
+  } catch (error) {
+    await supabase.storage.from(CATEGORY_IMAGE_BUCKET).remove([objectPath]).catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function deleteDashboardCategoryImage(
+  category: CatalogCategory,
+): Promise<CatalogCategory> {
+  await requireDashboardStaff();
+  const previousImageUrl = category.image;
+
+  const { data, error } = await supabase
+    .from("store_categories")
+    .update({ image_url: null })
+    .eq("id", category.id)
+    .select("*")
+    .single();
+  throwIfError(error, "Removing category image failed");
+  if (!data) throw new Error("Removing category image returned no record.");
+
+  await removeOwnedCategoryImageFile(previousImageUrl).catch(() => undefined);
   invalidateNativeStoreCache();
   return mapCategory(data as CategoryRow);
 }
