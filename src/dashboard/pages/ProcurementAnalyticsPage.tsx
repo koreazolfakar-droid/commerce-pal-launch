@@ -22,7 +22,12 @@ export default function ProcurementAnalyticsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setWorkspace(await loadReceivingWorkspace());
+      setWorkspace(
+        await loadReceivingWorkspace({
+          includeAudit: false,
+          includeSerials: false,
+        }),
+      );
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Unable to load procurement analytics.");
     } finally {
