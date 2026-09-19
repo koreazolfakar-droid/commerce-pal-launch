@@ -120,7 +120,7 @@ export const Route = createFileRoute("/")({
       cmsSeo?.title?.trim() || `${SITE_NAME} Lebanon | Official Online Electronics Store`;
     const description =
       cmsSeo?.description?.trim() ||
-      `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and secure Shopify checkout.`;
+      `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
     const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroImage;
     const canonicalUrl = cmsSeo?.canonical_url?.trim();
     const customJsonLd = cmsSeo?.json_ld;
