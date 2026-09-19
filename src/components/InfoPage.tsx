@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/accordion";
 import { INFO_PAGES, POLICY_PAGES, POLICY_LINKS, type InfoPageName } from "@/lib/infoPages";
 import { useLanguage, type Language } from "@/lib/i18n";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { shopPoliciesQueryOptions } from "@/lib/queries";
 import { SHOPIFY_ACCOUNT_URL, STORE_NAME } from "@/lib/storeConfig";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
@@ -362,6 +363,14 @@ function GuideSection({ guide, language }: { guide: PageGuide; language: Languag
 export function InfoPage({ page }: { page: InfoPageName }) {
   const { t, direction, language } = useLanguage();
   const { data: policies, isPending } = useQuery(shopPoliciesQueryOptions());
+  const { data: cms } = useQuery(cmsQueryOptions());
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsWhatsApp = cms?.settings["whatsapp_number"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const whatsappNumber =
+    typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
+  const whatsappHref = generalWhatsAppUrl(whatsappNumber, storeName);
   const policy =
     page in POLICY_PAGES ? policies?.[POLICY_PAGES[page as keyof typeof POLICY_PAGES]] : null;
   const contactPage = page === "help" || page === "contact";
@@ -424,7 +433,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 {t("immediateSupport")}
               </p>
               <a
-                href={generalWhatsAppUrl()}
+                href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
@@ -555,7 +564,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 : "Send the product name or page link to support and we can help confirm the warranty information available for that item before purchase or when requesting service."}
             </p>
             <a
-              href={generalWhatsAppUrl()}
+              href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
