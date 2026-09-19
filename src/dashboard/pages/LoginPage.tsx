@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  Fingerprint,
   KeyRound,
   Languages,
   Loader2,
@@ -22,9 +23,11 @@ import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
 import TurnstileChallenge from "@/dashboard/components/auth/TurnstileChallenge";
 import {
   getDashboardMfaStatus,
+  isDashboardPasskeySupported,
   isDashboardTurnstileConfigured,
   requestDashboardPasswordReset,
   signInDashboard,
+  signInDashboardWithPasskey,
   updateDashboardPassword,
 } from "@/dashboard/data/catalog";
 
@@ -57,6 +60,12 @@ const loginCopy = {
     rememberEmail: "Remember email",
     forgotPassword: "Forgot password?",
     signIn: "Sign in",
+    signInWithPasskey: "Sign in with fingerprint / passkey",
+    passkeyHint: "Use your device fingerprint, face unlock, PIN or security key.",
+    passkeyUnavailable: "Passkey sign-in is not available on this device or browser.",
+    passkeyFailed: "Passkey sign-in could not be completed.",
+    passkeyCancelled: "Passkey request was cancelled or timed out.",
+    or: "or",
     sendRecovery: "Send recovery link",
     updatePassword: "Update password",
     backToSignIn: "Back to sign in",
@@ -114,6 +123,12 @@ const loginCopy = {
     rememberEmail: "تذكر البريد",
     forgotPassword: "نسيت كلمة المرور؟",
     signIn: "تسجيل الدخول",
+    signInWithPasskey: "الدخول بالبصمة / Passkey",
+    passkeyHint: "استخدم بصمة الجهاز أو فتح الوجه أو PIN أو مفتاح الأمان.",
+    passkeyUnavailable: "تسجيل الدخول عبر Passkey غير متاح على هذا الجهاز أو المتصفح.",
+    passkeyFailed: "تعذر إكمال تسجيل الدخول عبر Passkey.",
+    passkeyCancelled: "تم إلغاء طلب Passkey أو انتهت مهلته.",
+    or: "أو",
     sendRecovery: "إرسال رابط الاستعادة",
     updatePassword: "تحديث كلمة المرور",
     backToSignIn: "العودة لتسجيل الدخول",
@@ -338,7 +353,12 @@ export default function LoginPage() {
   const [privacyShielded, setPrivacyShielded] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
+  const [passkeySupported, setPasskeySupported] = useState(false);
   const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    setPasskeySupported(isDashboardPasskeySupported());
+  }, []);
 
   useEffect(() => {
     const shield = () => setPrivacyShielded(true);
@@ -409,6 +429,19 @@ export default function LoginPage() {
       }
       if (normalized.includes("security verification") || normalized.includes("captcha")) {
         return copy.verificationRequired;
+      }
+      if (normalized.includes("passkey")) {
+        if (
+          normalized.includes("not supported") ||
+          normalized.includes("not available") ||
+          normalized.includes("site origin")
+        ) {
+          return copy.passkeyUnavailable;
+        }
+        if (normalized.includes("cancelled") || normalized.includes("timed out")) {
+          return copy.passkeyCancelled;
+        }
+        return copy.passkeyFailed;
       }
       if (normalized.includes("too many")) return copy.tooMany;
       if (normalized.includes("temporarily unavailable")) return copy.unavailable;
@@ -482,6 +515,33 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
       resetCaptcha();
+    }
+  };
+
+  const submitPasskey = async () => {
+    setInlineError("");
+    setLoading(true);
+    try {
+      await signInDashboardWithPasskey();
+
+      const mfaStatus = await getDashboardMfaStatus();
+      if (!mfaStatus) throw new Error("Unable to verify this session.");
+
+      if (mfaStatus.ready) {
+        toast.success(copy.signedIn);
+        navigate("/dashboard");
+      } else {
+        setPassword("");
+        setView("mfa");
+        window.history.replaceState({}, "", "/dashboard/login?mode=mfa");
+      }
+    } catch (cause) {
+      const rawMessage = cause instanceof Error ? cause.message : "Passkey sign-in failed.";
+      const message = localizeAuthError(rawMessage);
+      setInlineError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -786,6 +846,28 @@ export default function LoginPage() {
                       </>
                     )}
                   </button>
+
+                  {passkeySupported ? (
+                    <>
+                      <div className="flex items-center gap-3 py-1" aria-hidden="true">
+                        <div className="h-px flex-1 bg-white/[.07]" />
+                        <span className="login-muted text-[9px] font-bold uppercase tracking-[.18em] text-slate-500">{copy.or}</span>
+                        <div className="h-px flex-1 bg-white/[.07]" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void submitPasskey()}
+                        disabled={loading}
+                        className="login-secondary flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-indigo-300/15 bg-indigo-300/[.07] px-4 text-[12px] font-bold text-indigo-100 transition hover:bg-indigo-300/[.12] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {loading ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-[18px]" />}
+                        {copy.signInWithPasskey}
+                      </button>
+                      <p className="login-muted text-center text-[9px] leading-4 text-slate-500">
+                        {copy.passkeyHint}
+                      </p>
+                    </>
+                  ) : null}
                 </div>
               ) : null}
 
