@@ -16,7 +16,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
-import CategoryForm from "@/dashboard/components/categories/CategoryForm";
+import CategoryForm, { type CategoryImageChange } from "@/dashboard/components/categories/CategoryForm";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
 import CategoryKpiCards from "@/dashboard/components/categories/CategoryKpiCards";
 import CategoryList from "@/dashboard/components/categories/CategoryList";
@@ -35,6 +35,7 @@ import {
   refreshDashboardCategoryProducts,
   reorderDashboardCategories,
   updateDashboardCategory,
+  uploadDashboardCategoryImage,
   type CatalogCategory,
 } from "@/dashboard/data/categories";
 import type { DashboardProduct } from "@/dashboard/data/catalog";
@@ -255,39 +256,75 @@ export default function CategoriesPage() {
     setEditing({ mode: "edit", category: { ...category } });
   };
 
-  const saveCategory = async (nextCategory: CatalogCategory) => {
+  const saveCategory = async (
+    nextCategory: CatalogCategory,
+    imageChange: CategoryImageChange,
+  ) => {
     const duplicateSlug = categories.some(
       (category) =>
         category.id !== nextCategory.id &&
         category.slug.toLowerCase() === nextCategory.slug.toLowerCase(),
     );
     if (duplicateSlug) {
-      toast.error("That category slug is already in use.");
-      return;
+      const error = new Error("That category slug is already in use.");
+      toast.error(error.message);
+      throw error;
     }
 
     try {
       if (editing?.mode === "create") {
-        const created = await createDashboardCategory(nextCategory);
-        setCategories((current) =>
-          [...current, created].sort((a, b) => a.order - b.order),
+        let saved = await createDashboardCategory(
+          imageChange.remove ? { ...nextCategory, image: undefined } : nextCategory,
         );
-        setSelectedId(created.id);
+
+        if (imageChange.file) {
+          const uploaded = await uploadDashboardCategoryImage(saved, imageChange.file);
+          saved = uploaded.category;
+          toast.success(
+            `Category created. Image converted to WebP: ${Math.round(
+              uploaded.conversion.source.bytes / 1024,
+            )} KB → ${Math.round(uploaded.conversion.output.bytes / 1024)} KB.`,
+          );
+        } else {
+          toast.success("Category created in Supabase.");
+        }
+
+        setCategories((current) =>
+          [...current, saved].sort((a, b) => a.order - b.order),
+        );
+        setSelectedId(saved.id);
         setEditing(null);
-        toast.success("Category created in Supabase.");
         return;
       }
 
-      const saved = await updateDashboardCategory(nextCategory);
+      let saved = await updateDashboardCategory(
+        imageChange.remove ? { ...nextCategory, image: undefined } : nextCategory,
+      );
+
+      if (imageChange.file) {
+        const uploaded = await uploadDashboardCategoryImage(saved, imageChange.file);
+        saved = uploaded.category;
+        toast.success(
+          `Category saved. Image converted to WebP: ${Math.round(
+            uploaded.conversion.source.bytes / 1024,
+          )} KB → ${Math.round(uploaded.conversion.output.bytes / 1024)} KB.`,
+        );
+      } else {
+        toast.success(
+          imageChange.remove ? "Category image removed." : "Category saved to Supabase.",
+        );
+      }
+
       setCategories((current) =>
         current.map((category) => (category.id === saved.id ? saved : category)),
       );
       setProducts(await refreshDashboardCategoryProducts());
       setSelectedId(saved.id);
       setEditing(null);
-      toast.success("Category saved to Supabase.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Category save failed.");
+      const message = cause instanceof Error ? cause.message : "Category save failed.";
+      toast.error(message);
+      throw cause;
     }
   };
 
