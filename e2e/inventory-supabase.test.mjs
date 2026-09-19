@@ -10,6 +10,10 @@ const inventoryData = await readFile(
   new URL("../src/dashboard/data/inventory.ts", import.meta.url),
   "utf8",
 );
+const movementDrawer = await readFile(
+  new URL("../src/dashboard/components/inventory/InventoryMovementHistoryDrawer.tsx", import.meta.url),
+  "utf8",
+);
 const inventoryMigration = await readFile(
   new URL("../supabase/migrations/20260918203000_inventory_management.sql", import.meta.url),
   "utf8",
@@ -35,4 +39,18 @@ test("inventory RPCs run with caller RLS and synchronize product stock", () => {
   assert.match(inventoryMigration, /sum\(v\.stock_quantity\)/);
   assert.match(inventoryMigration, /store_inventory_movements/);
   assert.match(inventoryMigration, /revoke all on function public\.set_store_inventory_stock[^;]+from public, anon/s);
+});
+
+test("inventory movement history drawer is paginated and resilient", () => {
+  assert.match(inventoryPage, /InventoryMovementHistoryDrawer/);
+  assert.match(inventoryPage, /setHistoryRow\(row\)/);
+  assert.match(movementDrawer, /listDashboardInventoryMovements/);
+  assert.match(movementDrawer, /const PAGE_SIZE = 25/);
+  assert.match(movementDrawer, /pageSize: PAGE_SIZE/);
+  assert.match(movementDrawer, /Loading movement history/);
+  assert.match(movementDrawer, /No inventory movements yet/);
+  assert.match(movementDrawer, /Retry/);
+  assert.match(movementDrawer, /Load more/);
+  assert.match(movementDrawer, /loadPage\(page \+ 1, true\)/);
+  assert.doesNotMatch(movementDrawer, /service_role|SUPABASE_SERVICE_ROLE|sb_secret_/);
 });
