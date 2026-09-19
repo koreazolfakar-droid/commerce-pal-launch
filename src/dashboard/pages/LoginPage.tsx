@@ -13,13 +13,15 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
 import {
+  getDashboardMfaStatus,
   requestDashboardPasswordReset,
   signInDashboard,
   updateDashboardPassword,
 } from "@/dashboard/data/catalog";
 
-type LoginView = "signin" | "forgot" | "recovery";
+type LoginView = "signin" | "forgot" | "recovery" | "mfa";
 
 const EMAIL_STORAGE_KEY = "spacecall-dashboard-email";
 
@@ -97,13 +99,16 @@ function PasswordField({
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
-  const recoveryMode =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("mode") === "recovery";
+  const requestedMode =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("mode")
+      : null;
+  const recoveryMode = requestedMode === "recovery";
+  const mfaMode = requestedMode === "mfa";
   const storedEmail =
     typeof window !== "undefined" ? window.localStorage.getItem(EMAIL_STORAGE_KEY) ?? "" : "";
 
-  const [view, setView] = useState<LoginView>(recoveryMode ? "recovery" : "signin");
+  const [view, setView] = useState<LoginView>(recoveryMode ? "recovery" : mfaMode ? "mfa" : "signin");
   const [email, setEmail] = useState(storedEmail);
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -149,15 +154,37 @@ export default function LoginPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (recoveryMode) return;
+
+    let cancelled = false;
+    getDashboardMfaStatus()
+      .then((status) => {
+        if (cancelled || !status) return;
+        if (status.ready) {
+          navigate("/dashboard");
+          return;
+        }
+        setView("mfa");
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, recoveryMode]);
+
   const title = useMemo(() => {
     if (view === "forgot") return "Reset your password";
     if (view === "recovery") return "Create a new password";
+    if (view === "mfa") return "Secure verification";
     return "Welcome back";
   }, [view]);
 
   const description = useMemo(() => {
     if (view === "forgot") return "We’ll send a secure recovery link to your authorized dashboard email.";
     if (view === "recovery") return "Choose a strong new password for your Space Call admin account.";
+    if (view === "mfa") return "Complete your authenticator verification before the admin workspace can open.";
     return "Sign in to manage products, orders, inventory and storefront content.";
   }, [view]);
 
@@ -175,8 +202,17 @@ export default function LoginPage() {
       if (rememberEmail) window.localStorage.setItem(EMAIL_STORAGE_KEY, email.trim());
       else window.localStorage.removeItem(EMAIL_STORAGE_KEY);
 
-      toast.success("Signed in securely.");
-      navigate("/dashboard");
+      const mfaStatus = await getDashboardMfaStatus();
+      if (!mfaStatus) throw new Error("Dashboard MFA status could not be verified.");
+
+      if (mfaStatus.ready) {
+        toast.success("Signed in securely.");
+        navigate("/dashboard");
+      } else {
+        setPassword("");
+        setView("mfa");
+        window.history.replaceState({}, "", "/dashboard/login?mode=mfa");
+      }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Sign in failed.";
       setInlineError(message);
@@ -498,6 +534,21 @@ export default function LoginPage() {
                     {loading ? <Loader2 className="size-4 animate-spin" /> : <><KeyRound className="size-4" /> Update password</>}
                   </button>
                 </div>
+              ) : null}
+
+              {view === "mfa" ? (
+                <DashboardMfaStep
+                  onSuccess={() => {
+                    window.history.replaceState({}, "", "/dashboard/login");
+                    toast.success("AAL2 security verified.");
+                    navigate("/dashboard");
+                  }}
+                  onCancel={() => {
+                    window.history.replaceState({}, "", "/dashboard/login");
+                    setView("signin");
+                    setInlineError("");
+                  }}
+                />
               ) : null}
 
               <div className="mt-8 border-t border-white/[.07] pt-5">
