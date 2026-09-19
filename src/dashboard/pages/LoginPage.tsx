@@ -201,7 +201,7 @@ function PasswordField({
   onChange,
   visible,
   onToggle,
-  label = "Password",
+  label,
   autoComplete = "current-password",
   onEnter,
 }: {
@@ -213,13 +213,24 @@ function PasswordField({
   autoComplete?: string;
   onEnter?: () => void;
 }) {
+  const { lang } = useLanguage();
+  const copy = loginCopy[lang];
+  const isRtl = lang === "ar";
   const [capsLockOn, setCapsLockOn] = useState(false);
 
   return (
     <label className="block">
-      <span className="mb-2 block text-[11px] font-bold text-slate-300">{label}</span>
+      <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">
+        {label ?? copy.password}
+      </span>
       <div className="relative">
-        <KeyRound className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+        <KeyRound
+          className={
+            isRtl
+              ? "absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+              : "absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+          }
+        />
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -228,19 +239,24 @@ function PasswordField({
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
+          dir={isRtl ? "rtl" : "ltr"}
           onKeyDown={(event) => {
             setCapsLockOn(event.getModifierState("CapsLock"));
             if (event.key === "Enter") onEnter?.();
           }}
           onKeyUp={(event) => setCapsLockOn(event.getModifierState("CapsLock"))}
           onBlur={() => setCapsLockOn(false)}
-          className="h-[52px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 pl-10 pr-11 text-[13px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10"
+          className="login-input h-[54px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 px-11 text-[16px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10 sm:text-[13px]"
         />
         <button
           type="button"
           onClick={onToggle}
-          className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
-          aria-label={visible ? "Hide password" : "Show password"}
+          className={
+            isRtl
+              ? "login-icon-button absolute left-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+              : "login-icon-button absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+          }
+          aria-label={visible ? copy.hidePassword : copy.showPassword}
         >
           {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
@@ -251,7 +267,7 @@ function PasswordField({
           className="mt-2 flex items-center gap-2 text-[10px] font-semibold text-amber-200"
         >
           <ShieldCheck className="size-3.5" />
-          Caps Lock is on. Check your password before continuing.
+          {copy.capsLock}
         </div>
       ) : null}
     </label>
