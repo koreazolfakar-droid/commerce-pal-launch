@@ -36,7 +36,7 @@ export const Route = createFileRoute("/category/$slug")({
     }
     const label = loaderData.label ?? categoryDefinition(params.slug)?.label ?? "Category";
     const title = `${label} in Lebanon | ${STORE_NAME}`;
-    const description = `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and secure Shopify checkout.`;
+    const description = `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
     const path = `/category/${params.slug}`;
     return {
       meta: [
@@ -89,8 +89,8 @@ function CategoryPage() {
       </h2>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
         {language === "ar"
-          ? `تصفح ${label} المتوفرة لدى Space Call مع أسعار واضحة، توفر مباشر وخيارات من علامات تجارية متعددة، وإتمام شراء آمن عبر Shopify.`
-          : `Browse ${label.toLowerCase()} available at Space Call with clear pricing, live availability, multiple brands and secure Shopify checkout.`}
+          ? `تصفح ${label} المتوفرة لدى Space Call مع أسعار واضحة، توفر مباشر وخيارات من علامات تجارية متعددة، وإتمام الطلب مباشرة عبر Space Call.`
+          : `Browse ${label.toLowerCase()} available at Space Call with clear pricing, live availability, multiple brands and direct Space Call checkout.`}
       </p>
     </div>
   );
