@@ -7,8 +7,10 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  INVENTORY_MOVEMENT_TYPES,
   listDashboardInventoryMovements,
   type DashboardInventoryMovement,
+  type InventoryMovementType,
   type InventoryRow,
 } from "@/dashboard/data/inventory";
 import {
@@ -20,6 +22,8 @@ import {
 } from "@/components/ui/sheet";
 
 const PAGE_SIZE = 25;
+
+type MovementTypeFilter = "all" | InventoryMovementType;
 
 function movementName(value: string) {
   return value
@@ -116,6 +120,7 @@ export default function InventoryMovementHistoryDrawer({
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const [movementType, setMovementType] = useState<MovementTypeFilter>("all");
   const requestId = useRef(0);
 
   const loadPage = useCallback(
@@ -133,6 +138,7 @@ export default function InventoryMovementHistoryDrawer({
         const result = await listDashboardInventoryMovements({
           productId: row.productId,
           variantId: row.variantId,
+          movementType: movementType === "all" ? undefined : movementType,
           page: nextPage,
           pageSize: PAGE_SIZE,
         });
@@ -156,7 +162,7 @@ export default function InventoryMovementHistoryDrawer({
         }
       }
     },
-    [row],
+    [movementType, row],
   );
 
   useEffect(() => {
@@ -208,6 +214,30 @@ export default function InventoryMovementHistoryDrawer({
           </SheetHeader>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5" aria-live="polite">
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-3">
+              <div className="min-w-0">
+                <div className="text-[10px] font-bold uppercase tracking-[.12em] text-slate-400">
+                  Movement type
+                </div>
+                <div className="mt-0.5 text-[9px] text-slate-400">
+                  Filtered directly from Supabase
+                </div>
+              </div>
+              <select
+                value={movementType}
+                onChange={(event) => setMovementType(event.target.value as MovementTypeFilter)}
+                className="h-10 min-w-[150px] rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                aria-label="Filter inventory movement history by type"
+              >
+                <option value="all">All movements</option>
+                {INVENTORY_MOVEMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {movementName(type)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {loading ? (
               <div className="space-y-3" aria-label="Loading movement history">
                 {Array.from({ length: 5 }, (_, index) => (
@@ -241,10 +271,14 @@ export default function InventoryMovementHistoryDrawer({
                     <History className="size-5" />
                   </div>
                   <div className="mt-4 text-sm font-bold text-slate-700">
-                    No inventory movements yet
+                    {movementType === "all"
+                      ? "No inventory movements yet"
+                      : "No " + movementName(movementType).toLowerCase() + " movements"}
                   </div>
                   <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                    Stock changes for this variant will appear here automatically.
+                    {movementType === "all"
+                      ? "Stock changes for this variant will appear here automatically."
+                      : "Try another movement type or switch back to all movements."}
                   </p>
                 </div>
               </div>
