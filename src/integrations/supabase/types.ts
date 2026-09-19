@@ -2092,6 +2092,16 @@ export type Database = {
         }
         Returns: string
       }
+      update_store_receiving_draft: {
+        Args: {
+          p_invoice_number: string
+          p_lines: Json
+          p_notes: string | null
+          p_receiving_employee_label: string | null
+          p_receiving_id: string
+        }
+        Returns: string
+      }
       void_store_receiving: {
         Args: { p_reason: string; p_receiving_id: string }
         Returns: string
