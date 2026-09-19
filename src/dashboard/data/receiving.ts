@@ -573,6 +573,278 @@ export async function loadReceivingWorkspace(
   };
 }
 
+
+export type PurchaseOrderDetailData = {
+  role: DashboardRole;
+  purchaseOrder: PurchaseOrderSummary | null;
+  supplier: ReceivingSupplier | null;
+  events: ProcurementEventSummary[];
+  attachments: ProcurementAttachment[];
+};
+
+export async function loadPurchaseOrderDetail(
+  purchaseOrderId: string,
+): Promise<PurchaseOrderDetailData> {
+  const role = await requireDashboardStaff();
+
+  const { data: poData, error: poError } = await supabase
+    .from("store_purchase_orders")
+    .select(
+      "id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes",
+    )
+    .eq("id", purchaseOrderId)
+    .maybeSingle();
+
+  throwIfError(poError, "Loading purchase order failed");
+  if (!poData) {
+    return {
+      role,
+      purchaseOrder: null,
+      supplier: null,
+      events: [],
+      attachments: [],
+    };
+  }
+
+  const po = poData as Pick<
+    PurchaseOrderRow,
+    | "id"
+    | "supplier_id"
+    | "location_id"
+    | "po_number"
+    | "status"
+    | "currency"
+    | "expected_at"
+    | "ordered_at"
+    | "approved_at"
+    | "rejected_at"
+    | "rejection_reason"
+    | "cancelled_at"
+    | "cancellation_reason"
+    | "discount_amount"
+    | "tax_amount"
+    | "shipping_amount"
+    | "exchange_rate"
+    | "created_at"
+    | "notes"
+  >;
+
+  const [
+    supplierResult,
+    locationResult,
+    itemResult,
+    approvedReceiptResult,
+    eventResult,
+    attachmentResult,
+  ] = await Promise.all([
+    supabase
+      .from("store_suppliers")
+      .select("id,name,code,phone,email,notes,is_active")
+      .eq("id", po.supplier_id)
+      .maybeSingle(),
+    po.location_id
+      ? supabase
+          .from("store_procurement_locations")
+          .select("id,name")
+          .eq("id", po.location_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from("store_purchase_order_items")
+      .select(
+        "id,purchase_order_id,product_id,variant_id,sku_snapshot,title_snapshot,expected_quantity,unit_cost",
+      )
+      .eq("purchase_order_id", purchaseOrderId),
+    supabase
+      .from("store_receivings")
+      .select("id")
+      .eq("purchase_order_id", purchaseOrderId)
+      .eq("status", "approved"),
+    supabase
+      .from("store_procurement_events")
+      .select("id,purchase_order_id,receiving_id,event_type,details,actor_id,created_at")
+      .eq("purchase_order_id", purchaseOrderId)
+      .order("created_at", { ascending: false })
+      .limit(300),
+    supabase
+      .from("store_procurement_attachments")
+      .select(
+        "id,purchase_order_id,receiving_id,file_name,storage_path,mime_type,size_bytes,attachment_type,created_at",
+      )
+      .eq("purchase_order_id", purchaseOrderId)
+      .order("created_at", { ascending: false })
+      .limit(300),
+  ]);
+
+  throwIfError(supplierResult.error, "Loading purchase order supplier failed");
+  throwIfError(locationResult.error, "Loading purchase order location failed");
+  throwIfError(itemResult.error, "Loading purchase order items failed");
+  throwIfError(approvedReceiptResult.error, "Loading approved receiving references failed");
+  throwIfError(eventResult.error, "Loading purchase order timeline failed");
+  throwIfError(attachmentResult.error, "Loading purchase order attachments failed");
+
+  const items = (itemResult.data ?? []) as Pick<
+    PurchaseOrderItemRow,
+    | "id"
+    | "purchase_order_id"
+    | "product_id"
+    | "variant_id"
+    | "sku_snapshot"
+    | "title_snapshot"
+    | "expected_quantity"
+    | "unit_cost"
+  >[];
+
+  const approvedReceiptIds = (approvedReceiptResult.data ?? []).map((row) => row.id);
+  const approvedLineResult = approvedReceiptIds.length
+    ? await supabase
+        .from("store_receiving_items")
+        .select("purchase_order_item_id,received_quantity")
+        .in("receiving_id", approvedReceiptIds)
+    : { data: [], error: null };
+
+  throwIfError(approvedLineResult.error, "Loading received purchase order quantities failed");
+
+  const approvedReceivedByPoItem = new Map<string, number>();
+  for (const line of approvedLineResult.data ?? []) {
+    approvedReceivedByPoItem.set(
+      line.purchase_order_item_id,
+      (approvedReceivedByPoItem.get(line.purchase_order_item_id) ?? 0) + line.received_quantity,
+    );
+  }
+
+  const lines: PurchaseOrderLine[] = items.map((item) => {
+    const approved = approvedReceivedByPoItem.get(item.id) ?? 0;
+    return {
+      id: item.id,
+      productId: item.product_id,
+      variantId: item.variant_id,
+      title: item.title_snapshot,
+      sku: item.sku_snapshot ?? "",
+      expectedQuantity: item.expected_quantity,
+      approvedReceivedQuantity: approved,
+      remainingQuantity: Math.max(0, item.expected_quantity - approved),
+      unitCost: toNumber(item.unit_cost),
+    };
+  });
+
+  const subtotal = lines.reduce((sum, line) => sum + line.expectedQuantity * line.unitCost, 0);
+  const grandTotal = Math.max(
+    0,
+    subtotal -
+      toNumber(po.discount_amount) +
+      toNumber(po.tax_amount) +
+      toNumber(po.shipping_amount),
+  );
+
+  const supplierRow = supplierResult.data as Pick<
+    SupplierRow,
+    "id" | "name" | "code" | "phone" | "email" | "notes" | "is_active"
+  > | null;
+
+  const supplier: ReceivingSupplier | null = supplierRow
+    ? {
+        id: supplierRow.id,
+        name: supplierRow.name,
+        code: supplierRow.code,
+        phone: supplierRow.phone,
+        email: supplierRow.email,
+        notes: supplierRow.notes,
+        isActive: supplierRow.is_active,
+      }
+    : null;
+
+  const events: ProcurementEventSummary[] = ((eventResult.data ?? []) as Pick<
+    ProcurementEventRow,
+    "id" | "purchase_order_id" | "receiving_id" | "event_type" | "details" | "actor_id" | "created_at"
+  >[]).map((row) => ({
+    id: row.id,
+    purchaseOrderId: row.purchase_order_id,
+    receivingId: row.receiving_id,
+    type: row.event_type,
+    details: row.details,
+    actorId: row.actor_id,
+    createdAt: row.created_at,
+  }));
+
+  const attachmentRows = (attachmentResult.data ?? []) as Pick<
+    ProcurementAttachmentRow,
+    | "id"
+    | "purchase_order_id"
+    | "receiving_id"
+    | "file_name"
+    | "storage_path"
+    | "mime_type"
+    | "size_bytes"
+    | "attachment_type"
+    | "created_at"
+  >[];
+
+  const attachmentUrlByPath = new Map<string, string>();
+  await Promise.all(
+    attachmentRows.map(async (row) => {
+      const { data, error } = await supabase.storage
+        .from(PROCUREMENT_MEDIA_BUCKET)
+        .createSignedUrl(row.storage_path, 60 * 60);
+      if (!error && data?.signedUrl) {
+        attachmentUrlByPath.set(row.storage_path, data.signedUrl);
+      }
+    }),
+  );
+
+  const purchaseOrder: PurchaseOrderSummary = {
+    id: po.id,
+    supplierId: po.supplier_id,
+    supplierName: supplier?.name ?? "Unknown supplier",
+    poNumber: po.po_number,
+    status: po.status,
+    currency: po.currency,
+    locationId: po.location_id,
+    locationName: po.location_id
+      ? locationResult.data?.name ?? "Unknown location"
+      : "Unassigned",
+    expectedAt: po.expected_at,
+    orderedAt: po.ordered_at,
+    approvedAt: po.approved_at,
+    rejectedAt: po.rejected_at,
+    rejectionReason: po.rejection_reason,
+    cancelledAt: po.cancelled_at,
+    cancellationReason: po.cancellation_reason,
+    createdAt: po.created_at,
+    notes: po.notes,
+    discountAmount: toNumber(po.discount_amount),
+    taxAmount: toNumber(po.tax_amount),
+    shippingAmount: toNumber(po.shipping_amount),
+    exchangeRate: toNumber(po.exchange_rate) || 1,
+    subtotal,
+    grandTotal,
+    expectedUnits: lines.reduce((sum, line) => sum + line.expectedQuantity, 0),
+    receivedUnits: lines.reduce((sum, line) => sum + line.approvedReceivedQuantity, 0),
+    remainingUnits: lines.reduce((sum, line) => sum + line.remainingQuantity, 0),
+    expectedCost: grandTotal,
+    items: lines,
+  };
+
+  return {
+    role,
+    purchaseOrder,
+    supplier,
+    events,
+    attachments: attachmentRows.map((row) => ({
+      id: row.id,
+      purchaseOrderId: row.purchase_order_id,
+      receivingId: row.receiving_id,
+      fileName: row.file_name,
+      storagePath: row.storage_path,
+      mimeType: row.mime_type ?? "",
+      sizeBytes: row.size_bytes,
+      attachmentType: row.attachment_type,
+      createdAt: row.created_at,
+      url: attachmentUrlByPath.get(row.storage_path) ?? "",
+    })),
+  };
+}
+
 export async function createReceivingSupplier(input: {
   name: string;
   code?: string;
