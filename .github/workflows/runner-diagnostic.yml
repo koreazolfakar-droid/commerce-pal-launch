@@ -1,0 +1,23 @@
+name: Runner Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  windows-probe:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - name: Runner started
+        shell: pwsh
+        run: |
+          Write-Output "GitHub-hosted Windows runner started successfully"
+          Write-Output "Repository: ${{ github.repository }}"
+          Write-Output "SHA: ${{ github.sha }}"
