@@ -3,17 +3,65 @@ import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 
 import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
+import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { categoryDefinition, displayCollections, productsInCategory } from "@/lib/taxonomy";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
+import type { CatalogIndex } from "@/lib/taxonomy";
+
+type ManagedStoreCategory = {
+  name: string;
+  name_ar: string | null;
+  slug: string;
+};
+
+function normalizeCategoryName(value: string | undefined) {
+  return value?.trim().toLocaleLowerCase() ?? "";
+}
+
+function productsInManagedCategory(catalog: CatalogIndex, categoryName: string) {
+  const normalized = normalizeCategoryName(categoryName);
+  return catalog.products.filter(
+    (product) => normalizeCategoryName(product.node.productType) === normalized,
+  );
+}
+
+async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory | null> {
+  const { data, error } = await publicSupabase
+    .from("store_categories")
+    .select("name,name_ar,slug")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (error) throw new Error(`Loading storefront category failed: ${error.message}`);
+  return (data as ManagedStoreCategory | null) ?? null;
+}
 
 export const Route = createFileRoute("/category/$slug")({
   validateSearch: parseProductSearch,
   loader: async ({ context, params }) => {
-    const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
+    const [catalog, managedCategory] = await Promise.all([
+      context.queryClient.ensureQueryData(catalogQueryOptions()),
+      fetchManagedCategory(params.slug),
+    ]);
+
+    if (managedCategory) {
+      const products = productsInManagedCategory(catalog, managedCategory.name);
+      if (!products.length) throw notFound();
+
+      void context.queryClient.prefetchQuery(collectionsQueryOptions());
+      return {
+        label: managedCategory.name,
+        labelAr: managedCategory.name_ar,
+        managedCategoryName: managedCategory.name,
+        products,
+      };
+    }
+
     const definition =
       catalog.categories.find((item) => item.slug === params.slug) ??
       categoryDefinition(params.slug);
@@ -23,7 +71,12 @@ export const Route = createFileRoute("/category/$slug")({
     // this secondary request: faster category HTML gives crawlers useful content sooner.
     void context.queryClient.prefetchQuery(collectionsQueryOptions());
 
-    return { label: definition.label, products: productsInCategory(catalog, params.slug) };
+    return {
+      label: definition.label,
+      labelAr: null,
+      managedCategoryName: null,
+      products: productsInCategory(catalog, params.slug),
+    };
   },
   head: ({ params, loaderData }) => {
     if (!loaderData) {
@@ -64,6 +117,7 @@ export const Route = createFileRoute("/category/$slug")({
 function CategoryPage() {
   const { t, language } = useLanguage();
   const { slug } = Route.useParams();
+  const loaderData = Route.useLoaderData();
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
   const filters = Route.useSearch();
@@ -71,8 +125,16 @@ function CategoryPage() {
 
   const definition =
     catalog.categories.find((item) => item.slug === slug) ?? categoryDefinition(slug);
-  const label = definition ? categoryLabel(definition, language) : slug;
-  const inCategory = productsInCategory(catalog, slug);
+  const label = loaderData.managedCategoryName
+    ? language === "ar" && loaderData.labelAr?.trim()
+      ? loaderData.labelAr.trim()
+      : loaderData.label
+    : definition
+      ? categoryLabel(definition, language)
+      : loaderData.label;
+  const inCategory = loaderData.managedCategoryName
+    ? productsInManagedCategory(catalog, loaderData.managedCategoryName)
+    : productsInCategory(catalog, slug);
   const products = applyFilters(inCategory, catalog, filters);
 
   const update = (patch: Partial<ProductFilters>) =>
