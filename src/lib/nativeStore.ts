@@ -9,16 +9,79 @@ type CollectionRow = Tables<"store_collections">;
 type CollectionLinkRow = Tables<"store_collection_products">;
 type BrandRow = Tables<"cms_brands">;
 
+type StorefrontProductRow = Pick<
+  ProductRow,
+  | "id"
+  | "title"
+  | "description"
+  | "description_html"
+  | "handle"
+  | "brand_id"
+  | "product_type"
+  | "created_at"
+  | "tags"
+  | "base_price"
+  | "compare_at_price"
+  | "currency"
+  | "track_inventory"
+  | "allow_backorder"
+  | "stock_quantity"
+  | "best_seller"
+  | "sort_order"
+>;
+type StorefrontVariantRow = Pick<
+  VariantRow,
+  | "id"
+  | "product_id"
+  | "title"
+  | "price"
+  | "compare_at_price"
+  | "is_active"
+  | "track_inventory"
+  | "allow_backorder"
+  | "stock_quantity"
+  | "sku"
+  | "barcode"
+  | "image_url"
+  | "options"
+  | "sort_order"
+>;
+type StorefrontImageRow = Pick<
+  ImageRow,
+  "product_id" | "url" | "alt_text" | "is_primary" | "sort_order"
+>;
+type StorefrontCollectionRow = Pick<
+  CollectionRow,
+  "id" | "handle" | "title" | "description" | "image_url"
+>;
+type StorefrontCollectionLinkRow = Pick<
+  CollectionLinkRow,
+  "collection_id" | "product_id" | "sort_order"
+>;
+type StorefrontBrandRow = Pick<BrandRow, "id" | "name">;
+
+const STOREFRONT_PRODUCT_SELECT =
+  "id,title,description,description_html,handle,brand_id,product_type,created_at,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+const STOREFRONT_VARIANT_SELECT =
+  "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
+const STOREFRONT_IMAGE_SELECT =
+  "product_id,url,alt_text,is_primary,sort_order" as const;
+const STOREFRONT_COLLECTION_SELECT =
+  "id,handle,title,description,image_url" as const;
+const STOREFRONT_COLLECTION_LINK_SELECT =
+  "collection_id,product_id,sort_order" as const;
+const STOREFRONT_BRAND_SELECT = "id,name" as const;
+
 type NativeProduct = {
   product: ShopifyProduct;
-  row: ProductRow;
+  row: StorefrontProductRow;
 };
 
 type NativeSnapshot = {
   products: NativeProduct[];
-  collections: CollectionRow[];
-  links: CollectionLinkRow[];
-  brands: BrandRow[];
+  collections: StorefrontStorefrontCollectionRow[];
+  links: StorefrontCollectionLinkRow[];
+  brands: StorefrontStorefrontBrandRow[];
 };
 
 const CACHE_TTL_MS = 30_000;
@@ -58,11 +121,11 @@ function money(amount: number, currencyCode: string) {
 }
 
 function buildProduct(
-  row: ProductRow,
-  variants: VariantRow[],
-  images: ImageRow[],
-  collections: CollectionRow[],
-  brand?: BrandRow,
+  row: StorefrontProductRow,
+  variants: StorefrontVariantRow[],
+  images: StorefrontImageRow[],
+  collections: StorefrontStorefrontCollectionRow[],
+  brand?: StorefrontBrandRow,
 ): ShopifyProduct {
   const sortedVariants = [...variants].sort((a, b) => a.sort_order - b.sort_order);
   const sortedImages = [...images].sort(
@@ -155,29 +218,30 @@ async function loadSnapshot(): Promise<NativeSnapshot> {
       await Promise.all([
         publicSupabase
           .from("store_products")
-          .select("*")
+      .select(STOREFRONT_PRODUCT_SELECT)
           .eq("status", "active")
           .order("sort_order", { ascending: true })
           .order("created_at", { ascending: false }),
         publicSupabase
           .from("store_product_variants")
-          .select("*")
+      .select(STOREFRONT_VARIANT_SELECT)
           .eq("is_active", true)
           .order("sort_order", { ascending: true }),
         publicSupabase
           .from("store_product_images")
-          .select("*")
+      .select(STOREFRONT_IMAGE_SELECT)
           .order("sort_order", { ascending: true }),
         publicSupabase
           .from("store_collections")
-          .select("*")
+      .select(STOREFRONT_COLLECTION_SELECT)
           .eq("is_active", true)
           .order("sort_order", { ascending: true })
           .order("title", { ascending: true }),
-        publicSupabase.from("store_collection_products").select("*").order("sort_order", { ascending: true }),
+        publicSupabase.from("store_collection_products")
+      .select(STOREFRONT_COLLECTION_LINK_SELECT).order("sort_order", { ascending: true }),
         publicSupabase
           .from("cms_brands")
-          .select("*")
+      .select(STOREFRONT_BRAND_SELECT)
           .eq("is_visible", true)
           .order("sort_order", { ascending: true }),
       ]);
@@ -198,7 +262,7 @@ async function loadSnapshot(): Promise<NativeSnapshot> {
     const products: NativeProduct[] = productRows.map((row) => {
       const productCollections = (linksByProduct.get(row.id) ?? [])
         .map((link) => collectionsById.get(link.collection_id))
-        .filter((collection): collection is CollectionRow => Boolean(collection));
+        .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
       return {
         row,
         product: buildProduct(
@@ -252,35 +316,36 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
 
   const productResult = await publicSupabase
     .from("store_products")
-    .select("*")
+      .select(STOREFRONT_PRODUCT_SELECT)
     .eq("handle", normalized)
     .eq("status", "active")
     .maybeSingle();
   if (productResult.error) {
     throw new Error(`Supabase product failed: ${productResult.error.message}`);
   }
-  const row = productResult.data as ProductRow | null;
+  const row = productResult.data as StorefrontProductRow | null;
   if (!row) return null;
 
   const [variantResult, imageResult, linkResult, brandResult] = await Promise.all([
     publicSupabase
       .from("store_product_variants")
-      .select("*")
+      .select(STOREFRONT_VARIANT_SELECT)
       .eq("product_id", row.id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     publicSupabase
       .from("store_product_images")
-      .select("*")
+      .select(STOREFRONT_IMAGE_SELECT)
       .eq("product_id", row.id)
       .order("sort_order", { ascending: true }),
     publicSupabase
       .from("store_collection_products")
-      .select("*")
+      .select(STOREFRONT_COLLECTION_LINK_SELECT)
       .eq("product_id", row.id)
       .order("sort_order", { ascending: true }),
     row.brand_id
-      ? publicSupabase.from("cms_brands").select("*").eq("id", row.brand_id).maybeSingle()
+      ? publicSupabase.from("cms_brands")
+      .select(STOREFRONT_BRAND_SELECT).eq("id", row.brand_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -292,11 +357,11 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
   }
 
   const collectionIds = links.map((link) => link.collection_id);
-  let collections: CollectionRow[] = [];
+  let collections: StorefrontCollectionRow[] = [];
   if (collectionIds.length) {
     const collectionResult = await publicSupabase
       .from("store_collections")
-      .select("*")
+      .select(STOREFRONT_COLLECTION_SELECT)
       .in("id", collectionIds)
       .eq("is_active", true);
     collections = assertResult(collectionResult, "product collections");
@@ -311,19 +376,21 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
     variants,
     images,
     collections,
-    (brandResult.data as BrandRow | null) ?? undefined,
+    (brandResult.data as StorefrontBrandRow | null) ?? undefined,
   );
 }
 
 export async function fetchCollections(first = 100): Promise<ShopifyCollection[]> {
-  const snapshot = await loadSnapshot();
-  return snapshot.collections.slice(0, Math.max(0, first)).map((row) => ({
-    id: row.id,
-    handle: row.handle,
-    title: row.title,
-    description: row.description,
-    image: row.image_url ? { url: row.image_url, altText: row.title } : null,
-  }));
+  const collectionResult = await publicSupabase
+    .from("store_collections")
+    .select(STOREFRONT_COLLECTION_SELECT)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("title", { ascending: true })
+    .limit(Math.max(0, first));
+
+  const rows = assertResult(collectionResult, "collections");
+  return rows.map(mapCollection);
 }
 
 const SMALL_COLLECTION_FAST_PATH_MAX = 12;
@@ -347,7 +414,7 @@ async function fetchSmallCollectionByHandle(
 
   const collectionResult = await publicSupabase
     .from("store_collections")
-    .select("*")
+      .select(STOREFRONT_COLLECTION_SELECT)
     .eq("handle", normalizedHandle)
     .eq("is_active", true)
     .maybeSingle();
@@ -355,7 +422,7 @@ async function fetchSmallCollectionByHandle(
     throw new Error(`Supabase collection failed: ${collectionResult.error.message}`);
   }
 
-  const row = collectionResult.data as CollectionRow | null;
+  const row = collectionResult.data as StorefrontCollectionRow | null;
   if (!row) return null;
 
   const collection = mapCollection(row);
@@ -363,7 +430,7 @@ async function fetchSmallCollectionByHandle(
 
   const linkResult = await publicSupabase
     .from("store_collection_products")
-    .select("*")
+      .select(STOREFRONT_COLLECTION_LINK_SELECT)
     .eq("collection_id", row.id)
     .order("sort_order", { ascending: true });
   const orderedLinks = assertResult(linkResult, "collection links");
@@ -372,14 +439,14 @@ async function fetchSmallCollectionByHandle(
   const linkedProductIds = [...new Set(orderedLinks.map((link) => link.product_id))];
   const productResult = await publicSupabase
     .from("store_products")
-    .select("*")
+      .select(STOREFRONT_PRODUCT_SELECT)
     .in("id", linkedProductIds)
     .eq("status", "active");
   const productRows = assertResult(productResult, "collection products");
   const productRowsById = new Map(productRows.map((product) => [product.id, product]));
   const selectedRows = orderedLinks
     .map((link) => productRowsById.get(link.product_id))
-    .filter((product): product is ProductRow => Boolean(product))
+    .filter((product): product is StorefrontProductRow => Boolean(product))
     .slice(0, pageSize);
 
   if (!selectedRows.length) return { collection, products: [] };
@@ -388,18 +455,18 @@ async function fetchSmallCollectionByHandle(
   const [variantResult, imageResult, productLinkResult] = await Promise.all([
     publicSupabase
       .from("store_product_variants")
-      .select("*")
+      .select(STOREFRONT_VARIANT_SELECT)
       .in("product_id", activeProductIds)
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     publicSupabase
       .from("store_product_images")
-      .select("*")
+      .select(STOREFRONT_IMAGE_SELECT)
       .in("product_id", activeProductIds)
       .order("sort_order", { ascending: true }),
     publicSupabase
       .from("store_collection_products")
-      .select("*")
+      .select(STOREFRONT_COLLECTION_LINK_SELECT)
       .in("product_id", activeProductIds)
       .order("sort_order", { ascending: true }),
   ]);
@@ -414,16 +481,16 @@ async function fetchSmallCollectionByHandle(
   const relatedCollectionIds = [
     ...new Set(productLinks.map((link) => link.collection_id).filter((id) => id !== row.id)),
   ];
-  let relatedCollections: CollectionRow[] = [];
+  let relatedCollections: StorefrontCollectionRow[] = [];
   if (relatedCollectionIds.length) {
     const relatedCollectionResult = await publicSupabase
       .from("store_collections")
-      .select("*")
+      .select(STOREFRONT_COLLECTION_SELECT)
       .in("id", relatedCollectionIds)
       .eq("is_active", true);
     relatedCollections = assertResult(relatedCollectionResult, "related collections");
   }
-  const collectionsById = new Map<string, CollectionRow>([
+  const collectionsById = new Map<string, StorefrontCollectionRow>([
     [row.id, row],
     ...relatedCollections.map((related) => [related.id, related] as const),
   ]);
@@ -435,11 +502,11 @@ async function fetchSmallCollectionByHandle(
         .filter((id): id is string => Boolean(id)),
     ),
   ];
-  let brands: BrandRow[] = [];
+  let brands: StorefrontBrandRow[] = [];
   if (brandIds.length) {
     const brandResult = await publicSupabase
       .from("cms_brands")
-      .select("*")
+      .select(STOREFRONT_BRAND_SELECT)
       .in("id", brandIds)
       .eq("is_visible", true);
     brands = assertResult(brandResult, "collection product brands");
@@ -449,7 +516,7 @@ async function fetchSmallCollectionByHandle(
   const products = selectedRows.map((productRow) => {
     const productCollections = (linksByProduct.get(productRow.id) ?? [])
       .map((link) => collectionsById.get(link.collection_id))
-      .filter((entry): entry is CollectionRow => Boolean(entry));
+      .filter((entry): entry is StorefrontCollectionRow => Boolean(entry));
     return buildProduct(
       productRow,
       variantsByProduct.get(productRow.id) ?? [],
