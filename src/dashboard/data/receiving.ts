@@ -175,6 +175,8 @@ export type ReceivingWorkspace = {
 };
 
 export type ReceivingWorkspaceLoadOptions = {
+  includePurchaseOrders?: boolean;
+  includeReceivings?: boolean;
   includeProductOptions?: boolean;
   includeAudit?: boolean;
   includeSerials?: boolean;
@@ -189,6 +191,8 @@ export async function loadReceivingWorkspace(
   options: ReceivingWorkspaceLoadOptions = {},
 ): Promise<ReceivingWorkspace> {
   const role = await requireDashboardStaff();
+  const includePurchaseOrders = options.includePurchaseOrders !== false;
+  const includeReceivings = options.includeReceivings !== false;
   const includeProductOptions = options.includeProductOptions !== false;
   const includeAudit = options.includeAudit !== false;
   const includeSerials = options.includeSerials !== false;
@@ -202,16 +206,20 @@ export async function loadReceivingWorkspace(
       .from("store_procurement_locations")
       .select("id,name,code,address,is_active")
       .order("name", { ascending: true }),
-    supabase
-      .from("store_purchase_orders")
-      .select("id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes")
-      .order("created_at", { ascending: false })
-      .limit(100),
-    supabase
-      .from("store_receivings")
-      .select("id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes")
-      .order("received_at", { ascending: false })
-      .limit(100),
+    includePurchaseOrders
+      ? supabase
+          .from("store_purchase_orders")
+          .select("id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes")
+          .order("created_at", { ascending: false })
+          .limit(100)
+      : Promise.resolve({ data: [], error: null }),
+    includeReceivings
+      ? supabase
+          .from("store_receivings")
+          .select("id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes")
+          .order("received_at", { ascending: false })
+          .limit(100)
+      : Promise.resolve({ data: [], error: null }),
     includeProductOptions
       ? supabase
           .from("store_products")
@@ -582,10 +590,16 @@ export type PurchaseOrderDetailData = {
   attachments: ProcurementAttachment[];
 };
 
+export type PurchaseOrderDetailLoadOptions = {
+  includeAudit?: boolean;
+};
+
 export async function loadPurchaseOrderDetail(
   purchaseOrderId: string,
+  options: PurchaseOrderDetailLoadOptions = {},
 ): Promise<PurchaseOrderDetailData> {
   const role = await requireDashboardStaff();
+  const includeAudit = options.includeAudit !== false;
 
   const { data: poData, error: poError } = await supabase
     .from("store_purchase_orders")
@@ -660,20 +674,24 @@ export async function loadPurchaseOrderDetail(
       .select("id")
       .eq("purchase_order_id", purchaseOrderId)
       .eq("status", "approved"),
-    supabase
-      .from("store_procurement_events")
-      .select("id,purchase_order_id,receiving_id,event_type,details,actor_id,created_at")
-      .eq("purchase_order_id", purchaseOrderId)
-      .order("created_at", { ascending: false })
-      .limit(300),
-    supabase
-      .from("store_procurement_attachments")
-      .select(
-        "id,purchase_order_id,receiving_id,file_name,storage_path,mime_type,size_bytes,attachment_type,created_at",
-      )
-      .eq("purchase_order_id", purchaseOrderId)
-      .order("created_at", { ascending: false })
-      .limit(300),
+    includeAudit
+      ? supabase
+          .from("store_procurement_events")
+          .select("id,purchase_order_id,receiving_id,event_type,details,actor_id,created_at")
+          .eq("purchase_order_id", purchaseOrderId)
+          .order("created_at", { ascending: false })
+          .limit(300)
+      : Promise.resolve({ data: [], error: null }),
+    includeAudit
+      ? supabase
+          .from("store_procurement_attachments")
+          .select(
+            "id,purchase_order_id,receiving_id,file_name,storage_path,mime_type,size_bytes,attachment_type,created_at",
+          )
+          .eq("purchase_order_id", purchaseOrderId)
+          .order("created_at", { ascending: false })
+          .limit(300)
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   throwIfError(supplierResult.error, "Loading purchase order supplier failed");
@@ -829,6 +847,410 @@ export async function loadPurchaseOrderDetail(
     role,
     purchaseOrder,
     supplier,
+    events,
+    attachments: attachmentRows.map((row) => ({
+      id: row.id,
+      purchaseOrderId: row.purchase_order_id,
+      receivingId: row.receiving_id,
+      fileName: row.file_name,
+      storagePath: row.storage_path,
+      mimeType: row.mime_type ?? "",
+      sizeBytes: row.size_bytes,
+      attachmentType: row.attachment_type,
+      createdAt: row.created_at,
+      url: attachmentUrlByPath.get(row.storage_path) ?? "",
+    })),
+  };
+}
+
+
+export type ProcurementFormOptionsData = {
+  suppliers: ReceivingSupplier[];
+  locations: ProcurementLocation[];
+  productOptions: ProcurementProductOption[];
+};
+
+export async function loadProcurementFormOptions(): Promise<ProcurementFormOptionsData> {
+  await requireDashboardStaff();
+
+  const [supplierResult, locationResult, productResult, variantResult] = await Promise.all([
+    supabase
+      .from("store_suppliers")
+      .select("id,name,code,phone,email,notes,is_active")
+      .order("name", { ascending: true }),
+    supabase
+      .from("store_procurement_locations")
+      .select("id,name,code,address,is_active")
+      .order("name", { ascending: true }),
+    supabase
+      .from("store_products")
+      .select("id,title,sku,stock_quantity,status,track_inventory")
+      .neq("status", "archived")
+      .order("title", { ascending: true }),
+    supabase
+      .from("store_product_variants")
+      .select("id,product_id,title,sku,stock_quantity,is_active,track_inventory,sort_order")
+      .eq("is_active", true)
+      .order("product_id", { ascending: true })
+      .order("sort_order", { ascending: true }),
+  ]);
+
+  throwIfError(supplierResult.error, "Loading suppliers failed");
+  throwIfError(locationResult.error, "Loading procurement locations failed");
+  throwIfError(productResult.error, "Loading procurement products failed");
+  throwIfError(variantResult.error, "Loading procurement variants failed");
+
+  const suppliers = (supplierResult.data ?? []) as Pick<
+    SupplierRow,
+    "id" | "name" | "code" | "phone" | "email" | "notes" | "is_active"
+  >[];
+  const locations = (locationResult.data ?? []) as Pick<
+    LocationRow,
+    "id" | "name" | "code" | "address" | "is_active"
+  >[];
+  const products = (productResult.data ?? []) as Pick<
+    ProductRow,
+    "id" | "title" | "sku" | "stock_quantity" | "status" | "track_inventory"
+  >[];
+  const variants = (variantResult.data ?? []) as Pick<
+    VariantRow,
+    "id" | "product_id" | "title" | "sku" | "stock_quantity" | "is_active" | "track_inventory" | "sort_order"
+  >[];
+
+  const variantsByProduct = new Map<string, typeof variants>();
+  for (const variant of variants) {
+    const rows = variantsByProduct.get(variant.product_id) ?? [];
+    rows.push(variant);
+    variantsByProduct.set(variant.product_id, rows);
+  }
+
+  const productOptions: ProcurementProductOption[] = [];
+  for (const product of products) {
+    if (!product.track_inventory) continue;
+    const productVariants = variantsByProduct.get(product.id) ?? [];
+    if (productVariants.length) {
+      for (const variant of productVariants) {
+        if (!variant.track_inventory) continue;
+        productOptions.push({
+          key: variant.id,
+          productId: product.id,
+          variantId: variant.id,
+          title: `${product.title} · ${variant.title}`,
+          sku: variant.sku ?? product.sku ?? "",
+          currentStock: variant.stock_quantity,
+        });
+      }
+    } else {
+      productOptions.push({
+        key: product.id,
+        productId: product.id,
+        variantId: null,
+        title: product.title,
+        sku: product.sku ?? "",
+        currentStock: product.stock_quantity,
+      });
+    }
+  }
+
+  return {
+    suppliers: suppliers.map((row) => ({
+      id: row.id,
+      name: row.name,
+      code: row.code,
+      phone: row.phone,
+      email: row.email,
+      notes: row.notes,
+      isActive: row.is_active,
+    })),
+    locations: locations.map((row) => ({
+      id: row.id,
+      name: row.name,
+      code: row.code,
+      address: row.address,
+      isActive: row.is_active,
+    })),
+    productOptions: productOptions.sort((a, b) => a.title.localeCompare(b.title)),
+  };
+}
+
+export type PurchaseOrderEditData = ProcurementFormOptionsData & {
+  purchaseOrder: PurchaseOrderSummary | null;
+};
+
+export async function loadPurchaseOrderEditData(
+  purchaseOrderId: string,
+): Promise<PurchaseOrderEditData> {
+  const [detail, formOptions] = await Promise.all([
+    loadPurchaseOrderDetail(purchaseOrderId, { includeAudit: false }),
+    loadProcurementFormOptions(),
+  ]);
+
+  return {
+    purchaseOrder: detail.purchaseOrder,
+    ...formOptions,
+  };
+}
+
+export type ReceivingPurchaseOrderBaseline = {
+  currency: string;
+  items: PurchaseOrderLine[];
+};
+
+export type ReceivingDetailData = {
+  role: DashboardRole;
+  receipt: ReceivingSummary | null;
+  purchaseOrder: ReceivingPurchaseOrderBaseline | null;
+  events: ProcurementEventSummary[];
+  attachments: ProcurementAttachment[];
+};
+
+export async function loadReceivingDetail(receivingId: string): Promise<ReceivingDetailData> {
+  const role = await requireDashboardStaff();
+
+  const { data: receiptData, error: receiptError } = await supabase
+    .from("store_receivings")
+    .select(
+      "id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes",
+    )
+    .eq("id", receivingId)
+    .maybeSingle();
+
+  throwIfError(receiptError, "Loading receiving record failed");
+  if (!receiptData) {
+    return {
+      role,
+      receipt: null,
+      purchaseOrder: null,
+      events: [],
+      attachments: [],
+    };
+  }
+
+  const receiptRow = receiptData as Pick<
+    ReceivingRow,
+    | "id"
+    | "receipt_number"
+    | "purchase_order_id"
+    | "invoice_number"
+    | "status"
+    | "receiving_employee_label"
+    | "received_at"
+    | "approved_at"
+    | "notes"
+  >;
+
+  const { data: poData, error: poError } = await supabase
+    .from("store_purchase_orders")
+    .select("id,supplier_id,po_number,currency")
+    .eq("id", receiptRow.purchase_order_id)
+    .maybeSingle();
+
+  throwIfError(poError, "Loading receiving purchase order failed");
+
+  const po = poData as Pick<
+    PurchaseOrderRow,
+    "id" | "supplier_id" | "po_number" | "currency"
+  > | null;
+
+  const [receivingItemResult, poItemResult, supplierResult, eventResult, attachmentResult] =
+    await Promise.all([
+      supabase
+        .from("store_receiving_items")
+        .select(
+          "id,receiving_id,purchase_order_item_id,expected_quantity_snapshot,remaining_quantity_before,received_quantity,damaged_quantity,unit_cost,delivered_quantity,difference,missing_quantity,overage_quantity,overage_reason",
+        )
+        .eq("receiving_id", receivingId),
+      po
+        ? supabase
+            .from("store_purchase_order_items")
+            .select(
+              "id,purchase_order_id,product_id,variant_id,sku_snapshot,title_snapshot,expected_quantity,unit_cost",
+            )
+            .eq("purchase_order_id", po.id)
+        : Promise.resolve({ data: [], error: null }),
+      po
+        ? supabase
+            .from("store_suppliers")
+            .select("id,name")
+            .eq("id", po.supplier_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      supabase
+        .from("store_procurement_events")
+        .select("id,purchase_order_id,receiving_id,event_type,details,actor_id,created_at")
+        .eq("receiving_id", receivingId)
+        .order("created_at", { ascending: false })
+        .limit(300),
+      supabase
+        .from("store_procurement_attachments")
+        .select(
+          "id,purchase_order_id,receiving_id,file_name,storage_path,mime_type,size_bytes,attachment_type,created_at",
+        )
+        .eq("receiving_id", receivingId)
+        .order("created_at", { ascending: false })
+        .limit(300),
+    ]);
+
+  throwIfError(receivingItemResult.error, "Loading receiving lines failed");
+  throwIfError(poItemResult.error, "Loading receiving PO lines failed");
+  throwIfError(supplierResult.error, "Loading receiving supplier failed");
+  throwIfError(eventResult.error, "Loading receiving timeline failed");
+  throwIfError(attachmentResult.error, "Loading receiving attachments failed");
+
+  const receivingItems = (receivingItemResult.data ?? []) as Pick<
+    ReceivingItemRow,
+    | "id"
+    | "receiving_id"
+    | "purchase_order_item_id"
+    | "expected_quantity_snapshot"
+    | "remaining_quantity_before"
+    | "received_quantity"
+    | "damaged_quantity"
+    | "unit_cost"
+    | "delivered_quantity"
+    | "difference"
+    | "missing_quantity"
+    | "overage_quantity"
+    | "overage_reason"
+  >[];
+  const poItems = (poItemResult.data ?? []) as Pick<
+    PurchaseOrderItemRow,
+    | "id"
+    | "purchase_order_id"
+    | "product_id"
+    | "variant_id"
+    | "sku_snapshot"
+    | "title_snapshot"
+    | "expected_quantity"
+    | "unit_cost"
+  >[];
+
+  const receivingItemIds = receivingItems.map((row) => row.id);
+  const serialResult = receivingItemIds.length
+    ? await supabase
+        .from("store_receiving_serials")
+        .select("id,receiving_item_id,serial_number,imei1,imei2,condition,inventory_status")
+        .in("receiving_item_id", receivingItemIds)
+    : { data: [], error: null };
+
+  throwIfError(serialResult.error, "Loading receiving serials failed");
+
+  const serialsByReceivingItem = new Map<string, ReceivingSerial[]>();
+  for (const serial of (serialResult.data ?? []) as Pick<
+    ReceivingSerialRow,
+    "id" | "receiving_item_id" | "serial_number" | "imei1" | "imei2" | "condition" | "inventory_status"
+  >[]) {
+    const rows = serialsByReceivingItem.get(serial.receiving_item_id) ?? [];
+    rows.push({
+      id: serial.id,
+      receivingItemId: serial.receiving_item_id,
+      serialNumber: serial.serial_number ?? "",
+      imei1: serial.imei1 ?? "",
+      imei2: serial.imei2 ?? "",
+      condition: serial.condition === "damaged" ? "damaged" : "usable",
+      inventoryStatus: serial.inventory_status,
+    });
+    serialsByReceivingItem.set(serial.receiving_item_id, rows);
+  }
+
+  const poItemById = new Map(poItems.map((row) => [row.id, row]));
+  const lines: ReceivingLineSummary[] = receivingItems.map((line) => {
+    const poItem = poItemById.get(line.purchase_order_item_id);
+    return {
+      id: line.id,
+      purchaseOrderItemId: line.purchase_order_item_id,
+      title: poItem?.title_snapshot ?? "Unknown item",
+      sku: poItem?.sku_snapshot ?? "",
+      expectedQuantity: line.expected_quantity_snapshot,
+      remainingQuantityBefore: line.remaining_quantity_before,
+      receivedQuantity: line.received_quantity,
+      damagedQuantity: line.damaged_quantity,
+      deliveredQuantity: line.delivered_quantity,
+      missingQuantity: line.missing_quantity,
+      difference: line.difference,
+      overageQuantity: line.overage_quantity,
+      overageReason: line.overage_reason,
+      unitCost: toNumber(line.unit_cost),
+      serials: serialsByReceivingItem.get(line.id) ?? [],
+    };
+  });
+
+  const baselineItems: PurchaseOrderLine[] = poItems.map((item) => ({
+    id: item.id,
+    productId: item.product_id,
+    variantId: item.variant_id,
+    title: item.title_snapshot,
+    sku: item.sku_snapshot ?? "",
+    expectedQuantity: item.expected_quantity,
+    approvedReceivedQuantity: 0,
+    remainingQuantity: item.expected_quantity,
+    unitCost: toNumber(item.unit_cost),
+  }));
+
+  const events: ProcurementEventSummary[] = ((eventResult.data ?? []) as Pick<
+    ProcurementEventRow,
+    "id" | "purchase_order_id" | "receiving_id" | "event_type" | "details" | "actor_id" | "created_at"
+  >[]).map((row) => ({
+    id: row.id,
+    purchaseOrderId: row.purchase_order_id,
+    receivingId: row.receiving_id,
+    type: row.event_type,
+    details: row.details,
+    actorId: row.actor_id,
+    createdAt: row.created_at,
+  }));
+
+  const attachmentRows = (attachmentResult.data ?? []) as Pick<
+    ProcurementAttachmentRow,
+    | "id"
+    | "purchase_order_id"
+    | "receiving_id"
+    | "file_name"
+    | "storage_path"
+    | "mime_type"
+    | "size_bytes"
+    | "attachment_type"
+    | "created_at"
+  >[];
+
+  const attachmentUrlByPath = new Map<string, string>();
+  await Promise.all(
+    attachmentRows.map(async (row) => {
+      const { data, error } = await supabase.storage
+        .from(PROCUREMENT_MEDIA_BUCKET)
+        .createSignedUrl(row.storage_path, 60 * 60);
+      if (!error && data?.signedUrl) {
+        attachmentUrlByPath.set(row.storage_path, data.signedUrl);
+      }
+    }),
+  );
+
+  const receipt: ReceivingSummary = {
+    id: receiptRow.id,
+    receiptNumber: receiptRow.receipt_number,
+    purchaseOrderId: receiptRow.purchase_order_id,
+    poNumber: po?.po_number ?? "—",
+    supplierName: supplierResult.data?.name ?? "Unknown supplier",
+    invoiceNumber: receiptRow.invoice_number,
+    status: receiptRow.status,
+    employee: receiptRow.receiving_employee_label?.trim() || "Authenticated staff",
+    receivedAt: receiptRow.received_at,
+    approvedAt: receiptRow.approved_at,
+    notes: receiptRow.notes,
+    stockUnits: lines.reduce((sum, line) => sum + line.receivedQuantity, 0),
+    damagedUnits: lines.reduce((sum, line) => sum + line.damagedQuantity, 0),
+    items: lines,
+  };
+
+  return {
+    role,
+    receipt,
+    purchaseOrder: po
+      ? {
+          currency: po.currency,
+          items: baselineItems,
+        }
+      : null,
     events,
     attachments: attachmentRows.map((row) => ({
       id: row.id,
