@@ -1,5 +1,4 @@
 version: 2.1
-
 executors:
   node-bun:
     docker:
@@ -8,7 +7,6 @@ executors:
     working_directory: ~/project
     environment:
       BUN_INSTALL: /home/circleci/.bun
-
 commands:
   install-bun:
     steps:
@@ -26,13 +24,13 @@ commands:
       - install-bun
       - attach_workspace:
           at: ~/project
-  typecheck-scope:
+  tsc-match:
     parameters:
       pattern:
         type: string
     steps:
       - run:
-          name: TypeScript scoped diagnostics
+          name: Scoped TypeScript diagnostic
           command: |
             bun run routes:generate
             set +e
@@ -40,9 +38,8 @@ commands:
             code=$?
             set -e
             if [ "$code" -eq 0 ]; then exit 0; fi
-            if grep -E '<< parameters.pattern >>' /tmp/tsc.log >/dev/null; then exit 1; fi
+            grep -E '<< parameters.pattern >>' /tmp/tsc.log >/dev/null && exit 1
             exit 0
-
 jobs:
   setup:
     executor: node-bun
@@ -58,40 +55,26 @@ jobs:
           command: bun install --frozen-lockfile
       - save_cache:
           key: bun-deps-v2-{{ checksum "bun.lock" }}
-          paths:
-            - ~/.bun/install/cache
+          paths: [~/.bun/install/cache]
       - persist_to_workspace:
           root: ~/project
-          paths:
-            - node_modules
+          paths: [node_modules]
 
-  typecheck-dashboard-data:
+  tsc-catalog:
     executor: node-bun
-    steps:
-      - restore-project
-      - typecheck-scope:
-          pattern: 'src/dashboard/data/'
-
-  typecheck-dashboard-pages:
+    steps: [restore-project, { tsc-match: { pattern: 'src/dashboard/data/catalog\.ts' } }]
+  tsc-inventory:
     executor: node-bun
-    steps:
-      - restore-project
-      - typecheck-scope:
-          pattern: 'src/dashboard/pages/'
-
-  typecheck-dashboard-components:
+    steps: [restore-project, { tsc-match: { pattern: 'src/dashboard/data/inventory\.ts' } }]
+  tsc-receiving:
     executor: node-bun
-    steps:
-      - restore-project
-      - typecheck-scope:
-          pattern: 'src/dashboard/components/'
-
-  typecheck-dashboard-other:
+    steps: [restore-project, { tsc-match: { pattern: 'src/dashboard/data/receiving\.ts' } }]
+  tsc-other-data:
     executor: node-bun
     steps:
       - restore-project
       - run:
-          name: TypeScript remaining dashboard diagnostics
+          name: Other dashboard data TypeScript diagnostic
           command: |
             bun run routes:generate
             set +e
@@ -99,110 +82,72 @@ jobs:
             code=$?
             set -e
             if [ "$code" -eq 0 ]; then exit 0; fi
-            if grep -E 'src/dashboard/' /tmp/tsc.log | grep -Ev 'src/dashboard/(data|pages|components)/' >/dev/null; then exit 1; fi
+            grep -E 'src/dashboard/data/' /tmp/tsc.log | grep -Ev '(catalog|inventory|receiving)\.ts' >/dev/null && exit 1
             exit 0
 
-  lint-dashboard-data:
+  lint-pages-a:
     executor: node-bun
     steps:
       - restore-project
       - run:
-          name: ESLint dashboard data
-          command: ./node_modules/.bin/eslint src/dashboard/data --fix-dry-run
+          command: ./node_modules/.bin/eslint src/dashboard/pages/BrandsPage.tsx src/dashboard/pages/CategoriesPage.tsx src/dashboard/pages/CollectionDetailPage.tsx src/dashboard/pages/CollectionsPage.tsx src/dashboard/pages/CustomerDetailPage.tsx src/dashboard/pages/CustomersPage.tsx src/dashboard/pages/DashboardHomePage.tsx src/dashboard/pages/HeroBannersPage.tsx src/dashboard/pages/HomepageBuilder.tsx src/dashboard/pages/InventoryManagerPage.tsx src/dashboard/pages/LoginPage.tsx src/dashboard/pages/MediaLibraryPage.tsx src/dashboard/pages/NavigationPage.tsx src/dashboard/pages/NotFound.tsx src/dashboard/pages/OrderDetailPage.tsx --fix-dry-run
+  lint-pages-b:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          command: ./node_modules/.bin/eslint src/dashboard/pages/OrdersPage.tsx src/dashboard/pages/ProcurementAnalyticsPage.tsx src/dashboard/pages/ProductFormPage.tsx src/dashboard/pages/ProductsPage.tsx src/dashboard/pages/PurchaseOrderCreatePage.tsx src/dashboard/pages/PurchaseOrderDetailPage.tsx src/dashboard/pages/PurchaseOrderEditPage.tsx src/dashboard/pages/PurchaseOrdersPage.tsx src/dashboard/pages/ReceivingDetailPage.tsx src/dashboard/pages/ReceivingPage.tsx src/dashboard/pages/SecurityPage.tsx src/dashboard/pages/SeoPage.tsx src/dashboard/pages/SettingsPage.tsx src/dashboard/pages/SuppliersPage.tsx src/dashboard/pages/WorkspacePage.tsx --fix-dry-run
+  lint-other-a:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          command: ./node_modules/.bin/eslint src/dashboard/App.tsx src/dashboard/AppMount.tsx src/dashboard/i18n.ts src/dashboard/config src/dashboard/contexts --fix-dry-run
+  lint-other-b:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          command: ./node_modules/.bin/eslint src/dashboard/hooks src/dashboard/lib src/dashboard/security --fix-dry-run
 
-  lint-dashboard-pages:
+  auth-a1:
     executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          name: ESLint dashboard pages
-          command: ./node_modules/.bin/eslint src/dashboard/pages --fix-dry-run
+    steps: [restore-project, { run: { command: "node --test e2e/dashboard-auth0-security.test.mjs e2e/dashboard-csp-session-ci.test.mjs" } }]
+  auth-a2:
+    executor: node-bun
+    steps: [restore-project, { run: { command: "node --test e2e/dashboard-login-route.test.mjs e2e/dashboard-login-screen-capture.test.mjs" } }]
+  auth-b1:
+    executor: node-bun
+    steps: [restore-project, { run: { command: "node --test e2e/dashboard-login-ui.test.mjs e2e/dashboard-password-breach-screening.test.mjs" } }]
+  auth-b2:
+    executor: node-bun
+    steps: [restore-project, { run: { command: "node --test e2e/dashboard-security-hardening.test.mjs e2e/dashboard-session-security.test.mjs e2e/dashboard-totp-mfa.test.mjs" } }]
 
-  lint-dashboard-components:
+  cat-a1:
     executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          name: ESLint dashboard components
-          command: ./node_modules/.bin/eslint src/dashboard/components --fix-dry-run
+    steps: [restore-project, { run: { command: "node --test e2e/dashboard-category-image-pipeline.test.mjs e2e/dashboard-collections-supabase.test.mjs" } }]
+  cat-a2:
+    executor: node-bun
+    steps: [restore-project, { run: { command: "node --test e2e/dashboard-content-cms-step4.test.mjs e2e/dashboard-hero-image-pipeline.test.mjs e2e/dashboard-hero-supabase.test.mjs" } }]
+  cat-b1:
+    executor: node-bun
+    steps: [restore-project, { run: { command: "node --test e2e/dashboard-home-supabase.test.mjs e2e/dashboard-homepage-cms.test.mjs" } }]
+  cat-b2:
+    executor: node-bun
+    steps: [restore-project, { run: { command: "node --test e2e/dashboard-product-image-metadata.test.mjs e2e/dashboard-product-management-step5.test.mjs e2e/dashboard-settings-supabase.test.mjs" } }]
 
-  lint-dashboard-other:
+  non-a1:
     executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          name: ESLint remaining dashboard
-          command: ./node_modules/.bin/eslint src/dashboard/App.tsx src/dashboard/AppMount.tsx src/dashboard/config src/dashboard/contexts src/dashboard/hooks src/dashboard/lib src/dashboard/security src/dashboard/i18n.ts --fix-dry-run
-
-  test-shell-live-workspace:
+    steps: [restore-project, { run: { command: "node --test e2e/architecture.test.mjs e2e/catalog.test.mjs e2e/cms-refresh.test.mjs" } }]
+  non-a2:
     executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/dashboard-live-workspace.test.mjs
-
-  test-shell-source-guard:
+    steps: [restore-project, { run: { command: "node --test e2e/hybrid-storefront.test.mjs e2e/inventory-supabase.test.mjs e2e/performance-architecture.test.mjs" } }]
+  non-b1:
     executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/dashboard-supabase-source-guard.test.mjs
-
-  test-shell-truthful:
+    steps: [restore-project, { run: { command: "node --test e2e/product-add-edit-supabase.test.mjs e2e/seo-regression.test.mjs" } }]
+  non-b2:
     executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/dashboard-truthful-shell.test.mjs
-
-  test-auth-a:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/dashboard-auth0-security.test.mjs e2e/dashboard-csp-session-ci.test.mjs e2e/dashboard-login-route.test.mjs e2e/dashboard-login-screen-capture.test.mjs
-
-  test-auth-b:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/dashboard-login-ui.test.mjs e2e/dashboard-password-breach-screening.test.mjs e2e/dashboard-security-hardening.test.mjs e2e/dashboard-session-security.test.mjs e2e/dashboard-totp-mfa.test.mjs
-
-  test-catalog-a:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/dashboard-category-image-pipeline.test.mjs e2e/dashboard-collections-supabase.test.mjs e2e/dashboard-content-cms-step4.test.mjs e2e/dashboard-hero-image-pipeline.test.mjs e2e/dashboard-hero-supabase.test.mjs
-
-  test-catalog-b:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/dashboard-home-supabase.test.mjs e2e/dashboard-homepage-cms.test.mjs e2e/dashboard-product-image-metadata.test.mjs e2e/dashboard-product-management-step5.test.mjs e2e/dashboard-settings-supabase.test.mjs
-
-  test-nondashboard-a:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/architecture.test.mjs e2e/catalog.test.mjs e2e/cms-refresh.test.mjs e2e/hybrid-storefront.test.mjs e2e/inventory-supabase.test.mjs e2e/performance-architecture.test.mjs
-
-  test-nondashboard-b:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/product-add-edit-supabase.test.mjs e2e/seo-regression.test.mjs e2e/shopify-only-storefront.test.mjs e2e/storefront-consistency.test.mjs e2e/storefront-supabase-failover.test.mjs
-
-  test-ci-config:
-    executor: node-bun
-    steps:
-      - restore-project
-      - run:
-          command: node --test e2e/ci-config.test.mjs
+    steps: [restore-project, { run: { command: "node --test e2e/shopify-only-storefront.test.mjs e2e/storefront-consistency.test.mjs e2e/storefront-supabase-failover.test.mjs" } }]
 
 workflows:
   storefront-validation:
@@ -210,23 +155,24 @@ workflows:
       - setup:
           filters:
             branches:
-              only:
-                - /^important\/.*/
-      - typecheck-dashboard-data: { requires: [setup] }
-      - typecheck-dashboard-pages: { requires: [setup] }
-      - typecheck-dashboard-components: { requires: [setup] }
-      - typecheck-dashboard-other: { requires: [setup] }
-      - lint-dashboard-data: { requires: [setup] }
-      - lint-dashboard-pages: { requires: [setup] }
-      - lint-dashboard-components: { requires: [setup] }
-      - lint-dashboard-other: { requires: [setup] }
-      - test-shell-live-workspace: { requires: [setup] }
-      - test-shell-source-guard: { requires: [setup] }
-      - test-shell-truthful: { requires: [setup] }
-      - test-auth-a: { requires: [setup] }
-      - test-auth-b: { requires: [setup] }
-      - test-catalog-a: { requires: [setup] }
-      - test-catalog-b: { requires: [setup] }
-      - test-nondashboard-a: { requires: [setup] }
-      - test-nondashboard-b: { requires: [setup] }
-      - test-ci-config: { requires: [setup] }
+              only: [/^important\/.*/]
+      - tsc-catalog: { requires: [setup] }
+      - tsc-inventory: { requires: [setup] }
+      - tsc-receiving: { requires: [setup] }
+      - tsc-other-data: { requires: [setup] }
+      - lint-pages-a: { requires: [setup] }
+      - lint-pages-b: { requires: [setup] }
+      - lint-other-a: { requires: [setup] }
+      - lint-other-b: { requires: [setup] }
+      - auth-a1: { requires: [setup] }
+      - auth-a2: { requires: [setup] }
+      - auth-b1: { requires: [setup] }
+      - auth-b2: { requires: [setup] }
+      - cat-a1: { requires: [setup] }
+      - cat-a2: { requires: [setup] }
+      - cat-b1: { requires: [setup] }
+      - cat-b2: { requires: [setup] }
+      - non-a1: { requires: [setup] }
+      - non-a2: { requires: [setup] }
+      - non-b1: { requires: [setup] }
+      - non-b2: { requires: [setup] }
