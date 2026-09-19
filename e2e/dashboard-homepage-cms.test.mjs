@@ -43,11 +43,13 @@ test("storefront orders and hides homepage blocks from public CMS sections", () 
   assert.match(storefront, /<CmsBuilderSection section=\{section\} \/>/);
 });
 
-test("public CMS projects cms_sections and localized section titles remain consumed", () => {
-  assert.match(publicCms, /from\("cms_sections"\)/);
-  assert.match(categories, /localizeSection\(cmsSection, language\)/);
-  assert.match(brands, /localizeSection\(cmsSection, language\)/);
-  assert.match(trust, /localizeSection\(section, language\)/);
+test("public CMS exposes only visible sections, navigation and brands", () => {
+  assert.match(publicCms, /from\\("cms_sections"\\)[\\s\\S]*?\\.eq\\("is_visible", true\\)/);
+  assert.match(publicCms, /from\\("cms_navigation_items"\\)[\\s\\S]*?\\.eq\\("is_visible", true\\)/);
+  assert.match(publicCms, /from\\("cms_brands"\\)[\\s\\S]*?\\.eq\\("is_visible", true\\)/);
+  assert.match(categories, /localizeSection\\(cmsSection, language\\)/);
+  assert.match(brands, /localizeSection\\(cmsSection, language\\)/);
+  assert.match(trust, /localizeSection\\(section, language\\)/);
 });
 
 test("core homepage sections cannot be accidentally deleted from the builder", () => {
