@@ -165,6 +165,47 @@ export async function getDashboardRole(): Promise<DashboardRole | null> {
   return data.role === "admin" || data.role === "editor" ? data.role : null;
 }
 
+type DashboardThrottleDecision = {
+  allowed: boolean;
+  retryAfter: number;
+  remainingBeforeBlock?: number;
+};
+
+async function dashboardLoginThrottle(
+  email: string,
+  outcome: "check" | "failure" | "success",
+): Promise<DashboardThrottleDecision> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return { allowed: true, retryAfter: 0 };
+
+  const { data, error } = await supabase.functions.invoke("dashboard-auth-throttle", {
+    body: { email: normalizedEmail, outcome },
+  });
+
+  if (error) {
+    console.warn("[dashboard-security] login throttle unavailable", error.message);
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  const payload = data as Partial<DashboardThrottleDecision> | null;
+  return {
+    allowed: payload?.allowed !== false,
+    retryAfter:
+      typeof payload?.retryAfter === "number" && Number.isFinite(payload.retryAfter)
+        ? Math.max(0, payload.retryAfter)
+        : 0,
+    remainingBeforeBlock:
+      typeof payload?.remainingBeforeBlock === "number"
+        ? Math.max(0, payload.remainingBeforeBlock)
+        : undefined,
+  };
+}
+
+function throttleMessage(retryAfter: number) {
+  const minutes = Math.max(1, Math.ceil(retryAfter / 60));
+  return `Too many failed sign-in attempts. Try again in about ${minutes} minute${minutes === 1 ? "" : "s"}.`;
+}
+
 export async function signInDashboard(
   email: string,
   password: string,
@@ -174,18 +215,31 @@ export async function signInDashboard(
     throw new Error("Complete the security verification before signing in.");
   }
 
+  const throttle = await dashboardLoginThrottle(email, "check");
+  if (!throttle.allowed) {
+    throw new Error(throttleMessage(throttle.retryAfter));
+  }
+
   const { error } = await supabase.auth.signInWithPassword({
     email: email.trim(),
     password,
     ...(captchaToken ? { options: { captchaToken } } : {}),
   });
-  throwIfError(error, "Sign in failed");
+
+  if (error) {
+    const failed = await dashboardLoginThrottle(email, "failure");
+    if (!failed.allowed) throw new Error(throttleMessage(failed.retryAfter));
+    throwIfError(error, "Sign in failed");
+  }
 
   const role = await getDashboardRole();
   if (!role) {
+    await dashboardLoginThrottle(email, "failure");
     await supabase.auth.signOut({ scope: "local" });
     throw new Error("This account does not have dashboard access.");
   }
+
+  await dashboardLoginThrottle(email, "success");
   return role;
 }
 
@@ -315,6 +369,10 @@ export async function verifyDashboardTotp(
   }
   await logDashboardSecurityEvent("mfa_verified", {
     aal: status.currentLevel,
+  });
+  await logDashboardSecurityEvent("login_success", {
+    aal: status.currentLevel,
+    mfa: true,
   });
   return status;
 }
