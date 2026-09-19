@@ -1,1 +1,9 @@
 project_id = "bzkbjkduealajwrkefif"
+
+[auth.passkey]
+enabled = true
+
+[auth.webauthn]
+rp_display_name = "Space Call Dashboard"
+rp_id = "spacecallapp.store"
+rp_origins = ["https://spacecallapp.store", "https://www.spacecallapp.store"]
