@@ -6,10 +6,10 @@ export const cmsQueryOptions = () =>
     queryKey: ["storefront", "public-cms"],
     queryFn: fetchCmsSnapshot,
     placeholderData: EMPTY_CMS,
-    staleTime: 5_000,
+    staleTime: 60_000,
     gcTime: 5 * 60_000,
-    // Revalidate after hydration so a transient SSR CMS miss can never pin an old hero.
-    refetchOnMount: "always",
+    // Revalidate only when the cached CMS snapshot is stale; avoid a duplicate request on every mount.
+    refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     retry: 1,
