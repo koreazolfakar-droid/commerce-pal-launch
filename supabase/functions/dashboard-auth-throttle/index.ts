@@ -59,20 +59,65 @@ Deno.serve(async (req) => {
     return json({ error: "invalid_json" }, 400);
   }
 
-  const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
+  const requestedEmail =
+    typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   const outcome = String(payload.outcome ?? "");
-  if (!email || email.length > 320 || !email.includes("@")) return json({ error: "invalid_request" }, 400);
-  if (!["check", "failure", "success"].includes(outcome)) return json({ error: "invalid_request" }, 400);
+  if (!["check", "failure", "success"].includes(outcome)) {
+    return json({ error: "invalid_request" }, 400);
+  }
+  if (
+    outcome !== "success" &&
+    (!requestedEmail || requestedEmail.length > 320 || !requestedEmail.includes("@"))
+  ) {
+    return json({ error: "invalid_request" }, 400);
+  }
+
+  const supabase = createClient(url, serviceRole, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  let email = requestedEmail;
+  if (outcome === "success") {
+    const authorization = req.headers.get("authorization")?.trim() ?? "";
+    if (!authorization.toLowerCase().startsWith("bearer ")) {
+      return json({ error: "authentication_required" }, 401);
+    }
+
+    const token = authorization.slice(7).trim();
+    if (!token) return json({ error: "authentication_required" }, 401);
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
+    if (authError || !user?.id || !user.email) {
+      return json({ error: "authentication_required" }, 401);
+    }
+
+    const { data: roleRow, error: roleError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (roleError) return json({ error: "throttle_unavailable" }, 503);
+    if (roleRow?.role !== "admin" && roleRow?.role !== "editor") {
+      return json({ error: "dashboard_access_required" }, 403);
+    }
+
+    // Never trust a client-supplied email for a successful login reset.
+    // Bind the reset to the email from the validated Supabase user session.
+    email = user.email.trim().toLowerCase();
+  }
+
+  if (!email || email.length > 320 || !email.includes("@")) {
+    return json({ error: "invalid_request" }, 400);
+  }
 
   const ip = clientIp(req);
   const [pairKeyHash, ipKeyHash] = await Promise.all([
     sha256(`pair|${ip}|${email}`),
     sha256(`ip|${ip}`),
   ]);
-
-  const supabase = createClient(url, serviceRole, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
 
   async function readBucket(keyHash: string): Promise<Bucket | null> {
     const { data, error } = await supabase
