@@ -74,10 +74,14 @@ test("dashboard data layer uses real procurement tables and RPCs", () => {
 
 test("procurement list pages skip unused heavy workspace payloads", () => {
   assert.match(data, /ReceivingWorkspaceLoadOptions/);
+  assert.match(data, /includePurchaseOrders = options\.includePurchaseOrders !== false/);
+  assert.match(data, /includeReceivings = options\.includeReceivings !== false/);
   assert.match(data, /includeProductOptions = options\.includeProductOptions !== false/);
   assert.match(data, /includeAudit = options\.includeAudit !== false/);
   assert.match(data, /includeSerials = options\.includeSerials !== false/);
-  assert.match(page, /includeProductOptions: !purchaseOrdersMode/);
+  assert.match(page, /includePurchaseOrders: !purchaseOrderCreateMode/);
+  assert.match(page, /includeReceivings: !purchaseOrderCreateMode/);
+  assert.match(page, /includeProductOptions: purchaseOrderCreateMode/);
   assert.match(page, /includeAudit: false/);
   assert.match(page, /includeSerials: false/);
 });
@@ -239,6 +243,14 @@ test("draft PO editing, deletion and expected delivery are routed separately", (
   assert.match(purchaseOrderEditPage, /deletePurchaseOrderDraft/);
 });
 
+test("PO edit uses targeted form data instead of the full procurement workspace", () => {
+  assert.match(data, /export async function loadPurchaseOrderEditData/);
+  assert.match(data, /loadPurchaseOrderDetail\(purchaseOrderId, \{ includeAudit: false \}\)/);
+  assert.match(data, /export async function loadProcurementFormOptions/);
+  assert.doesNotMatch(purchaseOrderEditPage, /loadReceivingWorkspace/);
+  assert.match(purchaseOrderEditPage, /loadPurchaseOrderEditData\(id\)/);
+});
+
 test("receiving review supports editable drafts, invoice matching, serials and void", () => {
   assert.match(app, /ReceivingDetailPage/);
   assert.match(app, /receivingDetail/);
@@ -253,6 +265,23 @@ test("receiving review supports editable drafts, invoice matching, serials and v
   assert.match(upgrade, /update_store_receiving_draft/);
   assert.match(upgrade, /replace_store_receiving_serials/);
   assert.match(upgrade, /admin approval is required for excess delivery/);
+});
+
+test("receiving detail loads only the requested receiving dataset", () => {
+  assert.match(data, /export async function loadReceivingDetail/);
+  const start = data.indexOf("export async function loadReceivingDetail");
+  const end = data.indexOf("export async function createReceivingSupplier", start);
+  assert.ok(start >= 0 && end > start);
+
+  const detailLoader = data.slice(start, end);
+  assert.match(detailLoader, /\.eq\("id", receivingId\)/);
+  assert.match(detailLoader, /\.eq\("receiving_id", receivingId\)/);
+  assert.match(detailLoader, /store_receiving_items/);
+  assert.match(detailLoader, /store_receiving_serials/);
+  assert.match(detailLoader, /store_procurement_events/);
+  assert.match(detailLoader, /store_procurement_attachments/);
+  assert.doesNotMatch(receivingDetailPage, /loadReceivingWorkspace/);
+  assert.match(receivingDetailPage, /loadReceivingDetail\(id\)/);
 });
 
 test("approved receiving updates stock, serial state and weighted average cost with FX", () => {
@@ -290,6 +319,15 @@ test("supplier management, analytics and reorder suggestions are live modules", 
   assert.match(data, /buildProcurementAnalytics/);
   assert.match(data, /buildReorderSuggestions/);
   assert.match(data, /recommendedSupplierName/);
+});
+
+test("supplier and analytics pages request only the procurement datasets they use", () => {
+  assert.match(suppliersPage, /includeReceivings: false/);
+  assert.match(suppliersPage, /includeProductOptions: false/);
+  assert.match(suppliersPage, /includeAudit: false/);
+  assert.match(suppliersPage, /includeSerials: false/);
+  assert.match(analyticsPage, /includeAudit: false/);
+  assert.match(analyticsPage, /includeSerials: false/);
 });
 
 test("generated Supabase types include procurement tables and functions", () => {

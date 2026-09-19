@@ -165,7 +165,9 @@ export default function ReceivingPage({
     manual ? setRefreshing(true) : setLoading(true);
     try {
       const next = await loadReceivingWorkspace({
-        includeProductOptions: !purchaseOrdersMode,
+        includePurchaseOrders: !purchaseOrderCreateMode,
+        includeReceivings: !purchaseOrderCreateMode,
+        includeProductOptions: purchaseOrderCreateMode,
         includeAudit: false,
         includeSerials: false,
       });
@@ -180,7 +182,7 @@ export default function ReceivingPage({
       setLoading(false);
       setRefreshing(false);
     }
-  }, [purchaseOrdersMode]);
+  }, [purchaseOrderCreateMode]);
 
   useEffect(() => {
     void load(false);
