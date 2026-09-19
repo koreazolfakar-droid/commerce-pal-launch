@@ -118,6 +118,107 @@ before insert or update of purchase_order_id on public.store_receivings
 for each row execute function private.store_receiving_fill_supplier();
 
 -- ---------------------------------------------------------------------------
+-- Weighted average inventory cost
+-- ---------------------------------------------------------------------------
+
+alter table public.store_products
+  add column if not exists average_cost numeric(12,2) not null default 0 check (average_cost >= 0);
+
+alter table public.store_product_variants
+  add column if not exists average_cost numeric(12,2) not null default 0 check (average_cost >= 0);
+
+create or replace function private.update_average_cost_after_receiving_approval()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_line record;
+  v_current_stock integer;
+  v_old_stock integer;
+  v_old_average numeric(12,2);
+  v_new_average numeric(12,2);
+begin
+  if new.status <> 'approved' or old.status is not distinct from new.status then
+    return new;
+  end if;
+
+  for v_line in
+    select
+      ri.received_quantity,
+      ri.unit_cost,
+      poi.product_id,
+      poi.variant_id
+    from public.store_receiving_items ri
+    join public.store_purchase_order_items poi on poi.id = ri.purchase_order_item_id
+    where ri.receiving_id = new.id
+      and ri.received_quantity > 0
+  loop
+    if v_line.variant_id is not null then
+      select stock_quantity, average_cost
+        into v_current_stock, v_old_average
+      from public.store_product_variants
+      where id = v_line.variant_id
+      for update;
+
+      v_old_stock := greatest(0, v_current_stock - v_line.received_quantity);
+      if v_current_stock > 0 then
+        v_new_average := round(
+          ((v_old_stock::numeric * v_old_average) + (v_line.received_quantity::numeric * v_line.unit_cost))
+          / v_current_stock::numeric,
+          2
+        );
+        update public.store_product_variants
+        set average_cost = greatest(0, v_new_average),
+            updated_at = now()
+        where id = v_line.variant_id;
+      end if;
+
+      update public.store_products p
+      set average_cost = coalesce((
+            select round(
+              sum(v.stock_quantity::numeric * v.average_cost) / nullif(sum(v.stock_quantity), 0)::numeric,
+              2
+            )
+            from public.store_product_variants v
+            where v.product_id = v_line.product_id
+              and v.is_active
+          ), 0),
+          updated_at = now()
+      where p.id = v_line.product_id;
+    else
+      select stock_quantity, average_cost
+        into v_current_stock, v_old_average
+      from public.store_products
+      where id = v_line.product_id
+      for update;
+
+      v_old_stock := greatest(0, v_current_stock - v_line.received_quantity);
+      if v_current_stock > 0 then
+        v_new_average := round(
+          ((v_old_stock::numeric * v_old_average) + (v_line.received_quantity::numeric * v_line.unit_cost))
+          / v_current_stock::numeric,
+          2
+        );
+        update public.store_products
+        set average_cost = greatest(0, v_new_average),
+            updated_at = now()
+        where id = v_line.product_id;
+      end if;
+    end if;
+  end loop;
+
+  return new;
+end;
+$;
+
+drop trigger if exists store_receivings_update_average_cost on public.store_receivings;
+create trigger store_receivings_update_average_cost
+after update of status on public.store_receivings
+for each row execute function private.update_average_cost_after_receiving_approval();
+
+-- ---------------------------------------------------------------------------
 -- Attachments and device serial / IMEI capture
 -- ---------------------------------------------------------------------------
 
