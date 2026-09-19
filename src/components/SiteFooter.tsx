@@ -43,7 +43,17 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
   const logoUrl =
     typeof cmsLogoUrl === "string" && cmsLogoUrl.trim() ? cmsLogoUrl.trim() : "/logo.svg";
   const whatsappDigits = typeof cmsWhatsApp === "string" ? cmsWhatsApp.replace(/\D/g, "") : "";
-  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : generalWhatsAppUrl();
+  const whatsappUrl = generalWhatsAppUrl(whatsappDigits || undefined, storeName);
+  const socialSetting = (key: string, fallback: string) => {
+    const value = cms?.settings[key];
+    return typeof value === "string" && value.trim() ? value.trim() : fallback;
+  };
+  const socials = [
+    { label: "Instagram", Icon: Instagram, href: socialSetting("instagram_url", STORE_CONFIG.socialInstagram) },
+    { label: "Facebook", Icon: Facebook, href: socialSetting("facebook_url", STORE_CONFIG.socialFacebook) },
+    { label: "X", Icon: Twitter, href: socialSetting("x_url", STORE_CONFIG.socialX) },
+    { label: "YouTube", Icon: Youtube, href: socialSetting("youtube_url", STORE_CONFIG.socialYoutube) },
+  ];
 
   const support = [
     ["Help", "/help"],
@@ -91,7 +101,7 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
               {isAr ? "تواصل معنا عبر واتساب" : "Contact us on WhatsApp"}
             </a>
             <div className="mt-5 flex gap-3 text-muted-foreground">
-              {SOCIALS.filter((social) => social.href).map(({ Icon, label, href }) => (
+              {socials.filter((social) => social.href).map(({ Icon, label, href }) => (
                 <a
                   key={label}
                   href={href}
