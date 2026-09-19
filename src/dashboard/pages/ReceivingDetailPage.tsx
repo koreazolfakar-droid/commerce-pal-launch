@@ -433,19 +433,21 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
                 <a href={attachment.url} target="_blank" rel="noreferrer" className="truncate text-[11px] font-bold text-indigo-600 hover:underline">
                   {attachment.fileName}
                 </a>
-                <button
-                  onClick={() => {
-                    if (!window.confirm("Delete this attachment?")) return;
-                    setSaving(true);
-                    void deleteProcurementAttachment(attachment)
-                      .then(() => load())
-                      .catch((cause) => toast.error(cause instanceof Error ? cause.message : "Delete failed."))
-                      .finally(() => setSaving(false));
-                  }}
-                  className="text-[10px] font-bold text-rose-600"
-                >
-                  Delete
-                </button>
+                {workspace.role === "admin" ? (
+                  <button
+                    onClick={() => {
+                      if (!window.confirm("Delete this attachment?")) return;
+                      setSaving(true);
+                      void deleteProcurementAttachment(attachment)
+                        .then(() => load())
+                        .catch((cause) => toast.error(cause instanceof Error ? cause.message : "Delete failed."))
+                        .finally(() => setSaving(false));
+                    }}
+                    className="text-[10px] font-bold text-rose-600"
+                  >
+                    Delete
+                  </button>
+                ) : null}
               </div>
             ))}
             {!attachments.length ? <div className="p-6 text-center text-[10px] text-slate-400">No receiving documents yet.</div> : null}
