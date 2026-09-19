@@ -33,6 +33,7 @@ import {
   type DashboardHeroSlide,
   type HeroAlignment,
   type HeroButtonStyle,
+  type HeroContentTheme,
   type HeroImageTarget,
   type HeroTargetType,
 } from "@/dashboard/data/hero";
@@ -42,6 +43,8 @@ const EMPTY_FORM: DashboardHeroInput = {
   titleAr: "",
   subtitleEn: "",
   subtitleAr: "",
+  eyebrowEn: "",
+  eyebrowAr: "",
   imageUrl: "",
   mobileImageUrl: "",
   imageAltEn: "",
@@ -52,13 +55,20 @@ const EMPTY_FORM: DashboardHeroInput = {
   buttonLabelAr: "",
   targetType: "none",
   targetValue: "",
+  secondaryButtonLabelEn: "",
+  secondaryButtonLabelAr: "",
+  secondaryTargetType: "none",
+  secondaryTargetValue: "",
   isPublished: false,
   startsAt: "",
   endsAt: "",
   contentAlignment: "start",
   overlayOpacity: 20,
   buttonStyle: "primary",
+  secondaryButtonStyle: "secondary",
+  contentTheme: "light",
   openInNewTab: false,
+  secondaryOpenInNewTab: false,
 };
 
 function toLocalInputValue(value: string) {
@@ -75,6 +85,8 @@ function fromSlide(slide: DashboardHeroSlide): DashboardHeroInput {
     titleAr: slide.titleAr,
     subtitleEn: slide.subtitleEn,
     subtitleAr: slide.subtitleAr,
+    eyebrowEn: slide.eyebrowEn,
+    eyebrowAr: slide.eyebrowAr,
     imageUrl: slide.imageUrl,
     mobileImageUrl: slide.mobileImageUrl,
     imageAltEn: slide.imageAltEn,
@@ -85,13 +97,20 @@ function fromSlide(slide: DashboardHeroSlide): DashboardHeroInput {
     buttonLabelAr: slide.buttonLabelAr,
     targetType: slide.targetType,
     targetValue: slide.targetValue,
+    secondaryButtonLabelEn: slide.secondaryButtonLabelEn,
+    secondaryButtonLabelAr: slide.secondaryButtonLabelAr,
+    secondaryTargetType: slide.secondaryTargetType,
+    secondaryTargetValue: slide.secondaryTargetValue,
     isPublished: slide.isPublished,
     startsAt: toLocalInputValue(slide.startsAt),
     endsAt: toLocalInputValue(slide.endsAt),
     contentAlignment: slide.contentAlignment,
     overlayOpacity: slide.overlayOpacity,
     buttonStyle: slide.buttonStyle,
+    secondaryButtonStyle: slide.secondaryButtonStyle,
+    contentTheme: slide.contentTheme,
     openInNewTab: slide.openInNewTab,
+    secondaryOpenInNewTab: slide.secondaryOpenInNewTab,
   };
 }
 
@@ -108,6 +127,19 @@ function targetHref(form: DashboardHeroInput) {
   if (form.targetType === "collection" && form.targetValue) return `/collections/${form.targetValue}`;
   if (form.targetType === "url" && form.targetValue) return form.targetValue;
   return "";
+}
+
+function secondaryTargetHref(form: DashboardHeroInput) {
+  if (form.secondaryTargetType === "product" && form.secondaryTargetValue) return `/product/${form.secondaryTargetValue}`;
+  if (form.secondaryTargetType === "collection" && form.secondaryTargetValue) return `/collections/${form.secondaryTargetValue}`;
+  if (form.secondaryTargetType === "url" && form.secondaryTargetValue) return form.secondaryTargetValue;
+  return "";
+}
+
+function contentThemeClass(theme: HeroContentTheme) {
+  if (theme === "dark") return "text-slate-950";
+  if (theme === "glass") return "text-white rounded-2xl bg-slate-950/35 p-4 backdrop-blur-md sm:p-6";
+  return "text-white";
 }
 
 function buttonClass(style: HeroButtonStyle) {
