@@ -10,7 +10,7 @@ import { LanguageContext, useLanguage } from "@/dashboard/i18n";
 import { validateProductDraft } from "@/dashboard/lib/validation";
 import {
   getDashboardProduct,
-  getDashboardRole,
+  getDashboardMfaStatus,
   listDashboardBrands,
   listDashboardCategories,
   listDashboardCollections,
@@ -644,14 +644,17 @@ function DashboardGate() {
 
   useEffect(() => {
     let cancelled = false;
-    getDashboardRole()
-      .then((role) => {
+    getDashboardMfaStatus()
+      .then((status) => {
         if (cancelled) return;
-        if (role) setState("ready");
-        else {
-          setState("denied");
-          navigate("/dashboard/login");
+
+        if (status?.ready) {
+          setState("ready");
+          return;
         }
+
+        setState("denied");
+        navigate(status ? "/dashboard/login?mode=mfa" : "/dashboard/login");
       })
       .catch(() => {
         if (!cancelled) {
@@ -659,6 +662,7 @@ function DashboardGate() {
           navigate("/dashboard/login");
         }
       });
+
     return () => {
       cancelled = true;
     };

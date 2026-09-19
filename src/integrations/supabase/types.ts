@@ -1084,16 +1084,22 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string
+          mfa_enrolled_at: string | null
+          mfa_required: boolean
           role: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          mfa_enrolled_at?: string | null
+          mfa_required?: boolean
           role: string
           user_id: string
         }
         Update: {
           created_at?: string
+          mfa_enrolled_at?: string | null
+          mfa_required?: boolean
           role?: string
           user_id?: string
         }
@@ -1104,6 +1110,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_dashboard_mfa: {
+        Args: never
+        Returns: {
+          mfa_enrolled_at: string
+          mfa_required: boolean
+          role: string
+        }[]
+      }
       adjust_store_inventory: {
         Args: {
           p_note?: string
