@@ -173,7 +173,7 @@ type DashboardThrottleDecision = {
 
 async function dashboardLoginThrottle(
   email: string,
-  outcome: "check" | "failure" | "success",
+  outcome: "check" | "failure",
 ): Promise<DashboardThrottleDecision> {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return { allowed: true, retryAfter: 0 };
@@ -239,7 +239,6 @@ export async function signInDashboard(
     throw new Error("This account does not have dashboard access.");
   }
 
-  await dashboardLoginThrottle(email, "success");
   return role;
 }
 
