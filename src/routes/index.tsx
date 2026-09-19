@@ -311,6 +311,8 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
       : typeof section.content["builderType"] === "string"
         ? section.content["builderType"]
         : section.section_type;
+  const displayTitle = localized.title || section.title || "";
+  const displaySubtitle = localized.subtitle || section.subtitle || "";
   const description = typeof builder["description"] === "string" ? builder["description"] : "";
   const eyebrow = typeof builder["eyebrow"] === "string" ? builder["eyebrow"] : "";
   const buttonText = typeof builder["buttonText"] === "string" ? builder["buttonText"] : "";
@@ -332,7 +334,7 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
   if (type === "announcement") {
     return (
       <section className="rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white">
-        {localized.title || section.title || description}
+        {displayTitle || description}
         {buttonText && buttonLink ? (
           <a href={buttonLink} className="ms-2 font-bold text-indigo-200 hover:underline">
             {buttonText}
@@ -377,12 +379,12 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
             {eyebrow}
           </div>
         ) : null}
-        {localized.title ? (
-          <h2 className="text-2xl font-black tracking-tight sm:text-3xl">{localized.title}</h2>
+        {displayTitle ? (
+          <h2 className="text-2xl font-black tracking-tight sm:text-3xl">{displayTitle}</h2>
         ) : null}
-        {localized.subtitle ? (
+        {displaySubtitle ? (
           <p className={`text-sm font-semibold ${dark ? "text-white/80" : "text-muted-foreground"}`}>
-            {localized.subtitle}
+            {displaySubtitle}
           </p>
         ) : null}
         {description ? (
