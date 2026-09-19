@@ -8,7 +8,7 @@ import {
   RefreshCw,
   Truck,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
@@ -40,7 +40,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
+function InfoItem({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
       <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">{label}</div>
