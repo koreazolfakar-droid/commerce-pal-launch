@@ -56,5 +56,11 @@ test("inventory movement history drawer is paginated and resilient", () => {
   assert.match(movementDrawer, /Filter inventory movement history by type/);
   assert.match(inventoryData, /movementType\?: InventoryMovementType/);
   assert.match(inventoryData, /query = query\.eq\("movement_type", input\.movementType\)/);
+  assert.match(movementDrawer, /Last 7 days/);
+  assert.match(movementDrawer, /Last 30 days/);
+  assert.match(movementDrawer, /Last 90 days/);
+  assert.match(movementDrawer, /movementCreatedSince\(period\)/);
+  assert.match(inventoryData, /createdSince\?: string/);
+  assert.match(inventoryData, /query = query\.gte\("created_at", input\.createdSince\)/);
   assert.doesNotMatch(movementDrawer, /service_role|SUPABASE_SERVICE_ROLE|sb_secret_/);
 });
