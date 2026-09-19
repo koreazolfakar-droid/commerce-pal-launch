@@ -19,6 +19,14 @@ const migration = await readFile(
   new URL("../supabase/migrations/20260918230000_harden_cms_hero_targets.sql", import.meta.url),
   "utf8",
 );
+const customizationMigration = await readFile(
+  new URL("../supabase/migrations/20260919205500_expand_hero_customization.sql", import.meta.url),
+  "utf8",
+);
+const cmsGateway = await readFile(
+  new URL("../supabase/functions/public-cms/index.ts", import.meta.url),
+  "utf8",
+);
 
 test("dedicated hero dashboard route uses the real CMS page", () => {
   assert.match(app, /HeroBannersPageLive/);
@@ -59,6 +67,19 @@ test("hero CTA uses validated product, collection or safe URL targets", () => {
   assert.match(migration, /c\.is_active = true/);
   assert.match(migration, /hero desktop image must use HTTPS/);
   assert.match(migration, /hero mobile image must use HTTPS/);
+});
+
+test("hero customization is persisted and exposed through the public CMS gateway", () => {
+  assert.match(customizationMigration, /add column if not exists eyebrow_en/);
+  assert.match(customizationMigration, /secondary_target_type/);
+  assert.match(customizationMigration, /content_theme/);
+  assert.match(customizationMigration, /create_cms_hero_slide_v2/);
+  assert.match(customizationMigration, /update_cms_hero_slide_v2/);
+  assert.match(customizationMigration, /from public, anon/);
+  assert.match(cmsGateway, /eyebrow_en: row\.eyebrow_en/);
+  assert.match(cmsGateway, /secondary_button_label_en/);
+  assert.match(cmsGateway, /secondary_target_type/);
+  assert.match(cmsGateway, /content_theme: row\.content_theme/);
 });
 
 test("public CMS uses an edge gateway with resilient empty fallback", () => {
