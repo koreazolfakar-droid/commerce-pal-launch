@@ -243,8 +243,22 @@ export default function ReceivingPage({
         (item.status === "ordered" || item.status === "partially_received"),
     );
     if (!po) return;
+
+    const next: Record<string, ReceivingDraftLine> = {};
+    for (const item of po.items) {
+      if (item.remainingQuantity <= 0) continue;
+      next[item.id] = {
+        received: "",
+        damaged: "0",
+        unitCost: String(item.unitCost),
+        overageConfirmed: false,
+        overageReason: "",
+      };
+    }
+
+    setReceivingPoId(po.id);
+    setReceivingLines(next);
     setPanel("receive");
-    selectReceivingPo(po.id);
   }, [purchaseOrderId, receivingMode, workspace]);
 
   const saveSupplier = async () => {
