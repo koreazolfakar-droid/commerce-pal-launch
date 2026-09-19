@@ -35,6 +35,7 @@ import LoginPage from "@/dashboard/pages/LoginPage";
 import SecurityPage from "@/dashboard/pages/SecurityPage";
 import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 import { useDashboardAuth0 } from "@/dashboard/security/Auth0DashboardSecurity";
+import { SITE_URL, STORE_CONFIG } from "@/lib/storeConfig";
 
 const iconMap: Record<string, typeof LayoutDashboard> = { LayoutDashboard, ShoppingBag, Package, Layers3, Tags, Boxes, Users, PanelsTopLeft, Image: ImageIcon, Badge: Star, Menu, BadgePercent: TicketPercent, Megaphone, TicketPercent, SearchCheck, ChartNoAxesCombined: BarChart3, Mail, Star, FolderOpen, UserCog, ScrollText: FileText, Settings2, LockKeyhole };
 
@@ -71,25 +72,195 @@ function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: { colla
         </div>)}
       </div>
       <div className="border-t border-white/[.07] p-4">
-        {!collapsed && <div className="mb-3 rounded-2xl border border-white/[.08] bg-white/[.05] p-3"><div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-slate-300"><Sparkles className="size-3.5 text-[#8c8aff]" /> {t("Standalone workspace")}</div><p className="mb-3 text-[11px] leading-4 text-slate-500">{t("Supabase catalog connected.")}</p><button onClick={() => toast.info("Store preview link is available in the next integration phase.")} className="flex items-center gap-1.5 text-[11px] font-semibold text-[#a8b2ff] hover:text-white">{t("View store")} <ExternalLink className="size-3" /></button></div>}
+        {!collapsed && <div className="mb-3 rounded-2xl border border-white/[.08] bg-white/[.05] p-3"><div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-slate-300"><Sparkles className="size-3.5 text-[#8c8aff]" /> {t("Live workspace")}</div><p className="mb-3 text-[11px] leading-4 text-slate-500">{t("Supabase data connected.")}</p><button onClick={() => window.open(SITE_URL, "_blank", "noopener,noreferrer")} className="flex items-center gap-1.5 text-[11px] font-semibold text-[#a8b2ff] hover:text-white">{t("View store")} <ExternalLink className="size-3" /></button></div>}
         <button onClick={() => setCollapsed(!collapsed)} className={`hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[12px] text-slate-500 hover:bg-white/[.06] hover:text-white lg:flex ${collapsed ? "justify-center" : ""}`} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>{collapsed ? <PanelLeftOpen className="size-4" /> : <><PanelLeftClose className="size-4" /><span>{t("Collapse sidebar")}</span></>}</button>
       </div>
     </aside>
   </>;
 }
 
-function Header({ onMenu, onSearch }: { onMenu: () => void; onSearch: (value: string) => void }) {
+function Header({ onMenu }: { onMenu: () => void }) {
   const { lang, setLang, t } = useLanguage();
   const { enabled: auth0Enabled, logoutAuth0 } = useDashboardAuth0();
-  const [query, setQuery] = useState(""); const [open, setOpen] = useState(false); const [profileOpen, setProfileOpen] = useState(false); const [, navigate] = useLocation();
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [, navigate] = useLocation();
   const [headerProducts, setHeaderProducts] = useState<DashboardProduct[]>([]);
-  useEffect(() => { const listener = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); document.getElementById("global-search")?.focus(); } }; window.addEventListener("keydown", listener); return () => window.removeEventListener("keydown", listener); }, []);
-  useEffect(() => { let cancelled = false; listDashboardProducts().then((rows) => { if (!cancelled) setHeaderProducts(rows); }).catch(() => undefined); return () => { cancelled = true; }; }, []);
-  const results: DashboardProduct[] = query ? headerProducts.filter(p => `${p.name} ${p.brand} ${p.sku}`.toLowerCase().includes(query.toLowerCase())).slice(0, 5) : [];
-  return <header className="sticky top-0 z-30 flex h-[78px] items-center justify-between border-b border-slate-200/80 bg-[#f7f9fc]/90 px-4 backdrop-blur-xl sm:px-6 lg:px-10">
-    <div className="flex min-w-0 flex-1 items-center gap-3"><button onClick={onMenu} className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 lg:hidden"><Menu className="size-5" /></button><div className="relative hidden max-w-[480px] flex-1 sm:block"><Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input id="global-search" value={query} onChange={e => { setQuery(e.target.value); setOpen(true); onSearch(e.target.value); }} onFocus={() => setOpen(true)} placeholder={t("Search orders, products, customers...")} className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-14 text-[13px] text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#6872ee] focus:ring-4 focus:ring-[#6872ee]/10" /><div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400"><Command className="size-3" />K</div>{open && query && <div className="absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">{results.length ? results.map((item) => <button key={item.id} onClick={() => { setOpen(false); navigate(`/dashboard/products/${item.id}`); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-slate-50"><div className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><Package className="size-4" /></div><div className="min-w-0"><div className="truncate text-[12px] font-semibold text-slate-800">{item.name}</div><div className="text-[11px] text-slate-400">{`${item.brand || "No brand"} · ${item.category || "Uncategorized"}`}</div></div></button>) : <div className="px-3 py-4 text-center text-xs text-slate-400">No matching Supabase products</div>}</div>}</div></div>
-    <div className="flex shrink-0 items-center gap-2 sm:gap-4"><button onClick={() => toast.info("You are all caught up.")} className="relative grid size-10 place-items-center rounded-xl text-slate-500 hover:bg-white hover:text-slate-800"><Bell className="size-[18px]" /><span className="absolute right-2.5 top-2 size-1.5 rounded-full bg-rose-500 ring-2 ring-[#f7f9fc]" /></button><div className="hidden h-8 w-px bg-slate-200 sm:block" /><button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-500 hover:text-indigo-600" title={lang === "en" ? "العربية" : "English"}>{lang === "en" ? "AR" : "EN"}</button><button onClick={() => setProfileOpen(!profileOpen)} className="relative flex items-center gap-2.5 rounded-xl p-1.5 pr-2 hover:bg-white"><div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-white">SC</div><div className="hidden text-left sm:block"><div className="text-[12px] font-bold text-slate-800">Space Call Staff</div><div className="text-[10px] font-medium text-slate-400">{t("Store Manager")}</div></div><ChevronDown className="hidden size-4 text-slate-400 sm:block" />{profileOpen && <div className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-2xl border border-slate-200 bg-white p-2 text-left shadow-xl"><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"><Users className="size-3.5" /> Profile</button><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"><Settings2 className="size-3.5" /> Preferences</button><button onClick={async () => { await signOutDashboard().catch(() => undefined); if (auth0Enabled) { await logoutAuth0(); return; } navigate("/dashboard/login"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-rose-600 hover:bg-rose-50"><LogOut className="size-3.5" /> Sign out</button></div>}</button></div>
-  </header>;
+
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        document.getElementById("global-search")?.focus();
+      }
+    };
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    listDashboardProducts()
+      .then((rows) => {
+        if (!cancelled) setHeaderProducts(rows);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const results: DashboardProduct[] = query
+    ? headerProducts
+        .filter((product) =>
+          `${product.name} ${product.brand} ${product.sku}`
+            .toLowerCase()
+            .includes(query.toLowerCase()),
+        )
+        .slice(0, 5)
+    : [];
+
+  return (
+    <header className="sticky top-0 z-30 flex h-[78px] items-center justify-between border-b border-slate-200/80 bg-[#f7f9fc]/90 px-4 backdrop-blur-xl sm:px-6 lg:px-10">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          onClick={onMenu}
+          className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 lg:hidden"
+          aria-label="Open dashboard menu"
+        >
+          <Menu className="size-5" />
+        </button>
+        <div className="relative hidden max-w-[480px] flex-1 sm:block">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <input
+            id="global-search"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            placeholder={t("Search products...")}
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-14 text-[13px] text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#6872ee] focus:ring-4 focus:ring-[#6872ee]/10"
+          />
+          <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+            <Command className="size-3" />K
+          </div>
+          {open && query && (
+            <div className="absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+              {results.length ? (
+                results.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setOpen(false);
+                      navigate(`/dashboard/products/${item.id}`);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-slate-50"
+                  >
+                    <div className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
+                      <Package className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-[12px] font-semibold text-slate-800">{item.name}</div>
+                      <div className="text-[11px] text-slate-400">
+                        {`${item.brand || "No brand"} · ${item.category || "Uncategorized"}`}
+                      </div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-4 text-center text-xs text-slate-400">
+                  No matching Supabase products
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+        <button
+          onClick={() => toast.info(t("Notifications are not connected yet."))}
+          className="grid size-10 place-items-center rounded-xl text-slate-500 hover:bg-white hover:text-slate-800"
+          aria-label={t("Notifications are not connected yet.")}
+          title={t("Notifications are not connected yet.")}
+        >
+          <Bell className="size-[18px]" />
+        </button>
+        <div className="hidden h-8 w-px bg-slate-200 sm:block" />
+        <button
+          onClick={() => setLang(lang === "en" ? "ar" : "en")}
+          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-500 hover:text-indigo-600"
+          title={lang === "en" ? "العربية" : "English"}
+        >
+          {lang === "en" ? "AR" : "EN"}
+        </button>
+
+        <div className="relative">
+          <button
+            onClick={() => setProfileOpen((current) => !current)}
+            className="flex items-center gap-2.5 rounded-xl p-1.5 pr-2 hover:bg-white"
+            aria-haspopup="menu"
+            aria-expanded={profileOpen}
+          >
+            <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-white">
+              SC
+            </div>
+            <div className="hidden text-left sm:block">
+              <div className="text-[12px] font-bold text-slate-800">Space Call Staff</div>
+              <div className="text-[10px] font-medium text-slate-400">{t("Store Manager")}</div>
+            </div>
+            <ChevronDown className="hidden size-4 text-slate-400 sm:block" />
+          </button>
+
+          {profileOpen && (
+            <div
+              className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-2xl border border-slate-200 bg-white p-2 text-left shadow-xl"
+              role="menu"
+            >
+              <button
+                onClick={() => {
+                  setProfileOpen(false);
+                  navigate("/dashboard/security");
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"
+                role="menuitem"
+              >
+                <LockKeyhole className="size-3.5" /> {t("Security")}
+              </button>
+              <button
+                onClick={() => {
+                  setProfileOpen(false);
+                  navigate("/dashboard/settings");
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"
+                role="menuitem"
+              >
+                <Settings2 className="size-3.5" /> {t("Settings")}
+              </button>
+              <button
+                onClick={async () => {
+                  setProfileOpen(false);
+                  await signOutDashboard().catch(() => undefined);
+                  if (auth0Enabled) {
+                    await logoutAuth0();
+                    return;
+                  }
+                  navigate("/dashboard/login");
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-rose-600 hover:bg-rose-50"
+                role="menuitem"
+              >
+                <LogOut className="size-3.5" /> Sign out
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
 }
 
 function PageHeader({ meta, action }: { meta: { eyebrow: string; title: string; description: string }; action?: React.ReactNode }) { return <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]"><span className="size-1.5 rounded-full bg-[#6a70e7]" />{meta.eyebrow}</div><h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">{meta.title}</h1><p className="mt-1.5 text-sm text-slate-500">{meta.description}</p></div>{action}</div>; }
@@ -635,7 +806,131 @@ function CustomersPage() { const [search, setSearch] = useState(""); const filte
 
 function InventoryPage() { const rows = products.map(p => ({ ...p, reserved: Math.max(1, Math.floor(p.stock * .18)), available: Math.max(0, p.stock - Math.max(1, Math.floor(p.stock * .18))) })); return <div><PageHeader meta={pageMeta["/dashboard/inventory"]} action={<button onClick={() => toast.success("Inventory sync simulation completed.")} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"><RefreshCw className="size-3.5" /> Sync mock inventory</button>} /><div className="mb-4 grid gap-3 sm:grid-cols-4"><div className="rounded-xl border border-slate-200 bg-white p-4"><div className="text-[11px] text-slate-400">Units in stock</div><div className="mt-1 text-xl font-bold text-[#14203a]">284</div></div><div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4"><div className="text-[11px] text-amber-700/70">Low stock</div><div className="mt-1 text-xl font-bold text-amber-700">18</div></div><div className="rounded-xl border border-rose-100 bg-rose-50/50 p-4"><div className="text-[11px] text-rose-700/70">Out of stock</div><div className="mt-1 text-xl font-bold text-rose-700">12</div></div><div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="text-[11px] text-blue-700/70">On order</div><div className="mt-1 text-xl font-bold text-blue-700">42</div></div></div><div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white"><div className="flex items-center justify-between border-b border-slate-100 p-4"><div className="text-[13px] font-bold text-[#14203a]">Inventory levels</div><button onClick={() => toast.info("Inventory filters are in mock mode.")} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-600"><Filter className="size-3.5" /> Filter</button></div><div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left"><thead className="bg-[#fafbfe]"><tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.12em] text-slate-400"><th className="px-5 py-3 font-semibold">Product</th><th className="px-3 py-3 font-semibold">Variant</th><th className="px-3 py-3 font-semibold">SKU</th><th className="px-3 py-3 font-semibold">Stock</th><th className="px-3 py-3 font-semibold">Reserved</th><th className="px-3 py-3 font-semibold">Available</th><th className="px-5 py-3 font-semibold">Status</th></tr></thead><tbody>{rows.map(p => <tr key={p.id} className="border-b border-slate-50 hover:bg-[#fafbff]"><td className="px-5 py-3.5 text-[12px] font-bold text-slate-700">{p.name}</td><td className="px-3 py-3.5 text-[11px] text-slate-500">Standard</td><td className="px-3 py-3.5 font-mono text-[10px] text-slate-500">{p.sku}</td><td className="px-3 py-3.5 text-[12px] font-bold text-slate-700">{p.stock}</td><td className="px-3 py-3.5 text-[12px] text-slate-500">{p.reserved}</td><td className="px-3 py-3.5 text-[12px] font-bold text-slate-700">{p.available}</td><td className="px-5 py-3.5"><StatusBadge status={p.stock < 10 ? "Pending" : "Active"} /></td></tr>)}</tbody></table></div></div></div>; }
 
-function SettingsPage() { const [tab, setTab] = useState("General"); const tabs = ["General", "Store identity", "Contact", "Social media", "WhatsApp", "SEO", "Localization", "Appearance", "Integrations", "Security"]; return <div><PageHeader meta={pageMeta["/dashboard/settings"]} action={<button onClick={() => toast.success("Settings saved to the local mock workspace.")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"><Check className="size-4" /> Save changes</button>} /><div className="grid gap-4 xl:grid-cols-[220px_1fr]"><div className="rounded-2xl border border-slate-200/80 bg-white p-2 shadow-[0_8px_24px_rgba(33,47,82,.04)]"><div className="space-y-1">{tabs.map(t => <button key={t} onClick={() => setTab(t)} className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-[11px] font-semibold transition ${tab === t ? "bg-indigo-50 text-indigo-700" : "text-slate-500 hover:bg-slate-50"}`}>{t}</button>)}</div></div><div className="space-y-4"><SmallPanel title={tab} subtitle={tab === "Integrations" ? "Visual placeholders only. Nothing is connected." : "Manage your workspace preferences."}>{tab === "Integrations" ? <div className="space-y-3 px-5 py-5">{[["Shopify", "Not connected", "Storefront and admin APIs are intentionally disabled."], ["Supabase", "Not connected", "Database sync is intentionally disabled."], ["Space Call Store", "Integration pending", "Live store connection will be planned in a later phase."]].map(([name, status, desc]) => <div key={name} className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center"><div className="grid size-10 place-items-center rounded-xl bg-slate-100 text-slate-500"><Cloud className="size-5" /></div><div className="flex-1"><div className="text-[12px] font-bold text-slate-700">{name}</div><div className="mt-1 text-[11px] text-slate-400">{desc}</div></div><span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700">{status}</span><button onClick={() => toast.info(`${name} is intentionally unavailable in standalone phase.`)} className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-500">Details</button></div>)}</div> : <div className="grid gap-4 px-5 py-5 sm:grid-cols-2"><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Store name</span><input defaultValue="Space Call" className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400" /></label><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Store email</span><input defaultValue="hello@spacecall.demo" className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400" /></label><label className="block sm:col-span-2"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Workspace note</span><textarea defaultValue="Standalone dashboard using mock/demo data only." rows={4} className="w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400" /></label></div>}</SmallPanel><div className="rounded-2xl border border-[#dfe2ff] bg-[#f5f6ff] p-4 text-[11px] leading-5 text-[#5962b8]"><div className="flex items-center gap-2 font-bold"><LockKeyhole className="size-4" /> Integration guardrail</div><p className="mt-1">This workspace is intentionally isolated. Shopify, Supabase, production APIs, storage, and live authentication are not connected.</p></div></div></div></div>; }
+function SettingsPage() {
+  const [tab, setTab] = useState<"Overview" | "Connections">("Overview");
+  const tabs = ["Overview", "Connections"] as const;
+  const whatsapp = STORE_CONFIG.whatsappNumber ? `+${STORE_CONFIG.whatsappNumber}` : "Not configured";
+  const overviewRows = [
+    ["Store name", STORE_CONFIG.name],
+    ["Live storefront", SITE_URL],
+    ["WhatsApp", whatsapp],
+    ["Invoice email", STORE_CONFIG.invoiceEmail || "Not configured"],
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        meta={{
+          eyebrow: "System",
+          title: "Settings",
+          description: "Current Space Call storefront configuration and connection status.",
+        }}
+        action={
+          <button
+            onClick={() => window.open(SITE_URL, "_blank", "noopener,noreferrer")}
+            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
+          >
+            <ExternalLink className="size-3.5" /> View store
+          </button>
+        }
+      />
+
+      <div className="grid gap-4 xl:grid-cols-[220px_1fr]">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-2 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+          <div className="space-y-1">
+            {tabs.map((item) => (
+              <button
+                key={item}
+                onClick={() => setTab(item)}
+                className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-[11px] font-semibold transition ${
+                  tab === item
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-slate-500 hover:bg-slate-50"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {tab === "Overview" ? (
+            <SmallPanel
+              title="Current storefront configuration"
+              subtitle="Read-only in this cleanup step. Live editing will be connected in the next settings phase."
+            >
+              <div className="divide-y divide-slate-100 px-5 py-2">
+                {overviewRows.map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                  >
+                    <span className="text-[11px] font-semibold text-slate-500">{label}</span>
+                    <span className="break-all text-[12px] font-bold text-slate-700">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </SmallPanel>
+          ) : (
+            <SmallPanel
+              title="Live connections"
+              subtitle="Truthful status for the services already used by this dashboard."
+            >
+              <div className="space-y-3 px-5 py-5">
+                {[
+                  [
+                    "Dashboard data",
+                    "Connected",
+                    "Products, orders, customers, inventory and supported CMS modules use authenticated Supabase data.",
+                  ],
+                  [
+                    "Public storefront",
+                    "Live",
+                    SITE_URL,
+                  ],
+                  [
+                    "Dashboard access",
+                    "Protected",
+                    "The current authentication and MFA security gate remains active.",
+                  ],
+                ].map(([name, status, description]) => (
+                  <div
+                    key={name}
+                    className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center"
+                  >
+                    <div className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
+                      <Cloud className="size-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[12px] font-bold text-slate-700">{name}</div>
+                      <div className="mt-1 break-all text-[11px] leading-5 text-slate-400">
+                        {description}
+                      </div>
+                    </div>
+                    <span className="w-fit rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+                      {status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </SmallPanel>
+          )}
+
+          <div className="rounded-2xl border border-[#dfe2ff] bg-[#f5f6ff] p-4 text-[11px] leading-5 text-[#5962b8]">
+            <div className="flex items-center gap-2 font-bold">
+              <LockKeyhole className="size-4" /> No fake saves
+            </div>
+            <p className="mt-1">
+              This page now shows the current configuration without pretending to save changes.
+              Editable settings will be connected to the real CMS in the next dedicated step.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function GenericPage({ path }: { path: string }) { const meta = pageMeta[path] ?? { eyebrow: "Workspace", title: "Coming soon", description: "This workspace module is staged for the next iteration." }; const [enabled, setEnabled] = useState(true); return <div><PageHeader meta={meta} action={<button onClick={() => toast.success("Mock changes saved.")} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"><Check className="size-4" /> Save changes</button>} /><div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]"><SmallPanel title="Workspace overview" subtitle="A practical starting point for the next management workflow"><div className="space-y-4 px-5 py-5"><div className="rounded-2xl bg-gradient-to-br from-[#17223f] to-[#3446a5] p-6 text-white"><div className="mb-8 flex items-center justify-between"><div className="grid size-10 place-items-center rounded-xl bg-white/10"><Sparkles className="size-5 text-[#bfc5ff]" /></div><span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-[#d5d9ff]">Mock module</span></div><div className="text-[22px] font-bold tracking-[-.04em]">{meta.title}</div><p className="mt-2 max-w-md text-[12px] leading-5 text-indigo-100/75">This screen is connected to the standalone navigation and ready for real data contracts in a future phase.</p></div><div className="grid gap-3 sm:grid-cols-3">{[["Records", "128"], ["Published", "96"], ["Needs review", "12"]].map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 p-4"><div className="text-[10px] text-slate-400">{label}</div><div className="mt-1 text-xl font-bold text-[#14203a]">{value}</div></div>)}</div></div></SmallPanel><SmallPanel title="Module settings"><div className="space-y-4 px-5 py-5"><div className="flex items-center justify-between rounded-xl border border-slate-200 p-4"><div><div className="text-[12px] font-bold text-slate-700">Enable module</div><div className="mt-1 text-[11px] text-slate-400">Show this module in the admin workspace.</div></div><button onClick={() => setEnabled(!enabled)} className={`relative h-6 w-11 rounded-full transition ${enabled ? "bg-[#5968ea]" : "bg-slate-200"}`}><span className={`absolute top-1 size-4 rounded-full bg-white shadow transition ${enabled ? "left-6" : "left-1"}`} /></button></div><label className="block"><span className="mb-1.5 block text-[11px] font-bold text-slate-600">Internal note</span><textarea rows={4} defaultValue={`Mock configuration for ${meta.title}.`} className="w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400" /></label><button onClick={() => toast.info("Preview refreshed from mock state.")} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600"><Eye className="size-3.5" /> Preview module</button></div></SmallPanel></div></div>; }
 
@@ -713,10 +1008,10 @@ function DashboardGate() {
   return <DashboardLayout />;
 }
 
-function DashboardLayout() { const [location] = useLocation(); const [collapsed, setCollapsed] = useState(() => localStorage.getItem("spacecall-sidebar") === "collapsed"); const [mobileOpen, setMobileOpen] = useState(false); const [, setSearch] = useState(""); useEffect(() => { localStorage.setItem("spacecall-sidebar", collapsed ? "collapsed" : "expanded"); }, [collapsed]); const route = location.replace(/\/$/, "") || "/dashboard"; const productDetail = route.match(/^\/dashboard\/products\/([^/]+)$/); const orderDetail = route.match(/^\/dashboard\/orders\/([^/]+)$/); const customerDetail = route.match(/^\/dashboard\/customers\/([^/]+)$/); const collectionDetail = route.match(/^\/dashboard\/collections\/([^/]+)$/); let content: React.ReactNode; if (route === "/dashboard" || route === "/dashboard/") content = <DashboardHomePage />; else if (route === "/dashboard/orders") content = <OrdersPageLive />; else if (orderDetail) content = <OrderDetailPageLive id={orderDetail[1]} />; else if (route === "/dashboard/collections") content = <CollectionsPageLive />; else if (collectionDetail) content = <CollectionDetailPageLive id={collectionDetail[1]} />; else if (route === "/dashboard/products") content = <ProductsPage />; else if (route === "/dashboard/products/new") content = <ProductForm />; else if (productDetail) content = <ProductForm id={productDetail[1]} />; else if (route === "/dashboard/customers") content = <CustomersPageLive />; else if (customerDetail) content = <CustomerDetailPageLive id={customerDetail[1]} />; else if (route === "/dashboard/inventory") content = <InventoryManagerPage />; else if (route === "/dashboard/categories") content = <CategoriesPage />; else if (route === "/dashboard/brands") content = <BrandsPage />; else if (route === "/dashboard/security") content = <SecurityPage />; else if (route === "/dashboard/settings") content = <SettingsPage />; else if (route === "/dashboard/homepage/hero") content = <HeroBannersPageLive />; else if (route === "/dashboard/homepage" || route === "/dashboard/homepage/sections") content = <HomepageBuilderPage />; else content = <GenericPage path={route} />; return <div className="min-h-screen bg-[#f7f9fc]"><Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} /><div className={`min-h-screen transition-[padding] duration-200 ${collapsed ? "lg:pl-[82px]" : "lg:pl-[260px]"}`}><Header onMenu={() => setMobileOpen(true)} onSearch={setSearch} /><main className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-9">{content}</main></div></div>; }
+function DashboardLayout() { const [location] = useLocation(); const [collapsed, setCollapsed] = useState(() => localStorage.getItem("spacecall-sidebar") === "collapsed"); const [mobileOpen, setMobileOpen] = useState(false); useEffect(() => { localStorage.setItem("spacecall-sidebar", collapsed ? "collapsed" : "expanded"); }, [collapsed]); const route = location.replace(/\/$/, "") || "/dashboard"; const productDetail = route.match(/^\/dashboard\/products\/([^/]+)$/); const orderDetail = route.match(/^\/dashboard\/orders\/([^/]+)$/); const customerDetail = route.match(/^\/dashboard\/customers\/([^/]+)$/); const collectionDetail = route.match(/^\/dashboard\/collections\/([^/]+)$/); let content: React.ReactNode; if (route === "/dashboard" || route === "/dashboard/") content = <DashboardHomePage />; else if (route === "/dashboard/orders") content = <OrdersPageLive />; else if (orderDetail) content = <OrderDetailPageLive id={orderDetail[1]} />; else if (route === "/dashboard/collections") content = <CollectionsPageLive />; else if (collectionDetail) content = <CollectionDetailPageLive id={collectionDetail[1]} />; else if (route === "/dashboard/products") content = <ProductsPage />; else if (route === "/dashboard/products/new") content = <ProductForm />; else if (productDetail) content = <ProductForm id={productDetail[1]} />; else if (route === "/dashboard/customers") content = <CustomersPageLive />; else if (customerDetail) content = <CustomerDetailPageLive id={customerDetail[1]} />; else if (route === "/dashboard/inventory") content = <InventoryManagerPage />; else if (route === "/dashboard/categories") content = <CategoriesPage />; else if (route === "/dashboard/brands") content = <BrandsPage />; else if (route === "/dashboard/security") content = <SecurityPage />; else if (route === "/dashboard/settings") content = <SettingsPage />; else if (route === "/dashboard/homepage/hero") content = <HeroBannersPageLive />; else if (route === "/dashboard/homepage" || route === "/dashboard/homepage/sections") content = <HomepageBuilderPage />; else content = <GenericPage path={route} />; return <div className="min-h-screen bg-[#f7f9fc]"><Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} /><div className={`min-h-screen transition-[padding] duration-200 ${collapsed ? "lg:pl-[82px]" : "lg:pl-[260px]"}`}><Header onMenu={() => setMobileOpen(true)} /><main className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-9">{content}</main></div></div>; }
 
 export default function App() {
   const [lang, setLang] = useState<"en" | "ar">(() => (localStorage.getItem("spacecall-language") as "en" | "ar") || "en");
   useEffect(() => { document.documentElement.lang = lang; document.documentElement.dir = lang === "ar" ? "rtl" : "ltr"; localStorage.setItem("spacecall-language", lang); }, [lang]);
-  const t = (key: string) => { const dictionary = lang === "ar" ? { "Overview": "نظرة عامة", "Commerce": "التجارة", "Store content": "محتوى المتجر", "Marketing": "التسويق", "Management": "الإدارة", "System": "النظام", "Dashboard": "لوحة التحكم", "Orders": "الطلبات", "Products": "المنتجات", "Collections": "المجموعات", "Categories": "التصنيفات", "Inventory": "المخزون", "Customers": "العملاء", "Homepage": "الصفحة الرئيسية", "Hero banners": "البنرات الرئيسية", "Brands": "العلامات التجارية", "Navigation": "التنقل", "Promotions": "العروض", "Campaigns": "الحملات", "Coupons": "القسائم", "SEO": "تحسين الظهور", "Analytics": "التحليلات", "Messages": "الرسائل", "Reviews": "المراجعات", "Media library": "مكتبة الوسائط", "Users": "المستخدمون", "Activity logs": "سجل النشاط", "Security": "الأمان", "Settings": "الإعدادات", "Search orders, products, customers...": "ابحث في الطلبات والمنتجات والعملاء...", "Store Manager": "مدير المتجر", "Export report": "تصدير التقرير", "Standalone workspace": "مساحة مستقلة", "View store": "عرض المتجر", "Collapse sidebar": "طي الشريط الجانبي" } : {}; return dictionary[key as keyof typeof dictionary] || key; };
+  const t = (key: string) => { const dictionary = lang === "ar" ? { "Overview": "نظرة عامة", "Commerce": "التجارة", "Store content": "محتوى المتجر", "Marketing": "التسويق", "Management": "الإدارة", "System": "النظام", "Dashboard": "لوحة التحكم", "Orders": "الطلبات", "Products": "المنتجات", "Collections": "المجموعات", "Categories": "التصنيفات", "Inventory": "المخزون", "Customers": "العملاء", "Homepage": "الصفحة الرئيسية", "Hero banners": "البنرات الرئيسية", "Brands": "العلامات التجارية", "Navigation": "التنقل", "Promotions": "العروض", "Campaigns": "الحملات", "Coupons": "القسائم", "SEO": "تحسين الظهور", "Analytics": "التحليلات", "Messages": "الرسائل", "Reviews": "المراجعات", "Media library": "مكتبة الوسائط", "Users": "المستخدمون", "Activity logs": "سجل النشاط", "Security": "الأمان", "Settings": "الإعدادات", "Search products...": "ابحث في المنتجات...", "Store Manager": "مدير المتجر", "Export report": "تصدير التقرير", "Live workspace": "مساحة مباشرة", "Supabase data connected.": "بيانات Supabase متصلة.", "Notifications are not connected yet.": "الإشعارات غير مربوطة بعد.", "View store": "عرض المتجر", "Collapse sidebar": "طي الشريط الجانبي" } : {}; return dictionary[key as keyof typeof dictionary] || key; };
   return <LanguageContext.Provider value={{ lang, setLang, t }}><><Switch><Route path="/dashboard/login" component={LoginPage} /><Route component={DashboardGate} /></Switch><Toaster position="bottom-right" richColors /></></LanguageContext.Provider>; }
