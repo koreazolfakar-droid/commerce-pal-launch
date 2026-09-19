@@ -1,4 +1,5 @@
 import { Building2 } from "lucide-react";
+import { useState } from "react";
 import type { CatalogBrand } from "@/dashboard/data/brands";
 
 export default function BrandMark({
@@ -8,6 +9,7 @@ export default function BrandMark({
   brand: CatalogBrand;
   className?: string;
 }) {
+  const [imageFailed, setImageFailed] = useState(false);
   const initials = brand.name
     .split(/\s+/)
     .filter(Boolean)
@@ -22,8 +24,13 @@ export default function BrandMark({
         className
       }
     >
-      {brand.logo ? (
-        <img src={brand.logo} alt="" className="size-full object-contain p-1.5" />
+      {brand.logo && !imageFailed ? (
+        <img
+          src={brand.logo}
+          alt={`${brand.name} logo`}
+          className="size-full object-contain p-1.5"
+          onError={() => setImageFailed(true)}
+        />
       ) : initials ? (
         initials
       ) : (

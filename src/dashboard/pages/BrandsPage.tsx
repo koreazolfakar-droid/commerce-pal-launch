@@ -257,7 +257,7 @@ export default function BrandsPage() {
     );
     if (duplicateSlug) {
       toast.error("That brand slug is already in use.");
-      return;
+      return false;
     }
 
     try {
@@ -266,8 +266,8 @@ export default function BrandsPage() {
         setBrands((current) => [...current, created].sort((a, b) => a.order - b.order));
         setSelectedId(created.id);
         setEditing(null);
-        toast.success("Brand created in Supabase.");
-        return;
+        toast.success("Brand created successfully.");
+        return true;
       }
 
       const saved = await updateDashboardBrand(nextBrand);
@@ -276,9 +276,11 @@ export default function BrandsPage() {
       );
       setSelectedId(saved.id);
       setEditing(null);
-      toast.success("Brand saved to Supabase.");
+      toast.success("Brand changes saved.");
+      return true;
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand save failed.");
+      return false;
     }
   };
 
@@ -587,6 +589,7 @@ export default function BrandsPage() {
           onHomepageChange={setHomepageFilter}
           sort={sortMode}
           onSortChange={setSortMode}
+          onReset={resetFilters}
         />
       )}
 

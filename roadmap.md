@@ -1,5 +1,10 @@
 # Space Call — Roadmap
 
+## In progress: Brands dashboard usability
+
+- [ ] Improve the add/edit brand flow with direct logo and cover uploads, live previews, validation, and clear save states.
+- [ ] Improve brand management on mobile and verify create/edit, filtering, assignment, and ordering remain intact.
+
 ## In progress: full storefront audit & upgrade (Shopify-managed content, UX, security)
 
 ### Audit findings (verified against the live store, 88 products, 4 collections)
