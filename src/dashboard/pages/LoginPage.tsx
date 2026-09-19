@@ -562,7 +562,7 @@ export default function LoginPage() {
 
     window.history.replaceState({}, "", "/dashboard/login");
     navigate("/dashboard");
-  }, [navigate, recoveryMode]);
+  }, [copy.verified, navigate, recoveryMode]);
 
   const handleMfaCancel = useCallback(() => {
     window.history.replaceState({}, "", "/dashboard/login");
@@ -577,8 +577,24 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#07101f] text-white print:hidden">
+    <div dir={isRtl ? "rtl" : "ltr"} data-login-theme={theme} className="login-root relative min-h-[100dvh] overflow-hidden bg-[#07101f] text-white print:hidden">
       <style>{`
+        [data-login-theme="light"].login-root { background: #eef2f7 !important; color: #0f172a !important; }
+        [data-login-theme="light"] .login-card { background: rgba(255,255,255,.96) !important; border-color: #e2e8f0 !important; box-shadow: 0 36px 110px rgba(15,23,42,.14) !important; }
+        [data-login-theme="light"] .login-form-panel { background: #ffffff !important; }
+        [data-login-theme="light"] .login-showcase { border-color: #e2e8f0 !important; }
+        [data-login-theme="light"] .login-showcase-bg { background: radial-gradient(circle at 20% 10%, rgba(99,102,241,.14), transparent 34%), linear-gradient(145deg,#f8faff 0%,#f4f6ff 52%,#eef2ff 100%) !important; }
+        [data-login-theme="light"] .login-heading { color: #0f172a !important; }
+        [data-login-theme="light"] .login-muted { color: #64748b !important; }
+        [data-login-theme="light"] .login-label { color: #334155 !important; }
+        [data-login-theme="light"] .login-input { background: #f8fafc !important; border-color: #e2e8f0 !important; color: #0f172a !important; box-shadow: inset 0 1px 2px rgba(15,23,42,.03) !important; }
+        [data-login-theme="light"] .login-input:focus { background: #fff !important; border-color: #818cf8 !important; }
+        [data-login-theme="light"] .login-icon-button, [data-login-theme="light"] .login-control { color: #475569 !important; background: #fff !important; border-color: #e2e8f0 !important; }
+        [data-login-theme="light"] .login-soft { background: rgba(255,255,255,.78) !important; border-color: #e0e7ff !important; box-shadow: 0 20px 60px rgba(79,70,229,.08) !important; }
+        [data-login-theme="light"] .login-placeholder { background: #f1f5f9 !important; }
+        [data-login-theme="light"] .login-footer { background: #f8fafc !important; border-color: #e2e8f0 !important; }
+        [data-login-theme="light"] .login-privacy { background: rgba(238,242,247,.98) !important; }
+        [data-login-theme="light"] .login-logo-tile { background: #fff !important; border-color: #e2e8f0 !important; box-shadow: 0 12px 32px rgba(30,41,59,.10) !important; }
         @media print {
           html, body { background: #0a1224 !important; }
           body * { visibility: hidden !important; }
@@ -586,7 +602,7 @@ export default function LoginPage() {
       `}</style>
       {privacyShielded ? (
         <div
-          className="fixed inset-0 z-[9999] grid place-items-center bg-[#07101f]/98 backdrop-blur-xl"
+          className="login-privacy fixed inset-0 z-[9999] grid place-items-center bg-[#07101f]/98 backdrop-blur-xl"
           aria-live="polite"
           data-testid="login-privacy-shield"
         >
@@ -594,9 +610,9 @@ export default function LoginPage() {
             <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-indigo-300/15 bg-indigo-300/[.07] text-[#c8ceff] shadow-[0_20px_60px_rgba(79,70,229,.18)]">
               <ShieldCheck className="size-6" />
             </div>
-            <div className="mt-4 text-sm font-bold text-white">Sensitive content hidden</div>
-            <p className="mt-1.5 text-[11px] leading-5 text-slate-400">
-              Return to the login page to continue securely.
+            <div className="login-heading mt-4 text-sm font-bold text-white">{copy.sensitiveHidden}</div>
+            <p className="login-muted mt-1.5 text-[11px] leading-5 text-slate-400">
+              {copy.returnSecurely}
             </p>
           </div>
         </div>
@@ -609,10 +625,10 @@ export default function LoginPage() {
         <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-white/[.025] to-transparent" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1180px] items-start px-3 py-3 sm:items-center sm:px-6 sm:py-8 lg:px-8">
-        <div className="grid w-full overflow-hidden rounded-[28px] border border-white/[.08] bg-[#0c1629]/92 shadow-[0_40px_140px_rgba(0,0,0,.48)] ring-1 ring-white/[.02] backdrop-blur-2xl sm:rounded-[32px] lg:grid-cols-[1.05fr_.95fr]">
-          <section className="relative hidden min-h-[680px] overflow-hidden border-r border-white/[.07] p-10 lg:flex lg:flex-col lg:justify-between xl:p-12">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(79,70,229,.18),transparent_34%),linear-gradient(145deg,#111e38_0%,#0d172b_52%,#0a1426_100%)]" />
+      <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-[1180px] items-stretch p-0 sm:items-center sm:px-6 sm:py-8 lg:px-8">
+        <div className="login-card grid min-h-[100dvh] w-full overflow-hidden bg-[#0c1629]/92 shadow-[0_40px_140px_rgba(0,0,0,.48)] backdrop-blur-2xl sm:min-h-0 sm:rounded-[32px] sm:border sm:border-white/[.08] sm:ring-1 sm:ring-white/[.02] lg:grid-cols-[1.05fr_.95fr]">
+          <section className="login-showcase relative hidden min-h-[680px] overflow-hidden border-r border-white/[.07] p-10 lg:flex lg:flex-col lg:justify-between xl:p-12">
+            <div className="login-showcase-bg absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(79,70,229,.18),transparent_34%),linear-gradient(145deg,#111e38_0%,#0d172b_52%,#0a1426_100%)]" />
             <div className="absolute -right-24 top-24 size-72 rounded-full border border-white/[.035]" />
             <div className="absolute -right-8 top-40 size-48 rounded-full border border-white/[.03]" />
             <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-300/20 to-transparent" />
@@ -620,35 +636,26 @@ export default function LoginPage() {
             <div className="relative flex items-center justify-between">
               <BrandLockup />
               <div className="rounded-full border border-white/[.08] bg-white/[.035] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">
-                Private workspace
+                {copy.privateWorkspace}
               </div>
             </div>
 
             <div className="relative my-10 max-w-[500px]">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-indigo-200">
                 <ShieldCheck className="size-3.5" />
-                Secure admin access
+                {copy.secureAccess}
               </div>
-              <h2 className="max-w-[470px] text-[41px] font-black leading-[1.02] tracking-[-.055em] text-white xl:text-[48px]">
-                Your store operations,
-                <span className="block bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent">
-                  one secure workspace.
-                </span>
+              <h2 className="login-heading max-w-[470px] text-[41px] font-black leading-[1.02] tracking-[-.055em] text-white xl:text-[48px]">
+                {copy.heroTitle}
               </h2>
-              <p className="mt-5 max-w-[455px] text-[13px] leading-6 text-slate-400">
-                Manage catalog, stock, orders, customers and storefront content with role-aware access and protected sessions.
+              <p className="login-muted mt-5 max-w-[455px] text-[13px] leading-6 text-slate-400">
+                {copy.heroBody}
               </p>
 
               <div className="mt-7">
                 <WorkspacePreview />
               </div>
 
-              <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-3">
-                <SecurityPoint>Supabase authentication with staff-role authorization</SecurityPoint>
-                <SecurityPoint>Protected dashboard routes and server-side data rules</SecurityPoint>
-                <SecurityPoint>Automatic sign-out after 30 minutes of inactivity</SecurityPoint>
-                {isDashboardTurnstileConfigured ? <SecurityPoint>Cloudflare Turnstile bot protection</SecurityPoint> : <SecurityPoint>Multi-factor access enforcement</SecurityPoint>}
-              </div>
             </div>
 
             <div className="relative flex items-center justify-between border-t border-white/[.06] pt-5 text-[9px] text-slate-500">
@@ -657,37 +664,45 @@ export default function LoginPage() {
                 Space Call Admin
               </span>
               <a href="/" className="inline-flex items-center gap-1.5 font-semibold text-slate-300 transition hover:text-white">
-                Open storefront <ArrowRight className="size-3" />
+                {copy.openStorefront} <ArrowRight className={isRtl ? "size-3 rotate-180" : "size-3"} />
               </a>
             </div>
           </section>
 
-          <section className="relative flex min-h-[640px] items-center justify-center bg-[linear-gradient(180deg,rgba(255,255,255,.018),transparent_32%)] p-5 sm:p-8 lg:min-h-[680px] lg:p-10 xl:p-12">
+          <section className="login-form-panel relative flex min-h-[100dvh] items-start justify-center bg-[linear-gradient(180deg,rgba(255,255,255,.018),transparent_32%)] px-5 pb-8 pt-5 sm:min-h-[680px] sm:items-center sm:p-10 xl:p-12">
             <div className="w-full max-w-[420px]">
-              <div className="mb-8 flex items-center justify-between lg:hidden">
+              <div className="mb-9 flex items-center justify-between gap-3 lg:hidden">
                 <BrandLockup />
-                <a href="/" className="rounded-full border border-white/[.08] bg-white/[.035] px-3 py-1.5 text-[9px] font-bold text-slate-400">
-                  Storefront
-                </a>
+                <ThemeLanguageControls
+                  theme={theme}
+                  onThemeToggle={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+                />
+              </div>
+
+              <div className={isRtl ? "absolute left-6 top-6 hidden lg:block" : "absolute right-6 top-6 hidden lg:block"}>
+                <ThemeLanguageControls
+                  theme={theme}
+                  onThemeToggle={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+                />
               </div>
 
               <div className="mb-8">
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.065] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#c7ccff]">
                   <LockKeyhole className="size-3.5" />
-                  Authorized staff only
+                  {copy.authorizedOnly}
                 </div>
-                <h1 className="text-[34px] font-black leading-none tracking-[-.055em] text-white sm:text-[38px]">
+                <h1 className="login-heading text-[34px] font-black leading-none tracking-[-.055em] text-white sm:text-[38px]">
                   {title}
                 </h1>
-                <p className="mt-3 max-w-md text-[12px] leading-5 text-slate-400">{description}</p>
+                <p className="login-muted mt-3 max-w-md text-[12px] leading-5 text-slate-400">{description}</p>
               </div>
 
               {view === "signin" ? (
                 <div className="space-y-4">
                   <label className="block">
-                    <span className="mb-2 block text-[11px] font-bold text-slate-300">Email</span>
+                    <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">{copy.email}</span>
                     <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+                      <Mail className={isRtl ? "absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" : "absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"} />
                       <input
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
@@ -701,7 +716,7 @@ export default function LoginPage() {
                         onKeyDown={(event) => {
                           if (event.key === "Enter") void submit();
                         }}
-                        className="h-[52px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 pl-10 pr-3 text-[13px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10"
+                        className="login-input h-[54px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 px-11 text-[16px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10 sm:text-[13px]"
                       />
                     </div>
                   </label>
@@ -722,7 +737,7 @@ export default function LoginPage() {
                         onChange={(event) => setRememberEmail(event.target.checked)}
                         className="size-4 rounded border-white/15 bg-white/5 accent-indigo-500"
                       />
-                      Remember email
+                      {copy.rememberEmail}
                     </label>
                     <button
                       type="button"
@@ -735,7 +750,7 @@ export default function LoginPage() {
                       }}
                       className="rounded-md px-1 py-0.5 text-[10px] font-bold text-[#b9c0ff] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
                     >
-                      Forgot password?
+                      {copy.forgotPassword}
                     </button>
                   </div>
 
@@ -759,7 +774,7 @@ export default function LoginPage() {
                       <Loader2 className="size-4 animate-spin" />
                     ) : (
                       <>
-                        Sign in to dashboard <ArrowRight className="size-4" />
+                        {copy.signIn} <ArrowRight className={isRtl ? "size-4 rotate-180" : "size-4"} />
                       </>
                     )}
                   </button>
@@ -773,17 +788,17 @@ export default function LoginPage() {
                       <div className="grid size-10 place-items-center rounded-full bg-emerald-300/10 text-emerald-300">
                         <Mail className="size-4" />
                       </div>
-                      <div className="mt-4 text-[14px] font-bold text-white">Recovery request received</div>
+                      <div className="login-heading mt-4 text-[14px] font-bold text-white">{copy.recoveryReceived}</div>
                       <p className="mt-1.5 text-[11px] leading-5 text-slate-400">
-                        If <span className="font-semibold text-slate-200">{email}</span> belongs to an authorized dashboard account, a secure recovery link will arrive shortly.
+                        {copy.recoveryBody}
                       </p>
                     </div>
                   ) : (
                     <>
                       <label className="block">
-                        <span className="mb-2 block text-[11px] font-bold text-slate-300">Dashboard email</span>
+                        <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">{copy.email}</span>
                         <div className="relative">
-                          <Mail className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+                          <Mail className={isRtl ? "absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" : "absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"} />
                           <input
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
@@ -797,7 +812,7 @@ export default function LoginPage() {
                             onKeyDown={(event) => {
                               if (event.key === "Enter") void sendReset();
                             }}
-                            className="h-[52px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 pl-10 pr-3 text-[13px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10"
+                            className="login-input h-[54px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 px-11 text-[16px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10 sm:text-[13px]"
                           />
                         </div>
                       </label>
@@ -818,7 +833,7 @@ export default function LoginPage() {
                         disabled={loading || (isDashboardTurnstileConfigured && !captchaToken)}
                         className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-indigo-300/10 bg-gradient-to-r from-[#6472f3] to-[#765ee7] text-[12px] font-bold text-white shadow-[0_16px_34px_rgba(87,84,219,.24)] transition hover:brightness-110 disabled:opacity-50"
                       >
-                        {loading ? <Loader2 className="size-4 animate-spin" /> : <><Mail className="size-4" /> Send recovery link</>}
+                        {loading ? <Loader2 className="size-4 animate-spin" /> : <><Mail className="size-4" /> {copy.sendRecovery}</>}
                       </button>
                     </>
                   )}
@@ -828,7 +843,7 @@ export default function LoginPage() {
                     onClick={backToSignIn}
                     className="flex h-10 w-full items-center justify-center gap-2 text-[11px] font-bold text-slate-400 transition hover:text-white"
                   >
-                    <ArrowLeft className="size-3.5" /> Back to sign in
+                    <ArrowLeft className={isRtl ? "size-3.5 rotate-180" : "size-3.5"} /> {copy.backToSignIn}
                   </button>
                 </div>
               ) : null}
@@ -836,7 +851,7 @@ export default function LoginPage() {
               {view === "recovery" ? (
                 <div className="space-y-4">
                   <PasswordField
-                    label="New password"
+                    label={copy.newPassword}
                     value={newPassword}
                     onChange={setNewPassword}
                     visible={showNewPassword}
@@ -844,7 +859,7 @@ export default function LoginPage() {
                     autoComplete="new-password"
                   />
                   <PasswordField
-                    label="Confirm new password"
+                    label={copy.confirmPassword}
                     value={confirmPassword}
                     onChange={setConfirmPassword}
                     visible={showConfirmPassword}
@@ -854,7 +869,7 @@ export default function LoginPage() {
                   />
 
                   <div className="rounded-xl border border-white/[.08] bg-white/[.035] px-3.5 py-3 text-[10px] leading-5 text-slate-400">
-                    Use at least 10 characters. The password is screened against HIBP twice: first in your browser for fast feedback, then again by the protected password-update service before Supabase Auth accepts the change. HIBP receives only a 5-character hash prefix.
+                    {copy.passwordHint}
                   </div>
 
                   {inlineError ? (
@@ -868,7 +883,7 @@ export default function LoginPage() {
                     disabled={loading}
                     className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-indigo-300/10 bg-gradient-to-r from-[#6472f3] to-[#765ee7] text-[12px] font-bold text-white shadow-[0_16px_34px_rgba(87,84,219,.24)] transition hover:brightness-110 disabled:opacity-50"
                   >
-                    {loading ? <Loader2 className="size-4 animate-spin" /> : <><KeyRound className="size-4" /> Update password</>}
+                    {loading ? <Loader2 className="size-4 animate-spin" /> : <><KeyRound className="size-4" /> {copy.updatePassword}</>}
                   </button>
                 </div>
               ) : null}
@@ -877,16 +892,13 @@ export default function LoginPage() {
                 <DashboardMfaStep
                   onSuccess={handleMfaSuccess}
                   onCancel={handleMfaCancel}
+                  theme={theme}
                 />
               ) : null}
 
-              <div className="mt-8 rounded-[16px] border border-white/[.055] bg-white/[.025] px-4 py-3.5">
-                <div className="flex items-center justify-center gap-2 text-[9px] font-semibold text-slate-400">
-                  <ShieldCheck className="size-3.5 text-emerald-400/80" />
-                  Supabase Auth · staff role required · protected session
-                </div>
-                <p className="mt-1.5 text-center text-[9px] leading-4 text-slate-600">
-                  Never share your password or authenticator code. Space Call support will never ask for them.
+              <div className="login-footer mt-8 rounded-[16px] border border-white/[.055] bg-white/[.025] px-4 py-3.5">
+                <p className="login-muted text-center text-[9px] leading-4 text-slate-500">
+                  {copy.antiPhishing}
                 </p>
               </div>
             </div>
