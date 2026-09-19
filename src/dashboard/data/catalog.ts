@@ -674,6 +674,18 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
     existingProduct = data;
   }
 
+  let preexistingVariants: VariantRow[] = [];
+  if (input.id) {
+    const { data, error } = await supabase
+      .from("store_product_variants")
+      .select("*")
+      .eq("product_id", input.id)
+      .order("sort_order", { ascending: true });
+    throwIfError(error, "Loading product variants before save failed");
+    preexistingVariants = (data ?? []) as VariantRow[];
+  }
+
+  let variantManagedSeparately = preexistingVariants.length > 1;
   const handle = existingProduct?.handle ?? (await uniqueHandle(input.title));
   const productPayload = {
     title: input.title.trim(),
@@ -684,11 +696,6 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
     product_type: category?.name ?? null,
     status: statusToDb(input.status),
     currency: "USD",
-    base_price: input.price,
-    compare_at_price: input.compareAt,
-    sku: input.sku.trim() || null,
-    barcode: input.barcode.trim() || null,
-    stock_quantity: Math.max(0, Math.trunc(input.stock)),
     track_inventory: true,
     seo_title: input.seoTitle.trim() || null,
     seo_description: input.seoDescription.trim() || null,
@@ -696,6 +703,15 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
       input.status === "Active"
         ? existingProduct?.published_at ?? new Date().toISOString()
         : null,
+    ...(variantManagedSeparately
+      ? {}
+      : {
+          base_price: input.price,
+          compare_at_price: input.compareAt,
+          sku: input.sku.trim() || null,
+          barcode: input.barcode.trim() || null,
+          stock_quantity: Math.max(0, Math.trunc(input.stock)),
+        }),
   };
 
   let productId = input.id;
@@ -721,7 +737,7 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   throwIfError(variantReadError, "Loading product variants failed");
 
   const variantRows = (existingVariants ?? []) as VariantRow[];
-  let variantManagedSeparately = variantRows.length > 1;
+  variantManagedSeparately = variantRows.length > 1;
   if (variantRows.length <= 1) {
     const variantPayload = {
       title: variantRows[0]?.title ?? "Default",
