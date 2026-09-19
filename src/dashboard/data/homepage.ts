@@ -77,6 +77,7 @@ const BUILDER_TO_DB_TYPE: Partial<Record<SectionType, string>> = {
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SECTION_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]{0,79}$/;
+const CORE_HOMEPAGE_SECTION_KEYS = new Set(["hero", "brands", "featured_products", "trust"]);
 
 function throwIfError(error: { message: string } | null, label: string) {
   if (error) throw new Error(`${label}: ${error.message}`);
@@ -294,6 +295,18 @@ export async function deleteDashboardHomepageSection(id: string): Promise<void> 
   const role = await requireDashboardStaff();
   if (role !== "admin") {
     throw new Error("Only dashboard admins can permanently delete homepage sections.");
+  }
+
+  const { data: row, error: lookupError } = await supabase
+    .from("cms_sections")
+    .select("section_key")
+    .eq("page_slug", "home")
+    .eq("id", id)
+    .maybeSingle();
+  throwIfError(lookupError, "Loading homepage section failed");
+
+  if (row?.section_key && CORE_HOMEPAGE_SECTION_KEYS.has(row.section_key)) {
+    throw new Error("Core storefront sections cannot be deleted. Hide them instead.");
   }
 
   const { error } = await supabase
