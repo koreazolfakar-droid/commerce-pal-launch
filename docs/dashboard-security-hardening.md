@@ -23,7 +23,7 @@
 - Security Center at `/dashboard/security`.
 - CSP allowlisting for Cloudflare Turnstile.
 - CSP uses a cryptographically random per-request SSR nonce. TanStack `ScriptOnce`, `HeadContent`, and `Scripts` bind executable SSR scripts to that nonce; `script-src` no longer contains `'unsafe-inline'`.
-- `script-src-attr 'none'` blocks HTML inline event handlers such as `onclick=`. Inline style attributes remain allowed for React/component compatibility, while SSR `<style>` elements use the request nonce.
+- `script-src-attr 'none'` blocks HTML inline event handlers such as `onclick=`. `style-src` still allows inline styles because the current component library emits dynamic `<style>`/style attributes; tightening style CSP is a separate refactor.
 - Production/non-preview Supabase sessions use `sessionStorage` rather than `localStorage`, so dashboard tokens do not survive closing the browser tab/window.
 - Dashboard responses are explicitly marked `no-store` for browser/CDN/proxy caches.
 - CI runs dashboard security regression tests on every PR open/update and on pushes to `main`.
