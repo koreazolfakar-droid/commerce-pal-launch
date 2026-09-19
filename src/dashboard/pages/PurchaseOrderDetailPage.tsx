@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import {
   approvePurchaseOrder,
   cancelPurchaseOrder,
+  closePurchaseOrder,
   deleteProcurementAttachment,
   issuePurchaseOrder,
   loadReceivingWorkspace,
@@ -120,7 +121,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
   };
 
   const runLifecycle = async (
-    action: "approve" | "issue" | "reject" | "reopen" | "cancel",
+    action: "approve" | "issue" | "reject" | "reopen" | "cancel" | "close",
   ) => {
     if (!po) return;
     setSaving(true);
@@ -139,6 +140,9 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         if (!reason) return;
         await rejectPurchaseOrder(po.id, reason);
         toast.success(`PO ${po.poNumber} rejected.`);
+      } else if (action === "close") {
+        await closePurchaseOrder(po.id);
+        toast.success(`PO ${po.poNumber} closed.`);
       } else {
         const reason = window.prompt("Reason for cancelling this purchase order?")?.trim();
         if (!reason) return;
@@ -303,6 +307,16 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             >
               <PackageCheck className="size-3.5" />
               Receive PO
+            </button>
+          ) : null}
+
+          {isAdmin && po.status === "received" ? (
+            <button
+              onClick={() => void runLifecycle("close")}
+              disabled={saving}
+              className="h-10 rounded-xl bg-slate-700 px-4 text-[11px] font-bold text-white disabled:opacity-50"
+            >
+              Close PO
             </button>
           ) : null}
 
