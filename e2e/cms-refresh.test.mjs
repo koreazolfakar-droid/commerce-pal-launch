@@ -21,8 +21,9 @@ test("storefront CMS query refreshes safely without pinning stale dashboard cont
   assert.match(cmsQuery, /queryKey: \["storefront", "public-cms"\]/);
   assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
   assert.match(cmsQuery, /placeholderData: EMPTY_CMS/);
-  assert.match(cmsQuery, /staleTime: 30_000/);
+  assert.match(cmsQuery, /staleTime: 5_000/);
   assert.match(cmsQuery, /gcTime: 5 \* 60_000/);
+  assert.match(cmsQuery, /refetchOnMount: "always"/);
   assert.match(cmsQuery, /retry: 1/);
   assert.doesNotMatch(cmsQuery, /dashboard-disconnected/);
   assert.doesNotMatch(cmsQuery, /Number\.POSITIVE_INFINITY/);
