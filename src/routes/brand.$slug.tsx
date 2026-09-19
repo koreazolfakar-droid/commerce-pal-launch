@@ -52,7 +52,7 @@ export const Route = createFileRoute("/brand/$slug")({
     }
     const label = loaderData.label ?? params.slug.replace(/-/g, " ");
     const title = `${label} Products in Lebanon | ${STORE_NAME}`;
-    const description = `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and secure Shopify checkout.`;
+    const description = `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and direct Space Call checkout.`;
     const path = `/brand/${params.slug}`;
     return {
       meta: [
