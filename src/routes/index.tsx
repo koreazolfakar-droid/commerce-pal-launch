@@ -13,7 +13,7 @@ import { cmsQueryOptions } from "@/lib/cmsQuery";
 import {
   bestSellingQueryOptions,
   newestQueryOptions,
-  catalogQueryOptions,
+  homepageCatalogQueryOptions,
   collectionQueryOptions,
   collectionsQueryOptions,
 } from "@/lib/queries";
@@ -442,7 +442,7 @@ function Index() {
   const deferredWorkReady = useDeferredHomepageWork();
   const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
   const { data: catalog } = useQuery({
-    ...catalogQueryOptions(),
+    ...homepageCatalogQueryOptions(),
     enabled: deferredWorkReady,
   });
   const { data: collections = [] } = useQuery({
@@ -631,7 +631,7 @@ function Index() {
       visible: deferredWorkReady,
       node: (
         <Suspense fallback={null}>
-          <LazyRecentlyViewed products={merchandiseProducts} />
+          <LazyRecentlyViewed />
         </Suspense>
       ),
     },
