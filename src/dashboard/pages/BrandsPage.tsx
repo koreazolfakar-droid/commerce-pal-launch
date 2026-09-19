@@ -604,7 +604,7 @@ export default function BrandsPage() {
       )}
 
       <div className="grid gap-4 xl:grid-cols-[330px_minmax(0,1fr)]">
-        <section className="self-start rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_24px_rgba(33,47,82,.04)] xl:sticky xl:top-5">
+        <section id="brand-list" className="self-start scroll-mt-4 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_24px_rgba(33,47,82,.04)] xl:sticky xl:top-5">
           {listBrands.length ? (
             <BrandList
               brands={listBrands}
@@ -614,6 +614,14 @@ export default function BrandsPage() {
               onSelect={(brand) => {
                 setSelectedId(brand.id);
                 setProductMenuId(null);
+                if (typeof window !== "undefined" && window.innerWidth < 1280) {
+                  window.requestAnimationFrame(() => {
+                    document.getElementById("brand-details")?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  });
+                }
               }}
               onEdit={openEdit}
               onViewProducts={scrollToProducts}
@@ -648,7 +656,22 @@ export default function BrandsPage() {
         </section>
 
         {selected && (
-          <div className="min-w-0 space-y-4">
+          <div id="brand-details" className="min-w-0 scroll-mt-4 space-y-4">
+            <div className="xl:hidden">
+              <button
+                type="button"
+                onClick={() =>
+                  document.getElementById("brand-list")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  })
+                }
+                className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 shadow-sm"
+              >
+                <ChevronDown className="size-3.5 rotate-90" />
+                Back to brands
+              </button>
+            </div>
             <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex min-w-0 items-start gap-3">
