@@ -44,3 +44,15 @@ test("small storefront collections avoid hydrating the full native snapshot", as
   assert.match(nativeStore, /\.eq\("collection_id", row\.id\)/);
   assert.match(nativeStore, /\.in\("product_id", activeProductIds\)/);
 });
+
+
+test("homepage hero refresh never replays stale local fallback", async () => {
+  const [hero, cms] = await Promise.all([
+    read("src/components/HomeHero.tsx"),
+    read("src/lib/cms.ts"),
+  ]);
+
+  assert.doesNotMatch(hero, /space-call-home-hero-refresh-fallback-v1/);
+  assert.doesNotMatch(hero, /readStoredHero|storeHero|sessionStorage/);
+  assert.match(cms, /cache:\s*"no-store"/);
+});

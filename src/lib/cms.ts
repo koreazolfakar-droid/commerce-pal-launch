@@ -147,6 +147,7 @@ export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
   try {
     const response = await fetch(`${url}/functions/v1/public-cms`, {
       method: "GET",
+      cache: "no-store",
       headers: {
         apikey: key,
         Accept: "application/json",
