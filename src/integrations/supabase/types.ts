@@ -134,6 +134,7 @@ export type Database = {
           title_ar: string | null
           title_en: string | null
           updated_at: string
+          visual_config: Json
         }
         Insert: {
           button_label?: string | null
@@ -173,6 +174,7 @@ export type Database = {
           title_ar?: string | null
           title_en?: string | null
           updated_at?: string
+          visual_config?: Json
         }
         Update: {
           button_label?: string | null
@@ -212,6 +214,7 @@ export type Database = {
           title_ar?: string | null
           title_en?: string | null
           updated_at?: string
+          visual_config?: Json
         }
         Relationships: []
       }
@@ -2219,6 +2222,16 @@ export type Database = {
       void_store_receiving: {
         Args: { p_reason: string; p_receiving_id: string }
         Returns: string
+      }
+      set_cms_hero_visual_config: {
+        Args: { p_slide_id: string; p_visual_config: Json }
+        Returns: Database["public"]["Tables"]["cms_hero_slides"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "cms_hero_slides"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       update_cms_hero_slide: {
         Args: {
