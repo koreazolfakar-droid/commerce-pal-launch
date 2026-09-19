@@ -196,6 +196,41 @@ function WorkspacePreview() {
   );
 }
 
+function ThemeLanguageControls({
+  theme,
+  onThemeToggle,
+}: {
+  theme: LoginTheme;
+  onThemeToggle: () => void;
+}) {
+  const { lang, setLang } = useLanguage();
+  const copy = loginCopy[lang];
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => setLang(lang === "en" ? "ar" : "en")}
+        className="login-control flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-xl border border-white/[.08] bg-white/[.04] px-2.5 text-slate-300 transition hover:bg-white/[.08] hover:text-white"
+        aria-label={copy.switchLanguage}
+        title={copy.switchLanguage}
+      >
+        <Languages className="size-4" />
+        <span className="text-[10px] font-black">{lang === "en" ? "AR" : "EN"}</span>
+      </button>
+      <button
+        type="button"
+        onClick={onThemeToggle}
+        className="login-control grid size-10 place-items-center rounded-xl border border-white/[.08] bg-white/[.04] text-slate-300 transition hover:bg-white/[.08] hover:text-white"
+        aria-label={theme === "dark" ? copy.lightMode : copy.darkMode}
+        title={theme === "dark" ? copy.lightMode : copy.darkMode}
+      >
+        {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      </button>
+    </div>
+  );
+}
+
 function PasswordField({
   value,
   onChange,
