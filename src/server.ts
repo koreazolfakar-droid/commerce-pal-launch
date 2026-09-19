@@ -194,11 +194,14 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return withDocumentCache(
+      return withDashboardNoStore(
         request,
-        withStaticAssetCache(
+        withDocumentCache(
           request,
-          withSecurityHeaders(await normalizeCatastrophicSsrResponse(response)),
+          withStaticAssetCache(
+            request,
+            withSecurityHeaders(await normalizeCatastrophicSsrResponse(response)),
+          ),
         ),
       );
     } catch (error) {
@@ -218,6 +221,22 @@ export default {
  * Hashed JS/CSS/images keep their normal platform caching; only documents are
  * forced fresh so /, /shop, /help and product pages cannot expose mixed builds.
  */
+function withDashboardNoStore(request: Request, response: Response): Response {
+  const pathname = new URL(request.url).pathname;
+  if (!pathname.startsWith("/dashboard")) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+  headers.set("CDN-Cache-Control", "no-store");
+  headers.set("Surrogate-Control", "no-store");
+  headers.set("Pragma", "no-cache");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 function withDocumentCache(request: Request, response: Response): Response {
   if (
     request.method === "GET" &&
@@ -295,7 +314,9 @@ export function withSecurityHeaders(response: Response): Response {
         "frame-ancestors 'self'",
         "form-action 'self' https://*.myshopify.com https://checkout.shopify.com",
         "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+        "script-src-attr 'none'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "style-src-attr 'unsafe-inline'",
         "font-src 'self' data: https://fonts.gstatic.com",
         "img-src 'self' data: blob: https://cdn.shopify.com https://*.shopifycdn.com https://rtwyankpxtffqqrasyzw.supabase.co https://images.unsplash.com",
         "media-src 'self' https://cdn.shopify.com https://*.shopifycdn.com",
