@@ -2,9 +2,11 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const WINDOW_MS = 10 * 60 * 1000;
-const FIRST_BLOCK_FAILURES = 5;
-const HARD_BLOCK_FAILURES = 10;
-const FIRST_BLOCK_MS = 15 * 60 * 1000;
+const PAIR_SOFT_FAILURES = 5;
+const PAIR_HARD_FAILURES = 10;
+const IP_SOFT_FAILURES = 25;
+const IP_HARD_FAILURES = 50;
+const SOFT_BLOCK_MS = 15 * 60 * 1000;
 const HARD_BLOCK_MS = 60 * 60 * 1000;
 
 const cors = {
@@ -35,6 +37,13 @@ async function sha256(value: string) {
   return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+type Bucket = {
+  failure_count: number;
+  window_started_at: string;
+  blocked_until: string | null;
+  last_attempt_at: string;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -51,83 +60,119 @@ Deno.serve(async (req) => {
   }
 
   const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
-  const outcome = payload.outcome;
-  if (!email || email.length > 320 || !email.includes("@")) {
-    return json({ error: "invalid_request" }, 400);
-  }
-  if (!["check", "failure"].includes(String(outcome))) {
-    return json({ error: "invalid_request" }, 400);
-  }
+  const outcome = String(payload.outcome ?? "");
+  if (!email || email.length > 320 || !email.includes("@")) return json({ error: "invalid_request" }, 400);
+  if (!["check", "failure"].includes(outcome)) return json({ error: "invalid_request" }, 400);
 
-  const keyHash = await sha256(`${clientIp(req)}|${email}`);
+  const ip = clientIp(req);
+  const [pairKeyHash, ipKeyHash] = await Promise.all([
+    sha256(`pair|${ip}|${email}`),
+    sha256(`ip|${ip}`),
+  ]);
+
   const supabase = createClient(url, serviceRole, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data: row, error: readError } = await supabase
-    .from("dashboard_login_throttle")
-    .select("failure_count,window_started_at,blocked_until,last_attempt_at")
-    .eq("key_hash", keyHash)
-    .maybeSingle();
+  async function readBucket(keyHash: string): Promise<Bucket | null> {
+    const { data, error } = await supabase
+      .from("dashboard_login_throttle")
+      .select("failure_count,window_started_at,blocked_until,last_attempt_at")
+      .eq("key_hash", keyHash)
+      .maybeSingle();
+    if (error) throw error;
+    return data as Bucket | null;
+  }
 
-  if (readError) return json({ error: "throttle_unavailable" }, 503);
+  async function resetExpired(keyHash: string, bucket: Bucket | null, now: number) {
+    if (!bucket) return;
+    const start = new Date(bucket.window_started_at).getTime();
+    if (Number.isFinite(start) && now - start < WINDOW_MS) return;
 
-  const now = Date.now();
-  const blockedUntil = row?.blocked_until ? new Date(row.blocked_until).getTime() : 0;
-  const windowStarted = row?.window_started_at ? new Date(row.window_started_at).getTime() : 0;
-  const windowExpired = !windowStarted || now - windowStarted >= WINDOW_MS;
+    await supabase
+      .from("dashboard_login_throttle")
+      .update({
+        failure_count: 0,
+        window_started_at: new Date(now).toISOString(),
+        blocked_until: null,
+        last_attempt_at: new Date(now).toISOString(),
+      })
+      .eq("key_hash", keyHash);
+  }
 
-  if (outcome === "check") {
-    if (blockedUntil > now) {
-      return json({
-        allowed: false,
-        retryAfter: Math.max(1, Math.ceil((blockedUntil - now) / 1000)),
+  function retryAfter(bucket: Bucket | null, now: number) {
+    const until = bucket?.blocked_until ? new Date(bucket.blocked_until).getTime() : 0;
+    return until > now ? Math.max(1, Math.ceil((until - now) / 1000)) : 0;
+  }
+
+  async function recordFailure(
+    keyHash: string,
+    bucket: Bucket | null,
+    softFailures: number,
+    hardFailures: number,
+    now: number,
+  ) {
+    const start = bucket?.window_started_at ? new Date(bucket.window_started_at).getTime() : 0;
+    const expired = !Number.isFinite(start) || !start || now - start >= WINDOW_MS;
+    const nextCount = expired ? 1 : (bucket?.failure_count ?? 0) + 1;
+    const blockMs =
+      nextCount >= hardFailures ? HARD_BLOCK_MS :
+      nextCount >= softFailures ? SOFT_BLOCK_MS :
+      0;
+
+    const { error } = await supabase
+      .from("dashboard_login_throttle")
+      .upsert({
+        key_hash: keyHash,
+        failure_count: nextCount,
+        window_started_at: new Date(expired ? now : start).toISOString(),
+        blocked_until: blockMs ? new Date(now + blockMs).toISOString() : null,
+        last_attempt_at: new Date(now).toISOString(),
       });
-    }
+    if (error) throw error;
 
-    if (row && windowExpired) {
-      await supabase
-        .from("dashboard_login_throttle")
-        .update({
-          failure_count: 0,
-          window_started_at: new Date(now).toISOString(),
-          blocked_until: null,
-          last_attempt_at: new Date(now).toISOString(),
-        })
-        .eq("key_hash", keyHash);
-    }
-
-    return json({ allowed: true, retryAfter: 0 });
+    return {
+      retryAfter: blockMs ? Math.ceil(blockMs / 1000) : 0,
+      remainingBeforeBlock: Math.max(0, softFailures - nextCount),
+    };
   }
 
-  const nextCount = windowExpired ? 1 : (row?.failure_count ?? 0) + 1;
-  let blockMs = 0;
-  if (nextCount >= HARD_BLOCK_FAILURES) blockMs = HARD_BLOCK_MS;
-  else if (nextCount >= FIRST_BLOCK_FAILURES) blockMs = FIRST_BLOCK_MS;
+  try {
+    let [pairBucket, ipBucket] = await Promise.all([
+      readBucket(pairKeyHash),
+      readBucket(ipKeyHash),
+    ]);
 
-  const nextBlockedUntil = blockMs ? new Date(now + blockMs).toISOString() : null;
-  const { error: writeError } = await supabase
-    .from("dashboard_login_throttle")
-    .upsert({
-      key_hash: keyHash,
-      failure_count: nextCount,
-      window_started_at: new Date(windowExpired ? now : windowStarted).toISOString(),
-      blocked_until: nextBlockedUntil,
-      last_attempt_at: new Date(now).toISOString(),
-    });
+    const now = Date.now();
 
-  if (writeError) return json({ error: "throttle_unavailable" }, 503);
+    if (outcome === "check") {
+      const pairRetry = retryAfter(pairBucket, now);
+      const ipRetry = retryAfter(ipBucket, now);
+      const retry = Math.max(pairRetry, ipRetry);
+      if (retry > 0) return json({ allowed: false, retryAfter: retry });
 
-  if (blockMs) {
+      await Promise.all([
+        resetExpired(pairKeyHash, pairBucket, now),
+        resetExpired(ipKeyHash, ipBucket, now),
+      ]);
+      return json({ allowed: true, retryAfter: 0 });
+    }
+
+    const [pairResult, ipResult] = await Promise.all([
+      recordFailure(pairKeyHash, pairBucket, PAIR_SOFT_FAILURES, PAIR_HARD_FAILURES, now),
+      recordFailure(ipKeyHash, ipBucket, IP_SOFT_FAILURES, IP_HARD_FAILURES, now),
+    ]);
+
+    const retry = Math.max(pairResult.retryAfter, ipResult.retryAfter);
     return json({
-      allowed: false,
-      retryAfter: Math.ceil(blockMs / 1000),
+      allowed: retry === 0,
+      retryAfter: retry,
+      remainingBeforeBlock: Math.min(
+        pairResult.remainingBeforeBlock,
+        ipResult.remainingBeforeBlock,
+      ),
     });
+  } catch {
+    return json({ error: "throttle_unavailable" }, 503);
   }
-
-  return json({
-    allowed: true,
-    retryAfter: 0,
-    remainingBeforeBlock: Math.max(0, FIRST_BLOCK_FAILURES - nextCount),
-  });
 });
