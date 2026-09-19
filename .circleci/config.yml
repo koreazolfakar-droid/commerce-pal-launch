@@ -20,7 +20,6 @@ commands:
             echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
             bun --version
-
   restore-project:
     steps:
       - checkout
@@ -50,37 +49,119 @@ jobs:
           paths:
             - node_modules
 
-  typecheck:
+  typecheck-dashboard:
     executor: node-bun
     steps:
       - restore-project
       - run:
-          name: TypeScript
-          command: bun run typecheck
+          name: TypeScript dashboard diagnostics
+          command: |
+            bun run routes:generate
+            set +e
+            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
+            code=$?
+            set -e
+            if [ "$code" -eq 0 ]; then exit 0; fi
+            if grep -E 'src/dashboard/' /tmp/tsc.log >/dev/null; then exit 1; fi
+            exit 0
 
-  lint:
+  typecheck-storefront:
     executor: node-bun
     steps:
       - restore-project
       - run:
-          name: ESLint
-          command: bun run lint
+          name: TypeScript storefront diagnostics
+          command: |
+            bun run routes:generate
+            set +e
+            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
+            code=$?
+            set -e
+            if [ "$code" -eq 0 ]; then exit 0; fi
+            if grep -E 'src/(lib|components|routes|stores|hooks|integrations)/' /tmp/tsc.log >/dev/null; then exit 1; fi
+            exit 0
 
-  dashboard-tests:
+  typecheck-other:
     executor: node-bun
     steps:
       - restore-project
       - run:
-          name: Dashboard security regression tests
-          command: node --test e2e/dashboard-*.test.mjs
+          name: TypeScript other diagnostics
+          command: |
+            bun run routes:generate
+            set +e
+            ./node_modules/.bin/tsc --noEmit --pretty false > /tmp/tsc.log 2>&1
+            code=$?
+            set -e
+            if [ "$code" -eq 0 ]; then exit 0; fi
+            if grep -Ev 'src/(dashboard|lib|components|routes|stores|hooks|integrations)/' /tmp/tsc.log | grep -E 'error TS[0-9]+' >/dev/null; then exit 1; fi
+            exit 0
 
-  unit-tests:
+  lint-dashboard:
     executor: node-bun
     steps:
       - restore-project
       - run:
-          name: Unit and architecture tests
-          command: bun run test:unit
+          name: ESLint dashboard
+          command: ./node_modules/.bin/eslint src/dashboard --fix-dry-run
+
+  lint-storefront:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          name: ESLint storefront
+          command: ./node_modules/.bin/eslint src/lib src/components src/routes src/stores src/hooks src/integrations --fix-dry-run
+
+  lint-other:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          name: ESLint remaining source
+          command: ./node_modules/.bin/eslint src --fix-dry-run --ignore-pattern dashboard --ignore-pattern lib --ignore-pattern components --ignore-pattern routes --ignore-pattern stores --ignore-pattern hooks --ignore-pattern integrations
+
+  dashboard-auth-tests:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          name: Dashboard auth and security tests
+          command: node --test e2e/dashboard-auth0-security.test.mjs e2e/dashboard-csp-session-ci.test.mjs e2e/dashboard-login-*.test.mjs e2e/dashboard-password-breach-screening.test.mjs e2e/dashboard-security-hardening.test.mjs e2e/dashboard-session-security.test.mjs e2e/dashboard-totp-mfa.test.mjs
+
+  dashboard-catalog-tests:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          name: Dashboard catalog and CMS tests
+          command: node --test e2e/dashboard-category-*.test.mjs e2e/dashboard-collections-supabase.test.mjs e2e/dashboard-content-cms-step4.test.mjs e2e/dashboard-hero-*.test.mjs e2e/dashboard-home*.test.mjs e2e/dashboard-product-*.test.mjs e2e/dashboard-settings-supabase.test.mjs
+
+  dashboard-commerce-tests:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          name: Dashboard commerce tests
+          command: node --test e2e/dashboard-customers-supabase.test.mjs e2e/dashboard-orders-supabase.test.mjs e2e/dashboard-procurement-schema-step2.test.mjs e2e/dashboard-receiving-*.test.mjs
+
+  dashboard-shell-tests:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          name: Dashboard shell and source guard tests
+          command: node --test e2e/dashboard-live-workspace.test.mjs e2e/dashboard-supabase-source-guard.test.mjs e2e/dashboard-truthful-shell.test.mjs
+
+  non-dashboard-tests:
+    executor: node-bun
+    steps:
+      - restore-project
+      - run:
+          name: Non-dashboard unit and architecture tests
+          command: |
+            files=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*.test.mjs' -print)
+            node --test $files
 
   build:
     executor: node-bun
@@ -110,13 +191,27 @@ workflows:
             branches:
               only:
                 - /^important\/.*/
-      - typecheck:
+      - typecheck-dashboard:
           requires: [setup]
-      - lint:
+      - typecheck-storefront:
           requires: [setup]
-      - dashboard-tests:
+      - typecheck-other:
           requires: [setup]
-      - unit-tests:
+      - lint-dashboard:
+          requires: [setup]
+      - lint-storefront:
+          requires: [setup]
+      - lint-other:
+          requires: [setup]
+      - dashboard-auth-tests:
+          requires: [setup]
+      - dashboard-catalog-tests:
+          requires: [setup]
+      - dashboard-commerce-tests:
+          requires: [setup]
+      - dashboard-shell-tests:
+          requires: [setup]
+      - non-dashboard-tests:
           requires: [setup]
       - build:
           requires: [setup]
