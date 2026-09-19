@@ -11,10 +11,14 @@ import { useWishlistStore } from "@/stores/wishlistStore";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 const LazySearchOverlay = lazy(() =>
-  import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({ default: SearchOverlay })),
+  import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({
+    default: SearchOverlay,
+  })),
 );
 const LazyMobileMenu = lazy(() =>
-  import("@/components/MobileMenu").then(({ MobileMenu }) => ({ default: MobileMenu })),
+  import("@/components/MobileMenu").then(({ MobileMenu }) => ({
+    default: MobileMenu,
+  })),
 );
 const LazyMobileCategoryRail = lazy(() =>
   import("@/components/MobileCategoryRail").then(({ MobileCategoryRail }) => ({
@@ -56,9 +60,9 @@ export function MobileTopBar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto flex max-w-md items-center gap-2 px-3 py-2.5">
-          <div className="flex w-20 shrink-0 items-center sm:w-[7.5rem]">
+      <header className="mobile-top-bar sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
+        <div className="mx-auto flex max-w-md items-center gap-1 px-3 py-2.5">
+          <div className="flex w-[5.625rem] shrink-0 items-center sm:w-[8.5rem]">
             <button
               type="button"
               aria-label={t("openMenu")}
@@ -72,7 +76,7 @@ export function MobileTopBar({
             to="/"
             aria-label={`${storeName} home`}
             data-testid="mobile-brand"
-            className="flex min-w-0 flex-1 items-center justify-center gap-2"
+            className="flex min-w-0 flex-1 items-center justify-center gap-1.5"
           >
             <img
               src={logoUrl}
@@ -86,7 +90,7 @@ export function MobileTopBar({
             />
             <span className="truncate text-[17px] font-black tracking-[-0.025em]">{storeName}</span>
           </Link>
-          <div className="flex w-20 shrink-0 items-center justify-end gap-0.5 sm:w-[7.5rem]">
+          <div className="flex w-[5.625rem] shrink-0 items-center justify-end gap-0.5 sm:w-[8.5rem]">
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
@@ -126,7 +130,10 @@ export function MobileTopBar({
             fallback={
               <div className="scroll-rail flex gap-2 px-4 pb-2" aria-hidden="true">
                 {Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className="shimmer h-8 w-20 shrink-0 rounded-full bg-surface" />
+                  <div
+                    key={index}
+                    className="shimmer h-8 w-[5.625rem] shrink-0 rounded-full bg-surface"
+                  />
                 ))}
               </div>
             }

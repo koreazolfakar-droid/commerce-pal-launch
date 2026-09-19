@@ -58,7 +58,10 @@ export const ProductCard = memo(function ProductCard({
         quantity: 1,
         selectedOptions: selectedVariant.selectedOptions ?? [],
       });
-      if (success) toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
+      if (success)
+        toast.success(`${node.title}: ${t("addedToCart")}`, {
+          position: "top-center",
+        });
       else toast.error(t("addToCartFailed"), { position: "top-center" });
     } finally {
       setIsAdding(false);
@@ -72,7 +75,7 @@ export const ProductCard = memo(function ProductCard({
   return (
     <article
       className={cn(
-        "card-lift group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-card hover:border-primary/30",
+        "sc-product-card card-lift group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-card hover:border-primary/30",
         className,
       )}
     >

@@ -52,7 +52,9 @@ export const ProductListCard = memo(function ProductListCard({
       });
 
       if (success) {
-        toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
+        toast.success(`${node.title}: ${t("addedToCart")}`, {
+          position: "top-center",
+        });
       } else {
         toast.error(t("addToCartFailed"), { position: "top-center" });
       }
@@ -62,7 +64,7 @@ export const ProductListCard = memo(function ProductListCard({
   };
 
   return (
-    <article className="product-list-card group relative !grid !grid-cols-[7.75rem_minmax(0,1fr)] !items-center !gap-2.5 !overflow-hidden !rounded-[1.25rem] !border !border-border/75 !bg-card !p-2.5 !shadow-card transition-[border-color,box-shadow,transform] hover:!border-primary/30 hover:!shadow-card-hover sm:!grid-cols-[8.25rem_minmax(0,1fr)] sm:!gap-3 sm:!p-3">
+    <article className="product-list-card group relative !grid !grid-cols-[minmax(5.5rem,30%)_minmax(0,1fr)] !items-center !gap-2.5 !overflow-hidden !rounded-[1.25rem] !border !border-border/75 !bg-card !p-2.5 !shadow-card transition-[border-color,box-shadow,transform] hover:!border-primary/30 hover:!shadow-card-hover sm:!grid-cols-[8.25rem_minmax(0,1fr)] sm:!gap-3 sm:!p-3">
       <div className="relative flex min-w-0 self-center items-center justify-center">
         <Link
           to="/product/$handle"
@@ -74,7 +76,7 @@ export const ProductListCard = memo(function ProductListCard({
             url={image?.url}
             alt={image?.altText ?? node.title}
             size={360}
-            sizes="(min-width: 640px) 132px, 124px"
+            sizes="(min-width: 640px) 132px, 30vw"
             eager={eager}
             className="!aspect-square !w-full"
             imageClassName="!p-[6%] transition-transform duration-300 group-hover:scale-[1.035]"
@@ -118,20 +120,20 @@ export const ProductListCard = memo(function ProductListCard({
               frameless
               className="shrink-0"
             />
-            <span className="truncate text-[10px] font-extrabold uppercase tracking-[0.045em] text-muted-foreground sm:text-[11px]">
+            <span className="truncate text-[10px] font-extrabold uppercase tracking-[0.045em] text-muted-foreground sm:text-xs">
               {brand.label}
             </span>
           </div>
         )}
 
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0 pe-12">
-          <h3 className="line-clamp-2 break-words text-[0.8rem] font-extrabold leading-[1.2] tracking-[-0.018em] transition-colors group-hover:text-primary sm:text-[0.9rem]">
+          <h3 className="line-clamp-2 break-words text-sm font-semibold leading-[1.5] tracking-[-0.018em] transition-colors group-hover:text-primary sm:text-sm">
             {node.title}
           </h3>
         </Link>
 
         {summary && (
-          <p className="truncate pe-12 text-[10px] leading-[0.95rem] text-muted-foreground sm:text-[11px]">
+          <p className="truncate pe-12 text-xs leading-5 text-muted-foreground sm:text-[11px]">
             {summary}
           </p>
         )}
@@ -150,7 +152,7 @@ export const ProductListCard = memo(function ProductListCard({
             </div>
             <p
               className={cn(
-                "mt-1 truncate text-[9px] font-bold leading-none sm:text-[10px]",
+                "mt-1 truncate text-xs font-medium leading-5",
                 inStock ? "text-success" : "text-muted-foreground",
               )}
             >
