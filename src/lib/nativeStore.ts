@@ -1,6 +1,7 @@
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
+import { buildCatalogIndex } from "@/lib/taxonomy";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -59,6 +60,10 @@ type StorefrontCollectionLinkRow = Pick<
   "collection_id" | "product_id" | "sort_order"
 >;
 type StorefrontBrandRow = Pick<BrandRow, "id" | "name">;
+type NavigationProductRow = Pick<
+  ProductRow,
+  "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
+>;
 
 const STOREFRONT_PRODUCT_SELECT =
   "id,title,description,description_html,handle,brand_id,product_type,created_at,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
@@ -71,6 +76,8 @@ const STOREFRONT_COLLECTION_SELECT =
 const STOREFRONT_COLLECTION_LINK_SELECT =
   "collection_id,product_id,sort_order" as const;
 const STOREFRONT_BRAND_SELECT = "id,name" as const;
+const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
+  "id,title,handle,brand_id,product_type,tags" as const;
 
 type NativeProduct = {
   product: ShopifyProduct;
@@ -308,6 +315,76 @@ export async function fetchBrandVendors(): Promise<string[]> {
       .filter((value): value is string => Boolean(value)),
   );
   return snapshot.brands.map((brand) => brand.name).filter((name) => used.has(name));
+}
+
+/**
+ * Lightweight facets for global navigation.
+ *
+ * Header/menu rendering only needs category and brand metadata. Keep that
+ * critical path independent from the full product snapshot so it never loads
+ * variant or image tables merely to render navigation.
+ */
+export async function fetchNavigationCatalogFacets() {
+  const [productResult, collectionResult, linkResult, brandResult] = await Promise.all([
+    publicSupabase
+      .from("store_products")
+      .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
+      .eq("status", "active")
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_collections")
+      .select(STOREFRONT_COLLECTION_SELECT)
+      .eq("is_active", true),
+    publicSupabase
+      .from("store_collection_products")
+      .select(STOREFRONT_COLLECTION_LINK_SELECT)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("cms_brands")
+      .select(STOREFRONT_BRAND_SELECT)
+      .eq("is_visible", true)
+      .order("sort_order", { ascending: true }),
+  ]);
+
+  const productRows = assertResult(productResult, "navigation products") as NavigationProductRow[];
+  const collectionRows = assertResult(collectionResult, "navigation collections");
+  const links = assertResult(linkResult, "navigation collection links");
+  const brands = assertResult(brandResult, "navigation brands");
+
+  const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
+  const linksByProduct = groupByProduct(links);
+  const brandsById = new Map(brands.map((row) => [row.id, row]));
+
+  const products: ShopifyProduct[] = productRows.map((row) => {
+    const productCollections = (linksByProduct.get(row.id) ?? [])
+      .map((link) => collectionsById.get(link.collection_id))
+      .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
+
+    return {
+      node: {
+        id: row.id,
+        title: row.title,
+        description: "",
+        handle: row.handle,
+        vendor: row.brand_id ? brandsById.get(row.brand_id)?.name : undefined,
+        productType: row.product_type ?? undefined,
+        tags: row.tags,
+        availableForSale: true,
+        priceRange: { minVariantPrice: { amount: "0", currencyCode: "USD" } },
+        images: { edges: [] },
+        collections: {
+          edges: productCollections.map((collection) => ({
+            node: { handle: collection.handle, title: collection.title },
+          })),
+        },
+        variants: { edges: [] },
+        options: [],
+      },
+    };
+  });
+
+  const catalog = buildCatalogIndex(products);
+  return { categories: catalog.categories, brands: catalog.brands };
 }
 
 export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
