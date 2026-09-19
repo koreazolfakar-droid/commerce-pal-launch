@@ -11,6 +11,7 @@ import {
   fetchCollectionByHandle,
   fetchCollections,
   fetchNewestProducts,
+  fetchNavigationCatalogFacets,
   fetchProductByHandle,
   fetchProductRecommendations,
   fetchProductsByHandles,
@@ -24,6 +25,7 @@ const CATALOG_STALE_TIME = 60 * 1000;
 const BRAND_COLLECTION_STALE_TIME = 60 * 1000;
 const MERCHANDISING_STALE_TIME = 60 * 1000;
 const POLICY_STALE_TIME = 30 * 60 * 1000;
+const NAVIGATION_FACETS_STALE_TIME = 5 * 60 * 1000;
 const CATALOG_REFRESH_FALLBACK_TTL_MS = 5 * 60 * 1000;
 const CATALOG_REFRESH_FALLBACK_STORAGE_KEY = "space-call-supabase-catalog-fallback-v1";
 const QUERY_RETRY_COUNT = 2;
@@ -111,6 +113,15 @@ export const collectionsQueryOptions = () =>
     queryKey: ["supabase", "collections"],
     queryFn: () => fetchCollections(500),
     staleTime: BRAND_COLLECTION_STALE_TIME,
+    retry: QUERY_RETRY_COUNT,
+    retryDelay,
+  });
+
+export const navigationCatalogQueryOptions = () =>
+  queryOptions({
+    queryKey: ["supabase", "navigation-facets"],
+    queryFn: fetchNavigationCatalogFacets,
+    staleTime: NAVIGATION_FACETS_STALE_TIME,
     retry: QUERY_RETRY_COUNT,
     retryDelay,
   });
