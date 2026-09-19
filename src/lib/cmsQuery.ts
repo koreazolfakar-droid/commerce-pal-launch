@@ -6,9 +6,10 @@ export const cmsQueryOptions = () =>
     queryKey: ["storefront", "public-cms"],
     queryFn: fetchCmsSnapshot,
     placeholderData: EMPTY_CMS,
-    staleTime: 30_000,
+    staleTime: 5_000,
     gcTime: 5 * 60_000,
     refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: 1,
   });
