@@ -680,6 +680,43 @@ export async function createReceiving(input: CreateReceivingInput) {
   return data;
 }
 
+export type UpdateReceivingDraftInput = {
+  receivingId: string;
+  invoiceNumber: string;
+  employeeLabel?: string;
+  notes?: string;
+  lines: Array<{
+    receivingItemId: string;
+    receivedQuantity: number;
+    damagedQuantity: number;
+    unitCost: number;
+    overageConfirmed: boolean;
+    overageReason?: string;
+  }>;
+};
+
+export async function updateReceivingDraft(input: UpdateReceivingDraftInput) {
+  await requireDashboardStaff();
+  const payload: Json = input.lines.map((line) => ({
+    receiving_item_id: line.receivingItemId,
+    received_quantity: line.receivedQuantity,
+    damaged_quantity: line.damagedQuantity,
+    unit_cost: line.unitCost,
+    overage_confirmed: line.overageConfirmed,
+    overage_reason: line.overageReason?.trim() || null,
+  }));
+
+  const { data, error } = await supabase.rpc("update_store_receiving_draft", {
+    p_receiving_id: input.receivingId,
+    p_invoice_number: input.invoiceNumber.trim(),
+    p_receiving_employee_label: input.employeeLabel?.trim() || null,
+    p_notes: input.notes?.trim() || null,
+    p_lines: payload,
+  });
+  throwIfError(error, "Updating receiving draft failed");
+  return data;
+}
+
 export async function approveReceiving(receivingId: string) {
   await requireDashboardStaff();
   const { data, error } = await supabase.rpc("approve_store_receiving", {
