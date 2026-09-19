@@ -378,7 +378,19 @@ export async function verifyDashboardTotp(
     factorId,
     code: normalizedCode,
   });
-  throwIfError(error, "Authenticator code verification failed");
+  if (error) {
+    const authError = error as { code?: string; status?: number };
+    const codeValue = typeof authError.code === "string" ? authError.code.toLowerCase() : "";
+    const status = typeof authError.status === "number" ? authError.status : 0;
+
+    if (status === 429 || codeValue.includes("rate_limit")) {
+      throw new Error("Too many verification attempts. Wait a moment and try again.");
+    }
+    if (status >= 500) {
+      throw new Error("Verification service is temporarily unavailable. Try again shortly.");
+    }
+    throw new Error("Verification code could not be confirmed.");
+  }
 
   const assurance = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   throwIfError(assurance.error, "Checking MFA assurance failed");
