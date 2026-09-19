@@ -371,6 +371,140 @@ export async function signInDashboard(
   return role;
 }
 
+
+export type DashboardPasskey = {
+  id: string;
+  friendlyName: string | null;
+  createdAt: string;
+  lastUsedAt: string | null;
+};
+
+type DashboardPasskeyAction = "signin" | "register";
+
+function dashboardPasskeyErrorMessage(
+  error: DashboardAuthFailure,
+  action: DashboardPasskeyAction,
+) {
+  const code = typeof error.code === "string" ? error.code.toLowerCase() : "";
+  const status = typeof error.status === "number" ? error.status : 0;
+
+  if (code === "passkey_disabled") {
+    return "Passkey authentication is not available for this dashboard yet.";
+  }
+  if (code === "too_many_passkeys") {
+    return "This account has reached the maximum number of registered passkeys.";
+  }
+  if (code === "webauthn_credential_exists") {
+    return "This passkey is already registered to the account.";
+  }
+  if (code === "webauthn_credential_not_found") {
+    return "No matching passkey could be verified.";
+  }
+  if (code === "webauthn_challenge_not_found" || code === "webauthn_challenge_expired") {
+    return "The passkey request expired. Try again.";
+  }
+  if (code === "webauthn_verification_failed") {
+    return "Passkey verification failed. Try again.";
+  }
+  if (status === 429 || code.includes("rate_limit")) {
+    return "Too many passkey requests. Wait a moment and try again.";
+  }
+  if (status >= 500) {
+    return "Passkey service is temporarily unavailable. Try again shortly.";
+  }
+
+  return action === "register"
+    ? "Passkey could not be registered. Try again."
+    : "Passkey sign-in could not be completed.";
+}
+
+function dashboardPasskeyThrownErrorMessage(
+  cause: unknown,
+  action: DashboardPasskeyAction,
+) {
+  if (cause instanceof DOMException) {
+    if (cause.name === "NotAllowedError" || cause.name === "AbortError") {
+      return "Passkey request was cancelled or timed out.";
+    }
+    if (cause.name === "SecurityError") {
+      return "Passkey authentication is not available on this site origin.";
+    }
+  }
+
+  return action === "register"
+    ? "Passkey could not be registered. Try again."
+    : "Passkey sign-in could not be completed.";
+}
+
+export function isDashboardPasskeySupported() {
+  return (
+    typeof window !== "undefined" &&
+    window.isSecureContext === true &&
+    "PublicKeyCredential" in window &&
+    typeof navigator !== "undefined" &&
+    Boolean(navigator.credentials)
+  );
+}
+
+export async function signInDashboardWithPasskey(): Promise<DashboardRole> {
+  if (!isDashboardPasskeySupported()) {
+    throw new Error("Passkeys are not supported by this browser or secure context.");
+  }
+
+  let result: Awaited<ReturnType<typeof supabase.auth.signInWithPasskey>>;
+  try {
+    result = await supabase.auth.signInWithPasskey();
+  } catch (cause) {
+    throw new Error(dashboardPasskeyThrownErrorMessage(cause, "signin"));
+  }
+
+  if (result.error) {
+    throw new Error(dashboardPasskeyErrorMessage(result.error, "signin"));
+  }
+
+  clearDashboardRoleCache();
+  const role = await getDashboardRole();
+  if (!role) {
+    await supabase.auth.signOut({ scope: "local" });
+    throw new Error(DASHBOARD_SIGNIN_DENIED_MESSAGE);
+  }
+
+  return role;
+}
+
+export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
+  if (!isDashboardPasskeySupported()) {
+    throw new Error("Passkeys are not supported by this browser or secure context.");
+  }
+
+  const mfaStatus = await getDashboardMfaStatus();
+  if (!mfaStatus?.ready) {
+    throw new Error("Complete MFA verification before adding a passkey.");
+  }
+
+  let result: Awaited<ReturnType<typeof supabase.auth.registerPasskey>>;
+  try {
+    result = await supabase.auth.registerPasskey();
+  } catch (cause) {
+    throw new Error(dashboardPasskeyThrownErrorMessage(cause, "register"));
+  }
+
+  if (result.error) {
+    throw new Error(dashboardPasskeyErrorMessage(result.error, "register"));
+  }
+
+  if (!result.data?.id) {
+    throw new Error("Passkey could not be registered. Try again.");
+  }
+
+  return {
+    id: result.data.id,
+    friendlyName: result.data.friendly_name ?? null,
+    createdAt: result.data.created_at,
+    lastUsedAt: null,
+  };
+}
+
 export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null> {
   const {
     data: { user },
