@@ -505,6 +505,61 @@ export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
   };
 }
 
+
+async function requireDashboardPasskeyManagementSession() {
+  const status = await getDashboardMfaStatus();
+  if (!status?.ready) {
+    throw new Error("Complete MFA verification before managing passkeys.");
+  }
+  return status;
+}
+
+function mapDashboardPasskey(passkey: {
+  id: string;
+  friendly_name?: string | null;
+  created_at: string;
+  last_used_at?: string | null;
+}): DashboardPasskey {
+  return {
+    id: passkey.id,
+    friendlyName: passkey.friendly_name ?? null,
+    createdAt: passkey.created_at,
+    lastUsedAt: passkey.last_used_at ?? null,
+  };
+}
+
+export async function listDashboardPasskeys(): Promise<DashboardPasskey[]> {
+  await requireDashboardPasskeyManagementSession();
+  const { data, error } = await supabase.auth.passkey.list();
+  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "register"));
+  return (data ?? []).map(mapDashboardPasskey);
+}
+
+export async function renameDashboardPasskey(
+  passkeyId: string,
+  friendlyName: string,
+): Promise<void> {
+  await requireDashboardPasskeyManagementSession();
+  const normalizedName = friendlyName.trim();
+  if (!normalizedName || normalizedName.length > 120) {
+    throw new Error("Passkey name must be between 1 and 120 characters.");
+  }
+
+  const { error } = await supabase.auth.passkey.update({
+    passkeyId,
+    friendlyName: normalizedName,
+  });
+  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "register"));
+  await logDashboardSecurityEvent("passkey_renamed", { passkeyId });
+}
+
+export async function deleteDashboardPasskey(passkeyId: string): Promise<void> {
+  await requireDashboardPasskeyManagementSession();
+  const { error } = await supabase.auth.passkey.delete({ passkeyId });
+  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "register"));
+  await logDashboardSecurityEvent("passkey_deleted", { passkeyId });
+}
+
 export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null> {
   const {
     data: { user },
