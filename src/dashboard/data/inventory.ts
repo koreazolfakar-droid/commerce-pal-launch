@@ -8,6 +8,37 @@ type VariantRow = Tables<"store_product_variants">;
 type ImageRow = Tables<"store_product_images">;
 type MovementRow = Tables<"store_inventory_movements">;
 
+type InventoryProductRow = Pick<
+  ProductRow,
+  | "id"
+  | "title"
+  | "brand_id"
+  | "category_id"
+  | "product_type"
+  | "sku"
+  | "barcode"
+  | "stock_quantity"
+  | "status"
+>;
+type InventoryVariantRow = Pick<
+  VariantRow,
+  | "id"
+  | "product_id"
+  | "title"
+  | "sku"
+  | "barcode"
+  | "image_url"
+  | "stock_quantity"
+  | "track_inventory"
+  | "is_active"
+  | "options"
+>;
+type InventoryImageRow = Pick<ImageRow, "product_id" | "url" | "is_primary" | "sort_order">;
+type InventoryLatestMovementRow = Pick<
+  MovementRow,
+  "variant_id" | "created_at" | "quantity_delta"
+>;
+
 export type InventoryRow = {
   productId: string;
   variantId: string;
@@ -79,6 +110,12 @@ export type DashboardInventoryMovementPage = {
   hasMore: boolean;
 };
 
+export type InventoryLatestMovement = {
+  variantId: string;
+  createdAt: string;
+  quantityDelta: number;
+};
+
 function throwIfError(error: { message: string } | null, label: string) {
   if (error) throw new Error(`${label}: ${error.message}`);
 }
@@ -99,8 +136,8 @@ function optionsLabel(value: Json) {
     .join(" · ");
 }
 
-function firstImageByProduct(images: ImageRow[]) {
-  const byProduct = new Map<string, ImageRow>();
+function firstImageByProduct(images: InventoryImageRow[]) {
+  const byProduct = new Map<string, InventoryImageRow>();
   for (const image of [...images].sort(
     (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
   )) {
@@ -112,57 +149,45 @@ function firstImageByProduct(images: ImageRow[]) {
 export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
   await requireDashboardStaff();
 
-  const [productResult, variantResult, imageResult, brandResult, categoryResult, movementResult] =
-    await Promise.all([
-      supabase
-        .from("store_products")
-        .select("*")
-        .order("title", { ascending: true }),
-      supabase
-        .from("store_product_variants")
-        .select("*")
-        .order("product_id", { ascending: true })
-        .order("sort_order", { ascending: true }),
-      supabase
-        .from("store_product_images")
-        .select("*")
-        .order("sort_order", { ascending: true }),
-      supabase.from("cms_brands").select("id,name"),
-      supabase.from("store_categories").select("id,name"),
-      supabase
-        .from("store_inventory_movements")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1000),
-    ]);
+  const [productResult, variantResult, imageResult, brandResult, categoryResult] = await Promise.all([
+    supabase
+      .from("store_products")
+      .select("id,title,brand_id,category_id,product_type,sku,barcode,stock_quantity,status")
+      .order("title", { ascending: true }),
+    supabase
+      .from("store_product_variants")
+      .select(
+        "id,product_id,title,sku,barcode,image_url,stock_quantity,track_inventory,is_active,options",
+      )
+      .order("product_id", { ascending: true })
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("store_product_images")
+      .select("product_id,url,is_primary,sort_order")
+      .order("sort_order", { ascending: true }),
+    supabase.from("cms_brands").select("id,name"),
+    supabase.from("store_categories").select("id,name"),
+  ]);
 
   throwIfError(productResult.error, "Loading inventory products failed");
   throwIfError(variantResult.error, "Loading inventory variants failed");
   throwIfError(imageResult.error, "Loading inventory images failed");
   throwIfError(brandResult.error, "Loading inventory brands failed");
   throwIfError(categoryResult.error, "Loading inventory categories failed");
-  throwIfError(movementResult.error, "Loading inventory movements failed");
 
   const products = new Map(
-    ((productResult.data ?? []) as ProductRow[]).map((product) => [product.id, product]),
+    ((productResult.data ?? []) as InventoryProductRow[]).map((product) => [product.id, product]),
   );
   const brands = new Map((brandResult.data ?? []).map((brand) => [brand.id, brand.name]));
   const categories = new Map(
     (categoryResult.data ?? []).map((category) => [category.id, category.name]),
   );
-  const productImages = firstImageByProduct((imageResult.data ?? []) as ImageRow[]);
-  const latestMovementByVariant = new Map<string, MovementRow>();
-  for (const movement of (movementResult.data ?? []) as MovementRow[]) {
-    if (movement.variant_id && !latestMovementByVariant.has(movement.variant_id)) {
-      latestMovementByVariant.set(movement.variant_id, movement);
-    }
-  }
+  const productImages = firstImageByProduct((imageResult.data ?? []) as InventoryImageRow[]);
 
-  return ((variantResult.data ?? []) as VariantRow[])
+  return ((variantResult.data ?? []) as InventoryVariantRow[])
     .map((variant): InventoryRow | null => {
       const product = products.get(variant.product_id);
       if (!product) return null;
-      const movement = latestMovementByVariant.get(variant.id);
       const fallbackImage = productImages.get(product.id)?.url ?? "";
       return {
         productId: product.id,
@@ -183,11 +208,39 @@ export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
         variantActive: variant.is_active,
         productStatus: product.status,
         optionsLabel: optionsLabel(variant.options),
-        lastMovementAt: movement?.created_at ?? null,
-        lastMovementDelta: movement?.quantity_delta ?? null,
+        lastMovementAt: null,
+        lastMovementDelta: null,
       };
     })
     .filter((row): row is InventoryRow => Boolean(row));
+}
+
+export async function loadInventoryLatestMovements(
+  limit = 1000,
+): Promise<InventoryLatestMovement[]> {
+  await requireDashboardStaff();
+  const safeLimit = Math.min(2000, Math.max(1, Math.trunc(limit)));
+
+  const { data, error } = await supabase
+    .from("store_inventory_movements")
+    .select("variant_id,created_at,quantity_delta")
+    .not("variant_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(safeLimit);
+
+  throwIfError(error, "Loading latest inventory movements failed");
+
+  const latestByVariant = new Map<string, InventoryLatestMovement>();
+  for (const movement of (data ?? []) as InventoryLatestMovementRow[]) {
+    if (!movement.variant_id || latestByVariant.has(movement.variant_id)) continue;
+    latestByVariant.set(movement.variant_id, {
+      variantId: movement.variant_id,
+      createdAt: movement.created_at,
+      quantityDelta: movement.quantity_delta,
+    });
+  }
+
+  return [...latestByVariant.values()];
 }
 
 export async function listDashboardInventoryMovements(input: {
