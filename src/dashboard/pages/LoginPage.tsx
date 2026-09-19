@@ -10,7 +10,7 @@ import {
   Mail,
   ShieldCheck,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
@@ -277,6 +277,18 @@ export default function LoginPage() {
     setView("signin");
   };
 
+  const handleMfaSuccess = useCallback(() => {
+    window.history.replaceState({}, "", "/dashboard/login");
+    toast.success("AAL2 security verified.");
+    navigate("/dashboard");
+  }, [navigate]);
+
+  const handleMfaCancel = useCallback(() => {
+    window.history.replaceState({}, "", "/dashboard/login");
+    setView("signin");
+    setInlineError("");
+  }, []);
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0a1224] text-white print:hidden">
       <style>{`
@@ -538,16 +550,8 @@ export default function LoginPage() {
 
               {view === "mfa" ? (
                 <DashboardMfaStep
-                  onSuccess={() => {
-                    window.history.replaceState({}, "", "/dashboard/login");
-                    toast.success("AAL2 security verified.");
-                    navigate("/dashboard");
-                  }}
-                  onCancel={() => {
-                    window.history.replaceState({}, "", "/dashboard/login");
-                    setView("signin");
-                    setInlineError("");
-                  }}
+                  onSuccess={handleMfaSuccess}
+                  onCancel={handleMfaCancel}
                 />
               ) : null}
 
