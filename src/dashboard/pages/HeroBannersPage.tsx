@@ -410,10 +410,13 @@ export default function HeroBannersPage() {
   };
 
   const linkOptions = form.targetType === "product" ? products : form.targetType === "collection" ? collections : [];
+  const secondaryLinkOptions = form.secondaryTargetType === "product" ? products : form.secondaryTargetType === "collection" ? collections : [];
   const previewImage = previewMode === "mobile" && form.mobileImageUrl ? form.mobileImageUrl : form.imageUrl;
   const previewTitle = language === "ar" ? form.titleAr : form.titleEn;
   const previewSubtitle = language === "ar" ? form.subtitleAr : form.subtitleEn;
+  const previewEyebrow = language === "ar" ? form.eyebrowAr : form.eyebrowEn;
   const previewButton = language === "ar" ? form.buttonLabelAr : form.buttonLabelEn;
+  const previewSecondaryButton = language === "ar" ? form.secondaryButtonLabelAr : form.secondaryButtonLabelEn;
   const alignClass =
     form.contentAlignment === "center"
       ? "items-center text-center"
