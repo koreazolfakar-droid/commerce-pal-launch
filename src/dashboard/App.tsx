@@ -379,6 +379,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
           onClick={toggleTheme}
           className="grid size-10 place-items-center rounded-xl border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
           aria-label={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
+          aria-pressed={theme === "dark"}
           title={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
         >
           {theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
