@@ -244,7 +244,9 @@ export default function LoginPage() {
         window.history.replaceState({}, "", "/dashboard/login?mode=mfa");
       }
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Sign in failed.";
+      const message = cause instanceof Error ? cause.message : "Unable to sign in.";
+      setPassword("");
+      setShowPassword(false);
       setInlineError(message);
       toast.error(message);
     } finally {
