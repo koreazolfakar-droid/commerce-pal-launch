@@ -60,7 +60,14 @@ export default function SuppliersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setWorkspace(await loadReceivingWorkspace());
+      setWorkspace(
+        await loadReceivingWorkspace({
+          includeReceivings: false,
+          includeProductOptions: false,
+          includeAudit: false,
+          includeSerials: false,
+        }),
+      );
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Unable to load suppliers.");
     } finally {
