@@ -22,6 +22,10 @@
 - Password changes revoke all refresh sessions.
 - Security Center at `/dashboard/security`.
 - CSP allowlisting for Cloudflare Turnstile.
+- CSP blocks inline script attributes (`script-src-attr 'none'`) while retaining the existing inline bootstrap scripts until they can be nonce/hash migrated without breaking TanStack hydration.
+- Production/non-preview Supabase sessions use `sessionStorage` rather than `localStorage`, so dashboard tokens do not survive closing the browser tab/window.
+- Dashboard responses are explicitly marked `no-store` for browser/CDN/proxy caches.
+- CI runs dashboard security regression tests on every PR open/update and on pushes to `main`.
 
 ## Production activation: Cloudflare Turnstile
 
@@ -63,3 +67,12 @@ Never store any of these in `VITE_*`, source files, GitHub commits, or browser s
 - passwords
 - MFA TOTP secret after enrollment
 - refresh/access tokens outside the Supabase client session mechanism
+
+
+## Session storage boundary
+
+The dashboard is still a browser-managed Supabase SPA session because MFA, refresh, and authenticated Edge Function calls currently run through the browser Supabase client. The production session is therefore intentionally stored in `sessionStorage`, not `localStorage`: this reduces persistence but does **not** make tokens inaccessible to JavaScript.
+
+Moving the Supabase session to a fully HttpOnly cookie would require a server-brokered auth architecture for MFA, token refresh, and every authenticated dashboard/Edge request. That is a separate architectural migration and should not be represented as completed by merely wrapping or encrypting browser storage.
+
+Auth0's additional dashboard token cache remains memory-only.
