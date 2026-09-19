@@ -399,7 +399,7 @@ export default function LoginPage() {
     return () => {
       cancelled = true;
     };
-  }, [copy.verified, navigate, recoveryMode]);
+  }, [navigate, recoveryMode]);
 
   const handleCaptchaToken = useCallback((token: string | null) => {
     setCaptchaToken(token);
@@ -595,6 +595,10 @@ export default function LoginPage() {
         [data-login-theme="light"] .login-footer { background: #f8fafc !important; border-color: #e2e8f0 !important; }
         [data-login-theme="light"] .login-privacy { background: rgba(238,242,247,.98) !important; }
         [data-login-theme="light"] .login-logo-tile { background: #fff !important; border-color: #e2e8f0 !important; box-shadow: 0 12px 32px rgba(30,41,59,.10) !important; }
+        [data-login-theme="light"] .login-error { background: #fff1f2 !important; border-color: #fecdd3 !important; color: #be123c !important; }
+        [data-login-theme="light"] .login-secret { background: #f8fafc !important; border-color: #e2e8f0 !important; color: #334155 !important; }
+        [data-login-theme="light"] .login-secondary { background: #eef2ff !important; border-color: #e0e7ff !important; color: #4338ca !important; }
+        [data-login-theme="light"] .login-badge { background: #ecfdf5 !important; border-color: #d1fae5 !important; color: #047857 !important; }
         @media print {
           html, body { background: #0a1224 !important; }
           body * { visibility: hidden !important; }
@@ -712,6 +716,7 @@ export default function LoginPage() {
                         autoCorrect="off"
                         spellCheck={false}
                         autoComplete="username"
+                        dir="ltr"
                         placeholder="name@company.com"
                         onKeyDown={(event) => {
                           if (event.key === "Enter") void submit();
@@ -808,6 +813,7 @@ export default function LoginPage() {
                             autoCorrect="off"
                             spellCheck={false}
                             autoComplete="email"
+                            dir="ltr"
                             placeholder="name@company.com"
                             onKeyDown={(event) => {
                               if (event.key === "Enter") void sendReset();
