@@ -1,5 +1,8 @@
 import {
+  Clock3,
   Copy,
+  Eye,
+  EyeOff,
   KeyRound,
   Loader2,
   LogOut,
@@ -18,6 +21,9 @@ import {
 } from "@/dashboard/data/catalog";
 
 type MfaMode = "loading" | "enroll" | "challenge";
+
+const MFA_CHALLENGE_WINDOW_MS = 5 * 60 * 1000;
+const MFA_SECRET_REVEAL_MS = 15 * 1000;
 
 function qrImageSource(value: string) {
   if (value.startsWith("data:")) return value;
@@ -40,6 +46,12 @@ export default function DashboardMfaStep({
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [secretRevealed, setSecretRevealed] = useState(false);
+  const [challengeExpiresAt] = useState(() => Date.now() + MFA_CHALLENGE_WINDOW_MS);
+  const [remainingSeconds, setRemainingSeconds] = useState(() =>
+    Math.ceil(MFA_CHALLENGE_WINDOW_MS / 1000),
+  );
+  const [challengeExpired, setChallengeExpired] = useState(false);
 
   const initialize = useCallback(async () => {
     setError("");
@@ -83,8 +95,54 @@ export default function DashboardMfaStep({
     void initialize();
   }, [initialize]);
 
+  useEffect(() => {
+    const updateRemaining = () => {
+      const remaining = Math.max(0, Math.ceil((challengeExpiresAt - Date.now()) / 1000));
+      setRemainingSeconds(remaining);
+      if (remaining === 0) {
+        setChallengeExpired(true);
+        setCode("");
+        setEnrollment(null);
+        setSecretRevealed(false);
+      }
+    };
+
+    updateRemaining();
+    const timer = window.setInterval(updateRemaining, 1000);
+    return () => window.clearInterval(timer);
+  }, [challengeExpiresAt]);
+
+  useEffect(() => {
+    if (!challengeExpired) return;
+
+    let cancelled = false;
+    void signOutDashboard()
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) onCancel();
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [challengeExpired, onCancel]);
+
+  useEffect(() => {
+    if (!secretRevealed) return;
+
+    const timer = window.setTimeout(() => {
+      setSecretRevealed(false);
+    }, MFA_SECRET_REVEAL_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [secretRevealed]);
+
   const verify = async () => {
     setError("");
+    if (challengeExpired || remainingSeconds <= 0) {
+      setError("This verification window has expired. Sign in again to continue.");
+      return;
+    }
     if (!factorId) {
       setError("Authenticator setup is not ready yet.");
       return;
@@ -101,9 +159,8 @@ export default function DashboardMfaStep({
       await verifyDashboardTotp(factorId, normalizedCode);
       toast.success("Multi-factor authentication verified.");
       onSuccess();
-    } catch (cause) {
-      const message =
-        cause instanceof Error ? cause.message : "Authenticator verification failed.";
+    } catch {
+      const message = "Verification code could not be confirmed. Check the current code and try again.";
       setError(message);
       toast.error(message);
       setCode("");
@@ -114,18 +171,25 @@ export default function DashboardMfaStep({
 
   const cancel = async () => {
     setLoading(true);
+    setCode("");
+    setEnrollment(null);
+    setSecretRevealed(false);
     await signOutDashboard().catch(() => undefined);
     setLoading(false);
     onCancel();
   };
 
   const copySecret = async () => {
-    if (!enrollment?.secret) return;
+    if (!enrollment?.secret || !secretRevealed) {
+      toast.error("Reveal the setup key before copying it.");
+      return;
+    }
     try {
       await navigator.clipboard.writeText(enrollment.secret);
-      toast.success("Authenticator secret copied.");
+      setSecretRevealed(false);
+      toast.success("Setup key copied and hidden again.");
     } catch {
-      toast.error("Could not copy the authenticator secret.");
+      toast.error("Could not copy the setup key.");
     }
   };
 
@@ -162,6 +226,13 @@ export default function DashboardMfaStep({
         </div>
         <h2 className="text-[28px] font-black tracking-[-.05em] text-white">{title}</h2>
         <p className="mt-2 text-[12px] leading-5 text-slate-400">{description}</p>
+        <div
+          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-white/[.08] bg-white/[.035] px-2.5 py-1.5 text-[9px] font-semibold text-slate-400"
+          aria-live="polite"
+        >
+          <Clock3 className="size-3.5" />
+          Verification window: {Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, "0")}
+        </div>
       </div>
 
       {mode === "enroll" && enrollment ? (
@@ -176,20 +247,37 @@ export default function DashboardMfaStep({
           </div>
 
           <div className="mt-4 text-center text-[10px] font-semibold text-slate-400">
-            Can't scan the QR?
+            Can't scan the QR? The manual setup key is hidden by default.
           </div>
-          <div className="mt-2 flex items-center gap-2 rounded-xl border border-white/10 bg-[#0b1427] p-2.5">
-            <code className="min-w-0 flex-1 break-all text-[10px] font-semibold tracking-[.08em] text-slate-200">
-              {enrollment.secret}
-            </code>
-            <button
-              type="button"
-              onClick={() => void copySecret()}
-              className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10"
-              aria-label="Copy authenticator secret"
-            >
-              <Copy className="size-3.5" />
-            </button>
+          <div className="mt-2 rounded-xl border border-white/10 bg-[#0b1427] p-2.5">
+            <div className="flex items-center gap-2">
+              <code
+                className="min-w-0 flex-1 break-all text-[10px] font-semibold tracking-[.08em] text-slate-200"
+                aria-label="Authenticator setup key"
+              >
+                {secretRevealed ? enrollment.secret : "•••• •••• •••• ••••"}
+              </code>
+              <button
+                type="button"
+                onClick={() => setSecretRevealed((value) => !value)}
+                className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10"
+                aria-label={secretRevealed ? "Hide authenticator setup key" : "Reveal authenticator setup key"}
+              >
+                {secretRevealed ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => void copySecret()}
+                disabled={!secretRevealed}
+                className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+                aria-label="Copy authenticator setup key"
+              >
+                <Copy className="size-3.5" />
+              </button>
+            </div>
+            <p className="mt-2 text-[9px] leading-4 text-slate-500">
+              The key auto-hides after 15 seconds and immediately after copying. Never share the QR code or setup key.
+            </p>
           </div>
 
           {enrollment.uri.startsWith("otpauth://") ? (
@@ -221,6 +309,7 @@ export default function DashboardMfaStep({
             inputMode="numeric"
             autoComplete="one-time-code"
             autoFocus
+            disabled={challengeExpired}
             placeholder="000000"
             aria-label="Authenticator code"
             className="h-12 w-full rounded-[14px] border border-white/10 bg-white/[.065] pl-10 pr-3 text-center text-[18px] font-bold tracking-[.32em] text-white outline-none transition placeholder:text-slate-600 focus:border-[#7b86ff] focus:bg-white/[.09] focus:ring-4 focus:ring-[#6874f5]/10"
@@ -240,7 +329,7 @@ export default function DashboardMfaStep({
       <button
         type="button"
         onClick={() => void verify()}
-        disabled={loading}
+        disabled={loading || challengeExpired}
         className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6271f6] to-[#785fe8] text-[12px] font-bold text-white shadow-[0_12px_30px_rgba(103,113,245,.28)] disabled:opacity-60"
       >
         {loading ? (
