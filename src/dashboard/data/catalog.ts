@@ -476,8 +476,14 @@ export async function requestDashboardPasswordReset(
   email: string,
   captchaToken?: string,
 ) {
-  const normalizedEmail = email.trim();
+  const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) throw new Error("Enter your dashboard email first.");
+  if (
+    normalizedEmail.length > 320 ||
+    !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(normalizedEmail)
+  ) {
+    throw new Error("Enter a valid dashboard email address.");
+  }
   if (isDashboardTurnstileConfigured && !captchaToken) {
     throw new Error("Complete the security verification before requesting a reset.");
   }
