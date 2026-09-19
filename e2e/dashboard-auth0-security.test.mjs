@@ -37,7 +37,7 @@ test("Auth0 uses public Vite configuration and in-memory token cache", () => {
 
 test("dashboard keeps Supabase staff and MFA authorization behind Auth0", () => {
   assert.match(app, /getDashboardMfaStatus\(\)/);
-  assert.match(login, /signInDashboard\(email, password, captchaToken \?\? undefined\)/);
+  assert.match(login, /signInDashboard\(email, password, captchaToken/);
   assert.match(app, /signOutDashboard/);
   assert.match(app, /logoutAuth0/);
   assert.match(app, /status\?\.ready/);
