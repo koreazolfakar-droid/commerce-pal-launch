@@ -83,10 +83,10 @@ function normalize(input: DashboardSeoInput) {
 
   return {
     page_slug: pageSlug,
-    title: input.title.trim() || input.titleEn.trim() || null,
+    title: input.titleEn.trim() || input.title.trim() || null,
     title_en: input.titleEn.trim() || null,
     title_ar: input.titleAr.trim() || null,
-    description: input.description.trim() || input.descriptionEn.trim() || null,
+    description: input.descriptionEn.trim() || input.description.trim() || null,
     description_en: input.descriptionEn.trim() || null,
     description_ar: input.descriptionAr.trim() || null,
     og_image_url: optionalUrl(input.ogImageUrl, "Open Graph image"),
