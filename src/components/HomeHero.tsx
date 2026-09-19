@@ -100,11 +100,9 @@ function cmsButtonClass(style: CmsHeroSlide["button_style"]) {
 }
 
 export function HomeHero({
-  products: _products,
   heroCollection,
   cmsHeroSlides = [],
 }: {
-  products: ShopifyProduct[];
   heroCollection?: HomeHeroCollection;
   cmsHeroSlides?: CmsHeroSlide[];
 }) {
