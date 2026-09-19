@@ -14,8 +14,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
+import TurnstileChallenge from "@/dashboard/components/auth/TurnstileChallenge";
 import {
   getDashboardMfaStatus,
+  isDashboardTurnstileConfigured,
   requestDashboardPasswordReset,
   signInDashboard,
   updateDashboardPassword,
@@ -121,6 +123,8 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const [inlineError, setInlineError] = useState("");
   const [privacyShielded, setPrivacyShielded] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
 
   useEffect(() => {
     const shield = () => setPrivacyShielded(true);
@@ -174,6 +178,15 @@ export default function LoginPage() {
     };
   }, [navigate, recoveryMode]);
 
+  const handleCaptchaToken = useCallback((token: string | null) => {
+    setCaptchaToken(token);
+  }, []);
+
+  const resetCaptcha = useCallback(() => {
+    setCaptchaToken(null);
+    setCaptchaResetNonce((value) => value + 1);
+  }, []);
+
   const title = useMemo(() => {
     if (view === "forgot") return "Reset your password";
     if (view === "recovery") return "Create a new password";
@@ -197,7 +210,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await signInDashboard(email, password);
+      await signInDashboard(email, password, captchaToken ?? undefined);
 
       if (rememberEmail) window.localStorage.setItem(EMAIL_STORAGE_KEY, email.trim());
       else window.localStorage.removeItem(EMAIL_STORAGE_KEY);
@@ -219,6 +232,7 @@ export default function LoginPage() {
       toast.error(message);
     } finally {
       setLoading(false);
+      resetCaptcha();
     }
   };
 
@@ -231,7 +245,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await requestDashboardPasswordReset(email);
+      await requestDashboardPasswordReset(email, captchaToken ?? undefined);
       setResetSent(true);
       toast.success("Password recovery email sent.");
     } catch (cause) {
@@ -240,6 +254,7 @@ export default function LoginPage() {
       toast.error(message);
     } finally {
       setLoading(false);
+      resetCaptcha();
     }
   };
 
@@ -274,6 +289,7 @@ export default function LoginPage() {
   const backToSignIn = () => {
     setInlineError("");
     setResetSent(false);
+    resetCaptcha();
     setView("signin");
   };
 
@@ -347,6 +363,7 @@ export default function LoginPage() {
                 <SecurityPoint>Supabase authentication with staff-role authorization</SecurityPoint>
                 <SecurityPoint>Protected dashboard routes and server-side data rules</SecurityPoint>
                 <SecurityPoint>Automatic sign-out after 30 minutes of inactivity</SecurityPoint>
+                {isDashboardTurnstileConfigured ? <SecurityPoint>Cloudflare Turnstile bot protection</SecurityPoint> : null}
               </div>
             </div>
 
@@ -420,6 +437,7 @@ export default function LoginPage() {
                       type="button"
                       onClick={() => {
                         setInlineError("");
+                        resetCaptcha();
                         setView("forgot");
                       }}
                       className="text-[10px] font-bold text-[#aeb5ff] transition hover:text-white"
@@ -427,6 +445,11 @@ export default function LoginPage() {
                       Forgot password?
                     </button>
                   </div>
+
+                  <TurnstileChallenge
+                    onTokenChange={handleCaptchaToken}
+                    resetNonce={captchaResetNonce}
+                  />
 
                   {inlineError ? (
                     <div role="alert" className="rounded-xl border border-rose-400/15 bg-rose-400/[.08] px-3.5 py-3 text-[11px] leading-5 text-rose-200">
@@ -436,7 +459,7 @@ export default function LoginPage() {
 
                   <button
                     onClick={() => void submit()}
-                    disabled={loading}
+                    disabled={loading || (isDashboardTurnstileConfigured && !captchaToken)}
                     className="mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6271f6] to-[#785fe8] text-[12px] font-bold text-white shadow-[0_12px_30px_rgba(103,113,245,.28)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {loading ? (
@@ -482,6 +505,11 @@ export default function LoginPage() {
                         </div>
                       </label>
 
+                      <TurnstileChallenge
+                        onTokenChange={handleCaptchaToken}
+                        resetNonce={captchaResetNonce}
+                      />
+
                       {inlineError ? (
                         <div role="alert" className="rounded-xl border border-rose-400/15 bg-rose-400/[.08] px-3.5 py-3 text-[11px] leading-5 text-rose-200">
                           {inlineError}
@@ -490,7 +518,7 @@ export default function LoginPage() {
 
                       <button
                         onClick={() => void sendReset()}
-                        disabled={loading}
+                        disabled={loading || (isDashboardTurnstileConfigured && !captchaToken)}
                         className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6271f6] to-[#785fe8] text-[12px] font-bold text-white disabled:opacity-60"
                       >
                         {loading ? <Loader2 className="size-4 animate-spin" /> : <><Mail className="size-4" /> Send recovery link</>}
