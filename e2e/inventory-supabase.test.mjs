@@ -71,6 +71,8 @@ test("inventory movement history drawer is paginated and resilient", () => {
   assert.match(inventoryData, /query = query\.eq\("reference_type", input\.referenceType\)/);
   assert.match(movementDrawer, /Search reference ID or note/);
   assert.match(movementDrawer, /setDebouncedSearch\(searchInput\), 300/);
+  assert.match(movementDrawer, /useMemo\(\(\) => movementCreatedSince\(period\), \[period\]\)/);
+  assert.match(movementDrawer, /createdSince,/);
   assert.match(movementDrawer, /aria-label="Clear inventory movement history search"/);
   assert.match(movementDrawer, /aria-busy=\{loading \|\| loadingMore\}/);
   assert.match(movementDrawer, /sm:grid-cols-3/);
