@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
 import { discountPercent, formatPrice, type ShopifyProduct } from "@/lib/shopify";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
@@ -105,6 +106,13 @@ export const Route = createFileRoute("/product/$handle")({
 
 function ProductPage() {
   const { t, language } = useLanguage();
+  const { data: cms } = useQuery(cmsQueryOptions());
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsWhatsApp = cms?.settings["whatsapp_number"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const whatsappNumber =
+    typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
   const { product } = Route.useLoaderData() as { product: ShopifyProduct };
   const node = product.node;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
@@ -217,6 +225,8 @@ function ProductPage() {
     url: absoluteUrl(`/product/${node.handle}`),
     quantity,
     options: selectedVariant?.selectedOptions ?? [],
+    whatsappNumber,
+    storeName,
   });
 
   const content = useMemo(
