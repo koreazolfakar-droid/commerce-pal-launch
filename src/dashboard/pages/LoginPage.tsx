@@ -46,10 +46,67 @@ function BrandLockup() {
 function SecurityPoint({ children }: { children: string }) {
   return (
     <div className="flex items-center gap-2.5 text-[11px] font-medium text-slate-300">
-      <span className="grid size-5 shrink-0 place-items-center rounded-full bg-emerald-400/10 text-emerald-300">
+      <span className="grid size-5 shrink-0 place-items-center rounded-full border border-emerald-300/15 bg-emerald-400/10 text-emerald-300 shadow-[0_0_24px_rgba(52,211,153,.08)]">
         <CheckCircle2 className="size-3" />
       </span>
       {children}
+    </div>
+  );
+}
+
+function WorkspacePreview() {
+  return (
+    <div className="relative overflow-hidden rounded-[24px] border border-white/[.08] bg-[#0d172b]/72 p-4 shadow-[0_24px_80px_rgba(0,0,0,.22)] backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/35 to-transparent" />
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-[9px] font-bold uppercase tracking-[.18em] text-slate-500">
+            Workspace status
+          </div>
+          <div className="mt-1 text-[14px] font-bold tracking-[-.03em] text-white">
+            Space Call Operations
+          </div>
+        </div>
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-2.5 py-1 text-[9px] font-bold text-emerald-200">
+          <span className="size-1.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,.8)]" />
+          Protected
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {[
+          ["Catalog", "Live"],
+          ["Inventory", "Synced"],
+          ["Security", "AAL2"],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            className="rounded-2xl border border-white/[.07] bg-white/[.035] px-3 py-3"
+          >
+            <div className="text-[8px] font-semibold uppercase tracking-[.13em] text-slate-500">
+              {label}
+            </div>
+            <div className="mt-1.5 text-[12px] font-bold text-slate-100">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-white/[.07] bg-white/[.025] p-3">
+        <div className="flex items-center justify-between text-[9px] text-slate-500">
+          <span>Secure access chain</span>
+          <span className="font-semibold text-slate-300">3 layers</span>
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <div className="h-1.5 flex-1 rounded-full bg-indigo-400/90" />
+          <div className="h-1.5 flex-1 rounded-full bg-violet-400/75" />
+          <div className="h-1.5 flex-1 rounded-full bg-emerald-400/80" />
+        </div>
+        <div className="mt-2 grid grid-cols-3 gap-2 text-[8px] font-semibold text-slate-500">
+          <span>Identity</span>
+          <span className="text-center">MFA</span>
+          <span className="text-right">Role access</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -92,7 +149,7 @@ function PasswordField({
           }}
           onKeyUp={(event) => setCapsLockOn(event.getModifierState("CapsLock"))}
           onBlur={() => setCapsLockOn(false)}
-          className="h-12 w-full rounded-[14px] border border-white/10 bg-white/[.065] pl-10 pr-11 text-[13px] text-white outline-none transition placeholder:text-slate-600 focus:border-[#7b86ff] focus:bg-white/[.09] focus:ring-4 focus:ring-[#6874f5]/10"
+          className="h-[52px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 pl-10 pr-11 text-[13px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10"
         />
         <button
           type="button"
@@ -345,7 +402,7 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a1224] text-white print:hidden">
+    <div className="relative min-h-screen overflow-hidden bg-[#07101f] text-white print:hidden">
       <style>{`
         @media print {
           html, body { background: #0a1224 !important; }
@@ -354,12 +411,12 @@ export default function LoginPage() {
       `}</style>
       {privacyShielded ? (
         <div
-          className="fixed inset-0 z-[9999] grid place-items-center bg-[#081121]"
+          className="fixed inset-0 z-[9999] grid place-items-center bg-[#07101f]/98 backdrop-blur-xl"
           aria-live="polite"
           data-testid="login-privacy-shield"
         >
           <div className="mx-auto max-w-xs px-6 text-center">
-            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-white/10 bg-white/[.06] text-[#aeb5ff]">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-indigo-300/15 bg-indigo-300/[.07] text-[#c8ceff] shadow-[0_20px_60px_rgba(79,70,229,.18)]">
               <ShieldCheck className="size-6" />
             </div>
             <div className="mt-4 text-sm font-bold text-white">Sensitive content hidden</div>
@@ -370,65 +427,84 @@ export default function LoginPage() {
         </div>
       ) : null}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-28 -top-28 size-[430px] rounded-full bg-[#5667ff]/18 blur-[100px]" />
-        <div className="absolute -bottom-36 -right-24 size-[520px] rounded-full bg-[#8d57d7]/16 blur-[120px]" />
-        <div className="absolute left-1/2 top-[18%] h-px w-[78%] -translate-x-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <div className="absolute inset-0 opacity-[.035] [background-image:linear-gradient(rgba(255,255,255,.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:48px_48px]" />
+        <div className="absolute -left-36 -top-44 size-[560px] rounded-full bg-indigo-500/[.16] blur-[120px]" />
+        <div className="absolute -bottom-48 -right-24 size-[620px] rounded-full bg-violet-500/[.12] blur-[140px]" />
+        <div className="absolute left-[58%] top-[12%] size-[260px] rounded-full bg-cyan-400/[.035] blur-[90px]" />
+        <div className="absolute inset-0 opacity-[.028] [background-image:linear-gradient(rgba(255,255,255,.75)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.75)_1px,transparent_1px)] [background-size:52px_52px]" />
+        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-white/[.025] to-transparent" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1180px] items-start px-4 py-6 sm:items-center sm:px-6 sm:py-8 lg:px-8">
-        <div className="grid w-full overflow-hidden rounded-[30px] border border-white/10 bg-[#111c32]/88 shadow-[0_40px_120px_rgba(0,0,0,.38)] backdrop-blur-2xl lg:grid-cols-[1.05fr_.95fr]">
-          <section className="relative hidden min-h-[640px] overflow-hidden border-r border-white/10 p-10 lg:flex lg:flex-col lg:justify-between xl:p-12">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#17264b] via-[#121e37] to-[#10182d]" />
-            <div className="absolute -right-28 top-10 size-80 rounded-full bg-[#6674ff]/18 blur-[90px]" />
-            <div className="absolute -bottom-28 left-8 size-72 rounded-full bg-[#9153d5]/16 blur-[90px]" />
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1180px] items-start px-3 py-3 sm:items-center sm:px-6 sm:py-8 lg:px-8">
+        <div className="grid w-full overflow-hidden rounded-[28px] border border-white/[.08] bg-[#0c1629]/92 shadow-[0_40px_140px_rgba(0,0,0,.48)] ring-1 ring-white/[.02] backdrop-blur-2xl sm:rounded-[32px] lg:grid-cols-[1.05fr_.95fr]">
+          <section className="relative hidden min-h-[680px] overflow-hidden border-r border-white/[.07] p-10 lg:flex lg:flex-col lg:justify-between xl:p-12">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(79,70,229,.18),transparent_34%),linear-gradient(145deg,#111e38_0%,#0d172b_52%,#0a1426_100%)]" />
+            <div className="absolute -right-24 top-24 size-72 rounded-full border border-white/[.035]" />
+            <div className="absolute -right-8 top-40 size-48 rounded-full border border-white/[.03]" />
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-300/20 to-transparent" />
 
-            <div className="relative">
+            <div className="relative flex items-center justify-between">
               <BrandLockup />
+              <div className="rounded-full border border-white/[.08] bg-white/[.035] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">
+                Private workspace
+              </div>
             </div>
 
-            <div className="relative max-w-md">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.07] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.17em] text-indigo-200">
+            <div className="relative my-10 max-w-[500px]">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-indigo-200">
                 <ShieldCheck className="size-3.5" />
                 Secure admin access
               </div>
-              <h2 className="max-w-[430px] text-[40px] font-black leading-[1.04] tracking-[-.055em] text-white xl:text-[46px]">
-                Control your store from one focused workspace.
+              <h2 className="max-w-[470px] text-[41px] font-black leading-[1.02] tracking-[-.055em] text-white xl:text-[48px]">
+                Your store operations,
+                <span className="block bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent">
+                  one secure workspace.
+                </span>
               </h2>
-              <p className="mt-5 max-w-[430px] text-[13px] leading-6 text-slate-400">
-                Manage catalog, stock, orders, customers and homepage content from the Space Call dashboard.
+              <p className="mt-5 max-w-[455px] text-[13px] leading-6 text-slate-400">
+                Manage catalog, stock, orders, customers and storefront content with role-aware access and protected sessions.
               </p>
-              <div className="mt-8 space-y-3">
+
+              <div className="mt-7">
+                <WorkspacePreview />
+              </div>
+
+              <div className="mt-7 grid grid-cols-2 gap-x-5 gap-y-3">
                 <SecurityPoint>Supabase authentication with staff-role authorization</SecurityPoint>
                 <SecurityPoint>Protected dashboard routes and server-side data rules</SecurityPoint>
                 <SecurityPoint>Automatic sign-out after 30 minutes of inactivity</SecurityPoint>
-                {isDashboardTurnstileConfigured ? <SecurityPoint>Cloudflare Turnstile bot protection</SecurityPoint> : null}
+                {isDashboardTurnstileConfigured ? <SecurityPoint>Cloudflare Turnstile bot protection</SecurityPoint> : <SecurityPoint>Multi-factor access enforcement</SecurityPoint>}
               </div>
             </div>
 
-            <div className="relative flex items-center justify-between text-[10px] text-slate-500">
-              <span>Space Call Admin</span>
+            <div className="relative flex items-center justify-between border-t border-white/[.06] pt-5 text-[9px] text-slate-500">
+              <span className="inline-flex items-center gap-2">
+                <span className="size-1.5 rounded-full bg-emerald-300" />
+                Space Call Admin
+              </span>
               <a href="/" className="inline-flex items-center gap-1.5 font-semibold text-slate-300 transition hover:text-white">
                 Open storefront <ArrowRight className="size-3" />
               </a>
             </div>
           </section>
 
-          <section className="flex min-h-[620px] items-center justify-center p-5 sm:p-8 lg:min-h-[640px] lg:p-10 xl:p-12">
-            <div className="w-full max-w-[430px]">
-              <div className="mb-8 lg:hidden">
+          <section className="relative flex min-h-[640px] items-center justify-center bg-[linear-gradient(180deg,rgba(255,255,255,.018),transparent_32%)] p-5 sm:p-8 lg:min-h-[680px] lg:p-10 xl:p-12">
+            <div className="w-full max-w-[420px]">
+              <div className="mb-8 flex items-center justify-between lg:hidden">
                 <BrandLockup />
+                <a href="/" className="rounded-full border border-white/[.08] bg-white/[.035] px-3 py-1.5 text-[9px] font-bold text-slate-400">
+                  Storefront
+                </a>
               </div>
 
               <div className="mb-8">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.045] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#b5bdff]">
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.065] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#c7ccff]">
                   <LockKeyhole className="size-3.5" />
                   Authorized staff only
                 </div>
-                <h1 className="text-[32px] font-black tracking-[-.055em] text-white sm:text-[36px]">
+                <h1 className="text-[34px] font-black leading-none tracking-[-.055em] text-white sm:text-[38px]">
                   {title}
                 </h1>
-                <p className="mt-2.5 max-w-md text-[13px] leading-5 text-slate-400">{description}</p>
+                <p className="mt-3 max-w-md text-[12px] leading-5 text-slate-400">{description}</p>
               </div>
 
               {view === "signin" ? (
@@ -450,7 +526,7 @@ export default function LoginPage() {
                         onKeyDown={(event) => {
                           if (event.key === "Enter") void submit();
                         }}
-                        className="h-12 w-full rounded-[14px] border border-white/10 bg-white/[.065] pl-10 pr-3 text-[13px] text-white outline-none transition placeholder:text-slate-600 focus:border-[#7b86ff] focus:bg-white/[.09] focus:ring-4 focus:ring-[#6874f5]/10"
+                        className="h-[52px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 pl-10 pr-3 text-[13px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10"
                       />
                     </div>
                   </label>
@@ -469,7 +545,7 @@ export default function LoginPage() {
                         type="checkbox"
                         checked={rememberEmail}
                         onChange={(event) => setRememberEmail(event.target.checked)}
-                        className="size-3.5 rounded border-white/15 bg-white/5"
+                        className="size-4 rounded border-white/15 bg-white/5 accent-indigo-500"
                       />
                       Remember email
                     </label>
@@ -482,7 +558,7 @@ export default function LoginPage() {
                         resetCaptcha();
                         setView("forgot");
                       }}
-                      className="text-[10px] font-bold text-[#aeb5ff] transition hover:text-white"
+                      className="rounded-md px-1 py-0.5 text-[10px] font-bold text-[#b9c0ff] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
                     >
                       Forgot password?
                     </button>
@@ -494,7 +570,7 @@ export default function LoginPage() {
                   />
 
                   {inlineError ? (
-                    <div role="alert" className="rounded-xl border border-rose-400/15 bg-rose-400/[.08] px-3.5 py-3 text-[11px] leading-5 text-rose-200">
+                    <div role="alert" className="rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
                       {inlineError}
                     </div>
                   ) : null}
@@ -502,7 +578,7 @@ export default function LoginPage() {
                   <button
                     onClick={() => void submit()}
                     disabled={loading || (isDashboardTurnstileConfigured && !captchaToken)}
-                    className="mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6271f6] to-[#785fe8] text-[12px] font-bold text-white shadow-[0_12px_30px_rgba(103,113,245,.28)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-1 flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-indigo-300/10 bg-gradient-to-r from-[#6472f3] via-[#6d68ef] to-[#765ee7] text-[12px] font-bold text-white shadow-[0_18px_38px_rgba(87,84,219,.28)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_22px_44px_rgba(87,84,219,.34)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50"
                   >
                     {loading ? (
                       <Loader2 className="size-4 animate-spin" />
@@ -518,7 +594,7 @@ export default function LoginPage() {
               {view === "forgot" ? (
                 <div className="space-y-4">
                   {resetSent ? (
-                    <div className="rounded-2xl border border-emerald-300/15 bg-emerald-300/[.07] p-5">
+                    <div className="rounded-[20px] border border-emerald-300/15 bg-emerald-300/[.055] p-5 shadow-[0_18px_50px_rgba(16,185,129,.06)]">
                       <div className="grid size-10 place-items-center rounded-full bg-emerald-300/10 text-emerald-300">
                         <Mail className="size-4" />
                       </div>
@@ -546,7 +622,7 @@ export default function LoginPage() {
                             onKeyDown={(event) => {
                               if (event.key === "Enter") void sendReset();
                             }}
-                            className="h-12 w-full rounded-[14px] border border-white/10 bg-white/[.065] pl-10 pr-3 text-[13px] text-white outline-none transition placeholder:text-slate-600 focus:border-[#7b86ff] focus:ring-4 focus:ring-[#6874f5]/10"
+                            className="h-[52px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 pl-10 pr-3 text-[13px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10"
                           />
                         </div>
                       </label>
@@ -557,7 +633,7 @@ export default function LoginPage() {
                       />
 
                       {inlineError ? (
-                        <div role="alert" className="rounded-xl border border-rose-400/15 bg-rose-400/[.08] px-3.5 py-3 text-[11px] leading-5 text-rose-200">
+                        <div role="alert" className="rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
                           {inlineError}
                         </div>
                       ) : null}
@@ -565,7 +641,7 @@ export default function LoginPage() {
                       <button
                         onClick={() => void sendReset()}
                         disabled={loading || (isDashboardTurnstileConfigured && !captchaToken)}
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6271f6] to-[#785fe8] text-[12px] font-bold text-white disabled:opacity-60"
+                        className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-indigo-300/10 bg-gradient-to-r from-[#6472f3] to-[#765ee7] text-[12px] font-bold text-white shadow-[0_16px_34px_rgba(87,84,219,.24)] transition hover:brightness-110 disabled:opacity-50"
                       >
                         {loading ? <Loader2 className="size-4 animate-spin" /> : <><Mail className="size-4" /> Send recovery link</>}
                       </button>
@@ -607,7 +683,7 @@ export default function LoginPage() {
                   </div>
 
                   {inlineError ? (
-                    <div role="alert" className="rounded-xl border border-rose-400/15 bg-rose-400/[.08] px-3.5 py-3 text-[11px] leading-5 text-rose-200">
+                    <div role="alert" className="rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
                       {inlineError}
                     </div>
                   ) : null}
@@ -615,7 +691,7 @@ export default function LoginPage() {
                   <button
                     onClick={() => void saveNewPassword()}
                     disabled={loading}
-                    className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6271f6] to-[#785fe8] text-[12px] font-bold text-white disabled:opacity-60"
+                    className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-indigo-300/10 bg-gradient-to-r from-[#6472f3] to-[#765ee7] text-[12px] font-bold text-white shadow-[0_16px_34px_rgba(87,84,219,.24)] transition hover:brightness-110 disabled:opacity-50"
                   >
                     {loading ? <Loader2 className="size-4 animate-spin" /> : <><KeyRound className="size-4" /> Update password</>}
                   </button>
@@ -629,12 +705,12 @@ export default function LoginPage() {
                 />
               ) : null}
 
-              <div className="mt-8 border-t border-white/[.07] pt-5">
-                <div className="flex items-center justify-center gap-2 text-[9px] font-medium text-slate-500">
-                  <ShieldCheck className="size-3.5 text-emerald-400/70" />
+              <div className="mt-8 rounded-[16px] border border-white/[.055] bg-white/[.025] px-4 py-3.5">
+                <div className="flex items-center justify-center gap-2 text-[9px] font-semibold text-slate-400">
+                  <ShieldCheck className="size-3.5 text-emerald-400/80" />
                   Supabase Auth · staff role required · protected session
                 </div>
-                <p className="mt-2 text-center text-[9px] leading-4 text-slate-600">
+                <p className="mt-1.5 text-center text-[9px] leading-4 text-slate-600">
                   Never share your password or authenticator code. Space Call support will never ask for them.
                 </p>
               </div>
