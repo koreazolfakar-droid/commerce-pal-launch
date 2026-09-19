@@ -85,6 +85,9 @@ test("receiving dashboard exposes required operational fields and approval flow"
   assert.match(page, /Create receiving draft/);
   assert.match(page, /Approve/);
   assert.match(page, /previewReceivingLine/);
+  assert.match(page, /Receiving progress/);
+  assert.match(page, /Fill remaining/);
+  assert.match(page, /purchaseOrderProgress/);
 });
 
 test("receiving is routed and inventory history recognizes purchase receipts", () => {
