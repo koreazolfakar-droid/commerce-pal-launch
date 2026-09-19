@@ -176,5 +176,22 @@ Deno.serve(async (req) => {
     return json({ error: "password_update_failed" }, 500);
   }
 
+  const sessionId = typeof claims.session_id === "string" ? claims.session_id : null;
+  const userAgent = (req.headers.get("user-agent") ?? "").slice(0, 500);
+  const { error: auditError } = await admin.from("dashboard_security_events").insert({
+    user_id: user.id,
+    session_id: sessionId,
+    event_type: "password_changed",
+    user_agent: userAgent || null,
+    metadata: {
+      source: "dashboard-update-password",
+      hibp_server_checked: true,
+    },
+  });
+
+  if (auditError) {
+    console.warn("[dashboard-security] server password audit log failed", auditError.message);
+  }
+
   return json({ ok: true });
 });
