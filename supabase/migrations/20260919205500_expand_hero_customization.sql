@@ -300,7 +300,7 @@ $$;
 revoke all on function public.create_cms_hero_slide_v2(
   text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,
   boolean,timestamptz,timestamptz,text,integer,text,text,text,boolean,boolean
-) from public;
+) from public, anon;
 grant execute on function public.create_cms_hero_slide_v2(
   text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,
   boolean,timestamptz,timestamptz,text,integer,text,text,text,boolean,boolean
@@ -309,7 +309,7 @@ grant execute on function public.create_cms_hero_slide_v2(
 revoke all on function public.update_cms_hero_slide_v2(
   uuid,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,
   boolean,timestamptz,timestamptz,text,integer,text,text,text,boolean,boolean
-) from public;
+) from public, anon;
 grant execute on function public.update_cms_hero_slide_v2(
   uuid,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,text,
   boolean,timestamptz,timestamptz,text,integer,text,text,text,boolean,boolean
