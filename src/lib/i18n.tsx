@@ -24,7 +24,7 @@ const translations = {
     benefitReturns: "Easy returns",
     benefitReturnsPolicy: "Per our published policy",
     benefitSecurePayment: "Secure payment",
-    benefitEncryptedCheckout: "Encrypted Shopify checkout",
+    benefitEncryptedCheckout: "Protected direct checkout",
     serviceComparePhones: "Compare phones",
     serviceCompareDetail: "Compare live specs side by side",
     serviceCompareAction: "Compare",
@@ -98,7 +98,7 @@ const translations = {
     faqOriginalQ: "Are the products genuine?",
     faqOriginalA: "Yes. All our products are 100% genuine and come with an official warranty.",
     faqTrackingQ: "How do I track my order?",
-    faqTrackingA: "Open your Shopify account or contact us on WhatsApp.",
+    faqTrackingA: "Contact us on WhatsApp with your order number for tracking support.",
     faqReturnsQ: "What is the return policy?",
     faqReturnsA:
       "Returns are accepted within 7 days of receipt, with the product in its original condition.",
