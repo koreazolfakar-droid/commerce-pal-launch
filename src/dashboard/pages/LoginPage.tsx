@@ -10,7 +10,7 @@ import {
   Mail,
   ShieldCheck,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import {
@@ -115,6 +115,39 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [inlineError, setInlineError] = useState("");
+  const [privacyShielded, setPrivacyShielded] = useState(false);
+
+  useEffect(() => {
+    const shield = () => setPrivacyShielded(true);
+    const unshield = () => setPrivacyShielded(false);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") shield();
+      else unshield();
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "PrintScreen") {
+        event.preventDefault();
+        shield();
+        window.setTimeout(unshield, 1200);
+      }
+    };
+
+    window.addEventListener("blur", shield);
+    window.addEventListener("focus", unshield);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("pagehide", shield);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("blur", shield);
+      window.removeEventListener("focus", unshield);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("pagehide", shield);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
 
   const title = useMemo(() => {
     if (view === "forgot") return "Reset your password";
@@ -209,7 +242,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a1224] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#0a1224] text-white print:hidden">
+      <style>{`
+        @media print {
+          html, body { background: #0a1224 !important; }
+          body * { visibility: hidden !important; }
+        }
+      `}</style>
+      {privacyShielded ? (
+        <div
+          className="fixed inset-0 z-[9999] grid place-items-center bg-[#081121]"
+          aria-live="polite"
+          data-testid="login-privacy-shield"
+        >
+          <div className="mx-auto max-w-xs px-6 text-center">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-white/10 bg-white/[.06] text-[#aeb5ff]">
+              <ShieldCheck className="size-6" />
+            </div>
+            <div className="mt-4 text-sm font-bold text-white">Sensitive content hidden</div>
+            <p className="mt-1.5 text-[11px] leading-5 text-slate-400">
+              Return to the login page to continue securely.
+            </p>
+          </div>
+        </div>
+      ) : null}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-28 -top-28 size-[430px] rounded-full bg-[#5667ff]/18 blur-[100px]" />
         <div className="absolute -bottom-36 -right-24 size-[520px] rounded-full bg-[#8d57d7]/16 blur-[120px]" />
