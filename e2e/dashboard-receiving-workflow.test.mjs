@@ -81,7 +81,7 @@ test("procurement list pages skip unused heavy workspace payloads", () => {
   assert.match(data, /includeSerials = options\.includeSerials !== false/);
   assert.match(page, /includePurchaseOrders: !purchaseOrderCreateMode/);
   assert.match(page, /includeReceivings: !purchaseOrderCreateMode/);
-  assert.match(page, /includeProductOptions: !purchaseOrdersMode/);
+  assert.match(page, /includeProductOptions: purchaseOrderCreateMode/);
   assert.match(page, /includeAudit: false/);
   assert.match(page, /includeSerials: false/);
 });
