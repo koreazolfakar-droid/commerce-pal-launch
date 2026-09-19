@@ -43,7 +43,7 @@ The client intentionally does not claim Turnstile is fully enabled merely becaus
 
 The dashboard's supported password-change/recovery path is protected by the `dashboard-update-password` Edge Function. The function requires a validated dashboard user, AAL2, an admin/editor role, and server-side HIBP screening before calling the Supabase Auth Admin password mutation.
 
-The browser also performs the same HIBP k-anonymity screening for fast feedback. HIBP receives only the first five SHA-1 hex characters in both checks; the complete digest and plaintext password are not sent to HIBP.
+The browser also performs the same HIBP k-anonymity screening for fast feedback. The new password is sent over TLS to the protected Space Call Edge Function because that trusted service performs the actual password mutation; it is not logged by application code. HIBP receives only the first five SHA-1 hex characters in both checks; the complete digest and plaintext password are never sent to HIBP.
 
 Supabase's native **Leaked Password Protection** is still recommended if the project is upgraded to a plan that supports it. On hosted Supabase Free, there is no Auth hook that intercepts every new-password assignment, so the native Auth endpoint remains a platform-level bypass of application-specific HIBP policy for a caller that deliberately avoids the dashboard flow. The application never uses that direct mutation path.
 
