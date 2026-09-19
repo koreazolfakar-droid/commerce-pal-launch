@@ -1902,6 +1902,22 @@ export type Database = {
         }
         Returns: string
       }
+      create_store_purchase_order_v2: {
+        Args: {
+          p_currency: string
+          p_discount_amount: number
+          p_exchange_rate: number
+          p_expected_at: string | null
+          p_items: Json
+          p_location_id: string | null
+          p_notes: string | null
+          p_po_number: string
+          p_shipping_amount: number
+          p_supplier_id: string
+          p_tax_amount: number
+        }
+        Returns: string
+      }
       create_store_receiving: {
         Args: {
           p_invoice_number: string
