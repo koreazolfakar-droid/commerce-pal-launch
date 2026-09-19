@@ -19,7 +19,7 @@ test("dashboard login route uses the dedicated redesigned page", () => {
 });
 
 test("login page keeps Supabase staff authentication and never stores passwords", () => {
-  assert.match(login, /signInDashboard\(email, password, captchaToken \?\? undefined\)/);
+  assert.match(login, /signInDashboard\(email, password, captchaToken/);
   assert.match(login, /EMAIL_STORAGE_KEY = "spacecall-dashboard-email"/);
   assert.match(login, /Remember email/);
   assert.doesNotMatch(login, /localStorage\.setItem\([^\n]*password/i);
@@ -38,7 +38,7 @@ test("login page exposes responsive security and password UX", () => {
 
 test("password recovery flow is real and uses Supabase Auth", () => {
   assert.match(login, /Forgot password\?/);
-  assert.match(login, /requestDashboardPasswordReset\(email, captchaToken \?\? undefined\)/);
+  assert.match(login, /requestDashboardPasswordReset\(email, captchaToken/);
   assert.match(login, /updateDashboardPassword\(newPassword\)/);
   assert.match(login, /mode=recovery/);
   assert.match(catalog, /resetPasswordForEmail/);
