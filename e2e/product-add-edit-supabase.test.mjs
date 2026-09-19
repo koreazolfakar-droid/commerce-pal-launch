@@ -37,7 +37,7 @@ test("product detail fetch bypasses the catalog snapshot cache", () => {
 });
 
 test("product route resolves product data from the Supabase native store", () => {
-  assert.match(productRoute, /fetchProductByHandle.*@\/lib\/nativeStore/s);
+  assert.match(productRoute, /fetchProductByHandle.*@\/lib\/storefrontData/s);
   assert.match(productRoute, /loader: async \(\{ params \}\) =>/);
   assert.match(productRoute, /fetchProductByHandle\(params\.handle\)/);
 });
