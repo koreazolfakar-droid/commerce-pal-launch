@@ -8,7 +8,9 @@ import {
   Tags,
 } from "lucide-react";
 
+import { localizeSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import { useLanguage } from "@/lib/i18n";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 const REASONS = [
@@ -45,12 +47,14 @@ const REASONS = [
 ] as const;
 
 export function WhyShop() {
+  const { language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
   const section = cms?.sections.find(
     (item) => item.page_slug === "home" && item.section_key === "trust",
   );
-  const title = section?.title?.trim() || `Why shop with ${STORE_NAME}`;
-  const subtitle = section?.subtitle?.trim();
+  const localized = section ? localizeSection(section, language) : undefined;
+  const title = localized?.title?.trim() || `Why shop with ${STORE_NAME}`;
+  const subtitle = localized?.subtitle?.trim();
 
   return (
     <section aria-labelledby="why-shop">
