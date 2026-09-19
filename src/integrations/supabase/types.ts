@@ -1302,6 +1302,45 @@ export type Database = {
         }
       }
       create_store_order_internal: { Args: { payload: Json }; Returns: Json }
+      create_store_product_variant: {
+        Args: {
+          p_allow_backorder: boolean
+          p_barcode: string
+          p_compare_at_price: number | null
+          p_image_url: string
+          p_is_active: boolean
+          p_options: Json
+          p_price: number
+          p_product_id: string
+          p_sku: string
+          p_sort_order: number
+          p_stock: number
+          p_title: string
+          p_track_inventory: boolean
+        }
+        Returns: {
+          allow_backorder: boolean
+          barcode: string | null
+          compare_at_price: number | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          options: Json
+          price: number
+          product_id: string
+          sku: string | null
+          sort_order: number
+          stock_quantity: number
+          title: string
+          track_inventory: boolean
+          updated_at: string
+        }
+      }
+      duplicate_store_product: {
+        Args: { p_product_id: string }
+        Returns: string
+      }
       delete_cms_hero_slide: {
         Args: { p_slide_id: string }
         Returns: undefined
@@ -1316,6 +1355,14 @@ export type Database = {
       }
       delete_store_collection: {
         Args: { p_collection_id: string }
+        Returns: undefined
+      }
+      delete_store_product_safe: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
+      delete_store_product_variant_safe: {
+        Args: { p_variant_id: string }
         Returns: undefined
       }
       get_store_customer_orders: {
@@ -1383,9 +1430,21 @@ export type Database = {
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_categories: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_collections: { Args: { p_items: Json }; Returns: undefined }
+      reorder_store_product_variants: {
+        Args: { p_items: Json }
+        Returns: undefined
+      }
       set_store_collection_products: {
         Args: { p_collection_id: string; p_product_ids: string[] }
         Returns: undefined
+      }
+      set_store_product_collections: {
+        Args: { p_collection_ids: string[]; p_product_id: string }
+        Returns: undefined
+      }
+      set_store_products_status: {
+        Args: { p_product_ids: string[]; p_status: string }
+        Returns: number
       }
       set_store_inventory_stock: {
         Args: {
@@ -1459,6 +1518,41 @@ export type Database = {
           to: "cms_hero_slides"
           isOneToOne: true
           isSetofReturn: false
+        }
+      }
+      update_store_product_variant: {
+        Args: {
+          p_allow_backorder: boolean
+          p_barcode: string
+          p_compare_at_price: number | null
+          p_image_url: string
+          p_is_active: boolean
+          p_options: Json
+          p_price: number
+          p_sku: string
+          p_sort_order: number
+          p_stock: number
+          p_title: string
+          p_track_inventory: boolean
+          p_variant_id: string
+        }
+        Returns: {
+          allow_backorder: boolean
+          barcode: string | null
+          compare_at_price: number | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          options: Json
+          price: number
+          product_id: string
+          sku: string | null
+          sort_order: number
+          stock_quantity: number
+          title: string
+          track_inventory: boolean
+          updated_at: string
         }
       }
       update_store_category: {
