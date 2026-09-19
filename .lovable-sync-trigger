@@ -20,3 +20,7 @@ Current dashboard category changes already present on main:
 
 Reason for this sync commit:
 Force the Lovable-connected branch to pull and rebuild the latest main snapshot so the live /dashboard/categories UI matches the code currently in commerce-pal-launch. Do not use the separate Deploy. Done. Lovable dashboard project for this sync.
+
+
+Republish request: 2026-09-19T23:01:00+03:00
+Action: rebuild and republish the latest main snapshot, including the Dashboard Categories image upload/WebP controls.
