@@ -66,3 +66,16 @@ test("passkey flows require WebAuthn in a secure browser context and sanitize fa
   assert.match(catalog, /Passkey request was cancelled or timed out\./);
   assert.doesNotMatch(catalog, /service_role|SUPABASE_SERVICE_ROLE|sb_secret_/);
 });
+
+const securityPage = await readFile(
+  new URL("../src/dashboard/pages/SecurityPage.tsx", import.meta.url),
+  "utf8",
+);
+
+test("Security Center exposes guarded passkey enrollment", () => {
+  assert.match(securityPage, /registerDashboardPasskey/);
+  assert.match(securityPage, /isDashboardPasskeySupported/);
+  assert.match(securityPage, /Passkeys & biometrics/);
+  assert.match(securityPage, /disabled=\{action !== null \|\| !passkeySupported\}/);
+  assert.match(securityPage, /Your biometric data never leaves your device\./);
+});
