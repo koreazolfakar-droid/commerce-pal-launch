@@ -497,12 +497,14 @@ export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
     throw new Error("Passkey could not be registered. Try again.");
   }
 
-  return {
+  const passkey: DashboardPasskey = {
     id: result.data.id,
     friendlyName: result.data.friendly_name ?? null,
     createdAt: result.data.created_at,
     lastUsedAt: null,
   };
+  await logDashboardSecurityEvent("passkey_registered", { passkeyId: passkey.id });
+  return passkey;
 }
 
 
