@@ -159,19 +159,35 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (recoveryMode) return;
-
     let cancelled = false;
+
     getDashboardMfaStatus()
       .then((status) => {
-        if (cancelled || !status) return;
+        if (cancelled) return;
+
+        if (!status) {
+          if (recoveryMode) {
+            setInlineError("Your recovery session is missing or expired. Request a new recovery link.");
+          }
+          return;
+        }
+
         if (status.ready) {
+          if (recoveryMode) {
+            setView("recovery");
+            return;
+          }
           navigate("/dashboard");
           return;
         }
+
         setView("mfa");
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (recoveryMode && !cancelled) {
+          setInlineError("Unable to verify the recovery session. Request a new recovery link.");
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -294,10 +310,18 @@ export default function LoginPage() {
   };
 
   const handleMfaSuccess = useCallback(() => {
-    window.history.replaceState({}, "", "/dashboard/login");
     toast.success("AAL2 security verified.");
+
+    if (recoveryMode) {
+      window.history.replaceState({}, "", "/dashboard/login?mode=recovery");
+      setInlineError("");
+      setView("recovery");
+      return;
+    }
+
+    window.history.replaceState({}, "", "/dashboard/login");
     navigate("/dashboard");
-  }, [navigate]);
+  }, [navigate, recoveryMode]);
 
   const handleMfaCancel = useCallback(() => {
     window.history.replaceState({}, "", "/dashboard/login");
@@ -557,7 +581,7 @@ export default function LoginPage() {
                   />
 
                   <div className="rounded-xl border border-white/[.08] bg-white/[.035] px-3.5 py-3 text-[10px] leading-5 text-slate-400">
-                    Use at least 10 characters. Before saving, the password is checked against known breach data using HIBP k-anonymity; your password is never sent to HIBP.
+                    Use at least 10 characters. The password is screened against HIBP twice: first in your browser for fast feedback, then again by the protected password-update service before Supabase Auth accepts the change. HIBP receives only a 5-character hash prefix.
                   </div>
 
                   {inlineError ? (
