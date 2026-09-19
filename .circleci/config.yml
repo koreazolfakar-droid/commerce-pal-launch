@@ -61,4 +61,8 @@ jobs:
 workflows:
   storefront-validation:
     jobs:
-      - storefront-ci
+      - storefront-ci:
+          filters:
+            branches:
+              ignore:
+                - main
