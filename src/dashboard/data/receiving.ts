@@ -4,6 +4,10 @@ import type { Json, Tables } from "@/integrations/supabase/types";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
 
 type SupplierRow = Tables<"store_suppliers">;
+type LocationRow = Tables<"store_procurement_locations">;
+type ProcurementEventRow = Tables<"store_procurement_events">;
+type ProcurementAttachmentRow = Tables<"store_procurement_attachments">;
+type ReceivingSerialRow = Tables<"store_receiving_serials">;
 type PurchaseOrderRow = Tables<"store_purchase_orders">;
 type PurchaseOrderItemRow = Tables<"store_purchase_order_items">;
 type ReceivingRow = Tables<"store_receivings">;
@@ -25,7 +29,51 @@ export type ReceivingSupplier = {
   id: string;
   name: string;
   code: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
   isActive: boolean;
+};
+
+export type ProcurementLocation = {
+  id: string;
+  name: string;
+  code: string;
+  address: string | null;
+  isActive: boolean;
+};
+
+export type ProcurementEventSummary = {
+  id: string;
+  purchaseOrderId: string | null;
+  receivingId: string | null;
+  type: string;
+  details: Json;
+  actorId: string | null;
+  createdAt: string;
+};
+
+export type ProcurementAttachment = {
+  id: string;
+  purchaseOrderId: string | null;
+  receivingId: string | null;
+  fileName: string;
+  storagePath: string;
+  mimeType: string;
+  sizeBytes: number | null;
+  attachmentType: string;
+  createdAt: string;
+  url: string;
+};
+
+export type ReceivingSerial = {
+  id: string;
+  receivingItemId: string;
+  serialNumber: string;
+  imei1: string;
+  imei2: string;
+  condition: "usable" | "damaged";
+  inventoryStatus: string;
 };
 
 export type PurchaseOrderLine = {
@@ -38,6 +86,7 @@ export type PurchaseOrderLine = {
   approvedReceivedQuantity: number;
   remainingQuantity: number;
   unitCost: number;
+  serials: ReceivingSerial[];
 };
 
 export type PurchaseOrderSummary = {
@@ -47,9 +96,23 @@ export type PurchaseOrderSummary = {
   poNumber: string;
   status: PurchaseOrderRow["status"];
   currency: string;
+  locationId: string | null;
+  locationName: string;
+  expectedAt: string | null;
   orderedAt: string | null;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  rejectionReason: string | null;
+  cancelledAt: string | null;
+  cancellationReason: string | null;
   createdAt: string;
   notes: string | null;
+  discountAmount: number;
+  taxAmount: number;
+  shippingAmount: number;
+  exchangeRate: number;
+  subtotal: number;
+  grandTotal: number;
   expectedUnits: number;
   receivedUnits: number;
   remainingUnits: number;
@@ -102,9 +165,12 @@ export type ProcurementProductOption = {
 
 export type ReceivingWorkspace = {
   suppliers: ReceivingSupplier[];
+  locations: ProcurementLocation[];
   purchaseOrders: PurchaseOrderSummary[];
   receivings: ReceivingSummary[];
   productOptions: ProcurementProductOption[];
+  events: ProcurementEventSummary[];
+  attachments: ProcurementAttachment[];
 };
 
 function toNumber(value: number | string | null | undefined) {
@@ -115,14 +181,18 @@ function toNumber(value: number | string | null | undefined) {
 export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
   await requireDashboardStaff();
 
-  const [supplierResult, poResult, receivingResult, productResult, variantResult] = await Promise.all([
+  const [supplierResult, locationResult, poResult, receivingResult, productResult, variantResult, eventResult, attachmentResult] = await Promise.all([
     supabase
       .from("store_suppliers")
-      .select("id,name,code,is_active")
+      .select("id,name,code,phone,email,notes,is_active")
+      .order("name", { ascending: true }),
+    supabase
+      .from("store_procurement_locations")
+      .select("id,name,code,address,is_active")
       .order("name", { ascending: true }),
     supabase
       .from("store_purchase_orders")
-      .select("id,supplier_id,po_number,status,currency,ordered_at,created_at,notes")
+      .select("id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes")
       .order("created_at", { ascending: false })
       .limit(100),
     supabase
@@ -141,18 +211,50 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
       .eq("is_active", true)
       .order("product_id", { ascending: true })
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("store_procurement_events")
+      .select("id,purchase_order_id,receiving_id,event_type,details,actor_id,created_at")
+      .order("created_at", { ascending: false })
+      .limit(300),
+    supabase
+      .from("store_procurement_attachments")
+      .select("id,purchase_order_id,receiving_id,file_name,storage_path,mime_type,size_bytes,attachment_type,created_at")
+      .order("created_at", { ascending: false })
+      .limit(300),
   ]);
 
   throwIfError(supplierResult.error, "Loading suppliers failed");
+  throwIfError(locationResult.error, "Loading procurement locations failed");
   throwIfError(poResult.error, "Loading purchase orders failed");
   throwIfError(receivingResult.error, "Loading receivings failed");
   throwIfError(productResult.error, "Loading procurement products failed");
   throwIfError(variantResult.error, "Loading procurement variants failed");
+  throwIfError(eventResult.error, "Loading procurement audit events failed");
+  throwIfError(attachmentResult.error, "Loading procurement attachments failed");
 
-  const suppliers = (supplierResult.data ?? []) as Pick<SupplierRow, "id" | "name" | "code" | "is_active">[];
+  const suppliers = (supplierResult.data ?? []) as Pick<SupplierRow, "id" | "name" | "code" | "phone" | "email" | "notes" | "is_active">[];
+  const locations = (locationResult.data ?? []) as Pick<LocationRow, "id" | "name" | "code" | "address" | "is_active">[];
   const purchaseOrders = (poResult.data ?? []) as Pick<
     PurchaseOrderRow,
-    "id" | "supplier_id" | "po_number" | "status" | "currency" | "ordered_at" | "created_at" | "notes"
+    | "id"
+    | "supplier_id"
+    | "location_id"
+    | "po_number"
+    | "status"
+    | "currency"
+    | "expected_at"
+    | "ordered_at"
+    | "approved_at"
+    | "rejected_at"
+    | "rejection_reason"
+    | "cancelled_at"
+    | "cancellation_reason"
+    | "discount_amount"
+    | "tax_amount"
+    | "shipping_amount"
+    | "exchange_rate"
+    | "created_at"
+    | "notes"
   >[];
   const receivings = (receivingResult.data ?? []) as Pick<
     ReceivingRow,
@@ -165,6 +267,14 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
   const variants = (variantResult.data ?? []) as Pick<
     VariantRow,
     "id" | "product_id" | "title" | "sku" | "stock_quantity" | "is_active" | "track_inventory" | "sort_order"
+  >[];
+  const events = (eventResult.data ?? []) as Pick<
+    ProcurementEventRow,
+    "id" | "purchase_order_id" | "receiving_id" | "event_type" | "details" | "actor_id" | "created_at"
+  >[];
+  const attachmentRows = (attachmentResult.data ?? []) as Pick<
+    ProcurementAttachmentRow,
+    "id" | "purchase_order_id" | "receiving_id" | "file_name" | "storage_path" | "mime_type" | "size_bytes" | "attachment_type" | "created_at"
   >[];
 
   const poIds = purchaseOrders.map((row) => row.id);
@@ -208,6 +318,33 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
     | "overage_quantity"
     | "overage_reason"
   >[];
+
+  const receivingItemIds = receivingItems.map((row) => row.id);
+  const serialResult = receivingItemIds.length
+    ? await supabase
+        .from("store_receiving_serials")
+        .select("id,receiving_item_id,serial_number,imei1,imei2,condition,inventory_status")
+        .in("receiving_item_id", receivingItemIds)
+    : { data: [], error: null };
+  throwIfError(serialResult.error, "Loading receiving serials failed");
+  const serialRows = (serialResult.data ?? []) as Pick<
+    ReceivingSerialRow,
+    "id" | "receiving_item_id" | "serial_number" | "imei1" | "imei2" | "condition" | "inventory_status"
+  >[];
+  const serialsByReceivingItem = new Map<string, ReceivingSerial[]>();
+  for (const serial of serialRows) {
+    const rows = serialsByReceivingItem.get(serial.receiving_item_id) ?? [];
+    rows.push({
+      id: serial.id,
+      receivingItemId: serial.receiving_item_id,
+      serialNumber: serial.serial_number ?? "",
+      imei1: serial.imei1 ?? "",
+      imei2: serial.imei2 ?? "",
+      condition: serial.condition === "damaged" ? "damaged" : "usable",
+      inventoryStatus: serial.inventory_status,
+    });
+    serialsByReceivingItem.set(serial.receiving_item_id, rows);
+  }
 
   const supplierById = new Map(suppliers.map((row) => [row.id, row]));
   const poById = new Map(purchaseOrders.map((row) => [row.id, row]));
@@ -261,12 +398,14 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
       overageQuantity: line.overage_quantity,
       overageReason: line.overage_reason,
       unitCost: toNumber(line.unit_cost),
+      serials: serialsByReceivingItem.get(line.id) ?? [],
     };
     const lines = receivingLinesByReceipt.get(line.receiving_id) ?? [];
     lines.push(summary);
     receivingLinesByReceipt.set(line.receiving_id, lines);
   }
 
+  const locationById = new Map(locations.map((row) => [row.id, row]));
   const productById = new Map(products.map((row) => [row.id, row]));
   const variantsByProduct = new Map<string, typeof variants>();
   for (const variant of variants) {
@@ -308,10 +447,25 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
       id: row.id,
       name: row.name,
       code: row.code,
+      phone: row.phone,
+      email: row.email,
+      notes: row.notes,
+      isActive: row.is_active,
+    })),
+    locations: locations.map((row) => ({
+      id: row.id,
+      name: row.name,
+      code: row.code,
+      address: row.address,
       isActive: row.is_active,
     })),
     purchaseOrders: purchaseOrders.map((po) => {
       const lines = poLinesByPo.get(po.id) ?? [];
+      const subtotal = lines.reduce((sum, line) => sum + line.expectedQuantity * line.unitCost, 0);
+      const grandTotal = Math.max(
+        0,
+        subtotal - toNumber(po.discount_amount) + toNumber(po.tax_amount) + toNumber(po.shipping_amount),
+      );
       return {
         id: po.id,
         supplierId: po.supplier_id,
@@ -319,13 +473,27 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
         poNumber: po.po_number,
         status: po.status,
         currency: po.currency,
+        locationId: po.location_id,
+        locationName: po.location_id ? locationById.get(po.location_id)?.name ?? "Unknown location" : "Unassigned",
+        expectedAt: po.expected_at,
         orderedAt: po.ordered_at,
+        approvedAt: po.approved_at,
+        rejectedAt: po.rejected_at,
+        rejectionReason: po.rejection_reason,
+        cancelledAt: po.cancelled_at,
+        cancellationReason: po.cancellation_reason,
         createdAt: po.created_at,
         notes: po.notes,
+        discountAmount: toNumber(po.discount_amount),
+        taxAmount: toNumber(po.tax_amount),
+        shippingAmount: toNumber(po.shipping_amount),
+        exchangeRate: toNumber(po.exchange_rate) || 1,
+        subtotal,
+        grandTotal,
         expectedUnits: lines.reduce((sum, line) => sum + line.expectedQuantity, 0),
         receivedUnits: lines.reduce((sum, line) => sum + line.approvedReceivedQuantity, 0),
         remainingUnits: lines.reduce((sum, line) => sum + line.remainingQuantity, 0),
-        expectedCost: lines.reduce((sum, line) => sum + line.expectedQuantity * line.unitCost, 0),
+        expectedCost: grandTotal,
         items: lines,
       };
     }),
@@ -350,6 +518,27 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
       };
     }),
     productOptions: productOptions.sort((a, b) => a.title.localeCompare(b.title)),
+    events: events.map((row) => ({
+      id: row.id,
+      purchaseOrderId: row.purchase_order_id,
+      receivingId: row.receiving_id,
+      type: row.event_type,
+      details: row.details,
+      actorId: row.actor_id,
+      createdAt: row.created_at,
+    })),
+    attachments: attachmentRows.map((row) => ({
+      id: row.id,
+      purchaseOrderId: row.purchase_order_id,
+      receivingId: row.receiving_id,
+      fileName: row.file_name,
+      storagePath: row.storage_path,
+      mimeType: row.mime_type ?? "",
+      sizeBytes: row.size_bytes,
+      attachmentType: row.attachment_type,
+      createdAt: row.created_at,
+      url: supabase.storage.from("cms-media").getPublicUrl(row.storage_path).data.publicUrl,
+    })),
   };
 }
 
@@ -377,6 +566,12 @@ export type CreatePurchaseOrderInput = {
   supplierId: string;
   poNumber: string;
   currency?: string;
+  locationId?: string | null;
+  expectedAt?: string | null;
+  discountAmount?: number;
+  taxAmount?: number;
+  shippingAmount?: number;
+  exchangeRate?: number;
   notes?: string;
   items: Array<{
     productId: string;
@@ -397,10 +592,16 @@ export async function createPurchaseOrder(input: CreatePurchaseOrderInput) {
     unit_cost: item.unitCost,
   }));
 
-  const { data, error } = await supabase.rpc("create_store_purchase_order", {
+  const { data, error } = await supabase.rpc("create_store_purchase_order_v2", {
     p_supplier_id: input.supplierId,
+    p_location_id: input.locationId ?? null,
     p_po_number: input.poNumber.trim(),
     p_currency: (input.currency || "USD").trim().toUpperCase(),
+    p_expected_at: input.expectedAt ?? null,
+    p_discount_amount: input.discountAmount ?? 0,
+    p_tax_amount: input.taxAmount ?? 0,
+    p_shipping_amount: input.shippingAmount ?? 0,
+    p_exchange_rate: input.exchangeRate ?? 1,
     p_notes: input.notes?.trim() || null,
     p_items: payload,
   });
