@@ -34,6 +34,10 @@ const throttleMigration = await readFile(
   new URL("../supabase/migrations/20260919064000_dashboard_login_throttle.sql", import.meta.url),
   "utf8",
 );
+const hardenedPolicies = await readFile(
+  new URL("../supabase/migrations/20260919065000_harden_dashboard_security_policies.sql", import.meta.url),
+  "utf8",
+);
 
 test("Turnstile is staged safely and passed directly to Supabase Auth", () => {
   assert.match(catalog, /VITE_TURNSTILE_SITE_KEY/);
@@ -53,20 +57,33 @@ test("Turnstile widget uses explicit rendering, token expiry handling and CSP al
   assert.match(turnstile, /"error-callback"/);
   assert.match(turnstile, /turnstile\.reset/);
   assert.match(server, /script-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
-  assert.match(server, /frame-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
+  assert.match(server, /connect-src[^\n]+https:\/\/challenges\.cloudflare\.com/);\n  assert.match(server, /frame-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
 });
 
-test("pre-auth throttle is non-clearable and stores only opaque hashes", () => {
+test("pre-auth throttle uses opaque pair/IP buckets and clears only the pair on success", () => {
   assert.match(catalog, /dashboard-auth-throttle/);
-  assert.match(catalog, /outcome: "check" \| "failure"/);
-  assert.doesNotMatch(catalog, /dashboardLoginThrottle\(email, "success"\)/);
-  assert.match(throttle, /sha256\(\`pair\|\$\{ip\}\|\$\{email\}\`\)/);
-  assert.match(throttle, /sha256\(\`ip\|\$\{ip\}\`\)/);
+  assert.match(catalog, /outcome: "check" \| "failure" \| "success"/);
+  assert.match(catalog, /dashboardLoginThrottle\(email, "check"\)/);
+  assert.match(catalog, /dashboardLoginThrottle\(email, "failure"\)/);
+  assert.match(catalog, /dashboardLoginThrottle\(email, "success"\)/);
   assert.match(throttle, /PAIR_SOFT_FAILURES = 5/);
+  assert.match(throttle, /PAIR_HARD_FAILURES = 10/);
   assert.match(throttle, /IP_SOFT_FAILURES = 25/);
-  assert.doesNotMatch(throttle, /outcome === "success"/);
+  assert.match(throttle, /IP_HARD_FAILURES = 50/);
+  assert.match(throttle, /pair\|\$\{ip\}\|\$\{email\}/);
+  assert.match(throttle, /ip\|\$\{ip\}/);
+  assert.match(throttle, /outcome === "success"/);
+  assert.match(throttle, /eq\("key_hash", pairKeyHash\)/);
+  assert.match(throttle, /48 \* 60 \* 60 \* 1000/);
   assert.match(throttleMigration, /key_hash text primary key/);
-  assert.doesNotMatch(throttleMigration, /email text|ip_address|raw_email/i);
+  assert.doesNotMatch(throttleMigration, /email text|ip_address|raw_email|raw_ip/i);
+});
+
+test("throttle storage is denied to browser roles", () => {
+  assert.match(hardenedPolicies, /dashboard_login_throttle_deny_clients/);
+  assert.match(hardenedPolicies, /to anon, authenticated/);
+  assert.match(hardenedPolicies, /using \(false\)/);
+  assert.match(hardenedPolicies, /with check \(false\)/);
 });
 
 test("session controls use explicit Supabase sign-out scopes", () => {
@@ -80,17 +97,24 @@ test("session controls use explicit Supabase sign-out scopes", () => {
 
 test("security events are sanitized, user-bound and visible in the Security Center", () => {
   assert.match(securityMigration, /dashboard_security_events/);
-  assert.match(securityMigration, /p_metadata - 'password' - 'token' - 'secret' - 'captchaToken'/);
+  assert.match(securityMigration, /dashboard_security_events_staff_read_own/);
+  assert.match(hardenedPolicies, /private\.log_dashboard_security_event_internal/);
+  assert.match(hardenedPolicies, /security invoker/);
+  assert.match(hardenedPolicies, /p_metadata - 'password' - 'token' - 'secret' - 'captchaToken'/);
   assert.match(catalog, /log_dashboard_security_event/);
   assert.match(catalog, /mfa_verified/);
   assert.match(catalog, /login_success/);
   assert.match(catalog, /password_changed/);
+  assert.match(catalog, /signout_global/);
   assert.match(securityPage, /Recent security activity/);
 });
 
-test("Security Center is a real dashboard route", () => {
+test("Security Center is a real route and reports security state precisely", () => {
   assert.match(app, /import SecurityPage from "@\/dashboard\/pages\/SecurityPage"/);
   assert.match(app, /route === "\/dashboard\/security"[\s\S]+<SecurityPage \/>/);
   assert.match(nav, /href: "\/dashboard\/security"/);
   assert.match(nav, /label: "Security"/);
+  assert.match(securityPage, /AAL2 active/);
+  assert.match(securityPage, /Client configured/);
+  assert.match(securityPage, /Supabase Auth must also have Cloudflare Turnstile enabled/);
 });
