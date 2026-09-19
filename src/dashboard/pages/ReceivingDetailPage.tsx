@@ -17,6 +17,7 @@ import {
   deleteProcurementAttachment,
   loadReceivingWorkspace,
   replaceReceivingSerials,
+  updateReceivingDraft,
   uploadProcurementAttachment,
   voidReceiving,
   type ProcurementAttachment,
@@ -26,6 +27,14 @@ import {
 } from "@/dashboard/data/receiving";
 
 type SerialDraftRow = ReceivingSerialDraft & { key: string };
+
+type ReceivingLineDraft = {
+  received: string;
+  damaged: string;
+  unitCost: string;
+  overageConfirmed: boolean;
+  overageReason: string;
+};
 
 function money(value: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
@@ -44,6 +53,10 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [employeeLabel, setEmployeeLabel] = useState("");
+  const [receivingNotes, setReceivingNotes] = useState("");
+  const [lineDrafts, setLineDrafts] = useState<Record<string, ReceivingLineDraft>>({});
   const [serialDrafts, setSerialDrafts] = useState<Record<string, SerialDraftRow[]>>({});
   const [attachmentType, setAttachmentType] = useState<"supplier_invoice" | "packing_list" | "other">("supplier_invoice");
 
@@ -55,6 +68,23 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
       if (!found) throw new Error("Receiving record was not found.");
       setWorkspace(next);
       setReceipt(found);
+      setInvoiceNumber(found.invoiceNumber);
+      setEmployeeLabel(found.employee === "Authenticated staff" ? "" : found.employee);
+      setReceivingNotes(found.notes ?? "");
+      setLineDrafts(
+        Object.fromEntries(
+          found.items.map((line) => [
+            line.id,
+            {
+              received: String(line.receivedQuantity),
+              damaged: String(line.damagedQuantity),
+              unitCost: String(line.unitCost),
+              overageConfirmed: line.overageQuantity > 0,
+              overageReason: line.overageReason ?? "",
+            },
+          ]),
+        ),
+      );
       setSerialDrafts(
         Object.fromEntries(
           found.items.map((line) => [
@@ -111,6 +141,67 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
       return sum + line.deliveredQuantity * (poLine?.unitCost ?? line.unitCost);
     }, 0);
   }, [po, receipt]);
+
+  const saveReceivingDraft = async () => {
+    if (!receipt || receipt.status !== "draft") return;
+    if (!invoiceNumber.trim()) return toast.error("Invoice number is required.");
+
+    try {
+      const lines = receipt.items.map((line) => {
+        const draft = lineDrafts[line.id];
+        if (!draft) throw new Error(`${line.title}: receiving draft data is missing.`);
+
+        const receivedQuantity = Number(draft.received);
+        const damagedQuantity = Number(draft.damaged);
+        const unitCost = Number(draft.unitCost);
+
+        if (!Number.isInteger(receivedQuantity) || receivedQuantity < 0) {
+          throw new Error(`${line.title}: received quantity must be a non-negative whole number.`);
+        }
+        if (!Number.isInteger(damagedQuantity) || damagedQuantity < 0) {
+          throw new Error(`${line.title}: damaged quantity must be a non-negative whole number.`);
+        }
+        if (receivedQuantity + damagedQuantity <= 0) {
+          throw new Error(`${line.title}: enter at least one received or damaged unit.`);
+        }
+        if (!Number.isFinite(unitCost) || unitCost < 0) {
+          throw new Error(`${line.title}: unit cost must be zero or greater.`);
+        }
+
+        const delivered = receivedQuantity + damagedQuantity;
+        if (
+          delivered > line.remainingQuantityBefore &&
+          (!draft.overageConfirmed || !draft.overageReason.trim())
+        ) {
+          throw new Error(`${line.title}: excess delivery requires confirmation and a reason.`);
+        }
+
+        return {
+          receivingItemId: line.id,
+          receivedQuantity,
+          damagedQuantity,
+          unitCost,
+          overageConfirmed: delivered > line.remainingQuantityBefore ? draft.overageConfirmed : false,
+          overageReason: delivered > line.remainingQuantityBefore ? draft.overageReason : undefined,
+        };
+      });
+
+      setSaving(true);
+      await updateReceivingDraft({
+        receivingId: receipt.id,
+        invoiceNumber,
+        employeeLabel,
+        notes: receivingNotes,
+        lines,
+      });
+      toast.success("Receiving draft updated.");
+      await load();
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Updating receiving draft failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const saveSerials = async (lineId: string) => {
     setSaving(true);
@@ -228,6 +319,9 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
               <button onClick={() => void voidDraft()} disabled={saving} className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold text-rose-700 disabled:opacity-50">
                 <XCircle className="size-3.5" /> Void draft
               </button>
+              <button onClick={() => void saveReceivingDraft()} disabled={saving} className="flex h-10 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 text-[11px] font-bold text-indigo-700 disabled:opacity-50">
+                <Save className="size-3.5" /> Save draft
+              </button>
               <button onClick={() => void approve()} disabled={saving} className="flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-[11px] font-bold text-white disabled:opacity-50">
                 <CheckCircle2 className="size-3.5" /> Approve receiving
               </button>
@@ -235,6 +329,45 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
           ) : null}
         </div>
       </div>
+
+      {receipt.status === "draft" ? (
+        <div className="mb-5 rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-5">
+          <div className="mb-4">
+            <div className="text-[14px] font-bold text-[#14203a]">Draft receiving details</div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              Update invoice, employee, notes and receiving quantities before approval.
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <label>
+              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">Invoice number</div>
+              <input
+                value={invoiceNumber}
+                onChange={(event) => setInvoiceNumber(event.target.value)}
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+              />
+            </label>
+            <label>
+              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">Receiving employee</div>
+              <input
+                value={employeeLabel}
+                onChange={(event) => setEmployeeLabel(event.target.value)}
+                placeholder="Optional display name"
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+              />
+            </label>
+            <label>
+              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">Notes</div>
+              <input
+                value={receivingNotes}
+                onChange={(event) => setReceivingNotes(event.target.value)}
+                placeholder="Optional receiving notes"
+                className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+              />
+            </label>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
@@ -284,32 +417,163 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
             const trackedCount = rows.filter((row) => row.serialNumber?.trim() || row.imei1?.trim() || row.imei2?.trim()).length;
             return (
               <div key={line.id} className="p-4">
-                <div className="grid gap-3 lg:grid-cols-[1.3fr_repeat(7,minmax(80px,.55fr))] lg:items-start">
-                  <div>
-                    <div className="text-[12px] font-bold text-slate-800">{line.title}</div>
-                    <div className="mt-1 font-mono text-[9px] text-slate-400">{line.sku || "No SKU"}</div>
-                  </div>
-                  {[
-                    ["Expected", line.expectedQuantity],
-                    ["Remaining before", line.remainingQuantityBefore],
-                    ["Received", line.receivedQuantity],
-                    ["Damaged", line.damagedQuantity],
-                    ["Missing", line.missingQuantity],
-                    ["Difference", line.difference],
-                  ].map(([label, value]) => (
-                    <div key={label}>
-                      <div className="text-[8px] font-bold uppercase text-slate-400">{label}</div>
-                      <div className="mt-1 text-[11px] font-bold text-slate-700">{value}</div>
+                {receipt.status === "draft" ? (() => {
+                  const draft = lineDrafts[line.id];
+                  const received = Number(draft?.received ?? 0);
+                  const damaged = Number(draft?.damaged ?? 0);
+                  const delivered = (Number.isFinite(received) ? received : 0) + (Number.isFinite(damaged) ? damaged : 0);
+                  const missing = Math.max(0, line.remainingQuantityBefore - delivered);
+                  const difference = delivered - line.remainingQuantityBefore;
+                  const unitCost = Number(draft?.unitCost ?? line.unitCost);
+                  const draftPriceVariance =
+                    (Number.isFinite(unitCost) ? unitCost : line.unitCost) - (poLine?.unitCost ?? line.unitCost);
+                  const requiresOverage = delivered > line.remainingQuantityBefore;
+
+                  return (
+                    <div>
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.35fr_repeat(7,minmax(90px,.6fr))] xl:items-start">
+                        <div>
+                          <div className="text-[12px] font-bold text-slate-800">{line.title}</div>
+                          <div className="mt-1 font-mono text-[9px] text-slate-400">{line.sku || "No SKU"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[8px] font-bold uppercase text-slate-400">Expected</div>
+                          <div className="mt-1 text-[11px] font-bold text-slate-700">{line.expectedQuantity}</div>
+                        </div>
+                        <div>
+                          <div className="text-[8px] font-bold uppercase text-slate-400">Remaining before</div>
+                          <div className="mt-1 text-[11px] font-bold text-indigo-600">{line.remainingQuantityBefore}</div>
+                        </div>
+                        <label>
+                          <div className="text-[8px] font-bold uppercase text-slate-400">Received</div>
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={draft?.received ?? ""}
+                            onChange={(event) =>
+                              setLineDrafts((current) => ({
+                                ...current,
+                                [line.id]: { ...current[line.id], received: event.target.value },
+                              }))
+                            }
+                            className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
+                          />
+                        </label>
+                        <label>
+                          <div className="text-[8px] font-bold uppercase text-slate-400">Damaged</div>
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={draft?.damaged ?? ""}
+                            onChange={(event) =>
+                              setLineDrafts((current) => ({
+                                ...current,
+                                [line.id]: { ...current[line.id], damaged: event.target.value },
+                              }))
+                            }
+                            className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
+                          />
+                        </label>
+                        <div>
+                          <div className="text-[8px] font-bold uppercase text-slate-400">Missing</div>
+                          <div className="mt-1 text-[11px] font-bold text-rose-600">{missing}</div>
+                        </div>
+                        <div>
+                          <div className="text-[8px] font-bold uppercase text-slate-400">Difference</div>
+                          <div className={`mt-1 text-[11px] font-bold ${difference > 0 ? "text-amber-600" : "text-slate-700"}`}>
+                            {difference}
+                          </div>
+                        </div>
+                        <label>
+                          <div className="text-[8px] font-bold uppercase text-slate-400">Invoice cost</div>
+                          <input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={draft?.unitCost ?? ""}
+                            onChange={(event) =>
+                              setLineDrafts((current) => ({
+                                ...current,
+                                [line.id]: { ...current[line.id], unitCost: event.target.value },
+                              }))
+                            }
+                            className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
+                          />
+                          <div className={`mt-1 text-[9px] font-bold ${draftPriceVariance === 0 ? "text-emerald-600" : "text-amber-600"}`}>
+                            {draftPriceVariance === 0
+                              ? "Matches PO"
+                              : `${draftPriceVariance > 0 ? "+" : ""}${money(draftPriceVariance, currency)} / unit`}
+                          </div>
+                        </label>
+                      </div>
+
+                      {requiresOverage ? (
+                        <div className="mt-3 grid gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 md:grid-cols-[auto_1fr] md:items-center">
+                          <label className="flex items-center gap-2 text-[10px] font-bold text-amber-800">
+                            <input
+                              type="checkbox"
+                              checked={draft?.overageConfirmed ?? false}
+                              onChange={(event) =>
+                                setLineDrafts((current) => ({
+                                  ...current,
+                                  [line.id]: {
+                                    ...current[line.id],
+                                    overageConfirmed: event.target.checked,
+                                  },
+                                }))
+                              }
+                            />
+                            Confirm excess delivery
+                          </label>
+                          <input
+                            value={draft?.overageReason ?? ""}
+                            maxLength={500}
+                            onChange={(event) =>
+                              setLineDrafts((current) => ({
+                                ...current,
+                                [line.id]: {
+                                  ...current[line.id],
+                                  overageReason: event.target.value,
+                                },
+                              }))
+                            }
+                            placeholder="Reason required for receiving above remaining PO quantity"
+                            className="h-9 rounded-lg border border-amber-200 bg-white px-3 text-[10px]"
+                          />
+                        </div>
+                      ) : null}
                     </div>
-                  ))}
-                  <div>
-                    <div className="text-[8px] font-bold uppercase text-slate-400">Invoice cost</div>
-                    <div className="mt-1 text-[11px] font-bold text-slate-700">{money(line.unitCost, currency)}</div>
-                    <div className={`mt-1 text-[9px] font-bold ${rowPriceVariance === 0 ? "text-emerald-600" : "text-amber-600"}`}>
-                      {rowPriceVariance === 0 ? "Matches PO" : `${rowPriceVariance > 0 ? "+" : ""}${money(rowPriceVariance, currency)} / unit`}
+                  );
+                })() : (
+                  <div className="grid gap-3 lg:grid-cols-[1.3fr_repeat(7,minmax(80px,.55fr))] lg:items-start">
+                    <div>
+                      <div className="text-[12px] font-bold text-slate-800">{line.title}</div>
+                      <div className="mt-1 font-mono text-[9px] text-slate-400">{line.sku || "No SKU"}</div>
+                    </div>
+                    {[
+                      ["Expected", line.expectedQuantity],
+                      ["Remaining before", line.remainingQuantityBefore],
+                      ["Received", line.receivedQuantity],
+                      ["Damaged", line.damagedQuantity],
+                      ["Missing", line.missingQuantity],
+                      ["Difference", line.difference],
+                    ].map(([label, value]) => (
+                      <div key={label}>
+                        <div className="text-[8px] font-bold uppercase text-slate-400">{label}</div>
+                        <div className="mt-1 text-[11px] font-bold text-slate-700">{value}</div>
+                      </div>
+                    ))}
+                    <div>
+                      <div className="text-[8px] font-bold uppercase text-slate-400">Invoice cost</div>
+                      <div className="mt-1 text-[11px] font-bold text-slate-700">{money(line.unitCost, currency)}</div>
+                      <div className={`mt-1 text-[9px] font-bold ${rowPriceVariance === 0 ? "text-emerald-600" : "text-amber-600"}`}>
+                        {rowPriceVariance === 0 ? "Matches PO" : `${rowPriceVariance > 0 ? "+" : ""}${money(rowPriceVariance, currency)} / unit`}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
