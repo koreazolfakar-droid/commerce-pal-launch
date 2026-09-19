@@ -825,59 +825,69 @@ export default function CategoriesPage() {
                       key={product.id}
                       className="relative grid gap-3 p-4 sm:grid-cols-[minmax(0,1.5fr)_minmax(90px,.8fr)_80px_80px_82px_36px] sm:items-center sm:px-5"
                     >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <img
-                          src={product.image}
-                          alt=""
-                          className="size-11 shrink-0 rounded-xl bg-slate-100 object-cover"
-                        />
-                        <div className="min-w-0">
-                          <div className="truncate text-[11px] font-black text-slate-700">
+                      <div className="flex min-w-0 items-center gap-3 pe-12 sm:pe-0">
+                        <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-50 sm:size-11 sm:rounded-xl">
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt=""
+                              className="h-full w-full object-contain p-1.5 sm:p-1"
+                            />
+                          ) : (
+                            <div className="text-[9px] font-bold text-slate-300">No image</div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="line-clamp-2 text-[13px] font-black leading-5 text-slate-700 sm:truncate sm:text-[11px] sm:leading-normal">
                             {product.name}
                           </div>
-                          <div className="mt-1 truncate text-[9px] text-slate-400">
-                            {product.brand}
+                          <div className="mt-1 truncate text-[10px] font-medium text-slate-400 sm:text-[9px]">
+                            {product.brand || "—"}
                           </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 sm:block">
-                        <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
-                          SKU
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-slate-50/70 p-3 sm:contents">
+                        <div className="min-w-0">
+                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
+                            SKU
+                          </div>
+                          <div className="mt-1 truncate font-mono text-[10px] font-semibold text-slate-600 sm:mt-0 sm:text-[9px] sm:font-normal sm:text-slate-500">
+                            {product.sku || "—"}
+                          </div>
                         </div>
-                        <div className="truncate font-mono text-[9px] text-slate-500">
-                          {product.sku}
+
+                        <div className="min-w-0">
+                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
+                            Price
+                          </div>
+                          <div className="mt-1 text-[11px] font-black text-slate-700 sm:mt-0 sm:text-[10px] sm:font-bold">
+                            {"$" + product.price.toLocaleString()}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center justify-between sm:block">
-                        <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
-                          Price
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-700">
-                          {"$" + product.price.toLocaleString()}
-                        </span>
-                      </div>
+                        <div className="min-w-0">
+                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
+                            Stock
+                          </div>
+                          <div
+                            className={
+                              "mt-1 text-[11px] font-black sm:mt-0 sm:text-[10px] sm:font-bold " +
+                              (product.stock < 10 ? "text-rose-600" : "text-slate-700")
+                            }
+                          >
+                            {product.stock}
+                          </div>
+                        </div>
 
-                      <div className="flex items-center justify-between sm:block">
-                        <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
-                          Stock
-                        </span>
-                        <span
-                          className={
-                            "text-[10px] font-bold " +
-                            (product.stock < 10 ? "text-rose-600" : "text-slate-700")
-                          }
-                        >
-                          {product.stock}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between sm:block">
-                        <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
-                          Status
-                        </span>
-                        <ProductStatus status={product.status} />
+                        <div className="min-w-0">
+                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
+                            Status
+                          </div>
+                          <div className="mt-1 sm:mt-0">
+                            <ProductStatus status={product.status} />
+                          </div>
+                        </div>
                       </div>
 
                       <div className="absolute end-3 top-3 sm:static">
@@ -889,7 +899,7 @@ export default function CategoriesPage() {
                               current === product.id ? null : product.id,
                             )
                           }
-                          className="grid size-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100"
+                          className="grid size-11 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 sm:size-8 sm:rounded-lg"
                         >
                           <MoreHorizontal className="size-4" />
                         </button>
@@ -898,50 +908,70 @@ export default function CategoriesPage() {
                           <>
                             <button
                               aria-label="Close product actions"
-                              className="fixed inset-0 z-40 cursor-default"
+                              className="fixed inset-0 z-[70] cursor-default bg-slate-950/20 sm:bg-transparent"
                               onClick={() => setProductMenuId(null)}
                             />
-                            <div className="absolute end-3 top-11 z-50 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl sm:end-12 sm:top-1/2 sm:-translate-y-1/2">
+
+                            <div
+                              role="menu"
+                              aria-label={"Actions for " + product.name}
+                              className="fixed inset-x-3 bottom-[calc(.75rem+env(safe-area-inset-bottom))] z-[80] max-h-[70dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:end-12 sm:top-1/2 sm:z-50 sm:max-h-none sm:w-44 sm:-translate-y-1/2 sm:overflow-hidden sm:rounded-xl sm:p-1.5 sm:shadow-xl"
+                            >
+                              <div className="px-2.5 pb-2 pt-1 sm:hidden">
+                                <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-slate-200" />
+                                <div className="truncate text-[11px] font-black text-slate-700">
+                                  {product.name}
+                                </div>
+                                <div className="mt-0.5 text-[9px] text-slate-400">Product actions</div>
+                              </div>
+
                               <button
                                 type="button"
+                                role="menuitem"
                                 onClick={() => {
                                   setProductMenuId(null);
                                   navigate("/dashboard/products/" + product.id);
                                 }}
-                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 sm:min-h-0 sm:gap-2 sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[10px]"
                               >
-                                <Eye className="size-3.5 text-slate-400" />
+                                <Eye className="size-4 text-slate-400 sm:size-3.5" />
                                 View Product
                               </button>
                               <button
                                 type="button"
+                                role="menuitem"
                                 onClick={() => {
                                   setProductMenuId(null);
                                   navigate("/dashboard/products/" + product.id);
                                 }}
-                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 sm:min-h-0 sm:gap-2 sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[10px]"
                               >
-                                <Pencil className="size-3.5 text-slate-400" />
+                                <Pencil className="size-4 text-slate-400 sm:size-3.5" />
                                 Edit Product
                               </button>
                               <button
                                 type="button"
+                                role="menuitem"
                                 onClick={() => {
                                   setProductMenuId(null);
                                   setMoveProduct(product);
                                   setMoveDestination("");
                                 }}
-                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 sm:min-h-0 sm:gap-2 sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[10px]"
                               >
-                                <MoveRight className="size-3.5 text-slate-400" />
+                                <MoveRight className="size-4 text-slate-400 sm:size-3.5" />
                                 Move to Category
                               </button>
+
+                              <div className="my-1 border-t border-slate-100" />
+
                               <button
                                 type="button"
+                                role="menuitem"
                                 onClick={() => removeProductFromCategory(product)}
-                                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-semibold text-amber-700 hover:bg-amber-50"
+                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-amber-700 hover:bg-amber-50 sm:min-h-0 sm:gap-2 sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[10px]"
                               >
-                                <X className="size-3.5" />
+                                <X className="size-4 sm:size-3.5" />
                                 Remove from Category
                               </button>
                             </div>
