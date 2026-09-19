@@ -31,6 +31,10 @@ const visualMigration = await readFile(
   new URL("../supabase/migrations/20260919212052_hero_visual_config.sql", import.meta.url),
   "utf8",
 );
+const atomicVisualMigration = await readFile(
+  new URL("../supabase/migrations/20260919212447_hero_visual_atomic_save.sql", import.meta.url),
+  "utf8",
+);
 
 test("dedicated hero dashboard route uses the real CMS page", () => {
   assert.match(app, /HeroBannersPageLive/);
@@ -44,8 +48,8 @@ test("dedicated hero dashboard route uses the real CMS page", () => {
 
 test("hero dashboard supports real Supabase CRUD, storage upload and media library", () => {
   assert.match(data, /from\("cms_hero_slides"\)/);
-  assert.match(data, /rpc\("create_cms_hero_slide_v2"/);
-  assert.match(data, /rpc\("update_cms_hero_slide_v2"/);
+  assert.match(data, /rpc\("create_cms_hero_slide_v3"/);
+  assert.match(data, /rpc\("update_cms_hero_slide_v3"/);
   assert.match(data, /rpc\("delete_cms_hero_slide"/);
   assert.match(data, /rpc\("reorder_cms_hero_slides"/);
   assert.match(data, /storage\.from\(HERO_BUCKET\)\.upload/);
@@ -95,7 +99,11 @@ test("hero customization is persisted and exposed through the public CMS gateway
   assert.match(visualMigration, /add column if not exists visual_config/);
   assert.match(visualMigration, /set_cms_hero_visual_config/);
   assert.match(visualMigration, /from public, anon/);
-  assert.match(data, /set_cms_hero_visual_config/);
+  assert.match(data, /create_cms_hero_slide_v3/);
+  assert.match(data, /update_cms_hero_slide_v3/);
+  assert.match(atomicVisualMigration, /create_cms_hero_slide_v3/);
+  assert.match(atomicVisualMigration, /update_cms_hero_slide_v3/);
+  assert.match(atomicVisualMigration, /set_cms_hero_visual_config/);
 });
 
 test("public CMS uses an edge gateway with resilient empty fallback", () => {
