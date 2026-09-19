@@ -544,7 +544,13 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
   };
 }
 
-export async function createReceivingSupplier(input: { name: string; code?: string }) {
+export async function createReceivingSupplier(input: {
+  name: string;
+  code?: string;
+  phone?: string;
+  email?: string;
+  notes?: string;
+}) {
   await requireDashboardStaff();
   const name = input.name.trim();
   if (!name) throw new Error("Supplier name is required.");
@@ -554,9 +560,12 @@ export async function createReceivingSupplier(input: { name: string; code?: stri
     .insert({
       name,
       code: input.code?.trim() || null,
+      phone: input.phone?.trim() || null,
+      email: input.email?.trim() || null,
+      notes: input.notes?.trim() || null,
       is_active: true,
     })
-    .select("id,name,code,is_active")
+    .select("id,name,code,phone,email,notes,is_active")
     .single();
 
   throwIfError(error, "Creating supplier failed");
