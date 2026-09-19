@@ -1715,6 +1715,10 @@ export type Database = {
           stock_units_added: number
         }[]
       }
+      close_store_purchase_order: {
+        Args: { p_purchase_order_id: string }
+        Returns: string
+      }
       consume_edge_rate_limit: {
         Args: { _key: string; _limit: number; _window_seconds: number }
         Returns: {
@@ -2026,6 +2030,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      replace_store_receiving_serials: {
+        Args: { p_receiving_item_id: string; p_serials: Json }
+        Returns: number
       }
       reorder_cms_hero_slides: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
