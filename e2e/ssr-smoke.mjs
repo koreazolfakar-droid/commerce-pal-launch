@@ -31,7 +31,7 @@ for (const [name, value] of Object.entries({
   "x-content-type-options": "nosniff",
   "x-frame-options": "SAMEORIGIN",
   "referrer-policy": "strict-origin-when-cross-origin",
-  "permissions-policy": "camera=(), microphone=(), geolocation=(self), payment=()",
+  "permissions-policy": "camera=(), microphone=(), geolocation=(self), payment=(), display-capture=()",
 })) {
   assert.equal(home.response.headers.get(name), value);
 }
@@ -66,5 +66,5 @@ const robots = await readFile(new URL("../public/robots.txt", import.meta.url), 
 assert.ok(!/^Disallow:\s*\/$/m.test(robots));
 
 await Promise.allSettled(pending);
-console.log(JSON.stringify({ passed: true, source: "supabase-native", paths: ["/", "/help", "/privacy", "/shop", "/sitemap.xml"] }));
+console.log(JSON.stringify({ passed: true, source: "supabase-native", paths: ["/", "/help", "/privacy", "/sitemap.xml"] }));
 process.exit(0);
