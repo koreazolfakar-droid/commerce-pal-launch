@@ -29,7 +29,7 @@ test("dashboard gate requires a ready AAL2 MFA session", () => {
 
 test("password login transitions into mandatory MFA", () => {
   assert.match(login, /type LoginView = "signin" \| "forgot" \| "recovery" \| "mfa"/);
-  assert.match(login, /signInDashboard\(email, password, captchaToken \?\? undefined\)/);
+  assert.match(login, /signInDashboard\(email, password, captchaToken/);
   assert.match(login, /getDashboardMfaStatus\(\)/);
   assert.match(login, /setView\("mfa"\)/);
   assert.match(login, /DashboardMfaStep/);
