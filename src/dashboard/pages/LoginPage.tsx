@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/dashboard/i18n";
+import { useTheme } from "@/hooks/useTheme";
 import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
 import TurnstileChallenge from "@/dashboard/components/auth/TurnstileChallenge";
 import {
@@ -31,7 +32,6 @@ type LoginView = "signin" | "forgot" | "recovery" | "mfa";
 type LoginTheme = "light" | "dark";
 
 const EMAIL_STORAGE_KEY = "spacecall-dashboard-email";
-const LOGIN_THEME_STORAGE_KEY = "spacecall-login-theme";
 
 const loginCopy = {
   en: {
@@ -325,12 +325,6 @@ export default function LoginPage() {
   const storedEmail =
     typeof window !== "undefined" ? window.localStorage.getItem(EMAIL_STORAGE_KEY) ?? "" : "";
 
-  const [theme, setTheme] = useState<LoginTheme>(() => {
-    if (typeof window === "undefined") return "dark";
-    const storedTheme = window.localStorage.getItem(LOGIN_THEME_STORAGE_KEY);
-    if (storedTheme === "light" || storedTheme === "dark") return storedTheme;
-    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
   const [view, setView] = useState<LoginView>(recoveryMode || mfaMode ? "mfa" : "signin");
   const [email, setEmail] = useState(storedEmail);
   const [password, setPassword] = useState("");
@@ -346,10 +340,8 @@ export default function LoginPage() {
   const [privacyShielded, setPrivacyShielded] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
-
-  useEffect(() => {
-    window.localStorage.setItem(LOGIN_THEME_STORAGE_KEY, theme);
-  }, [theme]);
+  const { resolvedTheme, mounted: themeMounted, toggleTheme } = useTheme();
+  const theme: LoginTheme = themeMounted ? resolvedTheme : "dark";
 
   useEffect(() => {
     const shield = () => setPrivacyShielded(true);
@@ -692,14 +684,14 @@ export default function LoginPage() {
                 <BrandLockup />
                 <ThemeLanguageControls
                   theme={theme}
-                  onThemeToggle={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+                  onThemeToggle={toggleTheme}
                 />
               </div>
 
               <div className={isRtl ? "absolute left-6 top-6 hidden lg:block" : "absolute right-6 top-6 hidden lg:block"}>
                 <ThemeLanguageControls
                   theme={theme}
-                  onThemeToggle={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+                  onThemeToggle={toggleTheme}
                 />
               </div>
 
