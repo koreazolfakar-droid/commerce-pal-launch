@@ -80,11 +80,35 @@ for (const [name, value] of Object.entries({
 })) {
   assert.equal(home.response.headers.get(name), value);
 }
-assert.match(home.response.headers.get("content-security-policy") ?? "", /default-src 'self'/);
+const homeCsp = home.response.headers.get("content-security-policy") ?? "";
+assert.match(homeCsp, /default-src 'self'/);
+const homeNonceMatch = homeCsp.match(/script-src[^;]*'nonce-([a-f0-9]{32})'/);
+assert.ok(homeNonceMatch, "SSR CSP includes a 128-bit request nonce");
+const homeNonce = homeNonceMatch[1];
+assert.doesNotMatch(
+  homeCsp.match(/script-src[^;]*/)?.[0] ?? "",
+  /'unsafe-inline'/,
+  "script-src must not allow unsafe-inline",
+);
+const homeScripts = [...home.body.matchAll(/<script\b[^>]*>/g)].map((match) => match[0]);
+assert.ok(homeScripts.length > 0, "SSR emits executable scripts");
+for (const tag of homeScripts) {
+  assert.match(
+    tag,
+    new RegExp(`\\bnonce=["']${homeNonce}["']`),
+    `SSR script is nonce-bound: ${tag.slice(0, 120)}`,
+  );
+}
 assert.equal(
   home.response.headers.get("strict-transport-security"),
   "max-age=31536000; includeSubDomains",
 );
+
+const secondHome = await request("/");
+const secondCsp = secondHome.response.headers.get("content-security-policy") ?? "";
+const secondNonce = secondCsp.match(/script-src[^;]*'nonce-([a-f0-9]{32})'/)?.[1];
+assert.ok(secondNonce, "Second SSR response includes a nonce");
+assert.notEqual(secondNonce, homeNonce, "Each SSR request gets a unique CSP nonce");
 assert.ok(
   fixtureRequests.includes("GetCollection"),
   "Homepage resolves its Shopify hero collection",

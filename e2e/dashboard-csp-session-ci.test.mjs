@@ -19,6 +19,16 @@ const workflow = await readFile(
   new URL("../.github/workflows/storefront-ci.yml", import.meta.url),
   "utf8",
 );
+const router = await readFile(new URL("../src/router.tsx", import.meta.url), "utf8");
+const root = await readFile(new URL("../src/routes/__root.tsx", import.meta.url), "utf8");
+const csp = await readFile(
+  new URL("../src/lib/contentSecurityPolicy.ts", import.meta.url),
+  "utf8",
+);
+const errorPage = await readFile(
+  new URL("../src/lib/error-page.ts", import.meta.url),
+  "utf8",
+);
 
 test("dashboard responses are explicitly non-cacheable", () => {
   assert.match(server, /function withDashboardNoStore/);
@@ -34,13 +44,29 @@ test("dashboard responses are explicitly non-cacheable", () => {
   assert.ok(securityHeaders > fetchReturn, "security headers must remain in the response pipeline");
 });
 
-test("CSP blocks inline script attributes while preserving required script elements", () => {
-  assert.match(server, /script-src 'self' 'unsafe-inline' https:\/\/challenges\.cloudflare\.com/);
-  assert.match(server, /script-src-attr 'none'/);
-  assert.match(server, /style-src-attr 'unsafe-inline'/);
-  assert.match(server, /object-src 'none'/);
-  assert.match(server, /base-uri 'self'/);
-  assert.match(server, /upgrade-insecure-requests/);
+test("CSP uses a per-request nonce and removes script unsafe-inline", () => {
+  assert.match(router, /createIsomorphicFn\(\)\.server/);
+  assert.match(router, /crypto\.getRandomValues\(bytes\)/);
+  assert.match(router, /ssr: getSSROptions\(\)/);
+
+  assert.match(root, /headers: \(\{ ssr \}\)/);
+  assert.match(root, /buildContentSecurityPolicy\(nonce\)/);
+  assert.match(root, /<ScriptOnce>\{THEME_INIT_SCRIPT\}<\/ScriptOnce>/);
+  assert.match(root, /<ScriptOnce>\{LANGUAGE_INIT_SCRIPT\}<\/ScriptOnce>/);
+  assert.match(root, /<ScriptOnce>\{FONT_LOAD_SCRIPT\}<\/ScriptOnce>/);
+  assert.doesNotMatch(root, /dangerouslySetInnerHTML/);
+
+  assert.match(csp, /'nonce-\$\{nonce\}'/);
+  assert.match(csp, /script-src-attr 'none'/);
+  assert.doesNotMatch(csp, /script-src[^\n]*unsafe-inline/);
+  assert.match(csp, /style-src-attr 'unsafe-inline'/);
+  assert.match(csp, /object-src 'none'/);
+  assert.match(csp, /base-uri 'self'/);
+  assert.match(csp, /upgrade-insecure-requests/);
+
+  assert.match(server, /!headers\.has\("Content-Security-Policy"\)/);
+  assert.match(server, /buildContentSecurityPolicy\(\)/);
+  assert.doesNotMatch(errorPage, /onclick=|javascript:/i);
 });
 
 test("production Supabase sessions do not persist in localStorage", () => {

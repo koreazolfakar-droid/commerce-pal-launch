@@ -34,9 +34,10 @@
 - The discovery index is deliberately bounded. A very large catalog should add
   cursor-based “Load more” UI and Shopify-native filter inputs instead of
   increasing the initial limit.
-- CSP currently permits inline scripts/styles because TanStack hydration and
-  the existing theme/language bootstrap scripts require them. A future nonce
-  migration can remove `'unsafe-inline'`.
+- CSP uses a per-request SSR nonce for executable script elements and no longer
+  permits `'unsafe-inline'` in `script-src`. TanStack hydration plus the
+  theme/language/font bootstrap scripts are nonce-bound. Inline style attributes
+  remain allowed for component compatibility.
 - Shopify policy and product copy is rendered in the language supplied by the
   merchant. It is not machine-translated by the storefront.
 

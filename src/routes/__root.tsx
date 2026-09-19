@@ -5,6 +5,7 @@ import {
   createRootRouteWithContext,
   useRouter,
   HeadContent,
+  ScriptOnce,
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
@@ -19,6 +20,7 @@ import { usePersistedStoreHydration } from "@/hooks/usePersistedStoreHydration";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { buildContentSecurityPolicy } from "@/lib/contentSecurityPolicy";
 
 const FONT_STYLESHEET_URL =
   "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap";
@@ -94,6 +96,13 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  headers: ({ ssr }) => {
+    const nonce = ssr?.nonce;
+    if (!nonce) return undefined;
+    return {
+      "Content-Security-Policy": buildContentSecurityPolicy(nonce),
+    };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -148,10 +157,10 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-        <script dangerouslySetInnerHTML={{ __html: LANGUAGE_INIT_SCRIPT }} />
+        <ScriptOnce>{THEME_INIT_SCRIPT}</ScriptOnce>
+        <ScriptOnce>{LANGUAGE_INIT_SCRIPT}</ScriptOnce>
         <HeadContent />
-        <script dangerouslySetInnerHTML={{ __html: FONT_LOAD_SCRIPT }} />
+        <ScriptOnce>{FONT_LOAD_SCRIPT}</ScriptOnce>
         <noscript>
           <link rel="stylesheet" href={FONT_STYLESHEET_URL} />
         </noscript>
