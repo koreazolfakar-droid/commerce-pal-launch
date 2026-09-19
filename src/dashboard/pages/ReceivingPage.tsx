@@ -164,7 +164,11 @@ export default function ReceivingPage({
   const load = useCallback(async (manual = false) => {
     manual ? setRefreshing(true) : setLoading(true);
     try {
-      const next = await loadReceivingWorkspace();
+      const next = await loadReceivingWorkspace({
+        includeProductOptions: !purchaseOrdersMode,
+        includeAudit: false,
+        includeSerials: false,
+      });
       setWorkspace(next);
       setError("");
       if (manual) toast.success("Purchase orders and receiving refreshed.");
@@ -176,7 +180,7 @@ export default function ReceivingPage({
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [purchaseOrdersMode]);
 
   useEffect(() => {
     void load(false);

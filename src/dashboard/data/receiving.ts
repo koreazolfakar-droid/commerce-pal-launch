@@ -174,13 +174,24 @@ export type ReceivingWorkspace = {
   attachments: ProcurementAttachment[];
 };
 
+export type ReceivingWorkspaceLoadOptions = {
+  includeProductOptions?: boolean;
+  includeAudit?: boolean;
+  includeSerials?: boolean;
+};
+
 function toNumber(value: number | string | null | undefined) {
   const parsed = Number(value ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
+export async function loadReceivingWorkspace(
+  options: ReceivingWorkspaceLoadOptions = {},
+): Promise<ReceivingWorkspace> {
   const role = await requireDashboardStaff();
+  const includeProductOptions = options.includeProductOptions !== false;
+  const includeAudit = options.includeAudit !== false;
+  const includeSerials = options.includeSerials !== false;
 
   const [supplierResult, locationResult, poResult, receivingResult, productResult, variantResult, eventResult, attachmentResult] = await Promise.all([
     supabase
@@ -201,27 +212,35 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
       .select("id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes")
       .order("received_at", { ascending: false })
       .limit(100),
-    supabase
-      .from("store_products")
-      .select("id,title,sku,stock_quantity,status,track_inventory")
-      .neq("status", "archived")
-      .order("title", { ascending: true }),
-    supabase
-      .from("store_product_variants")
-      .select("id,product_id,title,sku,stock_quantity,is_active,track_inventory,sort_order")
-      .eq("is_active", true)
-      .order("product_id", { ascending: true })
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("store_procurement_events")
-      .select("id,purchase_order_id,receiving_id,event_type,details,actor_id,created_at")
-      .order("created_at", { ascending: false })
-      .limit(300),
-    supabase
-      .from("store_procurement_attachments")
-      .select("id,purchase_order_id,receiving_id,file_name,storage_path,mime_type,size_bytes,attachment_type,created_at")
-      .order("created_at", { ascending: false })
-      .limit(300),
+    includeProductOptions
+      ? supabase
+          .from("store_products")
+          .select("id,title,sku,stock_quantity,status,track_inventory")
+          .neq("status", "archived")
+          .order("title", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    includeProductOptions
+      ? supabase
+          .from("store_product_variants")
+          .select("id,product_id,title,sku,stock_quantity,is_active,track_inventory,sort_order")
+          .eq("is_active", true)
+          .order("product_id", { ascending: true })
+          .order("sort_order", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    includeAudit
+      ? supabase
+          .from("store_procurement_events")
+          .select("id,purchase_order_id,receiving_id,event_type,details,actor_id,created_at")
+          .order("created_at", { ascending: false })
+          .limit(300)
+      : Promise.resolve({ data: [], error: null }),
+    includeAudit
+      ? supabase
+          .from("store_procurement_attachments")
+          .select("id,purchase_order_id,receiving_id,file_name,storage_path,mime_type,size_bytes,attachment_type,created_at")
+          .order("created_at", { ascending: false })
+          .limit(300)
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   throwIfError(supplierResult.error, "Loading suppliers failed");
@@ -321,7 +340,7 @@ export async function loadReceivingWorkspace(): Promise<ReceivingWorkspace> {
   >[];
 
   const receivingItemIds = receivingItems.map((row) => row.id);
-  const serialResult = receivingItemIds.length
+  const serialResult = includeSerials && receivingItemIds.length
     ? await supabase
         .from("store_receiving_serials")
         .select("id,receiving_item_id,serial_number,imei1,imei2,condition,inventory_status")
