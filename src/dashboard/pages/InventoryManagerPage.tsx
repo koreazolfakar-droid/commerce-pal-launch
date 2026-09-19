@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import InventoryMovementHistoryDrawer from "@/dashboard/components/inventory/InventoryMovementHistoryDrawer";
 import {
   adjustInventoryDelta,
   loadInventoryWorkspace,
@@ -57,6 +58,7 @@ export default function InventoryManagerPage() {
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draftStocks, setDraftStocks] = useState<Record<string, string>>({});
+  const [historyRow, setHistoryRow] = useState<InventoryRow | null>(null);
 
   const load = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
@@ -425,10 +427,18 @@ export default function InventoryManagerPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-start gap-1.5 text-[9px] leading-4 text-slate-400">
-                  <History className="mt-0.5 size-3 shrink-0" />
-                  <span>Last movement: {movementLabel(row)}</span>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setHistoryRow(row)}
+                  className="mt-3 flex min-h-11 w-full items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 text-left text-[9px] leading-4 text-slate-500 transition active:scale-[.99]"
+                  aria-label={`View inventory history for ${row.productName} ${row.variantTitle}`}
+                >
+                  <History className="size-3.5 shrink-0 text-indigo-500" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">Last movement: {movementLabel(row)}</span>
+                    <span className="mt-0.5 block font-bold text-indigo-600">View history</span>
+                  </span>
+                </button>
               </article>
             );
           })}
@@ -535,10 +545,18 @@ export default function InventoryManagerPage() {
                     </td>
                     <td className="px-3 py-4"><span className="inline-flex min-w-12 items-center justify-center rounded-xl bg-slate-100 px-2.5 py-1.5 text-[14px] font-black text-slate-800">{row.stock}</span></td>
                     <td className="px-3 py-3.5">
-                      <div className="flex max-w-[230px] items-start gap-1.5 text-[9px] leading-4 text-slate-400">
+                      <button
+                        type="button"
+                        onClick={() => setHistoryRow(row)}
+                        className="flex max-w-[230px] items-start gap-1.5 rounded-lg px-2 py-1.5 text-left text-[9px] leading-4 text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-700"
+                        aria-label={`View inventory history for ${row.productName} ${row.variantTitle}`}
+                      >
                         <History className="mt-0.5 size-3 shrink-0" />
-                        <span>{movementLabel(row)}</span>
-                      </div>
+                        <span>
+                          <span className="block">{movementLabel(row)}</span>
+                          <span className="font-bold text-indigo-600">View history</span>
+                        </span>
+                      </button>
                     </td>
                     <td className="px-5 py-3.5">
                       <Badge status={status} />
@@ -556,6 +574,14 @@ export default function InventoryManagerPage() {
           </div>
         )}
       </div>
+
+      <InventoryMovementHistoryDrawer
+        row={historyRow}
+        open={Boolean(historyRow)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setHistoryRow(null);
+        }}
+      />
     </div>
   );
 }
