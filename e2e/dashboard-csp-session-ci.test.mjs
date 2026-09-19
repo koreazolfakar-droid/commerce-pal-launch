@@ -87,12 +87,9 @@ test("Auth0 dashboard tokens remain memory-only", () => {
   assert.doesNotMatch(auth0, /clientSecret|CLIENT_SECRET/);
 });
 
-test("CI runs security regression tests on every PR update and main push", () => {
-  assert.match(workflow, /push:\s*\n\s*branches:\s*\n\s*- main/);
-  assert.match(workflow, /- opened/);
-  assert.match(workflow, /- synchronize/);
-  assert.match(workflow, /- reopened/);
-  assert.match(workflow, /- ready_for_review/);
+test("GitHub Storefront CI stays manual while retaining the full security validation suite", () => {
+  assert.match(workflow, /workflow_dispatch/);
+  assert.doesNotMatch(workflow, /\npush:|\npull_request:/);
   assert.match(workflow, /Dashboard security regression tests/);
   assert.match(workflow, /node --test e2e\/dashboard-\*\.test\.mjs/);
   assert.match(workflow, /bun run typecheck/);
