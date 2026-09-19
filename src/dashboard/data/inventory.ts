@@ -40,6 +40,15 @@ export const INVENTORY_MOVEMENT_TYPES = [
 
 export type InventoryMovementType = (typeof INVENTORY_MOVEMENT_TYPES)[number];
 
+export const INVENTORY_REFERENCE_TYPES = [
+  "manual_dashboard",
+  "variant_manager",
+  "order",
+  "order_cancel",
+] as const;
+
+export type InventoryReferenceType = (typeof INVENTORY_REFERENCE_TYPES)[number];
+
 export type DashboardInventoryMovement = {
   id: string;
   productId: string;
@@ -175,6 +184,7 @@ export async function listDashboardInventoryMovements(input: {
   productId: string;
   variantId: string;
   movementType?: InventoryMovementType;
+  referenceType?: InventoryReferenceType;
   createdSince?: string;
   page?: number;
   pageSize?: number;
@@ -196,6 +206,10 @@ export async function listDashboardInventoryMovements(input: {
 
   if (input.movementType) {
     query = query.eq("movement_type", input.movementType);
+  }
+
+  if (input.referenceType) {
+    query = query.eq("reference_type", input.referenceType);
   }
 
   if (input.createdSince) {
