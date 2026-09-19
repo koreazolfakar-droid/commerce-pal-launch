@@ -1,9 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { cdnImage } from "@/lib/image";
+import { localizeSection } from "@/lib/cms";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import type { ShopifyCollection } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
@@ -20,8 +23,14 @@ export function HomeCategorySection({
   collections: ShopifyCollection[];
 }) {
   const { t, language } = useLanguage();
+  const { data: cms } = useQuery(cmsQueryOptions());
   if (!catalog.categories.length) return null;
-  const title = language === "ar" ? "تسوّق حسب الفئة" : "Shop by Category";
+  const cmsSection = cms?.sections.find(
+    (section) => section.page_slug === "home" && section.section_key === "categories",
+  );
+  const title =
+    (cmsSection ? localizeSection(cmsSection, language).title?.trim() : "") ||
+    (language === "ar" ? "تسوّق حسب الفئة" : "Shop by Category");
 
   return (
     <section
