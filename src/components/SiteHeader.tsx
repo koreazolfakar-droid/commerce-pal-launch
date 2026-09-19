@@ -38,7 +38,7 @@ import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { useHydrated } from "@/hooks/useHydrated";
-import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { collectionsQueryOptions, navigationCatalogQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { displayCollections, type CatalogFacet } from "@/lib/taxonomy";
 import { useCartStore } from "@/stores/cartStore";
@@ -96,7 +96,7 @@ export function SiteHeader() {
     state.items.reduce((total, item) => total + item.quantity, 0),
   );
 
-  const { data: catalog } = useQuery(catalogQueryOptions());
+  const { data: catalog } = useQuery(navigationCatalogQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
   const { data: cms } = useQuery(cmsQueryOptions());
 
