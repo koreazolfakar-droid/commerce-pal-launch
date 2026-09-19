@@ -142,60 +142,70 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
     }, 0);
   }, [po, receipt]);
 
-  const saveReceivingDraft = async () => {
+  const buildReceivingDraftLines = () => {
+    if (!receipt) throw new Error("Receiving record is not loaded.");
+
+    return receipt.items.map((line) => {
+      const draft = lineDrafts[line.id];
+      if (!draft) throw new Error(`${line.title}: receiving draft data is missing.`);
+
+      const receivedQuantity = Number(draft.received);
+      const damagedQuantity = Number(draft.damaged);
+      const unitCost = Number(draft.unitCost);
+
+      if (!Number.isInteger(receivedQuantity) || receivedQuantity < 0) {
+        throw new Error(`${line.title}: received quantity must be a non-negative whole number.`);
+      }
+      if (!Number.isInteger(damagedQuantity) || damagedQuantity < 0) {
+        throw new Error(`${line.title}: damaged quantity must be a non-negative whole number.`);
+      }
+      if (receivedQuantity + damagedQuantity <= 0) {
+        throw new Error(`${line.title}: enter at least one received or damaged unit.`);
+      }
+      if (!Number.isFinite(unitCost) || unitCost < 0) {
+        throw new Error(`${line.title}: unit cost must be zero or greater.`);
+      }
+
+      const delivered = receivedQuantity + damagedQuantity;
+      if (
+        delivered > line.remainingQuantityBefore &&
+        (!draft.overageConfirmed || !draft.overageReason.trim())
+      ) {
+        throw new Error(`${line.title}: excess delivery requires confirmation and a reason.`);
+      }
+
+      return {
+        receivingItemId: line.id,
+        receivedQuantity,
+        damagedQuantity,
+        unitCost,
+        overageConfirmed: delivered > line.remainingQuantityBefore ? draft.overageConfirmed : false,
+        overageReason: delivered > line.remainingQuantityBefore ? draft.overageReason : undefined,
+      };
+    });
+  };
+
+  const persistReceivingDraft = async (reloadAfter = true) => {
     if (!receipt || receipt.status !== "draft") return;
-    if (!invoiceNumber.trim()) return toast.error("Invoice number is required.");
+    if (!invoiceNumber.trim()) throw new Error("Invoice number is required.");
 
+    const lines = buildReceivingDraftLines();
+    await updateReceivingDraft({
+      receivingId: receipt.id,
+      invoiceNumber,
+      employeeLabel,
+      notes: receivingNotes,
+      lines,
+    });
+
+    if (reloadAfter) await load();
+  };
+
+  const saveReceivingDraft = async () => {
     try {
-      const lines = receipt.items.map((line) => {
-        const draft = lineDrafts[line.id];
-        if (!draft) throw new Error(`${line.title}: receiving draft data is missing.`);
-
-        const receivedQuantity = Number(draft.received);
-        const damagedQuantity = Number(draft.damaged);
-        const unitCost = Number(draft.unitCost);
-
-        if (!Number.isInteger(receivedQuantity) || receivedQuantity < 0) {
-          throw new Error(`${line.title}: received quantity must be a non-negative whole number.`);
-        }
-        if (!Number.isInteger(damagedQuantity) || damagedQuantity < 0) {
-          throw new Error(`${line.title}: damaged quantity must be a non-negative whole number.`);
-        }
-        if (receivedQuantity + damagedQuantity <= 0) {
-          throw new Error(`${line.title}: enter at least one received or damaged unit.`);
-        }
-        if (!Number.isFinite(unitCost) || unitCost < 0) {
-          throw new Error(`${line.title}: unit cost must be zero or greater.`);
-        }
-
-        const delivered = receivedQuantity + damagedQuantity;
-        if (
-          delivered > line.remainingQuantityBefore &&
-          (!draft.overageConfirmed || !draft.overageReason.trim())
-        ) {
-          throw new Error(`${line.title}: excess delivery requires confirmation and a reason.`);
-        }
-
-        return {
-          receivingItemId: line.id,
-          receivedQuantity,
-          damagedQuantity,
-          unitCost,
-          overageConfirmed: delivered > line.remainingQuantityBefore ? draft.overageConfirmed : false,
-          overageReason: delivered > line.remainingQuantityBefore ? draft.overageReason : undefined,
-        };
-      });
-
       setSaving(true);
-      await updateReceivingDraft({
-        receivingId: receipt.id,
-        invoiceNumber,
-        employeeLabel,
-        notes: receivingNotes,
-        lines,
-      });
+      await persistReceivingDraft(true);
       toast.success("Receiving draft updated.");
-      await load();
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Updating receiving draft failed.");
     } finally {
@@ -218,9 +228,15 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
 
   const approve = async () => {
     if (!receipt) return;
-    if (!window.confirm(`Approve receiving #${receipt.receiptNumber}? This will update stock.`)) return;
+    if (!window.confirm(`Approve receiving #${receipt.receiptNumber}? Latest draft fields and serials will be saved first, then stock will update.`)) return;
     setSaving(true);
     try {
+      if (receipt.status === "draft") {
+        await persistReceivingDraft(false);
+        for (const line of receipt.items) {
+          await replaceReceivingSerials(line.id, serialDrafts[line.id] ?? []);
+        }
+      }
       await approveReceiving(receipt.id);
       toast.success("Receiving approved and stock updated.");
       await load();
