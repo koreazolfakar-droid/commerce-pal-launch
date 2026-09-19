@@ -27,6 +27,14 @@ const cmsGateway = await readFile(
   new URL("../supabase/functions/public-cms/index.ts", import.meta.url),
   "utf8",
 );
+const visualMigration = await readFile(
+  new URL("../supabase/migrations/20260919212052_hero_visual_config.sql", import.meta.url),
+  "utf8",
+);
+const atomicVisualMigration = await readFile(
+  new URL("../supabase/migrations/20260919212447_hero_visual_atomic_save.sql", import.meta.url),
+  "utf8",
+);
 
 test("dedicated hero dashboard route uses the real CMS page", () => {
   assert.match(app, /HeroBannersPageLive/);
@@ -40,8 +48,8 @@ test("dedicated hero dashboard route uses the real CMS page", () => {
 
 test("hero dashboard supports real Supabase CRUD, storage upload and media library", () => {
   assert.match(data, /from\("cms_hero_slides"\)/);
-  assert.match(data, /rpc\("create_cms_hero_slide_v2"/);
-  assert.match(data, /rpc\("update_cms_hero_slide_v2"/);
+  assert.match(data, /rpc\("create_cms_hero_slide_v3"/);
+  assert.match(data, /rpc\("update_cms_hero_slide_v3"/);
   assert.match(data, /rpc\("delete_cms_hero_slide"/);
   assert.match(data, /rpc\("reorder_cms_hero_slides"/);
   assert.match(data, /storage\.from\(HERO_BUCKET\)\.upload/);
@@ -56,6 +64,13 @@ test("hero dashboard supports real Supabase CRUD, storage upload and media libra
   assert.match(page, /Eyebrow text/);
   assert.match(page, /Secondary CTA \(optional\)/);
   assert.match(page, /Content theme/);
+  assert.match(page, /Vertical position/);
+  assert.match(page, /Title size/);
+  assert.match(page, /Content width/);
+  assert.match(page, /Button shape/);
+  assert.match(page, /Minimal/);
+  assert.match(page, /Centered/);
+  assert.match(page, /Glass/);
   assert.match(data, /secondaryButtonStyle/);
   assert.match(data, /contentTheme/);
 });
@@ -80,6 +95,15 @@ test("hero customization is persisted and exposed through the public CMS gateway
   assert.match(cmsGateway, /secondary_button_label_en/);
   assert.match(cmsGateway, /secondary_target_type/);
   assert.match(cmsGateway, /content_theme: row\.content_theme/);
+  assert.match(cmsGateway, /visual_config: row\.visual_config/);
+  assert.match(visualMigration, /add column if not exists visual_config/);
+  assert.match(visualMigration, /set_cms_hero_visual_config/);
+  assert.match(visualMigration, /from public, anon/);
+  assert.match(data, /create_cms_hero_slide_v3/);
+  assert.match(data, /update_cms_hero_slide_v3/);
+  assert.match(atomicVisualMigration, /create_cms_hero_slide_v3/);
+  assert.match(atomicVisualMigration, /update_cms_hero_slide_v3/);
+  assert.match(atomicVisualMigration, /set_cms_hero_visual_config/);
 });
 
 test("public CMS uses an edge gateway with resilient empty fallback", () => {
@@ -112,8 +136,11 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", (
   assert.ok(hero.includes("lg:h-[28rem]"));
   assert.ok(hero.includes("xl:h-[30rem]"));
   assert.ok(hero.includes("p-4 sm:p-8 lg:p-10"));
-  assert.ok(hero.includes("max-w-[90%] sm:max-w-2xl"));
-  assert.ok(hero.includes("text-xl font-black leading-[1.08]"));
+  assert.match(hero, /cmsVisualConfig/);
+  assert.match(hero, /cmsVerticalClass/);
+  assert.match(hero, /cmsTitleClass/);
+  assert.match(hero, /cmsWidthClass/);
+  assert.match(hero, /cmsRadiusClass/);
   assert.ok(hero.includes("mt-1.5 max-w-[20rem] text-xs"));
   assert.ok(hero.includes("mt-3 flex flex-wrap gap-2"));
 });

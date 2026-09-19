@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   createDashboardHeroSlide,
+  DEFAULT_HERO_VISUAL_CONFIG,
   deleteDashboardHeroSlide,
   getHeroScheduleState,
   listDashboardHeroLinkOptions,
@@ -36,6 +37,7 @@ import {
   type HeroContentTheme,
   type HeroImageTarget,
   type HeroTargetType,
+  type HeroVisualConfig,
 } from "@/dashboard/data/hero";
 
 const EMPTY_FORM: DashboardHeroInput = {
@@ -69,6 +71,7 @@ const EMPTY_FORM: DashboardHeroInput = {
   contentTheme: "light",
   openInNewTab: false,
   secondaryOpenInNewTab: false,
+  visualConfig: { ...DEFAULT_HERO_VISUAL_CONFIG },
 };
 
 function toLocalInputValue(value: string) {
@@ -111,6 +114,7 @@ function fromSlide(slide: DashboardHeroSlide): DashboardHeroInput {
     contentTheme: slide.contentTheme,
     openInNewTab: slide.openInNewTab,
     secondaryOpenInNewTab: slide.secondaryOpenInNewTab,
+    visualConfig: { ...slide.visualConfig },
   };
 }
 
@@ -141,6 +145,71 @@ function contentThemeClass(theme: HeroContentTheme) {
   if (theme === "glass") return "text-white rounded-2xl bg-slate-950/35 p-4 backdrop-blur-md sm:p-6";
   return "text-white";
 }
+
+function heroVerticalClass(vertical: HeroVisualConfig["vertical"]) {
+  if (vertical === "top") return "justify-start";
+  if (vertical === "center") return "justify-center";
+  return "justify-end";
+}
+
+function heroTitleClass(size: HeroVisualConfig["titleSize"]) {
+  if (size === "compact") return "text-xl sm:text-3xl";
+  if (size === "large") return "text-3xl sm:text-5xl";
+  return "text-2xl sm:text-4xl";
+}
+
+function heroWidthClass(width: HeroVisualConfig["contentWidth"]) {
+  if (width === "narrow") return "max-w-lg";
+  if (width === "wide") return "max-w-4xl";
+  return "max-w-2xl";
+}
+
+function heroRadiusClass(radius: HeroVisualConfig["buttonRadius"]) {
+  if (radius === "soft") return "rounded-lg";
+  if (radius === "pill") return "rounded-full";
+  return "rounded-xl";
+}
+
+const HERO_PRESETS: Array<{
+  id: string;
+  label: string;
+  description: string;
+  patch: Pick<DashboardHeroInput, "contentTheme" | "overlayOpacity" | "contentAlignment" | "visualConfig">;
+}> = [
+  {
+    id: "minimal",
+    label: "Minimal",
+    description: "Clean bottom layout",
+    patch: {
+      contentTheme: "light",
+      overlayOpacity: 15,
+      contentAlignment: "start",
+      visualConfig: { vertical: "bottom", titleSize: "standard", contentWidth: "narrow", buttonRadius: "pill" },
+    },
+  },
+  {
+    id: "center",
+    label: "Centered",
+    description: "Campaign focus",
+    patch: {
+      contentTheme: "light",
+      overlayOpacity: 30,
+      contentAlignment: "center",
+      visualConfig: { vertical: "center", titleSize: "large", contentWidth: "standard", buttonRadius: "rounded" },
+    },
+  },
+  {
+    id: "glass",
+    label: "Glass",
+    description: "Premium glass panel",
+    patch: {
+      contentTheme: "glass",
+      overlayOpacity: 10,
+      contentAlignment: "start",
+      visualConfig: { vertical: "bottom", titleSize: "standard", contentWidth: "standard", buttonRadius: "rounded" },
+    },
+  },
+];
 
 function buttonClass(style: HeroButtonStyle) {
   if (style === "light") return "bg-white text-slate-950";
@@ -780,6 +849,19 @@ export default function HeroBannersPage() {
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="mb-4 text-[13px] font-bold text-[#14203a]">Design & live preview</div>
+            <div className="mb-4 grid gap-2 sm:grid-cols-3">
+              {HERO_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => setForm((current) => ({ ...current, ...preset.patch, visualConfig: { ...preset.patch.visualConfig } }))}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-start transition hover:border-indigo-300 hover:bg-indigo-50/50"
+                >
+                  <span className="block text-[11px] font-bold text-slate-700">{preset.label}</span>
+                  <span className="mt-0.5 block text-[9px] text-slate-400">{preset.description}</span>
+                </button>
+              ))}
+            </div>
             <div className="mb-4 grid gap-4 lg:grid-cols-3">
               <label>
                 <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content alignment</span>
@@ -803,6 +885,41 @@ export default function HeroBannersPage() {
               </label>
             </div>
 
+            <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Vertical position</span>
+                <select value={form.visualConfig.vertical} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, vertical: e.target.value as HeroVisualConfig["vertical"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="top">Top</option>
+                  <option value="center">Center</option>
+                  <option value="bottom">Bottom</option>
+                </select>
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Title size</span>
+                <select value={form.visualConfig.titleSize} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, titleSize: e.target.value as HeroVisualConfig["titleSize"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="compact">Compact</option>
+                  <option value="standard">Standard</option>
+                  <option value="large">Large</option>
+                </select>
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content width</span>
+                <select value={form.visualConfig.contentWidth} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, contentWidth: e.target.value as HeroVisualConfig["contentWidth"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="narrow">Narrow</option>
+                  <option value="standard">Standard</option>
+                  <option value="wide">Wide</option>
+                </select>
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button shape</span>
+                <select value={form.visualConfig.buttonRadius} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, buttonRadius: e.target.value as HeroVisualConfig["buttonRadius"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="soft">Soft</option>
+                  <option value="rounded">Rounded</option>
+                  <option value="pill">Pill</option>
+                </select>
+              </label>
+            </div>
+
             <div className="mb-3 flex justify-between gap-2">
               <div className="flex rounded-xl bg-slate-100 p-1">
                 <button onClick={() => setPreviewMode("desktop")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "desktop" ? "bg-white shadow-sm" : "text-slate-500"}`}><Monitor className="size-3.5" /> Desktop</button>
@@ -818,15 +935,15 @@ export default function HeroBannersPage() {
               <div className="relative size-full">
                 {previewImage ? <img src={previewImage} alt="" className="absolute inset-0 size-full object-cover" /> : <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950"><ImageIcon className="size-10 text-white/20" /></div>}
                 <div className="absolute inset-0 bg-black" style={{ opacity: form.overlayOpacity / 100 }} />
-                <div className={`relative z-10 flex size-full flex-col justify-end p-6 sm:p-8 ${alignClass}`} dir={language === "ar" ? "rtl" : "ltr"}>
-                  <div className={`max-w-2xl ${contentThemeClass(form.contentTheme)}`}>
+                <div className={`relative z-10 flex size-full flex-col p-6 sm:p-8 ${heroVerticalClass(form.visualConfig.vertical)} ${alignClass}`} dir={language === "ar" ? "rtl" : "ltr"}>
+                  <div className={`${heroWidthClass(form.visualConfig.contentWidth)} ${contentThemeClass(form.contentTheme)}`}>
                     {previewEyebrow ? <div className="mb-2 text-[10px] font-black uppercase tracking-[.18em] opacity-80 sm:text-xs">{previewEyebrow}</div> : null}
-                    {previewTitle ? <div className="text-2xl font-black sm:text-4xl">{previewTitle}</div> : null}
+                    {previewTitle ? <div className={`${heroTitleClass(form.visualConfig.titleSize)} font-black`}>{previewTitle}</div> : null}
                     {previewSubtitle ? <div className="mt-2 max-w-xl text-sm opacity-85 sm:text-base">{previewSubtitle}</div> : null}
                     {(previewButton && targetHref(form)) || (previewSecondaryButton && secondaryTargetHref(form)) ? (
                       <div className="mt-4 flex flex-wrap gap-2">
-                        {previewButton && targetHref(form) ? <span className={`inline-flex rounded-xl px-4 py-2.5 text-[11px] font-bold ${buttonClass(form.buttonStyle)}`}>{previewButton}</span> : null}
-                        {previewSecondaryButton && secondaryTargetHref(form) ? <span className={`inline-flex rounded-xl px-4 py-2.5 text-[11px] font-bold ${buttonClass(form.secondaryButtonStyle)}`}>{previewSecondaryButton}</span> : null}
+                        {previewButton && targetHref(form) ? <span className={`inline-flex px-4 py-2.5 text-[11px] font-bold ${heroRadiusClass(form.visualConfig.buttonRadius)} ${buttonClass(form.buttonStyle)}`}>{previewButton}</span> : null}
+                        {previewSecondaryButton && secondaryTargetHref(form) ? <span className={`inline-flex px-4 py-2.5 text-[11px] font-bold ${heroRadiusClass(form.visualConfig.buttonRadius)} ${buttonClass(form.secondaryButtonStyle)}`}>{previewSecondaryButton}</span> : null}
                       </div>
                     ) : null}
                   </div>

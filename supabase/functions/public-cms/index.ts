@@ -138,6 +138,7 @@ Deno.serve(async (req: Request) => {
       content_theme: row.content_theme ?? "light",
       open_in_new_tab: row.open_in_new_tab ?? false,
       secondary_open_in_new_tab: row.secondary_open_in_new_tab ?? false,
+      visual_config: row.visual_config ?? {},
     }));
 
   const sections = (sectionsResult.data ?? []).map((row) => ({

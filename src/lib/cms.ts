@@ -6,6 +6,13 @@ export type CmsJsonValue =
 export type CmsSettingValue = CmsJsonValue;
 export type CmsLocale = "en" | "ar";
 
+export type CmsHeroVisualConfig = {
+  vertical?: "top" | "center" | "bottom";
+  titleSize?: "compact" | "standard" | "large";
+  contentWidth?: "narrow" | "standard" | "wide";
+  buttonRadius?: "soft" | "rounded" | "pill";
+};
+
 export type CmsHeroSlide = {
   id: string;
   title: string | null;
@@ -41,6 +48,7 @@ export type CmsHeroSlide = {
   content_theme?: "light" | "dark" | "glass";
   open_in_new_tab?: boolean;
   secondary_open_in_new_tab?: boolean;
+  visual_config?: CmsHeroVisualConfig | null;
 };
 
 export type CmsSection = {
