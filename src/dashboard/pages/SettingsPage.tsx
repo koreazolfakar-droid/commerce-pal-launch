@@ -240,7 +240,7 @@ export default function SettingsPage() {
             <>
               <Panel
                 title="Brand identity"
-                subtitle="The storefront header and footer already consume these CMS values."
+                subtitle="Store name and logo are live in the storefront header/footer. Taglines are stored in CMS for supported content surfaces."
               >
                 <div className="grid gap-5 p-5 lg:grid-cols-[220px_minmax(0,1fr)]">
                   <div>
@@ -318,7 +318,7 @@ export default function SettingsPage() {
           {tab === "contact" ? (
             <Panel
               title="Contact & WhatsApp"
-              subtitle="WhatsApp and store identity changes are consumed by storefront contact and checkout surfaces."
+              subtitle="WhatsApp is live across storefront contact and checkout surfaces. The other contact fields are stored in CMS for supported contact surfaces."
             >
               <div className="grid gap-4 p-5 sm:grid-cols-2">
                 <Field
@@ -374,7 +374,7 @@ export default function SettingsPage() {
           {tab === "social" ? (
             <Panel
               title="Social media"
-              subtitle="Empty links stay hidden on storefront surfaces that support social links."
+              subtitle="Saved social links are consumed by the storefront footer; deployment fallbacks remain available when a CMS value is empty."
             >
               <div className="grid gap-4 p-5 sm:grid-cols-2">
                 <Field label="Instagram URL" value={settings.instagramUrl} onChange={(value) => update("instagramUrl", value)} dir="ltr" />
