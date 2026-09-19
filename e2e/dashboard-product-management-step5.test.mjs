@@ -9,7 +9,7 @@ const [app, catalog, data, variants, products, form, migration, types] = await P
   readFile(new URL("../src/dashboard/components/products/ProductVariantManager.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProductsPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProductFormPage.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../supabase/migrations/20260919082000_product_management_step5.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260919082451_product_management_step5.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/integrations/supabase/types.ts", import.meta.url), "utf8"),
 ]);
 
