@@ -78,3 +78,18 @@ test("login UI clears sensitive password state when changing authentication flow
     /const handleMfaCancel = useCallback\(\(\) => \{[\s\S]+setPassword\(""\)[\s\S]+setNewPassword\(""\)[\s\S]+setConfirmPassword\(""\)/,
   );
 });
+
+
+test("sign-in errors are sanitized and failed credentials are cleared", () => {
+  assert.match(catalog, /DASHBOARD_SIGNIN_DENIED_MESSAGE = "Unable to sign in with those credentials\."/);
+  assert.match(catalog, /dashboardSignInErrorMessage/);
+  assert.match(catalog, /code === "captcha_failed"/);
+  assert.match(catalog, /status === 429 \|\| code\.includes\("rate_limit"\)/);
+  assert.match(catalog, /status >= 500/);
+  assert.doesNotMatch(catalog, /throwIfError\(error, "Sign in failed"\)/);
+  assert.doesNotMatch(catalog, /This account does not have dashboard access\./);
+  assert.match(
+    login,
+    /catch \(cause\) \{[\s\S]+setPassword\(""\)[\s\S]+setShowPassword\(false\)[\s\S]+setInlineError\(message\)/,
+  );
+});
