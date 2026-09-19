@@ -64,6 +64,40 @@ function cmsContentThemeClass(theme: CmsHeroSlide["content_theme"]) {
   return "text-white";
 }
 
+function cmsVisualConfig(slide: CmsHeroSlide | undefined) {
+  const config = slide?.visual_config ?? {};
+  return {
+    vertical: config.vertical === "top" || config.vertical === "center" ? config.vertical : "bottom",
+    titleSize: config.titleSize === "compact" || config.titleSize === "large" ? config.titleSize : "standard",
+    contentWidth: config.contentWidth === "narrow" || config.contentWidth === "wide" ? config.contentWidth : "standard",
+    buttonRadius: config.buttonRadius === "soft" || config.buttonRadius === "pill" ? config.buttonRadius : "rounded",
+  } as const;
+}
+
+function cmsVerticalClass(vertical: ReturnType<typeof cmsVisualConfig>["vertical"]) {
+  if (vertical === "top") return "justify-start";
+  if (vertical === "center") return "justify-center";
+  return "justify-end";
+}
+
+function cmsTitleClass(size: ReturnType<typeof cmsVisualConfig>["titleSize"]) {
+  if (size === "compact") return "text-lg sm:text-3xl lg:text-4xl";
+  if (size === "large") return "text-2xl sm:text-5xl lg:text-6xl";
+  return "text-xl sm:text-4xl lg:text-5xl";
+}
+
+function cmsWidthClass(width: ReturnType<typeof cmsVisualConfig>["contentWidth"]) {
+  if (width === "narrow") return "max-w-[90%] sm:max-w-lg";
+  if (width === "wide") return "max-w-[94%] sm:max-w-4xl";
+  return "max-w-[90%] sm:max-w-2xl";
+}
+
+function cmsRadiusClass(radius: ReturnType<typeof cmsVisualConfig>["buttonRadius"]) {
+  if (radius === "soft") return "rounded-lg";
+  if (radius === "pill") return "rounded-full";
+  return "rounded-xl";
+}
+
 function cmsButtonClass(style: CmsHeroSlide["button_style"]) {
   if (style === "light") return "bg-white text-slate-950 hover:bg-white/90";
   if (style === "dark") return "bg-slate-950 text-white hover:bg-slate-900";
@@ -241,6 +275,7 @@ export function HomeHero({
         ? "items-end text-end"
         : "items-start text-start";
   const cmsOverlayOpacity = Math.max(0, Math.min(90, cmsSlide?.overlay_opacity ?? 20)) / 100;
+  const cmsVisual = cmsVisualConfig(cmsSlide);
 
   return (
     <>
@@ -320,17 +355,17 @@ export function HomeHero({
             />
             <div
               data-testid="home-hero-content"
-              className={`absolute inset-0 z-[3] flex flex-col justify-end p-4 sm:p-8 lg:p-10 ${cmsAlignment}`}
+              className={`absolute inset-0 z-[3] flex flex-col p-4 sm:p-8 lg:p-10 ${cmsVerticalClass(cmsVisual.vertical)} ${cmsAlignment}`}
               dir={language === "ar" ? "rtl" : "ltr"}
             >
-              <div className={`max-w-[90%] sm:max-w-2xl ${cmsContentThemeClass(cmsSlide.content_theme)}`}>
+              <div className={`${cmsWidthClass(cmsVisual.contentWidth)} ${cmsContentThemeClass(cmsSlide.content_theme)}`}>
                 {cmsSlide.eyebrow ? (
                   <div className="mb-1.5 text-[10px] font-black uppercase tracking-[.18em] opacity-80 sm:mb-2 sm:text-xs">
                     {cmsSlide.eyebrow}
                   </div>
                 ) : null}
                 {cmsSlide.title ? (
-                  <h2 className="text-xl font-black leading-[1.08] tracking-tight drop-shadow sm:text-4xl sm:leading-tight lg:text-5xl">
+                  <h2 className={`${cmsTitleClass(cmsVisual.titleSize)} font-black leading-[1.08] tracking-tight drop-shadow sm:leading-tight`}>
                     {cmsSlide.title}
                   </h2>
                 ) : null}
@@ -346,7 +381,7 @@ export function HomeHero({
                         href={cmsHref}
                         target={cmsSlide.open_in_new_tab ? "_blank" : undefined}
                         rel={cmsSlide.open_in_new_tab ? "noopener noreferrer" : undefined}
-                        className={`press inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-[11px] font-bold shadow-lg transition sm:min-h-11 sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-xs ${cmsButtonClass(cmsSlide.button_style)}`}
+                        className={`press inline-flex min-h-10 items-center justify-center px-4 py-2 text-[11px] font-bold shadow-lg transition sm:min-h-11 sm:px-5 sm:py-2.5 sm:text-xs ${cmsRadiusClass(cmsVisual.buttonRadius)} ${cmsButtonClass(cmsSlide.button_style)}`}
                       >
                         {cmsSlide.button_label}
                       </a>
@@ -356,7 +391,7 @@ export function HomeHero({
                         href={cmsSecondaryHref}
                         target={cmsSlide.secondary_open_in_new_tab ? "_blank" : undefined}
                         rel={cmsSlide.secondary_open_in_new_tab ? "noopener noreferrer" : undefined}
-                        className={`press inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-[11px] font-bold shadow-lg transition sm:min-h-11 sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-xs ${cmsButtonClass(cmsSlide.secondary_button_style)}`}
+                        className={`press inline-flex min-h-10 items-center justify-center px-4 py-2 text-[11px] font-bold shadow-lg transition sm:min-h-11 sm:px-5 sm:py-2.5 sm:text-xs ${cmsRadiusClass(cmsVisual.buttonRadius)} ${cmsButtonClass(cmsSlide.secondary_button_style)}`}
                       >
                         {cmsSlide.secondary_button_label}
                       </a>
