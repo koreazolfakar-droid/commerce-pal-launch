@@ -670,3 +670,357 @@ export async function approveReceiving(receivingId: string) {
   invalidateNativeStoreCache();
   return result;
 }
+
+
+export type UpdatePurchaseOrderDraftInput = CreatePurchaseOrderInput & {
+  purchaseOrderId: string;
+};
+
+function poItemsPayload(items: CreatePurchaseOrderInput["items"]): Json {
+  return items.map((item) => ({
+    product_id: item.productId,
+    variant_id: item.variantId,
+    expected_quantity: item.expectedQuantity,
+    unit_cost: item.unitCost,
+  }));
+}
+
+export async function updatePurchaseOrderDraft(input: UpdatePurchaseOrderDraftInput) {
+  await requireDashboardStaff();
+  if (!input.items.length) throw new Error("Add at least one PO item.");
+  const { data, error } = await supabase.rpc("update_store_purchase_order_draft", {
+    p_purchase_order_id: input.purchaseOrderId,
+    p_supplier_id: input.supplierId,
+    p_location_id: input.locationId ?? null,
+    p_po_number: input.poNumber.trim(),
+    p_currency: (input.currency || "USD").trim().toUpperCase(),
+    p_expected_at: input.expectedAt ?? null,
+    p_discount_amount: input.discountAmount ?? 0,
+    p_tax_amount: input.taxAmount ?? 0,
+    p_shipping_amount: input.shippingAmount ?? 0,
+    p_exchange_rate: input.exchangeRate ?? 1,
+    p_notes: input.notes?.trim() || null,
+    p_items: poItemsPayload(input.items),
+  });
+  throwIfError(error, "Updating purchase order failed");
+  return data;
+}
+
+export async function approvePurchaseOrder(purchaseOrderId: string) {
+  await requireDashboardStaff();
+  const { data, error } = await supabase.rpc("approve_store_purchase_order", {
+    p_purchase_order_id: purchaseOrderId,
+  });
+  throwIfError(error, "Approving purchase order failed");
+  return data;
+}
+
+export async function issuePurchaseOrder(purchaseOrderId: string) {
+  await requireDashboardStaff();
+  const { data, error } = await supabase.rpc("issue_store_purchase_order", {
+    p_purchase_order_id: purchaseOrderId,
+  });
+  throwIfError(error, "Issuing purchase order failed");
+  return data;
+}
+
+export async function rejectPurchaseOrder(purchaseOrderId: string, reason: string) {
+  await requireDashboardStaff();
+  const cleanReason = reason.trim();
+  if (!cleanReason) throw new Error("Rejection reason is required.");
+  const { data, error } = await supabase.rpc("reject_store_purchase_order", {
+    p_purchase_order_id: purchaseOrderId,
+    p_reason: cleanReason,
+  });
+  throwIfError(error, "Rejecting purchase order failed");
+  return data;
+}
+
+export async function reopenPurchaseOrder(purchaseOrderId: string) {
+  await requireDashboardStaff();
+  const { data, error } = await supabase.rpc("reopen_store_purchase_order", {
+    p_purchase_order_id: purchaseOrderId,
+  });
+  throwIfError(error, "Reopening purchase order failed");
+  return data;
+}
+
+export async function cancelPurchaseOrder(purchaseOrderId: string, reason: string) {
+  await requireDashboardStaff();
+  const cleanReason = reason.trim();
+  if (!cleanReason) throw new Error("Cancellation reason is required.");
+  const { data, error } = await supabase.rpc("cancel_store_purchase_order", {
+    p_purchase_order_id: purchaseOrderId,
+    p_reason: cleanReason,
+  });
+  throwIfError(error, "Cancelling purchase order failed");
+  return data;
+}
+
+export async function voidReceiving(receivingId: string, reason: string) {
+  await requireDashboardStaff();
+  const cleanReason = reason.trim();
+  if (!cleanReason) throw new Error("Void reason is required.");
+  const { data, error } = await supabase.rpc("void_store_receiving", {
+    p_receiving_id: receivingId,
+    p_reason: cleanReason,
+  });
+  throwIfError(error, "Voiding receiving failed");
+  return data;
+}
+
+export async function saveProcurementLocation(input: {
+  id?: string;
+  name: string;
+  code: string;
+  address?: string;
+  isActive?: boolean;
+}) {
+  await requireDashboardStaff();
+  const payload = {
+    name: input.name.trim(),
+    code: input.code.trim().toUpperCase(),
+    address: input.address?.trim() || null,
+    is_active: input.isActive ?? true,
+  };
+  if (!payload.name || !payload.code) throw new Error("Location name and code are required.");
+
+  const query = input.id
+    ? supabase.from("store_procurement_locations").update(payload).eq("id", input.id)
+    : supabase.from("store_procurement_locations").insert(payload);
+
+  const { data, error } = await query.select("id,name,code,address,is_active").single();
+  throwIfError(error, input.id ? "Updating location failed" : "Creating location failed");
+  return data;
+}
+
+export async function updateReceivingSupplier(input: {
+  id: string;
+  name: string;
+  code?: string;
+  phone?: string;
+  email?: string;
+  notes?: string;
+  isActive?: boolean;
+}) {
+  await requireDashboardStaff();
+  const { data, error } = await supabase
+    .from("store_suppliers")
+    .update({
+      name: input.name.trim(),
+      code: input.code?.trim() || null,
+      phone: input.phone?.trim() || null,
+      email: input.email?.trim() || null,
+      notes: input.notes?.trim() || null,
+      is_active: input.isActive ?? true,
+    })
+    .eq("id", input.id)
+    .select("id,name,code,phone,email,notes,is_active")
+    .single();
+  throwIfError(error, "Updating supplier failed");
+  return data;
+}
+
+export type ReceivingSerialDraft = {
+  serialNumber?: string;
+  imei1?: string;
+  imei2?: string;
+  condition?: "usable" | "damaged";
+};
+
+export async function replaceReceivingSerials(
+  receivingItemId: string,
+  serials: ReceivingSerialDraft[],
+) {
+  await requireDashboardStaff();
+  const cleaned = serials
+    .map((serial) => ({
+      receiving_item_id: receivingItemId,
+      serial_number: serial.serialNumber?.trim() || null,
+      imei1: serial.imei1?.trim() || null,
+      imei2: serial.imei2?.trim() || null,
+      condition: serial.condition ?? "usable",
+    }))
+    .filter((serial) => serial.serial_number || serial.imei1 || serial.imei2);
+
+  const { error: deleteError } = await supabase
+    .from("store_receiving_serials")
+    .delete()
+    .eq("receiving_item_id", receivingItemId);
+  throwIfError(deleteError, "Replacing serials failed");
+
+  if (!cleaned.length) return [] as ReceivingSerialRow[];
+
+  const { data, error } = await supabase
+    .from("store_receiving_serials")
+    .insert(cleaned)
+    .select("id,receiving_item_id,serial_number,imei1,imei2,condition,inventory_status");
+  throwIfError(error, "Saving serial / IMEI data failed");
+  return (data ?? []) as ReceivingSerialRow[];
+}
+
+const PROCUREMENT_MEDIA_BUCKET = "cms-media";
+const PROCUREMENT_MEDIA_PREFIX = "procurement";
+const MAX_PROCUREMENT_FILE_BYTES = 20 * 1024 * 1024;
+
+export async function uploadProcurementAttachment(input: {
+  file: File;
+  purchaseOrderId?: string | null;
+  receivingId?: string | null;
+  attachmentType: "purchase_order" | "supplier_invoice" | "packing_list" | "other";
+}) {
+  await requireDashboardStaff();
+  if (!input.purchaseOrderId && !input.receivingId) throw new Error("Attachment must belong to a PO or receiving.");
+  if (input.file.size <= 0) throw new Error("The selected file is empty.");
+  if (input.file.size > MAX_PROCUREMENT_FILE_BYTES) throw new Error("Attachment must be 20 MB or smaller.");
+
+  const unique =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const safeName = input.file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+  const scope = input.purchaseOrderId ? `po/${input.purchaseOrderId}` : `receiving/${input.receivingId}`;
+  const objectPath = `${PROCUREMENT_MEDIA_PREFIX}/${scope}/${unique}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(PROCUREMENT_MEDIA_BUCKET)
+    .upload(objectPath, input.file, {
+      upsert: false,
+      contentType: input.file.type || "application/octet-stream",
+    });
+  throwIfError(uploadError, "Uploading procurement attachment failed");
+
+  try {
+    const { data, error } = await supabase
+      .from("store_procurement_attachments")
+      .insert({
+        purchase_order_id: input.purchaseOrderId ?? null,
+        receiving_id: input.receivingId ?? null,
+        file_name: input.file.name,
+        storage_path: objectPath,
+        mime_type: input.file.type || null,
+        size_bytes: input.file.size,
+        attachment_type: input.attachmentType,
+      })
+      .select("*")
+      .single();
+    throwIfError(error, "Registering procurement attachment failed");
+    return data;
+  } catch (error) {
+    await supabase.storage.from(PROCUREMENT_MEDIA_BUCKET).remove([objectPath]);
+    throw error;
+  }
+}
+
+export async function deleteProcurementAttachment(attachment: ProcurementAttachment) {
+  await requireDashboardStaff();
+  const { error } = await supabase
+    .from("store_procurement_attachments")
+    .delete()
+    .eq("id", attachment.id);
+  throwIfError(error, "Deleting procurement attachment failed");
+  const { error: storageError } = await supabase.storage
+    .from(PROCUREMENT_MEDIA_BUCKET)
+    .remove([attachment.storagePath]);
+  if (storageError) {
+    console.warn("[procurement] attachment metadata deleted but storage cleanup failed", storageError.message);
+  }
+}
+
+export type ProcurementAnalytics = {
+  totalSpend: number;
+  poCount: number;
+  openPoCount: number;
+  overduePoCount: number;
+  receivedUnits: number;
+  damagedUnits: number;
+  damageRate: number;
+  supplierSpend: Array<{ supplierId: string; supplierName: string; spend: number; poCount: number }>;
+};
+
+export function buildProcurementAnalytics(workspace: ReceivingWorkspace): ProcurementAnalytics {
+  const now = Date.now();
+  const totalSpend = workspace.purchaseOrders
+    .filter((po) => !["cancelled", "rejected"].includes(po.status))
+    .reduce((sum, po) => sum + po.grandTotal, 0);
+  const openStatuses = new Set(["pending_approval", "approved", "ordered", "partially_received"]);
+  const openPoCount = workspace.purchaseOrders.filter((po) => openStatuses.has(po.status)).length;
+  const overduePoCount = workspace.purchaseOrders.filter((po) => {
+    if (!po.expectedAt || !openStatuses.has(po.status)) return false;
+    return new Date(po.expectedAt).getTime() < now;
+  }).length;
+  const receivedUnits = workspace.receivings
+    .filter((receipt) => receipt.status === "approved")
+    .reduce((sum, receipt) => sum + receipt.stockUnits, 0);
+  const damagedUnits = workspace.receivings
+    .filter((receipt) => receipt.status === "approved")
+    .reduce((sum, receipt) => sum + receipt.damagedUnits, 0);
+
+  const supplierMap = new Map<string, { supplierId: string; supplierName: string; spend: number; poCount: number }>();
+  for (const po of workspace.purchaseOrders) {
+    if (["cancelled", "rejected"].includes(po.status)) continue;
+    const current = supplierMap.get(po.supplierId) ?? {
+      supplierId: po.supplierId,
+      supplierName: po.supplierName,
+      spend: 0,
+      poCount: 0,
+    };
+    current.spend += po.grandTotal;
+    current.poCount += 1;
+    supplierMap.set(po.supplierId, current);
+  }
+
+  return {
+    totalSpend,
+    poCount: workspace.purchaseOrders.length,
+    openPoCount,
+    overduePoCount,
+    receivedUnits,
+    damagedUnits,
+    damageRate: receivedUnits + damagedUnits > 0 ? damagedUnits / (receivedUnits + damagedUnits) : 0,
+    supplierSpend: [...supplierMap.values()].sort((a, b) => b.spend - a.spend),
+  };
+}
+
+export type ReorderSuggestion = {
+  key: string;
+  productId: string;
+  variantId: string | null;
+  title: string;
+  sku: string;
+  currentStock: number;
+  onOrder: number;
+  suggestedQuantity: number;
+};
+
+export function buildReorderSuggestions(
+  workspace: ReceivingWorkspace,
+  targetStock = 10,
+): ReorderSuggestion[] {
+  const onOrderByKey = new Map<string, number>();
+  for (const po of workspace.purchaseOrders) {
+    if (!["approved", "ordered", "partially_received"].includes(po.status)) continue;
+    for (const line of po.items) {
+      const key = line.variantId ?? line.productId;
+      onOrderByKey.set(key, (onOrderByKey.get(key) ?? 0) + line.remainingQuantity);
+    }
+  }
+
+  return workspace.productOptions
+    .map((option) => {
+      const onOrder = onOrderByKey.get(option.key) ?? 0;
+      const projected = option.currentStock + onOrder;
+      return {
+        key: option.key,
+        productId: option.productId,
+        variantId: option.variantId,
+        title: option.title,
+        sku: option.sku,
+        currentStock: option.currentStock,
+        onOrder,
+        suggestedQuantity: Math.max(0, targetStock - projected),
+      };
+    })
+    .filter((item) => item.suggestedQuantity > 0)
+    .sort((a, b) => a.currentStock - b.currentStock);
+}
