@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   CheckCircle2,
   Copy,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { useLanguage } from "@/lib/i18n";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { downloadOrderInvoicePdf } from "@/lib/orderInvoice";
 import { formatPrice, variantSummary } from "@/lib/shopify";
 import { STORE_NAME, storeUrl } from "@/lib/storeConfig";
@@ -159,6 +161,13 @@ export function WhatsAppCheckoutForm({
   disabled = false,
 }: WhatsAppCheckoutFormProps) {
   const { language } = useLanguage();
+  const { data: cms } = useQuery(cmsQueryOptions());
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsWhatsApp = cms?.settings["whatsapp_number"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const whatsappNumber =
+    typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
   const isArabic = language === "ar";
   const [details, setDetails] = useState<CustomerDetails>(EMPTY_DETAILS);
   const [submitted, setSubmitted] = useState(false);
@@ -482,7 +491,7 @@ export function WhatsAppCheckoutForm({
     });
 
     const message = [
-      `🛍️ ${isArabic ? "طلب جديد" : "New order"} — ${STORE_NAME}`,
+      `🛍️ ${isArabic ? "طلب جديد" : "New order"} — ${storeName}`,
       `${isArabic ? "رقم الطلب" : "Order ref"}: ${referenceValue}`,
       `${copy.invoiceNumber}: ${invoiceValue}`,
       "",
@@ -516,7 +525,7 @@ export function WhatsAppCheckoutForm({
     ].filter(Boolean);
 
     setSubmitted(true);
-    const target = whatsappUrl(message.join("\n"));
+    const target = whatsappUrl(message.join("\n"), whatsappNumber);
     const popup = window.open(target, "_blank", "noopener,noreferrer");
     if (!popup) {
       window.location.assign(target);
