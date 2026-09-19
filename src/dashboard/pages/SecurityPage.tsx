@@ -176,8 +176,8 @@ export default function SecurityPage() {
             <div className="text-[11px] font-bold text-slate-500">Bot protection</div>
             {snapshot.turnstileConfigured ? <CheckCircle2 className="size-5 text-emerald-500" /> : <AlertTriangle className="size-5 text-amber-500" />}
           </div>
-          <div className="mt-3 text-xl font-bold text-[#14203a]">{snapshot.turnstileConfigured ? "Turnstile ready" : "Not configured"}</div>
-          <div className="mt-1 text-[10px] text-slate-400">Cloudflare challenge token is sent directly to Supabase Auth.</div>
+          <div className="mt-3 text-xl font-bold text-[#14203a]">{snapshot.turnstileConfigured ? "Client configured" : "Site key missing"}</div>
+          <div className="mt-1 text-[10px] text-slate-400">Site key status only. Supabase Auth must also have Cloudflare Turnstile enabled with the matching Secret Key.</div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
