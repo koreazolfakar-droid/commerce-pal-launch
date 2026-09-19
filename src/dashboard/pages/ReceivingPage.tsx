@@ -48,15 +48,19 @@ type ReceivingDraftLine = {
 
 function StatusBadge({ status }: { status: string }) {
   const tone =
-    status === "received" || status === "approved"
+    status === "received" || status === "approved" || status === "closed"
       ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
       : status === "partially_received"
         ? "bg-blue-50 text-blue-700 ring-blue-100"
         : status === "ordered"
           ? "bg-violet-50 text-violet-700 ring-violet-100"
-          : status === "draft"
-            ? "bg-amber-50 text-amber-700 ring-amber-100"
-            : "bg-slate-100 text-slate-600 ring-slate-200";
+          : status === "pending_approval"
+            ? "bg-cyan-50 text-cyan-700 ring-cyan-100"
+            : status === "rejected" || status === "cancelled" || status === "voided"
+              ? "bg-rose-50 text-rose-700 ring-rose-100"
+              : status === "draft"
+                ? "bg-amber-50 text-amber-700 ring-amber-100"
+                : "bg-slate-100 text-slate-600 ring-slate-200";
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${tone}`}>
       {status.replaceAll("_", " ")}
@@ -378,7 +382,7 @@ export default function ReceivingPage({
   };
 
   const submitPo = async (po: PurchaseOrderSummary) => {
-    if (!window.confirm(`Submit PO ${po.poNumber}? Draft lines will become locked for receiving.`)) return;
+    if (!window.confirm(`Submit PO ${po.poNumber} for approval? Draft lines will be locked until review.`)) return;
     setSaving(true);
     try {
       await submitPurchaseOrder(po.id);
@@ -434,21 +438,21 @@ export default function ReceivingPage({
       if (!lines.length) throw new Error("Enter at least one received or damaged quantity.");
 
       setSaving(true);
-      await createReceiving({
+      const receivingId = await createReceiving({
         purchaseOrderId: selectedReceivingPo.id,
         invoiceNumber,
         employeeLabel,
         notes: receivingNotes,
         lines,
       });
-      toast.success("Receiving draft created. Review it, then approve to update stock.");
+      toast.success("Receiving draft created. Review serials, invoice matching, then approve.");
       setPanel(null);
       setInvoiceNumber("");
       setEmployeeLabel("");
       setReceivingNotes("");
       setReceivingPoId("");
       setReceivingLines({});
-      await load(false);
+      navigate(`/dashboard/receivings/${receivingId}`);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Receiving draft creation failed.");
     } finally {
@@ -1160,9 +1164,13 @@ export default function ReceivingPage({
             >
               <option value="all">All statuses</option>
               <option value="draft">Draft</option>
+              <option value="pending_approval">Pending approval</option>
+              <option value="approved">Approved</option>
               <option value="ordered">Issued</option>
               <option value="partially_received">Partially received</option>
               <option value="received">Received</option>
+              <option value="closed">Closed</option>
+              <option value="rejected">Rejected</option>
               <option value="cancelled">Cancelled</option>
             </select>
 
@@ -1418,7 +1426,13 @@ export default function ReceivingPage({
             <article key={receipt.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[12px] font-bold text-slate-800">Receipt #{receipt.receiptNumber}</div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/dashboard/receivings/${receipt.id}`)}
+                    className="text-left text-[12px] font-bold text-indigo-600 hover:underline"
+                  >
+                    Receipt #{receipt.receiptNumber}
+                  </button>
                   <div className="mt-1 text-[10px] text-slate-400">
                     {receipt.supplierName} · PO {receipt.poNumber} · Invoice {receipt.invoiceNumber}
                   </div>
@@ -1441,10 +1455,10 @@ export default function ReceivingPage({
               </div>
               <div className="mt-3 flex items-center justify-between">
                 <button
-                  onClick={() => setSelectedReceiptId(receipt.id)}
+                  onClick={() => navigate(`/dashboard/receivings/${receipt.id}`)}
                   className="text-[10px] font-bold text-indigo-600"
                 >
-                  View line details
+                  Open receiving
                 </button>
                 {receipt.status === "draft" ? (
                   <button
@@ -1478,7 +1492,15 @@ export default function ReceivingPage({
             <tbody>
               {filteredReceivings.map((receipt) => (
                 <tr key={receipt.id} className="border-t border-slate-100">
-                  <td className="px-5 py-3 text-[11px] font-bold text-indigo-600">#{receipt.receiptNumber}</td>
+                  <td className="px-5 py-3">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/dashboard/receivings/${receipt.id}`)}
+                      className="text-[11px] font-bold text-indigo-600 hover:underline"
+                    >
+                      #{receipt.receiptNumber}
+                    </button>
+                  </td>
                   <td className="px-3 py-3">
                     <div className="text-[11px] font-semibold text-slate-700">{receipt.supplierName}</div>
                     <div className="text-[9px] text-slate-400">PO {receipt.poNumber}</div>
@@ -1492,10 +1514,10 @@ export default function ReceivingPage({
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => setSelectedReceiptId(receipt.id)}
+                        onClick={() => navigate(`/dashboard/receivings/${receipt.id}`)}
                         className="text-[10px] font-bold text-indigo-600 hover:underline"
                       >
-                        Details
+                        Open
                       </button>
                       {receipt.status === "draft" ? (
                         <button
