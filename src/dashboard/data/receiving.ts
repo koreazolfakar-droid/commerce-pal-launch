@@ -708,6 +708,15 @@ export async function updatePurchaseOrderDraft(input: UpdatePurchaseOrderDraftIn
   return data;
 }
 
+export async function deletePurchaseOrderDraft(purchaseOrderId: string) {
+  await requireDashboardStaff();
+  const { data, error } = await supabase.rpc("delete_store_purchase_order_draft", {
+    p_purchase_order_id: purchaseOrderId,
+  });
+  throwIfError(error, "Deleting purchase order draft failed");
+  return data;
+}
+
 export async function approvePurchaseOrder(purchaseOrderId: string) {
   await requireDashboardStaff();
   const { data, error } = await supabase.rpc("approve_store_purchase_order", {
