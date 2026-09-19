@@ -207,6 +207,30 @@ function throttleMessage(retryAfter: number) {
   return `Too many failed sign-in attempts. Try again in about ${minutes} minute${minutes === 1 ? "" : "s"}.`;
 }
 
+const DASHBOARD_SIGNIN_DENIED_MESSAGE = "Unable to sign in with those credentials.";
+
+type DashboardAuthFailure = {
+  code?: string;
+  status?: number;
+};
+
+function dashboardSignInErrorMessage(error: DashboardAuthFailure) {
+  const code = typeof error.code === "string" ? error.code.toLowerCase() : "";
+  const status = typeof error.status === "number" ? error.status : 0;
+
+  if (code === "captcha_failed") {
+    return "Security verification expired or failed. Complete it again.";
+  }
+  if (status === 429 || code.includes("rate_limit")) {
+    return "Too many authentication requests. Wait a moment and try again.";
+  }
+  if (status >= 500) {
+    return "Sign-in service is temporarily unavailable. Try again shortly.";
+  }
+
+  return DASHBOARD_SIGNIN_DENIED_MESSAGE;
+}
+
 export async function signInDashboard(
   email: string,
   password: string,
@@ -230,14 +254,14 @@ export async function signInDashboard(
   if (error) {
     const failed = await dashboardLoginThrottle(email, "failure");
     if (!failed.allowed) throw new Error(throttleMessage(failed.retryAfter));
-    throwIfError(error, "Sign in failed");
+    throw new Error(dashboardSignInErrorMessage(error));
   }
 
   const role = await getDashboardRole();
   if (!role) {
     await dashboardLoginThrottle(email, "failure");
     await supabase.auth.signOut({ scope: "local" });
-    throw new Error("This account does not have dashboard access.");
+    throw new Error(DASHBOARD_SIGNIN_DENIED_MESSAGE);
   }
 
   await dashboardLoginThrottle(email, "success");
