@@ -390,6 +390,94 @@ grant execute on function public.update_store_purchase_order_draft(
   uuid,uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
 ) to authenticated;
 
+-- Atomic create helper for the richer PO header.
+create or replace function private.create_store_purchase_order_v2_internal(
+  p_supplier_id uuid,
+  p_location_id uuid,
+  p_po_number text,
+  p_currency text,
+  p_expected_at timestamptz,
+  p_discount_amount numeric,
+  p_tax_amount numeric,
+  p_shipping_amount numeric,
+  p_exchange_rate numeric,
+  p_notes text,
+  p_items jsonb
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_po_id uuid;
+begin
+  v_po_id := private.create_store_purchase_order_internal(
+    p_supplier_id,
+    p_po_number,
+    p_currency,
+    p_notes,
+    p_items
+  );
+
+  perform private.update_store_purchase_order_draft_internal(
+    v_po_id,
+    p_supplier_id,
+    p_location_id,
+    p_po_number,
+    p_currency,
+    p_expected_at,
+    p_discount_amount,
+    p_tax_amount,
+    p_shipping_amount,
+    p_exchange_rate,
+    p_notes,
+    p_items
+  );
+
+  return v_po_id;
+end;
+$;
+
+revoke all on function private.create_store_purchase_order_v2_internal(
+  uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
+) from public, anon, authenticated;
+grant execute on function private.create_store_purchase_order_v2_internal(
+  uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
+) to authenticated;
+
+create or replace function public.create_store_purchase_order_v2(
+  p_supplier_id uuid,
+  p_location_id uuid,
+  p_po_number text,
+  p_currency text,
+  p_expected_at timestamptz,
+  p_discount_amount numeric,
+  p_tax_amount numeric,
+  p_shipping_amount numeric,
+  p_exchange_rate numeric,
+  p_notes text,
+  p_items jsonb
+)
+returns uuid
+language sql
+security invoker
+set search_path = ''
+as $
+  select private.create_store_purchase_order_v2_internal(
+    p_supplier_id, p_location_id, p_po_number, p_currency, p_expected_at,
+    p_discount_amount, p_tax_amount, p_shipping_amount, p_exchange_rate,
+    p_notes, p_items
+  );
+$;
+
+revoke all on function public.create_store_purchase_order_v2(
+  uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
+) from public, anon;
+grant execute on function public.create_store_purchase_order_v2(
+  uuid,uuid,text,text,timestamptz,numeric,numeric,numeric,numeric,text,jsonb
+) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Approval / issue / reject / cancel lifecycle
 -- ---------------------------------------------------------------------------
