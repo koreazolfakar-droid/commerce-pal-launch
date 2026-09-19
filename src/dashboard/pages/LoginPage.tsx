@@ -276,6 +276,9 @@ function PasswordField({
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
+  const { lang, setLang } = useLanguage();
+  const copy = loginCopy[lang];
+  const isRtl = lang === "ar";
   const requestedMode =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("mode")
@@ -285,6 +288,12 @@ export default function LoginPage() {
   const storedEmail =
     typeof window !== "undefined" ? window.localStorage.getItem(EMAIL_STORAGE_KEY) ?? "" : "";
 
+  const [theme, setTheme] = useState<LoginTheme>(() => {
+    if (typeof window === "undefined") return "dark";
+    const storedTheme = window.localStorage.getItem(LOGIN_THEME_STORAGE_KEY);
+    if (storedTheme === "light" || storedTheme === "dark") return storedTheme;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
   const [view, setView] = useState<LoginView>(recoveryMode || mfaMode ? "mfa" : "signin");
   const [email, setEmail] = useState(storedEmail);
   const [password, setPassword] = useState("");
@@ -300,6 +309,10 @@ export default function LoginPage() {
   const [privacyShielded, setPrivacyShielded] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
+
+  useEffect(() => {
+    window.localStorage.setItem(LOGIN_THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   useEffect(() => {
     const shield = () => setPrivacyShielded(true);
@@ -351,7 +364,7 @@ export default function LoginPage() {
     return () => {
       cancelled = true;
     };
-  }, [navigate, recoveryMode]);
+  }, [copy.verified, navigate, recoveryMode]);
 
   const handleCaptchaToken = useCallback((token: string | null) => {
     setCaptchaToken(token);
@@ -362,24 +375,47 @@ export default function LoginPage() {
     setCaptchaResetNonce((value) => value + 1);
   }, []);
 
+  const localizeAuthError = useCallback(
+    (message: string) => {
+      if (lang === "en") return message;
+      const normalized = message.toLowerCase();
+      if (normalized.includes("valid dashboard email") || normalized.includes("valid email")) {
+        return copy.invalidEmail;
+      }
+      if (normalized.includes("security verification") || normalized.includes("captcha")) {
+        return copy.verificationRequired;
+      }
+      if (normalized.includes("too many")) return copy.tooMany;
+      if (normalized.includes("temporarily unavailable")) return copy.unavailable;
+      if (normalized.includes("unable to sign in") || normalized.includes("sign in failed")) {
+        return copy.signInFailed;
+      }
+      if (normalized.includes("password reset") || normalized.includes("recovery")) {
+        return copy.resetFailed;
+      }
+      return copy.genericError;
+    },
+    [copy, lang],
+  );
+
   const title = useMemo(() => {
-    if (view === "forgot") return "Reset your password";
-    if (view === "recovery") return "Create a new password";
-    if (view === "mfa") return "Secure verification";
-    return "Welcome back";
-  }, [view]);
+    if (view === "forgot") return copy.forgotTitle;
+    if (view === "recovery") return copy.recoveryTitle;
+    if (view === "mfa") return copy.mfaTitle;
+    return copy.welcome;
+  }, [copy, view]);
 
   const description = useMemo(() => {
-    if (view === "forgot") return "We’ll send a secure recovery link to your authorized dashboard email.";
-    if (view === "recovery") return "Choose a strong new password for your Space Call admin account.";
-    if (view === "mfa") return "Complete your authenticator verification before the admin workspace can open.";
-    return "Sign in to manage products, orders, inventory and storefront content.";
-  }, [view]);
+    if (view === "forgot") return copy.forgotDescription;
+    if (view === "recovery") return copy.recoveryDescription;
+    if (view === "mfa") return copy.mfaDescription;
+    return copy.signInDescription;
+  }, [copy, view]);
 
   const submit = async () => {
     setInlineError("");
     if (!email.trim() || !password) {
-      setInlineError("Enter your dashboard email and password.");
+      setInlineError(copy.required);
       return;
     }
 
@@ -391,10 +427,10 @@ export default function LoginPage() {
       else window.localStorage.removeItem(EMAIL_STORAGE_KEY);
 
       const mfaStatus = await getDashboardMfaStatus();
-      if (!mfaStatus) throw new Error("Dashboard MFA status could not be verified.");
+      if (!mfaStatus) throw new Error("Unable to verify this session.");
 
       if (mfaStatus.ready) {
-        toast.success("Signed in securely.");
+        toast.success(copy.signedIn);
         navigate("/dashboard");
       } else {
         setPassword("");
@@ -402,7 +438,8 @@ export default function LoginPage() {
         window.history.replaceState({}, "", "/dashboard/login?mode=mfa");
       }
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Unable to sign in.";
+      const rawMessage = cause instanceof Error ? cause.message : "Unable to sign in.";
+      const message = localizeAuthError(rawMessage);
       setPassword("");
       setShowPassword(false);
       setInlineError(message);
@@ -416,7 +453,7 @@ export default function LoginPage() {
   const sendReset = async () => {
     setInlineError("");
     if (!email.trim()) {
-      setInlineError("Enter your dashboard email first.");
+      setInlineError(copy.emailRequired);
       return;
     }
 
@@ -424,9 +461,10 @@ export default function LoginPage() {
     try {
       await requestDashboardPasswordReset(email, captchaToken ?? undefined);
       setResetSent(true);
-      toast.success("If this email is authorized, a recovery link will be sent.");
+      toast.success(copy.resetRequested);
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Password reset request failed.";
+      const rawMessage = cause instanceof Error ? cause.message : "Password reset request failed.";
+      const message = localizeAuthError(rawMessage);
       setInlineError(message);
       toast.error(message);
     } finally {
@@ -438,11 +476,11 @@ export default function LoginPage() {
   const saveNewPassword = async () => {
     setInlineError("");
     if (newPassword.length < 10) {
-      setInlineError("Use at least 10 characters for your new password.");
+      setInlineError(copy.passwordShort);
       return;
     }
     if (newPassword !== confirmPassword) {
-      setInlineError("The two passwords do not match.");
+      setInlineError(copy.mismatch);
       return;
     }
 
@@ -453,9 +491,10 @@ export default function LoginPage() {
       setNewPassword("");
       setConfirmPassword("");
       setView("signin");
-      toast.success("Password updated. Sign in with your new password.");
+      toast.success(copy.passwordUpdated);
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Password update failed.";
+      const rawMessage = cause instanceof Error ? cause.message : "Password update failed.";
+      const message = localizeAuthError(rawMessage);
       setInlineError(message);
       toast.error(message);
     } finally {
@@ -477,7 +516,7 @@ export default function LoginPage() {
   };
 
   const handleMfaSuccess = useCallback(() => {
-    toast.success("AAL2 security verified.");
+    toast.success(copy.verified);
 
     if (recoveryMode) {
       window.history.replaceState({}, "", "/dashboard/login?mode=recovery");
