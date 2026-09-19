@@ -379,7 +379,7 @@ export type DashboardPasskey = {
   lastUsedAt: string | null;
 };
 
-type DashboardPasskeyAction = "signin" | "register";
+type DashboardPasskeyAction = "signin" | "register" | "manage";
 
 function dashboardPasskeyErrorMessage(
   error: DashboardAuthFailure,
@@ -413,9 +413,9 @@ function dashboardPasskeyErrorMessage(
     return "Passkey service is temporarily unavailable. Try again shortly.";
   }
 
-  return action === "register"
-    ? "Passkey could not be registered. Try again."
-    : "Passkey sign-in could not be completed.";
+  if (action === "register") return "Passkey could not be registered. Try again.";
+  if (action === "manage") return "Passkey settings could not be updated.";
+  return "Passkey sign-in could not be completed.";
 }
 
 function dashboardPasskeyThrownErrorMessage(
@@ -431,9 +431,9 @@ function dashboardPasskeyThrownErrorMessage(
     }
   }
 
-  return action === "register"
-    ? "Passkey could not be registered. Try again."
-    : "Passkey sign-in could not be completed.";
+  if (action === "register") return "Passkey could not be registered. Try again.";
+  if (action === "manage") return "Passkey settings could not be updated.";
+  return "Passkey sign-in could not be completed.";
 }
 
 export function isDashboardPasskeySupported() {
@@ -533,7 +533,7 @@ function mapDashboardPasskey(passkey: {
 export async function listDashboardPasskeys(): Promise<DashboardPasskey[]> {
   await requireDashboardPasskeyManagementSession();
   const { data, error } = await supabase.auth.passkey.list();
-  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "register"));
+  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
   return (data ?? []).map(mapDashboardPasskey);
 }
 
@@ -551,14 +551,14 @@ export async function renameDashboardPasskey(
     passkeyId,
     friendlyName: normalizedName,
   });
-  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "register"));
+  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
   await logDashboardSecurityEvent("passkey_renamed", { passkeyId });
 }
 
 export async function deleteDashboardPasskey(passkeyId: string): Promise<void> {
   await requireDashboardPasskeyManagementSession();
   const { error } = await supabase.auth.passkey.delete({ passkeyId });
-  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "register"));
+  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
   await logDashboardSecurityEvent("passkey_deleted", { passkeyId });
 }
 
