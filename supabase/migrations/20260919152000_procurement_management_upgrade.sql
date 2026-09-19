@@ -268,6 +268,10 @@ declare
   v_imei1 text;
   v_imei2 text;
   v_condition text;
+  v_received_quantity integer;
+  v_damaged_quantity integer;
+  v_usable_count integer := 0;
+  v_damaged_count integer := 0;
   v_count integer := 0;
 begin
   if v_actor is null or not private.is_dashboard_staff() then
@@ -277,8 +281,8 @@ begin
     raise exception 'serial payload must be an array';
   end if;
 
-  select ri.receiving_id, r.status
-    into v_receiving_id, v_status
+  select ri.receiving_id, r.status, ri.received_quantity, ri.damaged_quantity
+    into v_receiving_id, v_status, v_received_quantity, v_damaged_quantity
   from public.store_receiving_items ri
   join public.store_receivings r on r.id = ri.receiving_id
   where ri.id = p_receiving_item_id
@@ -302,6 +306,18 @@ begin
     end if;
     if v_condition not in ('usable', 'damaged') then
       raise exception 'invalid serial condition';
+    end if;
+
+    if v_condition = 'usable' then
+      v_usable_count := v_usable_count + 1;
+      if v_usable_count > v_received_quantity then
+        raise exception 'usable serial count cannot exceed received quantity';
+      end if;
+    else
+      v_damaged_count := v_damaged_count + 1;
+      if v_damaged_count > v_damaged_quantity then
+        raise exception 'damaged serial count cannot exceed damaged quantity';
+      end if;
     end if;
 
     insert into public.store_receiving_serials (
