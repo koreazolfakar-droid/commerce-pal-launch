@@ -296,6 +296,20 @@ export default function HeroBannersPage() {
       return;
     }
 
+    const secondaryLabel = form.secondaryButtonLabelEn.trim() || form.secondaryButtonLabelAr.trim();
+    if (form.secondaryTargetType !== "none" && !form.secondaryTargetValue.trim()) {
+      toast.error("Choose a destination for the secondary button.");
+      return;
+    }
+    if (form.isPublished && secondaryLabel && form.secondaryTargetType === "none") {
+      toast.error("Choose a destination before publishing the secondary button.");
+      return;
+    }
+    if (form.isPublished && form.secondaryTargetType !== "none" && !secondaryLabel) {
+      toast.error("Add a secondary button label before publishing.");
+      return;
+    }
+
     setSaving(true);
     try {
       const saved = selectedId
