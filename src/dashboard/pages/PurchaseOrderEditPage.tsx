@@ -1,8 +1,9 @@
 import { ArrowLeft, Loader2, Plus, Save, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
+  deletePurchaseOrderDraft,
   loadReceivingWorkspace,
   updatePurchaseOrderDraft,
   type ProcurementProductOption,
@@ -17,7 +18,7 @@ type DraftLine = {
   unitCost: string;
 };
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
+function FieldLabel({ children }: { children: ReactNode }) {
   return <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">{children}</div>;
 }
 
@@ -291,7 +292,24 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
           </div>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-between gap-2">
+          <button
+            onClick={() => {
+              if (!window.confirm(`Delete draft ${po.poNumber}? This cannot be undone.`)) return;
+              setSaving(true);
+              void deletePurchaseOrderDraft(po.id)
+                .then(() => {
+                  toast.success("Purchase order draft deleted.");
+                  navigate("/dashboard/purchase-orders");
+                })
+                .catch((cause) => toast.error(cause instanceof Error ? cause.message : "Delete failed."))
+                .finally(() => setSaving(false));
+            }}
+            disabled={saving}
+            className="h-10 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold text-rose-700 disabled:opacity-50"
+          >
+            Delete draft
+          </button>
           <button onClick={() => void save()} disabled={saving} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50">
             {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
             Save draft changes
