@@ -137,6 +137,7 @@ export default function ReceivingPage({
   const [query, setQuery] = useState("");
   const [poStatusFilter, setPoStatusFilter] = useState("all");
   const [poSupplierFilter, setPoSupplierFilter] = useState("all");
+  const [poDeliveryFilter, setPoDeliveryFilter] = useState("all");
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
 
   const [supplierName, setSupplierName] = useState("");
@@ -200,9 +201,21 @@ export default function ReceivingPage({
         `${po.poNumber} ${po.supplierName} ${po.status}`.toLowerCase().includes(needle);
       const matchesStatus = poStatusFilter === "all" || po.status === poStatusFilter;
       const matchesSupplier = poSupplierFilter === "all" || po.supplierId === poSupplierFilter;
-      return matchesSearch && matchesStatus && matchesSupplier;
+      const now = new Date();
+      const expected = po.expectedAt ? new Date(po.expectedAt) : null;
+      const endOfToday = new Date(now);
+      endOfToday.setHours(23, 59, 59, 999);
+      const nextSevenDays = new Date(now);
+      nextSevenDays.setDate(nextSevenDays.getDate() + 7);
+      const matchesDelivery =
+        poDeliveryFilter === "all" ||
+        (poDeliveryFilter === "overdue" && expected != null && expected < now && !["received", "closed", "cancelled"].includes(po.status)) ||
+        (poDeliveryFilter === "today" && expected != null && expected >= new Date(now.getFullYear(), now.getMonth(), now.getDate()) && expected <= endOfToday) ||
+        (poDeliveryFilter === "next7" && expected != null && expected >= now && expected <= nextSevenDays) ||
+        (poDeliveryFilter === "unscheduled" && expected == null);
+      return matchesSearch && matchesStatus && matchesSupplier && matchesDelivery;
     });
-  }, [poStatusFilter, poSupplierFilter, purchaseOrders, query]);
+  }, [poDeliveryFilter, poStatusFilter, poSupplierFilter, purchaseOrders, query]);
 
   const filteredReceivings = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -1145,7 +1158,7 @@ export default function ReceivingPage({
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-[minmax(220px,1.4fr)_minmax(170px,.8fr)_minmax(190px,1fr)_auto]">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(220px,1.4fr)_minmax(150px,.8fr)_minmax(180px,1fr)_minmax(160px,.8fr)_auto]">
             <label className="relative">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -1188,14 +1201,28 @@ export default function ReceivingPage({
               ))}
             </select>
 
+            <select
+              value={poDeliveryFilter}
+              onChange={(event) => setPoDeliveryFilter(event.target.value)}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-indigo-400"
+              aria-label="Filter purchase orders by expected delivery"
+            >
+              <option value="all">All delivery dates</option>
+              <option value="overdue">Overdue</option>
+              <option value="today">Due today</option>
+              <option value="next7">Next 7 days</option>
+              <option value="unscheduled">No delivery date</option>
+            </select>
+
             <button
               type="button"
               onClick={() => {
                 setQuery("");
                 setPoStatusFilter("all");
                 setPoSupplierFilter("all");
+                setPoDeliveryFilter("all");
               }}
-              disabled={!query && poStatusFilter === "all" && poSupplierFilter === "all"}
+              disabled={!query && poStatusFilter === "all" && poSupplierFilter === "all" && poDeliveryFilter === "all"}
               className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-[11px] font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Clear filters
@@ -1260,6 +1287,9 @@ export default function ReceivingPage({
                       {po.poNumber}
                     </button>
                     <div className="mt-1 truncate text-[10px] font-semibold text-slate-600">{po.supplierName}</div>
+                    <div className="mt-1 text-[9px] text-slate-400">
+                      {po.locationName} · Expected {po.expectedAt ? new Date(po.expectedAt).toLocaleDateString() : "not scheduled"}
+                    </div>
                   </div>
                   <StatusBadge status={po.status} />
                 </div>
@@ -1320,12 +1350,13 @@ export default function ReceivingPage({
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[1120px] text-left">
+          <table className="w-full min-w-[1240px] text-left">
             <thead className="bg-[#fafbfe] text-[9px] uppercase tracking-[.1em] text-slate-400">
               <tr>
                 <th className="px-5 py-3">PO number</th>
                 <th className="px-3 py-3">Created date</th>
                 <th className="px-3 py-3">Supplier</th>
+                <th className="px-3 py-3">Expected delivery</th>
                 <th className="px-3 py-3">Issued date</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-3 py-3">Amount</th>
@@ -1351,7 +1382,17 @@ export default function ReceivingPage({
                   </td>
                   <td className="px-3 py-3">
                     <div className="text-[11px] font-semibold text-slate-700">{po.supplierName}</div>
-                    <div className="mt-0.5 text-[9px] text-slate-400">{po.currency}</div>
+                    <div className="mt-0.5 text-[9px] text-slate-400">{po.locationName} · {po.currency}</div>
+                  </td>
+                  <td className="px-3 py-3 text-[10px] text-slate-500">
+                    {po.expectedAt ? (
+                      <div>
+                        <div>{new Date(po.expectedAt).toLocaleString()}</div>
+                        {new Date(po.expectedAt).getTime() < Date.now() && !["received", "closed", "cancelled"].includes(po.status) ? (
+                          <div className="mt-1 text-[9px] font-bold text-rose-600">Overdue</div>
+                        ) : null}
+                      </div>
+                    ) : "—"}
                   </td>
                   <td className="px-3 py-3 text-[10px] text-slate-500">
                     {po.orderedAt ? new Date(po.orderedAt).toLocaleString() : "—"}
