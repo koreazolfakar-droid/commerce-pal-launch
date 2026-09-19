@@ -79,9 +79,9 @@ type NativeProduct = {
 
 type NativeSnapshot = {
   products: NativeProduct[];
-  collections: StorefrontStorefrontCollectionRow[];
+  collections: StorefrontCollectionRow[];
   links: StorefrontCollectionLinkRow[];
-  brands: StorefrontStorefrontBrandRow[];
+  brands: StorefrontBrandRow[];
 };
 
 const CACHE_TTL_MS = 30_000;
@@ -124,7 +124,7 @@ function buildProduct(
   row: StorefrontProductRow,
   variants: StorefrontVariantRow[],
   images: StorefrontImageRow[],
-  collections: StorefrontStorefrontCollectionRow[],
+  collections: StorefrontCollectionRow[],
   brand?: StorefrontBrandRow,
 ): ShopifyProduct {
   const sortedVariants = [...variants].sort((a, b) => a.sort_order - b.sort_order);
