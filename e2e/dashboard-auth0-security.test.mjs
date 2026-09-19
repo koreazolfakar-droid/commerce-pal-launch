@@ -14,6 +14,10 @@ const app = await readFile(
   new URL("../src/dashboard/App.tsx", import.meta.url),
   "utf8",
 );
+const login = await readFile(
+  new URL("../src/dashboard/pages/LoginPage.tsx", import.meta.url),
+  "utf8",
+);
 const pkg = JSON.parse(
   await readFile(new URL("../package.json", import.meta.url), "utf8"),
 );
@@ -31,11 +35,12 @@ test("Auth0 uses public Vite configuration and in-memory token cache", () => {
   assert.doesNotMatch(security, /clientSecret|CLIENT_SECRET|localStorage/);
 });
 
-test("dashboard keeps Supabase staff authorization as the second layer", () => {
-  assert.match(app, /getDashboardRole\(\)/);
-  assert.match(app, /signInDashboard/);
+test("dashboard keeps Supabase staff and MFA authorization behind Auth0", () => {
+  assert.match(app, /getDashboardMfaStatus\(\)/);
+  assert.match(login, /signInDashboard\(email, password\)/);
   assert.match(app, /signOutDashboard/);
   assert.match(app, /logoutAuth0/);
+  assert.match(app, /status\?\.ready/);
 });
 
 test("official Auth0 React SDK is installed", () => {
