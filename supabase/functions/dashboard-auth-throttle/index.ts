@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
       return json({
         allowed: false,
         retryAfter: Math.max(1, Math.ceil((blockedUntil - now) / 1000)),
-      }, 429);
+      });
     }
 
     if (row && windowExpired) {
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
     return json({
       allowed: false,
       retryAfter: Math.ceil(blockMs / 1000),
-    }, 429);
+    });
   }
 
   return json({
