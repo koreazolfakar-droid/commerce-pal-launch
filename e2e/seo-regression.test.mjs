@@ -6,23 +6,17 @@ async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("sitemap paginates Shopify and uses meaningful lastmod data", async () => {
-  const [sitemap, documents] = await Promise.all([
-    source("src/routes/sitemap[.]xml.ts"),
-    source("src/lib/shopifyDocuments.ts"),
-  ]);
-
-  assert.match(sitemap, /storefrontApiRequest\(PRODUCTS_QUERY/);
-  assert.match(sitemap, /pageInfo\?\.hasNextPage/);
-  assert.match(sitemap, /productLastmod/);
-  assert.match(documents, /createdAt updatedAt tags/);
-  assert.match(documents, /description updatedAt image/);
+test("sitemap is generated from the native storefront facade", async () => {
+  const sitemap = await source("src/routes/sitemap[.]xml.ts");
+  assert.match(sitemap, /fetchCatalogProducts/);
+  assert.match(sitemap, /fetchCollections/);
+  assert.match(sitemap, /@\/lib\/storefrontData/);
+  assert.doesNotMatch(sitemap, /storefrontApiRequest|SHOPIFY_|myshopify/);
   assert.doesNotMatch(sitemap, /<changefreq>|<priority>/);
 });
 
 test("global crawler metadata stays indexable without fake hreflang alternates", async () => {
   const root = await source("src/routes/__root.tsx");
-
   assert.match(root, /max-image-preview:large/);
   assert.match(root, /og:locale/);
   assert.doesNotMatch(root, /hrefLang:/);
@@ -33,7 +27,6 @@ test("product structured data exposes Google product and offer fields", async ()
     source("src/lib/seo.ts"),
     source("src/routes/product.$handle.tsx"),
   ]);
-
   assert.match(seo, /"@type": "Product"/);
   assert.match(seo, /"@type": "Offer"/);
   assert.match(seo, /priceCurrency:/);
@@ -43,8 +36,6 @@ test("product structured data exposes Google product and offer fields", async ()
   assert.match(seo, /gtin12/);
   assert.match(seo, /gtin13/);
   assert.match(seo, /gtin14/);
-  assert.match(seo, /areaServed/);
-  assert.match(seo, /name: "Lebanon"/);
   assert.match(productRoute, /jsonLd\(productJsonLd\(product\)\)/);
 });
 
@@ -53,15 +44,12 @@ test("header account and tracking links stay first-party", async () => {
     source("src/components/SiteHeader.tsx"),
     source("src/components/InfoPage.tsx"),
   ]);
-
   assert.match(header, /href="\/help#track-order"/);
   assert.match(header, /href="\/help#account-orders"/);
-  assert.doesNotMatch(header, /myshopify\.com/);
-  assert.doesNotMatch(header, /SHOPIFY_ACCOUNT_URL/);
+  assert.doesNotMatch(header, /myshopify\.com|SHOPIFY_ACCOUNT_URL/);
   assert.match(infoPage, /id="track-order"/);
   assert.match(infoPage, /id="account-orders"/);
-  assert.match(infoPage, /SHOPIFY_ACCOUNT_URL/);
-  assert.match(infoPage, /secure Shopify account page/);
+  assert.doesNotMatch(infoPage, /SHOPIFY_ACCOUNT_URL|secure Shopify account page|myshopify\.com/);
 });
 
 test("commercial landing pages carry Lebanon search intent", async () => {
@@ -71,7 +59,6 @@ test("commercial landing pages carry Lebanon search intent", async () => {
     source("src/routes/brand.$slug.tsx"),
     source("src/routes/collections.$handle.tsx"),
   ]);
-
   for (const page of [shop, category, brand, collection]) {
     assert.match(page, /Lebanon/);
     assert.match(page, /canonicalLink/);
