@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   beginDashboardTotpEnrollment,
+  ensureDashboardMfaActivated,
   getDashboardMfaStatus,
   signOutDashboard,
   verifyDashboardTotp,
@@ -49,6 +50,12 @@ export default function DashboardMfaStep({
       if (!status) throw new Error("Your dashboard session has expired.");
 
       if (status.ready) {
+        onSuccess();
+        return;
+      }
+
+      if (status.currentLevel === "aal2" && status.verifiedFactorId) {
+        await ensureDashboardMfaActivated();
         onSuccess();
         return;
       }
