@@ -45,6 +45,7 @@ export const INVENTORY_REFERENCE_TYPES = [
   "variant_manager",
   "order",
   "order_cancel",
+  "receiving",
 ] as const;
 
 export type InventoryReferenceType = (typeof INVENTORY_REFERENCE_TYPES)[number];
