@@ -7,9 +7,7 @@ function headers(_req: Request) {
     "Access-Control-Allow-Headers": "content-type, apikey, authorization",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store, max-age=0",
-    Pragma: "no-cache",
-    Expires: "0",
+    "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
     "X-Content-Type-Options": "nosniff",
   };
 }
