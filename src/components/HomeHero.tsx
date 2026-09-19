@@ -303,17 +303,17 @@ export function HomeHero({
             />
             <div
               data-testid="home-hero-content"
-              className={`absolute inset-0 z-[3] flex flex-col justify-end p-5 text-white sm:p-8 lg:p-10 ${cmsAlignment}`}
+              className={`absolute inset-0 z-[3] flex flex-col justify-end p-4 text-white sm:p-8 lg:p-10 ${cmsAlignment}`}
               dir={language === "ar" ? "rtl" : "ltr"}
             >
-              <div className="max-w-2xl">
+              <div className="max-w-[90%] sm:max-w-2xl">
                 {cmsSlide.title ? (
-                  <h2 className="text-2xl font-black tracking-tight drop-shadow sm:text-4xl lg:text-5xl">
+                  <h2 className="text-xl font-black leading-[1.08] tracking-tight drop-shadow sm:text-4xl sm:leading-tight lg:text-5xl">
                     {cmsSlide.title}
                   </h2>
                 ) : null}
                 {cmsSlide.subtitle ? (
-                  <p className="mt-2 max-w-xl text-sm font-medium text-white/90 drop-shadow sm:text-base lg:text-lg">
+                  <p className="mt-1.5 max-w-[20rem] text-xs font-medium leading-relaxed text-white/90 drop-shadow sm:mt-2 sm:max-w-xl sm:text-base lg:text-lg">
                     {cmsSlide.subtitle}
                   </p>
                 ) : null}
@@ -322,7 +322,7 @@ export function HomeHero({
                     href={cmsHref}
                     target={cmsSlide.open_in_new_tab ? "_blank" : undefined}
                     rel={cmsSlide.open_in_new_tab ? "noopener noreferrer" : undefined}
-                    className={`press mt-4 inline-flex min-h-11 items-center justify-center rounded-xl px-5 py-2.5 text-xs font-bold shadow-lg transition ${cmsButtonClass(cmsSlide.button_style)}`}
+                    className={`press mt-3 inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-[11px] font-bold shadow-lg transition sm:mt-4 sm:min-h-11 sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-xs ${cmsButtonClass(cmsSlide.button_style)}`}
                   >
                     {cmsSlide.button_label}
                   </a>

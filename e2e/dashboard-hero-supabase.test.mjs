@@ -85,6 +85,11 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", (
   assert.ok(hero.includes("md:h-[24rem]"));
   assert.ok(hero.includes("lg:h-[28rem]"));
   assert.ok(hero.includes("xl:h-[30rem]"));
+  assert.ok(hero.includes("p-4 text-white sm:p-8 lg:p-10"));
+  assert.ok(hero.includes("max-w-[90%] sm:max-w-2xl"));
+  assert.ok(hero.includes("text-xl font-black leading-[1.08]"));
+  assert.ok(hero.includes("mt-1.5 max-w-[20rem] text-xs"));
+  assert.ok(hero.includes("mt-3 inline-flex min-h-10"));
 });
 
 test("hero changes are auditable", () => {
