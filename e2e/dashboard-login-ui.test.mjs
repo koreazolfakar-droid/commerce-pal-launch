@@ -46,6 +46,9 @@ test("password recovery flow is real and uses Supabase Auth", () => {
   assert.doesNotMatch(catalog, /auth\.updateUser\(\{ password \}\)/);
   assert.match(catalog, /\/dashboard\/login\?mode=recovery/);
   assert.match(catalog, /password\.length < 10/);
+  assert.match(catalog, /Enter a valid dashboard email address/);
+  assert.match(login, /If this email is authorized, a recovery link will be sent/);
+  assert.match(login, /belongs to an authorized dashboard account/);
 });
 
 test("login provides accessible inline errors and loading states", () => {
