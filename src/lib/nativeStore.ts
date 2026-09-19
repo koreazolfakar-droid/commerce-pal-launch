@@ -215,6 +215,78 @@ function buildProduct(
   };
 }
 
+
+async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<ShopifyProduct[]> {
+  if (!productRows.length) return [];
+
+  const productIds = productRows.map((row) => row.id);
+  const [variantResult, imageResult, linkResult] = await Promise.all([
+    publicSupabase
+      .from("store_product_variants")
+      .select(STOREFRONT_VARIANT_SELECT)
+      .in("product_id", productIds)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_product_images")
+      .select(STOREFRONT_IMAGE_SELECT)
+      .in("product_id", productIds)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_collection_products")
+      .select(STOREFRONT_COLLECTION_LINK_SELECT)
+      .in("product_id", productIds)
+      .order("sort_order", { ascending: true }),
+  ]);
+
+  const variants = assertResult(variantResult, "bounded product variants");
+  const images = assertResult(imageResult, "bounded product images");
+  const links = assertResult(linkResult, "bounded product collection links");
+  const variantsByProduct = groupByProduct(variants);
+  const imagesByProduct = groupByProduct(images);
+  const linksByProduct = groupByProduct(links);
+
+  const collectionIds = [...new Set(links.map((link) => link.collection_id))];
+  let collections: StorefrontCollectionRow[] = [];
+  if (collectionIds.length) {
+    const collectionResult = await publicSupabase
+      .from("store_collections")
+      .select(STOREFRONT_COLLECTION_SELECT)
+      .in("id", collectionIds)
+      .eq("is_active", true);
+    collections = assertResult(collectionResult, "bounded product collections");
+  }
+
+  const brandIds = [
+    ...new Set(productRows.map((row) => row.brand_id).filter((id): id is string => Boolean(id))),
+  ];
+  let brands: StorefrontBrandRow[] = [];
+  if (brandIds.length) {
+    const brandResult = await publicSupabase
+      .from("cms_brands")
+      .select(STOREFRONT_BRAND_SELECT)
+      .in("id", brandIds)
+      .eq("is_visible", true);
+    brands = assertResult(brandResult, "bounded product brands");
+  }
+
+  const collectionsById = new Map(collections.map((row) => [row.id, row]));
+  const brandsById = new Map(brands.map((row) => [row.id, row]));
+
+  return productRows.map((row) => {
+    const productCollections = (linksByProduct.get(row.id) ?? [])
+      .map((link) => collectionsById.get(link.collection_id))
+      .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
+    return buildProduct(
+      row,
+      variantsByProduct.get(row.id) ?? [],
+      imagesByProduct.get(row.id) ?? [],
+      productCollections,
+      row.brand_id ? brandsById.get(row.brand_id) : undefined,
+    );
+  });
+}
+
 async function loadSnapshot(): Promise<NativeSnapshot> {
   const now = Date.now();
   if (cachedSnapshot && cachedSnapshot.expiresAt > now) return cachedSnapshot.value;
@@ -305,6 +377,19 @@ function publicProducts(snapshot: NativeSnapshot) {
 export async function fetchCatalogProducts(first = 500): Promise<ShopifyProduct[]> {
   const products = publicProducts(await loadSnapshot());
   return products.slice(0, Math.max(0, first));
+}
+
+export async function fetchHomepageProducts(first = 48): Promise<ShopifyProduct[]> {
+  if (first <= 0) return [];
+  const productResult = await publicSupabase
+    .from("store_products")
+    .select(STOREFRONT_PRODUCT_SELECT)
+    .eq("status", "active")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(first);
+  const rows = assertResult(productResult, "homepage products");
+  return hydrateProductRows(rows);
 }
 
 export async function fetchBrandVendors(): Promise<string[]> {
@@ -634,24 +719,28 @@ export async function fetchCollectionByHandle(
 }
 
 export async function fetchNewestProducts(first = 12) {
-  const snapshot = await loadSnapshot();
-  return [...snapshot.products]
-    .sort(
-      (a, b) =>
-        new Date(b.row.created_at).getTime() - new Date(a.row.created_at).getTime() ||
-        a.row.sort_order - b.row.sort_order,
-    )
-    .slice(0, first)
-    .map((entry) => entry.product);
+  if (first <= 0) return [];
+  const productResult = await publicSupabase
+    .from("store_products")
+    .select(STOREFRONT_PRODUCT_SELECT)
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .order("sort_order", { ascending: true })
+    .limit(first);
+  return hydrateProductRows(assertResult(productResult, "newest products"));
 }
 
 export async function fetchBestSellingProducts(first = 12) {
-  const snapshot = await loadSnapshot();
-  return snapshot.products
-    .filter((entry) => entry.row.best_seller)
-    .sort((a, b) => a.row.sort_order - b.row.sort_order)
-    .slice(0, first)
-    .map((entry) => entry.product);
+  if (first <= 0) return [];
+  const productResult = await publicSupabase
+    .from("store_products")
+    .select(STOREFRONT_PRODUCT_SELECT)
+    .eq("status", "active")
+    .eq("best_seller", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(first);
+  return hydrateProductRows(assertResult(productResult, "best-selling products"));
 }
 
 export async function fetchProductsByVendor(vendor: string, first = 8) {
@@ -668,20 +757,21 @@ export async function fetchAllProductsByVendor(vendor: string) {
 }
 
 export async function fetchProductsByHandles(handles: string[]) {
-  const order = new Map(
-    [...new Set(handles.map((handle) => handle.trim()).filter(Boolean))].map((handle, index) => [
-      handle.toLowerCase(),
-      index,
-    ]),
-  );
+  const normalizedHandles = [...new Set(handles.map((handle) => handle.trim()).filter(Boolean))];
+  const order = new Map(normalizedHandles.map((handle, index) => [handle.toLowerCase(), index]));
   if (!order.size) return [];
-  return publicProducts(await loadSnapshot())
-    .filter((product) => order.has(product.node.handle.toLowerCase()))
-    .sort(
-      (a, b) =>
-        (order.get(a.node.handle.toLowerCase()) ?? 0) -
-        (order.get(b.node.handle.toLowerCase()) ?? 0),
-    );
+
+  const productResult = await publicSupabase
+    .from("store_products")
+    .select(STOREFRONT_PRODUCT_SELECT)
+    .in("handle", normalizedHandles)
+    .eq("status", "active");
+  const products = await hydrateProductRows(assertResult(productResult, "products by handles"));
+  return products.sort(
+    (a, b) =>
+      (order.get(a.node.handle.toLowerCase()) ?? Number.MAX_SAFE_INTEGER) -
+      (order.get(b.node.handle.toLowerCase()) ?? Number.MAX_SAFE_INTEGER),
+  );
 }
 
 export async function fetchProductRecommendations(handle: string, first = 8) {
