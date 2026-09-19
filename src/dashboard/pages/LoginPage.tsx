@@ -557,7 +557,7 @@ export default function LoginPage() {
                   />
 
                   <div className="rounded-xl border border-white/[.08] bg-white/[.035] px-3.5 py-3 text-[10px] leading-5 text-slate-400">
-                    Use at least 10 characters. A password manager-generated password is recommended.
+                    Use at least 10 characters. Before saving, the password is checked against known breach data using HIBP k-anonymity; your password is never sent to HIBP.
                   </div>
 
                   {inlineError ? (
