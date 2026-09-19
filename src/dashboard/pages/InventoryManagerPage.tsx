@@ -10,11 +10,12 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import InventoryMovementHistoryDrawer from "@/dashboard/components/inventory/InventoryMovementHistoryDrawer";
 import {
   adjustInventoryDelta,
+  loadInventoryLatestMovements,
   loadInventoryWorkspace,
   setInventoryStock,
   type InventoryRow,
@@ -41,8 +42,8 @@ function Badge({ status }: { status: InventoryStatus }) {
   return <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${styles}`}>{status}</span>;
 }
 
-function movementLabel(row: InventoryRow) {
-  if (!row.lastMovementAt || row.lastMovementDelta == null) return "—";
+function movementLabel(row: InventoryRow, loading: boolean) {
+  if (!row.lastMovementAt || row.lastMovementDelta == null) return loading ? "Loading…" : "—";
   const prefix = row.lastMovementDelta > 0 ? "+" : "";
   return `${prefix}${row.lastMovementDelta} · ${new Date(row.lastMovementAt).toLocaleString()}`;
 }
@@ -55,27 +56,68 @@ export default function InventoryManagerPage() {
   const [onlyLow, setOnlyLow] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [movementLoading, setMovementLoading] = useState(false);
+  const movementRequestRef = useRef(0);
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draftStocks, setDraftStocks] = useState<Record<string, string>>({});
   const [historyRow, setHistoryRow] = useState<InventoryRow | null>(null);
 
   const load = useCallback(async (manual = false) => {
+    const requestId = ++movementRequestRef.current;
     if (manual) setRefreshing(true);
     else setLoading(true);
+
     try {
       const next = await loadInventoryWorkspace();
+      if (requestId !== movementRequestRef.current) return;
+
       setRows(next);
       setDraftStocks({});
       setError("");
+      setMovementLoading(true);
+
+      void loadInventoryLatestMovements()
+        .then((movements) => {
+          if (requestId !== movementRequestRef.current) return;
+          const latestByVariant = new Map(
+            movements.map((movement) => [movement.variantId, movement]),
+          );
+          setRows((current) =>
+            current.map((row) => {
+              const movement = latestByVariant.get(row.variantId);
+              return movement
+                ? {
+                    ...row,
+                    lastMovementAt: movement.createdAt,
+                    lastMovementDelta: movement.quantityDelta,
+                  }
+                : row;
+            }),
+          );
+        })
+        .catch((cause) => {
+          console.warn(
+            "[dashboard-inventory] latest movement hydration failed",
+            cause instanceof Error ? cause.message : cause,
+          );
+        })
+        .finally(() => {
+          if (requestId === movementRequestRef.current) setMovementLoading(false);
+        });
+
       if (manual) toast.success("Inventory refreshed from Supabase.");
     } catch (cause) {
+      if (requestId !== movementRequestRef.current) return;
       const message = cause instanceof Error ? cause.message : "Unable to load inventory.";
       setError(message);
+      setMovementLoading(false);
       if (manual) toast.error(message);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (requestId === movementRequestRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, []);
 
@@ -435,7 +477,7 @@ export default function InventoryManagerPage() {
                 >
                   <History className="size-3.5 shrink-0 text-indigo-500" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate">Last movement: {movementLabel(row)}</span>
+                    <span className="block truncate">Last movement: {movementLabel(row, movementLoading)}</span>
                     <span className="mt-0.5 block font-bold text-indigo-600">View history</span>
                   </span>
                 </button>
@@ -553,7 +595,7 @@ export default function InventoryManagerPage() {
                       >
                         <History className="mt-0.5 size-3 shrink-0" />
                         <span>
-                          <span className="block">{movementLabel(row)}</span>
+                          <span className="block">{movementLabel(row, movementLoading)}</span>
                           <span className="font-bold text-indigo-600">View history</span>
                         </span>
                       </button>
