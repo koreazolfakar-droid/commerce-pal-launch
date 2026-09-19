@@ -32,8 +32,8 @@ test("dedicated hero dashboard route uses the real CMS page", () => {
 
 test("hero dashboard supports real Supabase CRUD, storage upload and media library", () => {
   assert.match(data, /from\("cms_hero_slides"\)/);
-  assert.match(data, /rpc\("create_cms_hero_slide"/);
-  assert.match(data, /rpc\("update_cms_hero_slide"/);
+  assert.match(data, /rpc\("create_cms_hero_slide_v2"/);
+  assert.match(data, /rpc\("update_cms_hero_slide_v2"/);
   assert.match(data, /rpc\("delete_cms_hero_slide"/);
   assert.match(data, /rpc\("reorder_cms_hero_slides"/);
   assert.match(data, /storage\.from\(HERO_BUCKET\)\.upload/);
@@ -45,6 +45,11 @@ test("hero dashboard supports real Supabase CRUD, storage upload and media libra
   assert.match(page, /Starts at/);
   assert.match(page, /Ends at/);
   assert.match(page, /Design & live preview/);
+  assert.match(page, /Eyebrow text/);
+  assert.match(page, /Secondary CTA \(optional\)/);
+  assert.match(page, /Content theme/);
+  assert.match(data, /secondaryButtonStyle/);
+  assert.match(data, /contentTheme/);
 });
 
 test("hero CTA uses validated product, collection or safe URL targets", () => {
@@ -85,11 +90,11 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", (
   assert.ok(hero.includes("md:h-[24rem]"));
   assert.ok(hero.includes("lg:h-[28rem]"));
   assert.ok(hero.includes("xl:h-[30rem]"));
-  assert.ok(hero.includes("p-4 text-white sm:p-8 lg:p-10"));
+  assert.ok(hero.includes("p-4 sm:p-8 lg:p-10"));
   assert.ok(hero.includes("max-w-[90%] sm:max-w-2xl"));
   assert.ok(hero.includes("text-xl font-black leading-[1.08]"));
   assert.ok(hero.includes("mt-1.5 max-w-[20rem] text-xs"));
-  assert.ok(hero.includes("mt-3 inline-flex min-h-10"));
+  assert.ok(hero.includes("mt-3 flex flex-wrap gap-2"));
 });
 
 test("hero changes are auditable", () => {
