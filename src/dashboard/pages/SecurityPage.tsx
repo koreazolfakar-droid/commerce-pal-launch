@@ -175,7 +175,7 @@ export default function SecurityPage() {
     try {
       const passkey = await registerDashboardPasskey();
       toast.success(`Passkey added${passkey.friendlyName ? `: ${passkey.friendlyName}` : "."}`);
-      await Promise.all([loadPasskeys(), load()]);
+      await load();
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Could not add passkey.");
     } finally {
@@ -195,7 +195,7 @@ export default function SecurityPage() {
       toast.success("Passkey renamed.");
       setEditingPasskeyId(null);
       setPasskeyName("");
-      await Promise.all([loadPasskeys(), load()]);
+      await load();
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Could not rename passkey.");
     } finally {
@@ -209,7 +209,7 @@ export default function SecurityPage() {
     try {
       await deleteDashboardPasskey(passkey.id);
       toast.success("Passkey removed.");
-      await Promise.all([loadPasskeys(), load()]);
+      await load();
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Could not remove passkey.");
     } finally {
