@@ -431,7 +431,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                   setProfileOpen(false);
                   navigate("/dashboard/settings");
                 }}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground"
                 role="menuitem"
               >
                 <Settings2 className="size-3.5" /> {t("Settings")}
