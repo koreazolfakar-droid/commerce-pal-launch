@@ -42,7 +42,8 @@ test("password recovery flow is real and uses Supabase Auth", () => {
   assert.match(login, /updateDashboardPassword\(newPassword\)/);
   assert.match(login, /mode=recovery/);
   assert.match(catalog, /resetPasswordForEmail/);
-  assert.match(catalog, /updateUser\(\{ password \}\)/);
+  assert.match(catalog, /functions\.invoke\("dashboard-update-password"/);
+  assert.doesNotMatch(catalog, /auth\.updateUser\(\{ password \}\)/);
   assert.match(catalog, /\/dashboard\/login\?mode=recovery/);
   assert.match(catalog, /password\.length < 10/);
 });
