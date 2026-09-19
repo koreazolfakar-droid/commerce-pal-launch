@@ -217,7 +217,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 opacity-[.035] [background-image:linear-gradient(rgba(255,255,255,.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:48px_48px]" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1180px] items-center px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1180px] items-start px-4 py-6 sm:items-center sm:px-6 sm:py-8 lg:px-8">
         <div className="grid w-full overflow-hidden rounded-[30px] border border-white/10 bg-[#111c32]/88 shadow-[0_40px_120px_rgba(0,0,0,.38)] backdrop-blur-2xl lg:grid-cols-[1.05fr_.95fr]">
           <section className="relative hidden min-h-[640px] overflow-hidden border-r border-white/10 p-10 lg:flex lg:flex-col lg:justify-between xl:p-12">
             <div className="absolute inset-0 bg-gradient-to-br from-[#17264b] via-[#121e37] to-[#10182d]" />
