@@ -40,17 +40,42 @@ test("storefront commerce reads resolve only through the native Supabase gateway
   assert.match(collectionRoute, /@\/lib\/storefrontData/);
 });
 
-test("homepage brand shelves use bounded native catalog reads", async () => {
-  const [queries, shelves] = await Promise.all([
+test("homepage uses bounded product reads and keeps brand shelves lazy", async () => {
+  const [queries, index, shelves, nativeStore, homeSections] = await Promise.all([
     read("src/lib/queries.ts"),
+    read("src/routes/index.tsx"),
     read("src/components/BrandShowcaseSections.tsx"),
+    read("src/lib/nativeStore.ts"),
+    read("src/components/HomeSections.tsx"),
   ]);
-  assert.match(queries, /fetchCatalogProducts\(500\)/);
+
+  assert.match(queries, /fetchHomepageProducts\(48\)/);
+  assert.match(queries, /homepageCatalogQueryOptions/);
+  assert.match(index, /homepageCatalogQueryOptions/);
+  assert.doesNotMatch(index, /catalogQueryOptions/);
   assert.match(queries, /homeVendorProductsQueryOptions/);
   assert.match(queries, /fetchProductsByVendor\(normalizedVendor, 4\)/);
   assert.match(shelves, /homeVendorProductsQueryOptions/);
   assert.match(shelves, /HOME_BRAND_PRODUCT_TARGET = 4/);
   assert.match(shelves, /IntersectionObserver/);
+
+  const homepageStart = nativeStore.indexOf("export async function fetchHomepageProducts");
+  const homepageEnd = nativeStore.indexOf("export async function fetchBrandVendors", homepageStart);
+  assert.ok(homepageStart >= 0 && homepageEnd > homepageStart);
+  assert.doesNotMatch(nativeStore.slice(homepageStart, homepageEnd), /loadSnapshot/);
+
+  const newestStart = nativeStore.indexOf("export async function fetchNewestProducts");
+  const newestEnd = nativeStore.indexOf("export async function fetchBestSellingProducts", newestStart);
+  assert.ok(newestStart >= 0 && newestEnd > newestStart);
+  assert.doesNotMatch(nativeStore.slice(newestStart, newestEnd), /loadSnapshot/);
+
+  const bestStart = newestEnd;
+  const bestEnd = nativeStore.indexOf("export async function fetchProductsByVendor", bestStart);
+  assert.ok(bestStart >= 0 && bestEnd > bestStart);
+  assert.doesNotMatch(nativeStore.slice(bestStart, bestEnd), /loadSnapshot/);
+
+  assert.match(homeSections, /productsByHandlesQueryOptions/);
+  assert.match(homeSections, /handles\.slice\(0, 6\)/);
 });
 
 test("global navigation uses lightweight facets instead of the full catalog snapshot", async () => {
