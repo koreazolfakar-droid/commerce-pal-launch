@@ -48,6 +48,22 @@ function cmsHeroHref(slide: CmsHeroSlide) {
   return undefined;
 }
 
+function cmsSecondaryHeroHref(slide: CmsHeroSlide) {
+  if (!slide.secondary_target_value) return undefined;
+  if (slide.secondary_target_type === "product") return `/product/${slide.secondary_target_value}`;
+  if (slide.secondary_target_type === "collection") return `/collections/${slide.secondary_target_value}`;
+  if (slide.secondary_target_type === "url") return slide.secondary_target_value;
+  return undefined;
+}
+
+function cmsContentThemeClass(theme: CmsHeroSlide["content_theme"]) {
+  if (theme === "dark") return "text-slate-950";
+  if (theme === "glass") {
+    return "rounded-2xl bg-slate-950/35 p-4 text-white backdrop-blur-md sm:p-6";
+  }
+  return "text-white";
+}
+
 function cmsButtonClass(style: CmsHeroSlide["button_style"]) {
   if (style === "light") return "bg-white text-slate-950 hover:bg-white/90";
   if (style === "dark") return "bg-slate-950 text-white hover:bg-slate-900";
@@ -217,6 +233,7 @@ export function HomeHero({
     ) : null;
 
   const cmsHref = cmsSlide ? cmsHeroHref(cmsSlide) : undefined;
+  const cmsSecondaryHref = cmsSlide ? cmsSecondaryHeroHref(cmsSlide) : undefined;
   const cmsAlignment =
     cmsSlide?.content_alignment === "center"
       ? "items-center text-center"
@@ -303,29 +320,48 @@ export function HomeHero({
             />
             <div
               data-testid="home-hero-content"
-              className={`absolute inset-0 z-[3] flex flex-col justify-end p-4 text-white sm:p-8 lg:p-10 ${cmsAlignment}`}
+              className={`absolute inset-0 z-[3] flex flex-col justify-end p-4 sm:p-8 lg:p-10 ${cmsAlignment}`}
               dir={language === "ar" ? "rtl" : "ltr"}
             >
-              <div className="max-w-[90%] sm:max-w-2xl">
+              <div className={`max-w-[90%] sm:max-w-2xl ${cmsContentThemeClass(cmsSlide.content_theme)}`}>
+                {cmsSlide.eyebrow ? (
+                  <div className="mb-1.5 text-[10px] font-black uppercase tracking-[.18em] opacity-80 sm:mb-2 sm:text-xs">
+                    {cmsSlide.eyebrow}
+                  </div>
+                ) : null}
                 {cmsSlide.title ? (
                   <h2 className="text-xl font-black leading-[1.08] tracking-tight drop-shadow sm:text-4xl sm:leading-tight lg:text-5xl">
                     {cmsSlide.title}
                   </h2>
                 ) : null}
                 {cmsSlide.subtitle ? (
-                  <p className="mt-1.5 max-w-[20rem] text-xs font-medium leading-relaxed text-white/90 drop-shadow sm:mt-2 sm:max-w-xl sm:text-base lg:text-lg">
+                  <p className="mt-1.5 max-w-[20rem] text-xs font-medium leading-relaxed opacity-90 drop-shadow sm:mt-2 sm:max-w-xl sm:text-base lg:text-lg">
                     {cmsSlide.subtitle}
                   </p>
                 ) : null}
-                {cmsHref && cmsSlide.button_label ? (
-                  <a
-                    href={cmsHref}
-                    target={cmsSlide.open_in_new_tab ? "_blank" : undefined}
-                    rel={cmsSlide.open_in_new_tab ? "noopener noreferrer" : undefined}
-                    className={`press mt-3 inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-[11px] font-bold shadow-lg transition sm:mt-4 sm:min-h-11 sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-xs ${cmsButtonClass(cmsSlide.button_style)}`}
-                  >
-                    {cmsSlide.button_label}
-                  </a>
+                {(cmsHref && cmsSlide.button_label) || (cmsSecondaryHref && cmsSlide.secondary_button_label) ? (
+                  <div className="mt-3 flex flex-wrap gap-2 sm:mt-4">
+                    {cmsHref && cmsSlide.button_label ? (
+                      <a
+                        href={cmsHref}
+                        target={cmsSlide.open_in_new_tab ? "_blank" : undefined}
+                        rel={cmsSlide.open_in_new_tab ? "noopener noreferrer" : undefined}
+                        className={`press inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-[11px] font-bold shadow-lg transition sm:min-h-11 sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-xs ${cmsButtonClass(cmsSlide.button_style)}`}
+                      >
+                        {cmsSlide.button_label}
+                      </a>
+                    ) : null}
+                    {cmsSecondaryHref && cmsSlide.secondary_button_label ? (
+                      <a
+                        href={cmsSecondaryHref}
+                        target={cmsSlide.secondary_open_in_new_tab ? "_blank" : undefined}
+                        rel={cmsSlide.secondary_open_in_new_tab ? "noopener noreferrer" : undefined}
+                        className={`press inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-[11px] font-bold shadow-lg transition sm:min-h-11 sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-xs ${cmsButtonClass(cmsSlide.secondary_button_style)}`}
+                      >
+                        {cmsSlide.secondary_button_label}
+                      </a>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             </div>
