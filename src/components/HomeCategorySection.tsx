@@ -33,7 +33,7 @@ async function fetchManagedHomeCategories(): Promise<ManagedHomeCategory[]> {
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
-  if (error) throw new Error(\`Loading storefront categories failed: \${error.message}\`);
+  if (error) throw new Error(`Loading storefront categories failed: ${error.message}`);
   return (data ?? []) as ManagedHomeCategory[];
 }
 
