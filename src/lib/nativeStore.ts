@@ -755,7 +755,7 @@ export async function fetchProductsByVendor(vendor: string, first = 8) {
   const brand = brands.find((entry) => entry.name.trim().toLowerCase() === normalized);
   if (!brand) return [];
 
-  let productQuery = publicSupabase
+  const productQuery = publicSupabase
     .from("store_products")
     .select(STOREFRONT_PRODUCT_SELECT)
     .eq("status", "active")
@@ -763,11 +763,12 @@ export async function fetchProductsByVendor(vendor: string, first = 8) {
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
-  if (Number.isFinite(first) && first < Number.MAX_SAFE_INTEGER) {
-    productQuery = productQuery.limit(first);
-  }
+  const productResult =
+    Number.isFinite(first) && first < Number.MAX_SAFE_INTEGER
+      ? await productQuery.limit(first)
+      : await productQuery;
 
-  return hydrateProductRows(assertResult(await productQuery, "vendor products"));
+  return hydrateProductRows(assertResult(productResult, "vendor products"));
 }
 
 export async function fetchAllProductsByVendor(vendor: string) {
@@ -775,7 +776,9 @@ export async function fetchAllProductsByVendor(vendor: string) {
 }
 
 export async function fetchProductsByHandles(handles: string[]) {
-  const normalizedHandles = [...new Set(handles.map((handle) => handle.trim()).filter(Boolean))];
+  const normalizedHandles = [
+    ...new Set(handles.map((handle) => handle.trim().toLowerCase()).filter(Boolean)),
+  ];
   const order = new Map(normalizedHandles.map((handle, index) => [handle.toLowerCase(), index]));
   if (!order.size) return [];
 
