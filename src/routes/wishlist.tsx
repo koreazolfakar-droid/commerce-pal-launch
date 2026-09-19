@@ -16,7 +16,7 @@ export const Route = createFileRoute("/wishlist")({
       { title: `Your wishlist — ${STORE_NAME}` },
       {
         name: "description",
-        content: `Saved products from the ${STORE_NAME} store, with live Shopify prices and stock.`,
+        content: `Saved products from the ${STORE_NAME} store, with live prices and stock.`,
       },
       { property: "og:title", content: `Your wishlist — ${STORE_NAME}` },
       { property: "og:description", content: "Saved products with live prices and stock." },
