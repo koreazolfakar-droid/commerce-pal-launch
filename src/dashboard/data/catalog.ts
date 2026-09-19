@@ -8,6 +8,35 @@ type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
 type ImageRow = Tables<"store_product_images">;
 
+type ProductListRow = Pick<
+  ProductRow,
+  | "id"
+  | "handle"
+  | "title"
+  | "description"
+  | "brand_id"
+  | "category_id"
+  | "product_type"
+  | "base_price"
+  | "compare_at_price"
+  | "stock_quantity"
+  | "status"
+  | "sku"
+  | "barcode"
+  | "seo_title"
+  | "seo_description"
+>;
+type VariantListRow = Pick<
+  VariantRow,
+  "product_id" | "price" | "compare_at_price" | "sku" | "barcode" | "sort_order"
+>;
+type ImageListRow = Pick<ImageRow, "product_id" | "url" | "is_primary" | "sort_order">;
+type ProductSearchRow = Pick<
+  ProductRow,
+  "id" | "title" | "brand_id" | "category_id" | "product_type" | "sku"
+>;
+type VariantSearchRow = Pick<VariantRow, "product_id" | "sku" | "sort_order">;
+
 export type DashboardRole = "admin" | "editor";
 
 export const dashboardTurnstileSiteKey =
@@ -104,6 +133,14 @@ export type DashboardProduct = {
   variantCount: number;
 };
 
+export type DashboardProductSearchItem = {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  sku: string;
+};
+
 export type DashboardProductInput = {
   id?: string;
   title: string;
@@ -145,6 +182,26 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "") || "product";
 }
 
+const DASHBOARD_ROLE_CACHE_TTL_MS = 15_000;
+
+let dashboardRoleCache:
+  | { userId: string; role: DashboardRole; expiresAt: number }
+  | null = null;
+let dashboardRoleRequest:
+  | { userId: string; promise: Promise<DashboardRole | null> }
+  | null = null;
+
+function clearDashboardRoleCache() {
+  dashboardRoleCache = null;
+  dashboardRoleRequest = null;
+}
+
+supabase.auth.onAuthStateChange((event) => {
+  if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+    clearDashboardRoleCache();
+  }
+});
+
 async function requireDashboardRole(): Promise<DashboardRole> {
   const role = await getDashboardRole();
   if (!role) throw new Error("Dashboard authentication is required.");
@@ -153,18 +210,62 @@ async function requireDashboardRole(): Promise<DashboardRole> {
 
 export async function getDashboardRole(): Promise<DashboardRole | null> {
   const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !user) return null;
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (error || !data) return null;
-  return data.role === "admin" || data.role === "editor" ? data.role : null;
+  if (sessionError || !session?.user) {
+    clearDashboardRoleCache();
+    return null;
+  }
+
+  const userId = session.user.id;
+  if (
+    dashboardRoleCache?.userId === userId &&
+    dashboardRoleCache.expiresAt > Date.now()
+  ) {
+    return dashboardRoleCache.role;
+  }
+
+  if (dashboardRoleRequest?.userId === userId) {
+    return dashboardRoleRequest.promise;
+  }
+
+  const request = (async (): Promise<DashboardRole | null> => {
+    // Validate the browser session with Supabase on cache misses. RLS remains the
+    // authorization boundary for every data query; this only removes duplicate
+    // role round-trips fired by parallel dashboard loaders.
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user || user.id !== userId) return null;
+
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error || !data) return null;
+
+    const role =
+      data.role === "admin" || data.role === "editor" ? data.role : null;
+    if (role) {
+      dashboardRoleCache = {
+        userId,
+        role,
+        expiresAt: Date.now() + DASHBOARD_ROLE_CACHE_TTL_MS,
+      };
+    }
+    return role;
+  })();
+
+  dashboardRoleRequest = { userId, promise: request };
+  try {
+    return await request;
+  } finally {
+    if (dashboardRoleRequest?.promise === request) dashboardRoleRequest = null;
+  }
 }
 
 type DashboardThrottleDecision = {
@@ -258,6 +359,7 @@ export async function signInDashboard(
     throw new Error(dashboardSignInErrorMessage(error));
   }
 
+  clearDashboardRoleCache();
   const role = await getDashboardRole();
   if (!role) {
     await dashboardLoginThrottle(email, "failure");
@@ -447,18 +549,21 @@ async function logDashboardSecurityEvent(
 }
 
 export async function signOutDashboard() {
+  clearDashboardRoleCache();
   await logDashboardSecurityEvent("signout_local");
   const { error } = await supabase.auth.signOut({ scope: "local" });
   throwIfError(error, "Sign out failed");
 }
 
 export async function signOutOtherDashboardSessions() {
+  clearDashboardRoleCache();
   await logDashboardSecurityEvent("signout_others");
   const { error } = await supabase.auth.signOut({ scope: "others" });
   throwIfError(error, "Signing out other sessions failed");
 }
 
 export async function signOutAllDashboardSessions() {
+  clearDashboardRoleCache();
   await logDashboardSecurityEvent("signout_global");
   const { error } = await supabase.auth.signOut({ scope: "global" });
   throwIfError(error, "Signing out all sessions failed");
@@ -635,7 +740,7 @@ export async function listDashboardCollections(): Promise<DashboardCollection[]>
   }));
 }
 
-function firstImage(images: ImageRow[]) {
+function firstImage(images: ImageListRow[]) {
   return [...images].sort(
     (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
   )[0];
@@ -644,9 +749,20 @@ function firstImage(images: ImageRow[]) {
 export async function listDashboardProducts(): Promise<DashboardProduct[]> {
   await requireDashboardRole();
   const [productResult, variantResult, imageResult, brandResult, categoryResult] = await Promise.all([
-    supabase.from("store_products").select("*").order("updated_at", { ascending: false }),
-    supabase.from("store_product_variants").select("*").order("sort_order", { ascending: true }),
-    supabase.from("store_product_images").select("*").order("sort_order", { ascending: true }),
+    supabase
+      .from("store_products")
+      .select(
+        "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description",
+      )
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("store_product_variants")
+      .select("product_id,price,compare_at_price,sku,barcode,sort_order")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("store_product_images")
+      .select("product_id,url,is_primary,sort_order")
+      .order("sort_order", { ascending: true }),
     supabase.from("cms_brands").select("id,name"),
     supabase.from("store_categories").select("id,name"),
   ]);
@@ -656,10 +772,10 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
   throwIfError(brandResult.error, "Loading product brands failed");
   throwIfError(categoryResult.error, "Loading product categories failed");
 
-  const variants = (variantResult.data ?? []) as VariantRow[];
-  const images = (imageResult.data ?? []) as ImageRow[];
-  const variantsByProduct = new Map<string, VariantRow[]>();
-  const imagesByProduct = new Map<string, ImageRow[]>();
+  const variants = (variantResult.data ?? []) as VariantListRow[];
+  const images = (imageResult.data ?? []) as ImageListRow[];
+  const variantsByProduct = new Map<string, VariantListRow[]>();
+  const imagesByProduct = new Map<string, ImageListRow[]>();
   for (const variant of variants) {
     const current = variantsByProduct.get(variant.product_id) ?? [];
     current.push(variant);
@@ -673,7 +789,7 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
   const brands = new Map((brandResult.data ?? []).map((row) => [row.id, row.name]));
   const categories = new Map((categoryResult.data ?? []).map((row) => [row.id, row.name]));
 
-  return ((productResult.data ?? []) as ProductRow[]).map((row) => {
+  return ((productResult.data ?? []) as ProductListRow[]).map((row) => {
     const productVariants = variantsByProduct.get(row.id) ?? [];
     const primary = productVariants[0];
     const image = firstImage(imagesByProduct.get(row.id) ?? []);
@@ -705,6 +821,48 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
       variantCount: productVariants.length,
     };
   });
+}
+
+export async function listDashboardProductSearchIndex(): Promise<DashboardProductSearchItem[]> {
+  await requireDashboardRole();
+  const [productResult, variantResult, brandResult, categoryResult] = await Promise.all([
+    supabase
+      .from("store_products")
+      .select("id,title,brand_id,category_id,product_type,sku")
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("store_product_variants")
+      .select("product_id,sku,sort_order")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    supabase.from("cms_brands").select("id,name"),
+    supabase.from("store_categories").select("id,name"),
+  ]);
+  throwIfError(productResult.error, "Loading product search index failed");
+  throwIfError(variantResult.error, "Loading product search variants failed");
+  throwIfError(brandResult.error, "Loading product search brands failed");
+  throwIfError(categoryResult.error, "Loading product search categories failed");
+
+  const variants = (variantResult.data ?? []) as VariantSearchRow[];
+  const firstVariantSku = new Map<string, string>();
+  for (const variant of variants) {
+    if (!firstVariantSku.has(variant.product_id) && variant.sku) {
+      firstVariantSku.set(variant.product_id, variant.sku);
+    }
+  }
+
+  const brands = new Map((brandResult.data ?? []).map((row) => [row.id, row.name]));
+  const categories = new Map((categoryResult.data ?? []).map((row) => [row.id, row.name]));
+
+  return ((productResult.data ?? []) as ProductSearchRow[]).map((row) => ({
+    id: row.id,
+    name: row.title,
+    brand: row.brand_id ? brands.get(row.brand_id) ?? "" : "",
+    category: row.category_id
+      ? categories.get(row.category_id) ?? row.product_type ?? ""
+      : row.product_type ?? "",
+    sku: firstVariantSku.get(row.id) ?? row.sku ?? "",
+  }));
 }
 
 export async function getDashboardProduct(id: string): Promise<DashboardProduct | null> {
