@@ -70,23 +70,17 @@ export function HomeCategorySection({
     staleTime: 30_000,
   });
 
-  const productsByType = new Map<string, typeof catalog.products>();
-  for (const product of catalog.products) {
-    const productType = normalizeCategoryName(product.node.productType);
-    if (!productType) continue;
-    const existing = productsByType.get(productType);
-    if (existing) existing.push(product);
-    else productsByType.set(productType, [product]);
-  }
+  const facetsBySlug = new Map(catalog.categories.map((category) => [category.slug, category]));
+  const facetsByName = new Map(
+    catalog.categories.map((category) => [normalizeCategoryName(category.label), category]),
+  );
 
   const managedItems: HomeCategoryItem[] =
     managedCategories?.flatMap((category) => {
-      const matchingProducts = productsByType.get(normalizeCategoryName(category.name)) ?? [];
-      if (!matchingProducts.length) return [];
-
-      const firstProduct = matchingProducts[0];
-      const resolvedSlug =
-        catalog.categoryOf.get(firstProduct.node.handle)?.[0] ?? category.slug;
+      const facet =
+        facetsBySlug.get(category.slug) ??
+        facetsByName.get(normalizeCategoryName(category.name));
+      if (!facet?.count) return [];
 
       return [
         {
@@ -94,8 +88,8 @@ export function HomeCategorySection({
           label: category.name,
           labelAr: category.name_ar,
           image: category.image_url || undefined,
-          glyphSlug: resolvedSlug,
-          count: matchingProducts.length,
+          glyphSlug: facet.slug,
+          count: facet.count,
         },
       ];
     }) ?? [];
