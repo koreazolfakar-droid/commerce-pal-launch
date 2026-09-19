@@ -69,5 +69,21 @@ test("inventory movement history drawer is paginated and resilient", () => {
   assert.match(movementDrawer, /Order cancellation/);
   assert.match(inventoryData, /referenceType\?: InventoryReferenceType/);
   assert.match(inventoryData, /query = query\.eq\("reference_type", input\.referenceType\)/);
+  assert.match(movementDrawer, /Search reference ID or note/);
+  assert.match(movementDrawer, /setDebouncedSearch\(searchInput\), 300/);
+  assert.match(movementDrawer, /aria-label="Clear inventory movement history search"/);
+  assert.match(movementDrawer, /aria-busy=\{loading \|\| loadingMore\}/);
+  assert.match(movementDrawer, /sm:grid-cols-3/);
+  assert.match(movementDrawer, /sm:w-\[560px\]/);
+  assert.match(movementDrawer, /Reset/);
   assert.doesNotMatch(movementDrawer, /service_role|SUPABASE_SERVICE_ROLE|sb_secret_/);
+});
+
+test("inventory movement search sanitizes raw PostgREST OR input", () => {
+  assert.match(inventoryData, /sanitizeInventoryMovementSearch\(input\.search\)/);
+  assert.match(inventoryData, /normalize\("NFKC"\)/);
+  assert.match(inventoryData, /slice\(0, 80\)/);
+  assert.match(inventoryData, /reference_id\.ilike\.\.%\$\{search\}%,note\.ilike\.\.%\$\{search\}%/);
+  assert.doesNotMatch(inventoryData, /reference_id\.ilike\.[^\n]*input\.search/);
+  assert.doesNotMatch(inventoryData, /note\.ilike\.[^\n]*input\.search/);
 });
