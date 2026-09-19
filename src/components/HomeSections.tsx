@@ -1,10 +1,13 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Bike, CreditCard, Heart, MessageCircle, RotateCcw, ShieldCheck, Tag } from "lucide-react";
 import { ArrowRight } from "lucide-react";
 
 import { cdnImage } from "@/lib/image";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
+import { STORE_NAME } from "@/lib/storeConfig";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
 import type { ShopifyProduct } from "@/lib/shopify";
 
@@ -88,6 +91,14 @@ const SERVICES = [
 
 export function ServicesStrip() {
   const { t } = useLanguage();
+  const { data: cms } = useQuery(cmsQueryOptions());
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsWhatsApp = cms?.settings["whatsapp_number"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const whatsappNumber =
+    typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
+  const whatsappHref = generalWhatsAppUrl(whatsappNumber, storeName);
   return (
     <section aria-label={t("storeServices")}>
       <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3">
@@ -120,7 +131,7 @@ export function ServicesStrip() {
           ) : (
             <a
               key={service.title}
-              href={generalWhatsAppUrl()}
+              href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
               className={className}
