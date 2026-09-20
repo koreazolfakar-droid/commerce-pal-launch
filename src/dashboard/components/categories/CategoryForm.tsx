@@ -213,16 +213,25 @@ export default function CategoryForm({
     >
       <div className="max-h-[94vh] w-full overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[28px]">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-6">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[.15em] text-[#6a70e7]">
-              {mode === "create" ? "New category" : "Edit category"}
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-100 bg-white text-indigo-600 shadow-sm">
+              {activePreview ? (
+                <img src={activePreview} alt="" className="size-full object-contain p-1" />
+              ) : (
+                <CategoryGlyph slug={draft.slug || draft.name || "category"} className="size-10" />
+              )}
+            </span>
+            <div className="min-w-0">
+              <div className="text-[10px] font-bold uppercase tracking-[.15em] text-[#6a70e7]">
+                {mode === "create" ? "New category" : "Edit category"}
+              </div>
+              <h2 className="mt-1 truncate text-[19px] font-black tracking-[-.03em] text-[#14203a]">
+                {mode === "create" ? "Create Category" : draft.name || "Category"}
+              </h2>
+              <p className="mt-1 truncate text-[10px] text-slate-400">
+                Configure browsing, storefront visibility, identity, order, and SEO.
+              </p>
             </div>
-            <h2 className="mt-1 text-[19px] font-black tracking-[-.03em] text-[#14203a]">
-              {mode === "create" ? "Create Category" : draft.name || "Category"}
-            </h2>
-            <p className="mt-1 text-[10px] text-slate-400">
-              Configure browsing, storefront visibility, identity, order, and SEO.
-            </p>
           </div>
           <button
             type="button"
