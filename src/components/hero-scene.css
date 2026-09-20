@@ -21,6 +21,9 @@
 }
 .hero-scene img {
   object-fit: cover;
+  object-position:
+    var(--hero-mobile-focal-x, 50%)
+    var(--hero-mobile-focal-y, 50%);
 }
 .hero-scene-shade {
   background: black;
@@ -172,6 +175,11 @@
   cursor: grabbing;
 }
 @container (min-width: 640px) {
+  .hero-scene img {
+    object-position:
+      var(--hero-desktop-focal-x, 50%)
+      var(--hero-desktop-focal-y, 50%);
+  }
   .hero-scene-canvas {
     height: clamp(352px, 38cqw, 480px);
   }
