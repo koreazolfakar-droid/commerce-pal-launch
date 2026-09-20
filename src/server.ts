@@ -1,6 +1,7 @@
 import "./lib/error-capture";
 
-import { consumeLastCapturedError, isClientDisconnectError } from "./lib/error-capture";
+import { consumeLastCapturedError } from "./lib/error-capture";
+import { isClientDisconnectError } from "./lib/client-disconnect";
 import { renderErrorPage } from "./lib/error-page";
 import { buildContentSecurityPolicy } from "./lib/contentSecurityPolicy";
 
