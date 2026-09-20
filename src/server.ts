@@ -1,6 +1,7 @@
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
+import { isClientDisconnectError } from "./lib/client-disconnect";
 import { renderErrorPage } from "./lib/error-page";
 import { buildContentSecurityPolicy } from "./lib/contentSecurityPolicy";
 
@@ -45,7 +46,10 @@ function syncRuntimeEnv(env: unknown) {
 
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
+async function normalizeCatastrophicSsrResponse(
+  request: Request,
+  response: Response,
+): Promise<Response> {
   if (response.status < 500) return response;
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return response;
@@ -53,7 +57,16 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   const body = await response.clone().text();
   if (!isH3SwallowedErrorBody(body)) return response;
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const capturedError = consumeLastCapturedError();
+  // Browsers routinely cancel an in-flight document request during navigation,
+  // refresh, or HMR. h3 converts that disconnect into its generic 500 payload;
+  // returning it as an application failure makes the preview report a blank
+  // screen even though the replacement navigation succeeds.
+  if (request.signal.aborted || isClientDisconnectError(capturedError)) {
+    return new Response(null, { status: 499, statusText: "Client Closed Request" });
+  }
+
+  console.error(capturedError ?? new Error(`h3 swallowed SSR error: ${body}`));
   return new Response(renderErrorPage(), {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
@@ -199,11 +212,14 @@ export default {
           request,
           withStaticAssetCache(
             request,
-            withSecurityHeaders(await normalizeCatastrophicSsrResponse(response)),
+            withSecurityHeaders(await normalizeCatastrophicSsrResponse(request, response)),
           ),
         ),
       );
     } catch (error) {
+      if (request.signal.aborted || isClientDisconnectError(error)) {
+        return new Response(null, { status: 499, statusText: "Client Closed Request" });
+      }
       console.error(error);
       return withSecurityHeaders(
         new Response(renderErrorPage(), {
