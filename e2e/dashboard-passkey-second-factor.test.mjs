@@ -57,6 +57,10 @@ test("server completion binds fresh passkey proof to the original password sessi
   assert.match(edge, /\.is\("consumed_at", null\)/);
   assert.match(edge, /dashboard_passkey_session_assurance/);
   assert.match(edge, /session_id: sessionId/);
+  assert.match(edge, /hasFreshPasskeyAmr/);
+  assert.match(edge, /method === "passkey"/);
+  assert.match(edge, /passkeyClaims\.sub !== mainUser\.id/);
+  assert.match(edge, /fresh_passkey_token_required/);
   assert.match(edge, /PASSKEY_ASSURANCE_MS = 8 \* 60 \* 60 \* 1000/);
 });
 
