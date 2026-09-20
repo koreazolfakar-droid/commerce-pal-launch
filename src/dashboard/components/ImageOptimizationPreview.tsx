@@ -39,6 +39,8 @@ export default function ImageOptimizationPreview({
   const [error, setError] = useState("");
   const [previewing, setPreviewing] = useState(false);
   const [outputPreviewUrls, setOutputPreviewUrls] = useState<string[]>([]);
+  const backgroundRemovalEnabled = Boolean(backgroundRemovalEnabled);
+  const backgroundRemovalTolerance = backgroundRemoval?.tolerance ?? 18;
 
   useEffect(() => {
     const syncCompression = (event: Event) => {
@@ -67,7 +69,14 @@ export default function ImageOptimizationPreview({
         const next: ProductImageConversionResult[] = [];
         for (const file of files) {
           next.push(
-            await convertProductImageToWebp(file, resolution, compression, backgroundRemoval),
+            await convertProductImageToWebp(
+              file,
+              resolution,
+              compression,
+              backgroundRemovalEnabled
+                ? { enabled: true, tolerance: backgroundRemovalTolerance }
+                : undefined,
+            ),
           );
         }
         if (!cancelled) setResults(next);
@@ -84,7 +93,13 @@ export default function ImageOptimizationPreview({
     return () => {
       cancelled = true;
     };
-  }, [files, resolution, compression, backgroundRemoval?.enabled, backgroundRemoval?.tolerance]);
+  }, [
+    files,
+    resolution,
+    compression,
+    backgroundRemovalEnabled,
+    backgroundRemovalTolerance,
+  ]);
 
   useEffect(() => {
     const urls = results.map((item) => URL.createObjectURL(item.file));
@@ -205,7 +220,7 @@ export default function ImageOptimizationPreview({
                 className="grid gap-2 rounded-xl border border-white bg-white/90 p-3 sm:grid-cols-[1fr_auto]"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  {backgroundRemoval?.enabled && outputPreviewUrls[index] ? (
+                  {backgroundRemovalEnabled && outputPreviewUrls[index] ? (
                     <div
                       className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200"
                       style={{
@@ -231,9 +246,9 @@ export default function ImageOptimizationPreview({
                       {" → "}
                       {item.output.width}×{item.output.height}px · {formatImageBytes(item.output.bytes)}
                     </div>
-                    {backgroundRemoval?.enabled ? (
+                    {backgroundRemovalEnabled ? (
                       <div className="mt-1 text-[8px] font-bold text-emerald-700">
-                        Transparent background preview · tolerance {backgroundRemoval.tolerance}
+                        Transparent background preview · tolerance {backgroundRemovalTolerance}
                       </div>
                     ) : null}
                   </div>
