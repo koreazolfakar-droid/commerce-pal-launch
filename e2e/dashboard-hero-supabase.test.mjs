@@ -118,6 +118,8 @@ test("hero customization is persisted and exposed through the public CMS gateway
   assert.match(cmsGateway, /secondary_target_type/);
   assert.match(cmsGateway, /content_theme: row\.content_theme/);
   assert.match(cmsGateway, /visual_config: row\.visual_config/);
+  assert.match(cmsGateway, /Cache-Control": "no-store, max-age=0, must-revalidate"/);
+  assert.doesNotMatch(cmsGateway, /stale-while-revalidate/);
   assert.match(visualMigration, /add column if not exists visual_config/);
   assert.match(visualMigration, /set_cms_hero_visual_config/);
   assert.match(visualMigration, /from public, anon/);
@@ -131,20 +133,21 @@ test("hero customization is persisted and exposed through the public CMS gateway
 test("public CMS uses an edge gateway with resilient empty fallback", () => {
   assert.match(cms, /functions\/v1\/public-cms/);
   assert.match(cms, /CMS_PUBLIC_READ_TIMEOUT_MS = 4_000/);
+  assert.match(cms, /cache: "no-store"/);
   assert.match(cms, /return EMPTY_CMS/);
   assert.doesNotMatch(cms, /service_role|SUPABASE_SECRET|sb_secret_/);
   assert.match(cmsQuery, /queryKey: \["storefront", "public-cms"\]/);
   assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
 });
 
-test("homepage hydrates CMS once and renders CMS hero before legacy fallback", async () => {
+test("homepage hydrates CMS once and renders a CMS-only visual hero", async () => {
   assert.match(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
+  assert.match(home, /enabled: deferredWorkReady/);
   assert.match(hero, /localizeHeroSlide/);
-  assert.match(hero, /const usingCms = localizedCmsSlides\.length > 0/);
   assert.match(hero, /"supabase-cms"/);
-  assert.match(hero, /"shopify-collection"/);
-  assert.match(hero, /hero-product-fallback/);
+  assert.doesNotMatch(hero, /"shopify-collection"/);
+  assert.doesNotMatch(hero, /hero-product-fallback/);
   assert.match(hero, /<HeroScene/);
   assert.match(hero, /<\/section>[\s\S]*data-testid="home-hero-dots"/);
   assert.match(hero, /overflow-x-auto/);
