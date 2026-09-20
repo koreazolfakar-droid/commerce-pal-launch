@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const HIBP_RANGE_URL = "https://api.pwnedpasswords.com/range/";
 const HIBP_TIMEOUT_MS = 8_000;
+const SENSITIVE_REAUTH_WINDOW_MS = 5 * 60 * 1000;
 const MIN_PASSWORD_LENGTH = 14;
 const MAX_PASSWORD_LENGTH = 256;
 
@@ -110,6 +111,28 @@ function getPasswordPolicyViolation(password: string, email: string) {
   return null;
 }
 
+function hasFreshTotpAmr(claims: Record<string, unknown>, now: number) {
+  const amr = Array.isArray(claims.amr) ? claims.amr : [];
+  return amr.some((entry) => {
+    if (!entry || typeof entry !== "object") return false;
+    const item = entry as Record<string, unknown>;
+    if (item.method !== "totp") return false;
+
+    const timestampMs =
+      typeof item.timestamp === "number"
+        ? item.timestamp * 1000
+        : typeof item.timestamp === "string"
+          ? Number(item.timestamp) * 1000
+          : Number.NaN;
+
+    return (
+      Number.isFinite(timestampMs) &&
+      now - timestampMs >= 0 &&
+      now - timestampMs <= SENSITIVE_REAUTH_WINDOW_MS
+    );
+  });
+}
+
 function toUpperHex(buffer: ArrayBuffer) {
   return Array.from(new Uint8Array(buffer), (byte) =>
     byte.toString(16).padStart(2, "0"),
@@ -214,6 +237,11 @@ Deno.serve(async (req) => {
   const claims = decodeJwtPayload(token);
   if (!claims || claims.sub !== user.id || claims.aal !== "aal2") {
     return json(req, { error: "aal2_required" }, 403);
+  }
+
+  const now = Date.now();
+  if (!hasFreshTotpAmr(claims, now)) {
+    return json(req, { error: "fresh_totp_required" }, 403);
   }
 
   const { data: roleRows, error: roleError } = await admin
