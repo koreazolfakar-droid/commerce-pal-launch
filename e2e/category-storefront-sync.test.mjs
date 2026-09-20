@@ -33,14 +33,31 @@ test("empty managed category routes render instead of returning 404", async () =
   assert.match(categoryRoute, /if \(managedCategory\) \{/);
 });
 
-test("dashboard exposes a storefront-like editable category grid", async () => {
-  const dashboard = await read("src/dashboard/pages/CategoriesPage.tsx");
-  const list = await read("src/dashboard/components/categories/CategoryList.tsx");
+test("dashboard exposes the same category artwork with editable custom overrides", async () => {
+  const [dashboard, list, preview, form, glyph] = await Promise.all([
+    read("src/dashboard/pages/CategoriesPage.tsx"),
+    read("src/dashboard/components/categories/CategoryList.tsx"),
+    read("src/dashboard/components/categories/CategoryPreview.tsx"),
+    read("src/dashboard/components/categories/CategoryForm.tsx"),
+    read("src/components/CategoryGlyph.tsx"),
+  ]);
 
   assert.match(dashboard, /id="storefront-category-grid"/);
   assert.match(dashboard, /Storefront Category Grid/);
   assert.match(dashboard, /onClick=\{\(\) => openEdit\(category\)\}/);
   assert.match(dashboard, /category\.image/);
+  assert.match(dashboard, /<CategoryGlyph slug=\{category\.slug\}/);
   assert.match(dashboard, /Add Category/);
+
   assert.match(list, /category\.image \?/);
+  assert.match(list, /<CategoryGlyph slug=\{category\.slug\}/);
+  assert.match(preview, /<CategoryGlyph slug=\{category\.slug\}/);
+
+  assert.match(form, /Storefront category image/);
+  assert.match(form, /Storefront default/);
+  assert.match(form, /Use custom image/);
+  assert.match(form, /Restore default/);
+  assert.match(form, /slug=\{draft\.slug \|\| draft\.name \|\| "category"\}/);
+
+  assert.match(glyph, /category-3d-sprite\.webp/);
 });

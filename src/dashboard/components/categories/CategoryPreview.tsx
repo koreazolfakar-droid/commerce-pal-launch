@@ -1,5 +1,5 @@
 import { EyeOff, Sparkles } from "lucide-react";
-import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
+import { CategoryGlyph } from "@/components/CategoryGlyph";
 import type { CatalogCategory } from "@/dashboard/data/categories";
 import type { DashboardProduct } from "@/dashboard/data/catalog";
 
@@ -41,7 +41,7 @@ export default function CategoryPreview({
               {category.image ? (
                 <img src={category.image} alt="" className="size-full rounded-2xl object-cover" />
               ) : (
-                <CategoryIcon name={category.icon} className="size-6" />
+                <CategoryGlyph slug={category.slug} className="size-12" />
               )}
             </div>
             <div className="min-w-0 flex-1">

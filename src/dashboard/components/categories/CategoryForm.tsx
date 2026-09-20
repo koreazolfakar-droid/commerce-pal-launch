@@ -1,6 +1,7 @@
-import { Check, Image as ImageIcon, Loader2, Trash2, Upload, X } from "lucide-react";
+import { Check, Loader2, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { normalizeCategorySlug, type CatalogCategory } from "@/dashboard/data/categories";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
 import { categoryIconOptions } from "@/dashboard/components/categories/category-icons";
@@ -319,24 +320,30 @@ export default function CategoryForm({
                       className="h-full w-full object-contain p-2"
                     />
                   ) : (
-                    <div className="flex flex-col items-center gap-2 text-slate-300">
-                      <ImageIcon className="size-7" />
-                      <span className="text-[9px] font-bold">No category image</span>
+                    <div className="relative grid size-full place-items-center">
+                      <CategoryGlyph
+                        slug={draft.slug || draft.name || "category"}
+                        className="h-[8.25rem] w-[8.25rem]"
+                      />
+                      <span className="absolute inset-x-2 bottom-2 rounded-lg bg-slate-900/75 px-2 py-1 text-center text-[8px] font-bold text-white">
+                        Storefront default
+                      </span>
                     </div>
                   )}
                 </div>
 
                 <div className="min-w-0">
-                  <div className="text-[11px] font-black text-slate-700">Category image</div>
+                  <div className="text-[11px] font-black text-slate-700">Storefront category image</div>
                   <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                    JPG, PNG, WebP or AVIF. On save it is converted to WebP before upload,
-                    with a maximum 1080 px edge.
+                    The preview now matches the storefront. Upload a custom image to replace the
+                    built-in category artwork. Removing the custom image restores the default.
+                    Uploads are converted to WebP with a maximum 1080 px edge.
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-[#5968ea] px-3.5 text-[10px] font-bold text-white shadow-sm">
                       <Upload className="size-4" />
-                      {activePreview ? "Replace image" : "Upload image"}
+                      {activePreview ? "Replace image" : "Use custom image"}
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/avif"
@@ -357,7 +364,7 @@ export default function CategoryForm({
                         className="inline-flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-white px-3.5 text-[10px] font-bold text-rose-600 disabled:opacity-50"
                       >
                         <Trash2 className="size-4" />
-                        Remove
+                        Restore default
                       </button>
                     ) : null}
                   </div>

@@ -11,7 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
-import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
+import { CategoryGlyph } from "@/components/CategoryGlyph";
 import type { CatalogCategory } from "@/dashboard/data/categories";
 
 type CategoryActionProps = {
@@ -76,7 +76,7 @@ function CategoryRow({
           {category.image ? (
             <img src={category.image} alt="" className="size-full object-contain p-1" />
           ) : (
-            <CategoryIcon name={category.icon} className="size-4.5" />
+            <CategoryGlyph slug={category.slug} className="size-9" />
           )}
         </span>
 
