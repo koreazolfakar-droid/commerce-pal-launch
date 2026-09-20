@@ -356,15 +356,40 @@ async function fetchSnapshot(): Promise<NativeSnapshot> {
     });
 
     const value = { products, collections: collectionRows, links, brands };
-    cachedSnapshot = { expiresAt: Date.now() + CACHE_TTL_MS, value };
+    const fetchedAt = Date.now();
+    cachedSnapshot = {
+      expiresAt: fetchedAt + CACHE_TTL_MS,
+      staleUntil: fetchedAt + CACHE_TTL_MS + STALE_TTL_MS,
+      value,
+    };
     return value;
-  })();
-
-  try {
-    return await pendingSnapshot;
-  } finally {
-    pendingSnapshot = null;
   }
+}
+
+function startSnapshotRefresh(): Promise<NativeSnapshot> {
+  if (!pendingSnapshot) {
+    pendingSnapshot = fetchSnapshot()
+      .catch((error) => {
+        // A failed background refresh keeps serving the stale snapshot.
+        console.warn("Native store background refresh failed.", error);
+        return cachedSnapshot?.value ?? Promise.reject(error);
+      })
+      .finally(() => {
+        pendingSnapshot = null;
+      });
+  }
+  return pendingSnapshot;
+}
+
+async function loadSnapshot(): Promise<NativeSnapshot> {
+  const now = Date.now();
+  if (cachedSnapshot && cachedSnapshot.expiresAt > now) return cachedSnapshot.value;
+  if (cachedSnapshot && cachedSnapshot.staleUntil > now) {
+    // Serve the stale snapshot immediately and refresh once in the background.
+    void startSnapshotRefresh();
+    return cachedSnapshot.value;
+  }
+  return startSnapshotRefresh();
 }
 
 export function invalidateNativeStoreCache() {
