@@ -126,8 +126,8 @@ begin
 end;
 $function$;
 
-revoke all on function public.dashboard_inventory_page(text, uuid, boolean, boolean, integer, integer, integer) from public;
-grant execute on function public.dashboard_inventory_page(text, uuid, boolean, boolean, integer, integer, integer) to authenticated;
+revoke all on function public.dashboard_inventory_page(text, uuid, boolean, boolean, integer, integer, integer) from public, anon;
+grant execute on function public.dashboard_inventory_page(text, uuid, boolean, boolean, integer, integer, integer) to authenticated, service_role;
 
 create or replace function public.dashboard_inventory_summary(
   p_threshold integer default 10
@@ -168,5 +168,5 @@ begin
 end;
 $function$;
 
-revoke all on function public.dashboard_inventory_summary(integer) from public;
-grant execute on function public.dashboard_inventory_summary(integer) to authenticated;
+revoke all on function public.dashboard_inventory_summary(integer) from public, anon;
+grant execute on function public.dashboard_inventory_summary(integer) to authenticated, service_role;
