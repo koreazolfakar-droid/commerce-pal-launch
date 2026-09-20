@@ -34,6 +34,7 @@ test("dashboard product uploads preserve exact masters and clean derived variant
   assert.match(catalog, /MAX_PRODUCT_MASTER_BYTES = 20 \* 1024 \* 1024/);
   assert.match(catalog, /master\.original/);
   assert.match(catalog, /display\.webp/);
+  assert.match(catalog, /\.upload\(masterPath, source/);
   assert.match(catalog, /cacheControl: "31536000"/);
   assert.match(catalog, /productResponsiveVariantPath/);
   assert.match(catalog, /_responsive\/v1/);
