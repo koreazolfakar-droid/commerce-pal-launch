@@ -156,6 +156,19 @@ Deno.serve(async (req) => {
   const action = typeof body.action === "string" ? body.action : "";
   const now = Date.now();
 
+  if (action === "status") {
+    const { data: assurance, error: assuranceError } = await admin
+      .from("dashboard_passkey_session_assurance")
+      .select("expires_at")
+      .eq("session_id", sessionId)
+      .eq("user_id", mainUser.id)
+      .gt("expires_at", new Date(now).toISOString())
+      .maybeSingle();
+
+    if (assuranceError) return json(req, { error: "stepup_unavailable" }, 503);
+    return json(req, { ok: true, ready: Boolean(assurance?.expires_at) });
+  }
+
   if (action === "begin") {
     if (!hasRecentPasswordAmr(claims, now)) {
       return json(req, { error: "recent_password_required" }, 403);
