@@ -40,6 +40,18 @@ jobs:
             source "$BASH_ENV"
             bun audit --audit-level=high
 
+  rate-limit-fix-test:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Verify create-order rate-limit regression test
+          command: node --test e2e/create-order-rate-limit-security.test.mjs
+
+
   storefront-ci:
     docker:
       - image: cimg/node:lts
@@ -95,6 +107,7 @@ workflows:
     jobs:
       - security-source
       - security-dependencies
+      - rate-limit-fix-test
       - storefront-ci:
           filters:
             branches:
