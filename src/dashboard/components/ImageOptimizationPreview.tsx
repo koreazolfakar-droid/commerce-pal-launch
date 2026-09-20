@@ -124,6 +124,9 @@ export default function ImageOptimizationPreview({
               </option>
             ))}
           </select>
+          <span className="mt-1 block text-[8px] leading-3 text-slate-400">
+            {IMAGE_COMPRESSION_PRESETS.find((option) => option.value === compression)?.description}
+          </span>
         </label>
 
         {onResolutionChange ? (
