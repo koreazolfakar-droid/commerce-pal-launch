@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import BrandAssignmentDialog from "@/dashboard/components/brands/BrandAssignmentDialog";
-import BrandForm from "@/dashboard/components/brands/BrandForm";
+import BrandForm, { type BrandImageChange } from "@/dashboard/components/brands/BrandForm";
 import BrandKpiCards from "@/dashboard/components/brands/BrandKpiCards";
 import BrandList from "@/dashboard/components/brands/BrandList";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
@@ -36,6 +36,7 @@ import {
   refreshDashboardProducts,
   reorderDashboardBrands,
   updateDashboardBrand,
+  uploadDashboardBrandImage,
   type CatalogBrand,
 } from "@/dashboard/data/brands";
 import type { DashboardProduct } from "@/dashboard/data/catalog";
@@ -250,7 +251,10 @@ export default function BrandsPage() {
     setEditing({ mode: "edit", brand: { ...brand } });
   };
 
-  const saveBrand = async (nextBrand: CatalogBrand) => {
+  const saveBrand = async (
+    nextBrand: CatalogBrand,
+    imageChange: BrandImageChange,
+  ) => {
     const duplicateSlug = brands.some(
       (brand) =>
         brand.id !== nextBrand.id && brand.slug.toLowerCase() === nextBrand.slug.toLowerCase(),
@@ -261,20 +265,47 @@ export default function BrandsPage() {
     }
 
     try {
-      if (editing?.mode === "create") {
-        const created = await createDashboardBrand(nextBrand);
-        setBrands((current) => [...current, created].sort((a, b) => a.order - b.order));
-        setSelectedId(created.id);
-        toast.success("Brand created successfully.");
-        return true;
+      let saved =
+        editing?.mode === "create"
+          ? await createDashboardBrand(nextBrand)
+          : await updateDashboardBrand(nextBrand);
+
+      const optimized: string[] = [];
+
+      if (imageChange.logoFile) {
+        const uploaded = await uploadDashboardBrandImage(imageChange.logoFile, "logo");
+        saved = await updateDashboardBrand({ ...saved, logo: uploaded.url });
+        optimized.push(
+          `logo ${Math.round(uploaded.conversion.source.bytes / 1024)} KB → ${Math.round(uploaded.conversion.output.bytes / 1024)} KB`,
+        );
       }
 
-      const saved = await updateDashboardBrand(nextBrand);
-      setBrands((current) =>
-        current.map((brand) => (brand.id === saved.id ? saved : brand)),
-      );
+      if (imageChange.coverFile) {
+        const uploaded = await uploadDashboardBrandImage(imageChange.coverFile, "cover");
+        saved = await updateDashboardBrand({ ...saved, coverImage: uploaded.url });
+        optimized.push(
+          `cover ${Math.round(uploaded.conversion.source.bytes / 1024)} KB → ${Math.round(uploaded.conversion.output.bytes / 1024)} KB`,
+        );
+      }
+
+      setBrands((current) => {
+        const exists = current.some((brand) => brand.id === saved.id);
+        const next = exists
+          ? current.map((brand) => (brand.id === saved.id ? saved : brand))
+          : [...current, saved];
+        return next.sort((a, b) => a.order - b.order);
+      });
       setSelectedId(saved.id);
-      toast.success("Brand changes saved.");
+
+      toast.success(
+        optimized.length
+          ? `Brand saved. WebP optimized: ${optimized.join(" · ")}.`
+          : editing?.mode === "create"
+            ? "Brand created successfully."
+            : imageChange.removeLogo || imageChange.removeCover
+              ? "Brand image removed and changes saved."
+              : "Brand changes saved.",
+      );
       return true;
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand save failed.");
