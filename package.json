@@ -18,7 +18,8 @@
     "test:e2e:ui": "playwright test --ui",
     "dev:e2e": "vite dev",
     "test:ssr": "node e2e/ssr-smoke.mjs",
-    "test:unit": "node --test e2e/*.test.mjs"
+    "test:unit": "node --test e2e/*.test.mjs",
+    "security:scan": "node scripts/security-gate.mjs && bun audit --audit-level=high"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.26.0",
