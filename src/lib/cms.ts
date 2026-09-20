@@ -123,6 +123,17 @@ export const EMPTY_CMS: CmsSnapshot = {
 const ARABIC_SCRIPT = /[\u0600-\u06ff]/;
 
 const CMS_PUBLIC_READ_TIMEOUT_MS = 4_000;
+const CMS_MEMORY_FRESH_MS = 30_000;
+const CMS_MEMORY_STALE_MS = 5 * 60_000;
+
+let cmsMemoryCache:
+  | {
+      freshUntil: number;
+      staleUntil: number;
+      value: CmsSnapshot;
+    }
+  | null = null;
+let pendingCmsRefresh: Promise<CmsSnapshot> | null = null;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -151,7 +162,7 @@ function normalizeCmsSnapshot(value: unknown): CmsSnapshot {
  * deployment issue or malformed response returns EMPTY_CMS so storefront
  * commerce data can continue rendering without a fatal error.
  */
-export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
+async function requestCmsSnapshot(): Promise<CmsSnapshot | null> {
   const { url, key } = getPublicSupabaseConfig();
   if (!url || !key) return EMPTY_CMS;
 
@@ -171,16 +182,61 @@ export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
 
     if (!response.ok) {
       console.warn(`[CMS] public-cms returned HTTP ${response.status}`);
-      return EMPTY_CMS;
+      return null;
     }
 
     return normalizeCmsSnapshot(await response.json());
   } catch (error) {
     console.warn("[CMS] public-cms unavailable; storefront fallbacks remain active.", error);
-    return EMPTY_CMS;
+    return null;
   } finally {
     globalThis.clearTimeout(timeout);
   }
+}
+
+function startCmsRefresh(): Promise<CmsSnapshot> {
+  if (!pendingCmsRefresh) {
+    pendingCmsRefresh = requestCmsSnapshot()
+      .then((snapshot) => {
+        if (!snapshot) return cmsMemoryCache?.value ?? EMPTY_CMS;
+
+        const now = Date.now();
+        cmsMemoryCache = {
+          freshUntil: now + CMS_MEMORY_FRESH_MS,
+          staleUntil: now + CMS_MEMORY_FRESH_MS + CMS_MEMORY_STALE_MS,
+          value: snapshot,
+        };
+        return snapshot;
+      })
+      .finally(() => {
+        pendingCmsRefresh = null;
+      });
+  }
+
+  return pendingCmsRefresh;
+}
+
+/**
+ * Read the public CMS with a small process-local stale-while-revalidate layer.
+ *
+ * SSR requests within the fresh window return immediately without another edge
+ * round-trip. During the stale window the last good snapshot is served while
+ * one refresh runs in the background. A failed refresh never replaces a known
+ * good snapshot.
+ */
+export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
+  const now = Date.now();
+
+  if (cmsMemoryCache && cmsMemoryCache.freshUntil > now) {
+    return cmsMemoryCache.value;
+  }
+
+  if (cmsMemoryCache && cmsMemoryCache.staleUntil > now) {
+    void startCmsRefresh();
+    return cmsMemoryCache.value;
+  }
+
+  return startCmsRefresh();
 }
 
 function cleanText(value: unknown) {
