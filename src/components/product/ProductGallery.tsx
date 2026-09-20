@@ -33,8 +33,20 @@ export function ProductGallery({
 }) {
   const { t } = useLanguage();
   const [zoomed, setZoomed] = useState(false);
+  const [responsiveFailures, setResponsiveFailures] = useState<Set<string>>(() => new Set());
   const index = images.length > 0 ? Math.min(activeIndex, images.length - 1) : 0;
   const image = images[index];
+  const mainSrcSet =
+    image && !responsiveFailures.has(image.url) ? cdnSrcSet(image.url, 900) : undefined;
+
+  const markResponsiveFailure = (url: string) => {
+    setResponsiveFailures((current) => {
+      if (current.has(url)) return current;
+      const next = new Set(current);
+      next.add(url);
+      return next;
+    });
+  };
 
   const step = (delta: number) => {
     if (images.length < 2) return;
@@ -64,8 +76,9 @@ export function ProductGallery({
       <div className="group relative aspect-[1/0.92] overflow-hidden rounded-[1.6rem] border bg-image-stage shadow-card sm:aspect-square lg:order-2">
         {image ? (
           <img
+            key={`${image.url}:${mainSrcSet ? "responsive" : "original"}`}
             src={cdnImage(image.url, 900)}
-            srcSet={cdnSrcSet(image.url, 900)}
+            srcSet={mainSrcSet}
             sizes="(min-width: 1024px) 560px, 92vw"
             alt={image.altText ?? title}
             fetchPriority="high"
@@ -73,6 +86,9 @@ export function ProductGallery({
             width={900}
             height={900}
             draggable={false}
+            onError={() => {
+              if (mainSrcSet) markResponsiveFailure(image.url);
+            }}
             className="h-full w-full select-none object-contain p-2.5 transition-transform duration-300 sm:p-5 lg:p-8"
           />
         ) : (
@@ -140,13 +156,21 @@ export function ProductGallery({
               )}
             >
               <img
+                key={`${thumb.url}:${responsiveFailures.has(thumb.url) ? "original" : "responsive"}`}
                 src={cdnImage(thumb.url, 160)}
+                srcSet={
+                  responsiveFailures.has(thumb.url) ? undefined : cdnSrcSet(thumb.url, 160)
+                }
+                sizes="80px"
                 alt=""
                 loading="lazy"
                 decoding="async"
                 width={80}
                 height={80}
                 draggable={false}
+                onError={() => {
+                  if (!responsiveFailures.has(thumb.url)) markResponsiveFailure(thumb.url);
+                }}
                 className="h-full w-full select-none object-contain p-1.5"
               />
             </button>
@@ -167,9 +191,17 @@ export function ProductGallery({
             onClick={(event) => event.stopPropagation()}
           >
             <img
+              key={`${image.url}:zoom:${responsiveFailures.has(image.url) ? "original" : "responsive"}`}
               src={cdnImage(image.url, 1400)}
+              srcSet={
+                responsiveFailures.has(image.url) ? undefined : cdnSrcSet(image.url, 1400)
+              }
+              sizes="(min-width: 1024px) 896px, 96vw"
               alt={image.altText ?? title}
               draggable={false}
+              onError={() => {
+                if (!responsiveFailures.has(image.url)) markResponsiveFailure(image.url);
+              }}
               className="mx-auto max-h-[84vh] w-full select-none object-contain p-4 sm:p-6"
             />
             <button
