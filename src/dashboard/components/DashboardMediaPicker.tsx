@@ -1,6 +1,7 @@
 import { Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 
 import {
   loadDashboardMediaWorkspace,
@@ -21,6 +22,7 @@ export function DashboardMediaPicker({
   const [assets, setAssets] = useState<DashboardMediaAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,6 +60,7 @@ export function DashboardMediaPicker({
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+      setPendingFile(null);
     }
   };
 
@@ -85,7 +88,10 @@ export function DashboardMediaPicker({
             type="file"
             accept="image/jpeg,image/png,image/webp,image/avif"
             className="hidden"
-            onChange={(event) => void upload(event.target.files?.[0])}
+            onChange={(event) => {
+              setPendingFile(event.target.files?.[0] ?? null);
+              event.currentTarget.value = "";
+            }}
           />
           <button
             type="button"
@@ -107,6 +113,35 @@ export function DashboardMediaPicker({
           ) : null}
         </div>
       </div>
+
+      {pendingFile ? (
+        <div className="mt-3 space-y-2">
+          <ImageOptimizationPreview
+            files={[pendingFile]}
+            resolution="1920"
+            title="Upload compression preview"
+            compact
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingFile(null)}
+              disabled={uploading}
+              className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void upload(pendingFile)}
+              disabled={uploading}
+              className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
+            >
+              Confirm & upload
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {open ? (
         <div
