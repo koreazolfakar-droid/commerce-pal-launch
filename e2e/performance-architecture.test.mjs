@@ -90,6 +90,17 @@ test("public CMS uses stale-while-revalidate memory caching for SSR", async () =
 });
 
 
+test("public CMS edge function avoids wildcard database payloads", async () => {
+  const edge = await read("supabase/functions/public-cms/index.ts");
+
+  assert.doesNotMatch(edge, /\.select\("\*"\)/);
+  assert.match(edge, /cms_hero_slides"[\s\S]*?image_url,mobile_image_url/);
+  assert.match(edge, /cms_sections"[\s\S]*?content_en,content_ar/);
+  assert.match(edge, /cms_navigation_items"[\s\S]*?label_en,label_ar/);
+  assert.match(edge, /cms_seo_pages"[\s\S]*?description_en,description_ar/);
+});
+
+
 test("small storefront collections avoid hydrating the full native snapshot", async () => {
   const nativeStore = await read("src/lib/nativeStore.ts");
 
