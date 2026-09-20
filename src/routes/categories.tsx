@@ -20,6 +20,13 @@ type ManagedStoreCategory = {
   sort_order: number;
 };
 
+type CategoryDisplayItem = {
+  slug: string;
+  label: string;
+  imageUrl: string | undefined;
+  glyphSlug: string;
+};
+
 async function fetchManagedStoreCategories(): Promise<ManagedStoreCategory[] | null> {
   const { data, error } = await publicSupabase
     .from("store_categories")
@@ -64,7 +71,7 @@ function CategoriesPage() {
   const { managedCategories } = Route.useLoaderData();
   const { language } = useLanguage();
 
-  const items =
+  const items: CategoryDisplayItem[] =
     managedCategories !== null
       ? managedCategories.map((category: ManagedStoreCategory) => {
           const artwork = findCategoryArtworkCollection(
@@ -117,7 +124,7 @@ function CategoriesPage() {
           role="list"
           aria-label={language === "ar" ? "تصنيفات المتجر" : "Store categories"}
         >
-          {items.map((category) => (
+          {items.map((category: CategoryDisplayItem) => (
             <Link
               key={category.slug}
               to="/category/$slug"
