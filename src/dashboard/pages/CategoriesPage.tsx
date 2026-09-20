@@ -16,6 +16,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { CategoryGlyph } from "@/components/CategoryGlyph";
 import CategoryForm, { type CategoryImageChange } from "@/dashboard/components/categories/CategoryForm";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
 import CategoryKpiCards from "@/dashboard/components/categories/CategoryKpiCards";
@@ -673,7 +674,7 @@ export default function CategoriesPage() {
                     className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-[1.05]"
                   />
                 ) : (
-                  <CategoryIcon name={category.icon} className="size-7 text-indigo-500" />
+                  <CategoryGlyph slug={category.slug} className="h-[4.1rem] w-[4.1rem] sm:h-[4.55rem] sm:w-[4.55rem]" />
                 )}
                 {!category.active && (
                   <span className="absolute inset-x-1 bottom-1 rounded-md bg-slate-900/75 px-1 py-0.5 text-[7px] font-black uppercase tracking-wide text-white">
