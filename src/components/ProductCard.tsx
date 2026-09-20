@@ -79,7 +79,7 @@ export const ProductCard = memo(function ProductCard({
         className,
       )}
     >
-      <div className="relative bg-white">
+      <div className="relative bg-image-stage">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
