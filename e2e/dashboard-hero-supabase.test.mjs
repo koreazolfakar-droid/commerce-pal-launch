@@ -14,6 +14,10 @@ const data = await readFile(
 const cms = await readFile(new URL("../src/lib/cms.ts", import.meta.url), "utf8");
 const cmsQuery = await readFile(new URL("../src/lib/cmsQuery.ts", import.meta.url), "utf8");
 const hero = await readFile(new URL("../src/components/HomeHero.tsx", import.meta.url), "utf8");
+const heroScene = await readFile(new URL("../src/components/HeroScene.tsx", import.meta.url), "utf8");
+const heroEditor = await readFile(new URL("../src/dashboard/components/HeroVisualEditor.tsx", import.meta.url), "utf8");
+const heroDesign = await readFile(new URL("../src/lib/heroDesign.ts", import.meta.url), "utf8");
+const heroCss = await readFile(new URL("../src/components/hero-scene.css", import.meta.url), "utf8");
 const home = await readFile(new URL("../src/routes/index.tsx", import.meta.url), "utf8");
 const migration = await readFile(
   new URL("../supabase/migrations/20260918230000_harden_cms_hero_targets.sql", import.meta.url),
@@ -73,6 +77,20 @@ test("hero dashboard supports real Supabase CRUD, storage upload and media libra
   assert.match(page, /Glass/);
   assert.match(data, /secondaryButtonStyle/);
   assert.match(data, /contentTheme/);
+});
+
+
+test("hero editor keeps device-specific image focus and preserves drag layout", () => {
+  assert.match(heroDesign, /desktopFocalPoint\?: HeroPoint/);
+  assert.match(heroDesign, /mobileFocalPoint\?: HeroPoint/);
+  assert.match(heroEditor, /mode === "mobile" \? "mobileFocalPoint" : "desktopFocalPoint"/);
+  assert.match(heroEditor, /Image focus X/);
+  assert.match(heroEditor, /Image focus Y/);
+  assert.match(heroScene, /desktopFocal = config\.desktopFocalPoint/);
+  assert.match(heroScene, /mobileFocal = config\.mobileFocalPoint/);
+  assert.match(heroCss, /--hero-mobile-focal-x/);
+  assert.match(heroCss, /--hero-desktop-focal-x/);
+  assert.match(page, /visualConfig: \{ \.\.\.current\.visualConfig, \.\.\.preset\.patch\.visualConfig \}/);
 });
 
 test("hero CTA uses validated product, collection or safe URL targets", () => {
