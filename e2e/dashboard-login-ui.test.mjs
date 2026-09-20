@@ -71,17 +71,37 @@ test("login provides accessible inline errors and loading states", () => {
 });
 
 test("login UI clears sensitive password state when changing authentication flows", () => {
-  assert.match(
-    login,
-    /setPassword\("")[\s\S]+setShowPassword\(false\)[\s\S]+setView\("forgot"\)/,
+  const forgotStart = login.indexOf("const openForgotPassword");
+  const forgotPasswordClear = login.indexOf('setPassword("");', forgotStart);
+  const forgotVisibilityClear = login.indexOf("setShowPassword(false);", forgotPasswordClear);
+  const forgotView = login.indexOf('setView("forgot");', forgotVisibilityClear);
+  assert.ok(
+    forgotStart >= 0 &&
+      forgotPasswordClear > forgotStart &&
+      forgotVisibilityClear > forgotPasswordClear &&
+      forgotView > forgotVisibilityClear,
+    "forgot-password flow must clear password state before changing views",
   );
-  assert.match(
-    login,
-    /const backToSignIn = \(\) => \{[\s\S]+setPassword\("")[\s\S]+setNewPassword\("")[\s\S]+setConfirmPassword\("")/,
+
+  const backStart = login.indexOf("const backToSignIn");
+  const backPassword = login.indexOf('setPassword("");', backStart);
+  const backNewPassword = login.indexOf('setNewPassword("");', backPassword);
+  const backConfirm = login.indexOf('setConfirmPassword("");', backNewPassword);
+  assert.ok(
+    backStart >= 0 && backPassword > backStart && backNewPassword > backPassword && backConfirm > backNewPassword,
+    "back-to-sign-in must clear all password fields",
   );
-  assert.match(
-    login,
-    /const handleMfaCancel = useCallback\(\(\) => \{[\s\S]+setPassword\("")[\s\S]+setNewPassword\("")[\s\S]+setConfirmPassword\("")/,
+
+  const cancelStart = login.indexOf("const handleMfaCancel");
+  const cancelPassword = login.indexOf('setPassword("");', cancelStart);
+  const cancelNewPassword = login.indexOf('setNewPassword("");', cancelPassword);
+  const cancelConfirm = login.indexOf('setConfirmPassword("");', cancelNewPassword);
+  assert.ok(
+    cancelStart >= 0 &&
+      cancelPassword > cancelStart &&
+      cancelNewPassword > cancelPassword &&
+      cancelConfirm > cancelNewPassword,
+    "MFA cancellation must clear all password fields",
   );
 });
 
