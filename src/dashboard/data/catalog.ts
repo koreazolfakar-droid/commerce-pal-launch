@@ -593,8 +593,8 @@ export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null
     totpFactors.find((factor) => !factor.status) ??
     null;
 
-  const currentLevel = aalResult.data?.currentLevel ?? null;
-  const nextLevel = aalResult.data?.nextLevel ?? null;
+  const currentLevel = (aalResult.data?.currentLevel ?? null) as "aal1" | "aal2" | null;
+  const nextLevel = (aalResult.data?.nextLevel ?? null) as "aal1" | "aal2" | null;
 
   return {
     role: roleRow.role,
