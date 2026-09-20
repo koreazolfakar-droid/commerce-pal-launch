@@ -476,12 +476,12 @@ export default function CategoryForm({
           </section>
         </div>
 
-        <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-6">
+        <div className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:flex sm:justify-end sm:px-6">
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50 sm:w-auto"
           >
             Cancel
           </button>
@@ -489,7 +489,7 @@ export default function CategoryForm({
             type="button"
             onClick={() => void submit()}
             disabled={saving}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-10 w-full min-w-32 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
             {saving
