@@ -240,6 +240,33 @@ export type InventoryCategoryOptions = {
   hasUncategorized: boolean;
 };
 
+type InventoryPageRow = {
+  product_id: string;
+  variant_id: string;
+  product_name: string;
+  variant_title: string | null;
+  brand: string | null;
+  category_id: string | null;
+  category: string | null;
+  sku: string | null;
+  barcode: string | null;
+  image: string | null;
+  stock: number;
+  product_stock: number;
+  track_inventory: boolean;
+  variant_active: boolean;
+  product_status: string;
+  options: Json;
+  total_count: number;
+};
+
+type InventorySummaryRow = {
+  total_units: number | null;
+  variant_count: number | null;
+  low_count: number | null;
+  out_count: number | null;
+};
+
 export async function loadInventoryPage(input: {
   search?: string;
   category?: string;
@@ -256,7 +283,15 @@ export async function loadInventoryPage(input: {
   const categoryId =
     category !== "all" && category !== "uncategorized" ? category : undefined;
 
-  const { data, error } = await supabase.rpc("dashboard_inventory_page", {
+  // The generated Supabase types lag behind the dashboard pagination functions,
+  // so these two RPCs are called through a loosely typed view of the client and
+  // narrowed to the row shapes the SQL functions return.
+  const rpc = supabase.rpc as unknown as (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: InventoryPageRow[] | null; error: unknown }>;
+
+  const { data, error } = await rpc("dashboard_inventory_page", {
     p_search: input.search?.trim() || undefined,
     p_category_id: categoryId,
     p_uncategorized: category === "uncategorized",
@@ -266,7 +301,7 @@ export async function loadInventoryPage(input: {
     p_page_size: pageSize,
   });
 
-  throwIfError(error, "Loading inventory page failed");
+  throwIfError(error as never, "Loading inventory page failed");
 
   const rows = data ?? [];
   return {
@@ -274,13 +309,13 @@ export async function loadInventoryPage(input: {
       productId: row.product_id,
       variantId: row.variant_id,
       productName: row.product_name,
-      variantTitle: row.variant_title,
-      brand: row.brand,
+      variantTitle: row.variant_title ?? "",
+      brand: row.brand ?? "",
       categoryId: row.category_id,
-      category: row.category,
-      sku: row.sku,
-      barcode: row.barcode,
-      image: row.image,
+      category: row.category ?? "",
+      sku: row.sku ?? "",
+      barcode: row.barcode ?? "",
+      image: row.image ?? "",
       stock: row.stock,
       productStock: row.product_stock,
       trackInventory: row.track_inventory,
@@ -300,11 +335,16 @@ export async function loadInventorySummary(
   threshold = 10,
 ): Promise<InventorySummary> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("dashboard_inventory_summary", {
+  const rpc = supabase.rpc as unknown as (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: InventorySummaryRow[] | null; error: unknown }>;
+
+  const { data, error } = await rpc("dashboard_inventory_summary", {
     p_threshold: Math.max(0, Math.trunc(threshold)),
   });
 
-  throwIfError(error, "Loading inventory summary failed");
+  throwIfError(error as never, "Loading inventory summary failed");
   const summary = data?.[0];
 
   return {

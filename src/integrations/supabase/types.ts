@@ -1775,47 +1775,6 @@ export type Database = {
           new_stock: number
         }[]
       }
-      dashboard_inventory_page: {
-        Args: {
-          p_category_id?: string
-          p_only_low?: boolean
-          p_page?: number
-          p_page_size?: number
-          p_search?: string
-          p_threshold?: number
-          p_uncategorized?: boolean
-        }
-        Returns: {
-          barcode: string
-          brand: string
-          category: string
-          category_id: string | null
-          image: string
-          options: Json
-          product_id: string
-          product_name: string
-          product_status: string
-          product_stock: number
-          sku: string
-          stock: number
-          total_count: number
-          track_inventory: boolean
-          variant_active: boolean
-          variant_id: string
-          variant_title: string
-        }[]
-      }
-      dashboard_inventory_summary: {
-        Args: {
-          p_threshold?: number
-        }
-        Returns: {
-          low_count: number
-          out_count: number
-          total_units: number
-          variant_count: number
-        }[]
-      }
       approve_store_purchase_order: {
         Args: { p_purchase_order_id: string }
         Returns: string

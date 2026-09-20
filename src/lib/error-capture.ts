@@ -49,11 +49,37 @@ function isErrorLike(value: unknown): value is Error {
   return value instanceof Error;
 }
 
+// A visitor navigating away mid-response makes Node destroy the socket and emit
+// "aborted" / ECONNRESET. That is normal traffic, not an application fault, so it
+// must never be recorded as the last error (it would mask the real one) nor logged.
+const CLIENT_DISCONNECT_CODES = new Set([
+  "ECONNRESET",
+  "ECONNABORTED",
+  "EPIPE",
+  "ERR_STREAM_PREMATURE_CLOSE",
+]);
+
+function isClientDisconnect(value: unknown): boolean {
+  let current: unknown = value;
+  for (let depth = 0; depth < CAUSE_DEPTH_LIMIT && current != null; depth++) {
+    if (!(current instanceof Error)) break;
+    const code = (current as { code?: unknown }).code;
+    if (typeof code === "string" && CLIENT_DISCONNECT_CODES.has(code)) return true;
+    if (current.message === "aborted" || current.message === "The operation was aborted.") {
+      return true;
+    }
+    if (current.name === "AbortError") return true;
+    current = current.cause;
+  }
+  return false;
+}
+
 // Wrap console.error so errors logged by any layer — including h3's internal
 // unhandled-error logging, which this file cannot hook directly — are both
 // recorded for consumeLastCapturedError and expanded before serialization.
 const originalConsoleError = console.error.bind(console);
 console.error = (...args: unknown[]) => {
+  if (args.some((arg) => isClientDisconnect(arg))) return;
   const expanded = args.map((arg) => {
     if (!isErrorLike(arg)) return arg;
     record(arg);
@@ -63,10 +89,14 @@ console.error = (...args: unknown[]) => {
 };
 
 if (typeof globalThis.addEventListener === "function") {
-  globalThis.addEventListener("error", (event) => record((event as ErrorEvent).error ?? event));
-  globalThis.addEventListener("unhandledrejection", (event) =>
-    record((event as PromiseRejectionEvent).reason),
-  );
+  globalThis.addEventListener("error", (event) => {
+    const error = (event as ErrorEvent).error ?? event;
+    if (!isClientDisconnect(error)) record(error);
+  });
+  globalThis.addEventListener("unhandledrejection", (event) => {
+    const reason = (event as PromiseRejectionEvent).reason;
+    if (!isClientDisconnect(reason)) record(reason);
+  });
 }
 
 export function consumeLastCapturedError(): unknown {
