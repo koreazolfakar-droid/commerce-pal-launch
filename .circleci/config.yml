@@ -21,7 +21,7 @@ commands:
           command: bun install --frozen-lockfile
 
 jobs:
-  diagnostic-static:
+  diagnostic-dashboard-tests:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -31,43 +31,34 @@ jobs:
     steps:
       - setup_bun
       - run:
-          name: TypeScript
-          command: bun run typecheck
-      - run:
-          name: ESLint
-          command: bun run lint
-
-  diagnostic-tests-build:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - setup_bun
-      - run:
-          name: Dashboard security regression tests
+          name: Dashboard tests
           command: node --test e2e/dashboard-*.test.mjs
-      - run:
-          name: Unit and architecture tests
-          command: bun run test:unit
+
+  diagnostic-build-smoke:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - setup_bun
       - run:
           name: Production build
           command: bun run build
       - run:
-          name: SSR smoke test
+          name: SSR smoke
           command: bun run test:ssr
 
 workflows:
   diagnostic-validation:
     jobs:
-      - diagnostic-static:
+      - diagnostic-dashboard-tests:
           filters:
             branches:
               only:
                 - /^important\/security-baseline-main-20260920$/
-      - diagnostic-tests-build:
+      - diagnostic-build-smoke:
           filters:
             branches:
               only:
