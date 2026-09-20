@@ -1383,7 +1383,9 @@ export type DashboardProductImage = {
 
 const PRODUCT_IMAGE_BUCKET = "cms-media";
 const PRODUCT_IMAGE_PREFIX = "products";
+const PRODUCT_RESPONSIVE_WIDTHS = [160, 240, 320, 480, 640, 828, 960, 1280, 1600, 1920] as const;
 const MAX_PRODUCT_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_PRODUCT_MASTER_BYTES = 20 * 1024 * 1024;
 
 function mapProductImage(row: ImageRow): DashboardProductImage {
   return {
@@ -1412,10 +1414,43 @@ export async function listDashboardProductImages(productId: string): Promise<Das
 
 function productStoragePathFromUrl(url: string) {
   const marker = `/storage/v1/object/public/${PRODUCT_IMAGE_BUCKET}/`;
-  const index = url.indexOf(marker);
-  if (index < 0) return null;
-  const path = decodeURIComponent(url.slice(index + marker.length));
-  return path.startsWith(`${PRODUCT_IMAGE_PREFIX}/`) ? path : null;
+  try {
+    const parsed = new URL(url);
+    const index = parsed.pathname.indexOf(marker);
+    if (index < 0) return null;
+    const path = decodeURIComponent(parsed.pathname.slice(index + marker.length));
+    return path.startsWith(`${PRODUCT_IMAGE_PREFIX}/`) ? path : null;
+  } catch {
+    return null;
+  }
+}
+
+function productResponsiveVariantPath(objectPath: string, width: number) {
+  const slash = objectPath.lastIndexOf("/");
+  const dot = objectPath.lastIndexOf(".");
+  const stem = dot > slash ? objectPath.slice(0, dot) : objectPath;
+  return `_responsive/v1/${stem}/${width}.webp`;
+}
+
+function productMasterPathFromDisplayPath(objectPath: string) {
+  return objectPath.endsWith("/display.webp")
+    ? `${objectPath.slice(0, -"/display.webp".length)}/master.original`
+    : null;
+}
+
+function productOwnedStoragePaths(url: string) {
+  const objectPath = productStoragePathFromUrl(url);
+  if (!objectPath) return [];
+
+  return [
+    objectPath,
+    ...(productMasterPathFromDisplayPath(objectPath)
+      ? [productMasterPathFromDisplayPath(objectPath)!]
+      : []),
+    ...PRODUCT_RESPONSIVE_WIDTHS.map((width) =>
+      productResponsiveVariantPath(objectPath, width),
+    ),
+  ];
 }
 
 async function uploadProductImageFile(
@@ -1423,6 +1458,10 @@ async function uploadProductImageFile(
   source: File,
   resolution: ProductImageResolution,
 ) {
+  if (source.size > MAX_PRODUCT_MASTER_BYTES) {
+    throw new Error("Original product image must be 20 MB or smaller.");
+  }
+
   const conversion = await convertProductImageToWebp(source, resolution);
   const file = conversion.file;
   if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
@@ -1433,24 +1472,46 @@ async function uploadProductImageFile(
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const objectPath = `${PRODUCT_IMAGE_PREFIX}/${productId}/${unique}.webp`;
+  const folder = `${PRODUCT_IMAGE_PREFIX}/${productId}/${unique}`;
+  const masterPath = `${folder}/master.original`;
+  const objectPath = `${folder}/display.webp`;
 
-  const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).upload(objectPath, file, {
-    cacheControl: "31536000",
-    upsert: false,
-    contentType: "image/webp",
-  });
-  throwIfError(error, "Uploading product image failed");
+  const { error: masterError } = await supabase.storage
+    .from(PRODUCT_IMAGE_BUCKET)
+    .upload(masterPath, source, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: source.type || "application/octet-stream",
+    });
+  throwIfError(masterError, "Preserving original product image failed");
+
+  const { error: displayError } = await supabase.storage
+    .from(PRODUCT_IMAGE_BUCKET)
+    .upload(objectPath, file, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: "image/webp",
+    });
+
+  if (displayError) {
+    await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([masterPath]).catch(() => undefined);
+    throwIfError(displayError, "Uploading product image failed");
+  }
 
   const { data } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(objectPath);
-  return { url: data.publicUrl, objectPath, conversion };
+  return { url: data.publicUrl, objectPath, masterPath, conversion };
+}
+
+async function cleanupNewProductImageFiles(paths: string[]) {
+  if (!paths.length) return;
+  await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove(paths).catch(() => undefined);
 }
 
 async function removeOwnedProductImageFile(url: string) {
-  const objectPath = productStoragePathFromUrl(url);
-  if (!objectPath) return;
-  const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([objectPath]);
-  throwIfError(error, "Deleting product image file failed");
+  const paths = productOwnedStoragePaths(url);
+  if (!paths.length) return;
+  const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove(paths);
+  throwIfError(error, "Deleting product image files failed");
 }
 
 export async function uploadDashboardProductImage(
@@ -1476,7 +1537,7 @@ export async function uploadDashboardProductImage(
     });
     throwIfError(error, "Saving product image failed");
   } catch (error) {
-    await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([uploaded.objectPath]);
+    await cleanupNewProductImageFiles([uploaded.objectPath, uploaded.masterPath]);
     throw error;
   }
 
@@ -1506,7 +1567,7 @@ export async function replaceDashboardProductImage(
       .eq("product_id", image.productId);
     throwIfError(error, "Replacing product image failed");
   } catch (error) {
-    await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([uploaded.objectPath]);
+    await cleanupNewProductImageFiles([uploaded.objectPath, uploaded.masterPath]);
     throw error;
   }
 
