@@ -4,16 +4,16 @@ import { readFile } from "node:fs/promises";
 
 const workflowPath = new URL("../.github/workflows/security-gate.yml", import.meta.url);
 
-test("Security Gate runs automatically before main changes are accepted", async () => {
+test("Deep GitHub security scan stays manual while CircleCI is the automatic gate", async () => {
   const workflow = await readFile(workflowPath, "utf8");
 
-  assert.match(workflow, /pull_request:\n\s+branches:\n\s+- main/);
-  assert.match(workflow, /push:\n\s+branches:\n\s+- main/);
   assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /\npull_request:/);
+  assert.doesNotMatch(workflow, /\npush:/);
   assert.match(workflow, /permissions:\n\s+contents: read/);
 });
 
-test("Security Gate covers code, secrets, dependencies and existing regression checks", async () => {
+test("Deep Security Scan covers code, secrets, dependencies and regression checks", async () => {
   const workflow = await readFile(workflowPath, "utf8");
 
   assert.match(workflow, /semgrep==1\.177\.0/);
@@ -27,10 +27,10 @@ test("Security Gate covers code, secrets, dependencies and existing regression c
   assert.match(workflow, /bun run test:ssr/);
 });
 
-test("Security Gate has a single required aggregator job", async () => {
+test("Deep Security Scan has one aggregator job", async () => {
   const workflow = await readFile(workflowPath, "utf8");
 
-  assert.match(workflow, /security-gate:\n\s+name: Security Gate/);
+  assert.match(workflow, /deep-security-scan:\n\s+name: Deep Security Scan/);
   assert.match(workflow, /needs:\n\s+- quality\n\s+- secrets\n\s+- sast\n\s+- supply-chain/);
-  assert.match(workflow, /Security Gate blocked this change/);
+  assert.match(workflow, /Deep Security Scan blocked this run/);
 });

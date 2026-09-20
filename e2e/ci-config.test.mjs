@@ -8,6 +8,8 @@ test("repository exposes one comprehensive validation command", async () => {
   const pkg = JSON.parse(await read("package.json"));
   assert.match(pkg.scripts.typecheck, /routes:generate/);
   assert.match(pkg.scripts.typecheck, /tsc --noEmit/);
+  assert.match(pkg.scripts["security:scan"], /security-gate\.mjs/);
+  assert.match(pkg.scripts["security:scan"], /bun audit --audit-level=high/);
   for (const step of ["typecheck", "lint", "test:unit", "build", "test:ssr"]) {
     assert.match(pkg.scripts.check, new RegExp(step));
   }
@@ -25,8 +27,16 @@ test("GitHub Storefront CI is manual-only", async () => {
   assert.match(workflow, /bun run build/);
 });
 
-test("CircleCI validates only important update branches", async () => {
+test("CircleCI runs separate source and dependency security gates on every pipeline", async () => {
   const circle = await read(".circleci/config.yml");
+
+  assert.match(circle, /security-source:/);
+  assert.match(circle, /security-dependencies:/);
+  assert.match(circle, /node scripts\/security-gate\.mjs/);
+  assert.match(circle, /bun audit --audit-level=high/);
+  assert.match(circle, /- security-source/);
+  assert.match(circle, /- security-dependencies/);
+
   assert.match(circle, /\/\^important\\\/\.\*\//);
   assert.match(circle, /bun install --frozen-lockfile/);
   assert.match(circle, /bun run typecheck/);
@@ -34,4 +44,20 @@ test("CircleCI validates only important update branches", async () => {
   assert.match(circle, /bun run test:unit/);
   assert.match(circle, /bun run build/);
   assert.match(circle, /bun run test:ssr/);
+});
+
+test("native security scanner protects secrets and dangerous production primitives", async () => {
+  const scanner = await read("scripts/security-gate.mjs");
+  for (const marker of [
+    "PRIVATE KEY",
+    "AKIA",
+    "github_pat_",
+    "sk_live_",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "eval()",
+    "new Function()",
+    "child_process",
+  ]) {
+    assert.ok(scanner.includes(marker), `missing security marker: ${marker}`);
+  }
 });

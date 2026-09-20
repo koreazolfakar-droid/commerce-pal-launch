@@ -1,6 +1,45 @@
 version: 2.1
 
+commands:
+  install-bun:
+    steps:
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+            bun --version
+
 jobs:
+  security-source:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: High-confidence source and secret scan
+          command: node scripts/security-gate.mjs
+
+  security-dependencies:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: High and critical dependency audit
+          command: |
+            source "$BASH_ENV"
+            bun audit --audit-level=high
+
   storefront-ci:
     docker:
       - image: cimg/node:lts
@@ -16,14 +55,7 @@ jobs:
             - bun-deps-v1-{{ checksum "bun.lock" }}
             - bun-deps-v1-
 
-      - run:
-          name: Install Bun
-          command: |
-            curl -fsSL https://bun.sh/install | bash
-            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
-            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
-            source "$BASH_ENV"
-            bun --version
+      - install-bun
 
       - run:
           name: Install dependencies
@@ -59,8 +91,10 @@ jobs:
           command: bun run test:ssr
 
 workflows:
-  storefront-validation:
+  security-and-storefront-validation:
     jobs:
+      - security-source
+      - security-dependencies
       - storefront-ci:
           filters:
             branches:
