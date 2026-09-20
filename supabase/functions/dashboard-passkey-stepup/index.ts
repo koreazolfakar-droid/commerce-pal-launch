@@ -80,12 +80,12 @@ function latestPasskeyUse(data: unknown): string | null {
   return latest > 0 ? new Date(latest).toISOString() : null;
 }
 
-function hasRecentPasswordAmr(claims: Record<string, unknown>, now: number) {
+function hasRecentPrimaryAmr(claims: Record<string, unknown>, now: number) {
   const amr = Array.isArray(claims.amr) ? claims.amr : [];
   return amr.some((entry) => {
     if (!entry || typeof entry !== "object") return false;
     const item = entry as Record<string, unknown>;
-    if (item.method !== "password") return false;
+    if (item.method !== "password" && item.method !== "recovery") return false;
     const timestamp =
       typeof item.timestamp === "number"
         ? item.timestamp * 1000
@@ -211,8 +211,8 @@ Deno.serve(async (req) => {
   }
 
   if (action === "begin") {
-    if (!hasRecentPasswordAmr(claims, now)) {
-      return json(req, { error: "recent_password_required" }, 403);
+    if (!hasRecentPrimaryAmr(claims, now)) {
+      return json(req, { error: "recent_primary_auth_required" }, 403);
     }
 
     const { data: passkeys, error: passkeyError } =
