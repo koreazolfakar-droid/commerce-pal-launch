@@ -216,6 +216,125 @@ export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
     .filter((row): row is InventoryRow => Boolean(row));
 }
 
+export type InventoryPage = {
+  items: InventoryRow[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};
+
+export type InventorySummary = {
+  totalUnits: number;
+  variantCount: number;
+  lowCount: number;
+  outCount: number;
+};
+
+export type InventoryCategoryOption = {
+  id: string;
+  name: string;
+};
+
+export type InventoryCategoryOptions = {
+  items: InventoryCategoryOption[];
+  hasUncategorized: boolean;
+};
+
+export async function loadInventoryPage(input: {
+  search?: string;
+  category?: string;
+  threshold?: number;
+  onlyLow?: boolean;
+  page?: number;
+  pageSize?: number;
+}): Promise<InventoryPage> {
+  await requireDashboardStaff();
+
+  const page = Math.max(1, Math.trunc(input.page ?? 1));
+  const pageSize = Math.min(100, Math.max(1, Math.trunc(input.pageSize ?? 20)));
+  const category = input.category ?? "all";
+  const categoryId =
+    category !== "all" && category !== "uncategorized" ? category : undefined;
+
+  const { data, error } = await supabase.rpc("dashboard_inventory_page", {
+    p_search: input.search?.trim() || undefined,
+    p_category_id: categoryId,
+    p_uncategorized: category === "uncategorized",
+    p_only_low: Boolean(input.onlyLow),
+    p_threshold: Math.max(0, Math.trunc(input.threshold ?? 10)),
+    p_page: page,
+    p_page_size: pageSize,
+  });
+
+  throwIfError(error, "Loading inventory page failed");
+
+  const rows = data ?? [];
+  return {
+    items: rows.map((row) => ({
+      productId: row.product_id,
+      variantId: row.variant_id,
+      productName: row.product_name,
+      variantTitle: row.variant_title,
+      brand: row.brand,
+      categoryId: row.category_id,
+      category: row.category,
+      sku: row.sku,
+      barcode: row.barcode,
+      image: row.image,
+      stock: row.stock,
+      productStock: row.product_stock,
+      trackInventory: row.track_inventory,
+      variantActive: row.variant_active,
+      productStatus: row.product_status as ProductRow["status"],
+      optionsLabel: optionsLabel(row.options),
+      lastMovementAt: null,
+      lastMovementDelta: null,
+    })),
+    page,
+    pageSize,
+    totalCount: Number(rows[0]?.total_count ?? 0),
+  };
+}
+
+export async function loadInventorySummary(
+  threshold = 10,
+): Promise<InventorySummary> {
+  await requireDashboardStaff();
+  const { data, error } = await supabase.rpc("dashboard_inventory_summary", {
+    p_threshold: Math.max(0, Math.trunc(threshold)),
+  });
+
+  throwIfError(error, "Loading inventory summary failed");
+  const summary = data?.[0];
+
+  return {
+    totalUnits: Number(summary?.total_units ?? 0),
+    variantCount: Number(summary?.variant_count ?? 0),
+    lowCount: Number(summary?.low_count ?? 0),
+    outCount: Number(summary?.out_count ?? 0),
+  };
+}
+
+export async function loadInventoryCategoryOptions(): Promise<InventoryCategoryOptions> {
+  await requireDashboardStaff();
+
+  const [categoryResult, uncategorizedResult] = await Promise.all([
+    supabase.from("store_categories").select("id,name").order("name", { ascending: true }),
+    supabase.from("store_products").select("id").is("category_id", null).limit(1),
+  ]);
+
+  throwIfError(categoryResult.error, "Loading inventory categories failed");
+  throwIfError(uncategorizedResult.error, "Loading uncategorized inventory state failed");
+
+  return {
+    items: (categoryResult.data ?? []).map((item) => ({
+      id: item.id,
+      name: item.name,
+    })),
+    hasUncategorized: Boolean(uncategorizedResult.data?.length),
+  };
+}
+
 export async function loadInventoryLatestMovements(
   variantIds?: string[],
   limit = 1000,
