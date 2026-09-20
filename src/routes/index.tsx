@@ -59,8 +59,8 @@ const LazyBrandShowcase = lazy(() =>
 );
 
 const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
-const HOME_SECONDARY_IDLE_TIMEOUT_MS = 1400;
-const HOME_SECONDARY_FALLBACK_DELAY_MS = 350;
+const HOME_SECONDARY_IDLE_TIMEOUT_MS = 450;
+const HOME_SECONDARY_FALLBACK_DELAY_MS = 120;
 
 type IdleCapableWindow = Window & {
   requestIdleCallback?: (

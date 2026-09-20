@@ -21,6 +21,8 @@ test("homepage keeps critical UI small and defers secondary work", async () => {
   assert.match(home, /\.\.\.collectionsQueryOptions\(\),\s*enabled: deferredWorkReady/s);
   assert.doesNotMatch(home, /<HomeHero[\s\S]*?products=\{products\}/);
   assert.match(home, /deferredWorkReady/);
+  assert.match(home, /HOME_SECONDARY_IDLE_TIMEOUT_MS\s*=\s*450/);
+  assert.match(home, /HOME_SECONDARY_FALLBACK_DELAY_MS\s*=\s*120/);
 
   assert.match(categories, /data-testid="category-section"/);
   assert.match(categories, /loading="lazy"/);
