@@ -361,7 +361,6 @@ async function fetchSnapshot(): Promise<NativeSnapshot> {
       value,
     };
     return value;
-  }
 }
 
 function startSnapshotRefresh(): Promise<NativeSnapshot> {
