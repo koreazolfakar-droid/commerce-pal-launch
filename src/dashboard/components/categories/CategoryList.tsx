@@ -95,7 +95,7 @@ function CategoryRow({
             )}
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400 sm:text-[9px]">
-            <span className="max-w-[150px] truncate">/{category.slug}</span>
+            <span className="max-w-[140px] truncate">/{category.slug}</span>
             <span>•</span>
             <span>{productCount} products</span>
             <span
@@ -121,7 +121,7 @@ function CategoryRow({
                 onMoveUp();
               }}
               aria-label={"Move " + category.name + " up"}
-              className="grid size-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 disabled:cursor-not-allowed disabled:opacity-35"
+              className="grid size-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
             >
               <ChevronUp className="size-3.5" />
             </button>
@@ -133,7 +133,7 @@ function CategoryRow({
                 onMoveDown();
               }}
               aria-label={"Move " + category.name + " down"}
-              className="grid size-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 disabled:cursor-not-allowed disabled:opacity-35"
+              className="grid size-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
             >
               <ChevronDown className="size-3.5" />
             </button>
