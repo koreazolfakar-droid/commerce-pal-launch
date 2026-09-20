@@ -2,6 +2,9 @@ name: Storefront CI
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - perf/home-first-load-20260920
 
 permissions:
   contents: read
