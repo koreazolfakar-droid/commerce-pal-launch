@@ -96,6 +96,47 @@ function hasRecentPasswordAmr(claims: Record<string, unknown>, now: number) {
   });
 }
 
+function hasFreshPasskeyAmr(
+  claims: Record<string, unknown>,
+  ticketCreatedMs: number,
+  now: number,
+) {
+  const amr = Array.isArray(claims.amr) ? claims.amr : [];
+  const issuedAtMs =
+    typeof claims.iat === "number"
+      ? claims.iat * 1000
+      : typeof claims.iat === "string"
+        ? Number(claims.iat) * 1000
+        : Number.NaN;
+
+  return amr.some((entry) => {
+    let method = "";
+    let timestamp = Number.NaN;
+
+    if (entry === "passkey") {
+      method = "passkey";
+      timestamp = issuedAtMs;
+    } else if (entry && typeof entry === "object") {
+      const item = entry as Record<string, unknown>;
+      method = typeof item.method === "string" ? item.method : "";
+      timestamp =
+        typeof item.timestamp === "number"
+          ? item.timestamp * 1000
+          : typeof item.timestamp === "string"
+            ? Number(item.timestamp) * 1000
+            : issuedAtMs;
+    }
+
+    return (
+      method === "passkey" &&
+      Number.isFinite(timestamp) &&
+      timestamp >= ticketCreatedMs - 1500 &&
+      now - timestamp >= 0 &&
+      now - timestamp <= PASSWORD_STAGE_WINDOW_MS
+    );
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
   if (req.method !== "POST") return json(req, { error: "method_not_allowed" }, 405);
@@ -252,7 +293,12 @@ Deno.serve(async (req) => {
     }
 
     const ticketExpiry = new Date(ticket.expires_at).getTime();
-    if (!Number.isFinite(ticketExpiry) || ticketExpiry <= now) {
+    const ticketCreatedMs = new Date(ticket.created_at).getTime();
+    if (
+      !Number.isFinite(ticketExpiry) ||
+      !Number.isFinite(ticketCreatedMs) ||
+      ticketExpiry <= now
+    ) {
       return json(req, { error: "ticket_expired" }, 403);
     }
 
@@ -264,6 +310,15 @@ Deno.serve(async (req) => {
       return json(req, { error: "passkey_identity_mismatch" }, 403);
     }
 
+    const passkeyClaims = decodeJwtPayload(passkeyAccessToken);
+    if (
+      !passkeyClaims ||
+      passkeyClaims.sub !== mainUser.id ||
+      !hasFreshPasskeyAmr(passkeyClaims, ticketCreatedMs, now)
+    ) {
+      return json(req, { error: "fresh_passkey_token_required" }, 403);
+    }
+
     const { data: passkeys, error: passkeyError } =
       await admin.auth.admin.passkey.listPasskeys({ userId: mainUser.id });
     if (passkeyError) return json(req, { error: "passkey_lookup_failed" }, 503);
@@ -273,7 +328,6 @@ Deno.serve(async (req) => {
     const baselineMs = ticket.baseline_last_used_at
       ? new Date(ticket.baseline_last_used_at).getTime()
       : 0;
-    const ticketCreatedMs = new Date(ticket.created_at).getTime();
 
     if (
       !latestUsedMs ||
