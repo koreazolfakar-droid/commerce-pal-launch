@@ -36,9 +36,12 @@ export function responsiveImageUrl(url: string | undefined, width: number): stri
   const source = responsiveSource(url);
   if (!source) return undefined;
 
-  const normalizedWidth = RESPONSIVE_PRODUCT_WIDTHS.reduce((best, candidate) => {
-    return Math.abs(candidate - width) < Math.abs(best - width) ? candidate : best;
-  }, RESPONSIVE_PRODUCT_WIDTHS[0]);
+  let normalizedWidth: number = RESPONSIVE_PRODUCT_WIDTHS[0];
+  for (const candidate of RESPONSIVE_PRODUCT_WIDTHS) {
+    if (Math.abs(candidate - width) < Math.abs(normalizedWidth - width)) {
+      normalizedWidth = candidate;
+    }
+  }
 
   const params = new URLSearchParams({
     path: source.path,
