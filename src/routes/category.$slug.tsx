@@ -51,7 +51,6 @@ export const Route = createFileRoute("/category/$slug")({
 
     if (managedCategory) {
       const products = productsInManagedCategory(catalog, managedCategory.name);
-      if (!products.length) throw notFound();
 
       void context.queryClient.prefetchQuery(collectionsQueryOptions());
       return {
