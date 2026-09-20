@@ -63,7 +63,8 @@ test("login provides accessible inline errors and loading states", () => {
   assert.match(login, /Loader2/);
   assert.match(login, /disabled=\{loading\}/);
   assert.match(login, /autoComplete="username"/);
-  assert.match(login, /autoComplete="current-password"/);
+  assert.match(login, /autoComplete = "current-password"/);
+  assert.match(login, /autoComplete=\{autoComplete\}/);
   assert.match(login, /spellCheck=\{false\}/);
   assert.match(login, /getModifierState\("CapsLock"\)/);
   assert.match(login, /Caps Lock is on\. Check your password before continuing\./);
