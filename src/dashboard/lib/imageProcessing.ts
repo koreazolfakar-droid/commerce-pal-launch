@@ -15,10 +15,10 @@ const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 const MAX_CANVAS_EDGE = 8192;
 
 export const IMAGE_COMPRESSION_PRESETS = [
-  { value: "light", label: "Light · 92%", quality: 0.92, description: "Best visual quality, larger file." },
-  { value: "balanced", label: "Balanced · 86%", quality: 0.86, description: "Recommended for most storefront images." },
-  { value: "strong", label: "Strong · 76%", quality: 0.76, description: "Smaller files with modest quality loss." },
-  { value: "maximum", label: "Maximum · 65%", quality: 0.65, description: "Smallest file for non-critical artwork." },
+  { value: "light", label: "Light compression · 92% quality", quality: 0.92, description: "Best visual quality, larger file." },
+  { value: "balanced", label: "Balanced · 86% quality", quality: 0.86, description: "Recommended for most storefront images." },
+  { value: "strong", label: "Strong compression · 76% quality", quality: 0.76, description: "Smaller files with modest quality loss." },
+  { value: "maximum", label: "Maximum compression · 65% quality", quality: 0.65, description: "Smallest file for non-critical artwork." },
 ] as const;
 
 export type ImageCompressionPreset = (typeof IMAGE_COMPRESSION_PRESETS)[number]["value"];
