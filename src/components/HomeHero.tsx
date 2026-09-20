@@ -18,6 +18,7 @@ type HomeHeroCollection =
   | undefined;
 
 const HERO_ROTATION_MS = 8000;
+const HERO_AUTO_ROTATION_ENABLED = false;
 const SHOPIFY_CDN = /cdn\.shopify\.com|shopifycdn\.(net|com)/;
 const HERO_IMAGE_WIDTHS = [640, 960, 1280, 1600, 1920, 2400, 2880] as const;
 
@@ -95,7 +96,7 @@ export function HomeHero({
   }, [slideCount]);
 
   useEffect(() => {
-    if (slideCount <= 1 || paused || interacting) return;
+    if (!HERO_AUTO_ROTATION_ENABLED || slideCount <= 1 || paused || interacting) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const timer = window.setInterval(() => {

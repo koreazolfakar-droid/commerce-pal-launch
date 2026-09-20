@@ -11,6 +11,7 @@ import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 
 const COMPACT_MARKS = new Set(["apple", "xiaomi"]);
+const AUTO_SCROLL_ENABLED = false;
 const AUTO_SCROLL_PX_PER_SECOND = 24;
 const AUTO_SCROLL_START_DELAY_MS = 5000;
 const ACTIVE_MEASURE_INTERVAL_MS = 160;
@@ -229,6 +230,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   ]);
 
   useEffect(() => {
+    if (!AUTO_SCROLL_ENABLED) return;
     const rail = railRef.current;
     if (!rail || railBrands.length < 2) return;
 

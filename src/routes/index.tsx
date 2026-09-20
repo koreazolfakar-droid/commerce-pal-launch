@@ -565,7 +565,7 @@ function Index() {
       node: catalog ? (
         <HomeCategorySection catalog={catalog} collections={collections} />
       ) : (
-        <div className="h-28 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+        <div className="h-28 rounded-3xl bg-surface" aria-hidden="true" />
       ),
     },
     {
@@ -578,7 +578,7 @@ function Index() {
           <LazyTopBrands brands={brands} />
         </Suspense>
       ) : (
-        <div className="h-24 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+        <div className="h-24 rounded-3xl bg-surface" aria-hidden="true" />
       ),
     },
     {
@@ -654,7 +654,7 @@ function Index() {
           ) : null}
         </>
       ) : (
-        <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+        <div className="h-52 rounded-3xl bg-surface" aria-hidden="true" />
       ),
     },
     {

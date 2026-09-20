@@ -388,6 +388,16 @@
     padding-bottom: var(--mobile-nav-height);
   }
 
+  /* Storefront motion is intentionally disabled: content should appear immediately. */
+  .store-layout *,
+  .store-layout *::before,
+  .store-layout *::after {
+    animation: none !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+
   .home-page {
     display: flex;
     flex-direction: column;

@@ -69,6 +69,24 @@ test("homepage hero refresh never replays stale local fallback", async () => {
 });
 
 
+test("storefront disables decorative motion and continuous auto-play", async () => {
+  const [styles, hero, brands, ticker, home] = await Promise.all([
+    read("src/styles.css"),
+    read("src/components/HomeHero.tsx"),
+    read("src/components/TopBrands.tsx"),
+    read("src/home-ticker.css"),
+    read("src/routes/index.tsx"),
+  ]);
+
+  assert.match(styles, /\.store-layout \*[\s\S]*?animation:\s*none !important/);
+  assert.match(styles, /transition-duration:\s*0s !important/);
+  assert.match(hero, /HERO_AUTO_ROTATION_ENABLED\s*=\s*false/);
+  assert.match(brands, /AUTO_SCROLL_ENABLED\s*=\s*false/);
+  assert.doesNotMatch(ticker, /animation:\s*home-promo-ticker/);
+  assert.doesNotMatch(home, /animate-pulse/);
+});
+
+
 test("native storefront data path avoids wildcard payloads", async () => {
   const nativeStore = await read("src/lib/nativeStore.ts");
 
