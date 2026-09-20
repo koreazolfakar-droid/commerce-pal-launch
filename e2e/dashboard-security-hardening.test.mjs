@@ -61,7 +61,8 @@ test("Turnstile widget uses explicit rendering, token expiry handling and CSP al
   assert.match(turnstile, /"error-callback"/);
   assert.match(turnstile, /turnstile\.reset/);
   assert.match(server, /script-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
-  assert.match(server, /connect-src[^\n]+https:\/\/challenges\.cloudflare\.com/);\n  assert.match(server, /frame-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
+  assert.match(server, /connect-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
+  assert.match(server, /frame-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
 });
 
 test("pre-auth throttle uses opaque pair/IP buckets and authenticates success resets", () => {
