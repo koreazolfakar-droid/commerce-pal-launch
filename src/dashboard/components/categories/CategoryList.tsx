@@ -69,11 +69,15 @@ function CategoryRow({
       >
         <span
           className={
-            "grid size-10 shrink-0 place-items-center rounded-xl " +
+            "grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl " +
             (selected ? "bg-white text-indigo-600 shadow-sm" : "bg-slate-100 text-slate-500")
           }
         >
-          <CategoryIcon name={category.icon} className="size-4.5" />
+          {category.image ? (
+            <img src={category.image} alt="" className="size-full object-contain p-1" />
+          ) : (
+            <CategoryIcon name={category.icon} className="size-4.5" />
+          )}
         </span>
 
         <span className="min-w-0 flex-1">

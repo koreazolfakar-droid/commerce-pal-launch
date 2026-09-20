@@ -76,22 +76,19 @@ export function HomeCategorySection({
   );
 
   const managedItems: HomeCategoryItem[] =
-    managedCategories?.flatMap((category) => {
+    managedCategories?.map((category) => {
       const facet =
         facetsBySlug.get(category.slug) ??
         facetsByName.get(normalizeCategoryName(category.name));
-      if (!facet?.count) return [];
 
-      return [
-        {
-          slug: category.slug,
-          label: category.name,
-          labelAr: category.name_ar,
-          image: category.image_url || undefined,
-          glyphSlug: facet.slug,
-          count: facet.count,
-        },
-      ];
+      return {
+        slug: category.slug,
+        label: category.name,
+        labelAr: category.name_ar,
+        image: category.image_url || undefined,
+        glyphSlug: facet?.slug ?? category.slug,
+        count: facet?.count ?? 0,
+      };
     }) ?? [];
 
   const fallbackItems: HomeCategoryItem[] = catalog.categories.map((category) => ({
