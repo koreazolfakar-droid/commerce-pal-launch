@@ -10,7 +10,7 @@ import { localizeSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import type { ShopifyCollection } from "@/lib/shopify";
-import type { CatalogIndex } from "@/lib/taxonomy";
+import type { CatalogFacet } from "@/lib/taxonomy";
 
 type ManagedHomeCategory = {
   name: string;
@@ -56,10 +56,10 @@ function normalizeCategoryName(value: string | undefined) {
  * unavailable.
  */
 export function HomeCategorySection({
-  catalog,
+  categories: catalogCategories,
   collections,
 }: {
-  catalog: CatalogIndex;
+  categories: CatalogFacet[];
   collections: ShopifyCollection[];
 }) {
   const { t, language } = useLanguage();
@@ -70,9 +70,9 @@ export function HomeCategorySection({
     staleTime: 30_000,
   });
 
-  const facetsBySlug = new Map(catalog.categories.map((category) => [category.slug, category]));
+  const facetsBySlug = new Map(catalogCategories.map((category) => [category.slug, category]));
   const facetsByName = new Map(
-    catalog.categories.map((category) => [normalizeCategoryName(category.label), category]),
+    catalogCategories.map((category) => [normalizeCategoryName(category.label), category]),
   );
 
   const managedItems: HomeCategoryItem[] =
@@ -91,7 +91,7 @@ export function HomeCategorySection({
       };
     }) ?? [];
 
-  const fallbackItems: HomeCategoryItem[] = catalog.categories.map((category) => ({
+  const fallbackItems: HomeCategoryItem[] = catalogCategories.map((category) => ({
     slug: category.slug,
     label: category.label,
     glyphSlug: category.slug,

@@ -51,8 +51,17 @@ test("homepage uses bounded product reads and keeps brand shelves lazy", async (
 
   assert.match(queries, /fetchHomepageProducts\(48\)/);
   assert.match(queries, /homepageCatalogQueryOptions/);
+  const homepageQueryStart = queries.indexOf("async function fetchHomepageCatalogIndex");
+  const homepageQueryEnd = queries.indexOf("async function fetchCatalogIndexSafely", homepageQueryStart);
+  assert.ok(homepageQueryStart >= 0 && homepageQueryEnd > homepageQueryStart);
+  assert.doesNotMatch(
+    queries.slice(homepageQueryStart, homepageQueryEnd),
+    /fetchNavigationCatalogFacets/,
+  );
   assert.match(index, /homepageCatalogQueryOptions/);
   assert.doesNotMatch(index, /catalogQueryOptions/);
+  assert.match(index, /categories: navigationCatalog\?\.categories \?\? catalog\.categories/);
+  assert.match(index, /brands: navigationCatalog\?\.brands \?\? catalog\.brands/);
   assert.match(queries, /homeVendorProductsQueryOptions/);
   assert.match(queries, /fetchProductsByVendor\(normalizedVendor, 4\)/);
   assert.match(shelves, /homeVendorProductsQueryOptions/);

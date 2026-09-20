@@ -81,16 +81,11 @@ function writeCatalogRefreshFallback(products: ShopifyProduct[], vendors: string
 }
 
 async function fetchHomepageCatalogIndex() {
-  const [products, facets] = await Promise.all([
-    fetchHomepageProducts(48),
-    fetchNavigationCatalogFacets(),
-  ]);
-  const catalog = buildCatalogIndex(products);
-  return {
-    ...catalog,
-    categories: facets.categories,
-    brands: facets.brands,
-  };
+  // Navigation facets are already loaded through navigationCatalogQueryOptions
+  // by the global header. Keeping them out of this query avoids four duplicate
+  // Supabase reads before homepage product rails can render.
+  const products = await fetchHomepageProducts(48);
+  return buildCatalogIndex(products);
 }
 
 async function fetchCatalogIndexSafely() {

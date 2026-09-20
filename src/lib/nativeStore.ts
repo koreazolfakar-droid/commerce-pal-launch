@@ -92,6 +92,11 @@ type NativeSnapshot = {
 };
 
 const CACHE_TTL_MS = 30_000;
+const HYDRATED_PRODUCT_CACHE_TTL_MS = 60_000;
+const hydratedProductCache = new Map<
+  string,
+  { expiresAt: number; product: ShopifyProduct }
+>();
 // After the fresh window ends, keep serving the last snapshot for up to five
 // minutes while a single background refresh runs. Repeat storefront visitors
 // never wait on the database round-trip.
@@ -223,72 +228,95 @@ function buildProduct(
 async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<ShopifyProduct[]> {
   if (!productRows.length) return [];
 
-  const productIds = productRows.map((row) => row.id);
-  const [variantResult, imageResult, linkResult] = await Promise.all([
-    publicSupabase
-      .from("store_product_variants")
-      .select(STOREFRONT_VARIANT_SELECT)
-      .in("product_id", productIds)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_product_images")
-      .select(STOREFRONT_IMAGE_SELECT)
-      .in("product_id", productIds)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT)
-      .in("product_id", productIds)
-      .order("sort_order", { ascending: true }),
-  ]);
+  const now = Date.now();
+  const cachedProducts = new Map<string, ShopifyProduct>();
+  const missingRows: StorefrontProductRow[] = [];
 
-  const variants = assertResult(variantResult, "bounded product variants");
-  const images = assertResult(imageResult, "bounded product images");
-  const links = assertResult(linkResult, "bounded product collection links");
-  const variantsByProduct = groupByProduct(variants);
-  const imagesByProduct = groupByProduct(images);
-  const linksByProduct = groupByProduct(links);
-
-  const collectionIds = [...new Set(links.map((link) => link.collection_id))];
-  let collections: StorefrontCollectionRow[] = [];
-  if (collectionIds.length) {
-    const collectionResult = await publicSupabase
-      .from("store_collections")
-      .select(STOREFRONT_COLLECTION_SELECT)
-      .in("id", collectionIds)
-      .eq("is_active", true);
-    collections = assertResult(collectionResult, "bounded product collections");
+  for (const row of productRows) {
+    const cached = hydratedProductCache.get(row.id);
+    if (cached && cached.expiresAt > now) {
+      cachedProducts.set(row.id, cached.product);
+    } else {
+      if (cached) hydratedProductCache.delete(row.id);
+      missingRows.push(row);
+    }
   }
 
-  const brandIds = [
-    ...new Set(productRows.map((row) => row.brand_id).filter((id): id is string => Boolean(id))),
-  ];
-  let brands: StorefrontBrandRow[] = [];
-  if (brandIds.length) {
-    const brandResult = await publicSupabase
-      .from("cms_brands")
-      .select(STOREFRONT_BRAND_SELECT)
-      .in("id", brandIds)
-      .eq("is_visible", true);
-    brands = assertResult(brandResult, "bounded product brands");
+  if (missingRows.length) {
+    const productIds = missingRows.map((row) => row.id);
+    const [variantResult, imageResult, linkResult] = await Promise.all([
+      publicSupabase
+        .from("store_product_variants")
+        .select(STOREFRONT_VARIANT_SELECT)
+        .in("product_id", productIds)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("store_product_images")
+        .select(STOREFRONT_IMAGE_SELECT)
+        .in("product_id", productIds)
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("store_collection_products")
+        .select(STOREFRONT_COLLECTION_LINK_SELECT)
+        .in("product_id", productIds)
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    const variants = assertResult(variantResult, "bounded product variants");
+    const images = assertResult(imageResult, "bounded product images");
+    const links = assertResult(linkResult, "bounded product collection links");
+    const variantsByProduct = groupByProduct(variants);
+    const imagesByProduct = groupByProduct(images);
+    const linksByProduct = groupByProduct(links);
+
+    const collectionIds = [...new Set(links.map((link) => link.collection_id))];
+    let collections: StorefrontCollectionRow[] = [];
+    if (collectionIds.length) {
+      const collectionResult = await publicSupabase
+        .from("store_collections")
+        .select(STOREFRONT_COLLECTION_SELECT)
+        .in("id", collectionIds)
+        .eq("is_active", true);
+      collections = assertResult(collectionResult, "bounded product collections");
+    }
+
+    const brandIds = [
+      ...new Set(missingRows.map((row) => row.brand_id).filter((id): id is string => Boolean(id))),
+    ];
+    let brands: StorefrontBrandRow[] = [];
+    if (brandIds.length) {
+      const brandResult = await publicSupabase
+        .from("cms_brands")
+        .select(STOREFRONT_BRAND_SELECT)
+        .in("id", brandIds)
+        .eq("is_visible", true);
+      brands = assertResult(brandResult, "bounded product brands");
+    }
+
+    const collectionsById = new Map(collections.map((row) => [row.id, row]));
+    const brandsById = new Map(brands.map((row) => [row.id, row]));
+    const expiresAt = Date.now() + HYDRATED_PRODUCT_CACHE_TTL_MS;
+
+    for (const row of missingRows) {
+      const productCollections = (linksByProduct.get(row.id) ?? [])
+        .map((link) => collectionsById.get(link.collection_id))
+        .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
+      const product = buildProduct(
+        row,
+        variantsByProduct.get(row.id) ?? [],
+        imagesByProduct.get(row.id) ?? [],
+        productCollections,
+        row.brand_id ? brandsById.get(row.brand_id) : undefined,
+      );
+      hydratedProductCache.set(row.id, { expiresAt, product });
+      cachedProducts.set(row.id, product);
+    }
   }
 
-  const collectionsById = new Map(collections.map((row) => [row.id, row]));
-  const brandsById = new Map(brands.map((row) => [row.id, row]));
-
-  return productRows.map((row) => {
-    const productCollections = (linksByProduct.get(row.id) ?? [])
-      .map((link) => collectionsById.get(link.collection_id))
-      .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
-    return buildProduct(
-      row,
-      variantsByProduct.get(row.id) ?? [],
-      imagesByProduct.get(row.id) ?? [],
-      productCollections,
-      row.brand_id ? brandsById.get(row.brand_id) : undefined,
-    );
-  });
+  return productRows
+    .map((row) => cachedProducts.get(row.id))
+    .filter((product): product is ShopifyProduct => Boolean(product));
 }
 
 async function fetchSnapshot(): Promise<NativeSnapshot> {
@@ -391,6 +419,7 @@ async function loadSnapshot(): Promise<NativeSnapshot> {
 
 export function invalidateNativeStoreCache() {
   cachedSnapshot = null;
+  hydratedProductCache.clear();
 }
 
 function publicProducts(snapshot: NativeSnapshot) {
