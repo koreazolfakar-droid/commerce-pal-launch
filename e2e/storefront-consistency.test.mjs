@@ -86,3 +86,16 @@ test("homepage hero remains CMS-first", async () => {
   assert.match(hero, /const usingCms = localizedCmsSlides\.length > 0/);
   assert.match(hero, /"supabase-cms"/);
 });
+
+
+test("brands page uses CMS/dashboard logos without loading collections", async () => {
+  const [brandsPage, brandDirectory] = await Promise.all([
+    source("src/routes/brands.tsx"),
+    source("src/lib/brandDirectory.ts"),
+  ]);
+
+  assert.doesNotMatch(brandsPage, /collectionsQueryOptions/);
+  assert.match(brandsPage, /buildShopifyBrands\(catalog\.brands, undefined\)/);
+  assert.match(brandDirectory, /override\?\.logo_url\?\.trim\(\)/);
+  assert.match(brandDirectory, /\{ image: override\.logo_url\.trim\(\) \}/);
+});
