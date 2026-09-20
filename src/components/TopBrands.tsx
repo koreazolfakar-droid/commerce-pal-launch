@@ -391,8 +391,8 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
                       className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-0.5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-14 sm:px-1 md:hover:-translate-y-0.5"
                     >
                       <span
-                        className={`top-brand-logo-surface pointer-events-none flex h-10 w-full items-center justify-center overflow-hidden rounded-xl border border-black/[0.06] bg-white px-1.5 shadow-[0_4px_14px_-10px_rgba(15,23,42,0.45)] transition-[transform,opacity,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] dark:border-white/10 dark:bg-white motion-reduce:transform-none motion-reduce:transition-none sm:h-12 group-hover:scale-[1.05] group-hover:border-primary/20 group-hover:opacity-100 ${
-                          isActive ? "scale-[1.03] opacity-100" : "scale-100 opacity-[0.94]"
+                        className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.08] group-hover:opacity-100 ${
+                          isActive ? "scale-[1.04] opacity-100" : "scale-100 opacity-[0.88]"
                         }`}
                       >
                         <BrandLogo
@@ -402,7 +402,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
                           wordmark
                           frameless
                           normalizeForRail
-                          className="max-w-full [&_img]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.16)]"
+                          className="max-w-full"
                           {...(brand.image ? { imageUrl: brand.image } : {})}
                         />
                       </span>
