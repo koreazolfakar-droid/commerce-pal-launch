@@ -40,6 +40,10 @@ const catalog = await readFile(
   new URL("../src/dashboard/data/catalog.ts", import.meta.url),
   "utf8",
 );
+const passkeyEdge = await readFile(
+  new URL("../supabase/functions/dashboard-passkey-stepup/index.ts", import.meta.url),
+  "utf8",
+);
 
 test("dashboard passkey is only used as a second factor after password", () => {
   assert.doesNotMatch(catalog, /export async function signInDashboardWithPasskey/);
@@ -52,13 +56,13 @@ test("dashboard passkey is only used as a second factor after password", () => {
   assert.match(catalog, /verifier\.auth\.signOut\(\{ scope: "local" \}\)/);
 });
 
-test("passkey enrollment stays behind native AAL2 authenticator verification", () => {
+test("passkey enrollment requires a fresh server-verified authenticator step-up", () => {
   assert.match(catalog, /export async function registerDashboardPasskey/);
-  assert.match(catalog, /const mfaStatus = await getDashboardMfaStatus\(\)/);
-  assert.match(catalog, /mfaStatus\.currentLevel !== "aal2"/);
-  assert.match(catalog, /!mfaStatus\.verifiedFactorId/);
+  assert.match(catalog, /action: "sensitive-status"/);
   assert.match(catalog, /Fresh authenticator verification is required before adding a passkey/);
   assert.match(catalog, /auth\.registerPasskey\(\)/);
+  assert.match(passkeyEdge, /action === "sensitive-status"/);
+  assert.match(passkeyEdge, /claims\.aal === "aal2" && hasFreshTotpAmr\(claims, now\)/);
 });
 
 test("passkey flows require WebAuthn in a secure browser context and sanitize failures", () => {
@@ -124,8 +128,10 @@ test("security center supports complete passkey lifecycle management", () => {
   assert.match(catalog, /export async function renameDashboardPasskey/);
   assert.match(catalog, /auth\.passkey\.update\(\{/);
   assert.match(catalog, /export async function deleteDashboardPasskey/);
-  assert.match(catalog, /auth\.passkey\.delete\(\{ passkeyId \}\)/);
-  assert.match(catalog, /Fresh authenticator verification is required before changing passkeys/);
+  assert.match(catalog, /body: \{ action: "delete", passkeyId \}/);
+  assert.doesNotMatch(catalog, /auth\.passkey\.delete\(\{ passkeyId \}\)/);
+  assert.match(passkeyEdge, /admin\.auth\.admin\.passkey\.deletePasskey/);
+  assert.match(passkeyEdge, /fresh_totp_required/);
   assert.match(securityPage, /maxLength=\{120\}/);
 });
 
@@ -139,5 +145,5 @@ test("passkey lifecycle events are constrained and audited at AAL2", () => {
 
   assert.match(catalog, /logDashboardSecurityEvent\("passkey_registered"/);
   assert.match(catalog, /logDashboardSecurityEvent\("passkey_renamed"/);
-  assert.match(catalog, /logDashboardSecurityEvent\("passkey_deleted"/);
+  assert.match(passkeyEdge, /event_type: "passkey_deleted"/);
 });
