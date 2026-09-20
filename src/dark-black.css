@@ -1,78 +1,102 @@
 /*
- * Space Call — production dark theme.
+ * Space Call — storefront dark theme.
  *
- * Goals:
- * - true black page background with neutral charcoal elevation (no navy tint)
- * - clear hierarchy between page, surface, card, image stage and popover layers
- * - readable primary, secondary and placeholder text on every dark surface
- * - one restrained brand-blue interaction color
- * - semantic success/warning/error colors reserved for status only
- * - visible borders, focus rings and disabled states without visual noise
+ * Design intent:
+ * - deep graphite / subtle blue-black instead of flat pure black
+ * - four distinct elevation levels: page -> surface -> card -> popover
+ * - premium Space Call blue reserved for actions, selection and focus
+ * - neutral, high-contrast typography with readable secondary text
+ * - light product image stage so catalogue photography stays clean and accurate
+ * - semantic success / warning / error colours remain independent of branding
+ *
+ * This file is imported by StoreLayout only. Keep it token-driven so the
+ * storefront can evolve without scattering one-off dark colours through UI code.
  */
 .dark {
   color-scheme: dark;
 
-  /* Structural elevation: pure black -> charcoal, never blue-tinted. */
-  --background: oklch(0 0 0);
-  --surface: oklch(0.13 0 0);
-  --card: oklch(0.17 0 0);
-  --image-stage: oklch(0.19 0 0);
-  --popover: oklch(0.205 0 0);
-  --secondary: oklch(0.205 0 0);
-  --muted: oklch(0.185 0 0);
-  --accent: oklch(0.22 0 0);
-  --sidebar: oklch(0.08 0 0);
-
-  /* Campaign surfaces remain neutral black/charcoal. */
-  --promo: oklch(0.16 0 0);
-  --hero: oklch(0.085 0 0);
-  --hero-border: oklch(0.32 0 0);
-
-  /* Text hierarchy: strong white, then deliberate neutral steps. */
-  --foreground: oklch(0.975 0 0);
-  --card-foreground: oklch(0.975 0 0);
-  --popover-foreground: oklch(0.975 0 0);
-  --secondary-foreground: oklch(0.94 0 0);
-  --accent-foreground: oklch(0.95 0 0);
-  --muted-foreground: oklch(0.76 0 0);
-  --placeholder: oklch(0.66 0 0);
-  --hero-foreground: oklch(0.98 0 0);
-  --hero-muted: oklch(0.78 0 0);
-  --sidebar-foreground: oklch(0.96 0 0);
-  --sidebar-accent: oklch(0.205 0 0);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
+  /*
+   * Structural elevation.
+   * Each step is deliberately separated enough to remain visible on OLED and
+   * low-brightness mobile screens without turning the UI grey.
+   */
+  --background: oklch(0.105 0.012 255);
+  --surface: oklch(0.155 0.014 255);
+  --card: oklch(0.19 0.016 255);
+  --popover: oklch(0.225 0.016 255);
+  --secondary: oklch(0.225 0.015 255);
+  --muted: oklch(0.205 0.014 255);
+  --accent: oklch(0.245 0.04 258);
+  --sidebar: oklch(0.135 0.013 255);
 
   /*
-   * Brand blue is used only for actions, links, selection and focus.
-   * A slightly brighter blue paired with a near-black foreground gives strong
-   * button contrast while keeping text-primary legible on black surfaces.
+   * Product photography should not inherit the dark chrome. A soft neutral
+   * off-white stage keeps transparent/white-background catalogue assets honest
+   * while reducing the harsh white-to-black jump of the previous theme.
    */
-  --primary: oklch(0.6 0.17 256);
-  --primary-foreground: oklch(0.07 0 0);
-  --ring: oklch(0.72 0.14 256);
+  --image-stage: oklch(0.97 0.002 250);
+
+  /* Campaign surfaces stay dark but remain distinguishable from the page. */
+  --promo: oklch(0.19 0.025 80);
+  --hero: oklch(0.15 0.018 258);
+  --hero-border: oklch(0.315 0.018 255);
+
+  /* Typography hierarchy. */
+  --foreground: oklch(0.975 0.004 250);
+  --card-foreground: oklch(0.975 0.004 250);
+  --popover-foreground: oklch(0.975 0.004 250);
+  --secondary-foreground: oklch(0.94 0.006 250);
+  --accent-foreground: oklch(0.9 0.075 258);
+  --muted-foreground: oklch(0.74 0.014 250);
+  --placeholder: oklch(0.62 0.014 250);
+  --hero-foreground: oklch(0.98 0.003 250);
+  --hero-muted: oklch(0.78 0.012 250);
+  --sidebar-foreground: oklch(0.96 0.004 250);
+  --sidebar-accent: oklch(0.225 0.03 258);
+  --sidebar-accent-foreground: oklch(0.94 0.025 258);
+
+  /*
+   * Space Call interaction blue. Keep the foreground dark on filled primary
+   * controls for reliable contrast; links/icons use the blue directly.
+   */
+  --primary: oklch(0.655 0.18 256);
+  --primary-foreground: oklch(0.075 0.01 255);
+  --ring: oklch(0.735 0.14 256);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-ring: var(--ring);
 
-  /* Borders are neutral and progressively stronger for interactive controls. */
-  --border: oklch(0.31 0 0);
-  --input: oklch(0.39 0 0);
-  --sidebar-border: oklch(0.29 0 0);
+  /*
+   * Borders are intentionally brighter than the old pure-black theme.
+   * Inputs get one extra step so forms remain understandable before focus.
+   */
+  --border: oklch(0.305 0.016 255);
+  --input: oklch(0.355 0.018 255);
+  --sidebar-border: oklch(0.29 0.016 255);
 
-  /* Semantic colors: distinct from the brand blue and readable on black. */
-  --destructive: oklch(0.64 0.19 24);
-  --destructive-foreground: oklch(0.075 0 0);
-  --success: oklch(0.75 0.13 158);
-  --success-foreground: oklch(0.075 0 0);
+  /* Semantic colours — status only, never used as generic decoration. */
+  --destructive: oklch(0.65 0.19 24);
+  --destructive-foreground: oklch(0.985 0.003 250);
+  --success: oklch(0.74 0.14 158);
+  --success-foreground: oklch(0.09 0.02 158);
   --warning: oklch(0.8 0.13 78);
-  --warning-foreground: oklch(0.075 0 0);
-  --info: oklch(0.72 0.11 246);
-  --info-foreground: oklch(0.075 0 0);
+  --warning-foreground: oklch(0.1 0.025 78);
+  --info: oklch(0.72 0.12 246);
+  --info-foreground: oklch(0.08 0.02 246);
 
-  /* Black shadows add depth without reintroducing a colored cast. */
-  --shadow-card-token: 0 1px 2px oklch(0 0 0 / 0.78), 0 0 0 1px oklch(1 0 0 / 0.025);
-  --shadow-card-hover-token: 0 16px 34px -16px oklch(0 0 0 / 0.96), 0 0 0 1px oklch(1 0 0 / 0.045);
-  --shadow-float-token: 0 24px 52px -18px oklch(0 0 0 / 1), 0 0 0 1px oklch(1 0 0 / 0.055);
+  /*
+   * Depth comes mainly from surface contrast. Shadows stay restrained so cards
+   * look premium rather than floating independently from the layout.
+   */
+  --shadow-card-token:
+    0 1px 2px oklch(0.02 0.01 255 / 0.72),
+    0 0 0 1px oklch(1 0 0 / 0.035);
+  --shadow-card-hover-token:
+    0 16px 34px -18px oklch(0.02 0.01 255 / 0.94),
+    0 0 0 1px oklch(1 0 0 / 0.06);
+  --shadow-float-token:
+    0 24px 52px -20px oklch(0.01 0.01 255 / 0.98),
+    0 0 0 1px oklch(1 0 0 / 0.07);
 }
 
 /* Native form controls and placeholder text follow the same hierarchy. */
@@ -91,9 +115,9 @@
   opacity: 0.64;
 }
 
-/* Selection should be obvious on black without washing out selected text. */
+/* Selection should be obvious without washing out selected text. */
 .dark ::selection {
-  background: color-mix(in oklab, var(--primary) 52%, black);
+  background: color-mix(in oklab, var(--primary) 48%, transparent);
   color: var(--foreground);
 }
 
