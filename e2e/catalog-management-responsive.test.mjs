@@ -52,3 +52,25 @@ test("Brands and Categories use the same phone and desktop master-detail breakpo
   assert.match(categories, /selected\.image/);
   assert.match(categories, /CategoryGlyph slug=\{selected\.slug\}/);
 });
+
+
+test("catalog editors and brand marks stay visually consistent across viewports", async () => {
+  const [brandMark, brandForm, categoryForm] = await Promise.all([
+    read("src/dashboard/components/brands/BrandMark.tsx"),
+    read("src/dashboard/components/brands/BrandForm.tsx"),
+    read("src/dashboard/components/categories/CategoryForm.tsx"),
+  ]);
+
+  assert.match(brandMark, /imageShape/);
+  assert.match(brandMark, /ratio >= 1\.8/);
+  assert.match(brandMark, /max-h-\[52%\] max-w-\[90%\]/);
+  assert.match(brandMark, /setImageFailed\(false\)/);
+
+  for (const form of [brandForm, categoryForm]) {
+    assert.match(form, /sticky bottom-0 grid grid-cols-2 gap-2/);
+    assert.match(form, /sm:flex sm:justify-end/);
+    assert.match(form, /w-full.*sm:w-auto/);
+  }
+
+  assert.match(categoryForm, /CategoryGlyph slug=\{draft\.slug \|\| draft\.name \|\| "category"\}/);
+});
