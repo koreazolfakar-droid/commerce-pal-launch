@@ -340,8 +340,26 @@ export default function BrandForm({
               <details className="sm:col-span-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
                 <summary className="cursor-pointer text-[10px] font-bold text-slate-500">Use image URLs instead</summary>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <Field label="Logo URL" value={draft.logo || ""} onChange={(value) => patch({ logo: value })} placeholder="https://..." />
-                  <Field label="Cover Image URL" value={draft.coverImage || ""} onChange={(value) => patch({ coverImage: value })} placeholder="https://..." />
+                  <Field
+                    label="Logo URL"
+                    value={draft.logo || ""}
+                    onChange={(value) => {
+                      setPendingLogo(null);
+                      setRemoveLogo(false);
+                      patch({ logo: value });
+                    }}
+                    placeholder="https://..."
+                  />
+                  <Field
+                    label="Cover Image URL"
+                    value={draft.coverImage || ""}
+                    onChange={(value) => {
+                      setPendingCover(null);
+                      setRemoveCover(false);
+                      patch({ coverImage: value });
+                    }}
+                    placeholder="https://..."
+                  />
                 </div>
               </details>
               <div className="sm:col-span-2">
