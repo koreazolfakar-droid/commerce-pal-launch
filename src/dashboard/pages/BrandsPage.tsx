@@ -704,7 +704,7 @@ export default function BrandsPage() {
               </button>
             </div>
             <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="flex min-w-0 items-start gap-3">
                   <BrandMark brand={selected} className="size-12" />
                   <div className="min-w-0">
@@ -758,7 +758,7 @@ export default function BrandsPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 lg:grid-cols-[1.4fr_.8fr]">
+              <div className="mt-5 grid gap-3 xl:grid-cols-[1.4fr_.8fr]">
                 <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                   <div className="text-[9px] font-black uppercase tracking-[.13em] text-slate-400">
                     Description
@@ -853,56 +853,56 @@ export default function BrandsPage() {
                   {assignedProducts.map((product) => (
                     <div
                       key={product.id}
-                      className="relative grid gap-3 p-4 sm:grid-cols-[minmax(0,1.5fr)_minmax(90px,.8fr)_80px_80px_82px_36px] sm:items-center sm:px-5"
+                      className="relative grid gap-3 p-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(90px,.8fr)_80px_80px_82px_36px] xl:items-center xl:px-5"
                     >
-                      <div className="flex min-w-0 items-center gap-3 pe-12 sm:pe-0">
-                        <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-50 sm:size-11 sm:rounded-xl">
+                      <div className="flex min-w-0 items-center gap-3 pe-12 xl:pe-0">
+                        <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-50 xl:size-11 xl:rounded-xl">
                           {product.image ? (
                             <img
                               src={product.image}
                               alt=""
-                              className="h-full w-full object-contain p-1.5 sm:p-1"
+                              className="h-full w-full object-contain p-1.5 xl:p-1"
                             />
                           ) : (
                             <div className="text-[9px] font-bold text-slate-300">No image</div>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="line-clamp-2 text-[13px] font-black leading-5 text-slate-700 sm:truncate sm:text-[11px] sm:leading-normal">
+                          <div className="line-clamp-2 text-[13px] font-black leading-5 text-slate-700 xl:truncate xl:text-[11px] xl:leading-normal">
                             {product.name}
                           </div>
-                          <div className="mt-1 truncate text-[10px] font-medium text-slate-400 sm:text-[9px]">
+                          <div className="mt-1 truncate text-[10px] font-medium text-slate-400 xl:text-[9px]">
                             {product.category || "Uncategorized"}
                           </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-slate-50/70 p-3 sm:contents">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-slate-50/70 p-3 xl:contents">
                         <div className="min-w-0">
-                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
+                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 xl:hidden">
                             SKU
                           </div>
-                          <div className="mt-1 truncate font-mono text-[10px] font-semibold text-slate-600 sm:mt-0 sm:text-[9px] sm:font-normal sm:text-slate-500">
+                          <div className="mt-1 truncate font-mono text-[10px] font-semibold text-slate-600 xl:mt-0 xl:text-[9px] xl:font-normal xl:text-slate-500">
                             {product.sku || "—"}
                           </div>
                         </div>
 
                         <div className="min-w-0">
-                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
+                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 xl:hidden">
                             Price
                           </div>
-                          <div className="mt-1 text-[11px] font-black text-slate-700 sm:mt-0 sm:text-[10px] sm:font-bold">
+                          <div className="mt-1 text-[11px] font-black text-slate-700 xl:mt-0 xl:text-[10px] xl:font-bold">
                             {"$" + product.price.toLocaleString()}
                           </div>
                         </div>
 
                         <div className="min-w-0">
-                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
+                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 xl:hidden">
                             Stock
                           </div>
                           <div
                             className={
-                              "mt-1 text-[11px] font-black sm:mt-0 sm:text-[10px] sm:font-bold " +
+                              "mt-1 text-[11px] font-black xl:mt-0 xl:text-[10px] xl:font-bold " +
                               (product.stock < 10 ? "text-rose-600" : "text-slate-700")
                             }
                           >
@@ -911,16 +911,16 @@ export default function BrandsPage() {
                         </div>
 
                         <div className="min-w-0">
-                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 sm:hidden">
+                          <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 xl:hidden">
                             Status
                           </div>
-                          <div className="mt-1 sm:mt-0">
+                          <div className="mt-1 xl:mt-0">
                             <ProductStatus status={product.status} />
                           </div>
                         </div>
                       </div>
 
-                      <div className="absolute end-3 top-3 sm:static">
+                      <div className="absolute end-3 top-3 xl:static">
                         <button
                           type="button"
                           aria-label={"Actions for " + product.name}
@@ -929,7 +929,7 @@ export default function BrandsPage() {
                               current === product.id ? null : product.id,
                             )
                           }
-                          className="grid size-11 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 sm:size-8 sm:rounded-lg"
+                          className="grid size-11 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 xl:size-8 xl:rounded-lg"
                         >
                           <MoreHorizontal className="size-4" />
                         </button>
@@ -938,16 +938,16 @@ export default function BrandsPage() {
                           <>
                             <button
                               aria-label="Close product actions"
-                              className="fixed inset-0 z-[70] cursor-default bg-slate-950/20 sm:bg-transparent"
+                              className="fixed inset-0 z-[70] cursor-default bg-slate-950/20 xl:bg-transparent"
                               onClick={() => setProductMenuId(null)}
                             />
 
                             <div
                               role="menu"
                               aria-label={"Actions for " + product.name}
-                              className="fixed inset-x-3 bottom-[calc(.75rem+env(safe-area-inset-bottom))] z-[80] max-h-[70dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:end-12 sm:top-1/2 sm:z-50 sm:max-h-none sm:w-44 sm:-translate-y-1/2 sm:overflow-hidden sm:rounded-xl sm:p-1.5 sm:shadow-xl"
+                              className="fixed inset-x-3 bottom-[calc(.75rem+env(safe-area-inset-bottom))] z-[80] max-h-[70dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl xl:absolute xl:inset-x-auto xl:bottom-auto xl:end-12 xl:top-1/2 xl:z-50 xl:max-h-none xl:w-44 xl:-translate-y-1/2 xl:overflow-hidden xl:rounded-xl xl:p-1.5 xl:shadow-xl"
                             >
-                              <div className="px-2.5 pb-2 pt-1 sm:hidden">
+                              <div className="px-2.5 pb-2 pt-1 xl:hidden">
                                 <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-slate-200" />
                                 <div className="truncate text-[11px] font-black text-slate-700">
                                   {product.name}
@@ -962,9 +962,9 @@ export default function BrandsPage() {
                                   setProductMenuId(null);
                                   navigate("/dashboard/products/" + product.id);
                                 }}
-                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 sm:min-h-0 sm:gap-2 sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[10px]"
+                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 xl:min-h-0 xl:gap-2 xl:rounded-lg xl:px-2.5 xl:py-2 xl:text-[10px]"
                               >
-                                <Eye className="size-4 text-slate-400 sm:size-3.5" />
+                                <Eye className="size-4 text-slate-400 xl:size-3.5" />
                                 View Product
                               </button>
 
@@ -975,9 +975,9 @@ export default function BrandsPage() {
                                   setProductMenuId(null);
                                   navigate("/dashboard/products/" + product.id);
                                 }}
-                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 sm:min-h-0 sm:gap-2 sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[10px]"
+                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 xl:min-h-0 xl:gap-2 xl:rounded-lg xl:px-2.5 xl:py-2 xl:text-[10px]"
                               >
-                                <Pencil className="size-4 text-slate-400 sm:size-3.5" />
+                                <Pencil className="size-4 text-slate-400 xl:size-3.5" />
                                 Edit Product
                               </button>
 
@@ -989,9 +989,9 @@ export default function BrandsPage() {
                                   setMoveProduct(product);
                                   setMoveDestination("");
                                 }}
-                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 sm:min-h-0 sm:gap-2 sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[10px]"
+                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 xl:min-h-0 xl:gap-2 xl:rounded-lg xl:px-2.5 xl:py-2 xl:text-[10px]"
                               >
-                                <MoveRight className="size-4 text-slate-400 sm:size-3.5" />
+                                <MoveRight className="size-4 text-slate-400 xl:size-3.5" />
                                 Move to Brand
                               </button>
 
@@ -1001,9 +1001,9 @@ export default function BrandsPage() {
                                 type="button"
                                 role="menuitem"
                                 onClick={() => removeProductFromBrand(product)}
-                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-amber-700 hover:bg-amber-50 sm:min-h-0 sm:gap-2 sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[10px]"
+                                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-amber-700 hover:bg-amber-50 xl:min-h-0 xl:gap-2 xl:rounded-lg xl:px-2.5 xl:py-2 xl:text-[10px]"
                               >
-                                <X className="size-4 sm:size-3.5" />
+                                <X className="size-4 xl:size-3.5" />
                                 Remove from Brand
                               </button>
                             </div>
