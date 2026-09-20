@@ -33,11 +33,11 @@ test("category images convert to WebP before Storage upload", () => {
 test("category image UI supports upload replace remove and local preview", () => {
   assert.match(categoryForm, /accept="image\/jpeg,image\/png,image\/webp,image\/avif"/);
   assert.match(categoryForm, /Replace image/);
-  assert.match(categoryForm, /Upload image/);
-  assert.match(categoryForm, /Remove/);
+  assert.match(categoryForm, /Use custom image/);
+  assert.match(categoryForm, /Restore default/);
   assert.match(categoryForm, /URL\.createObjectURL\(pendingImage\)/);
   assert.match(categoryForm, /Ready for WebP conversion/);
-  assert.match(categoryForm, /optimized before Storage upload/);
+  assert.match(categoryForm, /converted to WebP with a maximum 1080 px edge/);
 });
 
 test("category save path persists converted image and reports before-after bytes", () => {
