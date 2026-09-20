@@ -25,6 +25,15 @@ test("homepage keeps critical UI small and defers secondary work", async () => {
   assert.match(home, /HOME_SECONDARY_FALLBACK_DELAY_MS\s*=\s*40/);
   assert.match(home, /navigationCatalogQueryOptions/);
   assert.match(home, /<HomeCategorySection categories=\{navigationCategories\}/);
+  assert.doesNotMatch(
+    home,
+    /ensureQueryData\(collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE/,
+  );
+  assert.match(
+    home,
+    /\.\.\.collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\),\s*enabled: deferredWorkReady/s,
+  );
+  assert.match(home, /loaderData\?\.heroPreload\?\.desktop/);
 
   assert.match(categories, /data-testid="category-section"/);
   assert.match(categories, /loading="lazy"/);
