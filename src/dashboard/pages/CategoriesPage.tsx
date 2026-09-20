@@ -629,6 +629,66 @@ export default function CategoriesPage() {
         assignedProducts={assignedValidCount}
       />
 
+      <section
+        id="storefront-category-grid"
+        className="mb-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-5"
+      >
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-[12px] font-black text-[#14203a]">Storefront Category Grid</div>
+            <div className="mt-1 text-[10px] leading-4 text-slate-400">
+              This mirrors the public Categories page. Tap any tile to edit its name, image,
+              visibility, order, or assigned products.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700"
+          >
+            <Plus className="size-3.5" />
+            Add Category
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-x-2 gap-y-4 min-[480px]:grid-cols-4 sm:grid-cols-5 lg:grid-cols-7">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => openEdit(category)}
+              className={
+                "group flex min-w-0 flex-col items-center gap-2 rounded-2xl px-1.5 py-2 text-center transition hover:-translate-y-0.5 hover:bg-slate-50 " +
+                (!category.active ? "opacity-45" : "")
+              }
+              title={category.active ? "Visible in storefront" : "Hidden from storefront"}
+            >
+              <span className="relative grid h-[4.6rem] w-[4.6rem] shrink-0 place-items-center overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-sm sm:h-[5.1rem] sm:w-[5.1rem]">
+                {category.image ? (
+                  <img
+                    src={category.image}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-contain p-1.5 transition-transform duration-300 group-hover:scale-[1.05]"
+                  />
+                ) : (
+                  <CategoryIcon name={category.icon} className="size-7 text-indigo-500" />
+                )}
+                {!category.active && (
+                  <span className="absolute inset-x-1 bottom-1 rounded-md bg-slate-900/75 px-1 py-0.5 text-[7px] font-black uppercase tracking-wide text-white">
+                    Hidden
+                  </span>
+                )}
+              </span>
+              <span className="line-clamp-2 min-h-[2rem] max-w-full text-[11px] font-extrabold leading-[1.15] text-slate-800">
+                {category.name}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
       {!reorderMode && (
         <CategoryToolbar
           query={query}
