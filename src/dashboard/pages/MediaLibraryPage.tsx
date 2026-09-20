@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 
 import {
   deleteDashboardMediaAsset,
@@ -35,6 +36,7 @@ export default function MediaLibraryPage() {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<DashboardMediaAsset | null>(null);
   const [altText, setAltText] = useState("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -71,6 +73,7 @@ export default function MediaLibraryPage() {
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+      setPendingFile(null);
     }
   };
 
@@ -108,10 +111,48 @@ export default function MediaLibraryPage() {
         </div>
         <div className="flex gap-2">
           <button onClick={() => void load()} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"><RefreshCw className="size-3.5" /> Refresh</button>
-          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={(e)=>void upload(e.target.files?.[0])} />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/avif"
+            className="hidden"
+            onChange={(event) => {
+              setPendingFile(event.target.files?.[0] ?? null);
+              event.currentTarget.value = "";
+            }}
+          />
           <button onClick={()=>fileRef.current?.click()} disabled={uploading} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-50">{uploading?<Loader2 className="size-4 animate-spin" />:<UploadCloud className="size-4" />} Upload image</button>
         </div>
       </div>
+
+      {pendingFile ? (
+        <div className="mb-4 space-y-2">
+          <ImageOptimizationPreview
+            files={[pendingFile]}
+            resolution="1920"
+            title="Media compression preview"
+            compact
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingFile(null)}
+              disabled={uploading}
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void upload(pendingFile)}
+              disabled={uploading}
+              className="h-9 rounded-xl bg-[#5968ea] px-3 text-[10px] font-bold text-white disabled:opacity-50"
+            >
+              Confirm & upload
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mb-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
         <div className="relative flex-1"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><input value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search filename, alt text or path..." className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[12px] outline-none focus:border-indigo-400" /></div>

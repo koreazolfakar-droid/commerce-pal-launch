@@ -10,9 +10,20 @@ export const PRODUCT_IMAGE_RESOLUTIONS = [
 export type ProductImageResolution = (typeof PRODUCT_IMAGE_RESOLUTIONS)[number]["value"];
 
 const STORAGE_KEY = "spacecall-product-image-resolution";
+const COMPRESSION_STORAGE_KEY = "spacecall-image-compression-preset";
 const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 const MAX_CANVAS_EDGE = 8192;
-const WEBP_QUALITY = 0.88;
+
+export const IMAGE_COMPRESSION_PRESETS = [
+  { value: "light", label: "Light compression · 92% quality", quality: 0.92, description: "Best visual quality, larger file." },
+  { value: "balanced", label: "Balanced · 86% quality", quality: 0.86, description: "Recommended for most storefront images." },
+  { value: "strong", label: "Strong compression · 76% quality", quality: 0.76, description: "Smaller files with modest quality loss." },
+  { value: "maximum", label: "Maximum compression · 65% quality", quality: 0.65, description: "Smallest file for non-critical artwork." },
+] as const;
+
+export type ImageCompressionPreset = (typeof IMAGE_COMPRESSION_PRESETS)[number]["value"];
+
+const conversionCache = new WeakMap<File, Map<string, Promise<ProductImageConversionResult>>>();
 
 export function getProductImageResolution(): ProductImageResolution {
   if (typeof window === "undefined") return "1920";
@@ -24,6 +35,36 @@ export function getProductImageResolution(): ProductImageResolution {
 
 export function setProductImageResolution(value: ProductImageResolution) {
   if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, value);
+}
+
+export function getImageCompressionPreset(): ImageCompressionPreset {
+  if (typeof window === "undefined") return "balanced";
+  const saved = window.localStorage.getItem(COMPRESSION_STORAGE_KEY);
+  return IMAGE_COMPRESSION_PRESETS.some((option) => option.value === saved)
+    ? (saved as ImageCompressionPreset)
+    : "balanced";
+}
+
+export const IMAGE_COMPRESSION_CHANGE_EVENT = "spacecall-image-compression-change";
+
+export function setImageCompressionPreset(value: ImageCompressionPreset) {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(COMPRESSION_STORAGE_KEY, value);
+    window.dispatchEvent(
+      new CustomEvent<ImageCompressionPreset>(IMAGE_COMPRESSION_CHANGE_EVENT, { detail: value }),
+    );
+  }
+}
+
+export function imageCompressionQuality(value: ImageCompressionPreset) {
+  return IMAGE_COMPRESSION_PRESETS.find((option) => option.value === value)?.quality ?? 0.86;
+}
+
+export function formatImageBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes < 0) return "—";
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
 function loadImage(file: File) {
@@ -87,9 +128,10 @@ export async function inspectProductImageSource(source: File): Promise<ProductIm
   };
 }
 
-export async function convertProductImageToWebp(
+async function performProductImageConversion(
   source: File,
   resolution: ProductImageResolution,
+  compression: ImageCompressionPreset,
 ): Promise<ProductImageConversionResult> {
   const sourceInfo = await inspectProductImageSource(source);
   const sourceWidth = sourceInfo.width;
@@ -114,7 +156,7 @@ export async function convertProductImageToWebp(
   context.drawImage(image, 0, 0, width, height);
 
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, "image/webp", WEBP_QUALITY),
+    canvas.toBlob(resolve, "image/webp", imageCompressionQuality(compression)),
   );
   if (!blob) throw new Error("WebP conversion failed.");
 
@@ -134,4 +176,29 @@ export async function convertProductImageToWebp(
       bytes: file.size,
     },
   };
+}
+
+export async function convertProductImageToWebp(
+  source: File,
+  resolution: ProductImageResolution,
+  compression: ImageCompressionPreset = getImageCompressionPreset(),
+): Promise<ProductImageConversionResult> {
+  let fileCache = conversionCache.get(source);
+  if (!fileCache) {
+    fileCache = new Map();
+    conversionCache.set(source, fileCache);
+  }
+
+  const key = `${resolution}:${compression}`;
+  const cached = fileCache.get(key);
+  if (cached) return cached;
+
+  const conversion = performProductImageConversion(source, resolution, compression);
+  fileCache.set(key, conversion);
+  try {
+    return await conversion;
+  } catch (error) {
+    fileCache.delete(key);
+    throw error;
+  }
 }

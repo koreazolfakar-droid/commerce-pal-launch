@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import {
   createDashboardHeroSlide,
   DEFAULT_HERO_VISUAL_CONFIG,
@@ -261,6 +262,7 @@ export default function HeroBannersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<HeroImageTarget | null>(null);
+  const [pendingHeroImages, setPendingHeroImages] = useState<Partial<Record<HeroImageTarget, File>>>({});
   const [lastOptimizations, setLastOptimizations] = useState<
     Partial<Record<HeroImageTarget, DashboardHeroImageOptimization>>
   >({});
@@ -451,6 +453,11 @@ export default function HeroBannersPage() {
       setUploading(null);
       if (desktopFileRef.current) desktopFileRef.current.value = "";
       if (mobileFileRef.current) mobileFileRef.current.value = "";
+      setPendingHeroImages((current) => {
+        const next = { ...current };
+        delete next[target];
+        return next;
+      });
     }
   };
 
@@ -738,7 +745,16 @@ export default function HeroBannersPage() {
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/svg+xml,image/heic,image/heif"
                     className="hidden"
-                    onChange={(e) => void upload(e.target.files?.[0], target)}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.currentTarget.value = "";
+                      if (!file) return;
+                      if (["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
+                        setPendingHeroImages((current) => ({ ...current, [target]: file }));
+                      } else {
+                        void upload(file, target);
+                      }
+                    }}
                   />
                   <div className="flex flex-wrap gap-2">
                     <button onClick={() => (isDesktop ? desktopFileRef.current : mobileFileRef.current)?.click()} disabled={uploading !== null} className="flex h-9 items-center gap-2 rounded-xl bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 disabled:opacity-50">
@@ -752,6 +768,11 @@ export default function HeroBannersPage() {
                         onClick={() => {
                           setForm((current) => isDesktop ? { ...current, imageUrl: "" } : { ...current, mobileImageUrl: "" });
                           setLastOptimizations((current) => ({ ...current, [target]: undefined }));
+                          setPendingHeroImages((current) => {
+                            const next = { ...current };
+                            delete next[target];
+                            return next;
+                          });
                         }}
                         className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-500"
                       >
@@ -759,6 +780,41 @@ export default function HeroBannersPage() {
                       </button>
                     ) : null}
                   </div>
+                  {pendingHeroImages[target] ? (
+                    <div className="mt-3 space-y-2">
+                      <ImageOptimizationPreview
+                        files={[pendingHeroImages[target]!]}
+                        resolution={isDesktop ? "1920" : "1080"}
+                        title={isDesktop ? "Desktop hero compression preview" : "Mobile hero compression preview"}
+                        compact
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPendingHeroImages((current) => {
+        const next = { ...current };
+        delete next[target];
+        return next;
+      })
+                          }
+                          disabled={uploading !== null}
+                          className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void upload(pendingHeroImages[target], target)}
+                          disabled={uploading !== null}
+                          className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
+                        >
+                          Confirm & upload
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
                   {optimization ? (
                     <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">

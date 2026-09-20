@@ -1,12 +1,9 @@
 import { Check, Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
-import {
-  normalizeBrandSlug,
-  uploadDashboardBrandImage,
-  type CatalogBrand,
-} from "@/dashboard/data/brands";
+import { normalizeBrandSlug, type CatalogBrand } from "@/dashboard/data/brands";
 
 function Field({
   label,
@@ -76,6 +73,13 @@ function Toggle({
   );
 }
 
+export type BrandImageChange = {
+  logoFile?: File;
+  coverFile?: File;
+  removeLogo?: boolean;
+  removeCover?: boolean;
+};
+
 export default function BrandForm({
   brand,
   brands,
@@ -87,30 +91,17 @@ export default function BrandForm({
   brands: CatalogBrand[];
   mode: "create" | "edit";
   onClose: () => void;
-  onSave: (brand: CatalogBrand) => Promise<boolean>;
+  onSave: (brand: CatalogBrand, imageChange: BrandImageChange) => Promise<boolean>;
 }) {
   const [draft, setDraft] = useState<CatalogBrand>({ ...brand });
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState<"logo" | "cover" | null>(null);
+  const [pendingLogo, setPendingLogo] = useState<File | null>(null);
+  const [pendingCover, setPendingCover] = useState<File | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const [removeCover, setRemoveCover] = useState(false);
   const logoInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
   const patch = (next: Partial<CatalogBrand>) => setDraft((current) => ({ ...current, ...next }));
-
-  const uploadImage = async (file: File | undefined, kind: "logo" | "cover") => {
-    if (!file) return;
-    setUploading(kind);
-    try {
-      const url = await uploadDashboardBrandImage(file, kind);
-      patch(kind === "logo" ? { logo: url } : { coverImage: url });
-      toast.success(kind === "logo" ? "Logo uploaded." : "Cover image uploaded.");
-    } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Image upload failed.");
-    } finally {
-      setUploading(null);
-      if (kind === "logo" && logoInput.current) logoInput.current.value = "";
-      if (kind === "cover" && coverInput.current) coverInput.current.value = "";
-    }
-  };
 
   const submit = async () => {
     const name = draft.name.trim();
@@ -156,6 +147,11 @@ export default function BrandForm({
       seoDescription: draft.seoDescription?.trim() || undefined,
       createdAt: draft.createdAt || now,
       updatedAt: now,
+    }, {
+      ...(pendingLogo ? { logoFile: pendingLogo } : {}),
+      ...(pendingCover ? { coverFile: pendingCover } : {}),
+      ...(removeLogo ? { removeLogo: true } : {}),
+      ...(removeCover ? { removeCover: true } : {}),
     });
     setSaving(false);
     if (saved) onClose();
@@ -243,19 +239,32 @@ export default function BrandForm({
                       type="file"
                       accept="image/png,image/jpeg,image/webp,image/avif"
                       className="sr-only"
-                      onChange={(event) => void uploadImage(event.target.files?.[0], "logo")}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] ?? null;
+                        setPendingLogo(file);
+                        if (file) setRemoveLogo(false);
+                        event.currentTarget.value = "";
+                      }}
                     />
                     <button
                       type="button"
-                      disabled={uploading !== null}
+                      disabled={saving}
                       onClick={() => logoInput.current?.click()}
                       className="flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:border-indigo-200 disabled:opacity-50"
                     >
-                      {uploading === "logo" ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />}
-                      {draft.logo ? "Replace logo" : "Upload logo"}
+                      <UploadCloud className="size-3.5" />
+                      {pendingLogo ? "Change selection" : draft.logo && !removeLogo ? "Replace logo" : "Upload logo"}
                     </button>
-                    {draft.logo && (
-                      <button type="button" onClick={() => patch({ logo: undefined })} className="text-[9px] font-bold text-rose-600">
+                    {(draft.logo || pendingLogo) && !removeLogo && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPendingLogo(null);
+                          setRemoveLogo(true);
+                          patch({ logo: undefined });
+                        }}
+                        className="text-[9px] font-bold text-rose-600"
+                      >
                         Remove logo
                       </button>
                     )}
@@ -276,30 +285,81 @@ export default function BrandForm({
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/avif"
                   className="sr-only"
-                  onChange={(event) => void uploadImage(event.target.files?.[0], "cover")}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    setPendingCover(file);
+                    if (file) setRemoveCover(false);
+                    event.currentTarget.value = "";
+                  }}
                 />
                 <div className="mt-2 flex items-center gap-3">
                   <button
                     type="button"
-                    disabled={uploading !== null}
+                    disabled={saving}
                     onClick={() => coverInput.current?.click()}
                     className="flex h-9 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:border-indigo-200 disabled:opacity-50"
                   >
-                    {uploading === "cover" ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />}
-                    {draft.coverImage ? "Replace" : "Upload cover"}
+                    <UploadCloud className="size-3.5" />
+                    {pendingCover ? "Change selection" : draft.coverImage && !removeCover ? "Replace" : "Upload cover"}
                   </button>
-                  {draft.coverImage && (
-                    <button type="button" onClick={() => patch({ coverImage: undefined })} className="text-[9px] font-bold text-rose-600">
+                  {(draft.coverImage || pendingCover) && !removeCover && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPendingCover(null);
+                        setRemoveCover(true);
+                        patch({ coverImage: undefined });
+                      }}
+                      className="text-[9px] font-bold text-rose-600"
+                    >
                       Remove
                     </button>
                   )}
                 </div>
               </div>
+              {pendingLogo ? (
+                <div className="sm:col-span-2">
+                  <ImageOptimizationPreview
+                    files={[pendingLogo]}
+                    resolution="1080"
+                    title="Logo compression preview"
+                    compact
+                  />
+                </div>
+              ) : null}
+              {pendingCover ? (
+                <div className="sm:col-span-2">
+                  <ImageOptimizationPreview
+                    files={[pendingCover]}
+                    resolution="1920"
+                    title="Cover compression preview"
+                    compact
+                  />
+                </div>
+              ) : null}
               <details className="sm:col-span-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
                 <summary className="cursor-pointer text-[10px] font-bold text-slate-500">Use image URLs instead</summary>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <Field label="Logo URL" value={draft.logo || ""} onChange={(value) => patch({ logo: value })} placeholder="https://..." />
-                  <Field label="Cover Image URL" value={draft.coverImage || ""} onChange={(value) => patch({ coverImage: value })} placeholder="https://..." />
+                  <Field
+                    label="Logo URL"
+                    value={draft.logo || ""}
+                    onChange={(value) => {
+                      setPendingLogo(null);
+                      setRemoveLogo(false);
+                      patch({ logo: value });
+                    }}
+                    placeholder="https://..."
+                  />
+                  <Field
+                    label="Cover Image URL"
+                    value={draft.coverImage || ""}
+                    onChange={(value) => {
+                      setPendingCover(null);
+                      setRemoveCover(false);
+                      patch({ coverImage: value });
+                    }}
+                    placeholder="https://..."
+                  />
                 </div>
               </details>
               <div className="sm:col-span-2">
@@ -389,7 +449,7 @@ export default function BrandForm({
           <button
             type="button"
             onClick={onClose}
-            disabled={saving || uploading !== null}
+            disabled={saving}
             className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
           >
             Cancel
@@ -397,7 +457,7 @@ export default function BrandForm({
           <button
             type="button"
             onClick={() => void submit()}
-            disabled={saving || uploading !== null}
+            disabled={saving}
             className="flex h-10 min-w-32 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}

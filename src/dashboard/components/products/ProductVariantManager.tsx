@@ -11,6 +11,12 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import {
+  getProductImageResolution,
+  setProductImageResolution,
+  type ProductImageResolution,
+} from "@/dashboard/lib/imageProcessing";
 
 import {
   clearDashboardVariantImage,
@@ -141,6 +147,8 @@ export default function ProductVariantManager({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [imageResolution, setImageResolution] = useState<ProductImageResolution>(() => getProductImageResolution());
   const [editing, setEditing] = useState<DashboardProductVariant | null>(null);
   const [draft, setDraft] = useState<VariantDraft>(EMPTY_DRAFT);
   const [open, setOpen] = useState(false);
@@ -265,6 +273,7 @@ export default function ProductVariantManager({
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+      setPendingImageFile(null);
     }
   };
 
@@ -458,7 +467,10 @@ export default function ProductVariantManager({
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/avif"
                     className="hidden"
-                    onChange={(event) => void upload(event.target.files?.[0])}
+                    onChange={(event) => {
+                      setPendingImageFile(event.target.files?.[0] ?? null);
+                      event.currentTarget.value = "";
+                    }}
                   />
                   <button
                     type="button"
@@ -480,6 +492,38 @@ export default function ProductVariantManager({
                   ) : null}
                 </div>
               </div>
+              {pendingImageFile ? (
+                <div className="mt-3 space-y-2">
+                  <ImageOptimizationPreview
+                    files={[pendingImageFile]}
+                    resolution={imageResolution}
+                    onResolutionChange={(value) => {
+                      setImageResolution(value);
+                      setProductImageResolution(value);
+                    }}
+                    title="Variant image compression preview"
+                    compact
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPendingImageFile(null)}
+                      disabled={uploading}
+                      className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void upload(pendingImageFile)}
+                      disabled={uploading}
+                      className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
+                    >
+                      Confirm & upload
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-5 flex justify-end gap-2">
