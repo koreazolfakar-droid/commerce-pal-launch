@@ -248,7 +248,7 @@ export function HomeHero({
       {slideCount > 1 && (
         <div
           data-testid="home-hero-dots"
-          className="mx-auto mt-2 flex w-fit max-w-full items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/80 px-1.5 py-1 text-foreground shadow-sm backdrop-blur"
+          className="mx-auto mt-2 flex w-full max-w-xl items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/80 px-1.5 py-1 text-foreground shadow-sm backdrop-blur"
           aria-label={language === "ar" ? "شرائح الهيرو" : "Hero slides"}
         >
           <button
@@ -263,7 +263,7 @@ export function HomeHero({
             ‹
           </button>
 
-          <div className="flex items-center gap-0.5 px-0.5">
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 overflow-x-auto px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {Array.from({ length: slideCount }, (_, index) => (
               <button
                 key={index}
@@ -278,7 +278,7 @@ export function HomeHero({
                     : `Show hero image ${index + 1}`
                 }
                 aria-current={index === activeIndex ? "true" : undefined}
-                className="grid size-10 place-items-center rounded-full"
+                className="grid size-10 shrink-0 place-items-center rounded-full"
               >
                 <span
                   aria-hidden="true"
