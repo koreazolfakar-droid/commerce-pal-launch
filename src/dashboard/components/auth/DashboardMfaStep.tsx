@@ -2,6 +2,7 @@ import {
   Copy,
   Eye,
   EyeOff,
+  Fingerprint,
   KeyRound,
   Loader2,
   LogOut,
@@ -15,12 +16,14 @@ import {
   beginDashboardTotpEnrollment,
   ensureDashboardMfaActivated,
   getDashboardMfaStatus,
+  isDashboardPasskeySupported,
   signOutDashboard,
+  verifyDashboardPasskeySecondFactor,
   verifyDashboardTotp,
   type DashboardTotpEnrollment,
 } from "@/dashboard/data/catalog";
 
-type MfaMode = "loading" | "enroll" | "challenge";
+type MfaMode = "loading" | "choice" | "enroll" | "challenge";
 type LoginTheme = "light" | "dark";
 
 const mfaCopy = {
@@ -29,6 +32,13 @@ const mfaCopy = {
     verifyTitle: "Confirm your identity",
     setupDescription: "Scan the QR code with your authenticator app, then enter the current code.",
     verifyDescription: "Enter the current code from your authenticator app to continue.",
+    choiceTitle: "Choose your second step",
+    choiceDescription: "Use your authenticator code or verify with your fingerprint / passkey.",
+    authenticatorOption: "Authenticator code",
+    authenticatorHint: "Use the current code from your authenticator app.",
+    passkeyOption: "Fingerprint / Passkey",
+    passkeyHint: "Use your device fingerprint, face unlock, PIN or security key.",
+    passkeyFailed: "Fingerprint / passkey verification could not be completed.",
     badge: "Extra verification",
     preparing: "Preparing verification…",
     cannotScan: "Can't scan the QR? The setup key is hidden by default.",
@@ -59,6 +69,13 @@ const mfaCopy = {
     verifyTitle: "تأكيد الهوية",
     setupDescription: "امسح رمز QR بتطبيق المصادقة ثم أدخل الرمز الحالي.",
     verifyDescription: "أدخل الرمز الحالي من تطبيق المصادقة للمتابعة.",
+    choiceTitle: "اختر خطوة التحقق الثانية",
+    choiceDescription: "استخدم رمز تطبيق المصادقة أو تحقق بالبصمة / Passkey.",
+    authenticatorOption: "رمز Authenticator",
+    authenticatorHint: "استخدم الرمز الحالي من تطبيق المصادقة.",
+    passkeyOption: "البصمة / Passkey",
+    passkeyHint: "استخدم بصمة الجهاز أو الوجه أو PIN أو مفتاح الأمان.",
+    passkeyFailed: "تعذر إكمال التحقق بالبصمة / Passkey.",
     badge: "تحقق إضافي",
     preparing: "جارٍ تجهيز التحقق…",
     cannotScan: "تعذر مسح رمز QR؟ مفتاح الإعداد مخفي افتراضيًا.",
@@ -123,6 +140,7 @@ export default function DashboardMfaStep({
     Math.ceil(MFA_CHALLENGE_WINDOW_MS / 1000),
   );
   const [challengeExpired, setChallengeExpired] = useState(false);
+  const passkeySupported = useMemo(() => isDashboardPasskeySupported(), []);
 
   const initialize = useCallback(async () => {
     setError("");
@@ -168,7 +186,7 @@ export default function DashboardMfaStep({
       if (status.verifiedFactorId) {
         setFactorId(status.verifiedFactorId);
         setEnrollment(null);
-        setMode("challenge");
+        setMode(passkeySupported ? "choice" : "challenge");
         return;
       }
 
@@ -180,7 +198,7 @@ export default function DashboardMfaStep({
       setError(copy.notReady);
       setMode("challenge");
     }
-  }, [copy.notReady, onCancel, onSuccess]);
+  }, [copy.notReady, onCancel, onSuccess, passkeySupported]);
 
   useEffect(() => {
     void initialize();
@@ -227,6 +245,26 @@ export default function DashboardMfaStep({
 
     return () => window.clearTimeout(timer);
   }, [secretRevealed]);
+
+  const verifyPasskey = async () => {
+    setError("");
+    if (challengeExpired || remainingSeconds <= 0) {
+      setError(copy.expired);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await verifyDashboardPasskeySecondFactor();
+      toast.success(copy.verified);
+      onSuccess();
+    } catch {
+      setError(copy.passkeyFailed);
+      toast.error(copy.passkeyFailed);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const verify = async () => {
     setError("");
@@ -291,9 +329,18 @@ export default function DashboardMfaStep({
     }
   };
 
-  const title = mode === "enroll" ? copy.setupTitle : copy.verifyTitle;
+  const title =
+    mode === "enroll"
+      ? copy.setupTitle
+      : mode === "choice"
+        ? copy.choiceTitle
+        : copy.verifyTitle;
   const description =
-    mode === "enroll" ? copy.setupDescription : copy.verifyDescription;
+    mode === "enroll"
+      ? copy.setupDescription
+      : mode === "choice"
+        ? copy.choiceDescription
+        : copy.verifyDescription;
 
   const qrSource = useMemo(
     () => (enrollment?.qrCode ? qrImageSource(enrollment.qrCode) : ""),
@@ -323,6 +370,62 @@ export default function DashboardMfaStep({
         <h2 className="login-heading text-[28px] font-black tracking-[-.05em] text-white">{title}</h2>
         <p className="login-muted mt-2 text-[12px] leading-5 text-slate-400">{description}</p>
       </div>
+
+      {mode === "choice" ? (
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => {
+              setError("");
+              setMode("challenge");
+            }}
+            disabled={loading}
+            className="login-secondary flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-indigo-300/15 bg-indigo-300/[.07] px-4 text-left transition hover:bg-indigo-300/[.12] disabled:opacity-50"
+          >
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-300/10 text-indigo-200">
+              <KeyRound className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[12px] font-bold text-white">{copy.authenticatorOption}</div>
+              <div className="mt-1 text-[10px] leading-4 text-slate-400">{copy.authenticatorHint}</div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void verifyPasskey()}
+            disabled={loading || !passkeySupported || challengeExpired}
+            className="login-secondary flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-emerald-300/15 bg-emerald-300/[.06] px-4 text-left transition hover:bg-emerald-300/[.1] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-300/10 text-emerald-200">
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[12px] font-bold text-white">{copy.passkeyOption}</div>
+              <div className="mt-1 text-[10px] leading-4 text-slate-400">{copy.passkeyHint}</div>
+            </div>
+          </button>
+
+          {error ? (
+            <div
+              role="alert"
+              className="login-error rounded-xl border border-rose-400/15 bg-rose-400/[.08] px-3.5 py-3 text-[11px] leading-5 text-rose-200"
+            >
+              {error}
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => void cancel()}
+            disabled={loading}
+            className="login-muted flex h-10 w-full items-center justify-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
+          >
+            <LogOut className="size-3.5" />
+            {copy.signOut}
+          </button>
+        </div>
+      ) : null}
 
       {mode === "enroll" && enrollment ? (
         <div className="login-soft mb-5 rounded-2xl border border-white/10 bg-white/[.04] p-4">
@@ -381,6 +484,7 @@ export default function DashboardMfaStep({
         </div>
       ) : null}
 
+      {mode !== "choice" ? (
       <label className="block">
         <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">
           {copy.codeLabel}
@@ -405,8 +509,9 @@ export default function DashboardMfaStep({
           />
         </div>
       </label>
+      ) : null}
 
-      {error ? (
+      {mode !== "choice" && error ? (
         <div
           role="alert"
           className="login-error mt-3 rounded-xl border border-rose-400/15 bg-rose-400/[.08] px-3.5 py-3 text-[11px] leading-5 text-rose-200"
@@ -415,6 +520,7 @@ export default function DashboardMfaStep({
         </div>
       ) : null}
 
+      {mode !== "choice" ? (
       <button
         type="button"
         onClick={() => void verify()}
@@ -430,7 +536,9 @@ export default function DashboardMfaStep({
           </>
         )}
       </button>
+      ) : null}
 
+      {mode !== "choice" ? (
       <button
         type="button"
         onClick={() => void cancel()}
@@ -440,6 +548,7 @@ export default function DashboardMfaStep({
         <LogOut className="size-3.5" />
         {copy.signOut}
       </button>
+      ) : null}
     </div>
   );
 }
