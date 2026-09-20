@@ -77,6 +77,19 @@ test("root warms the primary storefront backend connection", async () => {
 });
 
 
+test("public CMS uses stale-while-revalidate memory caching for SSR", async () => {
+  const cms = await read("src/lib/cms.ts");
+
+  assert.match(cms, /CMS_MEMORY_FRESH_MS\s*=\s*30_000/);
+  assert.match(cms, /CMS_MEMORY_STALE_MS\s*=\s*5 \* 60_000/);
+  assert.match(cms, /let pendingCmsRefresh:/);
+  assert.match(cms, /function startCmsRefresh\(\)/);
+  assert.match(cms, /if \(cmsMemoryCache && cmsMemoryCache\.freshUntil > now\)/);
+  assert.match(cms, /void startCmsRefresh\(\);/);
+  assert.match(cms, /return cmsMemoryCache\.value;/);
+});
+
+
 test("small storefront collections avoid hydrating the full native snapshot", async () => {
   const nativeStore = await read("src/lib/nativeStore.ts");
 
