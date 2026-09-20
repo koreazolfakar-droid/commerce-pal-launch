@@ -335,11 +335,16 @@ export async function loadInventorySummary(
   threshold = 10,
 ): Promise<InventorySummary> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("dashboard_inventory_summary", {
+  const rpc = supabase.rpc as unknown as (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: InventorySummaryRow[] | null; error: unknown }>;
+
+  const { data, error } = await rpc("dashboard_inventory_summary", {
     p_threshold: Math.max(0, Math.trunc(threshold)),
   });
 
-  throwIfError(error, "Loading inventory summary failed");
+  throwIfError(error as never, "Loading inventory summary failed");
   const summary = data?.[0];
 
   return {
