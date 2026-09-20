@@ -450,18 +450,14 @@ export function isDashboardPasskeySupported() {
 }
 
 async function getDashboardPasskeyStepUpReady(): Promise<boolean> {
-  const rpcClient = supabase as unknown as {
-    rpc: (
-      name: string,
-      args?: Record<string, never>,
-    ) => Promise<{ data: unknown; error: { message: string } | null }>;
-  };
-  const { data, error } = await rpcClient.rpc("dashboard_passkey_stepup_ready");
+  const { data, error } = await supabase.functions.invoke("dashboard-passkey-stepup", {
+    body: { action: "status" },
+  });
   if (error) {
     console.warn("[dashboard-security] passkey step-up status unavailable", error.message);
     return false;
   }
-  return data === true;
+  return data?.ready === true;
 }
 
 export async function verifyDashboardPasskeySecondFactor(): Promise<DashboardMfaStatus> {
