@@ -10,6 +10,7 @@ import { cdnImage } from "@/lib/image";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
+import type { CatalogFacet } from "@/lib/taxonomy";
 
 type ManagedStoreCategory = {
   name: string;
@@ -89,7 +90,7 @@ function CategoriesPage() {
             glyphSlug: category.slug,
           };
         })
-      : catalog.categories.map((category) => {
+      : catalog.categories.map((category: CatalogFacet) => {
           const artwork = findCategoryArtworkCollection(
             collections,
             category.slug,
