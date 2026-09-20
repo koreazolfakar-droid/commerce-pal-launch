@@ -38,6 +38,10 @@ const hardenedPolicies = await readFile(
   new URL("../supabase/migrations/20260919065000_harden_dashboard_security_policies.sql", import.meta.url),
   "utf8",
 );
+const privilegeHardening = await readFile(
+  new URL("../supabase/migrations/20260920043811_revoke_dashboard_excess_privileges.sql", import.meta.url),
+  "utf8",
+);
 
 test("Turnstile is staged safely and passed directly to Supabase Auth", () => {
   assert.match(catalog, /VITE_TURNSTILE_SITE_KEY/);
@@ -81,6 +85,11 @@ test("pre-auth throttle uses opaque pair/IP buckets and authenticates success re
   assert.match(throttle, /ip\|\$\{ip\}/);
   assert.match(throttle, /eq\("key_hash", pairKeyHash\)/);
   assert.match(throttle, /48 \* 60 \* 60 \* 1000/);
+  assert.match(throttle, /const allowedOrigins = new Set/);
+  assert.match(throttle, /https:\/\/spacecallapp\.store/);
+  assert.match(throttle, /https:\/\/www\.spacecallapp\.store/);
+  assert.match(throttle, /origin && !allowedOrigins\.has\(origin\)/);
+  assert.doesNotMatch(throttle, /"Access-Control-Allow-Origin": "\*"/);
   assert.match(throttleMigration, /key_hash text primary key/);
   assert.doesNotMatch(throttleMigration, /email text|ip_address|raw_email|raw_ip/i);
 
@@ -97,6 +106,11 @@ test("throttle storage is denied to browser roles", () => {
   assert.match(hardenedPolicies, /to anon, authenticated/);
   assert.match(hardenedPolicies, /using \(false\)/);
   assert.match(hardenedPolicies, /with check \(false\)/);
+});
+
+test("sensitive dashboard tables do not grant non-RLS bypass privileges", () => {
+  assert.match(privilegeHardening, /revoke truncate, trigger, references[\s\S]+public\.user_roles[\s\S]+from authenticated/i);
+  assert.match(privilegeHardening, /revoke truncate, trigger, references[\s\S]+public\.dashboard_security_events[\s\S]+from authenticated/i);
 });
 
 test("session controls use explicit Supabase sign-out scopes", () => {
