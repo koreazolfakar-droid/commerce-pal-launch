@@ -1,6 +1,5 @@
 import {
-  useEffect,
-  useRef,
+   useRef,
   useState,
   type CSSProperties,
   type PointerEvent,
@@ -75,13 +74,10 @@ export function HeroScene({
   const free =
     placement === "free" ||
     Boolean(config.desktopLayout || config.mobileLayout);
-  const [mobileImageFailed, setMobileImageFailed] = useState(false);
-  useEffect(() => {
-    setMobileImageFailed(false);
-  }, [slide.id, slide.image_url, slide.mobile_image_url]);
-
+  const [failedMobileImageUrl, setFailedMobileImageUrl] = useState<string>();
   const mobileImage =
-    !mobileImageFailed && slide.mobile_image_url
+    slide.mobile_image_url &&
+    failedMobileImageUrl !== slide.mobile_image_url
       ? slide.mobile_image_url
       : slide.image_url;
   const ar = language === "ar";
@@ -95,8 +91,12 @@ export function HeroScene({
         typeof window !== "undefined" &&
         window.matchMedia("(max-width: 639px)").matches);
 
-    if (hasDistinctMobileImage && isMobileRender && !mobileImageFailed) {
-      setMobileImageFailed(true);
+    if (
+      hasDistinctMobileImage &&
+      isMobileRender &&
+      failedMobileImageUrl !== slide.mobile_image_url
+    ) {
+      setFailedMobileImageUrl(slide.mobile_image_url ?? undefined);
       return;
     }
 
