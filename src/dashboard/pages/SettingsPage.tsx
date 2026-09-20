@@ -292,7 +292,7 @@ export default function SettingsPage() {
                         Upload
                       </button>
                       <button
-                        onClick={() => update("logoUrl", "")}
+                        onClick={() => { setPendingLogo(null); update("logoUrl", ""); }}
                         disabled={!settings.logoUrl || uploading}
                         className="h-9 rounded-xl border border-slate-200 bg-white text-[10px] font-bold text-slate-500 disabled:opacity-40"
                       >
