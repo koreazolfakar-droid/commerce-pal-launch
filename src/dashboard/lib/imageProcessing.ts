@@ -45,8 +45,15 @@ export function getImageCompressionPreset(): ImageCompressionPreset {
     : "balanced";
 }
 
+export const IMAGE_COMPRESSION_CHANGE_EVENT = "spacecall-image-compression-change";
+
 export function setImageCompressionPreset(value: ImageCompressionPreset) {
-  if (typeof window !== "undefined") window.localStorage.setItem(COMPRESSION_STORAGE_KEY, value);
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(COMPRESSION_STORAGE_KEY, value);
+    window.dispatchEvent(
+      new CustomEvent<ImageCompressionPreset>(IMAGE_COMPRESSION_CHANGE_EVENT, { detail: value }),
+    );
+  }
 }
 
 export function imageCompressionQuality(value: ImageCompressionPreset) {
