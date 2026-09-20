@@ -291,12 +291,9 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
   });
 }
 
-async function loadSnapshot(): Promise<NativeSnapshot> {
-  const now = Date.now();
-  if (cachedSnapshot && cachedSnapshot.expiresAt > now) return cachedSnapshot.value;
-  if (pendingSnapshot) return pendingSnapshot;
+async function fetchSnapshot(): Promise<NativeSnapshot> {
+  {
 
-  pendingSnapshot = (async () => {
     const [productResult, variantResult, imageResult, collectionResult, linkResult, brandResult] =
       await Promise.all([
         publicSupabase
