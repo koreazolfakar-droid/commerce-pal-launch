@@ -146,6 +146,8 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", a
   assert.match(hero, /"shopify-collection"/);
   assert.match(hero, /hero-product-fallback/);
   assert.match(hero, /<HeroScene/);
+  assert.match(hero, /<\/section>[\s\S]*data-testid="home-hero-dots"/);
+  assert.match(hero, /overflow-x-auto/);
   const scene = await readFile(new URL("../src/components/HeroScene.tsx", import.meta.url), "utf8");
   assert.match(scene, /slide.mobile_image_url/);
   assert.match(scene, /slide.overlay_opacity/);
