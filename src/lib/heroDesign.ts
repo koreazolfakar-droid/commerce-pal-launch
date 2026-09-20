@@ -8,7 +8,10 @@ export type HeroVisualConfig = {
   buttonPlacement?: "inline" | "free" | "below";
   desktopLayout?: HeroLayout;
   mobileLayout?: HeroLayout;
+  /** Legacy focal point kept for backward compatibility with existing slides. */
   focalPoint?: HeroPoint;
+  desktopFocalPoint?: HeroPoint;
+  mobileFocalPoint?: HeroPoint;
 };
 
 export const DEFAULT_HERO_VISUAL_CONFIG: HeroVisualConfig = {
@@ -46,7 +49,9 @@ export function normalizeHeroVisualConfig(value: unknown): HeroVisualConfig {
       : {};
   const desktopLayout = layout(v.desktopLayout),
     mobileLayout = layout(v.mobileLayout),
-    focalPoint = point(v.focalPoint);
+    focalPoint = point(v.focalPoint),
+    desktopFocalPoint = point(v.desktopFocalPoint),
+    mobileFocalPoint = point(v.mobileFocalPoint);
   return {
     vertical:
       v.vertical === "top" || v.vertical === "center" ? v.vertical : "bottom",
@@ -68,6 +73,8 @@ export function normalizeHeroVisualConfig(value: unknown): HeroVisualConfig {
     ...(desktopLayout ? { desktopLayout } : {}),
     ...(mobileLayout ? { mobileLayout } : {}),
     ...(focalPoint ? { focalPoint } : {}),
+    ...(desktopFocalPoint ? { desktopFocalPoint } : {}),
+    ...(mobileFocalPoint ? { mobileFocalPoint } : {}),
   };
 }
 
