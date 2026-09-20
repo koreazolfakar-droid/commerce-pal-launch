@@ -53,6 +53,23 @@ export function isSupabaseClientConfigured(): boolean {
   return Boolean(url && publishableKey);
 }
 
+export function createEphemeralPasskeyClient() {
+  const { url, publishableKey } = getSupabaseEnv();
+  return createClient<Database>(url, publishableKey, {
+    global: {
+      fetch: createSupabaseFetch(publishableKey),
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      experimental: {
+        passkey: true,
+      },
+    },
+  });
+}
+
 function createSupabaseClient() {
   const { url: SUPABASE_URL, publishableKey: SUPABASE_PUBLISHABLE_KEY } = getSupabaseEnv();
 
