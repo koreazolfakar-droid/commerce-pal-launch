@@ -13,8 +13,8 @@ test("brand and category rows share the same responsive action surface", async (
 
   assert.match(actions, /bottom-\[calc\(4\.75rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(actions, /z-\[60\]/);
-  assert.match(actions, /sm:absolute/);
-  assert.match(actions, /sm:top-11/);
+  assert.match(actions, /lg:absolute/);
+  assert.match(actions, /lg:top-11/);
   assert.match(actions, /aria-haspopup="menu"/);
 
   assert.match(brands, /CatalogRowActions/);
@@ -38,6 +38,8 @@ test("Brands and Categories use the same phone and desktop master-detail breakpo
     assert.match(source, /window\.innerWidth < 1024/);
     assert.match(source, /text-\[24px\].*sm:text-\[30px\]/);
     assert.match(source, /grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto/);
+    assert.match(source, /bottom-\[calc\(4\.75rem\+env\(safe-area-inset-bottom\)\)\]/);
+    assert.match(source, /xl:grid-cols-\[minmax\(0,1\.5fr\)_minmax\(90px,\.8fr\)_80px_80px_82px_36px\]/);
   }
 
   assert.match(brands, /id="brand-list"/);
