@@ -8,7 +8,7 @@
   isolation: isolate;
   height: clamp(240px, 62cqw, 320px);
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 16px;
   background: #101b32;
 }
 .hero-scene picture,
@@ -69,14 +69,15 @@
   color: #020617;
 }
 .hero-scene[data-theme="glass"] .hero-scene-copy {
-  background: #02061766;
-  backdrop-filter: blur(12px);
-  padding: 16px;
-  border-radius: 20px;
+  background: #02061780;
+  backdrop-filter: blur(8px);
+  padding: 14px;
+  border: 1px solid #ffffff24;
+  border-radius: 14px;
 }
 .hero-scene h2 {
   margin: 0;
-  font-weight: 900;
+  font-weight: 800;
   font-size: clamp(20px, 3.5cqw, 48px);
   line-height: 1.1;
   letter-spacing: -0.025em;
@@ -121,10 +122,10 @@
   justify-content: center;
   min-height: 44px;
   padding: 10px 20px;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 12px;
   line-height: 1.4;
-  font-weight: 750;
+  font-weight: 700;
   background: var(--primary, #5968ea);
   color: var(--primary-foreground, white);
   text-decoration: none;
@@ -142,7 +143,7 @@
   background: #02061766;
   color: white;
   border: 1px solid #ffffffb3;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(6px);
 }
 .hero-scene[data-radius="pill"] .hero-scene-button {
   border-radius: 999px;
