@@ -8,7 +8,7 @@ const publicClient = fs.readFileSync("src/integrations/supabase/publicClient.ts"
 
 test("public storefront CMS reads only through the resilient public edge gateway", () => {
   assert.match(cms, /functions\/v1\/public-cms/);
-  assert.match(cms, /CMS_PUBLIC_READ_TIMEOUT_MS = 4_000/);
+  assert.match(cms, /CMS_PUBLIC_READ_TIMEOUT_MS = 4_000/);\n  assert.match(cms, /cache:\\s*"no-store"/);
   assert.match(cms, /AbortController/);
   assert.match(cms, /return EMPTY_CMS/);
   assert.match(cms, /normalizeCmsSnapshot/);
@@ -21,7 +21,7 @@ test("storefront CMS query refreshes safely without pinning stale dashboard cont
   assert.match(cmsQuery, /queryKey: \["storefront", "public-cms"\]/);
   assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
   assert.match(cmsQuery, /placeholderData: EMPTY_CMS/);
-  assert.match(cmsQuery, /staleTime: 30_000/);
+  assert.match(cmsQuery, /staleTime: 10_000/);
   assert.match(cmsQuery, /gcTime: 5 \* 60_000/);
   assert.match(cmsQuery, /retry: 1/);
   assert.doesNotMatch(cmsQuery, /dashboard-disconnected/);
