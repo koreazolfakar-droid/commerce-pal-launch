@@ -386,8 +386,8 @@ export type Database = {
           json_ld: Json
           noindex: boolean
           og_image_url: string | null
-          page_slug: string | null
-          path: string
+          page_slug: string
+          path: string | null
           robots: string
           title: string | null
           title_ar: string | null
@@ -405,8 +405,8 @@ export type Database = {
           json_ld?: Json
           noindex?: boolean
           og_image_url?: string | null
-          page_slug?: string | null
-          path: string
+          page_slug: string
+          path?: string | null
           robots?: string
           title?: string | null
           title_ar?: string | null
@@ -424,8 +424,8 @@ export type Database = {
           json_ld?: Json
           noindex?: boolean
           og_image_url?: string | null
-          page_slug?: string | null
-          path?: string
+          page_slug?: string
+          path?: string | null
           robots?: string
           title?: string | null
           title_ar?: string | null
