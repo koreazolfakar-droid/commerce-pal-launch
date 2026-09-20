@@ -1,5 +1,7 @@
 import {
   Boxes,
+  ChevronLeft,
+  ChevronRight,
   Filter,
   History,
   Loader2,
@@ -42,6 +44,33 @@ function Badge({ status }: { status: InventoryStatus }) {
   return <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${styles}`}>{status}</span>;
 }
 
+type PaginationItem = number | "ellipsis-start" | "ellipsis-end";
+
+function paginationItems(currentPage: number, totalPages: number): PaginationItem[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const items: PaginationItem[] = [1];
+  let start = Math.max(2, currentPage - 1);
+  let end = Math.min(totalPages - 1, currentPage + 1);
+
+  if (currentPage <= 4) {
+    start = 2;
+    end = 5;
+  } else if (currentPage >= totalPages - 3) {
+    start = totalPages - 4;
+    end = totalPages - 1;
+  }
+
+  if (start > 2) items.push("ellipsis-start");
+  for (let value = start; value <= end; value += 1) items.push(value);
+  if (end < totalPages - 1) items.push("ellipsis-end");
+  items.push(totalPages);
+
+  return items;
+}
+
 function movementLabel(row: InventoryRow, loading: boolean) {
   if (!row.lastMovementAt || row.lastMovementDelta == null) return loading ? "Loading…" : "—";
   const prefix = row.lastMovementDelta > 0 ? "+" : "";
@@ -57,64 +86,39 @@ export default function InventoryManagerPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [movementLoading, setMovementLoading] = useState(false);
+  const loadRequestRef = useRef(0);
   const movementRequestRef = useRef(0);
+  const [movementVersion, setMovementVersion] = useState(0);
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draftStocks, setDraftStocks] = useState<Record<string, string>>({});
   const [historyRow, setHistoryRow] = useState<InventoryRow | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const load = useCallback(async (manual = false) => {
-    const requestId = ++movementRequestRef.current;
+    const requestId = ++loadRequestRef.current;
     if (manual) setRefreshing(true);
     else setLoading(true);
 
     try {
       const next = await loadInventoryWorkspace();
-      if (requestId !== movementRequestRef.current) return;
+      if (requestId !== loadRequestRef.current) return;
 
       setRows(next);
       setDraftStocks({});
       setError("");
-      setMovementLoading(true);
-
-      void loadInventoryLatestMovements()
-        .then((movements) => {
-          if (requestId !== movementRequestRef.current) return;
-          const latestByVariant = new Map(
-            movements.map((movement) => [movement.variantId, movement]),
-          );
-          setRows((current) =>
-            current.map((row) => {
-              const movement = latestByVariant.get(row.variantId);
-              return movement
-                ? {
-                    ...row,
-                    lastMovementAt: movement.createdAt,
-                    lastMovementDelta: movement.quantityDelta,
-                  }
-                : row;
-            }),
-          );
-        })
-        .catch((cause) => {
-          console.warn(
-            "[dashboard-inventory] latest movement hydration failed",
-            cause instanceof Error ? cause.message : cause,
-          );
-        })
-        .finally(() => {
-          if (requestId === movementRequestRef.current) setMovementLoading(false);
-        });
+      setMovementVersion((current) => current + 1);
 
       if (manual) toast.success("Inventory refreshed from Supabase.");
     } catch (cause) {
-      if (requestId !== movementRequestRef.current) return;
+      if (requestId !== loadRequestRef.current) return;
       const message = cause instanceof Error ? cause.message : "Unable to load inventory.";
       setError(message);
       setMovementLoading(false);
       if (manual) toast.error(message);
     } finally {
-      if (requestId === movementRequestRef.current) {
+      if (requestId === loadRequestRef.current) {
         setLoading(false);
         setRefreshing(false);
       }
@@ -167,6 +171,64 @@ export default function InventoryManagerPage() {
       );
     });
   }, [rows, query, category, threshold, onlyLow]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = filtered.length ? (safePage - 1) * pageSize : 0;
+  const pageEnd = Math.min(pageStart + pageSize, filtered.length);
+  const pageRows = useMemo(
+    () => filtered.slice(pageStart, pageEnd),
+    [filtered, pageStart, pageEnd],
+  );
+  const pageVariantKey = pageRows.map((row) => row.variantId).join(",");
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, category, threshold, onlyLow, pageSize]);
+
+  useEffect(() => {
+    if (page !== safePage) setPage(safePage);
+  }, [page, safePage]);
+
+  useEffect(() => {
+    const variantIds = pageVariantKey ? pageVariantKey.split(",") : [];
+    const requestId = ++movementRequestRef.current;
+
+    if (!variantIds.length) {
+      setMovementLoading(false);
+      return;
+    }
+
+    setMovementLoading(true);
+    void loadInventoryLatestMovements(variantIds)
+      .then((movements) => {
+        if (requestId !== movementRequestRef.current) return;
+        const latestByVariant = new Map(
+          movements.map((movement) => [movement.variantId, movement]),
+        );
+        setRows((current) =>
+          current.map((row) => {
+            const movement = latestByVariant.get(row.variantId);
+            return movement
+              ? {
+                  ...row,
+                  lastMovementAt: movement.createdAt,
+                  lastMovementDelta: movement.quantityDelta,
+                }
+              : row;
+          }),
+        );
+      })
+      .catch((cause) => {
+        console.warn(
+          "[dashboard-inventory] paged movement hydration failed",
+          cause instanceof Error ? cause.message : cause,
+        );
+      })
+      .finally(() => {
+        if (requestId === movementRequestRef.current) setMovementLoading(false);
+      });
+  }, [pageVariantKey, movementVersion]);
 
   const totalUnits = rows.reduce((sum, row) => sum + row.stock, 0);
   const low = rows.filter(
@@ -363,21 +425,24 @@ export default function InventoryManagerPage() {
             <div className="text-[15px] font-bold text-[#14203a]">Inventory variants</div>
             <div className="mt-1 text-[10px] text-slate-400">Products, variants, and live stock controls</div>
           </div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">{filtered.length} shown</span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
+            {filtered.length ? `${pageStart + 1}–${pageEnd} of ${filtered.length}` : "0 shown"}
+          </span>
         </div>
 
         <div className="divide-y divide-slate-100 lg:hidden">
-          {filtered.map((row) => {
+          {pageRows.map((row) => {
             const status = statusFor(row.stock, threshold, row.trackInventory);
             const saving = savingId === row.variantId;
             return (
-              <article key={row.variantId} className="p-4">
-                <div className="flex items-start gap-3.5">
-                  <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+              <article key={row.variantId} className="p-3.5">
+                <div className="flex items-start gap-3">
+                  <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
                     {row.image ? (
                       <img
                         src={row.image}
                         alt={row.productName}
+                        loading="lazy"
                         className="size-full object-contain p-1"
                       />
                     ) : (
@@ -388,98 +453,87 @@ export default function InventoryManagerPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h3 className="line-clamp-2 text-[14px] font-extrabold leading-[1.35] text-slate-800">
+                        <h3 className="line-clamp-2 text-[13px] font-extrabold leading-[1.35] text-slate-800">
                           {row.productName}
                         </h3>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] font-medium text-slate-400">
-                          <span>{row.brand || "No brand"}</span>
-                          <span>•</span>
-                          <span>{row.variantTitle || "Default"}</span>
+                        <div className="mt-1 truncate text-[10px] font-medium text-slate-400">
+                          {row.brand || "No brand"} · {row.variantTitle || "Default"}
                         </div>
                       </div>
                       <Badge status={status} />
                     </div>
 
                     {row.optionsLabel && (
-                      <div className="mt-2 line-clamp-2 text-[10px] leading-4 text-slate-500">
+                      <div className="mt-1.5 line-clamp-1 text-[10px] text-slate-500">
                         {row.optionsLabel}
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-xl bg-slate-50 px-3 py-2.5">
+                <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+                  <div className="min-w-0 rounded-xl bg-slate-50 px-3 py-2">
                     <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">SKU</div>
-                    <div className="mt-1 truncate font-mono text-[10px] font-semibold text-slate-600">{row.sku || "—"}</div>
+                    <div className="mt-0.5 truncate font-mono text-[10px] font-semibold text-slate-600">
+                      {row.sku || "—"}
+                    </div>
                   </div>
-                  <div className="rounded-xl bg-slate-50 px-3 py-2.5">
+                  <div className="min-w-[78px] rounded-xl bg-slate-50 px-3 py-2">
                     <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">On hand</div>
                     <div className="mt-0.5 text-[18px] font-black leading-none text-slate-800">{row.stock}</div>
                   </div>
                 </div>
 
-                <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[10px] font-bold text-slate-700">Stock control</div>
-                      <div className="mt-0.5 text-[9px] text-slate-400">
-                        {row.trackInventory ? "Tap − / + or enter the exact quantity" : "Inventory tracking is disabled"}
-                      </div>
-                    </div>
-                    {saving && <Loader2 className="size-4 animate-spin text-indigo-500" />}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => void changeBy(row, -1)}
-                      disabled={saving || !row.trackInventory || row.stock <= 0}
-                      className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
-                      aria-label={`Decrease stock for ${row.productName}`}
-                    >
-                      <Minus className="size-4" />
-                    </button>
-                    <input
-                      value={draftStocks[row.variantId] ?? String(row.stock)}
-                      onChange={(event) =>
-                        setDraftStocks((current) => ({
-                          ...current,
-                          [row.variantId]: event.target.value,
-                        }))
-                      }
-                      onBlur={() => void commitAbsolute(row)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") event.currentTarget.blur();
-                      }}
-                      disabled={saving || !row.trackInventory}
-                      className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-center text-[15px] font-black text-slate-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400"
-                      type="number"
-                      min={0}
-                      step={1}
-                      inputMode="numeric"
-                    />
-                    <button
-                      onClick={() => void changeBy(row, 1)}
-                      disabled={saving || !row.trackInventory}
-                      className="grid size-11 shrink-0 place-items-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
-                      aria-label={`Increase stock for ${row.productName}`}
-                    >
-                      <Plus className="size-4" />
-                    </button>
-                  </div>
+                <div className="mt-2.5 flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2">
+                  <button
+                    onClick={() => void changeBy(row, -1)}
+                    disabled={saving || !row.trackInventory || row.stock <= 0}
+                    className="grid size-10 shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
+                    aria-label={`Decrease stock for ${row.productName}`}
+                  >
+                    <Minus className="size-4" />
+                  </button>
+                  <input
+                    value={draftStocks[row.variantId] ?? String(row.stock)}
+                    onChange={(event) =>
+                      setDraftStocks((current) => ({
+                        ...current,
+                        [row.variantId]: event.target.value,
+                      }))
+                    }
+                    onBlur={() => void commitAbsolute(row)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") event.currentTarget.blur();
+                    }}
+                    disabled={saving || !row.trackInventory}
+                    className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-center text-[14px] font-black text-slate-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400"
+                    type="number"
+                    min={0}
+                    step={1}
+                    inputMode="numeric"
+                    aria-label={`Set stock for ${row.productName}`}
+                  />
+                  <button
+                    onClick={() => void changeBy(row, 1)}
+                    disabled={saving || !row.trackInventory}
+                    className="grid size-10 shrink-0 place-items-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
+                    aria-label={`Increase stock for ${row.productName}`}
+                  >
+                    {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                  </button>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setHistoryRow(row)}
-                  className="mt-3 flex min-h-11 w-full items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 text-left text-[9px] leading-4 text-slate-500 transition active:scale-[.99]"
+                  className="mt-2 flex min-h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-[9px] leading-4 text-slate-500 transition hover:bg-slate-50 active:scale-[.99]"
                   aria-label={`View inventory history for ${row.productName} ${row.variantTitle}`}
                 >
                   <History className="size-3.5 shrink-0 text-indigo-500" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate">Last movement: {movementLabel(row, movementLoading)}</span>
-                    <span className="mt-0.5 block font-bold text-indigo-600">View history</span>
+                  <span className="min-w-0 flex-1 truncate">
+                    Last movement: {movementLabel(row, movementLoading)}
                   </span>
+                  <span className="shrink-0 font-bold text-indigo-600">History</span>
                 </button>
               </article>
             );
@@ -501,7 +555,7 @@ export default function InventoryManagerPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row) => {
+              {pageRows.map((row) => {
                 const status = statusFor(row.stock, threshold, row.trackInventory);
                 const saving = savingId === row.variantId;
                 return (
@@ -513,6 +567,7 @@ export default function InventoryManagerPage() {
                             <img
                               src={row.image}
                               alt={row.productName}
+                              loading="lazy"
                               className="size-full object-contain p-1"
                             />
                           ) : (
@@ -613,6 +668,73 @@ export default function InventoryManagerPage() {
           <div className="p-12 text-center text-sm text-slate-400">
             <Boxes className="mx-auto mb-3 size-8 text-slate-300" />
             No inventory variants match these filters.
+          </div>
+        )}
+
+        {filtered.length > 0 && (
+          <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#fcfcfe] px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div className="flex items-center justify-between gap-3 sm:justify-start">
+              <span className="text-[10px] font-semibold text-slate-500">
+                Showing {pageStart + 1}–{pageEnd} of {filtered.length}
+              </span>
+              <label className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
+                Per page
+                <select
+                  value={pageSize}
+                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                  aria-label="Inventory rows per page"
+                >
+                  <option value={20}>20</option>
+                  <option value={40}>40</option>
+                  <option value={60}>60</option>
+                </select>
+              </label>
+            </div>
+
+            <nav className="flex items-center justify-center gap-1" aria-label="Inventory pagination">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={safePage <= 1}
+                className="grid size-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:cursor-not-allowed disabled:opacity-35"
+                aria-label="Previous inventory page"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+
+              {paginationItems(safePage, totalPages).map((item) =>
+                typeof item === "number" ? (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setPage(item)}
+                    aria-current={item === safePage ? "page" : undefined}
+                    className={`min-w-9 rounded-lg border px-2 py-2 text-[11px] font-bold transition ${
+                      item === safePage
+                        ? "border-indigo-500 bg-indigo-600 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ) : (
+                  <span key={item} className="grid size-9 place-items-center text-[11px] text-slate-400">
+                    …
+                  </span>
+                ),
+              )}
+
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                disabled={safePage >= totalPages}
+                className="grid size-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:cursor-not-allowed disabled:opacity-35"
+                aria-label="Next inventory page"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </nav>
           </div>
         )}
       </div>
