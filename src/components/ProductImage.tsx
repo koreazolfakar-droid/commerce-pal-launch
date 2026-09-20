@@ -29,8 +29,6 @@ export function ProductImage({
 }) {
   const { t } = useLanguage();
   const [failedUrl, setFailedUrl] = useState<string>();
-  const [responsiveFailedUrl, setResponsiveFailedUrl] = useState<string>();
-  const responsiveSrcSet = responsiveFailedUrl === url ? undefined : cdnSrcSet(url, size);
 
   return (
     <div
@@ -41,9 +39,8 @@ export function ProductImage({
     >
       {url && failedUrl !== url ? (
         <img
-          key={`${url}:${responsiveFailedUrl === url ? "original" : "responsive"}`}
           src={cdnImage(url, size)}
-          srcSet={responsiveSrcSet}
+          srcSet={cdnSrcSet(url, size)}
           sizes={sizes}
           alt={alt}
           loading={eager ? "eager" : "lazy"}
@@ -52,13 +49,7 @@ export function ProductImage({
           width={size}
           height={size}
           draggable={false}
-          onError={() => {
-            if (responsiveSrcSet) {
-              setResponsiveFailedUrl(url);
-              return;
-            }
-            setFailedUrl(url);
-          }}
+          onError={() => setFailedUrl(url)}
           className={cn(
             "absolute inset-0 z-10 h-full w-full select-none bg-image-stage object-contain p-[7%] transition-transform duration-500 sm:p-[8%]",
             imageClassName,
