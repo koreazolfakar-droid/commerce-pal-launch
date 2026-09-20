@@ -14,6 +14,7 @@ import {
   bestSellingQueryOptions,
   newestQueryOptions,
   homepageCatalogQueryOptions,
+  navigationCatalogQueryOptions,
   collectionQueryOptions,
   collectionsQueryOptions,
 } from "@/lib/queries";
@@ -59,8 +60,8 @@ const LazyBrandShowcase = lazy(() =>
 );
 
 const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
-const HOME_SECONDARY_IDLE_TIMEOUT_MS = 450;
-const HOME_SECONDARY_FALLBACK_DELAY_MS = 120;
+const HOME_SECONDARY_IDLE_TIMEOUT_MS = 160;
+const HOME_SECONDARY_FALLBACK_DELAY_MS = 40;
 
 type IdleCapableWindow = Window & {
   requestIdleCallback?: (
@@ -500,6 +501,7 @@ function Index() {
   const { t, language } = useLanguage();
   const deferredWorkReady = useDeferredHomepageWork();
   const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
+  const { data: navigationCatalog } = useQuery(navigationCatalogQueryOptions());
   const { data: catalog } = useQuery({
     ...homepageCatalogQueryOptions(),
     enabled: deferredWorkReady,
@@ -531,9 +533,10 @@ function Index() {
   const products = catalog?.products ?? [];
   const merchandiseProducts = products.filter(isHomepageMerchandise);
   const homepageCatalog = catalog ? { ...catalog, products: merchandiseProducts } : null;
-  const brands = catalog
-    ? applyCmsBrands(buildShopifyBrands(catalog.brands, collections), cms.brands)
-    : [];
+  const navigationCategories = navigationCatalog?.categories ?? catalog?.categories ?? [];
+  const navigationBrands = navigationCatalog?.brands ?? catalog?.brands ?? [];
+  const navigationReady = Boolean(navigationCatalog || catalog);
+  const brands = applyCmsBrands(buildShopifyBrands(navigationBrands, collections), cms.brands);
   const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
   const best = (bestSellers ?? []).filter(isHomepageMerchandise);
   const latest = newItems.filter(isHomepageMerchandise);
@@ -589,8 +592,8 @@ function Index() {
       order: orderOf("categories", 15),
       section: coreSection("categories"),
       visible: isLive(coreSection("categories")),
-      node: catalog ? (
-        <HomeCategorySection catalog={catalog} collections={collections} />
+      node: navigationReady ? (
+        <HomeCategorySection categories={navigationCategories} collections={collections} />
       ) : (
         <div className="h-28 rounded-3xl bg-surface" aria-hidden="true" />
       ),
@@ -600,7 +603,7 @@ function Index() {
       order: orderOf("brands", 20),
       section: coreSection("brands"),
       visible: isLive(coreSection("brands")),
-      node: catalog ? (
+      node: navigationReady ? (
         <Suspense fallback={<SectionFallback className="h-24" />}>
           <LazyTopBrands brands={brands} />
         </Suspense>
