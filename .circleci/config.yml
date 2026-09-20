@@ -22,6 +22,25 @@ commands:
           name: Install dependencies
           command: bun install --frozen-lockfile
 jobs:
+  capture-lint:
+    executor: node-bun
+    steps:
+      - bootstrap
+      - run:
+          name: Capture lint failure
+          command: |
+            set +e
+            bun run lint > /tmp/lint.log 2>&1
+            code=$?
+            cat /tmp/lint.log
+            if [ "$code" -ne 0 ]; then
+              curl -fsS -X POST \
+                -H "x-ci-run-key: ${CIRCLE_SHA1}" \
+                -H 'x-ci-job-name: lint' \
+                --data-binary @/tmp/lint.log \
+                https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log || true
+            fi
+            exit "$code"
   capture-unit:
     executor: node-bun
     steps:
@@ -63,5 +82,6 @@ jobs:
 workflows:
   capture:
     jobs:
+      - capture-lint
       - capture-unit
       - capture-ssr
