@@ -58,19 +58,22 @@ export default function ImageOptimizationPreview({
     setPreviewing(true);
     setError("");
 
-    Promise.all(files.map((file) => convertProductImageToWebp(file, resolution, compression)))
-      .then((next) => {
+    void (async () => {
+      try {
+        const next: ProductImageConversionResult[] = [];
+        for (const file of files) {
+          next.push(await convertProductImageToWebp(file, resolution, compression));
+        }
         if (!cancelled) setResults(next);
-      })
-      .catch((cause) => {
+      } catch (cause) {
         if (!cancelled) {
           setResults([]);
           setError(cause instanceof Error ? cause.message : "Unable to preview optimization.");
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setPreviewing(false);
-      });
+      }
+    })();
 
     return () => {
       cancelled = true;
