@@ -4,13 +4,11 @@ import {
   Copy,
   Eye,
   EyeOff,
-  MoreHorizontal,
   Pencil,
   Plus,
   Sparkles,
-  Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import CatalogRowActions from "@/dashboard/components/CatalogRowActions";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
 import type { CatalogBrand } from "@/dashboard/data/brands";
 
@@ -43,8 +41,6 @@ export default function BrandList({
   onDelete: (brand: CatalogBrand) => void;
   onMove: (brandId: string, direction: -1 | 1) => void;
 }) {
-  const [menuId, setMenuId] = useState<string | null>(null);
-
   return (
     <div className="space-y-1.5">
       {brands.map((brand, index) => {
@@ -62,12 +58,12 @@ export default function BrandList({
             <button
               type="button"
               onClick={() => onSelect(brand)}
-              className={`flex min-h-[68px] w-full items-center gap-3 p-3 text-start ${reorderMode ? "pe-20" : "pe-14"}`}
+              className={`flex min-h-[72px] w-full items-center gap-3 px-3 py-2.5 text-start sm:min-h-[68px] ${reorderMode ? "pe-24 sm:pe-20" : "pe-14"}`}
             >
-              <BrandMark brand={brand} className="size-10" />
+              <BrandMark brand={brand} className="size-11 sm:size-10" />
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className="truncate text-[11.5px] font-black text-slate-700">
+                  <span className="truncate text-[13px] font-black text-slate-700 sm:text-[11.5px]">
                     {brand.name}
                   </span>
                   {brand.featured && (
@@ -76,13 +72,13 @@ export default function BrandList({
                     </span>
                   )}
                 </span>
-                <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] text-slate-400">
+                <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400 sm:text-[9px]">
                   <span className="max-w-[140px] truncate">/{brand.slug}</span>
                   <span>•</span>
                   <span>{getProductCount(brand)} products</span>
                   <span
                     className={
-                      "rounded-full px-1.5 py-0.5 font-bold " +
+                      "rounded-full px-2 py-0.5 font-bold " +
                       (brand.active
                         ? "bg-emerald-50 text-emerald-700"
                         : "bg-slate-100 text-slate-500")
@@ -117,94 +113,27 @@ export default function BrandList({
                   </button>
                 </div>
               ) : (
-                <>
-                  <button
-                    type="button"
-                    aria-label={"Actions for " + brand.name}
-                    onClick={() => setMenuId((current) => (current === brand.id ? null : brand.id))}
-                    className="grid size-10 place-items-center rounded-xl text-slate-400 transition hover:bg-white hover:text-slate-600"
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </button>
-                  {menuId === brand.id && (
-                    <>
-                      <button
-                        type="button"
-                        aria-label="Close brand actions"
-                        className="fixed inset-0 z-[55] cursor-default bg-slate-950/20 sm:z-40 sm:bg-transparent"
-                        onClick={() => setMenuId(null)}
-                      />
-                      <div
-                        role="menu"
-                        aria-label={"Actions for " + brand.name}
-                        className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-[60] max-h-[70dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:end-0 sm:top-11 sm:z-50 sm:max-h-none sm:w-48 sm:max-w-[calc(100vw-2rem)] sm:overflow-hidden sm:rounded-xl sm:p-1.5 sm:shadow-xl"
-                      >
-                        <div className="px-2.5 pb-2 pt-1 sm:hidden">
-                          <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-slate-200" />
-                          <div className="truncate text-[12px] font-black text-slate-700">
-                            {brand.name}
-                          </div>
-                          <div className="mt-0.5 text-[9px] text-slate-400">Brand actions</div>
-                        </div>
-                        {[
-                          { label: "Edit", icon: Pencil, action: () => onEdit(brand) },
-                          {
-                            label: "View Products",
-                            icon: Eye,
-                            action: () => onViewProducts(brand),
-                          },
-                          {
-                            label: "Add Product",
-                            icon: Plus,
-                            action: () => onAddProduct(brand),
-                          },
-                          {
-                            label: brand.featured ? "Unfeature" : "Feature",
-                            icon: Sparkles,
-                            action: () => onToggleFeatured(brand),
-                          },
-                          {
-                            label: brand.active ? "Hide" : "Show",
-                            icon: brand.active ? EyeOff : Eye,
-                            action: () => onToggleActive(brand),
-                          },
-                          {
-                            label: "Duplicate",
-                            icon: Copy,
-                            action: () => onDuplicate(brand),
-                          },
-                        ].map(({ label, icon: Icon, action }) => (
-                          <button
-                            key={label}
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setMenuId(null);
-                              action();
-                            }}
-                            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 sm:min-h-10 sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2 sm:text-[10px]"
-                          >
-                            <Icon className="size-4 text-slate-400 sm:size-3.5" />
-                            {label}
-                          </button>
-                        ))}
-                        <div className="my-1 border-t border-slate-100" />
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            setMenuId(null);
-                            onDelete(brand);
-                          }}
-                          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-rose-600 transition hover:bg-rose-50 sm:min-h-10 sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2 sm:text-[10px]"
-                        >
-                          <Trash2 className="size-4 sm:size-3.5" />
-                          Delete
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </>
+                <CatalogRowActions
+                  entityName={brand.name}
+                  entityType="Brand"
+                  actions={[
+                    { label: "Edit", icon: Pencil, onClick: () => onEdit(brand) },
+                    { label: "View Products", icon: Eye, onClick: () => onViewProducts(brand) },
+                    { label: "Add Product", icon: Plus, onClick: () => onAddProduct(brand) },
+                    {
+                      label: brand.featured ? "Unfeature" : "Feature",
+                      icon: Sparkles,
+                      onClick: () => onToggleFeatured(brand),
+                    },
+                    {
+                      label: brand.active ? "Hide" : "Show",
+                      icon: brand.active ? EyeOff : Eye,
+                      onClick: () => onToggleActive(brand),
+                    },
+                    { label: "Duplicate", icon: Copy, onClick: () => onDuplicate(brand) },
+                  ]}
+                  onDelete={() => onDelete(brand)}
+                />
               )}
             </div>
           </div>
