@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { getDashboardRole, type DashboardRole } from "@/dashboard/data/catalog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
@@ -420,10 +421,10 @@ export async function loadReceivingWorkspace(
       remainingQuantityBefore: line.remaining_quantity_before,
       receivedQuantity: line.received_quantity,
       damagedQuantity: line.damaged_quantity,
-      deliveredQuantity: line.delivered_quantity,
-      missingQuantity: line.missing_quantity,
-      difference: line.difference,
-      overageQuantity: line.overage_quantity,
+      deliveredQuantity: line.delivered_quantity ?? 0,
+      missingQuantity: line.missing_quantity ?? 0,
+      difference: line.difference ?? 0,
+      overageQuantity: line.overage_quantity ?? 0,
       overageReason: line.overage_reason,
       unitCost: toNumber(line.unit_cost),
       serials: serialsByReceivingItem.get(line.id) ?? [],
@@ -1165,10 +1166,10 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
       remainingQuantityBefore: line.remaining_quantity_before,
       receivedQuantity: line.received_quantity,
       damagedQuantity: line.damaged_quantity,
-      deliveredQuantity: line.delivered_quantity,
-      missingQuantity: line.missing_quantity,
-      difference: line.difference,
-      overageQuantity: line.overage_quantity,
+      deliveredQuantity: line.delivered_quantity ?? 0,
+      missingQuantity: line.missing_quantity ?? 0,
+      difference: line.difference ?? 0,
+      overageQuantity: line.overage_quantity ?? 0,
       overageReason: line.overage_reason,
       unitCost: toNumber(line.unit_cost),
       serials: serialsByReceivingItem.get(line.id) ?? [],
@@ -1326,7 +1327,7 @@ export async function createPurchaseOrder(input: CreatePurchaseOrderInput) {
     unit_cost: item.unitCost,
   }));
 
-  const { data, error } = await supabase.rpc("create_store_purchase_order_v2", {
+  const { data, error } = await supabase.rpc("create_store_purchase_order_v2", rpcArgs({
     p_supplier_id: input.supplierId,
     p_location_id: input.locationId ?? null,
     p_po_number: input.poNumber.trim(),
@@ -1338,7 +1339,7 @@ export async function createPurchaseOrder(input: CreatePurchaseOrderInput) {
     p_exchange_rate: input.exchangeRate ?? 1,
     p_notes: input.notes?.trim() || null,
     p_items: payload,
-  });
+  }));
   throwIfError(error, "Creating purchase order failed");
   if (!data) throw new Error("Purchase order creation returned no id.");
   return data;
@@ -1346,9 +1347,9 @@ export async function createPurchaseOrder(input: CreatePurchaseOrderInput) {
 
 export async function submitPurchaseOrder(purchaseOrderId: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("submit_store_purchase_order", {
+  const { data, error } = await supabase.rpc("submit_store_purchase_order", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
-  });
+  }));
   throwIfError(error, "Submitting purchase order failed");
   return data;
 }
@@ -1381,13 +1382,13 @@ export async function createReceiving(input: CreateReceivingInput) {
     overage_reason: line.overageReason?.trim() || null,
   }));
 
-  const { data, error } = await supabase.rpc("create_store_receiving", {
+  const { data, error } = await supabase.rpc("create_store_receiving", rpcArgs({
     p_purchase_order_id: input.purchaseOrderId,
     p_invoice_number: input.invoiceNumber.trim(),
     p_receiving_employee_label: input.employeeLabel?.trim() || null,
     p_notes: input.notes?.trim() || null,
     p_lines: payload,
-  });
+  }));
   throwIfError(error, "Creating receiving draft failed");
   if (!data) throw new Error("Receiving creation returned no id.");
   return data;
@@ -1419,22 +1420,22 @@ export async function updateReceivingDraft(input: UpdateReceivingDraftInput) {
     overage_reason: line.overageReason?.trim() || null,
   }));
 
-  const { data, error } = await supabase.rpc("update_store_receiving_draft", {
+  const { data, error } = await supabase.rpc("update_store_receiving_draft", rpcArgs({
     p_receiving_id: input.receivingId,
     p_invoice_number: input.invoiceNumber.trim(),
     p_receiving_employee_label: input.employeeLabel?.trim() || null,
     p_notes: input.notes?.trim() || null,
     p_lines: payload,
-  });
+  }));
   throwIfError(error, "Updating receiving draft failed");
   return data;
 }
 
 export async function approveReceiving(receivingId: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("approve_store_receiving", {
+  const { data, error } = await supabase.rpc("approve_store_receiving", rpcArgs({
     p_receiving_id: receivingId,
-  });
+  }));
   throwIfError(error, "Approving receiving failed");
   const result = data?.[0];
   if (!result) throw new Error("Receiving approval returned no result.");
@@ -1459,7 +1460,7 @@ function poItemsPayload(items: CreatePurchaseOrderInput["items"]): Json {
 export async function updatePurchaseOrderDraft(input: UpdatePurchaseOrderDraftInput) {
   await requireDashboardStaff();
   if (!input.items.length) throw new Error("Add at least one PO item.");
-  const { data, error } = await supabase.rpc("update_store_purchase_order_draft", {
+  const { data, error } = await supabase.rpc("update_store_purchase_order_draft", rpcArgs({
     p_purchase_order_id: input.purchaseOrderId,
     p_supplier_id: input.supplierId,
     p_location_id: input.locationId ?? null,
@@ -1472,43 +1473,43 @@ export async function updatePurchaseOrderDraft(input: UpdatePurchaseOrderDraftIn
     p_exchange_rate: input.exchangeRate ?? 1,
     p_notes: input.notes?.trim() || null,
     p_items: poItemsPayload(input.items),
-  });
+  }));
   throwIfError(error, "Updating purchase order failed");
   return data;
 }
 
 export async function deletePurchaseOrderDraft(purchaseOrderId: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("delete_store_purchase_order_draft", {
+  const { data, error } = await supabase.rpc("delete_store_purchase_order_draft", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
-  });
+  }));
   throwIfError(error, "Deleting purchase order draft failed");
   return data;
 }
 
 export async function approvePurchaseOrder(purchaseOrderId: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("approve_store_purchase_order", {
+  const { data, error } = await supabase.rpc("approve_store_purchase_order", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
-  });
+  }));
   throwIfError(error, "Approving purchase order failed");
   return data;
 }
 
 export async function issuePurchaseOrder(purchaseOrderId: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("issue_store_purchase_order", {
+  const { data, error } = await supabase.rpc("issue_store_purchase_order", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
-  });
+  }));
   throwIfError(error, "Issuing purchase order failed");
   return data;
 }
 
 export async function closePurchaseOrder(purchaseOrderId: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("close_store_purchase_order", {
+  const { data, error } = await supabase.rpc("close_store_purchase_order", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
-  });
+  }));
   throwIfError(error, "Closing purchase order failed");
   return data;
 }
@@ -1517,19 +1518,19 @@ export async function rejectPurchaseOrder(purchaseOrderId: string, reason: strin
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Rejection reason is required.");
-  const { data, error } = await supabase.rpc("reject_store_purchase_order", {
+  const { data, error } = await supabase.rpc("reject_store_purchase_order", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_reason: cleanReason,
-  });
+  }));
   throwIfError(error, "Rejecting purchase order failed");
   return data;
 }
 
 export async function reopenPurchaseOrder(purchaseOrderId: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("reopen_store_purchase_order", {
+  const { data, error } = await supabase.rpc("reopen_store_purchase_order", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
-  });
+  }));
   throwIfError(error, "Reopening purchase order failed");
   return data;
 }
@@ -1538,10 +1539,10 @@ export async function cancelPurchaseOrder(purchaseOrderId: string, reason: strin
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Cancellation reason is required.");
-  const { data, error } = await supabase.rpc("cancel_store_purchase_order", {
+  const { data, error } = await supabase.rpc("cancel_store_purchase_order", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_reason: cleanReason,
-  });
+  }));
   throwIfError(error, "Cancelling purchase order failed");
   return data;
 }
@@ -1550,10 +1551,10 @@ export async function voidReceiving(receivingId: string, reason: string) {
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Void reason is required.");
-  const { data, error } = await supabase.rpc("void_store_receiving", {
+  const { data, error } = await supabase.rpc("void_store_receiving", rpcArgs({
     p_receiving_id: receivingId,
     p_reason: cleanReason,
-  });
+  }));
   throwIfError(error, "Voiding receiving failed");
   return data;
 }
@@ -1631,10 +1632,10 @@ export async function replaceReceivingSerials(
     }))
     .filter((serial) => serial.serial_number || serial.imei1 || serial.imei2);
 
-  const { data, error } = await supabase.rpc("replace_store_receiving_serials", {
+  const { data, error } = await supabase.rpc("replace_store_receiving_serials", rpcArgs({
     p_receiving_item_id: receivingItemId,
     p_serials: payload,
-  });
+  }));
   throwIfError(error, "Saving serial / IMEI data failed");
   return data;
 }

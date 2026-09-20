@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
@@ -334,12 +335,12 @@ export async function adjustInventoryDelta(
   await requireDashboardStaff();
   if (!Number.isInteger(delta) || delta === 0) return row.stock;
 
-  const { data, error } = await supabase.rpc("adjust_store_inventory", {
+  const { data, error } = await supabase.rpc("adjust_store_inventory", rpcArgs({
     p_product_id: row.productId,
     p_variant_id: row.variantId,
     p_quantity_delta: delta,
     p_note: note,
-  });
+  }));
   throwIfError(error, "Adjusting inventory failed");
   const result = data?.[0];
   if (!result) throw new Error("Inventory adjustment returned no result.");
@@ -357,12 +358,12 @@ export async function setInventoryStock(
     throw new Error("Stock must be a non-negative whole number.");
   }
 
-  const { data, error } = await supabase.rpc("set_store_inventory_stock", {
+  const { data, error } = await supabase.rpc("set_store_inventory_stock", rpcArgs({
     p_product_id: row.productId,
     p_variant_id: row.variantId,
     p_stock: stock,
     p_note: note,
-  });
+  }));
   throwIfError(error, "Setting inventory failed");
   const result = data?.[0];
   if (!result) throw new Error("Inventory update returned no result.");

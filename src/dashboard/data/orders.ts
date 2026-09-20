@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
@@ -335,10 +336,10 @@ export async function updateDashboardOrderStatus(
   status: DashboardOrderStatus,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_order_status", {
+  const { error } = await supabase.rpc("update_store_order_status", rpcArgs({
     p_order_id: id,
     p_status: status,
-  });
+  }));
   throwIfError(error, "Updating order status failed");
   return getDashboardOrder(id);
 }
@@ -348,10 +349,10 @@ export async function updateDashboardOrderPaymentStatus(
   paymentStatus: DashboardPaymentStatus,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_order_payment_status", {
+  const { error } = await supabase.rpc("update_store_order_payment_status", rpcArgs({
     p_order_id: id,
     p_payment_status: paymentStatus,
-  });
+  }));
   throwIfError(error, "Updating order payment status failed");
   return getDashboardOrder(id);
 }

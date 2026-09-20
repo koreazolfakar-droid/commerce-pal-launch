@@ -76,7 +76,7 @@ export async function loadWorkspaceRows(
       rows: (data ?? []).slice(0, WORKSPACE_PAGE_SIZE).map((row) => ({
         id: row.id,
         label: row.action,
-        detail: row.entity_type,
+        detail: row.entity_type ?? "",
         date: row.created_at,
       })),
     };
@@ -93,7 +93,7 @@ export async function loadWorkspaceRows(
     rows: (data ?? []).slice(0, WORKSPACE_PAGE_SIZE).map((row) => ({
       id: String(row.id),
       label: row.action,
-      detail: row.entity_type,
+      detail: row.entity_type ?? "",
       date: row.created_at,
     })),
   };

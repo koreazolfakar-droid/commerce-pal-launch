@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole, type DashboardRole } from "@/dashboard/data/catalog";
@@ -96,13 +97,13 @@ export async function uploadDashboardMediaImage(
   throwIfError(uploadError, "Uploading media failed");
 
   try {
-    const { data, error } = await supabase.rpc("register_cms_media_asset", {
+    const { data, error } = await supabase.rpc("register_cms_media_asset", rpcArgs({
       p_object_path: objectPath,
       p_file_name: conversion.file.name,
       p_mime_type: "image/webp",
       p_size_bytes: conversion.file.size,
       p_alt_text: altText.trim() || null,
-    });
+    }));
     throwIfError(error, "Registering media failed");
     return mapMedia(data as MediaRow);
   } catch (error) {

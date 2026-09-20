@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
@@ -211,13 +212,13 @@ export async function uploadDashboardStoreLogo(file: File): Promise<string> {
 
   const { data: publicUrl } = supabase.storage.from(SETTINGS_BUCKET).getPublicUrl(objectPath);
 
-  const { error: assetError } = await supabase.rpc("register_cms_media_asset", {
+  const { error: assetError } = await supabase.rpc("register_cms_media_asset", rpcArgs({
     p_object_path: objectPath,
     p_file_name: conversion.file.name,
     p_mime_type: "image/webp",
     p_size_bytes: conversion.file.size,
     p_alt_text: "Space Call store logo",
-  });
+  }));
   if (assetError) {
     console.warn("[dashboard-settings] logo uploaded but media registration failed", assetError.message);
   }

@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassword";
 import type { Tables } from "@/integrations/supabase/types";
@@ -592,8 +593,8 @@ export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null
     totpFactors.find((factor) => !factor.status) ??
     null;
 
-  const currentLevel = aalResult.data?.currentLevel ?? null;
-  const nextLevel = aalResult.data?.nextLevel ?? null;
+  const currentLevel = (aalResult.data?.currentLevel ?? null) as "aal1" | "aal2" | null;
+  const nextLevel = (aalResult.data?.nextLevel ?? null) as "aal1" | "aal2" | null;
 
   return {
     role: roleRow.role,
@@ -732,10 +733,10 @@ async function logDashboardSecurityEvent(
   eventType: string,
   metadata: Record<string, unknown> = {},
 ) {
-  const { error } = await supabase.rpc("log_dashboard_security_event", {
+  const { error } = await supabase.rpc("log_dashboard_security_event", rpcArgs({
     p_event_type: eventType,
     p_metadata: metadata,
-  });
+  }));
   if (error) console.warn("[dashboard-security] event log failed", error.message);
 }
 
