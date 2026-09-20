@@ -453,7 +453,11 @@ export default function HeroBannersPage() {
       setUploading(null);
       if (desktopFileRef.current) desktopFileRef.current.value = "";
       if (mobileFileRef.current) mobileFileRef.current.value = "";
-      setPendingHeroImages((current) => ({ ...current, [target]: undefined }));
+      setPendingHeroImages((current) => {
+        const next = { ...current };
+        delete next[target];
+        return next;
+      });
     }
   };
 
@@ -783,7 +787,11 @@ export default function HeroBannersPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            setPendingHeroImages((current) => ({ ...current, [target]: undefined }))
+                            setPendingHeroImages((current) => {
+        const next = { ...current };
+        delete next[target];
+        return next;
+      })
                           }
                           disabled={uploading !== null}
                           className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
