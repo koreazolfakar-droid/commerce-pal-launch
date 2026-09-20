@@ -1,100 +1,36 @@
 version: 2.1
 
 jobs:
-  security-semgrep:
+  security-gate:
     docker:
-      - image: cimg/python:3.12
+      - image: cimg/node:lts
     resource_class: small
     working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
     steps:
       - checkout
-      - run:
-          name: Install Semgrep
-          command: |
-            python3 -m pip install --user --disable-pip-version-check semgrep==1.177.0
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
-            source "$BASH_ENV"
-            semgrep --version
-      - run:
-          name: SAST - Semgrep
-          command: |
-            source "$BASH_ENV"
-            semgrep scan \
-              --config auto \
-              --error \
-              --severity ERROR \
-              --metrics=off \
-              --exclude node_modules \
-              --exclude dist \
-              --exclude .output \
-              --exclude .nitro \
-              --exclude coverage \
-              .
 
-  security-gitleaks:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
       - run:
-          name: Install verified Gitleaks
+          name: Install Bun
           command: |
-            set -euo pipefail
-            mkdir -p "$HOME/bin"
-            curl -fsSLo /tmp/gitleaks.tar.gz \
-              https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
-            echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tar.gz" | sha256sum -c -
-            tar -xzf /tmp/gitleaks.tar.gz -C "$HOME/bin" gitleaks
-            echo 'export PATH="$HOME/bin:$PATH"' >> "$BASH_ENV"
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
-            gitleaks version
-      - run:
-          name: Secrets - Gitleaks
-          command: |
-            source "$BASH_ENV"
-            gitleaks dir . --redact --exit-code 1 --no-banner
+            bun --version
 
-  security-trivy:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
       - run:
-          name: Install verified Trivy
-          command: |
-            set -euo pipefail
-            mkdir -p "$HOME/bin"
-            curl -fsSLo /tmp/trivy-checksums.txt \
-              https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_checksums.txt
-            echo "bc701c3c3ee8b9acbea2c23257e41381e3854888f51281616a6ba5dc96963821  /tmp/trivy-checksums.txt" | sha256sum -c -
-            curl -fsSLo /tmp/trivy.tar.gz \
-              https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz
-            TRIVY_SHA="$(awk '$2 == "trivy_0.74.0_Linux-64bit.tar.gz" { print $1 }' /tmp/trivy-checksums.txt)"
-            test -n "$TRIVY_SHA"
-            echo "$TRIVY_SHA  /tmp/trivy.tar.gz" | sha256sum -c -
-            tar -xzf /tmp/trivy.tar.gz -C "$HOME/bin" trivy
-            echo 'export PATH="$HOME/bin:$PATH"' >> "$BASH_ENV"
-            source "$BASH_ENV"
-            trivy --version
-      - run:
-          name: Dependencies and configuration - Trivy
+          name: High-confidence source and secret scan
           command: |
             source "$BASH_ENV"
-            trivy fs \
-              --scanners vuln,secret,misconfig \
-              --severity HIGH,CRITICAL \
-              --ignore-unfixed \
-              --exit-code 1 \
-              --skip-dirs node_modules \
-              --skip-dirs dist \
-              --skip-dirs .output \
-              --skip-dirs .nitro \
-              --skip-dirs coverage \
-              .
+            node scripts/security-gate.mjs
+
+      - run:
+          name: Dependency vulnerability audit
+          command: |
+            source "$BASH_ENV"
+            bun audit --audit-level=high
 
   storefront-ci:
     docker:
@@ -156,9 +92,7 @@ jobs:
 workflows:
   security-and-storefront-validation:
     jobs:
-      - security-semgrep
-      - security-gitleaks
-      - security-trivy
+      - security-gate
       - storefront-ci:
           filters:
             branches:
