@@ -28,12 +28,16 @@ test("GitHub Storefront CI is manual-only", async () => {
 test("CircleCI scans every pipeline and keeps full storefront validation for important branches", async () => {
   const circle = await read(".circleci/config.yml");
 
-  assert.match(circle, /security-scan:/);
+  assert.match(circle, /security-semgrep:/);
+  assert.match(circle, /security-gitleaks:/);
+  assert.match(circle, /security-trivy:/);
   assert.match(circle, /semgrep==1\.177\.0/);
   assert.match(circle, /gitleaks_8\.30\.1_linux_x64/);
   assert.match(circle, /trivy_0\.74\.0_Linux-64bit/);
   assert.match(circle, /--severity HIGH,CRITICAL/);
-  assert.match(circle, /- security-scan/);
+  assert.match(circle, /- security-semgrep/);
+  assert.match(circle, /- security-gitleaks/);
+  assert.match(circle, /- security-trivy/);
 
   assert.match(circle, /\/\^important\\\/\.\*\//);
   assert.match(circle, /bun install --frozen-lockfile/);
