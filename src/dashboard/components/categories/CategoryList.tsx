@@ -4,14 +4,12 @@ import {
   Copy,
   Eye,
   EyeOff,
-  MoreHorizontal,
   Pencil,
   Plus,
   Sparkles,
-  Trash2,
 } from "lucide-react";
-import { useState } from "react";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
+import CatalogRowActions from "@/dashboard/components/CatalogRowActions";
 import type { CatalogCategory } from "@/dashboard/data/categories";
 
 type CategoryActionProps = {
@@ -51,8 +49,6 @@ function CategoryRow({
   onMoveUp,
   onMoveDown,
 }: CategoryActionProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
   return (
     <div
       className={
@@ -65,24 +61,24 @@ function CategoryRow({
       <button
         type="button"
         onClick={onSelect}
-        className="flex w-full items-center gap-3 p-3 text-start"
+        className={`flex min-h-[72px] w-full items-center gap-3 px-3 py-2.5 text-start sm:min-h-[68px] ${reorderMode ? "pe-24 sm:pe-20" : "pe-14"}`}
       >
         <span
           className={
-            "grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl " +
+            "grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl sm:size-10 " +
             (selected ? "bg-white text-indigo-600 shadow-sm" : "bg-slate-100 text-slate-500")
           }
         >
           {category.image ? (
             <img src={category.image} alt="" className="size-full object-contain p-1" />
           ) : (
-            <CategoryGlyph slug={category.slug} className="size-9" />
+            <CategoryGlyph slug={category.slug} className="size-10 sm:size-9" />
           )}
         </span>
 
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-[11.5px] font-black text-slate-700">
+            <span className="truncate text-[13px] font-black text-slate-700 sm:text-[11.5px]">
               {category.name}
             </span>
             {category.featured && (
@@ -98,13 +94,13 @@ function CategoryRow({
               </span>
             )}
           </span>
-          <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] text-slate-400">
+          <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400 sm:text-[9px]">
             <span className="max-w-[150px] truncate">/{category.slug}</span>
             <span>•</span>
             <span>{productCount} products</span>
             <span
               className={
-                "rounded-full px-1.5 py-0.5 font-bold " +
+                "rounded-full px-2 py-0.5 font-bold " +
                 (category.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500")
               }
             >
@@ -143,71 +139,27 @@ function CategoryRow({
             </button>
           </div>
         ) : (
-          <>
-            <button
-              type="button"
-              aria-label={"Actions for " + category.name}
-              onClick={(event) => {
-                event.stopPropagation();
-                setMenuOpen((open) => !open);
-              }}
-              className="grid size-8 place-items-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-600"
-            >
-              <MoreHorizontal className="size-4" />
-            </button>
-            {menuOpen && (
-              <>
-                <button
-                  aria-label="Close category actions"
-                  className="fixed inset-0 z-40 cursor-default"
-                  onClick={() => setMenuOpen(false)}
-                />
-                <div className="absolute end-0 top-9 z-50 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
-                  {[
-                    { label: "Edit", icon: Pencil, action: onEdit },
-                    { label: "View Products", icon: Eye, action: onViewProducts },
-                    { label: "Add Product", icon: Plus, action: onAddProduct },
-                    {
-                      label: category.featured ? "Unfeature" : "Feature",
-                      icon: Sparkles,
-                      action: onToggleFeatured,
-                    },
-                    {
-                      label: category.active ? "Hide" : "Show",
-                      icon: category.active ? EyeOff : Eye,
-                      action: onToggleActive,
-                    },
-                    { label: "Duplicate", icon: Copy, action: onDuplicate },
-                  ].map(({ label, icon: Icon, action }) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        action();
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
-                    >
-                      <Icon className="size-3.5 text-slate-400" />
-                      {label}
-                    </button>
-                  ))}
-                  <div className="my-1 border-t border-slate-100" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onDelete();
-                    }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-semibold text-rose-600 transition hover:bg-rose-50"
-                  >
-                    <Trash2 className="size-3.5" />
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
-          </>
+          <CatalogRowActions
+            entityName={category.name}
+            entityType="Category"
+            actions={[
+              { label: "Edit", icon: Pencil, onClick: onEdit },
+              { label: "View Products", icon: Eye, onClick: onViewProducts },
+              { label: "Add Product", icon: Plus, onClick: onAddProduct },
+              {
+                label: category.featured ? "Unfeature" : "Feature",
+                icon: Sparkles,
+                onClick: onToggleFeatured,
+              },
+              {
+                label: category.active ? "Hide" : "Show",
+                icon: category.active ? EyeOff : Eye,
+                onClick: onToggleActive,
+              },
+              { label: "Duplicate", icon: Copy, onClick: onDuplicate },
+            ]}
+            onDelete={onDelete}
+          />
         )}
       </div>
     </div>
