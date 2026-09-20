@@ -518,32 +518,6 @@ export async function verifyDashboardPasskeySecondFactor(): Promise<DashboardMfa
   return status;
 }
 
-export async function signInDashboardWithPasskey(): Promise<DashboardRole> {
-  if (!isDashboardPasskeySupported()) {
-    throw new Error("Passkeys are not supported by this browser or secure context.");
-  }
-
-  let result: Awaited<ReturnType<typeof supabase.auth.signInWithPasskey>>;
-  try {
-    result = await supabase.auth.signInWithPasskey();
-  } catch (cause) {
-    throw new Error(dashboardPasskeyThrownErrorMessage(cause, "signin"));
-  }
-
-  if (result.error) {
-    throw new Error(dashboardPasskeyErrorMessage(result.error, "signin"));
-  }
-
-  clearDashboardRoleCache();
-  const role = await getDashboardRole();
-  if (!role) {
-    await supabase.auth.signOut({ scope: "local" });
-    throw new Error(DASHBOARD_SIGNIN_DENIED_MESSAGE);
-  }
-
-  return role;
-}
-
 export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
   if (!isDashboardPasskeySupported()) {
     throw new Error("Passkeys are not supported by this browser or secure context.");
