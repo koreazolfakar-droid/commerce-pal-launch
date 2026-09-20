@@ -69,7 +69,7 @@ export async function uploadDashboardBrandImage(source: File, kind: "logo" | "co
   );
   throwIfError(error, `Uploading brand ${kind} failed`);
   const { data } = supabase.storage.from(BRAND_MEDIA_BUCKET).getPublicUrl(objectPath);
-  return data.publicUrl;
+  return { url: data.publicUrl, conversion };
 }
 
 export async function removeDashboardBrandImage(url: string) {
@@ -194,6 +194,14 @@ export async function createDashboardBrand(brand: CatalogBrand) {
 
 export async function updateDashboardBrand(brand: CatalogBrand) {
   await requireDashboardStaff();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("cms_brands")
+    .select("logo_url,cover_image_url")
+    .eq("id", brand.id)
+    .single();
+  throwIfError(existingError, "Loading brand before update failed");
+
   const payload = toBrandPayload(brand);
   const { data, error } = await supabase
     .from("cms_brands")
@@ -203,6 +211,16 @@ export async function updateDashboardBrand(brand: CatalogBrand) {
     .single();
   throwIfError(error, "Updating brand failed");
   if (!data) throw new Error("Updating brand returned no record.");
+
+  const previousLogo = existing?.logo_url ?? null;
+  const previousCover = existing?.cover_image_url ?? null;
+  if (previousLogo && previousLogo !== payload.logo_url) {
+    await removeDashboardBrandImage(previousLogo).catch(() => undefined);
+  }
+  if (previousCover && previousCover !== payload.cover_image_url) {
+    await removeDashboardBrandImage(previousCover).catch(() => undefined);
+  }
+
   invalidateNativeStoreCache();
   return mapBrand(data as BrandRow);
 }
