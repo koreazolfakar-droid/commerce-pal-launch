@@ -1,5 +1,6 @@
+import { HeroScene } from "@/components/HeroScene";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
 import { localizeHeroSlide, type CmsHeroSlide } from "@/lib/cms";
@@ -38,73 +39,6 @@ function heroCdnImage(url: string | undefined, width: number): string | undefine
 function heroCdnSrcSet(url: string | undefined): string | undefined {
   if (!url || !SHOPIFY_CDN.test(url)) return undefined;
   return HERO_IMAGE_WIDTHS.map((width) => `${heroCdnImage(url, width)} ${width}w`).join(", ");
-}
-
-function cmsHeroHref(slide: CmsHeroSlide) {
-  if (!slide.target_value) return undefined;
-  if (slide.target_type === "product") return `/product/${slide.target_value}`;
-  if (slide.target_type === "collection") return `/collections/${slide.target_value}`;
-  if (slide.target_type === "url") return slide.target_value;
-  return undefined;
-}
-
-function cmsSecondaryHeroHref(slide: CmsHeroSlide) {
-  if (!slide.secondary_target_value) return undefined;
-  if (slide.secondary_target_type === "product") return `/product/${slide.secondary_target_value}`;
-  if (slide.secondary_target_type === "collection") return `/collections/${slide.secondary_target_value}`;
-  if (slide.secondary_target_type === "url") return slide.secondary_target_value;
-  return undefined;
-}
-
-function cmsContentThemeClass(theme: CmsHeroSlide["content_theme"]) {
-  if (theme === "dark") return "text-slate-950";
-  if (theme === "glass") {
-    return "rounded-2xl bg-slate-950/35 p-4 text-white backdrop-blur-md sm:p-6";
-  }
-  return "text-white";
-}
-
-function cmsVisualConfig(slide: CmsHeroSlide | undefined) {
-  const config = slide?.visual_config ?? {};
-  return {
-    vertical: config.vertical === "top" || config.vertical === "center" ? config.vertical : "bottom",
-    titleSize: config.titleSize === "compact" || config.titleSize === "large" ? config.titleSize : "standard",
-    contentWidth: config.contentWidth === "narrow" || config.contentWidth === "wide" ? config.contentWidth : "standard",
-    buttonRadius: config.buttonRadius === "soft" || config.buttonRadius === "pill" ? config.buttonRadius : "rounded",
-  } as const;
-}
-
-function cmsVerticalClass(vertical: ReturnType<typeof cmsVisualConfig>["vertical"]) {
-  if (vertical === "top") return "justify-start";
-  if (vertical === "center") return "justify-center";
-  return "justify-end";
-}
-
-function cmsTitleClass(size: ReturnType<typeof cmsVisualConfig>["titleSize"]) {
-  if (size === "compact") return "text-lg sm:text-3xl lg:text-4xl";
-  if (size === "large") return "text-2xl sm:text-5xl lg:text-6xl";
-  return "text-xl sm:text-4xl lg:text-5xl";
-}
-
-function cmsWidthClass(width: ReturnType<typeof cmsVisualConfig>["contentWidth"]) {
-  if (width === "narrow") return "max-w-[90%] sm:max-w-lg";
-  if (width === "wide") return "max-w-[94%] sm:max-w-4xl";
-  return "max-w-[90%] sm:max-w-2xl";
-}
-
-function cmsRadiusClass(radius: ReturnType<typeof cmsVisualConfig>["buttonRadius"]) {
-  if (radius === "soft") return "rounded-lg";
-  if (radius === "pill") return "rounded-full";
-  return "rounded-xl";
-}
-
-function cmsButtonClass(style: CmsHeroSlide["button_style"]) {
-  if (style === "light") return "bg-white text-slate-950 hover:bg-white/90";
-  if (style === "dark") return "bg-slate-950 text-white hover:bg-slate-900";
-  if (style === "secondary") {
-    return "border border-white/70 bg-white/10 text-white backdrop-blur-md hover:bg-white/20";
-  }
-  return "bg-primary text-primary-foreground hover:bg-primary/90";
 }
 
 export function HomeHero({
@@ -152,13 +86,16 @@ export function HomeHero({
   const legacyFallbackEnabled = false;
   const slideCount = localizedCmsSlides.length;
   const [activeIndex, setActiveIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [interacting, setInteracting] = useState(false);
+  const swipe = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     setActiveIndex((current) => (slideCount ? Math.min(current, slideCount - 1) : 0));
   }, [slideCount]);
 
   useEffect(() => {
-    if (slideCount <= 1) return;
+    if (slideCount <= 1 || paused || interacting) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const timer = window.setInterval(() => {
@@ -166,7 +103,7 @@ export function HomeHero({
     }, HERO_ROTATION_MS);
 
     return () => window.clearInterval(timer);
-  }, [slideCount]);
+  }, [slideCount, paused, interacting]);
 
   const cmsSlide = usingCms
     ? localizedCmsSlides[activeIndex] ?? localizedCmsSlides[0]
@@ -205,43 +142,6 @@ export function HomeHero({
     }
   }, [failedShopifySlideId, shopifySlide?.id]);
 
-  const cmsDesktopAlt =
-    (language === "ar" ? cmsSlide?.image_alt_ar : cmsSlide?.image_alt_en) ||
-    cmsSlide?.title ||
-    "Space Call";
-  const cmsDesktopImage = cmsSlide?.image_url?.trim() || undefined;
-  const cmsMobileImage = cmsSlide?.mobile_image_url?.trim() || undefined;
-
-  const cmsPicture = cmsSlide && cmsDesktopImage ? (
-    <picture className="absolute inset-0 block size-full">
-      {cmsMobileImage ? (
-        <source
-          media="(max-width: 639px)"
-          srcSet={cmsMobileImage}
-        />
-      ) : null}
-      <source
-        media="(min-width: 640px)"
-        srcSet={cmsDesktopImage}
-      />
-      <img
-        key={`${cmsSlide.id}:${cmsDesktopImage}:${cmsMobileImage ?? "desktop-fallback"}`}
-        src={cmsDesktopImage}
-        alt={cmsDesktopAlt}
-        loading="eager"
-        fetchPriority="high"
-        decoding="async"
-        draggable={false}
-        onError={() =>
-          setFailedCmsSlideIds((current) =>
-            current.includes(cmsSlide.id) ? current : [...current, cmsSlide.id],
-          )
-        }
-        className="absolute inset-0 h-full w-full object-cover object-center"
-      />
-    </picture>
-  ) : null;
-
   const shopifyHeroPicture =
     shopifyImageActive && shopifyImage && shopifySlide ? (
       <picture>
@@ -266,21 +166,24 @@ export function HomeHero({
       </picture>
     ) : null;
 
-  const cmsHref = cmsSlide ? cmsHeroHref(cmsSlide) : undefined;
-  const cmsSecondaryHref = cmsSlide ? cmsSecondaryHeroHref(cmsSlide) : undefined;
-  const cmsAlignment =
-    cmsSlide?.content_alignment === "center"
-      ? "items-center text-center"
-      : cmsSlide?.content_alignment === "end"
-        ? "items-end text-end"
-        : "items-start text-start";
-  const cmsOverlayOpacity = Math.max(0, Math.min(90, cmsSlide?.overlay_opacity ?? 20)) / 100;
-  const cmsVisual = cmsVisualConfig(cmsSlide);
-
   return (
     <>
       <section
         aria-label={t("featuredTechnology")}
+        onMouseEnter={() => setInteracting(true)}
+        onMouseLeave={() => setInteracting(false)}
+        onFocusCapture={() => setInteracting(true)}
+        onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setInteracting(false); }}
+        onTouchStart={event => { const touch = event.touches[0]; if (touch) swipe.current = { x: touch.clientX, y: touch.clientY }; }}
+        onTouchEnd={event => {
+          const start = swipe.current, touch = event.changedTouches[0]; swipe.current = null;
+          if (!start || !touch || slideCount < 2) return;
+          const dx = touch.clientX - start.x, dy = touch.clientY - start.y;
+          if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            setPaused(true);
+            setActiveIndex(index => (index + (dx < 0 ? 1 : -1) + slideCount) % slideCount);
+          }
+        }}
         data-testid="home-hero"
         data-hero-source={heroSource}
         data-hero-id={cmsSlide?.id}
@@ -290,16 +193,10 @@ export function HomeHero({
             : shopifySlide?.handle ?? heroFallbackProduct?.node.handle ?? "none"
         }
         data-hero-collection-handle={shopifySlide?.handle}
-        className="relative isolate h-[clamp(15rem,62vw,20rem)] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:h-[22rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border md:h-[24rem] lg:h-[28rem] xl:h-[30rem]"
+        className={`${cmsSlide ? "relative isolate w-full min-w-0" : "relative isolate h-[clamp(15rem,62vw,20rem)] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:h-[22rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border md:h-[24rem] lg:h-[28rem] xl:h-[30rem]"}`}
       >
-        {cmsPicture ? (
-          <div
-            data-testid="home-hero-media"
-            aria-label={cmsSlide?.title ?? "Space Call"}
-            className="absolute inset-0 z-[1] block overflow-hidden"
-          >
-            {cmsPicture}
-          </div>
+        {cmsSlide ? (
+          <HeroScene slide={cmsSlide} language={language} priority={activeIndex === 0} onImageError={() => setFailedCmsSlideIds(current => [...current, cmsSlide.id])} />
         ) : shopifyHeroPicture ? (
           <div
             data-testid="home-hero-media"
@@ -346,74 +243,19 @@ export function HomeHero({
           </div>
         )}
 
-        {cmsSlide ? (
-          <>
-            <div
-              className="pointer-events-none absolute inset-0 z-[2] bg-black"
-              style={{ opacity: cmsOverlayOpacity }}
-              aria-hidden="true"
-            />
-            <div
-              data-testid="home-hero-content"
-              className={`absolute inset-0 z-[3] flex flex-col p-4 sm:p-8 lg:p-10 ${cmsVerticalClass(cmsVisual.vertical)} ${cmsAlignment}`}
-              dir={language === "ar" ? "rtl" : "ltr"}
-            >
-              <div className={`${cmsWidthClass(cmsVisual.contentWidth)} ${cmsContentThemeClass(cmsSlide.content_theme)}`}>
-                {cmsSlide.eyebrow ? (
-                  <div className="mb-1.5 text-[10px] font-black uppercase tracking-[.18em] opacity-80 sm:mb-2 sm:text-xs">
-                    {cmsSlide.eyebrow}
-                  </div>
-                ) : null}
-                {cmsSlide.title ? (
-                  <h2 className={`${cmsTitleClass(cmsVisual.titleSize)} font-black leading-[1.08] tracking-tight drop-shadow sm:leading-tight`}>
-                    {cmsSlide.title}
-                  </h2>
-                ) : null}
-                {cmsSlide.subtitle ? (
-                  <p className="mt-1.5 max-w-[20rem] text-xs font-medium leading-relaxed opacity-90 drop-shadow sm:mt-2 sm:max-w-xl sm:text-base lg:text-lg">
-                    {cmsSlide.subtitle}
-                  </p>
-                ) : null}
-                {(cmsHref && cmsSlide.button_label) || (cmsSecondaryHref && cmsSlide.secondary_button_label) ? (
-                  <div className="mt-3 flex flex-wrap gap-2 sm:mt-4">
-                    {cmsHref && cmsSlide.button_label ? (
-                      <a
-                        href={cmsHref}
-                        target={cmsSlide.open_in_new_tab ? "_blank" : undefined}
-                        rel={cmsSlide.open_in_new_tab ? "noopener noreferrer" : undefined}
-                        className={`press inline-flex min-h-10 items-center justify-center px-4 py-2 text-[11px] font-bold shadow-lg transition sm:min-h-11 sm:px-5 sm:py-2.5 sm:text-xs ${cmsRadiusClass(cmsVisual.buttonRadius)} ${cmsButtonClass(cmsSlide.button_style)}`}
-                      >
-                        {cmsSlide.button_label}
-                      </a>
-                    ) : null}
-                    {cmsSecondaryHref && cmsSlide.secondary_button_label ? (
-                      <a
-                        href={cmsSecondaryHref}
-                        target={cmsSlide.secondary_open_in_new_tab ? "_blank" : undefined}
-                        rel={cmsSlide.secondary_open_in_new_tab ? "noopener noreferrer" : undefined}
-                        className={`press inline-flex min-h-10 items-center justify-center px-4 py-2 text-[11px] font-bold shadow-lg transition sm:min-h-11 sm:px-5 sm:py-2.5 sm:text-xs ${cmsRadiusClass(cmsVisual.buttonRadius)} ${cmsButtonClass(cmsSlide.secondary_button_style)}`}
-                      >
-                        {cmsSlide.secondary_button_label}
-                      </a>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </>
-        ) : null}
-
         {slideCount > 1 && (
           <div
             data-testid="home-hero-dots"
-            className="absolute bottom-3 end-3 z-10 flex items-center gap-1.5 rounded-full bg-black/30 px-2.5 py-2 backdrop-blur-md sm:bottom-5 sm:end-5"
+            className="relative mt-2 flex flex-wrap items-center justify-center gap-1 rounded-2xl bg-muted p-1 text-foreground"
             aria-label={language === "ar" ? "شرائح الهيرو" : "Hero slides"}
           >
+            <button type="button" className="min-h-11 min-w-11 rounded-lg px-3" aria-label={language === "ar" ? "الشريحة السابقة" : "Previous slide"} onClick={() => { setPaused(true); setActiveIndex(index => (index - 1 + slideCount) % slideCount); }}>‹</button>
+            <button type="button" className="min-h-11 rounded-lg px-3 text-xs" aria-label={language === "ar" ? (paused ? "تشغيل الشرائح" : "إيقاف الشرائح") : (paused ? "Play slides" : "Pause slides")} onClick={() => setPaused(value => !value)}>{language === "ar" ? (paused ? "تشغيل" : "إيقاف") : (paused ? "Play" : "Pause")}</button>
             {Array.from({ length: slideCount }, (_, index) => (
               <button
                 key={index}
                 type="button"
-                onClick={() => setActiveIndex(index)}
+                onClick={() => { setPaused(true); setActiveIndex(index); }}
                 aria-label={
                   language === "ar"
                     ? `عرض صورة الهيرو ${index + 1}`
@@ -422,11 +264,12 @@ export function HomeHero({
                 aria-current={index === activeIndex ? "true" : undefined}
                 className={
                   index === activeIndex
-                    ? "h-2.5 w-6 rounded-full bg-primary transition-all"
-                    : "h-2.5 w-2.5 rounded-full bg-white/55 transition-all hover:bg-white/80"
+                    ? "min-h-11 min-w-11 rounded-xl bg-primary text-primary-foreground"
+                    : "min-h-11 min-w-11 rounded-xl bg-muted hover:bg-muted/80"
                 }
-              />
+              >{index + 1}</button>
             ))}
+            <button type="button" className="min-h-11 min-w-11 rounded-lg px-3" aria-label={language === "ar" ? "الشريحة التالية" : "Next slide"} onClick={() => { setPaused(true); setActiveIndex(index => (index + 1) % slideCount); }}>›</button>
           </div>
         )}
       </section>
@@ -437,3 +280,4 @@ export function HomeHero({
     </>
   );
 }
+

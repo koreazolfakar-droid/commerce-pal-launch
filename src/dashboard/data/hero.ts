@@ -17,19 +17,8 @@ export type HeroTargetType = "url" | "product" | "collection" | "none";
 export type HeroAlignment = "start" | "center" | "end";
 export type HeroButtonStyle = "primary" | "secondary" | "light" | "dark";
 export type HeroContentTheme = "light" | "dark" | "glass";
-export type HeroVisualConfig = {
-  vertical: "top" | "center" | "bottom";
-  titleSize: "compact" | "standard" | "large";
-  contentWidth: "narrow" | "standard" | "wide";
-  buttonRadius: "soft" | "rounded" | "pill";
-};
-
-export const DEFAULT_HERO_VISUAL_CONFIG: HeroVisualConfig = {
-  vertical: "bottom",
-  titleSize: "standard",
-  contentWidth: "standard",
-  buttonRadius: "rounded",
-};
+export { DEFAULT_HERO_VISUAL_CONFIG, type HeroVisualConfig } from "@/lib/heroDesign";
+import { normalizeHeroVisualConfig, type HeroVisualConfig } from "@/lib/heroDesign";
 
 export type DashboardHeroSlide = {
   id: string;
@@ -145,18 +134,6 @@ async function requireDashboardStaff() {
   const role = await getDashboardRole();
   if (!role) throw new Error("Dashboard authentication is required.");
   return role;
-}
-
-function normalizeHeroVisualConfig(value: unknown): HeroVisualConfig {
-  const input = value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-  return {
-    vertical: input.vertical === "top" || input.vertical === "center" ? input.vertical : "bottom",
-    titleSize: input.titleSize === "compact" || input.titleSize === "large" ? input.titleSize : "standard",
-    contentWidth: input.contentWidth === "narrow" || input.contentWidth === "wide" ? input.contentWidth : "standard",
-    buttonRadius: input.buttonRadius === "soft" || input.buttonRadius === "pill" ? input.buttonRadius : "rounded",
-  };
 }
 
 function mapHero(row: HeroRow): DashboardHeroSlide {
@@ -494,3 +471,4 @@ export function getHeroScheduleState(slide: Pick<
   if (end && end <= now) return "expired" as const;
   return "live" as const;
 }
+

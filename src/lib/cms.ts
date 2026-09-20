@@ -6,12 +6,7 @@ export type CmsJsonValue =
 export type CmsSettingValue = CmsJsonValue;
 export type CmsLocale = "en" | "ar";
 
-export type CmsHeroVisualConfig = {
-  vertical?: "top" | "center" | "bottom";
-  titleSize?: "compact" | "standard" | "large";
-  contentWidth?: "narrow" | "standard" | "wide";
-  buttonRadius?: "soft" | "rounded" | "pill";
-};
+export type CmsHeroVisualConfig = Partial<import("./heroDesign").HeroVisualConfig>;
 
 export type CmsHeroSlide = {
   id: string;
@@ -287,3 +282,4 @@ export function cmsSeoPage(snapshot: CmsSnapshot, pageSlug: string, language: Cm
       null,
   };
 }
+

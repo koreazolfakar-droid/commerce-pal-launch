@@ -115,7 +115,7 @@ test("public CMS uses an edge gateway with resilient empty fallback", () => {
   assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
 });
 
-test("homepage hydrates CMS once and renders CMS hero before legacy fallback", () => {
+test("homepage hydrates CMS once and renders CMS hero before legacy fallback", async () => {
   assert.match(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
   assert.match(hero, /localizeHeroSlide/);
@@ -123,29 +123,18 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", (
   assert.match(hero, /"supabase-cms"/);
   assert.match(hero, /"shopify-collection"/);
   assert.match(hero, /hero-product-fallback/);
-  assert.match(hero, /cmsSlide\.mobile_image_url/);
-  assert.ok(hero.includes("const cmsDesktopImage = cmsSlide?.image_url"));
-  assert.ok(hero.includes("const cmsMobileImage = cmsSlide?.mobile_image_url"));
-  assert.ok(hero.includes('media="(max-width: 639px)"'));
-  assert.ok(hero.includes('media="(min-width: 640px)"'));
-  assert.match(hero, /cmsSlide\.overlay_opacity/);
-  assert.match(hero, /cmsSlide\.open_in_new_tab/);
-  assert.ok(hero.includes("h-[clamp(15rem,62vw,20rem)]"));
-  assert.ok(hero.includes("sm:h-[22rem]"));
-  assert.ok(hero.includes("md:h-[24rem]"));
-  assert.ok(hero.includes("lg:h-[28rem]"));
-  assert.ok(hero.includes("xl:h-[30rem]"));
-  assert.ok(hero.includes("p-4 sm:p-8 lg:p-10"));
-  assert.match(hero, /cmsVisualConfig/);
-  assert.match(hero, /cmsVerticalClass/);
-  assert.match(hero, /cmsTitleClass/);
-  assert.match(hero, /cmsWidthClass/);
-  assert.match(hero, /cmsRadiusClass/);
-  assert.ok(hero.includes("mt-1.5 max-w-[20rem] text-xs"));
-  assert.ok(hero.includes("mt-3 flex flex-wrap gap-2"));
+  assert.match(hero, /<HeroScene/);
+  const scene = await readFile(new URL("../src/components/HeroScene.tsx", import.meta.url), "utf8");
+  assert.match(scene, /slide.mobile_image_url/);
+  assert.match(scene, /slide.overlay_opacity/);
+  assert.match(scene, /slide.open_in_new_tab/);
+  assert.match(scene, /noopener noreferrer/);
+  assert.match(scene, /normalizeHeroVisualConfig/);
+  assert.match(page, /<HeroVisualEditor/);
+
 });
 
-test("hero changes are auditable", () => {
+test("hero changes are auditable", async () => {
   assert.match(page, /Save changes/);
   assert.match(data, /reorderDashboardHeroSlides/);
   assert.match(
@@ -156,3 +145,4 @@ test("hero changes are auditable", () => {
     /cms_audit_log|log_cms_action/,
   );
 });
+
