@@ -900,8 +900,8 @@ export async function requestDashboardPasswordReset(
 }
 
 export async function updateDashboardPassword(password: string) {
-  if (password.length < 10) {
-    throw new Error("Use at least 10 characters for the new password.");
+  if (password.length < 14) {
+    throw new Error("Use at least 14 characters for the new password.");
   }
 
   const mfaStatus = await getDashboardMfaStatus();
@@ -930,6 +930,11 @@ export async function updateDashboardPassword(password: string) {
     if (payload?.error === "breach_screening_unavailable") {
       throw new Error(
         "Security check is temporarily unavailable. Your password was not changed. Try again shortly.",
+      );
+    }
+    if (payload?.error === "password_policy_rejected") {
+      throw new Error(
+        "Choose a less predictable password that is not related to Space Call or your account identity.",
       );
     }
     throw new Error("Secure password update failed.");
