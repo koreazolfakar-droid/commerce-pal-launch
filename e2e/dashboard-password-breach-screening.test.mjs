@@ -106,7 +106,7 @@ test("recovery flow requires MFA before exposing the password update path", () =
   assert.match(login, /if \(recoveryMode\)[\s\S]+setView\("recovery"\)/);
   assert.match(login, /setView\("mfa"\)/);
   assert.match(login, /if \(recoveryMode\)[\s\S]+\/dashboard\/login\?mode=recovery/);
-  assert.match(login, /screened against HIBP twice/);
+  assert.doesNotMatch(login, /screened against HIBP twice/i);
   assert.match(login, /forceFresh=\{recoveryMode\}/);
 });
 
