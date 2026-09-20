@@ -41,14 +41,15 @@ const catalog = await readFile(
   "utf8",
 );
 
-test("passkey sign-in stays behind dashboard role authorization", () => {
-  assert.match(catalog, /export async function signInDashboardWithPasskey/);
-  assert.match(catalog, /auth\.signInWithPasskey\(\)/);
-  assert.match(catalog, /const role = await getDashboardRole\(\)/);
-  assert.match(
-    catalog,
-    /if \(!role\) \{[\s\S]*auth\.signOut\(\{ scope: "local" \}\)[\s\S]*DASHBOARD_SIGNIN_DENIED_MESSAGE/,
-  );
+test("dashboard passkey is only used as a second factor after password", () => {
+  assert.doesNotMatch(catalog, /export async function signInDashboardWithPasskey/);
+  assert.match(catalog, /export async function verifyDashboardPasskeySecondFactor/);
+  assert.match(catalog, /createEphemeralPasskeyClient\(\)/);
+  assert.match(catalog, /"dashboard-passkey-stepup"/);
+  assert.match(catalog, /body: \{ action: "begin" \}/);
+  assert.match(catalog, /action: "complete"/);
+  assert.match(catalog, /verifier\.auth\.signInWithPasskey\(\)/);
+  assert.match(catalog, /verifier\.auth\.signOut\(\{ scope: "local" \}\)/);
 });
 
 test("passkey enrollment requires an already verified dashboard MFA session", () => {
@@ -69,6 +70,10 @@ test("passkey flows require WebAuthn in a secure browser context and sanitize fa
 
 const securityPage = await readFile(
   new URL("../src/dashboard/pages/SecurityPage.tsx", import.meta.url),
+  "utf8",
+);
+const mfaStep = await readFile(
+  new URL("../src/dashboard/components/auth/DashboardMfaStep.tsx", import.meta.url),
   "utf8",
 );
 
@@ -98,21 +103,17 @@ test("Supabase config targets the live Space Call project before config push", (
   assert.doesNotMatch(supabaseConfig, /bzkbjkduealajwrkefif/);
 });
 
-test("dashboard login exposes passkey sign-in only on supported secure clients", () => {
-  assert.match(login, /Fingerprint/);
-  assert.match(login, /isDashboardPasskeySupported/);
-  assert.match(login, /signInDashboardWithPasskey\(\)/);
-  assert.match(login, /passkeySupported \?/);
-  assert.match(login, /الدخول بالبصمة \/ Passkey/);
-  assert.match(login, /Sign in with fingerprint \/ passkey/);
-});
+test("password is always completed before the second-factor choice", () => {
+  assert.match(login, /await signInDashboard\(email, password, captchaToken \?\? undefined\)/);
+  assert.match(login, /setView\("mfa"\)/);
+  assert.doesNotMatch(login, /submitPasskey/);
+  assert.doesNotMatch(login, /signInDashboardWithPasskey/);
 
-test("passkey login still transitions through the existing MFA gate", () => {
-  assert.match(
-    login,
-    /const submitPasskey = async \(\) => \{[\s\S]+signInDashboardWithPasskey\(\)[\s\S]+getDashboardMfaStatus\(\)[\s\S]+setView\("mfa"\)/,
-  );
-  assert.match(login, /window\.history\.replaceState\(\{\}, "", "\/dashboard\/login\?mode=mfa"\)/);
+  assert.match(mfaStep, /type MfaMode = "loading" \| "choice" \| "enroll" \| "challenge"/);
+  assert.match(mfaStep, /Authenticator code/);
+  assert.match(mfaStep, /Fingerprint \/ Passkey/);
+  assert.match(mfaStep, /verifyDashboardPasskeySecondFactor\(\)/);
+  assert.match(mfaStep, /setMode\(passkeySupported \? "choice" : "challenge"\)/);
 });
 
 test("security center supports complete passkey lifecycle management", () => {
