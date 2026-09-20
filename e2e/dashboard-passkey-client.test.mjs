@@ -52,10 +52,12 @@ test("dashboard passkey is only used as a second factor after password", () => {
   assert.match(catalog, /verifier\.auth\.signOut\(\{ scope: "local" \}\)/);
 });
 
-test("passkey enrollment requires an already verified dashboard MFA session", () => {
+test("passkey enrollment stays behind native AAL2 authenticator verification", () => {
   assert.match(catalog, /export async function registerDashboardPasskey/);
   assert.match(catalog, /const mfaStatus = await getDashboardMfaStatus\(\)/);
-  assert.match(catalog, /if \(!mfaStatus\?\.ready\)/);
+  assert.match(catalog, /mfaStatus\.currentLevel !== "aal2"/);
+  assert.match(catalog, /!mfaStatus\.verifiedFactorId/);
+  assert.match(catalog, /Fresh authenticator verification is required before adding a passkey/);
   assert.match(catalog, /auth\.registerPasskey\(\)/);
 });
 
@@ -123,7 +125,7 @@ test("security center supports complete passkey lifecycle management", () => {
   assert.match(catalog, /auth\.passkey\.update\(\{/);
   assert.match(catalog, /export async function deleteDashboardPasskey/);
   assert.match(catalog, /auth\.passkey\.delete\(\{ passkeyId \}\)/);
-  assert.match(catalog, /Complete MFA verification before managing passkeys/);
+  assert.match(catalog, /Fresh authenticator verification is required before changing passkeys/);
   assert.match(securityPage, /maxLength=\{120\}/);
 });
 
