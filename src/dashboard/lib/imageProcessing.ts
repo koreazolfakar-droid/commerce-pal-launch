@@ -23,6 +23,25 @@ export const IMAGE_COMPRESSION_PRESETS = [
 
 export type ImageCompressionPreset = (typeof IMAGE_COMPRESSION_PRESETS)[number]["value"];
 
+export type ImageBackgroundRemovalOptions = {
+  enabled: boolean;
+  tolerance: number;
+};
+
+export const DEFAULT_LOGO_BACKGROUND_REMOVAL: Readonly<ImageBackgroundRemovalOptions> = {
+  enabled: true,
+  tolerance: 18,
+};
+
+function normalizeBackgroundRemovalOptions(
+  value?: ImageBackgroundRemovalOptions,
+): ImageBackgroundRemovalOptions {
+  return {
+    enabled: Boolean(value?.enabled),
+    tolerance: Math.min(60, Math.max(4, Math.round(value?.tolerance ?? 18))),
+  };
+}
+
 const conversionCache = new WeakMap<File, Map<string, Promise<ProductImageConversionResult>>>();
 
 export function getProductImageResolution(): ProductImageResolution {
@@ -84,6 +103,104 @@ function loadImage(file: File) {
   });
 }
 
+function removeEdgeConnectedWhiteBackground(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  tolerance: number,
+) {
+  if (width <= 0 || height <= 0) return;
+
+  const imageData = context.getImageData(0, 0, width, height);
+  const { data } = imageData;
+  const pixelCount = width * height;
+  const visited = new Uint8Array(pixelCount);
+  const queue = new Int32Array(pixelCount);
+  const threshold = Math.max(180, 255 - tolerance);
+  let head = 0;
+  let tail = 0;
+
+  const isBackgroundCandidate = (pixelIndex: number) => {
+    const offset = pixelIndex * 4;
+    // Already-transparent artwork does not need cleanup. Treat transparent
+    // pixels as a hard boundary so genuine white marks on transparent PNGs
+    // are never reached and erased by the flood fill.
+    if (data[offset + 3] < 240) return false;
+    const red = data[offset];
+    const green = data[offset + 1];
+    const blue = data[offset + 2];
+    const minChannel = Math.min(red, green, blue);
+    const maxChannel = Math.max(red, green, blue);
+    return minChannel >= threshold && maxChannel - minChannel <= 24;
+  };
+
+  const enqueue = (pixelIndex: number) => {
+    if (pixelIndex < 0 || pixelIndex >= pixelCount || visited[pixelIndex]) return;
+    if (!isBackgroundCandidate(pixelIndex)) return;
+    visited[pixelIndex] = 1;
+    queue[tail++] = pixelIndex;
+  };
+
+  for (let x = 0; x < width; x += 1) {
+    enqueue(x);
+    enqueue((height - 1) * width + x);
+  }
+  for (let y = 1; y < height - 1; y += 1) {
+    enqueue(y * width);
+    enqueue(y * width + width - 1);
+  }
+
+  while (head < tail) {
+    const pixelIndex = queue[head++];
+    const x = pixelIndex % width;
+    const y = Math.floor(pixelIndex / width);
+
+    if (x > 0) enqueue(pixelIndex - 1);
+    if (x + 1 < width) enqueue(pixelIndex + 1);
+    if (y > 0) enqueue(pixelIndex - width);
+    if (y + 1 < height) enqueue(pixelIndex + width);
+  }
+
+  for (let pixelIndex = 0; pixelIndex < pixelCount; pixelIndex += 1) {
+    if (visited[pixelIndex]) data[pixelIndex * 4 + 3] = 0;
+  }
+
+  // Fade one anti-aliased ring around the removed background. This avoids the
+  // pale rectangle/halo common around JPG logos without erasing interior whites.
+  const featherFloor = Math.max(160, threshold - 24);
+  const soften = (pixelIndex: number) => {
+    if (pixelIndex < 0 || pixelIndex >= pixelCount || visited[pixelIndex]) return;
+    const offset = pixelIndex * 4;
+    const alpha = data[offset + 3];
+    if (alpha === 0) return;
+
+    const red = data[offset];
+    const green = data[offset + 1];
+    const blue = data[offset + 2];
+    const minChannel = Math.min(red, green, blue);
+    const maxChannel = Math.max(red, green, blue);
+    if (minChannel < featherFloor || maxChannel - minChannel > 28) return;
+
+    const whiteness = Math.min(
+      1,
+      Math.max(0, (minChannel - featherFloor) / Math.max(1, threshold - featherFloor)),
+    );
+    data[offset + 3] = Math.round(alpha * (1 - whiteness * 0.85));
+  };
+
+  for (let pixelIndex = 0; pixelIndex < pixelCount; pixelIndex += 1) {
+    if (!visited[pixelIndex]) continue;
+    const x = pixelIndex % width;
+    const y = Math.floor(pixelIndex / width);
+    if (x > 0) soften(pixelIndex - 1);
+    if (x + 1 < width) soften(pixelIndex + 1);
+    if (y > 0) soften(pixelIndex - width);
+    if (y + 1 < height) soften(pixelIndex + width);
+  }
+
+  context.putImageData(imageData, 0, 0);
+}
+
 function webpName(name: string) {
   const stem = name
     .replace(/\.[^.]+$/, "")
@@ -132,6 +249,7 @@ async function performProductImageConversion(
   source: File,
   resolution: ProductImageResolution,
   compression: ImageCompressionPreset,
+  backgroundRemoval?: ImageBackgroundRemovalOptions,
 ): Promise<ProductImageConversionResult> {
   const sourceInfo = await inspectProductImageSource(source);
   const sourceWidth = sourceInfo.width;
@@ -154,6 +272,16 @@ async function performProductImageConversion(
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
   context.drawImage(image, 0, 0, width, height);
+
+  const normalizedBackgroundRemoval = normalizeBackgroundRemovalOptions(backgroundRemoval);
+  if (normalizedBackgroundRemoval.enabled) {
+    removeEdgeConnectedWhiteBackground(
+      context,
+      width,
+      height,
+      normalizedBackgroundRemoval.tolerance,
+    );
+  }
 
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, "image/webp", imageCompressionQuality(compression)),
@@ -182,6 +310,7 @@ export async function convertProductImageToWebp(
   source: File,
   resolution: ProductImageResolution,
   compression: ImageCompressionPreset = getImageCompressionPreset(),
+  backgroundRemoval?: ImageBackgroundRemovalOptions,
 ): Promise<ProductImageConversionResult> {
   let fileCache = conversionCache.get(source);
   if (!fileCache) {
@@ -189,11 +318,20 @@ export async function convertProductImageToWebp(
     conversionCache.set(source, fileCache);
   }
 
-  const key = `${resolution}:${compression}`;
+  const normalizedBackgroundRemoval = normalizeBackgroundRemovalOptions(backgroundRemoval);
+  const backgroundKey = normalizedBackgroundRemoval.enabled
+    ? `bg:${normalizedBackgroundRemoval.tolerance}`
+    : "bg:none";
+  const key = `${resolution}:${compression}:${backgroundKey}`;
   const cached = fileCache.get(key);
   if (cached) return cached;
 
-  const conversion = performProductImageConversion(source, resolution, compression);
+  const conversion = performProductImageConversion(
+    source,
+    resolution,
+    compression,
+    normalizedBackgroundRemoval,
+  );
   fileCache.set(key, conversion);
   try {
     return await conversion;

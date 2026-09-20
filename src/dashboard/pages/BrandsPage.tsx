@@ -273,7 +273,11 @@ export default function BrandsPage() {
       const optimized: string[] = [];
 
       if (imageChange.logoFile) {
-        const uploaded = await uploadDashboardBrandImage(imageChange.logoFile, "logo");
+        const uploaded = await uploadDashboardBrandImage(
+          imageChange.logoFile,
+          "logo",
+          imageChange.logoBackgroundRemoval,
+        );
         saved = await updateDashboardBrand({ ...saved, logo: uploaded.url });
         optimized.push(
           `logo ${Math.round(uploaded.conversion.source.bytes / 1024)} KB → ${Math.round(uploaded.conversion.output.bytes / 1024)} KB`,

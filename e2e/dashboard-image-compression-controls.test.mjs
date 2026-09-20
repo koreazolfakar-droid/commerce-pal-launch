@@ -18,12 +18,19 @@ test("shared image pipeline supports selectable cached WebP compression previews
   assert.match(processing, /imageCompressionQuality/);
   assert.match(processing, /conversionCache/);
   assert.match(processing, /canvas\.toBlob\(resolve, "image\/webp", imageCompressionQuality\(compression\)\)/);
+  assert.match(processing, /ImageBackgroundRemovalOptions/);
+  assert.match(processing, /removeEdgeConnectedWhiteBackground/);
+  assert.match(processing, /getImageData\(0, 0, width, height\)/);
+  assert.match(processing, /putImageData\(imageData, 0, 0\)/);
+  assert.match(processing, /bg:none/);
 
   assert.match(preview, /Compression/);
   assert.match(preview, /Preview is generated locally before upload/);
   assert.match(preview, /formatImageBytes\(item\.source\.bytes\)/);
   assert.match(preview, /formatImageBytes\(item\.output\.bytes\)/);
   assert.match(preview, /setImageCompressionPreset\(value\)/);
+  assert.match(preview, /Transparent background preview/);
+  assert.match(preview, /backgroundRemoval/);
 });
 
 test("brand and category editors stage replacements and show compression before saving", async () => {
@@ -40,7 +47,14 @@ test("brand and category editors stage replacements and show compression before 
   assert.match(brandForm, /removeCover/);
   assert.match(brandForm, /Logo compression preview/);
   assert.match(brandForm, /Cover compression preview/);
-  assert.match(brandsPage, /uploadDashboardBrandImage\(imageChange\.logoFile, "logo"\)/);
+  assert.match(brandForm, /Remove white background/);
+  assert.match(brandForm, /logoBackgroundTolerance/);
+  assert.match(brandForm, /Logo background removal tolerance/);
+  assert.match(brandForm, /backgroundRemoval=/);
+  assert.match(
+    brandsPage,
+    /uploadDashboardBrandImage\([\s\S]*imageChange\.logoFile,[\s\S]*"logo",[\s\S]*imageChange\.logoBackgroundRemoval/,
+  );
   assert.match(brandsPage, /uploadDashboardBrandImage\(imageChange\.coverFile, "cover"\)/);
   assert.match(brandData, /select\("logo_url,cover_image_url"\)/);
   assert.match(brandData, /removeDashboardBrandImage\(previousLogo\)/);

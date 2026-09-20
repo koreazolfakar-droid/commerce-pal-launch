@@ -7,7 +7,11 @@ import {
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
-import { convertProductImageToWebp } from "@/dashboard/lib/imageProcessing";
+import {
+  convertProductImageToWebp,
+  getImageCompressionPreset,
+  type ImageBackgroundRemovalOptions,
+} from "@/dashboard/lib/imageProcessing";
 
 type BrandRow = Tables<"cms_brands">;
 
@@ -50,9 +54,18 @@ function brandStoragePathFromUrl(url: string) {
   return path.startsWith(`${BRAND_MEDIA_PREFIX}/`) ? path : null;
 }
 
-export async function uploadDashboardBrandImage(source: File, kind: "logo" | "cover") {
+export async function uploadDashboardBrandImage(
+  source: File,
+  kind: "logo" | "cover",
+  backgroundRemoval?: ImageBackgroundRemovalOptions,
+) {
   await requireDashboardStaff();
-  const conversion = await convertProductImageToWebp(source, kind === "logo" ? "1080" : "1920");
+  const conversion = await convertProductImageToWebp(
+    source,
+    kind === "logo" ? "1080" : "1920",
+    getImageCompressionPreset(),
+    kind === "logo" ? backgroundRemoval : undefined,
+  );
   if (conversion.file.size > MAX_BRAND_MEDIA_BYTES) {
     throw new Error("The optimized image must be 10 MB or smaller.");
   }

@@ -9,6 +9,7 @@ import {
   formatImageBytes,
   getImageCompressionPreset,
   setImageCompressionPreset,
+  type ImageBackgroundRemovalOptions,
   type ImageCompressionPreset,
   type ProductImageConversionResult,
   type ProductImageResolution,
@@ -20,6 +21,7 @@ type Props = {
   onResolutionChange?: (value: ProductImageResolution) => void;
   title?: string;
   compact?: boolean;
+  backgroundRemoval?: ImageBackgroundRemovalOptions;
 };
 
 export default function ImageOptimizationPreview({
@@ -28,6 +30,7 @@ export default function ImageOptimizationPreview({
   onResolutionChange,
   title = "Image optimization preview",
   compact = false,
+  backgroundRemoval,
 }: Props) {
   const [compression, setCompression] = useState<ImageCompressionPreset>(() =>
     getImageCompressionPreset(),
@@ -35,6 +38,9 @@ export default function ImageOptimizationPreview({
   const [results, setResults] = useState<ProductImageConversionResult[]>([]);
   const [error, setError] = useState("");
   const [previewing, setPreviewing] = useState(false);
+  const [outputPreviewUrls, setOutputPreviewUrls] = useState<string[]>([]);
+  const backgroundRemovalEnabled = Boolean(backgroundRemoval?.enabled);
+  const backgroundRemovalTolerance = backgroundRemoval?.tolerance ?? 18;
 
   useEffect(() => {
     const syncCompression = (event: Event) => {
@@ -62,7 +68,16 @@ export default function ImageOptimizationPreview({
       try {
         const next: ProductImageConversionResult[] = [];
         for (const file of files) {
-          next.push(await convertProductImageToWebp(file, resolution, compression));
+          next.push(
+            await convertProductImageToWebp(
+              file,
+              resolution,
+              compression,
+              backgroundRemovalEnabled
+                ? { enabled: true, tolerance: backgroundRemovalTolerance }
+                : undefined,
+            ),
+          );
         }
         if (!cancelled) setResults(next);
       } catch (cause) {
@@ -78,7 +93,21 @@ export default function ImageOptimizationPreview({
     return () => {
       cancelled = true;
     };
-  }, [files, resolution, compression]);
+  }, [
+    files,
+    resolution,
+    compression,
+    backgroundRemovalEnabled,
+    backgroundRemovalTolerance,
+  ]);
+
+  useEffect(() => {
+    const urls = results.map((item) => URL.createObjectURL(item.file));
+    setOutputPreviewUrls(urls);
+    return () => {
+      for (const url of urls) URL.revokeObjectURL(url);
+    };
+  }, [results]);
 
   const totals = useMemo(() => {
     const source = results.reduce((sum, item) => sum + item.source.bytes, 0);
@@ -190,14 +219,38 @@ export default function ImageOptimizationPreview({
                 key={`${item.source.name}-${index}`}
                 className="grid gap-2 rounded-xl border border-white bg-white/90 p-3 sm:grid-cols-[1fr_auto]"
               >
-                <div className="min-w-0">
-                  <div className="truncate text-[10px] font-bold text-slate-700">
-                    {item.source.name}
-                  </div>
-                  <div className="mt-1 text-[9px] text-slate-500">
-                    {item.source.width}×{item.source.height}px · {formatImageBytes(item.source.bytes)}
-                    {" → "}
-                    {item.output.width}×{item.output.height}px · {formatImageBytes(item.output.bytes)}
+                <div className="flex min-w-0 items-center gap-3">
+                  {backgroundRemovalEnabled && outputPreviewUrls[index] ? (
+                    <div
+                      className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(45deg,#e2e8f0 25%,transparent 25%),linear-gradient(-45deg,#e2e8f0 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e2e8f0 75%),linear-gradient(-45deg,transparent 75%,#e2e8f0 75%)",
+                        backgroundPosition: "0 0,0 6px,6px -6px,-6px 0px",
+                        backgroundSize: "12px 12px",
+                      }}
+                    >
+                      <img
+                        src={outputPreviewUrls[index]}
+                        alt="Transparent output preview"
+                        className="size-full object-contain p-1"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="min-w-0">
+                    <div className="truncate text-[10px] font-bold text-slate-700">
+                      {item.source.name}
+                    </div>
+                    <div className="mt-1 text-[9px] text-slate-500">
+                      {item.source.width}×{item.source.height}px · {formatImageBytes(item.source.bytes)}
+                      {" → "}
+                      {item.output.width}×{item.output.height}px · {formatImageBytes(item.output.bytes)}
+                    </div>
+                    {backgroundRemovalEnabled ? (
+                      <div className="mt-1 text-[8px] font-bold text-emerald-700">
+                        Transparent background preview · tolerance {backgroundRemovalTolerance}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 <span className="self-center rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black text-emerald-700">
