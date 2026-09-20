@@ -12,15 +12,19 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import InventoryMovementHistoryDrawer from "@/dashboard/components/inventory/InventoryMovementHistoryDrawer";
 import {
   adjustInventoryDelta,
+  loadInventoryCategoryOptions,
   loadInventoryLatestMovements,
-  loadInventoryWorkspace,
+  loadInventoryPage,
+  loadInventorySummary,
   setInventoryStock,
+  type InventoryCategoryOptions,
   type InventoryRow,
+  type InventorySummary,
 } from "@/dashboard/data/inventory";
 
 type InventoryStatus = "In stock" | "Low stock" | "Out of stock" | "Not tracked";
@@ -80,14 +84,27 @@ function movementLabel(row: InventoryRow, loading: boolean) {
 export default function InventoryManagerPage() {
   const [rows, setRows] = useState<InventoryRow[]>([]);
   const [query, setQuery] = useState("");
+  const [serverQuery, setServerQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [threshold, setThreshold] = useState(10);
   const [onlyLow, setOnlyLow] = useState(false);
+  const [categories, setCategories] = useState<InventoryCategoryOptions>({
+    items: [],
+    hasUncategorized: false,
+  });
+  const [summary, setSummary] = useState<InventorySummary>({
+    totalUnits: 0,
+    variantCount: 0,
+    lowCount: 0,
+    outCount: 0,
+  });
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [movementLoading, setMovementLoading] = useState(false);
   const loadRequestRef = useRef(0);
   const movementRequestRef = useRef(0);
+  const hasLoadedRef = useRef(false);
   const [movementVersion, setMovementVersion] = useState(0);
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -99,16 +116,30 @@ export default function InventoryManagerPage() {
   const load = useCallback(async (manual = false) => {
     const requestId = ++loadRequestRef.current;
     if (manual) setRefreshing(true);
-    else setLoading(true);
+    else if (!hasLoadedRef.current) setLoading(true);
 
     try {
-      const next = await loadInventoryWorkspace();
+      const [pageResult, summaryResult] = await Promise.all([
+        loadInventoryPage({
+          search: serverQuery,
+          category,
+          threshold,
+          onlyLow,
+          page,
+          pageSize,
+        }),
+        loadInventorySummary(threshold),
+      ]);
+
       if (requestId !== loadRequestRef.current) return;
 
-      setRows(next);
+      setRows(pageResult.items);
+      setTotalCount(pageResult.totalCount);
+      setSummary(summaryResult);
       setDraftStocks({});
       setError("");
       setMovementVersion((current) => current + 1);
+      hasLoadedRef.current = true;
 
       if (manual) toast.success("Inventory refreshed from Supabase.");
     } catch (cause) {
@@ -123,68 +154,43 @@ export default function InventoryManagerPage() {
         setRefreshing(false);
       }
     }
-  }, []);
+  }, [serverQuery, category, threshold, onlyLow, page, pageSize]);
 
   useEffect(() => {
     void load(false);
   }, [load]);
 
-  const categories = useMemo(() => {
-    const map = new Map<string, string>();
-    let hasUncategorized = false;
-    for (const row of rows) {
-      if (row.categoryId) map.set(row.categoryId, row.category || "Unnamed category");
-      else hasUncategorized = true;
-    }
-    return {
-      items: [...map.entries()]
-        .map(([id, name]) => ({ id, name }))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-      hasUncategorized,
+  useEffect(() => {
+    let active = true;
+    void loadInventoryCategoryOptions()
+      .then((next) => {
+        if (active) setCategories(next);
+      })
+      .catch((cause) => {
+        console.warn(
+          "[dashboard-inventory] category options failed",
+          cause instanceof Error ? cause.message : cause,
+        );
+      });
+    return () => {
+      active = false;
     };
-  }, [rows]);
-
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return rows.filter((row) => {
-      const matchesQuery =
-        !needle ||
-        [
-          row.productName,
-          row.variantTitle,
-          row.optionsLabel,
-          row.sku,
-          row.barcode,
-          row.brand,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(needle);
-      const matchesCategory =
-        category === "all" ||
-        (category === "uncategorized" ? !row.categoryId : row.categoryId === category);
-      const status = statusFor(row.stock, threshold, row.trackInventory);
-      return (
-        matchesQuery &&
-        matchesCategory &&
-        (!onlyLow || status === "Low stock" || status === "Out of stock")
-      );
-    });
-  }, [rows, query, category, threshold, onlyLow]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const pageStart = filtered.length ? (safePage - 1) * pageSize : 0;
-  const pageEnd = Math.min(pageStart + pageSize, filtered.length);
-  const pageRows = useMemo(
-    () => filtered.slice(pageStart, pageEnd),
-    [filtered, pageStart, pageEnd],
-  );
-  const pageVariantKey = pageRows.map((row) => row.variantId).join(",");
+  }, []);
 
   useEffect(() => {
-    setPage(1);
-  }, [query, category, threshold, onlyLow, pageSize]);
+    const timer = window.setTimeout(() => {
+      setPage(1);
+      setServerQuery(query.trim());
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = totalCount ? (safePage - 1) * pageSize : 0;
+  const pageEnd = Math.min(pageStart + rows.length, totalCount);
+  const pageRows = rows;
+  const pageVariantKey = pageRows.map((row) => row.variantId).join(",");
 
   useEffect(() => {
     if (page !== safePage) setPage(safePage);
@@ -230,13 +236,9 @@ export default function InventoryManagerPage() {
       });
   }, [pageVariantKey, movementVersion]);
 
-  const totalUnits = rows.reduce((sum, row) => sum + row.stock, 0);
-  const low = rows.filter(
-    (row) => statusFor(row.stock, threshold, row.trackInventory) === "Low stock",
-  ).length;
-  const out = rows.filter(
-    (row) => statusFor(row.stock, threshold, row.trackInventory) === "Out of stock",
-  ).length;
+  const totalUnits = summary.totalUnits;
+  const low = summary.lowCount;
+  const out = summary.outCount;
 
   const replaceRowStock = (variantId: string, stock: number, delta: number) => {
     setRows((current) =>
@@ -270,6 +272,7 @@ export default function InventoryManagerPage() {
       );
       replaceRowStock(row.variantId, newStock, delta);
       toast.success(`${row.productName} stock updated to ${newStock}.`);
+      void load(false);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Inventory adjustment failed.");
     } finally {
@@ -303,6 +306,7 @@ export default function InventoryManagerPage() {
       const newStock = await setInventoryStock(row, nextStock, "Inventory dashboard manual stock set");
       replaceRowStock(row.variantId, newStock, newStock - row.stock);
       toast.success(`${row.productName} stock updated to ${newStock}.`);
+      void load(false);
     } catch (cause) {
       setDraftStocks((current) => ({ ...current, [row.variantId]: String(row.stock) }));
       toast.error(cause instanceof Error ? cause.message : "Inventory update failed.");
@@ -356,7 +360,7 @@ export default function InventoryManagerPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="text-[11px] text-slate-400">Total units</div>
           <div className="mt-1 text-2xl font-bold text-[#14203a]">{totalUnits}</div>
-          <div className="mt-1 text-[10px] text-slate-400">{rows.length} variants</div>
+          <div className="mt-1 text-[10px] text-slate-400">{summary.variantCount} variants</div>
         </div>
         <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
           <div className="text-[11px] text-amber-700/70">Low stock variants</div>
@@ -382,7 +386,10 @@ export default function InventoryManagerPage() {
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={category}
-              onChange={(event) => setCategory(event.target.value)}
+              onChange={(event) => {
+                setCategory(event.target.value);
+                setPage(1);
+              }}
               className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600"
             >
               <option value="all">All categories</option>
@@ -398,14 +405,20 @@ export default function InventoryManagerPage() {
               Low ≤
               <input
                 value={threshold}
-                onChange={(event) => setThreshold(Math.max(0, Number(event.target.value) || 0))}
+                onChange={(event) => {
+                  setThreshold(Math.max(0, Number(event.target.value) || 0));
+                  setPage(1);
+                }}
                 type="number"
                 min={0}
                 className="w-12 border-0 p-0 text-[11px] outline-none"
               />
             </label>
             <button
-              onClick={() => setOnlyLow((current) => !current)}
+              onClick={() => {
+                setOnlyLow((current) => !current);
+                setPage(1);
+              }}
               className={`flex h-10 items-center gap-2 rounded-xl border px-3 text-[11px] font-bold ${
                 onlyLow
                   ? "border-amber-300 bg-amber-50 text-amber-700"
@@ -426,7 +439,7 @@ export default function InventoryManagerPage() {
             <div className="mt-1 text-[10px] text-slate-400">Products, variants, and live stock controls</div>
           </div>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
-            {filtered.length ? `${pageStart + 1}–${pageEnd} of ${filtered.length}` : "0 shown"}
+            {totalCount ? `${pageStart + 1}–${pageEnd} of ${totalCount}` : "0 shown"}
           </span>
         </div>
 
@@ -664,24 +677,27 @@ export default function InventoryManagerPage() {
             </tbody>
           </table>
         </div>
-        {!filtered.length && (
+        {!totalCount && (
           <div className="p-12 text-center text-sm text-slate-400">
             <Boxes className="mx-auto mb-3 size-8 text-slate-300" />
             No inventory variants match these filters.
           </div>
         )}
 
-        {filtered.length > 0 && (
+        {totalCount > 0 && (
           <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#fcfcfe] px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="flex items-center justify-between gap-3 sm:justify-start">
               <span className="text-[10px] font-semibold text-slate-500">
-                Showing {pageStart + 1}–{pageEnd} of {filtered.length}
+                Showing {pageStart + 1}–{pageEnd} of {totalCount}
               </span>
               <label className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
                 Per page
                 <select
                   value={pageSize}
-                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  onChange={(event) => {
+                    setPageSize(Number(event.target.value));
+                    setPage(1);
+                  }}
                   className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-700 outline-none focus:border-indigo-400"
                   aria-label="Inventory rows per page"
                 >
