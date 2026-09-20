@@ -113,9 +113,16 @@ test("sign-in errors are sanitized and failed credentials are cleared", () => {
   assert.match(catalog, /status >= 500/);
   assert.doesNotMatch(catalog, /throwIfError\(error, "Sign in failed"\)/);
   assert.doesNotMatch(catalog, /This account does not have dashboard access\./);
-  assert.match(
-    login,
-    /catch \(cause\) \{[\s\S]+setPassword\("")[\s\S]+setShowPassword\(false\)[\s\S]+setInlineError\(message\)/,
+  const signInCatch = login.indexOf("catch (cause)");
+  const signInPasswordClear = login.indexOf('setPassword("");', signInCatch);
+  const signInVisibilityClear = login.indexOf("setShowPassword(false);", signInPasswordClear);
+  const signInInlineError = login.indexOf("setInlineError(message);", signInVisibilityClear);
+  assert.ok(
+    signInCatch >= 0 &&
+      signInPasswordClear > signInCatch &&
+      signInVisibilityClear > signInPasswordClear &&
+      signInInlineError > signInVisibilityClear,
+    "failed sign-in must clear password state before showing the sanitized error",
   );
 });
 
