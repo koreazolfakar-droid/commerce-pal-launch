@@ -72,9 +72,11 @@ test("hero dashboard supports real Supabase CRUD, storage upload and media libra
   assert.match(page, /Title size/);
   assert.match(page, /Content width/);
   assert.match(page, /Button shape/);
-  assert.match(page, /Minimal/);
-  assert.match(page, /Centered/);
-  assert.match(page, /Glass/);
+  assert.match(heroEditor, /Spotlight/);
+  assert.match(heroEditor, /Glass editorial/);
+  assert.match(heroEditor, /Poster \+ action bar/);
+  assert.match(heroEditor, /Light catalogue/);
+  assert.doesNotMatch(page, /HERO_PRESETS/);
   assert.match(data, /secondaryButtonStyle/);
   assert.match(data, /contentTheme/);
 });
@@ -90,7 +92,9 @@ test("hero editor keeps device-specific image focus and preserves drag layout", 
   assert.match(heroScene, /mobileFocal = config\.mobileFocalPoint/);
   assert.match(heroCss, /--hero-mobile-focal-x/);
   assert.match(heroCss, /--hero-desktop-focal-x/);
-  assert.match(page, /visualConfig: \{ \.\.\.current\.visualConfig, \.\.\.preset\.patch\.visualConfig \}/);
+  assert.match(heroEditor, /\[layoutKey\]: \{/);
+  assert.doesNotMatch(heroEditor, /desktopLayout: \{[\s\S]*mobileLayout: \{/);
+  assert.match(heroEditor, /Reset device image focus/);
 });
 
 test("hero CTA uses validated product, collection or safe URL targets", () => {
