@@ -8,7 +8,6 @@ import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
 import { CompareButton } from "@/components/CompareButton";
-import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { discountPercent, formatPrice, variantSummary, type ShopifyProduct } from "@/lib/shopify";
@@ -75,7 +74,7 @@ export const ProductCard = memo(function ProductCard({
   return (
     <article
       className={cn(
-        "sc-product-card card-lift group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-card hover:border-primary/30",
+        "sc-product-card group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-card transition-colors duration-200 hover:border-border",
         className,
       )}
     >
@@ -92,7 +91,7 @@ export const ProductCard = memo(function ProductCard({
             size={480}
             sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
             eager={eager}
-            imageClassName="group-hover:scale-[1.045]"
+            imageClassName="group-hover:scale-[1.02]"
           />
         </Link>
         <QuickViewButton product={product} />
@@ -139,12 +138,9 @@ export const ProductCard = memo(function ProductCard({
 
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-3.5 sm:p-4">
         {brand && (
-          <div className="flex min-w-0 items-center gap-1.5">
-            <BrandLogo slug={brand.slug} label={brand.label} size={20} className="rounded-md" />
-            <p className="truncate text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
-              {brand.label}
-            </p>
-          </div>
+          <p className="truncate text-[10px] font-medium tracking-[0.04em] text-muted-foreground">
+            {brand.label}
+          </p>
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
           <h3 className="line-clamp-2 min-h-[2.65rem] break-words text-sm font-semibold leading-[1.4] transition-colors group-hover:text-primary">
