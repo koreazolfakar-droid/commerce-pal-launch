@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import {
   loadDashboardSiteSettings,
   saveDashboardSiteSettings,
@@ -95,6 +96,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pendingLogo, setPendingLogo] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async (manual = false) => {
@@ -151,6 +153,7 @@ export default function SettingsPage() {
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+      setPendingLogo(null);
     }
   };
 
@@ -264,8 +267,21 @@ export default function SettingsPage() {
                       type="file"
                       accept="image/jpeg,image/png,image/webp,image/avif"
                       className="hidden"
-                      onChange={(event) => void uploadLogo(event.target.files?.[0])}
+                      onChange={(event) => {
+                        setPendingLogo(event.target.files?.[0] ?? null);
+                        event.currentTarget.value = "";
+                      }}
                     />
+                    {pendingLogo ? (
+                      <div className="mt-3">
+                        <ImageOptimizationPreview
+                          files={[pendingLogo]}
+                          resolution="1080"
+                          title="Store logo compression preview"
+                          compact
+                        />
+                      </div>
+                    ) : null}
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       <button
                         onClick={() => fileRef.current?.click()}
@@ -283,6 +299,26 @@ export default function SettingsPage() {
                         Use default
                       </button>
                     </div>
+                    {pendingLogo ? (
+                      <div className="mt-2 flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPendingLogo(null)}
+                          disabled={uploading}
+                          className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void uploadLogo(pendingLogo)}
+                          disabled={uploading}
+                          className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
+                        >
+                          Confirm & upload
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="grid content-start gap-4 sm:grid-cols-2">
