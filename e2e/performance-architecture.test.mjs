@@ -103,6 +103,17 @@ test("public CMS edge function avoids wildcard database payloads", async () => {
 });
 
 
+test("public CMS edge function serves warm payloads without repeating database reads", async () => {
+  const edge = await read("supabase/functions/public-cms/index.ts");
+
+  assert.match(edge, /CMS_EDGE_MEMORY_TTL_MS\s*=\s*30_000/);
+  assert.match(edge, /let cmsBodyCache:/);
+  assert.match(edge, /cachedBody\.expiresAt > Date\.now\(\)/);
+  assert.match(edge, /return new Response\(cachedBody\.body/);
+  assert.match(edge, /cmsBodyCache = \{[\s\S]*?expiresAt: Date\.now\(\) \+ CMS_EDGE_MEMORY_TTL_MS,[\s\S]*?body/);
+});
+
+
 test("small storefront collections avoid hydrating the full native snapshot", async () => {
   const nativeStore = await read("src/lib/nativeStore.ts");
 
