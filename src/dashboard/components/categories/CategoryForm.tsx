@@ -2,6 +2,7 @@ import { Check, Loader2, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
+import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import { normalizeCategorySlug, type CatalogCategory } from "@/dashboard/data/categories";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
 import { categoryIconOptions } from "@/dashboard/components/categories/category-icons";
@@ -375,7 +376,17 @@ export default function CategoryForm({
                       <div>
                         Source: {sourceInfo.width}×{sourceInfo.height} · {formatBytes(sourceInfo.bytes)}
                       </div>
-                      <div>Output: WebP · max 1080 px edge · optimized before Storage upload</div>
+                    </div>
+                  ) : null}
+
+                  {pendingImage ? (
+                    <div className="mt-3">
+                      <ImageOptimizationPreview
+                        files={[pendingImage]}
+                        resolution="1080"
+                        title="Category compression preview"
+                        compact
+                      />
                     </div>
                   ) : null}
                 </div>
