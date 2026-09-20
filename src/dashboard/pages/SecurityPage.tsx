@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import {
   deleteDashboardPasskey,
+  getDashboardMfaStatus,
   getDashboardSecuritySnapshot,
   isDashboardPasskeySupported,
   listDashboardPasskeys,
@@ -25,6 +26,7 @@ import {
   signOutAllDashboardSessions,
   signOutDashboard,
   signOutOtherDashboardSessions,
+  verifyDashboardTotp,
   type DashboardPasskey,
   type DashboardSecurityEvent,
   type DashboardSecuritySnapshot,
@@ -92,6 +94,12 @@ export default function SecurityPage() {
   const [passkeyAction, setPasskeyAction] = useState<string | null>(null);
   const [editingPasskeyId, setEditingPasskeyId] = useState<string | null>(null);
   const [passkeyName, setPasskeyName] = useState("");
+  const [passkeyStepUp, setPasskeyStepUp] = useState<
+    { type: "register" } | { type: "delete"; passkey: DashboardPasskey } | null
+  >(null);
+  const [passkeyTotpCode, setPasskeyTotpCode] = useState("");
+  const [passkeyStepUpError, setPasskeyStepUpError] = useState("");
+  const [passkeyStepUpBusy, setPasskeyStepUpBusy] = useState(false);
   const passkeySupported = useMemo(() => isDashboardPasskeySupported(), []);
 
   const loadPasskeys = useCallback(async () => {
@@ -171,15 +179,67 @@ export default function SecurityPage() {
     }
   };
 
-  const addPasskey = async () => {
-    setPasskeyAction("register");
+  const openPasskeyStepUp = (
+    request: { type: "register" } | { type: "delete"; passkey: DashboardPasskey },
+  ) => {
+    setPasskeyTotpCode("");
+    setPasskeyStepUpError("");
+    setPasskeyStepUp(request);
+  };
+
+  const closePasskeyStepUp = () => {
+    if (passkeyStepUpBusy) return;
+    setPasskeyStepUp(null);
+    setPasskeyTotpCode("");
+    setPasskeyStepUpError("");
+  };
+
+  const addPasskey = () => {
+    openPasskeyStepUp({ type: "register" });
+  };
+
+  const confirmPasskeyStepUp = async () => {
+    if (!passkeyStepUp) return;
+
+    const normalizedCode = passkeyTotpCode.replace(/\s+/g, "");
+    if (!/^\d{6,10}$/.test(normalizedCode)) {
+      setPasskeyStepUpError("Enter the numeric code from your authenticator app.");
+      return;
+    }
+
+    setPasskeyStepUpBusy(true);
+    setPasskeyStepUpError("");
     try {
-      const passkey = await registerDashboardPasskey();
-      toast.success(`Passkey added${passkey.friendlyName ? `: ${passkey.friendlyName}` : "."}`);
+      const status = await getDashboardMfaStatus();
+      if (!status?.verifiedFactorId) {
+        throw new Error("A verified authenticator is required before changing passkeys.");
+      }
+
+      // Fresh step-up: require a new authenticator challenge immediately before
+      // every passkey add/remove operation. The verification is not cached or reused.
+      await verifyDashboardTotp(status.verifiedFactorId, normalizedCode);
+
+      if (passkeyStepUp.type === "register") {
+        setPasskeyAction("register");
+        const passkey = await registerDashboardPasskey();
+        toast.success(`Passkey added${passkey.friendlyName ? `: ${passkey.friendlyName}` : "."}`);
+      } else {
+        const target = passkeyStepUp.passkey;
+        setPasskeyAction(`delete:${target.id}`);
+        await deleteDashboardPasskey(target.id);
+        toast.success("Passkey removed.");
+      }
+
+      setPasskeyStepUp(null);
+      setPasskeyTotpCode("");
       await load();
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Could not add passkey.");
+      setPasskeyTotpCode("");
+      setPasskeyStepUpError(
+        cause instanceof Error ? cause.message : "Authenticator verification failed.",
+      );
     } finally {
+      setPasskeyStepUpBusy(false);
       setPasskeyAction(null);
     }
   };
@@ -204,18 +264,9 @@ export default function SecurityPage() {
     }
   };
 
-  const removePasskey = async (passkey: DashboardPasskey) => {
+  const removePasskey = (passkey: DashboardPasskey) => {
     if (!window.confirm(`Remove ${passkey.friendlyName || "this passkey"}? You will no longer be able to use it to sign in.`)) return;
-    setPasskeyAction(`delete:${passkey.id}`);
-    try {
-      await deleteDashboardPasskey(passkey.id);
-      toast.success("Passkey removed.");
-      await load();
-    } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Could not remove passkey.");
-    } finally {
-      setPasskeyAction(null);
-    }
+    openPasskeyStepUp({ type: "delete", passkey });
   };
 
   if (loading && !snapshot) {
@@ -443,6 +494,87 @@ export default function SecurityPage() {
           )}
         </section>
       </div>
+
+      {passkeyStepUp ? (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="passkey-step-up-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closePasskeyStepUp();
+          }}
+        >
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+                <ShieldCheck className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <h2 id="passkey-step-up-title" className="text-[15px] font-bold text-slate-800">
+                  {passkeyStepUp.type === "register"
+                    ? "Verify before adding a passkey"
+                    : "Verify before removing this passkey"}
+                </h2>
+                <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                  Enter a fresh code from your authenticator app. This verification is required for this
+                  operation only and is not reused.
+                </p>
+              </div>
+            </div>
+
+            <label className="mt-5 block text-[11px] font-bold text-slate-600" htmlFor="passkey-totp-code">
+              Authenticator code
+            </label>
+            <input
+              id="passkey-totp-code"
+              value={passkeyTotpCode}
+              onChange={(event) =>
+                setPasskeyTotpCode(event.target.value.replace(/\D+/g, "").slice(0, 10))
+              }
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              disabled={passkeyStepUpBusy}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void confirmPasskeyStepUp();
+                if (event.key === "Escape") closePasskeyStepUp();
+              }}
+              className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-center text-lg font-bold tracking-[.28em] text-slate-800 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50"
+              aria-describedby={passkeyStepUpError ? "passkey-step-up-error" : undefined}
+            />
+
+            {passkeyStepUpError ? (
+              <div
+                id="passkey-step-up-error"
+                className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-[11px] leading-5 text-rose-700"
+              >
+                {passkeyStepUpError}
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closePasskeyStepUp}
+                disabled={passkeyStepUpBusy}
+                className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmPasskeyStepUp()}
+                disabled={passkeyStepUpBusy || !/^\d{6,10}$/.test(passkeyTotpCode)}
+                className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-sm transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {passkeyStepUpBusy ? <Loader2 className="size-3.5 animate-spin" /> : <KeyRound className="size-3.5" />}
+                Verify & continue
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
