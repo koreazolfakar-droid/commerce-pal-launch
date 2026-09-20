@@ -39,10 +39,10 @@ test("dashboard responses are explicitly non-cacheable", () => {
   assert.match(server, /Surrogate-Control", "no-store"/);
   assert.match(server, /Pragma", "no-cache"/);
 
-  const fetchReturn = server.indexOf("return withDashboardNoStore(");
-  const securityHeaders = server.indexOf("withSecurityHeaders(await normalizeCatastrophicSsrResponse(response))");
-  assert.ok(fetchReturn >= 0, "dashboard no-store wrapper must be applied");
-  assert.ok(securityHeaders > fetchReturn, "security headers must remain in the response pipeline");
+  assert.match(
+    server,
+    /return withDashboardNoStore\([\s\S]*withSecurityHeaders\(await normalizeCatastrophicSsrResponse\(request, response\)\)/,
+  );
 });
 
 test("CSP uses a per-request nonce and removes script unsafe-inline", () => {
