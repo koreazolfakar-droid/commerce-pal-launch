@@ -1,0 +1,1 @@
+alter table public.cms_brands add column if not exists href text;
