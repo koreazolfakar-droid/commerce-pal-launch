@@ -930,6 +930,7 @@ export default function LoginPage() {
                   onSuccess={handleMfaSuccess}
                   onCancel={handleMfaCancel}
                   theme={theme}
+                  forceFresh={recoveryMode}
                 />
               ) : null}
 
