@@ -84,7 +84,7 @@ test("inventory renders before movement history hydration", () => {
   assert.doesNotMatch(initialLoad, /store_inventory_movements/);
   assert.doesNotMatch(initialLoad, /select\("\*"\)/);
   assert.match(files.inventoryData, /select\("variant_id,created_at,quantity_delta"\)/);
-  assert.match(files.inventory, /loadInventoryLatestMovements\(\)/);
+  assert.match(files.inventory, /loadInventoryLatestMovements\(variantIds\)/);
 });
 
 test("migrated data layers read and write Supabase tables directly", () => {
