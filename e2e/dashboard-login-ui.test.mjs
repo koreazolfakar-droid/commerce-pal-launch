@@ -73,15 +73,15 @@ test("login provides accessible inline errors and loading states", () => {
 test("login UI clears sensitive password state when changing authentication flows", () => {
   assert.match(
     login,
-    /setPassword\("")[\s\S]+setShowPassword\(false\)[\s\S]+setView\("forgot"\)/,
+    /setPassword\(""\)[\s\S]+setShowPassword\(false\)[\s\S]+setView\("forgot"\)/,
   );
   assert.match(
     login,
-    /const backToSignIn = \(\) => \{[\s\S]+setPassword\("")[\s\S]+setNewPassword\("")[\s\S]+setConfirmPassword\("")/,
+    /const backToSignIn = \(\) => \{[\s\S]+setPassword\(""\)[\s\S]+setNewPassword\(""\)[\s\S]+setConfirmPassword\(""\)/,
   );
   assert.match(
     login,
-    /const handleMfaCancel = useCallback\(\(\) => \{[\s\S]+setPassword\("")[\s\S]+setNewPassword\("")[\s\S]+setConfirmPassword\("")/,
+    /const handleMfaCancel = useCallback\(\(\) => \{[\s\S]+setPassword\(""\)[\s\S]+setNewPassword\(""\)[\s\S]+setConfirmPassword\(""\)/,
   );
 });
 
@@ -95,7 +95,7 @@ test("sign-in errors are sanitized and failed credentials are cleared", () => {
   assert.doesNotMatch(catalog, /This account does not have dashboard access\./);
   assert.match(
     login,
-    /catch \(cause\) \{[\s\S]+setPassword\("")[\s\S]+setShowPassword\(false\)[\s\S]+setInlineError\(message\)/,
+    /catch \(cause\) \{[\s\S]+setPassword\(""\)[\s\S]+setShowPassword\(false\)[\s\S]+setInlineError\(message\)/,
   );
 });
 
