@@ -1,0 +1,1 @@
+Space Call security pipeline smoke test. Safe test-only change.
