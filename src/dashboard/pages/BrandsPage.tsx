@@ -503,7 +503,7 @@ export default function BrandsPage() {
             <span className="size-1.5 rounded-full bg-[#6a70e7]" />
             Commerce / Catalog
           </div>
-          <h1 className="text-[30px] font-black tracking-[-.05em] text-[#14203a]">
+          <h1 className="text-[24px] font-black tracking-[-.04em] text-[#14203a] sm:text-[30px] sm:tracking-[-.05em]">
             Brands Management
           </h1>
           <p className="mt-1.5 text-[12px] text-slate-500">
@@ -541,7 +541,7 @@ export default function BrandsPage() {
   }
 
   return (
-    <div className="pb-8">
+    <div className="pb-4 sm:pb-8">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
@@ -556,13 +556,13 @@ export default function BrandsPage() {
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           {!reorderMode ? (
             <>
               <button
                 type="button"
                 onClick={startReorder}
-                className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50"
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
               >
                 <GripVertical className="size-4" />
                 Reorder
@@ -570,7 +570,7 @@ export default function BrandsPage() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)]"
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] sm:w-auto"
               >
                 <Plus className="size-4" />
                 Add Brand
@@ -584,14 +584,14 @@ export default function BrandsPage() {
                   setReorderMode(false);
                   setReorderDraft([]);
                 }}
-                className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={saveReorder}
-                className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white sm:w-auto"
               >
                 <Check className="size-4" />
                 Save Order
@@ -634,8 +634,8 @@ export default function BrandsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-[330px_minmax(0,1fr)]">
-        <section id="brand-list" className="self-start scroll-mt-4 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_24px_rgba(33,47,82,.04)] xl:sticky xl:top-5">
+      <div className="grid items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
+        <section id="brand-list" className="self-start scroll-mt-[6.5rem] rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_24px_rgba(33,47,82,.04)] lg:sticky lg:top-[6.5rem]">
           {listBrands.length ? (
             <BrandList
               brands={listBrands}
@@ -645,7 +645,7 @@ export default function BrandsPage() {
               onSelect={(brand) => {
                 setSelectedId(brand.id);
                 setProductMenuId(null);
-                if (typeof window !== "undefined" && window.innerWidth < 1280) {
+                if (typeof window !== "undefined" && window.innerWidth < 1024) {
                   window.requestAnimationFrame(() => {
                     document.getElementById("brand-details")?.scrollIntoView({
                       behavior: "smooth",
@@ -687,8 +687,8 @@ export default function BrandsPage() {
         </section>
 
         {selected && (
-          <div id="brand-details" className="min-w-0 scroll-mt-4 space-y-4">
-            <div className="xl:hidden">
+          <div id="brand-details" className="min-w-0 scroll-mt-[6.5rem] space-y-4">
+            <div className="lg:hidden">
               <button
                 type="button"
                 onClick={() =>
@@ -734,11 +734,11 @@ export default function BrandsPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                   <button
                     type="button"
                     onClick={() => openEdit(selected)}
-                    className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600"
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600"
                   >
                     <Pencil className="size-3.5" />
                     Edit Brand
