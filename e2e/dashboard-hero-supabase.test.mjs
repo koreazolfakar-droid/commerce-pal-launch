@@ -14,6 +14,10 @@ const data = await readFile(
 const cms = await readFile(new URL("../src/lib/cms.ts", import.meta.url), "utf8");
 const cmsQuery = await readFile(new URL("../src/lib/cmsQuery.ts", import.meta.url), "utf8");
 const hero = await readFile(new URL("../src/components/HomeHero.tsx", import.meta.url), "utf8");
+const heroScene = await readFile(new URL("../src/components/HeroScene.tsx", import.meta.url), "utf8");
+const heroEditor = await readFile(new URL("../src/dashboard/components/HeroVisualEditor.tsx", import.meta.url), "utf8");
+const heroDesign = await readFile(new URL("../src/lib/heroDesign.ts", import.meta.url), "utf8");
+const heroCss = await readFile(new URL("../src/components/hero-scene.css", import.meta.url), "utf8");
 const home = await readFile(new URL("../src/routes/index.tsx", import.meta.url), "utf8");
 const migration = await readFile(
   new URL("../supabase/migrations/20260918230000_harden_cms_hero_targets.sql", import.meta.url),
@@ -68,11 +72,29 @@ test("hero dashboard supports real Supabase CRUD, storage upload and media libra
   assert.match(page, /Title size/);
   assert.match(page, /Content width/);
   assert.match(page, /Button shape/);
-  assert.match(page, /Minimal/);
-  assert.match(page, /Centered/);
-  assert.match(page, /Glass/);
+  assert.match(heroEditor, /Spotlight/);
+  assert.match(heroEditor, /Glass editorial/);
+  assert.match(heroEditor, /Poster \+ action bar/);
+  assert.match(heroEditor, /Light catalogue/);
+  assert.doesNotMatch(page, /HERO_PRESETS/);
   assert.match(data, /secondaryButtonStyle/);
   assert.match(data, /contentTheme/);
+});
+
+
+test("hero editor keeps device-specific image focus and preserves drag layout", () => {
+  assert.match(heroDesign, /desktopFocalPoint\?: HeroPoint/);
+  assert.match(heroDesign, /mobileFocalPoint\?: HeroPoint/);
+  assert.match(heroEditor, /mode === "mobile" \? "mobileFocalPoint" : "desktopFocalPoint"/);
+  assert.match(heroEditor, /Image focus X/);
+  assert.match(heroEditor, /Image focus Y/);
+  assert.match(heroScene, /desktopFocal = config\.desktopFocalPoint/);
+  assert.match(heroScene, /mobileFocal = config\.mobileFocalPoint/);
+  assert.match(heroCss, /--hero-mobile-focal-x/);
+  assert.match(heroCss, /--hero-desktop-focal-x/);
+  assert.match(heroEditor, /\[layoutKey\]: \{/);
+  assert.doesNotMatch(heroEditor, /desktopLayout: \{[\s\S]*mobileLayout: \{/);
+  assert.match(heroEditor, /Reset device image focus/);
 });
 
 test("hero CTA uses validated product, collection or safe URL targets", () => {
@@ -96,6 +118,8 @@ test("hero customization is persisted and exposed through the public CMS gateway
   assert.match(cmsGateway, /secondary_target_type/);
   assert.match(cmsGateway, /content_theme: row\.content_theme/);
   assert.match(cmsGateway, /visual_config: row\.visual_config/);
+  assert.match(cmsGateway, /Cache-Control": "no-store, max-age=0, must-revalidate"/);
+  assert.doesNotMatch(cmsGateway, /stale-while-revalidate/);
   assert.match(visualMigration, /add column if not exists visual_config/);
   assert.match(visualMigration, /set_cms_hero_visual_config/);
   assert.match(visualMigration, /from public, anon/);
@@ -109,27 +133,33 @@ test("hero customization is persisted and exposed through the public CMS gateway
 test("public CMS uses an edge gateway with resilient empty fallback", () => {
   assert.match(cms, /functions\/v1\/public-cms/);
   assert.match(cms, /CMS_PUBLIC_READ_TIMEOUT_MS = 4_000/);
+  assert.match(cms, /cache: "no-store"/);
   assert.match(cms, /return EMPTY_CMS/);
   assert.doesNotMatch(cms, /service_role|SUPABASE_SECRET|sb_secret_/);
   assert.match(cmsQuery, /queryKey: \["storefront", "public-cms"\]/);
   assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
 });
 
-test("homepage hydrates CMS once and renders CMS hero before legacy fallback", async () => {
+test("homepage hydrates CMS once and renders a CMS-only visual hero", async () => {
   assert.match(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
+  assert.match(home, /enabled: deferredWorkReady/);
   assert.match(hero, /localizeHeroSlide/);
-  assert.match(hero, /const usingCms = localizedCmsSlides\.length > 0/);
   assert.match(hero, /"supabase-cms"/);
-  assert.match(hero, /"shopify-collection"/);
-  assert.match(hero, /hero-product-fallback/);
+  assert.doesNotMatch(hero, /"shopify-collection"/);
+  assert.doesNotMatch(hero, /hero-product-fallback/);
   assert.match(hero, /<HeroScene/);
+  assert.match(hero, /<\/section>[\s\S]*data-testid="home-hero-dots"/);
+  assert.match(hero, /overflow-x-auto/);
   const scene = await readFile(new URL("../src/components/HeroScene.tsx", import.meta.url), "utf8");
   assert.match(scene, /slide.mobile_image_url/);
   assert.match(scene, /slide.overlay_opacity/);
   assert.match(scene, /slide.open_in_new_tab/);
   assert.match(scene, /noopener noreferrer/);
   assert.match(scene, /normalizeHeroVisualConfig/);
+  assert.match(scene, /failedMobileImageUrl/);
+  assert.match(scene, /setFailedMobileImageUrl/);
+  assert.match(scene, /window\.matchMedia\("\(max-width: 639px\)"\)/);
   assert.match(page, /<HeroVisualEditor/);
 
 });

@@ -83,6 +83,7 @@ test("homepage hero remains CMS-first", async () => {
   assert.match(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
   assert.match(hero, /localizeHeroSlide/);
-  assert.match(hero, /const usingCms = localizedCmsSlides\.length > 0/);
   assert.match(hero, /"supabase-cms"/);
+  assert.doesNotMatch(hero, /shopify-collection|hero-product-fallback/);
+  assert.match(home, /enabled: deferredWorkReady/);
 });

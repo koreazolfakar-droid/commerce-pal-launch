@@ -141,48 +141,6 @@ function secondaryTargetHref(form: DashboardHeroInput) {
   return "";
 }
 
-const HERO_PRESETS: Array<{
-  id: string;
-  label: string;
-  description: string;
-  patch: Pick<DashboardHeroInput, "contentTheme" | "overlayOpacity" | "contentAlignment" | "visualConfig">;
-}> = [
-  {
-    id: "minimal",
-    label: "Minimal",
-    description: "Clean bottom layout",
-    patch: {
-      contentTheme: "light",
-      overlayOpacity: 15,
-      contentAlignment: "start",
-      visualConfig: { vertical: "bottom", titleSize: "standard", contentWidth: "narrow", buttonRadius: "pill" },
-    },
-  },
-  {
-    id: "center",
-    label: "Centered",
-    description: "Campaign focus",
-    patch: {
-      contentTheme: "light",
-      overlayOpacity: 30,
-      contentAlignment: "center",
-      visualConfig: { vertical: "center", titleSize: "large", contentWidth: "standard", buttonRadius: "rounded" },
-    },
-  },
-  {
-    id: "glass",
-    label: "Glass",
-    description: "Premium glass panel",
-    patch: {
-      contentTheme: "glass",
-      overlayOpacity: 10,
-      contentAlignment: "start",
-      visualConfig: { vertical: "bottom", titleSize: "standard", contentWidth: "standard", buttonRadius: "rounded" },
-    },
-  },
-];
-
-
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -546,20 +504,7 @@ export default function HeroBannersPage() {
         <div className="space-y-4">
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="mb-4 text-[13px] font-bold text-[#14203a]">Design & live preview</div>
-            <details className="mb-4 rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-xs font-semibold">Advanced appearance / إعدادات المظهر</summary>
-            <div className="mb-4 mt-3 grid gap-2 sm:grid-cols-3">
-              {HERO_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => setForm((current) => ({ ...current, ...preset.patch, visualConfig: { ...preset.patch.visualConfig } }))}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-start transition hover:border-indigo-300 hover:bg-indigo-50/50"
-                >
-                  <span className="block text-[11px] font-bold text-slate-700">{preset.label}</span>
-                  <span className="mt-0.5 block text-[9px] text-slate-400">{preset.description}</span>
-                </button>
-              ))}
-            </div>
+            <details className="mb-4 rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-xs font-semibold">Fine tuning / ضبط دقيق</summary>
             <div className="mb-4 grid gap-4 lg:grid-cols-3">
               <label>
                 <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content alignment</span>

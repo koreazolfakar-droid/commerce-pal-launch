@@ -55,6 +55,9 @@ export function HeroVisualEditor({
   const layoutKey = mode === "mobile" ? "mobileLayout" : "desktopLayout";
   const layout =
     config[layoutKey] ?? defaultHeroLayout(config, form.contentAlignment, ar);
+  const focalKey =
+    mode === "mobile" ? "mobileFocalPoint" : "desktopFocalPoint";
+  const focal = config[focalKey] ?? config.focalPoint ?? { x: 50, y: 50 };
   const updateConfig = (patch: Partial<HeroVisualConfig>) =>
     apply({ ...form, visualConfig: { ...config, ...patch } });
   const slide: CmsHeroSlide = {
@@ -169,11 +172,7 @@ export function HeroVisualEditor({
                   contentWidth: "narrow",
                   buttonRadius: "pill",
                   buttonPlacement: theme.placement,
-                  desktopLayout: {
-                    content: { ...theme.content },
-                    buttons: { ...theme.buttons },
-                  },
-                  mobileLayout: {
+                  [layoutKey]: {
                     content: { ...theme.content },
                     buttons: { ...theme.buttons },
                   },
@@ -250,6 +249,13 @@ export function HeroVisualEditor({
           onClick={() => updateConfig({ [layoutKey]: undefined })}
         >
           {ar ? "إعادة مواضع هذا الجهاز" : "Reset device positions"}
+        </button>
+        <button
+          type="button"
+          className="min-h-11 rounded-lg border px-3 text-xs"
+          onClick={() => updateConfig({ [focalKey]: undefined })}
+        >
+          {ar ? "إعادة تركيز صورة هذا الجهاز" : "Reset device image focus"}
         </button>
       </div>
       <div
@@ -334,7 +340,7 @@ export function HeroVisualEditor({
           );
         })}
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <label className="text-xs">
           {ar ? "العنصر" : "Element"}
           <select
@@ -383,29 +389,38 @@ export function HeroVisualEditor({
             />
           </label>
         ))}
-        <label className="text-xs">
-          {ar ? "تركيز الصورة أفقيًا" : "Image focus"}
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={config.focalPoint?.x ?? 50}
-            onPointerDown={checkpoint}
-            onChange={(e) =>
-              onChange({
-                ...form,
-                visualConfig: {
-                  ...config,
-                  focalPoint: {
-                    x: Number(e.target.value),
-                    y: config.focalPoint?.y ?? 50,
+        {(["x", "y"] as const).map((axis) => (
+          <label key={`focal-${axis}`} className="text-xs">
+            {axis === "x"
+              ? ar
+                ? "تركيز الصورة أفقيًا"
+                : "Image focus X"
+              : ar
+                ? "تركيز الصورة عموديًا"
+                : "Image focus Y"}{" "}
+            · {focal[axis]}%
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={focal[axis]}
+              onPointerDown={checkpoint}
+              onChange={(e) =>
+                onChange({
+                  ...form,
+                  visualConfig: {
+                    ...config,
+                    [focalKey]: {
+                      ...focal,
+                      [axis]: Number(e.target.value),
+                    },
                   },
-                },
-              })
-            }
-            className="mt-3 w-full"
-          />
-        </label>
+                })
+              }
+              className="mt-3 w-full"
+            />
+          </label>
+        ))}
       </div>
       <p className="text-xs text-slate-500">
         {ar

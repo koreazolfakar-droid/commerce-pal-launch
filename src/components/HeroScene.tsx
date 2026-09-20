@@ -1,5 +1,6 @@
 import {
   useRef,
+  useState,
   type CSSProperties,
   type PointerEvent,
   type ReactNode,
@@ -55,6 +56,9 @@ export function HeroScene({
   );
   const desktop = config.desktopLayout ?? fallback,
     mobile = config.mobileLayout ?? fallback;
+  const legacyFocal = config.focalPoint ?? { x: 50, y: 50 };
+  const desktopFocal = config.desktopFocalPoint ?? legacyFocal;
+  const mobileFocal = config.mobileFocalPoint ?? legacyFocal;
   const current = editor?.mode === "mobile" ? mobile : desktop;
   const drag = useRef<{
     id: number;
@@ -70,8 +74,34 @@ export function HeroScene({
   const free =
     placement === "free" ||
     Boolean(config.desktopLayout || config.mobileLayout);
-  const mobileImage = slide.mobile_image_url || slide.image_url;
+  const [failedMobileImageUrl, setFailedMobileImageUrl] = useState<string>();
+  const mobileImage =
+    slide.mobile_image_url &&
+    failedMobileImageUrl !== slide.mobile_image_url
+      ? slide.mobile_image_url
+      : slide.image_url;
   const ar = language === "ar";
+  const handleImageError = () => {
+    const hasDistinctMobileImage =
+      Boolean(slide.mobile_image_url) &&
+      slide.mobile_image_url !== slide.image_url;
+    const isMobileRender =
+      editor?.mode === "mobile" ||
+      (!editor &&
+        typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 639px)").matches);
+
+    if (
+      hasDistinctMobileImage &&
+      isMobileRender &&
+      failedMobileImageUrl !== slide.mobile_image_url
+    ) {
+      setFailedMobileImageUrl(slide.mobile_image_url ?? undefined);
+      return;
+    }
+
+    onImageError?.();
+  };
   const patch = (
     part: Part,
     next: HeroLayout[Part],
@@ -276,13 +306,16 @@ export function HeroScene({
               "Space Call"
             }
             draggable={false}
-            onError={onImageError}
+            onError={handleImageError}
             loading="eager"
             fetchPriority={priority ? "high" : "auto"}
             decoding="async"
             style={{
-              objectPosition: `${config.focalPoint?.x ?? 50}% ${config.focalPoint?.y ?? 50}%`,
-            }}
+              "--hero-desktop-focal-x": `${desktopFocal.x}%`,
+              "--hero-desktop-focal-y": `${desktopFocal.y}%`,
+              "--hero-mobile-focal-x": `${mobileFocal.x}%`,
+              "--hero-mobile-focal-y": `${mobileFocal.y}%`,
+            } as CSSProperties}
           />
         </picture>
         <div

@@ -6,9 +6,9 @@ export const cmsQueryOptions = () =>
     queryKey: ["storefront", "public-cms"],
     queryFn: fetchCmsSnapshot,
     placeholderData: EMPTY_CMS,
-    staleTime: 60_000,
+    staleTime: 10_000,
     gcTime: 5 * 60_000,
-    // Revalidate only when the cached CMS snapshot is stale; avoid a duplicate request on every mount.
+    // Keep a short in-memory freshness window while ensuring dashboard edits appear quickly.
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
