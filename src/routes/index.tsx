@@ -112,7 +112,19 @@ export const Route = createFileRoute("/")({
       context.queryClient.ensureQueryData(cmsQueryOptions()),
     ]);
     const heroImage = heroCollection?.products?.[0]?.node.images.edges[0]?.node.url;
-    return { heroImage, cmsSeo: cmsSeoPage(cms, "home") };
+    const firstCmsHero = cms.heroSlides[0];
+    const desktopHeroPreload = firstCmsHero?.image_url?.trim() || undefined;
+    const mobileHeroPreload =
+      firstCmsHero?.mobile_image_url?.trim() || desktopHeroPreload;
+
+    return {
+      heroImage,
+      heroPreload:
+        desktopHeroPreload && mobileHeroPreload
+          ? { desktop: desktopHeroPreload, mobile: mobileHeroPreload }
+          : undefined,
+      cmsSeo: cmsSeoPage(cms, "home"),
+    };
   },
   head: ({ loaderData }) => {
     const cmsSeo = loaderData?.cmsSeo;
@@ -124,6 +136,25 @@ export const Route = createFileRoute("/")({
     const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroImage;
     const canonicalUrl = cmsSeo?.canonical_url?.trim();
     const customJsonLd = cmsSeo?.json_ld;
+    const heroPreload = loaderData?.heroPreload;
+    const heroPreloadLinks = heroPreload
+      ? heroPreload.mobile === heroPreload.desktop
+        ? [{ rel: "preload", as: "image", href: heroPreload.desktop }]
+        : [
+            {
+              rel: "preload",
+              as: "image",
+              href: heroPreload.mobile,
+              media: "(max-width: 639px)",
+            },
+            {
+              rel: "preload",
+              as: "image",
+              href: heroPreload.desktop,
+              media: "(min-width: 640px)",
+            },
+          ]
+      : [];
 
     return {
       meta: [
@@ -145,6 +176,7 @@ export const Route = createFileRoute("/")({
         }),
       ],
       links: [
+        ...heroPreloadLinks,
         canonicalUrl ? { rel: "canonical", href: canonicalUrl } : canonicalLink("/"),
         ...languageAlternateLinks({ path: "/", arabicPath: "/ar" }),
       ],
