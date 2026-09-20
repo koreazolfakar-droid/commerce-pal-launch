@@ -235,9 +235,9 @@ export function HomeHero({
           <div
             data-testid="home-hero-media"
             aria-hidden="true"
-            className="absolute inset-0 z-[1] grid place-items-center bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-8"
+            className="absolute inset-0 z-[1] grid place-items-center bg-slate-950 p-8"
           >
-            <div className="grid place-items-center rounded-3xl bg-white/95 p-5 shadow-xl">
+            <div className="grid place-items-center rounded-xl bg-white p-5">
               <img src="/logo.svg" alt="" className="h-14 w-auto max-w-[15rem] object-contain" />
             </div>
           </div>
@@ -246,11 +246,11 @@ export function HomeHero({
         {slideCount > 1 && (
           <div
             data-testid="home-hero-dots"
-            className="relative mt-2 flex flex-wrap items-center justify-center gap-1 rounded-2xl bg-muted p-1 text-foreground"
+            className="relative mt-2 flex items-center justify-center gap-1.5 text-foreground"
             aria-label={language === "ar" ? "شرائح الهيرو" : "Hero slides"}
           >
-            <button type="button" className="min-h-11 min-w-11 rounded-lg px-3" aria-label={language === "ar" ? "الشريحة السابقة" : "Previous slide"} onClick={() => { setPaused(true); setActiveIndex(index => (index - 1 + slideCount) % slideCount); }}>‹</button>
-            <button type="button" className="min-h-11 rounded-lg px-3 text-xs" aria-label={language === "ar" ? (paused ? "تشغيل الشرائح" : "إيقاف الشرائح") : (paused ? "Play slides" : "Pause slides")} onClick={() => setPaused(value => !value)}>{language === "ar" ? (paused ? "تشغيل" : "إيقاف") : (paused ? "Play" : "Pause")}</button>
+            <button type="button" className="h-9 w-9 rounded-full border border-border/70 bg-background text-sm text-muted-foreground transition-colors hover:border-border hover:text-foreground" aria-label={language === "ar" ? "الشريحة السابقة" : "Previous slide"} onClick={() => { setPaused(true); setActiveIndex(index => (index - 1 + slideCount) % slideCount); }}>‹</button>
+            <button type="button" className="h-9 rounded-lg px-2.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground" aria-label={language === "ar" ? (paused ? "تشغيل الشرائح" : "إيقاف الشرائح") : (paused ? "Play slides" : "Pause slides")} onClick={() => setPaused(value => !value)}>{language === "ar" ? (paused ? "تشغيل" : "إيقاف") : (paused ? "Play" : "Pause")}</button>
             {Array.from({ length: slideCount }, (_, index) => (
               <button
                 key={index}
@@ -264,12 +264,12 @@ export function HomeHero({
                 aria-current={index === activeIndex ? "true" : undefined}
                 className={
                   index === activeIndex
-                    ? "min-h-11 min-w-11 rounded-xl bg-primary text-primary-foreground"
-                    : "min-h-11 min-w-11 rounded-xl bg-muted hover:bg-muted/80"
+                    ? "h-9 min-w-9 rounded-lg bg-primary px-2 text-[11px] font-semibold text-primary-foreground"
+                    : "h-9 min-w-9 rounded-lg border border-border/70 bg-background px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
                 }
               >{index + 1}</button>
             ))}
-            <button type="button" className="min-h-11 min-w-11 rounded-lg px-3" aria-label={language === "ar" ? "الشريحة التالية" : "Next slide"} onClick={() => { setPaused(true); setActiveIndex(index => (index + 1) % slideCount); }}>›</button>
+            <button type="button" className="h-9 w-9 rounded-full border border-border/70 bg-background text-sm text-muted-foreground transition-colors hover:border-border hover:text-foreground" aria-label={language === "ar" ? "الشريحة التالية" : "Next slide"} onClick={() => { setPaused(true); setActiveIndex(index => (index + 1) % slideCount); }}>›</button>
           </div>
         )}
       </section>
