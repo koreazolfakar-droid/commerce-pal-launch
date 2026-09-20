@@ -1,0 +1,1 @@
+Space Call Security Gate smoke test. This file is intentionally harmless and is not intended for production merge.
