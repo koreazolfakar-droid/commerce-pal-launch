@@ -52,7 +52,7 @@ test("password recovery flow is real and uses the protected auth path", () => {
   assert.match(catalog, /functions\.invoke\("dashboard-update-password"/);
   assert.doesNotMatch(catalog, /auth\.updateUser\(\{ password \}\)/);
   assert.match(catalog, /\/dashboard\/login\?mode=recovery/);
-  assert.match(catalog, /password\.length < 10/);
+  assert.match(catalog, /password\.length < 14/);
   assert.match(catalog, /Enter a valid dashboard email address/);
   assert.match(login, /If this email is authorized, a recovery link will be sent/);
   assert.match(login, /If this email belongs to an authorized account/);
