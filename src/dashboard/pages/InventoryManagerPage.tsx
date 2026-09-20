@@ -200,7 +200,7 @@ export default function InventoryManagerPage() {
     }
 
     setMovementLoading(true);
-    void loadInventoryLatestMovements(variantIds, Math.max(100, variantIds.length * 20))
+    void loadInventoryLatestMovements(variantIds)
       .then((movements) => {
         if (requestId !== movementRequestRef.current) return;
         const latestByVariant = new Map(
