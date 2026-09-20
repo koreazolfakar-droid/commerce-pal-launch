@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 
+import { BrandLogo } from "@/components/BrandLogo";
 import type { ShopifyBrand } from "@/lib/brandDirectory";
 import { orderedBrands } from "@/lib/homeMerchandising";
 import { localizeSection } from "@/lib/cms";
@@ -394,9 +395,16 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
                           isActive ? "scale-[1.03] opacity-100" : "scale-100 opacity-[0.94]"
                         }`}
                       >
-                        <span className="max-w-full truncate px-1 text-center text-[13px] font-black tracking-[-0.02em] text-slate-950 sm:text-sm">
-                          {brand.label}
-                        </span>
+                        <BrandLogo
+                          slug={brand.slug}
+                          label={brand.label}
+                          size={36}
+                          wordmark
+                          frameless
+                          normalizeForRail
+                          className="max-w-full [&_img]:drop-shadow-[0_1px_1px_rgba(15,23,42,0.16)]"
+                          {...(brand.image ? { imageUrl: brand.image } : {})}
+                        />
                       </span>
                     </Link>
                   );
