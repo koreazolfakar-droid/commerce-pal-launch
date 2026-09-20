@@ -768,6 +768,11 @@ export default function HeroBannersPage() {
                         onClick={() => {
                           setForm((current) => isDesktop ? { ...current, imageUrl: "" } : { ...current, mobileImageUrl: "" });
                           setLastOptimizations((current) => ({ ...current, [target]: undefined }));
+                          setPendingHeroImages((current) => {
+                            const next = { ...current };
+                            delete next[target];
+                            return next;
+                          });
                         }}
                         className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-500"
                       >
