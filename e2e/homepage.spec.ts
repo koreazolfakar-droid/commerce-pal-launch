@@ -36,16 +36,20 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
   await expect(showcase.first()).toContainText("Zeta showcase");
 });
 
-test("hero uses independent Shopify artwork without unsafe navigation", async ({ page }) => {
+test("hero stays CMS-only and media background never creates unsafe navigation", async ({ page }) => {
   await page.goto("/");
   const hero = page.getByTestId("home-hero");
-  await expect(hero).toHaveAttribute("data-hero-source", "shopify-collection");
-  await expect(hero).toHaveAttribute("data-hero-collection-handle", "homepage-hero");
-  await expect(hero).toHaveAttribute("data-hero-handle", "homepage-hero");
-  await expect(hero.locator("img")).toHaveAttribute("alt", "Merchant artwork homepage-hero");
-  await expect(hero.locator("a")).toHaveCount(0);
-  await expect(hero.locator('[data-testid="home-hero-content"]')).toHaveCount(0);
-  await expect(hero.locator('[data-testid="home-hero-mobile-controls"]')).toHaveCount(0);
+  const source = await hero.getAttribute("data-hero-source");
+
+  expect(["supabase-cms", "placeholder"]).toContain(source);
+  await expect(hero).not.toHaveAttribute("data-hero-source", "shopify-collection");
+  await expect(hero.locator("img")).toBeVisible();
+
+  if (source === "supabase-cms") {
+    await expect(hero.locator('[data-testid="home-hero-content"]')).toHaveCount(1);
+  } else {
+    await expect(hero.locator('[data-testid="home-hero-content"]')).toHaveCount(0);
+  }
 
   const before = page.url();
   await page.getByTestId("home-hero-media").click({ position: { x: 8, y: 8 } });
