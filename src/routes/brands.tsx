@@ -7,15 +7,14 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, fetchCmsSnapshot } from "@/lib/cms";
 import { useLanguage } from "@/lib/i18n";
-import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { catalogQueryOptions } from "@/lib/queries";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/brands")({
   loader: async ({ context }) => {
-    const [, , cms] = await Promise.all([
+    const [, cms] = await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
-      context.queryClient.ensureQueryData(collectionsQueryOptions()),
       fetchCmsSnapshot(),
     ]);
     return { cms };
@@ -46,10 +45,9 @@ export const Route = createFileRoute("/brands")({
 
 function BrandsPage() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
-  const { data: collections } = useSuspenseQuery(collectionsQueryOptions());
   const { cms } = Route.useLoaderData();
   const { language } = useLanguage();
-  const brands = applyCmsBrands(buildShopifyBrands(catalog.brands, collections), cms.brands);
+  const brands = applyCmsBrands(buildShopifyBrands(catalog.brands, undefined), cms.brands);
 
   return (
     <StoreLayout>
