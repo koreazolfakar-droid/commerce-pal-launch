@@ -306,10 +306,10 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   if (!railBrands.length) return null;
 
   return (
-    <section aria-labelledby="top-brands" data-testid="top-brands" className="-mt-2 -mb-4 sm:-mb-5">
+    <section aria-labelledby="top-brands" data-testid="top-brands" className="mb-1">
       <div className="home-section-header !mb-0 flex-nowrap items-end">
         <div className="min-w-0 flex-1">
-          <h2 id="top-brands" className="text-xl font-black tracking-tight">
+          <h2 id="top-brands" className="text-xl font-bold tracking-tight">
             {sectionTitle}
           </h2>
         </div>
@@ -388,11 +388,11 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
                       onClick={() => {
                         interactionRef.current.resumeAt = Number.POSITIVE_INFINITY;
                       }}
-                      className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-0.5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-14 sm:px-1 md:hover:-translate-y-0.5"
+                      className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:h-14 sm:px-1"
                     >
                       <span
-                        className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.08] group-hover:opacity-100 ${
-                          isActive ? "scale-[1.04] opacity-100" : "scale-100 opacity-[0.88]"
+                        className={`pointer-events-none flex h-full w-full items-center justify-center transition-opacity duration-200 group-hover:opacity-100 ${
+                          isActive ? "opacity-100" : "opacity-[0.9]"
                         }`}
                       >
                         <BrandLogo
@@ -416,12 +416,10 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
 
         <div
           className="pointer-events-none absolute inset-y-0 left-0 z-10 w-9 bg-gradient-to-r from-background via-background/78 to-transparent"
-          style={{ boxShadow: "12px 0 26px -18px rgb(15 23 42 / 0.72)" }}
           aria-hidden="true"
         />
         <div
           className="pointer-events-none absolute inset-y-0 right-0 z-10 w-9 bg-gradient-to-l from-background via-background/78 to-transparent"
-          style={{ boxShadow: "-12px 0 26px -18px rgb(15 23 42 / 0.72)" }}
           aria-hidden="true"
         />
       </div>
