@@ -65,7 +65,7 @@ function CategoriesPage() {
 
   const items =
     managedCategories !== null
-      ? managedCategories.map((category) => {
+      ? managedCategories.map((category: ManagedStoreCategory) => {
           const artwork = findCategoryArtworkCollection(
             collections,
             category.slug,
