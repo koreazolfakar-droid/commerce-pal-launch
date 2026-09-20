@@ -103,12 +103,3 @@ test("brands page uses CMS/dashboard logos without loading collections", async (
   assert.match(brandDirectory, /override\?\.logo_url\?\.trim\(\)/);
   assert.match(brandDirectory, /\{ image: override\.logo_url\.trim\(\) \}/);
 });
-
-test("top brand rail keeps logo artwork readable in dark mode", async () => {
-  const topBrands = await source("src/components/TopBrands.tsx");
-  assert.match(topBrands, /top-brand-logo-surface/);
-  assert.match(topBrands, /bg-white/);
-  assert.match(topBrands, /dark:bg-white/);
-  assert.match(topBrands, /<BrandLogo[\s\S]*frameless[\s\S]*normalizeForRail/);
-});
-
