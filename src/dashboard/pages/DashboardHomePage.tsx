@@ -95,7 +95,8 @@ export default function DashboardHomePage() {
   const [error, setError] = useState("");
 
   const load = useCallback(async (manual = false) => {
-    manual ? setRefreshing(true) : setLoading(true);
+    if (manual) setRefreshing(true);
+      else setLoading(true);
     try {
       const next = await loadDashboardHomeSnapshot();
       setSnapshot(next);
