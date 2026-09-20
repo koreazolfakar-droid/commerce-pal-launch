@@ -70,7 +70,7 @@ export const ProductListCard = memo(function ProductListCard({
           to="/product/$handle"
           params={{ handle: node.handle }}
           aria-label={node.title}
-          className="block w-full overflow-hidden rounded-[0.95rem] bg-white"
+          className="block w-full overflow-hidden rounded-[0.95rem] bg-image-stage"
         >
           <ProductImage
             url={image?.url}
