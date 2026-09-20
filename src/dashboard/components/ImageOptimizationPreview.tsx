@@ -39,7 +39,7 @@ export default function ImageOptimizationPreview({
   const [error, setError] = useState("");
   const [previewing, setPreviewing] = useState(false);
   const [outputPreviewUrls, setOutputPreviewUrls] = useState<string[]>([]);
-  const backgroundRemovalEnabled = Boolean(backgroundRemovalEnabled);
+  const backgroundRemovalEnabled = Boolean(backgroundRemoval?.enabled);
   const backgroundRemovalTolerance = backgroundRemoval?.tolerance ?? 18;
 
   useEffect(() => {
