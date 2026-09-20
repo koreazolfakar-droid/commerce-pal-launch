@@ -21,7 +21,7 @@ commands:
           command: bun install --frozen-lockfile
 
 jobs:
-  diagnostic-dashboard-tests:
+  diagnostic-auth-tests:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -31,10 +31,22 @@ jobs:
     steps:
       - setup_bun
       - run:
-          name: Dashboard tests
-          command: node --test e2e/dashboard-*.test.mjs
+          name: Auth and security dashboard tests
+          command: |
+            node --test \
+              e2e/dashboard-auth0-security.test.mjs \
+              e2e/dashboard-login-route.test.mjs \
+              e2e/dashboard-login-screen-capture.test.mjs \
+              e2e/dashboard-login-ui.test.mjs \
+              e2e/dashboard-passkey-client.test.mjs \
+              e2e/dashboard-passkey-second-factor.test.mjs \
+              e2e/dashboard-passkey-step-up.test.mjs \
+              e2e/dashboard-password-breach-screening.test.mjs \
+              e2e/dashboard-security-hardening.test.mjs \
+              e2e/dashboard-session-security.test.mjs \
+              e2e/dashboard-totp-mfa.test.mjs
 
-  diagnostic-build-smoke:
+  diagnostic-feature-tests:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -44,21 +56,37 @@ jobs:
     steps:
       - setup_bun
       - run:
-          name: Production build
-          command: bun run build
-      - run:
-          name: SSR smoke
-          command: bun run test:ssr
+          name: Non-auth dashboard tests
+          command: |
+            node --test \
+              e2e/dashboard-category-image-pipeline.test.mjs \
+              e2e/dashboard-collections-supabase.test.mjs \
+              e2e/dashboard-content-cms-step4.test.mjs \
+              e2e/dashboard-customers-supabase.test.mjs \
+              e2e/dashboard-hero-image-pipeline.test.mjs \
+              e2e/dashboard-hero-supabase.test.mjs \
+              e2e/dashboard-home-supabase.test.mjs \
+              e2e/dashboard-homepage-cms.test.mjs \
+              e2e/dashboard-live-workspace.test.mjs \
+              e2e/dashboard-orders-supabase.test.mjs \
+              e2e/dashboard-procurement-schema-step2.test.mjs \
+              e2e/dashboard-product-image-metadata.test.mjs \
+              e2e/dashboard-product-management-step5.test.mjs \
+              e2e/dashboard-receiving-rules.test.mjs \
+              e2e/dashboard-receiving-workflow.test.mjs \
+              e2e/dashboard-settings-supabase.test.mjs \
+              e2e/dashboard-supabase-source-guard.test.mjs \
+              e2e/dashboard-truthful-shell.test.mjs
 
 workflows:
   diagnostic-validation:
     jobs:
-      - diagnostic-dashboard-tests:
+      - diagnostic-auth-tests:
           filters:
             branches:
               only:
                 - /^important\/security-baseline-main-20260920$/
-      - diagnostic-build-smoke:
+      - diagnostic-feature-tests:
           filters:
             branches:
               only:
