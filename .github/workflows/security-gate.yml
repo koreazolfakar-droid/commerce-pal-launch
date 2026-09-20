@@ -1,0 +1,141 @@
+name: Security Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality / Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.1.0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: TypeScript
+        run: bun run typecheck
+
+      - name: ESLint
+        run: bun run lint
+
+      - name: Dashboard security regression tests
+        run: node --test e2e/dashboard-*.test.mjs
+
+      - name: Unit and architecture tests
+        run: bun run test:unit
+
+      - name: Production build
+        run: bun run build
+
+      - name: SSR smoke test
+        run: bun run test:ssr
+
+  secrets:
+    name: Secrets / Gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Detect leaked secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sast:
+    name: SAST / Semgrep
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.1.0
+
+      - name: Install Semgrep
+        run: python3 -m pip install --disable-pip-version-check semgrep==1.177.0
+
+      - name: Scan application code
+        run: >
+          semgrep scan
+          --config auto
+          --error
+          --severity ERROR
+          --metrics=off
+          --exclude node_modules
+          --exclude dist
+          --exclude .output
+          --exclude .nitro
+          --exclude coverage
+          .
+
+  supply-chain:
+    name: Dependencies / Trivy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.1.0
+
+      - name: Scan dependencies, secrets and configuration
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
+          skip-dirs: node_modules,dist,.output,.nitro,coverage
+
+  security-gate:
+    name: Security Gate
+    if: always()
+    needs:
+      - quality
+      - secrets
+      - sast
+      - supply-chain
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce all required checks
+        env:
+          QUALITY: ${{ needs.quality.result }}
+          SECRETS: ${{ needs.secrets.result }}
+          SAST: ${{ needs.sast.result }}
+          SUPPLY_CHAIN: ${{ needs.supply-chain.result }}
+        run: |
+          echo "quality=$QUALITY"
+          echo "secrets=$SECRETS"
+          echo "sast=$SAST"
+          echo "supply_chain=$SUPPLY_CHAIN"
+
+          if [ "$QUALITY" != "success" ] ||              [ "$SECRETS" != "success" ] ||              [ "$SAST" != "success" ] ||              [ "$SUPPLY_CHAIN" != "success" ]; then
+            echo "::error::Security Gate blocked this change."
+            exit 1
+          fi
+
+          echo "Security Gate passed."
