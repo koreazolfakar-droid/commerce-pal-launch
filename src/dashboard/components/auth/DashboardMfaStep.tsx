@@ -118,10 +118,12 @@ export default function DashboardMfaStep({
   onSuccess,
   onCancel,
   theme = "dark",
+  forceFresh = false,
 }: {
   onSuccess: () => void;
   onCancel: () => void;
   theme?: LoginTheme;
+  forceFresh?: boolean;
 }) {
   const { lang } = useLanguage();
   const copy = mfaCopy[lang];
@@ -154,7 +156,7 @@ export default function DashboardMfaStep({
         return;
       }
 
-      if (!status.ready) {
+      if (!status.ready && !forceFresh) {
         const authenticatedAt = status.authenticatedAt
           ? new Date(status.authenticatedAt).getTime()
           : Number.NaN;
@@ -172,15 +174,20 @@ export default function DashboardMfaStep({
         setChallengeExpiresAt(deadline);
       }
 
-      if (status.ready) {
+      if (status.ready && !forceFresh) {
         onSuccess();
         return;
       }
 
-      if (status.currentLevel === "aal2" && status.verifiedFactorId) {
+      if (!forceFresh && status.currentLevel === "aal2" && status.verifiedFactorId) {
         await ensureDashboardMfaActivated();
         onSuccess();
         return;
+      }
+
+      if (forceFresh) {
+        setChallengeExpiresAt(Date.now() + MFA_CHALLENGE_WINDOW_MS);
+        setChallengeExpired(false);
       }
 
       if (status.verifiedFactorId) {
@@ -198,7 +205,7 @@ export default function DashboardMfaStep({
       setError(copy.notReady);
       setMode("challenge");
     }
-  }, [copy.notReady, onCancel, onSuccess, passkeySupported]);
+  }, [copy.notReady, forceFresh, onCancel, onSuccess, passkeySupported]);
 
   useEffect(() => {
     void initialize();

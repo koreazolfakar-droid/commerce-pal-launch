@@ -519,13 +519,11 @@ export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
     throw new Error("Passkeys are not supported by this browser or secure context.");
   }
 
-  const mfaStatus = await getDashboardMfaStatus();
-  if (
-    !mfaStatus ||
-    mfaStatus.currentLevel !== "aal2" ||
-    !mfaStatus.verifiedFactorId ||
-    mfaStatus.required !== true
-  ) {
+  const { data: stepUp, error: stepUpError } = await supabase.functions.invoke(
+    "dashboard-passkey-stepup",
+    { body: { action: "sensitive-status" } },
+  );
+  if (stepUpError || stepUp?.ready !== true) {
     throw new Error("Fresh authenticator verification is required before adding a passkey.");
   }
 
@@ -559,19 +557,6 @@ async function requireDashboardPasskeyReadSession() {
   const status = await getDashboardMfaStatus();
   if (!status?.ready) {
     throw new Error("Complete second-factor verification before viewing passkeys.");
-  }
-  return status;
-}
-
-async function requireDashboardPasskeySensitiveSession() {
-  const status = await getDashboardMfaStatus();
-  if (
-    !status ||
-    status.currentLevel !== "aal2" ||
-    !status.verifiedFactorId ||
-    status.required !== true
-  ) {
-    throw new Error("Fresh authenticator verification is required before changing passkeys.");
   }
   return status;
 }
@@ -616,10 +601,12 @@ export async function renameDashboardPasskey(
 }
 
 export async function deleteDashboardPasskey(passkeyId: string): Promise<void> {
-  await requireDashboardPasskeySensitiveSession();
-  const { error } = await supabase.auth.passkey.delete({ passkeyId });
-  if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
-  await logDashboardSecurityEvent("passkey_deleted", { passkeyId });
+  const { data, error } = await supabase.functions.invoke("dashboard-passkey-stepup", {
+    body: { action: "delete", passkeyId },
+  });
+  if (error || data?.ok !== true) {
+    throw new Error("Fresh authenticator verification is required before removing a passkey.");
+  }
 }
 
 export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null> {
@@ -900,13 +887,13 @@ export async function requestDashboardPasswordReset(
 }
 
 export async function updateDashboardPassword(password: string) {
-  if (password.length < 10) {
-    throw new Error("Use at least 10 characters for the new password.");
+  if (password.length < 14) {
+    throw new Error("Use at least 14 characters for the new password.");
   }
 
   const mfaStatus = await getDashboardMfaStatus();
-  if (!mfaStatus?.ready || mfaStatus.currentLevel !== "aal2") {
-    throw new Error("AAL2 multi-factor verification is required before changing the password.");
+  if (!mfaStatus?.ready) {
+    throw new Error("Fresh second-factor verification is required before changing the password.");
   }
 
   // Keep the browser-side k-anonymity check for fast UX, but do not trust it as
@@ -930,6 +917,11 @@ export async function updateDashboardPassword(password: string) {
     if (payload?.error === "breach_screening_unavailable") {
       throw new Error(
         "Security check is temporarily unavailable. Your password was not changed. Try again shortly.",
+      );
+    }
+    if (payload?.error === "password_policy_rejected") {
+      throw new Error(
+        "Choose a less predictable password that is not related to Space Call or your account identity.",
       );
     }
     throw new Error("Secure password update failed.");

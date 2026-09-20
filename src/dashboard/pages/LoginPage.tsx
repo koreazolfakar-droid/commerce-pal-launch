@@ -68,7 +68,7 @@ const loginCopy = {
     backToSignIn: "Back to sign in",
     recoveryReceived: "Recovery request received",
     recoveryBody: "If this email belongs to an authorized account, a recovery link will arrive shortly.",
-    passwordHint: "Use at least 10 characters and avoid passwords you use on other services.",
+    passwordHint: "Use at least 14 characters and avoid passwords you use on other services.",
     antiPhishing: "Never share your password or verification code. Space Call support will never ask for them.",
     sensitiveHidden: "Sensitive content hidden",
     returnSecurely: "Return to this page to continue.",
@@ -80,7 +80,7 @@ const loginCopy = {
     switchLanguage: "العربية",
     required: "Enter your email and password.",
     emailRequired: "Enter your email first.",
-    passwordShort: "Use at least 10 characters for your new password.",
+    passwordShort: "Use at least 14 characters for your new password.",
     mismatch: "The two passwords do not match.",
     signedIn: "Signed in successfully.",
     resetRequested: "If this email is authorized, a recovery link will be sent.",
@@ -131,7 +131,7 @@ const loginCopy = {
     backToSignIn: "العودة لتسجيل الدخول",
     recoveryReceived: "تم استلام طلب الاستعادة",
     recoveryBody: "إذا كان البريد مرتبطًا بحساب مصرح له، سيصل رابط الاستعادة قريبًا.",
-    passwordHint: "استخدم 10 أحرف على الأقل وتجنب كلمات المرور المستخدمة في خدمات أخرى.",
+    passwordHint: "استخدم 14 حرفًا على الأقل وتجنب كلمات المرور المستخدمة في خدمات أخرى.",
     antiPhishing: "لا تشارك كلمة المرور أو رمز التحقق. دعم Space Call لن يطلبهما منك.",
     sensitiveHidden: "تم إخفاء المحتوى الحساس",
     returnSecurely: "عد إلى هذه الصفحة للمتابعة.",
@@ -143,7 +143,7 @@ const loginCopy = {
     switchLanguage: "English",
     required: "أدخل البريد الإلكتروني وكلمة المرور.",
     emailRequired: "أدخل بريدك الإلكتروني أولًا.",
-    passwordShort: "استخدم 10 أحرف على الأقل لكلمة المرور الجديدة.",
+    passwordShort: "استخدم 14 حرفًا على الأقل لكلمة المرور الجديدة.",
     mismatch: "كلمتا المرور غير متطابقتين.",
     signedIn: "تم تسجيل الدخول بنجاح.",
     resetRequested: "إذا كان البريد مصرحًا له، سيتم إرسال رابط الاستعادة.",
@@ -535,7 +535,7 @@ export default function LoginPage() {
 
   const saveNewPassword = async () => {
     setInlineError("");
-    if (newPassword.length < 10) {
+    if (newPassword.length < 14) {
       setInlineError(copy.passwordShort);
       return;
     }
@@ -930,6 +930,7 @@ export default function LoginPage() {
                   onSuccess={handleMfaSuccess}
                   onCancel={handleMfaCancel}
                   theme={theme}
+                  forceFresh={recoveryMode}
                 />
               ) : null}
 

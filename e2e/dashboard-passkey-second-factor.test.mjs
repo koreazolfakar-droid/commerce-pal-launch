@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const [catalog, client, login, mfa, edge, migration] = await Promise.all([
+const [catalog, client, login, mfa, security, edge, migration] = await Promise.all([
   readFile(new URL("../src/dashboard/data/catalog.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/integrations/supabase/client.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/LoginPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/components/auth/DashboardMfaStep.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/pages/SecurityPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../supabase/functions/dashboard-passkey-stepup/index.ts", import.meta.url), "utf8"),
   readFile(
     new URL(
@@ -41,10 +42,11 @@ test("passkey proof uses an isolated non-persistent auth client", () => {
   assert.match(catalog, /verifier\.auth\.signOut\(\{ scope: "local" \}\)/);
 });
 
-test("server only begins passkey step-up after a recent password authentication", () => {
+test("server only begins passkey step-up after a recent password or recovery authentication", () => {
   assert.match(edge, /PASSWORD_STAGE_WINDOW_MS = 5 \* 60 \* 1000/);
-  assert.match(edge, /hasRecentPasswordAmr\(claims, now\)/);
-  assert.match(edge, /item\.method !== "password"/);
+  assert.match(edge, /hasRecentPrimaryAmr\(claims, now\)/);
+  assert.match(edge, /item\.method !== "password" && item\.method !== "recovery"/);
+  assert.match(edge, /recent_primary_auth_required/);
   assert.match(edge, /roleRow\?\.role !== "admin"/);
   assert.match(edge, /baselineLastUsedAt = latestPasskeyUse\(passkeys\)/);
   assert.match(edge, /dashboard_passkey_stepup_tickets/);
@@ -57,6 +59,10 @@ test("server completion binds fresh passkey proof to the original password sessi
   assert.match(edge, /\.is\("consumed_at", null\)/);
   assert.match(edge, /dashboard_passkey_session_assurance/);
   assert.match(edge, /session_id: sessionId/);
+  assert.match(edge, /hasFreshPasskeyAmr/);
+  assert.match(edge, /method === "passkey"/);
+  assert.match(edge, /passkeyClaims\.sub !== mainUser\.id/);
+  assert.match(edge, /fresh_passkey_token_required/);
   assert.match(edge, /PASSKEY_ASSURANCE_MS = 8 \* 60 \* 60 \* 1000/);
 });
 
@@ -74,4 +80,26 @@ test("database authorization accepts native AAL2 or server-verified passkey assu
   );
   assert.match(migration, /dashboard_passkey_stepup_ready/);
   assert.match(catalog, /passkeyStepUpReady/);
+});
+
+
+test("sensitive passkey add and delete require a fresh authenticator code", () => {
+  assert.match(security, /await verifyDashboardTotp\(status\.verifiedFactorId, normalizedCode\)/);
+  assert.match(catalog, /action: "sensitive-status"/);
+  assert.match(catalog, /body: \{ action: "delete", passkeyId \}/);
+  assert.doesNotMatch(catalog, /auth\.passkey\.delete\(\{ passkeyId \}\)/);
+
+  assert.match(edge, /action === "sensitive-status"/);
+  assert.match(edge, /hasFreshTotpAmr\(claims, now\)/);
+  assert.match(edge, /action === "delete"/);
+  assert.match(edge, /admin\.auth\.admin\.passkey\.deletePasskey/);
+  assert.match(edge, /fresh_totp_required/);
+  assert.match(edge, /event_type: "passkey_deleted"/);
+});
+
+test("recovery mode forces a new second-factor challenge", () => {
+  assert.match(login, /forceFresh=\{recoveryMode\}/);
+  assert.match(mfa, /forceFresh\?: boolean/);
+  assert.match(mfa, /status\.ready && !forceFresh/);
+  assert.match(mfa, /Date\.now\(\) \+ MFA_CHALLENGE_WINDOW_MS/);
 });
