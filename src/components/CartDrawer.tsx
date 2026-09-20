@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   MessageCircle,
   Minus,
@@ -176,10 +177,14 @@ export const CartDrawer = ({
                   className="min-h-12 w-full bg-[#25D366] font-extrabold text-white hover:bg-[#20bd5a]"
                   size="lg"
                 >
-                  <a href="/cart#whatsapp-checkout" onClick={() => setIsOpen(false)}>
+                  <Link
+                    to="/cart"
+                    hash="whatsapp-checkout"
+                    onClick={() => setIsOpen(false)}
+                  >
                     <MessageCircle className="mr-2 h-4 w-4" />
                     {whatsappLabel}
-                  </a>
+                  </Link>
                 </Button>
 
                 <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -189,10 +194,10 @@ export const CartDrawer = ({
                 </div>
 
                 <Button asChild variant="outline" className="min-h-12 w-full" size="lg">
-                  <a href="/cart" onClick={() => setIsOpen(false)}>
+                  <Link to="/cart" onClick={() => setIsOpen(false)}>
                     <ShoppingBag className="mr-2 h-4 w-4" />
                     {language === "ar" ? "إكمال الطلب" : "Continue checkout"}
-                  </a>
+                  </Link>
                 </Button>
               </div>
             </>

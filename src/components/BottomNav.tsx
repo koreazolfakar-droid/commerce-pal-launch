@@ -179,9 +179,10 @@ export function BottomNav() {
               const label = item.label;
               const isCart = item.href === "/cart";
               return (
-                <a
+                <Link
                   key={item.id}
                   href={item.href ?? "/"}
+                  preload="intent"
                   data-nav-id={item.id}
                   data-active={active ? "true" : "false"}
                   className={itemClass(active)}
@@ -198,7 +199,7 @@ export function BottomNav() {
                     {isCart ? <CartBadge value={cartCount} /> : null}
                   </span>
                   <span className="max-w-full truncate whitespace-nowrap px-0.5">{label}</span>
-                </a>
+                </Link>
               );
             })}
           </div>

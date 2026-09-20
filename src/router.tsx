@@ -30,6 +30,8 @@ export const getRouter = () => {
     // (hover/focus/touch). This keeps initial loading lean while making the next
     // page feel immediate once a user starts interacting with a link.
     defaultPreload: "intent",
+    // Hover/focus preload starts quickly; touch intent remains immediate.
+    defaultPreloadDelay: 20,
     // Avoid re-running the same route preload immediately when a user taps a link
     // right after hover/touch intent. Product/query freshness is still governed by
     // React Query's shorter data stale times.

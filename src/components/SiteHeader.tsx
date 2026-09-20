@@ -128,20 +128,22 @@ export function SiteHeader() {
           </ul>
           <ul className="flex items-center gap-5 font-semibold">
             <li>
-              <a
-                href="/help#track-order"
+              <Link
+                to="/help"
+                hash="track-order"
                 className="flex items-center gap-1.5 whitespace-nowrap hover:text-primary"
               >
                 <MapPin className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("trackOrder")}
-              </a>
+              </Link>
             </li>
             <li>
-              <a
-                href="/help#account-orders"
+              <Link
+                to="/help"
+                hash="account-orders"
                 className="flex items-center gap-1.5 whitespace-nowrap hover:text-primary"
               >
                 <User className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("account")}
-              </a>
+              </Link>
             </li>
             <li>
               <Link

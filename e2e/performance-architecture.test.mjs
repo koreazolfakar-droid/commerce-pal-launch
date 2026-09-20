@@ -33,7 +33,27 @@ test("homepage keeps critical UI small and defers secondary work", async () => {
 test("router preloads only after navigation intent", async () => {
   const router = await read("src/router.tsx");
   assert.match(router, /defaultPreload:\s*"intent"/);
+  assert.match(router, /defaultPreloadDelay:\s*20/);
   assert.match(router, /defaultPreloadStaleTime:\s*30_000/);
+});
+
+
+test("storefront internal navigation stays client-side", async () => {
+  const [bottom, cmsControls, cartDrawer, siteHeader, home] = await Promise.all([
+    read("src/components/BottomNav.tsx"),
+    read("src/components/CmsStoreControls.tsx"),
+    read("src/components/CartDrawer.tsx"),
+    read("src/components/SiteHeader.tsx"),
+    read("src/routes/index.tsx"),
+  ]);
+
+  assert.match(bottom, /href=\{item\.href \?\? "\/"\}[\s\S]*?preload="intent"/);
+  assert.match(cmsControls, /function isInternalStoreHref/);
+  assert.match(cmsControls, /<Link key=\{item\.id\} href=\{item\.href\} preload="intent"/);
+  assert.doesNotMatch(cartDrawer, /href="\/cart(?:#whatsapp-checkout)?"/);
+  assert.doesNotMatch(siteHeader, /href="\/help#(?:track-order|account-orders)"/);
+  assert.match(home, /function CmsActionLink/);
+  assert.match(home, /<Link href=\{href\} preload="intent"/);
 });
 
 

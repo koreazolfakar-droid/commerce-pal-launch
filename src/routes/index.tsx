@@ -329,6 +329,30 @@ function safeCmsHref(value: unknown) {
   return undefined;
 }
 
+function CmsActionLink({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (href.startsWith("/") && !href.startsWith("//")) {
+    return (
+      <Link href={href} preload="intent" className={className}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  );
+}
+
 function CmsBuilderSection({ section }: { section: CmsSection }) {
   const { language } = useLanguage();
   const localized = localizeSection(section, language);
@@ -368,9 +392,12 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
       <section className="rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white">
         {displayTitle || description}
         {buttonText && buttonLink ? (
-          <a href={buttonLink} className="ms-2 font-bold text-indigo-200 hover:underline">
+          <CmsActionLink
+            href={buttonLink}
+            className="ms-2 font-bold text-indigo-200 hover:underline"
+          >
             {buttonText}
-          </a>
+          </CmsActionLink>
         ) : null}
       </section>
     );
@@ -427,24 +454,24 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
         {(buttonText && buttonLink) || (secondaryButtonText && secondaryButtonLink) ? (
           <div className="mt-1 flex flex-wrap gap-2">
             {buttonText && buttonLink ? (
-              <a
+              <CmsActionLink
                 href={buttonLink}
                 className={`rounded-full px-5 py-2.5 text-xs font-bold ${
                   dark ? "bg-white text-slate-950" : "bg-primary text-primary-foreground"
                 }`}
               >
                 {buttonText}
-              </a>
+              </CmsActionLink>
             ) : null}
             {secondaryButtonText && secondaryButtonLink ? (
-              <a
+              <CmsActionLink
                 href={secondaryButtonLink}
                 className={`rounded-full border px-5 py-2.5 text-xs font-bold ${
                   dark ? "border-white/30 text-white" : "border-border"
                 }`}
               >
                 {secondaryButtonText}
-              </a>
+              </CmsActionLink>
             ) : null}
           </div>
         ) : null}
