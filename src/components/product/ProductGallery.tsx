@@ -156,6 +156,7 @@ export function ProductGallery({
               )}
             >
               <img
+                key={`${thumb.url}:${responsiveFailures.has(thumb.url) ? "original" : "responsive"}`}
                 src={cdnImage(thumb.url, 160)}
                 srcSet={
                   responsiveFailures.has(thumb.url) ? undefined : cdnSrcSet(thumb.url, 160)
@@ -190,6 +191,7 @@ export function ProductGallery({
             onClick={(event) => event.stopPropagation()}
           >
             <img
+              key={`${image.url}:zoom:${responsiveFailures.has(image.url) ? "original" : "responsive"}`}
               src={cdnImage(image.url, 1400)}
               srcSet={
                 responsiveFailures.has(image.url) ? undefined : cdnSrcSet(image.url, 1400)
@@ -197,6 +199,9 @@ export function ProductGallery({
               sizes="(min-width: 1024px) 896px, 96vw"
               alt={image.altText ?? title}
               draggable={false}
+              onError={() => {
+                if (!responsiveFailures.has(image.url)) markResponsiveFailure(image.url);
+              }}
               className="mx-auto max-h-[84vh] w-full select-none object-contain p-4 sm:p-6"
             />
             <button
