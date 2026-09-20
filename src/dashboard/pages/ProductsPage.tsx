@@ -262,7 +262,7 @@ export default function ProductsPage() {
               <tbody>
                 {filtered.map((product) => (
                   <tr key={product.id} className="border-b border-slate-50 hover:bg-[#fafbff]">
-                    <td className="px-4 py-3.5"><input type="checkbox" checked={selected.has(product.id)} onChange={() => setSelected((current) => { const next=new Set(current); next.has(product.id)?next.delete(product.id):next.add(product.id); return next; })} /></td>
+                    <td className="px-4 py-3.5"><input type="checkbox" checked={selected.has(product.id)} onChange={() => setSelected((current) => { const next=new Set(current); if (next.has(product.id)) next.delete(product.id); else next.add(product.id); return next; })} /></td>
                     <td className="px-3 py-3.5">
                       <button onClick={() => navigate(`/dashboard/products/${product.id}`)} className="flex max-w-[280px] items-center gap-3 text-left">
                         <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
@@ -292,7 +292,7 @@ export default function ProductsPage() {
             {filtered.map((product) => (
               <div key={product.id} className="p-4">
                 <div className="flex items-start gap-3">
-                  <input type="checkbox" checked={selected.has(product.id)} onChange={() => setSelected((current) => { const next=new Set(current); next.has(product.id)?next.delete(product.id):next.add(product.id); return next; })} className="mt-4" />
+                  <input type="checkbox" checked={selected.has(product.id)} onChange={() => setSelected((current) => { const next=new Set(current); if (next.has(product.id)) next.delete(product.id); else next.add(product.id); return next; })} className="mt-4" />
                   <button onClick={() => navigate(`/dashboard/products/${product.id}`)} className="flex min-w-0 flex-1 items-start gap-3 text-left">
                     <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">{product.image ? <img src={product.image} alt="" className="size-full object-contain" /> : <Package className="size-5 text-slate-400" />}</div>
                     <div className="min-w-0 flex-1"><div className="truncate text-[12px] font-bold text-slate-700">{product.name}</div><div className="mt-1 truncate text-[10px] text-slate-400">{product.brand || "No brand"} · {product.category || "Uncategorized"}</div><div className="mt-2 flex flex-wrap items-center gap-2 text-[10px]"><StatusPill status={product.status} /><span className="font-bold text-slate-700">{money(product.price)}</span><span className={product.stock < 10 ? "font-bold text-rose-600" : "text-slate-500"}>{product.stock} stock</span><span className="text-slate-400">{product.variantCount} variants</span></div></div>
