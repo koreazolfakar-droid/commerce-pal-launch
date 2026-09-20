@@ -532,7 +532,14 @@ function Index() {
 
   const products = catalog?.products ?? [];
   const merchandiseProducts = products.filter(isHomepageMerchandise);
-  const homepageCatalog = catalog ? { ...catalog, products: merchandiseProducts } : null;
+  const homepageCatalog = catalog
+    ? {
+        ...catalog,
+        products: merchandiseProducts,
+        categories: navigationCatalog?.categories ?? catalog.categories,
+        brands: navigationCatalog?.brands ?? catalog.brands,
+      }
+    : null;
   const navigationCategories = navigationCatalog?.categories ?? catalog?.categories ?? [];
   const navigationBrands = navigationCatalog?.brands ?? catalog?.brands ?? [];
   const navigationReady = Boolean(navigationCatalog || catalog);
