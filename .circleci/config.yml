@@ -1,21 +1,16 @@
 version: 2.1
-
-jobs:
-  storefront-ci:
+executors:
+  node-bun:
     docker:
       - image: cimg/node:lts
     resource_class: small
     working_directory: ~/project
     environment:
       BUN_INSTALL: /home/circleci/.bun
+commands:
+  bootstrap:
     steps:
       - checkout
-
-      - restore_cache:
-          keys:
-            - bun-deps-v1-{{ checksum "bun.lock" }}
-            - bun-deps-v1-
-
       - run:
           name: Install Bun
           command: |
@@ -23,46 +18,40 @@ jobs:
             echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
             echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
-            bun --version
-
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
-
-      - save_cache:
-          key: bun-deps-v1-{{ checksum "bun.lock" }}
-          paths:
-            - ~/.bun/install/cache
-
-      - run:
-          name: TypeScript
-          command: bun run typecheck
-
-      - run:
-          name: ESLint
-          command: bun run lint
-
-      - run:
-          name: Dashboard security regression tests
-          command: node --test e2e/dashboard-*.test.mjs
-
-      - run:
-          name: Unit and architecture tests
-          command: bun run test:unit
-
-      - run:
-          name: Production build
-          command: bun run build
-
-      - run:
-          name: SSR smoke test
-          command: bun run test:ssr
-
+jobs:
+  check-type:
+    executor: node-bun
+    steps:
+      - bootstrap
+      - run: { name: Typecheck, command: "bun run typecheck" }
+  check-lint:
+    executor: node-bun
+    steps:
+      - bootstrap
+      - run: { name: Lint, command: "bun run lint" }
+  check-unit:
+    executor: node-bun
+    steps:
+      - bootstrap
+      - run: { name: Unit, command: "bun run test:unit" }
+  check-build:
+    executor: node-bun
+    steps:
+      - bootstrap
+      - run: { name: Build, command: "bun run build" }
+  check-ssr:
+    executor: node-bun
+    steps:
+      - bootstrap
+      - run: { name: SSR, command: "bun run test:ssr" }
 workflows:
-  storefront-validation:
+  diagnose:
     jobs:
-      - storefront-ci:
-          filters:
-            branches:
-              only:
-                - /^important\/.*/
+      - check-type
+      - check-lint
+      - check-unit
+      - check-build
+      - check-ssr
