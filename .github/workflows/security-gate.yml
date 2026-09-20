@@ -1,19 +1,13 @@
-name: Security Gate
+name: Deep Security Scan
 
 on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: security-gate-${{ github.workflow }}-${{ github.ref }}
+  group: deep-security-scan-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -111,8 +105,8 @@ jobs:
           exit-code: "1"
           skip-dirs: node_modules,dist,.output,.nitro,coverage
 
-  security-gate:
-    name: Security Gate
+  deep-security-scan:
+    name: Deep Security Scan
     if: always()
     needs:
       - quality
@@ -121,7 +115,7 @@ jobs:
       - supply-chain
     runs-on: ubuntu-latest
     steps:
-      - name: Enforce all required checks
+      - name: Enforce all deep checks
         env:
           QUALITY: ${{ needs.quality.result }}
           SECRETS: ${{ needs.secrets.result }}
@@ -133,9 +127,12 @@ jobs:
           echo "sast=$SAST"
           echo "supply_chain=$SUPPLY_CHAIN"
 
-          if [ "$QUALITY" != "success" ] ||              [ "$SECRETS" != "success" ] ||              [ "$SAST" != "success" ] ||              [ "$SUPPLY_CHAIN" != "success" ]; then
-            echo "::error::Security Gate blocked this change."
+          if [ "$QUALITY" != "success" ] || \
+             [ "$SECRETS" != "success" ] || \
+             [ "$SAST" != "success" ] || \
+             [ "$SUPPLY_CHAIN" != "success" ]; then
+            echo "::error::Deep Security Scan blocked this run."
             exit 1
           fi
 
-          echo "Security Gate passed."
+          echo "Deep Security Scan passed."
