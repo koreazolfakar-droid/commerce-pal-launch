@@ -840,7 +840,7 @@ export default function CategoriesPage() {
                         .getElementById("category-homepage-preview")
                         ?.scrollIntoView({ behavior: "smooth", block: "center" })
                     }
-                    className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600"
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600"
                   >
                     <Eye className="size-3.5" />
                     Preview
@@ -853,7 +853,7 @@ export default function CategoriesPage() {
                         "Product assignment and movement are available below. Custom per-category product ordering is not stored in the current Product model.",
                       );
                     }}
-                    className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600"
+                    className="col-span-2 flex h-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 sm:col-auto"
                   >
                     <MoveRight className="size-3.5" />
                     Reorder Products
