@@ -154,6 +154,9 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", a
   assert.match(scene, /slide.open_in_new_tab/);
   assert.match(scene, /noopener noreferrer/);
   assert.match(scene, /normalizeHeroVisualConfig/);
+  assert.match(scene, /failedMobileImageUrl/);
+  assert.match(scene, /setFailedMobileImageUrl/);
+  assert.match(scene, /window\.matchMedia\("\(max-width: 639px\)"\)/);
   assert.match(page, /<HeroVisualEditor/);
 
 });
