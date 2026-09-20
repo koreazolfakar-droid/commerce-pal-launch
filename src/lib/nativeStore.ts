@@ -292,9 +292,7 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
 }
 
 async function fetchSnapshot(): Promise<NativeSnapshot> {
-  {
-
-    const [productResult, variantResult, imageResult, collectionResult, linkResult, brandResult] =
+  const [productResult, variantResult, imageResult, collectionResult, linkResult, brandResult] =
       await Promise.all([
         publicSupabase
           .from("store_products")
