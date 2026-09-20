@@ -376,6 +376,7 @@ export type Database = {
       }
       cms_seo_pages: {
         Row: {
+          canonical_url: string | null
           created_at: string
           description: string | null
           description_ar: string | null
@@ -394,6 +395,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          canonical_url?: string | null
           created_at?: string
           description?: string | null
           description_ar?: string | null
@@ -412,6 +414,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          canonical_url?: string | null
           created_at?: string
           description?: string | null
           description_ar?: string | null
@@ -452,8 +455,10 @@ export type Database = {
       cms_site_settings: {
         Row: {
           created_at: string
+          group_name: string | null
           is_public: boolean
           key: string
+          label: string | null
           updated_at: string
           value_json: Json | null
           value_text: string | null
@@ -461,8 +466,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          group_name?: string | null
           is_public?: boolean
           key: string
+          label?: string | null
           updated_at?: string
           value_json?: Json | null
           value_text?: string | null
@@ -470,8 +477,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          group_name?: string | null
           is_public?: boolean
           key?: string
+          label?: string | null
           updated_at?: string
           value_json?: Json | null
           value_text?: string | null
