@@ -552,7 +552,7 @@ export default function HeroBannersPage() {
                 <button
                   key={preset.id}
                   type="button"
-                  onClick={() => setForm((current) => ({ ...current, ...preset.patch, visualConfig: { ...preset.patch.visualConfig } }))}
+                  onClick={() => setForm((current) => ({ ...current, ...preset.patch, visualConfig: { ...current.visualConfig, ...preset.patch.visualConfig } }))}
                   className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-start transition hover:border-indigo-300 hover:bg-indigo-50/50"
                 >
                   <span className="block text-[11px] font-bold text-slate-700">{preset.label}</span>
