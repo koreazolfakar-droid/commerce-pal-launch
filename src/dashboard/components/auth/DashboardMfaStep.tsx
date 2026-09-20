@@ -156,7 +156,7 @@ export default function DashboardMfaStep({
         return;
       }
 
-      if (!status.ready) {
+      if (!status.ready && !forceFresh) {
         const authenticatedAt = status.authenticatedAt
           ? new Date(status.authenticatedAt).getTime()
           : Number.NaN;
