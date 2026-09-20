@@ -34,25 +34,30 @@ test("browser HIBP screening keeps the privacy-preserving range API", () => {
   assert.match(helper, /cache: "no-store"/);
 });
 
-test("dashboard password changes require AAL2 and the protected Edge Function", () => {
+test("dashboard password changes require a ready second factor and the protected Edge Function", () => {
   assert.match(catalog, /mfaStatus\?\.ready/);
-  assert.match(catalog, /currentLevel !== "aal2"/);
+  assert.match(catalog, /Fresh second-factor verification is required before changing the password/);
   assert.match(catalog, /assertDashboardPasswordNotPwned\(password\)/);
   assert.match(catalog, /functions\.invoke\("dashboard-update-password"/);
   assert.doesNotMatch(catalog, /auth\.updateUser\(\{ password \}\)/);
 
-  const aal2 = catalog.indexOf('mfaStatus.currentLevel !== "aal2"');
+  const readyGate = catalog.indexOf("if (!mfaStatus?.ready)");
   const clientScreening = catalog.indexOf("await assertDashboardPasswordNotPwned(password)");
   const edgeCall = catalog.indexOf('supabase.functions.invoke("dashboard-update-password"');
 
-  assert.ok(aal2 >= 0, "AAL2 gate must exist");
-  assert.ok(clientScreening > aal2, "client HIBP check must happen after AAL2 verification");
+  assert.ok(readyGate >= 0, "second-factor readiness gate must exist");
+  assert.ok(clientScreening > readyGate, "client HIBP check must happen after second-factor readiness");
   assert.ok(edgeCall > clientScreening, "server password service must run after client screening");
 });
 
 test("password Edge Function authenticates, authorizes, and rechecks HIBP server-side", () => {
   assert.match(passwordEdge, /admin\.auth\.getUser\(token\)/);
-  assert.match(passwordEdge, /claims\.aal !== "aal2"/);
+  assert.match(passwordEdge, /SENSITIVE_REAUTH_WINDOW_MS = 5 \* 60 \* 1000/);
+  assert.match(passwordEdge, /hasFreshTotpAmr\(claims, now\)/);
+  assert.match(passwordEdge, /claims\.aal === "aal2"/);
+  assert.match(passwordEdge, /dashboard_passkey_session_assurance/);
+  assert.match(passwordEdge, /\.gte\("verified_at", cutoff\)/);
+  assert.match(passwordEdge, /fresh_second_factor_required/);
   assert.match(passwordEdge, /from\("user_roles"\)/);
   assert.match(passwordEdge, /row\.role === "admin"/);
   assert.match(passwordEdge, /row\.role === "editor"/);
@@ -84,14 +89,14 @@ test("password Edge Function authenticates, authorizes, and rechecks HIBP server
   assert.doesNotMatch(passwordEdge, /console\.(log|debug|info)\([^\n]*password/i);
 
   const verifiedUser = passwordEdge.indexOf("await admin.auth.getUser(token)");
-  const aal2 = passwordEdge.indexOf('claims.aal !== "aal2"');
+  const secondFactorGate = passwordEdge.indexOf('error: "fresh_second_factor_required"');
   const localPolicy = passwordEdge.indexOf('getPasswordPolicyViolation(password, user.email ?? "")');
   const hibp = passwordEdge.indexOf("await isPasswordCompromised(password)");
   const mutation = passwordEdge.indexOf("await admin.auth.admin.updateUserById(user.id");
 
   assert.ok(verifiedUser >= 0, "JWT must be verified against Supabase Auth");
-  assert.ok(aal2 > verifiedUser, "AAL2 must be checked after token verification");
-  assert.ok(localPolicy > aal2, "local password policy must run after authorization");
+  assert.ok(secondFactorGate > verifiedUser, "fresh second-factor gate must follow token verification");
+  assert.ok(localPolicy > secondFactorGate, "local password policy must run after fresh second-factor verification");
   assert.ok(hibp > localPolicy, "server HIBP screening must happen after the local policy");
   assert.ok(mutation > hibp, "password mutation must happen only after all server screening");
 });
@@ -102,6 +107,7 @@ test("recovery flow requires MFA before exposing the password update path", () =
   assert.match(login, /setView\("mfa"\)/);
   assert.match(login, /if \(recoveryMode\)[\s\S]+\/dashboard\/login\?mode=recovery/);
   assert.match(login, /screened against HIBP twice/);
+  assert.match(login, /forceFresh=\{recoveryMode\}/);
 });
 
 test("HIBP outages fail closed in both browser and server layers", () => {
