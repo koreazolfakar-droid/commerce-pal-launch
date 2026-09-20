@@ -72,8 +72,9 @@ test("native storefront data path avoids wildcard payloads", async () => {
     nativeStore,
     /export async function fetchCollections[\s\S]*?\.from\("store_collections"\)[\s\S]*?\.limit\(Math\.max\(0, first\)\)/,
   );
-  assert.doesNotMatch(
-    nativeStore,
-    /export async function fetchCollections[\s\S]*?loadSnapshot\(\)/,
-  );
+  const collectionsStart = nativeStore.indexOf("export async function fetchCollections");
+  const collectionsEnd = nativeStore.indexOf("export async function fetchCollectionByHandle", collectionsStart);
+  assert.ok(collectionsStart >= 0 && collectionsEnd > collectionsStart);
+  const collectionsSource = nativeStore.slice(collectionsStart, collectionsEnd);
+  assert.doesNotMatch(collectionsSource, /loadSnapshot\(\)/);
 });
