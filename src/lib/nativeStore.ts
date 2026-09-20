@@ -92,7 +92,11 @@ type NativeSnapshot = {
 };
 
 const CACHE_TTL_MS = 30_000;
-let cachedSnapshot: { expiresAt: number; value: NativeSnapshot } | null = null;
+// After the fresh window ends, keep serving the last snapshot for up to five
+// minutes while a single background refresh runs. Repeat storefront visitors
+// never wait on the database round-trip.
+const STALE_TTL_MS = 5 * 60_000;
+let cachedSnapshot: { expiresAt: number; staleUntil: number; value: NativeSnapshot } | null = null;
 let pendingSnapshot: Promise<NativeSnapshot> | null = null;
 
 function assertResult<T>(
