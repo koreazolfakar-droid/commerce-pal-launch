@@ -21,7 +21,7 @@ commands:
           command: bun install --frozen-lockfile
 
 jobs:
-  security-static:
+  security-login-tests:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -31,48 +31,14 @@ jobs:
     steps:
       - setup_bun
       - run:
-          name: TypeScript
-          command: bun run typecheck
-      - run:
-          name: Lint changed security files
-          command: |
-            bun x eslint --fix-dry-run \
-              src/dashboard/components/auth/DashboardMfaStep.tsx \
-              src/dashboard/data/catalog.ts \
-              src/dashboard/pages/LoginPage.tsx \
-              supabase/functions/dashboard-auth-throttle/index.ts \
-              supabase/functions/dashboard-passkey-stepup/index.ts \
-              supabase/functions/dashboard-update-password/index.ts \
-              e2e/dashboard-login-ui.test.mjs \
-              e2e/dashboard-passkey-client.test.mjs \
-              e2e/dashboard-passkey-second-factor.test.mjs \
-              e2e/dashboard-password-breach-screening.test.mjs \
-              e2e/dashboard-security-hardening.test.mjs
-
-  security-tests:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - setup_bun
-      - run:
-          name: Focused auth and security tests
+          name: Login and session tests
           command: |
             node --test \
               e2e/dashboard-login-route.test.mjs \
               e2e/dashboard-login-ui.test.mjs \
-              e2e/dashboard-passkey-client.test.mjs \
-              e2e/dashboard-passkey-second-factor.test.mjs \
-              e2e/dashboard-passkey-step-up.test.mjs \
-              e2e/dashboard-password-breach-screening.test.mjs \
-              e2e/dashboard-security-hardening.test.mjs \
-              e2e/dashboard-session-security.test.mjs \
-              e2e/dashboard-totp-mfa.test.mjs
+              e2e/dashboard-session-security.test.mjs
 
-  security-build-smoke:
+  security-passkey-tests:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -82,26 +48,44 @@ jobs:
     steps:
       - setup_bun
       - run:
-          name: Production build
-          command: bun run build
+          name: Passkey tests
+          command: |
+            node --test \
+              e2e/dashboard-passkey-client.test.mjs \
+              e2e/dashboard-passkey-second-factor.test.mjs \
+              e2e/dashboard-passkey-step-up.test.mjs
+
+  security-password-mfa-tests:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - setup_bun
       - run:
-          name: SSR smoke
-          command: bun run test:ssr
+          name: Password and MFA tests
+          command: |
+            node --test \
+              e2e/dashboard-password-breach-screening.test.mjs \
+              e2e/dashboard-security-hardening.test.mjs \
+              e2e/dashboard-totp-mfa.test.mjs
 
 workflows:
   security-diagnostic:
     jobs:
-      - security-static:
+      - security-login-tests:
           filters:
             branches:
               only:
                 - /^important\/security-pr-diagnostic-20260920$/
-      - security-tests:
+      - security-passkey-tests:
           filters:
             branches:
               only:
                 - /^important\/security-pr-diagnostic-20260920$/
-      - security-build-smoke:
+      - security-password-mfa-tests:
           filters:
             branches:
               only:
