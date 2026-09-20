@@ -59,7 +59,7 @@ const CLIENT_DISCONNECT_CODES = new Set([
   "ERR_STREAM_PREMATURE_CLOSE",
 ]);
 
-function isClientDisconnect(value: unknown): boolean {
+export function isClientDisconnectError(value: unknown): boolean {
   let current: unknown = value;
   for (let depth = 0; depth < CAUSE_DEPTH_LIMIT && current != null; depth++) {
     if (!(current instanceof Error)) break;
@@ -79,7 +79,7 @@ function isClientDisconnect(value: unknown): boolean {
 // recorded for consumeLastCapturedError and expanded before serialization.
 const originalConsoleError = console.error.bind(console);
 console.error = (...args: unknown[]) => {
-  if (args.some((arg) => isClientDisconnect(arg))) return;
+  if (args.some((arg) => isClientDisconnectError(arg))) return;
   const expanded = args.map((arg) => {
     if (!isErrorLike(arg)) return arg;
     record(arg);
@@ -91,11 +91,11 @@ console.error = (...args: unknown[]) => {
 if (typeof globalThis.addEventListener === "function") {
   globalThis.addEventListener("error", (event) => {
     const error = (event as ErrorEvent).error ?? event;
-    if (!isClientDisconnect(error)) record(error);
+    if (!isClientDisconnectError(error)) record(error);
   });
   globalThis.addEventListener("unhandledrejection", (event) => {
     const reason = (event as PromiseRejectionEvent).reason;
-    if (!isClientDisconnect(reason)) record(reason);
+    if (!isClientDisconnectError(reason)) record(reason);
   });
 }
 
