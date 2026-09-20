@@ -905,8 +905,8 @@ export async function updateDashboardPassword(password: string) {
   }
 
   const mfaStatus = await getDashboardMfaStatus();
-  if (!mfaStatus?.ready || mfaStatus.currentLevel !== "aal2") {
-    throw new Error("AAL2 multi-factor verification is required before changing the password.");
+  if (!mfaStatus?.ready) {
+    throw new Error("Fresh second-factor verification is required before changing the password.");
   }
 
   // Keep the browser-side k-anonymity check for fast UX, but do not trust it as
