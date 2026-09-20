@@ -520,8 +520,13 @@ export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
   }
 
   const mfaStatus = await getDashboardMfaStatus();
-  if (!mfaStatus?.ready) {
-    throw new Error("Complete MFA verification before adding a passkey.");
+  if (
+    !mfaStatus ||
+    mfaStatus.currentLevel !== "aal2" ||
+    !mfaStatus.verifiedFactorId ||
+    mfaStatus.required !== true
+  ) {
+    throw new Error("Fresh authenticator verification is required before adding a passkey.");
   }
 
   let result: Awaited<ReturnType<typeof supabase.auth.registerPasskey>>;
@@ -550,10 +555,23 @@ export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
 }
 
 
-async function requireDashboardPasskeyManagementSession() {
+async function requireDashboardPasskeyReadSession() {
   const status = await getDashboardMfaStatus();
   if (!status?.ready) {
-    throw new Error("Complete MFA verification before managing passkeys.");
+    throw new Error("Complete second-factor verification before viewing passkeys.");
+  }
+  return status;
+}
+
+async function requireDashboardPasskeySensitiveSession() {
+  const status = await getDashboardMfaStatus();
+  if (
+    !status ||
+    status.currentLevel !== "aal2" ||
+    !status.verifiedFactorId ||
+    status.required !== true
+  ) {
+    throw new Error("Fresh authenticator verification is required before changing passkeys.");
   }
   return status;
 }
@@ -573,7 +591,7 @@ function mapDashboardPasskey(passkey: {
 }
 
 export async function listDashboardPasskeys(): Promise<DashboardPasskey[]> {
-  await requireDashboardPasskeyManagementSession();
+  await requireDashboardPasskeyReadSession();
   const { data, error } = await supabase.auth.passkey.list();
   if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
   return (data ?? []).map(mapDashboardPasskey);
@@ -583,7 +601,7 @@ export async function renameDashboardPasskey(
   passkeyId: string,
   friendlyName: string,
 ): Promise<void> {
-  await requireDashboardPasskeyManagementSession();
+  await requireDashboardPasskeyReadSession();
   const normalizedName = friendlyName.trim();
   if (!normalizedName || normalizedName.length > 120) {
     throw new Error("Passkey name must be between 1 and 120 characters.");
@@ -598,7 +616,7 @@ export async function renameDashboardPasskey(
 }
 
 export async function deleteDashboardPasskey(passkeyId: string): Promise<void> {
-  await requireDashboardPasskeyManagementSession();
+  await requireDashboardPasskeySensitiveSession();
   const { error } = await supabase.auth.passkey.delete({ passkeyId });
   if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
   await logDashboardSecurityEvent("passkey_deleted", { passkeyId });
