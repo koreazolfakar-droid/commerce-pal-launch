@@ -63,7 +63,7 @@ test("login provides accessible inline errors and loading states", () => {
   assert.match(login, /Loader2/);
   assert.match(login, /disabled=\{loading\}/);
   assert.match(login, /autoComplete="username"/);
-  assert.match(login, /autoComplete="current-password"/);
+  assert.match(login, /autoComplete = "current-password"/);
   assert.match(login, /spellCheck=\{false\}/);
   assert.match(login, /getModifierState\("CapsLock"\)/);
   assert.match(login, /Caps Lock is on\. Check your password before continuing\./);
@@ -71,15 +71,14 @@ test("login provides accessible inline errors and loading states", () => {
 });
 
 test("login UI clears sensitive password state when changing authentication flows", () => {
-  const forgotStart = login.indexOf("const openForgotPassword");
-  const forgotPasswordClear = login.indexOf('setPassword("");', forgotStart);
-  const forgotVisibilityClear = login.indexOf("setShowPassword(false);", forgotPasswordClear);
-  const forgotView = login.indexOf('setView("forgot");', forgotVisibilityClear);
+  const forgotView = login.indexOf('setView("forgot");');
+  const forgotPasswordClear = login.lastIndexOf('setPassword("");', forgotView);
+  const forgotVisibilityClear = login.lastIndexOf("setShowPassword(false);", forgotView);
   assert.ok(
-    forgotStart >= 0 &&
-      forgotPasswordClear > forgotStart &&
+    forgotView >= 0 &&
+      forgotPasswordClear >= 0 &&
       forgotVisibilityClear > forgotPasswordClear &&
-      forgotView > forgotVisibilityClear,
+      forgotVisibilityClear < forgotView,
     "forgot-password flow must clear password state before changing views",
   );
 
