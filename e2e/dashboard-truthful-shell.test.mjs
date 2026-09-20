@@ -3,9 +3,13 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
+const settings = await readFile(
+  new URL("../src/dashboard/pages/SettingsPage.tsx", import.meta.url),
+  "utf8",
+);
 
 test("dashboard shell exposes only truthful live actions", () => {
-  assert.match(app, /import \{ SITE_URL, STORE_CONFIG \} from "@\/lib\/storeConfig"/);
+  assert.match(app, /import \{ SITE_URL \} from "@\/lib\/storeConfig"/);
   assert.match(app, /window\.open\(SITE_URL, "_blank", "noopener,noreferrer"\)/);
   assert.match(app, /placeholder=\{t\("Search products\.\.\."\)\}/);
   assert.doesNotMatch(app, /Search orders, products, customers/);
@@ -14,13 +18,15 @@ test("dashboard shell exposes only truthful live actions", () => {
 });
 
 test("settings no longer pretends to persist mock configuration", () => {
-  assert.match(app, /Current storefront configuration/);
-  assert.match(app, /No fake saves/);
-  assert.match(app, /Live connections/);
-  assert.doesNotMatch(app, /Settings saved to the local mock workspace/);
-  assert.doesNotMatch(app, /hello@spacecall\.demo/);
-  assert.doesNotMatch(app, /Visual placeholders only\. Nothing is connected/);
-  assert.doesNotMatch(app, /Standalone dashboard using mock\/demo data only/);
+  assert.match(settings, /loadDashboardSiteSettings/);
+  assert.match(settings, /saveDashboardSiteSettings/);
+  assert.match(settings, /Settings refreshed from Supabase\./);
+  assert.match(settings, /Store settings saved to Supabase\./);
+  assert.match(settings, /System \/ Live configuration/);
+  assert.doesNotMatch(settings, /Settings saved to the local mock workspace/);
+  assert.doesNotMatch(settings, /hello@spacecall\.demo/);
+  assert.doesNotMatch(settings, /Visual placeholders only\. Nothing is connected/);
+  assert.doesNotMatch(settings, /Standalone dashboard using mock\/demo data only/);
 });
 
 test("account menu uses separate valid action buttons", () => {
