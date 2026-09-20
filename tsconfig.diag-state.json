@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/stores/**/*.ts",
+    "src/stores/**/*.tsx",
+    "src/hooks/**/*.ts",
+    "src/hooks/**/*.tsx"
+  ]
+}
