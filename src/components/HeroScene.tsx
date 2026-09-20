@@ -55,6 +55,9 @@ export function HeroScene({
   );
   const desktop = config.desktopLayout ?? fallback,
     mobile = config.mobileLayout ?? fallback;
+  const legacyFocal = config.focalPoint ?? { x: 50, y: 50 };
+  const desktopFocal = config.desktopFocalPoint ?? legacyFocal;
+  const mobileFocal = config.mobileFocalPoint ?? legacyFocal;
   const current = editor?.mode === "mobile" ? mobile : desktop;
   const drag = useRef<{
     id: number;
@@ -281,8 +284,11 @@ export function HeroScene({
             fetchPriority={priority ? "high" : "auto"}
             decoding="async"
             style={{
-              objectPosition: `${config.focalPoint?.x ?? 50}% ${config.focalPoint?.y ?? 50}%`,
-            }}
+              "--hero-desktop-focal-x": `${desktopFocal.x}%`,
+              "--hero-desktop-focal-y": `${desktopFocal.y}%`,
+              "--hero-mobile-focal-x": `${mobileFocal.x}%`,
+              "--hero-mobile-focal-y": `${mobileFocal.y}%`,
+            } as CSSProperties}
           />
         </picture>
         <div
