@@ -96,6 +96,26 @@ function hasRecentPrimaryAmr(claims: Record<string, unknown>, now: number) {
   });
 }
 
+function hasFreshTotpAmr(claims: Record<string, unknown>, now: number) {
+  const amr = Array.isArray(claims.amr) ? claims.amr : [];
+  return amr.some((entry) => {
+    if (!entry || typeof entry !== "object") return false;
+    const item = entry as Record<string, unknown>;
+    if (item.method !== "totp") return false;
+    const timestamp =
+      typeof item.timestamp === "number"
+        ? item.timestamp * 1000
+        : typeof item.timestamp === "string"
+          ? Number(item.timestamp) * 1000
+          : Number.NaN;
+    return (
+      Number.isFinite(timestamp) &&
+      now - timestamp >= 0 &&
+      now - timestamp <= PASSWORD_STAGE_WINDOW_MS
+    );
+  });
+}
+
 function hasFreshPasskeyAmr(
   claims: Record<string, unknown>,
   ticketCreatedMs: number,
@@ -187,6 +207,7 @@ Deno.serve(async (req) => {
     action?: unknown;
     ticketId?: unknown;
     passkeyAccessToken?: unknown;
+    passkeyId?: unknown;
   };
   try {
     body = await req.json();
@@ -196,6 +217,70 @@ Deno.serve(async (req) => {
 
   const action = typeof body.action === "string" ? body.action : "";
   const now = Date.now();
+
+  if (action === "sensitive-status") {
+    const ready = claims.aal === "aal2" && hasFreshTotpAmr(claims, now);
+    return json(req, { ok: true, ready, method: ready ? "totp" : null });
+  }
+
+  if (action === "delete") {
+    if (!uuidLike(body.passkeyId)) {
+      return json(req, { error: "invalid_passkey_id" }, 400);
+    }
+    if (claims.aal !== "aal2" || !hasFreshTotpAmr(claims, now)) {
+      return json(req, { error: "fresh_totp_required" }, 403);
+    }
+
+    const { data: passkeys, error: passkeyListError } =
+      await admin.auth.admin.passkey.listPasskeys({ userId: mainUser.id });
+    if (passkeyListError) {
+      return json(req, { error: "passkey_lookup_failed" }, 503);
+    }
+
+    const root =
+      passkeys && typeof passkeys === "object"
+        ? (passkeys as unknown as Record<string, unknown>)
+        : {};
+    const items = Array.isArray(passkeys)
+      ? passkeys
+      : Array.isArray(root.passkeys)
+        ? root.passkeys
+        : Array.isArray(root.data)
+          ? root.data
+          : [];
+    const ownsPasskey = items.some(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        (item as Record<string, unknown>).id === body.passkeyId,
+    );
+    if (!ownsPasskey) {
+      return json(req, { error: "passkey_not_found" }, 404);
+    }
+
+    const { error: deleteError } = await admin.auth.admin.passkey.deletePasskey({
+      userId: mainUser.id,
+      passkeyId: body.passkeyId,
+    });
+    if (deleteError) {
+      return json(req, { error: "passkey_delete_failed" }, 503);
+    }
+
+    const userAgent = (req.headers.get("user-agent") ?? "").slice(0, 500);
+    await admin.from("dashboard_security_events").insert({
+      user_id: mainUser.id,
+      session_id: sessionId,
+      event_type: "passkey_deleted",
+      user_agent: userAgent || null,
+      metadata: {
+        source: "dashboard-passkey-stepup",
+        fresh_second_factor: "totp",
+        passkey_id: body.passkeyId,
+      },
+    });
+
+    return json(req, { ok: true });
+  }
 
   if (action === "status") {
     const { data: assurance, error: assuranceError } = await admin
