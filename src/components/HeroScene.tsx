@@ -1,5 +1,7 @@
 import {
+  useEffect,
   useRef,
+  useState,
   type CSSProperties,
   type PointerEvent,
   type ReactNode,
@@ -73,8 +75,33 @@ export function HeroScene({
   const free =
     placement === "free" ||
     Boolean(config.desktopLayout || config.mobileLayout);
-  const mobileImage = slide.mobile_image_url || slide.image_url;
+  const [mobileImageFailed, setMobileImageFailed] = useState(false);
+  useEffect(() => {
+    setMobileImageFailed(false);
+  }, [slide.id, slide.image_url, slide.mobile_image_url]);
+
+  const mobileImage =
+    !mobileImageFailed && slide.mobile_image_url
+      ? slide.mobile_image_url
+      : slide.image_url;
   const ar = language === "ar";
+  const handleImageError = () => {
+    const hasDistinctMobileImage =
+      Boolean(slide.mobile_image_url) &&
+      slide.mobile_image_url !== slide.image_url;
+    const isMobileRender =
+      editor?.mode === "mobile" ||
+      (!editor &&
+        typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 639px)").matches);
+
+    if (hasDistinctMobileImage && isMobileRender && !mobileImageFailed) {
+      setMobileImageFailed(true);
+      return;
+    }
+
+    onImageError?.();
+  };
   const patch = (
     part: Part,
     next: HeroLayout[Part],
@@ -279,7 +306,7 @@ export function HeroScene({
               "Space Call"
             }
             draggable={false}
-            onError={onImageError}
+            onError={handleImageError}
             loading="eager"
             fetchPriority={priority ? "high" : "auto"}
             decoding="async"
