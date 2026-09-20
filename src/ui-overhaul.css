@@ -7,8 +7,8 @@
 
 :root {
   --ui-shell-max: 84rem;
-  --ui-radius-card: 1.25rem;
-  --ui-radius-control: 0.9rem;
+  --ui-radius-card: 1rem;
+  --ui-radius-control: 0.75rem;
   --ui-touch: 2.75rem;
   --ui-icon-size: 2.625rem;
   --ui-hairline: color-mix(in oklab, var(--color-border) 78%, transparent);
@@ -18,13 +18,7 @@
 
 /* ---------- Global visual consistency ---------- */
 .store-layout {
-  background:
-    radial-gradient(
-      circle at 50% -12rem,
-      color-mix(in oklab, var(--color-primary) 5%, transparent),
-      transparent 30rem
-    ),
-    var(--color-background);
+  background: var(--color-background);
 }
 
 .store-layout :is(button, a) svg.lucide {
@@ -57,7 +51,7 @@
 
 .home-section-header > a {
   min-height: 2.5rem;
-  border-radius: 999px;
+  border-radius: 0.625rem;
   padding-inline: 0.65rem;
 }
 
@@ -88,7 +82,7 @@
     > div:first-child
     > a:first-child
     img {
-    filter: drop-shadow(0 5px 10px color-mix(in oklab, var(--color-primary) 18%, transparent));
+    filter: none;
   }
 
   .store-layout > div[class*="lg:block"] header button[class*="rounded-full"][class*="bg-surface"] {
@@ -144,7 +138,7 @@
   }
 
   .store-layout header[class*="lg:hidden"] img {
-    filter: drop-shadow(0 4px 9px color-mix(in oklab, var(--color-primary) 16%, transparent));
+    filter: none;
   }
 
   .store-layout header[class*="lg:hidden"] :is(button, a)[class*="h-10"][class*="w-10"] {
