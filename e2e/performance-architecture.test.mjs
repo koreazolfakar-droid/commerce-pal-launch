@@ -35,6 +35,15 @@ test("router preloads only after navigation intent", async () => {
 });
 
 
+test("root warms the primary storefront backend connection", async () => {
+  const root = await read("src/routes/__root.tsx");
+  assert.match(
+    root,
+    /rel:\s*"preconnect"[\s\S]*?href:\s*"https:\/\/rtwyankpxtffqqrasyzw\.supabase\.co"[\s\S]*?crossOrigin:\s*"anonymous"/,
+  );
+});
+
+
 test("small storefront collections avoid hydrating the full native snapshot", async () => {
   const nativeStore = await read("src/lib/nativeStore.ts");
 
