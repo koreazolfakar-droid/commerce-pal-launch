@@ -129,11 +129,23 @@ export default function BrandList({
                   {menuId === brand.id && (
                     <>
                       <button
+                        type="button"
                         aria-label="Close brand actions"
-                        className="fixed inset-0 z-40 cursor-default"
+                        className="fixed inset-0 z-[55] cursor-default bg-slate-950/20 sm:z-40 sm:bg-transparent"
                         onClick={() => setMenuId(null)}
                       />
-                      <div className="absolute end-0 top-11 z-50 w-48 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                      <div
+                        role="menu"
+                        aria-label={"Actions for " + brand.name}
+                        className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-[60] max-h-[70dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:end-0 sm:top-11 sm:z-50 sm:max-h-none sm:w-48 sm:max-w-[calc(100vw-2rem)] sm:overflow-hidden sm:rounded-xl sm:p-1.5 sm:shadow-xl"
+                      >
+                        <div className="px-2.5 pb-2 pt-1 sm:hidden">
+                          <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-slate-200" />
+                          <div className="truncate text-[12px] font-black text-slate-700">
+                            {brand.name}
+                          </div>
+                          <div className="mt-0.5 text-[9px] text-slate-400">Brand actions</div>
+                        </div>
                         {[
                           { label: "Edit", icon: Pencil, action: () => onEdit(brand) },
                           {
@@ -165,26 +177,28 @@ export default function BrandList({
                           <button
                             key={label}
                             type="button"
+                            role="menuitem"
                             onClick={() => {
                               setMenuId(null);
                               action();
                             }}
-                            className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 py-2 text-start text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 sm:min-h-10 sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2 sm:text-[10px]"
                           >
-                            <Icon className="size-3.5 text-slate-400" />
+                            <Icon className="size-4 text-slate-400 sm:size-3.5" />
                             {label}
                           </button>
                         ))}
                         <div className="my-1 border-t border-slate-100" />
                         <button
                           type="button"
+                          role="menuitem"
                           onClick={() => {
                             setMenuId(null);
                             onDelete(brand);
                           }}
-                          className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 py-2 text-start text-[10px] font-semibold text-rose-600 transition hover:bg-rose-50"
+                          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-rose-600 transition hover:bg-rose-50 sm:min-h-10 sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2 sm:text-[10px]"
                         >
-                          <Trash2 className="size-3.5" />
+                          <Trash2 className="size-4 sm:size-3.5" />
                           Delete
                         </button>
                       </div>
