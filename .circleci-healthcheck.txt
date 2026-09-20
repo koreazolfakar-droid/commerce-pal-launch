@@ -1,0 +1,1 @@
+CircleCI baseline health check. Harmless diagnostic file; do not merge.
