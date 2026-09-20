@@ -300,8 +300,20 @@ export default function SecurityPage() {
             <div className="text-[11px] font-bold text-slate-500">MFA protection</div>
             <CheckCircle2 className="size-5 text-emerald-500" />
           </div>
-          <div className="mt-3 text-xl font-bold text-[#14203a]">{snapshot.mfaRequired && snapshot.currentLevel === "aal2" ? "AAL2 active" : "Attention required"}</div>
-          <div className="mt-1 text-[10px] text-slate-400">{snapshot.mfaEnrolledAt ? `Enrolled ${new Date(snapshot.mfaEnrolledAt).toLocaleDateString()}` : "Authenticator enrollment incomplete"}</div>
+          <div className="mt-3 text-xl font-bold text-[#14203a]">
+            {snapshot.passkeyStepUpReady
+              ? "Passkey verified"
+              : snapshot.mfaRequired && snapshot.currentLevel === "aal2"
+                ? "AAL2 active"
+                : "Attention required"}
+          </div>
+          <div className="mt-1 text-[10px] text-slate-400">
+            {snapshot.passkeyStepUpReady
+              ? "This password session completed a server-verified WebAuthn second step."
+              : snapshot.mfaEnrolledAt
+                ? `Enrolled ${new Date(snapshot.mfaEnrolledAt).toLocaleDateString()}`
+                : "Authenticator enrollment incomplete"}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5">

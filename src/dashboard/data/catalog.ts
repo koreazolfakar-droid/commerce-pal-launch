@@ -1,5 +1,5 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
-import { supabase } from "@/integrations/supabase/client";
+import { createEphemeralPasskeyClient, supabase } from "@/integrations/supabase/client";
 import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassword";
 import type { Tables } from "@/integrations/supabase/types";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
@@ -59,6 +59,7 @@ export type DashboardSecuritySnapshot = {
   nextLevel: "aal1" | "aal2" | null;
   mfaRequired: boolean;
   mfaEnrolledAt: string | null;
+  passkeyStepUpReady: boolean;
   turnstileConfigured: boolean;
   events: DashboardSecurityEvent[];
 };
@@ -72,6 +73,7 @@ export type DashboardMfaStatus = {
   currentLevel: "aal1" | "aal2" | null;
   nextLevel: "aal1" | "aal2" | null;
   verifiedFactorId: string | null;
+  passkeyStepUpReady: boolean;
   ready: boolean;
 };
 
@@ -447,30 +449,69 @@ export function isDashboardPasskeySupported() {
   );
 }
 
-export async function signInDashboardWithPasskey(): Promise<DashboardRole> {
+async function getDashboardPasskeyStepUpReady(): Promise<boolean> {
+  const { data, error } = await supabase.functions.invoke("dashboard-passkey-stepup", {
+    body: { action: "status" },
+  });
+  if (error) {
+    console.warn("[dashboard-security] passkey step-up status unavailable", error.message);
+    return false;
+  }
+  return data?.ready === true;
+}
+
+export async function verifyDashboardPasskeySecondFactor(): Promise<DashboardMfaStatus> {
   if (!isDashboardPasskeySupported()) {
     throw new Error("Passkeys are not supported by this browser or secure context.");
   }
 
-  let result: Awaited<ReturnType<typeof supabase.auth.signInWithPasskey>>;
-  try {
-    result = await supabase.auth.signInWithPasskey();
-  } catch (cause) {
-    throw new Error(dashboardPasskeyThrownErrorMessage(cause, "signin"));
+  const { data: beginData, error: beginError } = await supabase.functions.invoke(
+    "dashboard-passkey-stepup",
+    { body: { action: "begin" } },
+  );
+  if (beginError || !beginData?.ticketId) {
+    throw new Error("Passkey verification could not be started. Sign in again and try once more.");
   }
 
-  if (result.error) {
-    throw new Error(dashboardPasskeyErrorMessage(result.error, "signin"));
+  const verifier = createEphemeralPasskeyClient();
+  let passkeyAccessToken = "";
+  try {
+    const result = await verifier.auth.signInWithPasskey();
+    if (result.error) {
+      throw new Error(dashboardPasskeyErrorMessage(result.error, "signin"));
+    }
+    passkeyAccessToken = result.data?.session?.access_token ?? "";
+    if (!passkeyAccessToken) {
+      throw new Error("Passkey verification did not produce a valid proof.");
+    }
+
+    const { data: completeData, error: completeError } = await supabase.functions.invoke(
+      "dashboard-passkey-stepup",
+      {
+        body: {
+          action: "complete",
+          ticketId: beginData.ticketId,
+          passkeyAccessToken,
+        },
+      },
+    );
+    if (completeError || completeData?.ok !== true) {
+      throw new Error("Passkey verification could not be confirmed.");
+    }
+  } catch (cause) {
+    if (cause instanceof Error) throw cause;
+    throw new Error(dashboardPasskeyThrownErrorMessage(cause, "signin"));
+  } finally {
+    await verifier.auth.signOut({ scope: "local" }).catch(() => undefined);
+    passkeyAccessToken = "";
   }
 
   clearDashboardRoleCache();
-  const role = await getDashboardRole();
-  if (!role) {
-    await supabase.auth.signOut({ scope: "local" });
-    throw new Error(DASHBOARD_SIGNIN_DENIED_MESSAGE);
+  const status = await getDashboardMfaStatus();
+  if (!status?.ready || !status.passkeyStepUpReady) {
+    throw new Error("Passkey verification did not unlock this dashboard session.");
   }
-
-  return role;
+  return status;
 }
 
 export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
@@ -479,8 +520,13 @@ export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
   }
 
   const mfaStatus = await getDashboardMfaStatus();
-  if (!mfaStatus?.ready) {
-    throw new Error("Complete MFA verification before adding a passkey.");
+  if (
+    !mfaStatus ||
+    mfaStatus.currentLevel !== "aal2" ||
+    !mfaStatus.verifiedFactorId ||
+    mfaStatus.required !== true
+  ) {
+    throw new Error("Fresh authenticator verification is required before adding a passkey.");
   }
 
   let result: Awaited<ReturnType<typeof supabase.auth.registerPasskey>>;
@@ -509,10 +555,23 @@ export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
 }
 
 
-async function requireDashboardPasskeyManagementSession() {
+async function requireDashboardPasskeyReadSession() {
   const status = await getDashboardMfaStatus();
   if (!status?.ready) {
-    throw new Error("Complete MFA verification before managing passkeys.");
+    throw new Error("Complete second-factor verification before viewing passkeys.");
+  }
+  return status;
+}
+
+async function requireDashboardPasskeySensitiveSession() {
+  const status = await getDashboardMfaStatus();
+  if (
+    !status ||
+    status.currentLevel !== "aal2" ||
+    !status.verifiedFactorId ||
+    status.required !== true
+  ) {
+    throw new Error("Fresh authenticator verification is required before changing passkeys.");
   }
   return status;
 }
@@ -532,7 +591,7 @@ function mapDashboardPasskey(passkey: {
 }
 
 export async function listDashboardPasskeys(): Promise<DashboardPasskey[]> {
-  await requireDashboardPasskeyManagementSession();
+  await requireDashboardPasskeyReadSession();
   const { data, error } = await supabase.auth.passkey.list();
   if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
   return (data ?? []).map(mapDashboardPasskey);
@@ -542,7 +601,7 @@ export async function renameDashboardPasskey(
   passkeyId: string,
   friendlyName: string,
 ): Promise<void> {
-  await requireDashboardPasskeyManagementSession();
+  await requireDashboardPasskeyReadSession();
   const normalizedName = friendlyName.trim();
   if (!normalizedName || normalizedName.length > 120) {
     throw new Error("Passkey name must be between 1 and 120 characters.");
@@ -557,7 +616,7 @@ export async function renameDashboardPasskey(
 }
 
 export async function deleteDashboardPasskey(passkeyId: string): Promise<void> {
-  await requireDashboardPasskeyManagementSession();
+  await requireDashboardPasskeySensitiveSession();
   const { error } = await supabase.auth.passkey.delete({ passkeyId });
   if (error) throw new Error(dashboardPasskeyErrorMessage(error, "manage"));
   await logDashboardSecurityEvent("passkey_deleted", { passkeyId });
@@ -579,9 +638,10 @@ export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null
   if (roleError || !roleRow) return null;
   if (roleRow.role !== "admin" && roleRow.role !== "editor") return null;
 
-  const [aalResult, factorsResult] = await Promise.all([
+  const [aalResult, factorsResult, passkeyStepUpReady] = await Promise.all([
     supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
     supabase.auth.mfa.listFactors(),
+    getDashboardPasskeyStepUpReady(),
   ]);
 
   throwIfError(aalResult.error, "Checking MFA assurance failed");
@@ -604,10 +664,13 @@ export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null
     currentLevel,
     nextLevel,
     verifiedFactorId: verifiedFactor?.id ?? null,
+    passkeyStepUpReady,
     ready:
-      currentLevel === "aal2" &&
-      Boolean(verifiedFactor?.id) &&
-      roleRow.mfa_required === true,
+      roleRow.mfa_required === true &&
+      (
+        (currentLevel === "aal2" && Boolean(verifiedFactor?.id)) ||
+        passkeyStepUpReady
+      ),
   };
 }
 
@@ -802,6 +865,7 @@ export async function getDashboardSecuritySnapshot(): Promise<DashboardSecurityS
     nextLevel: mfaStatus.nextLevel,
     mfaRequired: mfaStatus.required,
     mfaEnrolledAt: mfaStatus.enrolledAt,
+    passkeyStepUpReady: mfaStatus.passkeyStepUpReady,
     turnstileConfigured: isDashboardTurnstileConfigured,
     events,
   };
