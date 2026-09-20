@@ -63,7 +63,11 @@ test("Turnstile widget uses explicit rendering, token expiry handling and CSP al
   assert.match(turnstile, /"expired-callback"/);
   assert.match(turnstile, /"error-callback"/);
   assert.match(turnstile, /turnstile\.reset/);
-  assert.match(csp, /script-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
+  assert.match(
+    csp,
+    /const scriptSources = \[[\s\S]+https:\/\/challenges\.cloudflare\.com[\s\S]+\]/,
+  );
+  assert.match(csp, /script-src \$\{scriptSources\.join\(" "\)\}/);
   assert.match(csp, /connect-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
   assert.match(csp, /frame-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
 });
