@@ -19,6 +19,13 @@ type ManagedStoreCategory = {
   sort_order: number;
 };
 
+type CategoryListItem = {
+  slug: string;
+  label: string;
+  imageUrl: string | undefined;
+  glyphSlug: string;
+};
+
 async function fetchManagedStoreCategories(): Promise<ManagedStoreCategory[] | null> {
   const { data, error } = await publicSupabase
     .from("store_categories")
@@ -63,7 +70,7 @@ function CategoriesPage() {
   const { managedCategories } = Route.useLoaderData();
   const { language } = useLanguage();
 
-  const items =
+  const items: CategoryListItem[] =
     managedCategories !== null
       ? managedCategories.map((category: ManagedStoreCategory) => {
           const artwork = findCategoryArtworkCollection(
