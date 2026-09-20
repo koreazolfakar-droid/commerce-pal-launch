@@ -103,7 +103,6 @@ function loadImage(file: File) {
   });
 }
 
-
 function removeEdgeConnectedWhiteBackground(
   context: CanvasRenderingContext2D,
   width: number,
@@ -123,7 +122,10 @@ function removeEdgeConnectedWhiteBackground(
 
   const isBackgroundCandidate = (pixelIndex: number) => {
     const offset = pixelIndex * 4;
-    if (data[offset + 3] === 0) return true;
+    // Already-transparent artwork does not need cleanup. Treat transparent
+    // pixels as a hard boundary so genuine white marks on transparent PNGs
+    // are never reached and erased by the flood fill.
+    if (data[offset + 3] < 240) return false;
     const red = data[offset];
     const green = data[offset + 1];
     const blue = data[offset + 2];
@@ -179,7 +181,10 @@ function removeEdgeConnectedWhiteBackground(
     const maxChannel = Math.max(red, green, blue);
     if (minChannel < featherFloor || maxChannel - minChannel > 28) return;
 
-    const whiteness = Math.min(1, Math.max(0, (minChannel - featherFloor) / Math.max(1, threshold - featherFloor)));
+    const whiteness = Math.min(
+      1,
+      Math.max(0, (minChannel - featherFloor) / Math.max(1, threshold - featherFloor)),
+    );
     data[offset + 3] = Math.round(alpha * (1 - whiteness * 0.85));
   };
 
