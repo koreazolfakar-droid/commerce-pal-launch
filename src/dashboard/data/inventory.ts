@@ -256,7 +256,15 @@ export async function loadInventoryPage(input: {
   const categoryId =
     category !== "all" && category !== "uncategorized" ? category : undefined;
 
-  const { data, error } = await supabase.rpc("dashboard_inventory_page", {
+  // The generated Supabase types lag behind the dashboard pagination functions,
+  // so these two RPCs are called through a loosely typed view of the client and
+  // narrowed to the row shapes the SQL functions return.
+  const rpc = supabase.rpc as unknown as (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: InventoryPageRow[] | null; error: unknown }>;
+
+  const { data, error } = await rpc("dashboard_inventory_page", {
     p_search: input.search?.trim() || undefined,
     p_category_id: categoryId,
     p_uncategorized: category === "uncategorized",
@@ -266,7 +274,7 @@ export async function loadInventoryPage(input: {
     p_page_size: pageSize,
   });
 
-  throwIfError(error, "Loading inventory page failed");
+  throwIfError(error as never, "Loading inventory page failed");
 
   const rows = data ?? [];
   return {
