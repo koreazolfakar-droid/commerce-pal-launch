@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
@@ -258,7 +259,7 @@ export async function createDashboardHeroSlide(
   input: DashboardHeroInput,
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("create_cms_hero_slide_v3", heroRpcPayload(input));
+  const { data, error } = await supabase.rpc("create_cms_hero_slide_v3", rpcArgs(heroRpcPayload(input)));
   throwIfError(error, "Creating hero slide failed");
   return data ? mapHero(data as HeroRow) : null;
 }
@@ -268,17 +269,17 @@ export async function updateDashboardHeroSlide(
   input: DashboardHeroInput,
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("update_cms_hero_slide_v3", {
+  const { data, error } = await supabase.rpc("update_cms_hero_slide_v3", rpcArgs({
     p_slide_id: id,
     ...heroRpcPayload(input),
-  });
+  }));
   throwIfError(error, "Updating hero slide failed");
   return data ? mapHero(data as HeroRow) : null;
 }
 
 export async function deleteDashboardHeroSlide(id: string): Promise<void> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("delete_cms_hero_slide", { p_slide_id: id });
+  const { error } = await supabase.rpc("delete_cms_hero_slide", rpcArgs({ p_slide_id: id }));
   throwIfError(error, "Deleting hero slide failed");
 }
 
@@ -286,9 +287,9 @@ export async function reorderDashboardHeroSlides(
   slides: Array<{ id: string; sortOrder: number }>,
 ): Promise<void> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("reorder_cms_hero_slides", {
+  const { error } = await supabase.rpc("reorder_cms_hero_slides", rpcArgs({
     p_items: slides.map((slide) => ({ id: slide.id, sort_order: slide.sortOrder })),
-  });
+  }));
   throwIfError(error, "Reordering hero slides failed");
 }
 
@@ -451,13 +452,13 @@ export async function uploadDashboardHeroImage(
   throwIfError(uploadError, "Uploading hero image failed");
 
   try {
-    const { data: asset, error: assetError } = await supabase.rpc("register_cms_media_asset", {
+    const { data: asset, error: assetError } = await supabase.rpc("register_cms_media_asset", rpcArgs({
       p_object_path: objectPath,
       p_file_name: storedFile.name,
       p_mime_type: storedFile.type,
       p_size_bytes: storedFile.size,
       p_alt_text: altText || null,
-    });
+    }));
     throwIfError(assetError, "Registering hero image failed");
 
     const row = asset as MediaRow;

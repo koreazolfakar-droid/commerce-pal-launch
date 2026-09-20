@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassword";
 import type { Tables } from "@/integrations/supabase/types";
@@ -732,10 +733,10 @@ async function logDashboardSecurityEvent(
   eventType: string,
   metadata: Record<string, unknown> = {},
 ) {
-  const { error } = await supabase.rpc("log_dashboard_security_event", {
+  const { error } = await supabase.rpc("log_dashboard_security_event", rpcArgs({
     p_event_type: eventType,
     p_metadata: metadata,
-  });
+  }));
   if (error) console.warn("[dashboard-security] event log failed", error.message);
 }
 

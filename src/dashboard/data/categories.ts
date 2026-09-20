@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import {
@@ -197,7 +198,7 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   const previousImageUrl = existing?.image_url ?? null;
   const nextImageUrl = category.image?.trim() || "";
 
-  const { error } = await supabase.rpc("update_store_category", {
+  const { error } = await supabase.rpc("update_store_category", rpcArgs({
     p_category_id: category.id,
     p_name: category.name.trim(),
     p_slug: normalizeCategorySlug(category.slug || category.name),
@@ -209,7 +210,7 @@ export async function updateDashboardCategory(category: CatalogCategory) {
     p_is_featured: category.featured,
     p_seo_title: category.seoTitle?.trim() || "",
     p_seo_description: category.seoDescription?.trim() || "",
-  });
+  }));
   throwIfError(error, "Updating category failed");
 
   const { data, error: readError } = await supabase
@@ -328,13 +329,13 @@ export async function deleteDashboardCategory(
   await requireDashboardStaff();
   const { error } = await supabase.rpc(
     "delete_store_category",
-    destinationCategoryId
+    rpcArgs(destinationCategoryId
       ? {
           p_category_id: categoryId,
           p_destination_category_id: destinationCategoryId,
         }
       : { p_category_id: categoryId },
-  );
+  ));
   throwIfError(error, "Deleting category failed");
   invalidateNativeStoreCache();
 }
@@ -345,9 +346,9 @@ export async function reorderDashboardCategories(categories: CatalogCategory[]) 
     id: category.id,
     sort_order: index + 1,
   })) satisfies Json[];
-  const { error } = await supabase.rpc("reorder_store_categories", {
+  const { error } = await supabase.rpc("reorder_store_categories", rpcArgs({
     p_items: items as Json,
-  });
+  }));
   throwIfError(error, "Saving category order failed");
   invalidateNativeStoreCache();
 }

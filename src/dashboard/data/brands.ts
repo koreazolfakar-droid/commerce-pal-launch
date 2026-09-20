@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import {
@@ -225,10 +226,10 @@ export async function deleteDashboardBrand(
   await requireDashboardStaff();
   const { error } = await supabase.rpc(
     "delete_store_brand",
-    destinationBrandId
+    rpcArgs(destinationBrandId
       ? { p_brand_id: brandId, p_destination_brand_id: destinationBrandId }
       : { p_brand_id: brandId },
-  );
+  ));
   throwIfError(error, "Deleting brand failed");
   invalidateNativeStoreCache();
 }
@@ -239,9 +240,9 @@ export async function reorderDashboardBrands(brands: CatalogBrand[]) {
     id: brand.id,
     sort_order: index + 1,
   })) satisfies Json[];
-  const { error } = await supabase.rpc("reorder_store_brands", {
+  const { error } = await supabase.rpc("reorder_store_brands", rpcArgs({
     p_items: items as Json,
-  });
+  }));
   throwIfError(error, "Saving brand order failed");
   invalidateNativeStoreCache();
 }

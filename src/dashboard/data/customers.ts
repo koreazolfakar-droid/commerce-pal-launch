@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
@@ -177,10 +178,10 @@ export async function getDashboardCustomer(id: string): Promise<DashboardCustome
   throwIfError(error, "Loading customer failed");
   if (!data) return null;
 
-  const { data: orders, error: ordersError } = await supabase.rpc("get_store_customer_orders", {
+  const { data: orders, error: ordersError } = await supabase.rpc("get_store_customer_orders", rpcArgs({
     p_customer_id: id,
     p_limit: 50,
-  });
+  }));
   throwIfError(ordersError, "Loading customer orders failed");
 
   const row = data as CustomerRow;
@@ -205,7 +206,7 @@ export async function createDashboardCustomer(
   input: DashboardCustomerCreateInput,
 ): Promise<DashboardCustomerDetail | null> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("create_store_customer", {
+  const { data, error } = await supabase.rpc("create_store_customer", rpcArgs({
     p_name: input.name,
     p_phone: input.phone,
     p_email: input.email || null,
@@ -215,7 +216,7 @@ export async function createDashboardCustomer(
     p_is_vip: input.isVip,
     p_is_blocked: input.isBlocked,
     p_internal_notes: input.internalNotes || null,
-  });
+  }));
   throwIfError(error, "Creating customer failed");
   const row = data as CustomerRow | null;
   return row ? getDashboardCustomer(row.id) : null;
@@ -226,7 +227,7 @@ export async function updateDashboardCustomer(
   input: DashboardCustomerInput,
 ): Promise<DashboardCustomerDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_customer_profile", {
+  const { error } = await supabase.rpc("update_store_customer_profile", rpcArgs({
     p_customer_id: id,
     p_name: input.name,
     p_email: input.email || null,
@@ -236,7 +237,7 @@ export async function updateDashboardCustomer(
     p_is_vip: input.isVip,
     p_is_blocked: input.isBlocked,
     p_internal_notes: input.internalNotes || null,
-  });
+  }));
   throwIfError(error, "Updating customer failed");
   return getDashboardCustomer(id);
 }

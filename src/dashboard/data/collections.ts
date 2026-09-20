@@ -1,3 +1,4 @@
+import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
@@ -197,7 +198,7 @@ export async function createDashboardCollection(
   input: DashboardCollectionInput,
 ): Promise<DashboardCollectionDetail | null> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("create_store_collection", {
+  const { data, error } = await supabase.rpc("create_store_collection", rpcArgs({
     p_title: input.title,
     p_handle: input.handle,
     p_title_ar: input.titleAr || null,
@@ -207,7 +208,7 @@ export async function createDashboardCollection(
     p_is_featured: input.isFeatured,
     p_seo_title: input.seoTitle || null,
     p_seo_description: input.seoDescription || null,
-  });
+  }));
   throwIfError(error, "Creating collection failed");
   return data ? getDashboardCollection(data.id) : null;
 }
@@ -217,7 +218,7 @@ export async function updateDashboardCollection(
   input: DashboardCollectionInput,
 ): Promise<DashboardCollectionDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_collection", {
+  const { error } = await supabase.rpc("update_store_collection", rpcArgs({
     p_collection_id: id,
     p_title: input.title,
     p_handle: input.handle,
@@ -228,14 +229,14 @@ export async function updateDashboardCollection(
     p_is_featured: input.isFeatured,
     p_seo_title: input.seoTitle || null,
     p_seo_description: input.seoDescription || null,
-  });
+  }));
   throwIfError(error, "Updating collection failed");
   return getDashboardCollection(id);
 }
 
 export async function deleteDashboardCollection(id: string): Promise<void> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("delete_store_collection", { p_collection_id: id });
+  const { error } = await supabase.rpc("delete_store_collection", rpcArgs({ p_collection_id: id }));
   throwIfError(error, "Deleting collection failed");
 }
 
@@ -244,10 +245,10 @@ export async function saveDashboardCollectionProducts(
   productIds: string[],
 ): Promise<DashboardCollectionDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("set_store_collection_products", {
+  const { error } = await supabase.rpc("set_store_collection_products", rpcArgs({
     p_collection_id: id,
     p_product_ids: productIds,
-  });
+  }));
   throwIfError(error, "Saving collection products failed");
   return getDashboardCollection(id);
 }
@@ -256,8 +257,8 @@ export async function reorderDashboardCollections(
   collections: Array<{ id: string; sortOrder: number }>,
 ): Promise<void> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("reorder_store_collections", {
+  const { error } = await supabase.rpc("reorder_store_collections", rpcArgs({
     p_items: collections.map((item) => ({ id: item.id, sort_order: item.sortOrder })),
-  });
+  }));
   throwIfError(error, "Reordering collections failed");
 }
