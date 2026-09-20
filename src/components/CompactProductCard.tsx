@@ -6,7 +6,6 @@ import { memo, useState } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
-import { BrandLogo } from "@/components/BrandLogo";
 import { discountPercent, formatPrice, variantSummary, type ShopifyProduct } from "@/lib/shopify";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
@@ -66,7 +65,7 @@ export const CompactProductCard = memo(function CompactProductCard({
     <article
       role={listItem ? "listitem" : undefined}
       className={cn(
-        "sc-product-card group relative flex h-full min-w-0 w-full flex-col overflow-hidden rounded-[1.15rem] border border-border/75 bg-card shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card-hover",
+        "sc-product-card group relative flex h-full min-w-0 w-full flex-col overflow-hidden rounded-xl border border-border/70 bg-card transition-colors duration-200 hover:border-border",
         className,
       )}
     >
@@ -82,7 +81,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             alt={image?.altText ?? node.title}
             size={280}
             sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 44vw"
-            imageClassName="group-hover:scale-[1.045]"
+            imageClassName="group-hover:scale-[1.02]"
           />
         </Link>
 
@@ -117,12 +116,9 @@ export const CompactProductCard = memo(function CompactProductCard({
       <div className="flex min-w-0 flex-1 flex-col gap-1 px-2.5 pb-2.5 pt-1 sm:px-3 sm:pb-3 sm:pt-1.5">
         <div className="flex min-h-4 min-w-0 items-center gap-1.5">
           {brand ? (
-            <>
-              <BrandLogo slug={brand.slug} label={brand.label} size={16} className="rounded" />
-              <p className="truncate text-[10px] font-bold uppercase tracking-[0.055em] text-foreground sm:text-[11px]">
-                {brand.label}
-              </p>
-            </>
+            <p className="truncate text-[10px] font-medium tracking-[0.035em] text-muted-foreground sm:text-[11px]">
+              {brand.label}
+            </p>
           ) : (
             <span className="invisible text-[10px]" aria-hidden="true">
               Brand
@@ -155,7 +151,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             onClick={handleAdd}
             disabled={isAdding || !variant || !inStock}
             aria-label={`Add ${node.title} to bag`}
-            className="press grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition-[opacity,transform,box-shadow] hover:scale-[1.03] hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:scale-100 disabled:opacity-40"
+            className="press grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-[opacity,transform] hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:scale-100 disabled:opacity-40"
           >
             {isAdding ? (
               <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
