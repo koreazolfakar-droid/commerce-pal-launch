@@ -55,7 +55,8 @@ export function HeroVisualEditor({
   const layoutKey = mode === "mobile" ? "mobileLayout" : "desktopLayout";
   const layout =
     config[layoutKey] ?? defaultHeroLayout(config, form.contentAlignment, ar);
-  const focalKey = mode === "mobile" ? "mobileFocalPoint" : "desktopFocalPoint";
+  const focalKey =
+    mode === "mobile" ? "mobileFocalPoint" : "desktopFocalPoint";
   const focal = config[focalKey] ?? config.focalPoint ?? { x: 50, y: 50 };
   const updateConfig = (patch: Partial<HeroVisualConfig>) =>
     apply({ ...form, visualConfig: { ...config, ...patch } });
@@ -171,11 +172,7 @@ export function HeroVisualEditor({
                   contentWidth: "narrow",
                   buttonRadius: "pill",
                   buttonPlacement: theme.placement,
-                  desktopLayout: {
-                    content: { ...theme.content },
-                    buttons: { ...theme.buttons },
-                  },
-                  mobileLayout: {
+                  [layoutKey]: {
                     content: { ...theme.content },
                     buttons: { ...theme.buttons },
                   },
@@ -252,6 +249,13 @@ export function HeroVisualEditor({
           onClick={() => updateConfig({ [layoutKey]: undefined })}
         >
           {ar ? "إعادة مواضع هذا الجهاز" : "Reset device positions"}
+        </button>
+        <button
+          type="button"
+          className="min-h-11 rounded-lg border px-3 text-xs"
+          onClick={() => updateConfig({ [focalKey]: undefined })}
+        >
+          {ar ? "إعادة تركيز صورة هذا الجهاز" : "Reset device image focus"}
         </button>
       </div>
       <div
