@@ -2,6 +2,7 @@ import { Check, Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import type { ImageBackgroundRemovalOptions } from "@/dashboard/lib/imageProcessing";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
 import { normalizeBrandSlug, type CatalogBrand } from "@/dashboard/data/brands";
 
@@ -78,6 +79,7 @@ export type BrandImageChange = {
   coverFile?: File;
   removeLogo?: boolean;
   removeCover?: boolean;
+  logoBackgroundRemoval?: ImageBackgroundRemovalOptions;
 };
 
 export default function BrandForm({
@@ -99,6 +101,8 @@ export default function BrandForm({
   const [pendingCover, setPendingCover] = useState<File | null>(null);
   const [removeLogo, setRemoveLogo] = useState(false);
   const [removeCover, setRemoveCover] = useState(false);
+  const [removeLogoBackground, setRemoveLogoBackground] = useState(true);
+  const [logoBackgroundTolerance, setLogoBackgroundTolerance] = useState(18);
   const logoInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
   const patch = (next: Partial<CatalogBrand>) => setDraft((current) => ({ ...current, ...next }));
@@ -152,6 +156,14 @@ export default function BrandForm({
       ...(pendingCover ? { coverFile: pendingCover } : {}),
       ...(removeLogo ? { removeLogo: true } : {}),
       ...(removeCover ? { removeCover: true } : {}),
+      ...(pendingLogo
+        ? {
+            logoBackgroundRemoval: {
+              enabled: removeLogoBackground,
+              tolerance: logoBackgroundTolerance,
+            },
+          }
+        : {}),
     });
     setSaving(false);
     if (saved) onClose();
@@ -319,12 +331,47 @@ export default function BrandForm({
                 </div>
               </div>
               {pendingLogo ? (
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-2 space-y-3">
+                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50/45 p-3">
+                    <Toggle
+                      title="Remove white background"
+                      description="Keeps only white/off-white pixels connected to the image edges, so interior white logo details stay protected."
+                      checked={removeLogoBackground}
+                      onChange={setRemoveLogoBackground}
+                    />
+                    {removeLogoBackground ? (
+                      <label className="mt-3 block rounded-xl border border-emerald-100 bg-white px-3 py-2.5">
+                        <span className="flex items-center justify-between gap-3 text-[10px] font-bold text-slate-600">
+                          <span>Background tolerance</span>
+                          <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black text-emerald-700">
+                            {logoBackgroundTolerance}
+                          </span>
+                        </span>
+                        <input
+                          type="range"
+                          min={4}
+                          max={60}
+                          step={1}
+                          value={logoBackgroundTolerance}
+                          onChange={(event) => setLogoBackgroundTolerance(Number(event.target.value))}
+                          className="mt-2 w-full accent-emerald-600"
+                          aria-label="Logo background removal tolerance"
+                        />
+                        <span className="mt-1 block text-[8px] leading-3 text-slate-400">
+                          Lower is safer. Raise it only when the uploaded background is gray/off-white.
+                        </span>
+                      </label>
+                    ) : null}
+                  </div>
                   <ImageOptimizationPreview
                     files={[pendingLogo]}
                     resolution="1080"
                     title="Logo compression preview"
                     compact
+                    backgroundRemoval={{
+                      enabled: removeLogoBackground,
+                      tolerance: logoBackgroundTolerance,
+                    }}
                   />
                 </div>
               ) : null}
@@ -374,7 +421,7 @@ export default function BrandForm({
             </div>
             <div className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-[10px] text-slate-400">
               <ImageIcon className="size-4 shrink-0" />
-              JPG, PNG, WebP and AVIF are optimized automatically. Use a transparent square logo for best results.
+              JPG, PNG, WebP and AVIF are optimized automatically. Brand logos can also remove edge-connected white backgrounds and save as transparent WebP.
             </div>
           </section>
 
