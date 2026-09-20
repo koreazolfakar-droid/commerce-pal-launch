@@ -157,12 +157,13 @@ Deno.serve(async (req: Request) => {
   });
 
   const forwarded =
-    req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-real-ip") ||
+    req.headers.get("cf-connecting-ip")?.trim() ||
+    req.headers.get("x-real-ip")?.trim() ||
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     "unknown";
-  const agent = req.headers.get("user-agent")?.slice(0, 180) || "unknown";
-  const fingerprint = await sha256(`${forwarded}|${agent}`);
+  // Rate limiting must be stable for a client IP. User-Agent is caller-controlled
+  // and including it lets an attacker reset the bucket simply by rotating headers.
+  const fingerprint = await sha256(forwarded.slice(0, 128));
 
   const { data: rateRows, error: rateError } = await db.rpc("consume_edge_rate_limit", {
     _key: `create-order:${fingerprint}`,
