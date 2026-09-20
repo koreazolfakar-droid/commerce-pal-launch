@@ -224,7 +224,8 @@ Deno.serve(async (req) => {
   }
 
   if (action === "delete") {
-    if (!uuidLike(body.passkeyId)) {
+    const passkeyId = typeof body.passkeyId === "string" ? body.passkeyId : "";
+    if (!uuidLike(passkeyId)) {
       return json(req, { error: "invalid_passkey_id" }, 400);
     }
     if (claims.aal !== "aal2" || !hasFreshTotpAmr(claims, now)) {
@@ -252,7 +253,7 @@ Deno.serve(async (req) => {
       (item) =>
         item &&
         typeof item === "object" &&
-        (item as Record<string, unknown>).id === body.passkeyId,
+        (item as Record<string, unknown>).id === passkeyId,
     );
     if (!ownsPasskey) {
       return json(req, { error: "passkey_not_found" }, 404);
@@ -260,7 +261,7 @@ Deno.serve(async (req) => {
 
     const { error: deleteError } = await admin.auth.admin.passkey.deletePasskey({
       userId: mainUser.id,
-      passkeyId: body.passkeyId,
+      passkeyId,
     });
     if (deleteError) {
       return json(req, { error: "passkey_delete_failed" }, 503);
@@ -275,7 +276,7 @@ Deno.serve(async (req) => {
       metadata: {
         source: "dashboard-passkey-stepup",
         fresh_second_factor: "totp",
-        passkey_id: body.passkeyId,
+        passkey_id: passkeyId,
       },
     });
 
