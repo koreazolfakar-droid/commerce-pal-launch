@@ -40,6 +40,32 @@ jobs:
             source "$BASH_ENV"
             bun audit --audit-level=high
 
+  diag-lock-install:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Verify frozen lockfile install
+          command: bun install --frozen-lockfile
+
+  diag-ci-config-tests:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Verify security CI configuration tests
+          command: node --test e2e/ci-config.test.mjs e2e/security-pipeline-config.test.mjs
+
+
   storefront-ci:
     docker:
       - image: cimg/node:lts
@@ -95,6 +121,8 @@ workflows:
     jobs:
       - security-source
       - security-dependencies
+      - diag-lock-install
+      - diag-ci-config-tests
       - storefront-ci:
           filters:
             branches:
