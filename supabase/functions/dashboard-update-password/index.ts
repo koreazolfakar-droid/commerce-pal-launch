@@ -235,14 +235,13 @@ Deno.serve(async (req) => {
   }
 
   const claims = decodeJwtPayload(token);
-  if (!claims || claims.sub !== user.id || claims.aal !== "aal2") {
-    return json(req, { error: "aal2_required" }, 403);
+  if (!claims || claims.sub !== user.id) {
+    return json(req, { error: "invalid_session" }, 401);
   }
 
   const now = Date.now();
-  if (!hasFreshTotpAmr(claims, now)) {
-    return json(req, { error: "fresh_totp_required" }, 403);
-  }
+  const sessionId =
+    typeof claims.session_id === "string" ? claims.session_id : null;
 
   const { data: roleRows, error: roleError } = await admin
     .from("user_roles")
@@ -261,7 +260,30 @@ Deno.serve(async (req) => {
     return json(req, { error: "dashboard_access_required" }, 403);
   }
 
-  const sessionId = typeof claims.session_id === "string" ? claims.session_id : null;
+  const freshTotp = claims.aal === "aal2" && hasFreshTotpAmr(claims, now);
+  let freshPasskey = false;
+
+  if (sessionId) {
+    const cutoff = new Date(now - SENSITIVE_REAUTH_WINDOW_MS).toISOString();
+    const { data: passkeyAssurance, error: passkeyAssuranceError } = await admin
+      .from("dashboard_passkey_session_assurance")
+      .select("verified_at,expires_at")
+      .eq("user_id", user.id)
+      .eq("session_id", sessionId)
+      .gte("verified_at", cutoff)
+      .gt("expires_at", new Date(now).toISOString())
+      .maybeSingle();
+
+    if (passkeyAssuranceError) {
+      return json(req, { error: "stepup_check_unavailable" }, 503);
+    }
+    freshPasskey = Boolean(passkeyAssurance?.verified_at);
+  }
+
+  if (!freshTotp && !freshPasskey) {
+    return json(req, { error: "fresh_second_factor_required" }, 403);
+  }
+
   const requestUserAgent = (req.headers.get("user-agent") ?? "").slice(0, 500);
   const audit = async (
     eventType: string,
@@ -324,6 +346,7 @@ Deno.serve(async (req) => {
     source: "dashboard-update-password",
     local_policy_checked: true,
     hibp_server_checked: true,
+    fresh_second_factor: freshPasskey ? "passkey" : "totp",
   });
 
   return json(req, { ok: true });
