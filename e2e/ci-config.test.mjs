@@ -8,6 +8,8 @@ test("repository exposes one comprehensive validation command", async () => {
   const pkg = JSON.parse(await read("package.json"));
   assert.match(pkg.scripts.typecheck, /routes:generate/);
   assert.match(pkg.scripts.typecheck, /tsc --noEmit/);
+  assert.match(pkg.scripts["security:scan"], /security-gate\.mjs/);
+  assert.match(pkg.scripts["security:scan"], /bun audit --audit-level=high/);
   for (const step of ["typecheck", "lint", "test:unit", "build", "test:ssr"]) {
     assert.match(pkg.scripts.check, new RegExp(step));
   }
@@ -25,19 +27,13 @@ test("GitHub Storefront CI is manual-only", async () => {
   assert.match(workflow, /bun run build/);
 });
 
-test("CircleCI scans every pipeline and keeps full storefront validation for important branches", async () => {
+test("CircleCI runs a security gate on every pipeline and full validation for important branches", async () => {
   const circle = await read(".circleci/config.yml");
 
-  assert.match(circle, /security-semgrep:/);
-  assert.match(circle, /security-gitleaks:/);
-  assert.match(circle, /security-trivy:/);
-  assert.match(circle, /semgrep==1\.177\.0/);
-  assert.match(circle, /gitleaks_8\.30\.1_linux_x64/);
-  assert.match(circle, /trivy_0\.74\.0_Linux-64bit/);
-  assert.match(circle, /--severity HIGH,CRITICAL/);
-  assert.match(circle, /- security-semgrep/);
-  assert.match(circle, /- security-gitleaks/);
-  assert.match(circle, /- security-trivy/);
+  assert.match(circle, /security-gate:/);
+  assert.match(circle, /node scripts\/security-gate\.mjs/);
+  assert.match(circle, /bun audit --audit-level=high/);
+  assert.match(circle, /- security-gate/);
 
   assert.match(circle, /\/\^important\\\/\.\*\//);
   assert.match(circle, /bun install --frozen-lockfile/);
@@ -46,4 +42,20 @@ test("CircleCI scans every pipeline and keeps full storefront validation for imp
   assert.match(circle, /bun run test:unit/);
   assert.match(circle, /bun run build/);
   assert.match(circle, /bun run test:ssr/);
+});
+
+test("native security scanner protects secrets and dangerous production primitives", async () => {
+  const scanner = await read("scripts/security-gate.mjs");
+  for (const marker of [
+    "PRIVATE KEY",
+    "AKIA",
+    "github_pat_",
+    "sk_live_",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "eval()",
+    "new Function()",
+    "child_process",
+  ]) {
+    assert.ok(scanner.includes(marker), `missing security marker: ${marker}`);
+  }
 });
