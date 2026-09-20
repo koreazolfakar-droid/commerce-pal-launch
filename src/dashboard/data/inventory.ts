@@ -217,15 +217,25 @@ export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
 }
 
 export async function loadInventoryLatestMovements(
+  variantIds?: string[],
   limit = 1000,
 ): Promise<InventoryLatestMovement[]> {
   await requireDashboardStaff();
   const safeLimit = Math.min(2000, Math.max(1, Math.trunc(limit)));
+  const ids = [...new Set((variantIds ?? []).filter(Boolean))];
 
-  const { data, error } = await supabase
+  if (variantIds && ids.length === 0) return [];
+
+  let query = supabase
     .from("store_inventory_movements")
     .select("variant_id,created_at,quantity_delta")
-    .not("variant_id", "is", null)
+    .not("variant_id", "is", null);
+
+  if (ids.length) {
+    query = query.in("variant_id", ids);
+  }
+
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .limit(safeLimit);
 
