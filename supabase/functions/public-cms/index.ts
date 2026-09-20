@@ -1,6 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
+const CMS_EDGE_MEMORY_TTL_MS = 30_000;
+let cmsBodyCache: { expiresAt: number; body: string } | null = null;
+
 function headers(_req: Request) {
   return {
     "Access-Control-Allow-Origin": "*",
@@ -42,6 +45,11 @@ Deno.serve(async (req: Request) => {
       status: 500,
       headers: headers(req),
     });
+  }
+
+  const cachedBody = cmsBodyCache;
+  if (cachedBody && cachedBody.expiresAt > Date.now()) {
+    return new Response(cachedBody.body, { status: 200, headers: headers(req) });
   }
 
   const db = createClient(url, secret, {
@@ -212,15 +220,18 @@ Deno.serve(async (req: Request) => {
     }),
   );
 
-  return new Response(
-    JSON.stringify({
-      settings,
-      heroSlides,
-      sections,
-      navigation,
-      brands: brandsResult.data ?? [],
-      seoPages,
-    }),
-    { status: 200, headers: headers(req) },
-  );
+  const body = JSON.stringify({
+    settings,
+    heroSlides,
+    sections,
+    navigation,
+    brands: brandsResult.data ?? [],
+    seoPages,
+  });
+  cmsBodyCache = {
+    expiresAt: Date.now() + CMS_EDGE_MEMORY_TTL_MS,
+    body,
+  };
+
+  return new Response(body, { status: 200, headers: headers(req) });
 });
