@@ -17,7 +17,7 @@ test("homepage keeps critical UI small and defers secondary work", async () => {
   assert.match(home, /LazyDealSpotlight/);
   assert.match(home, /requestIdleCallback/);
   assert.match(home, /enabled: secondaryQueriesReady/);
-  assert.match(home, /\.\.\.catalogQueryOptions\(\),\s*enabled: deferredWorkReady/s);
+  assert.match(home, /\.\.\.homepageCatalogQueryOptions\(\),\s*enabled: deferredWorkReady/s);
   assert.match(home, /\.\.\.collectionsQueryOptions\(\),\s*enabled: deferredWorkReady/s);
   assert.match(
     home,
