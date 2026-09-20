@@ -14,8 +14,8 @@ const login = await readFile(
   new URL("../src/dashboard/pages/LoginPage.tsx", import.meta.url),
   "utf8",
 );
-const server = await readFile(
-  new URL("../src/server.ts", import.meta.url),
+const csp = await readFile(
+  new URL("../src/lib/contentSecurityPolicy.ts", import.meta.url),
   "utf8",
 );
 const passwordEdge = await readFile(
@@ -114,7 +114,7 @@ test("HIBP outages fail closed in both browser and server layers", () => {
 
 test("browser CSP still allows only the HIBP range endpoint used for UX screening", () => {
   assert.match(
-    server,
+    csp,
     /connect-src[^\n]+https:\/\/api\.pwnedpasswords\.com/,
   );
 });
