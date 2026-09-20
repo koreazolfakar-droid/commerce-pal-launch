@@ -161,7 +161,7 @@ export default function BrandForm({
     <div
       className="fixed inset-0 z-[95] grid place-items-end bg-slate-950/45 p-0 backdrop-blur-[2px] sm:place-items-center sm:p-4"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget && !saving) onClose();
       }}
     >
       <div className="max-h-[94vh] w-full overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[28px]">
@@ -180,8 +180,9 @@ export default function BrandForm({
           <button
             type="button"
             onClick={onClose}
+            disabled={saving}
             aria-label="Close brand form"
-            className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400"
+            className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 disabled:opacity-50"
           >
             <X className="size-4" />
           </button>
@@ -445,12 +446,12 @@ export default function BrandForm({
           </section>
         </div>
 
-        <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-6">
+        <div className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:flex sm:justify-end sm:px-6">
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50 sm:w-auto"
           >
             Cancel
           </button>
@@ -458,7 +459,7 @@ export default function BrandForm({
             type="button"
             onClick={() => void submit()}
             disabled={saving}
-            className="flex h-10 min-w-32 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-10 w-full min-w-32 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
             {saving ? "Saving…" : mode === "create" ? "Create Brand" : "Save Brand"}
