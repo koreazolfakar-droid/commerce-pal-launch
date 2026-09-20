@@ -35,8 +35,8 @@ test("homepage catalog preserves the last successful Supabase snapshot during tr
   const queries = await source("src/lib/queries.ts");
   assert.match(queries, /CATALOG_REFRESH_FALLBACK_TTL_MS = 5 \* 60 \* 1000/);
   assert.match(queries, /CATALOG_REFRESH_FALLBACK_STORAGE_KEY = "space-call-supabase-catalog-fallback-v1"/);
-  assert.match(queries, /window\.sessionStorage\.setItem\(CATALOG_REFRESH_FALLBACK_STORAGE_KEY/);
-  assert.match(queries, /window\.sessionStorage\.getItem\(CATALOG_REFRESH_FALLBACK_STORAGE_KEY/);
+  assert.match(queries, /window\.sessionStorage\.setItem\([\s\S]*?CATALOG_REFRESH_FALLBACK_STORAGE_KEY/);
+  assert.match(queries, /window\.sessionStorage\.getItem\(CATALOG_REFRESH_FALLBACK_STORAGE_KEY\)/);
   assert.match(queries, /Supabase catalog refresh failed; keeping the last successful tab snapshot/);
   assert.match(queries, /QUERY_RETRY_COUNT = 2/);
   assert.match(queries, /retryDelay/);

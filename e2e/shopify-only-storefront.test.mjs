@@ -11,7 +11,7 @@ test("public storefront queries use the native Supabase facade", async () => {
   ]);
   assert.match(queries, /@\/lib\/storefrontData/);
   assert.match(facade, /@\/lib\/nativeStore/);
-  assert.doesNotMatch(facade, /Shopify fallback|storefrontApiRequest|SHOPIFY_STOREFRONT/);
+  assert.doesNotMatch(facade, /storefrontApiRequest|SHOPIFY_STOREFRONT|myshopify\.com/);
 });
 
 test("public CMS is Supabase-backed and resilient", async () => {

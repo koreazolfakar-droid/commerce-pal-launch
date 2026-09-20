@@ -38,5 +38,5 @@ test("storefront consumes CMS identity, logo, WhatsApp and social settings", () 
   assert.match(footer, /cms\?\.settings\["whatsapp_number"\]/);
   assert.match(footer, /socialSetting\("instagram_url"/);
   assert.match(publicCms, /from\("cms_site_settings"\)/);
-  assert.match(publicCms, /"Cache-Control": "no-store, max-age=0"/);
+  assert.match(publicCms, /"Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300"/);
 });

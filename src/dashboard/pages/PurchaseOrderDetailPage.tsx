@@ -75,7 +75,8 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
   const [error, setError] = useState("");
 
   const load = useCallback(async (manual = false) => {
-    manual ? setRefreshing(true) : setLoading(true);
+    if (manual) setRefreshing(true);
+      else setLoading(true);
     try {
       const detail = await loadPurchaseOrderDetail(id);
       setPo(detail.purchaseOrder);

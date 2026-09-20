@@ -57,7 +57,8 @@ export default function CustomersPage() {
 
   const load = useCallback(
     async (manual = false) => {
-      manual ? setRefreshing(true) : setLoading(true);
+      if (manual) setRefreshing(true);
+      else setLoading(true);
       try {
         const next = await listDashboardCustomers({ search, filter, page, pageSize: 20 });
         setResult(next);

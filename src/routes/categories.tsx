@@ -10,6 +10,7 @@ import { cdnImage } from "@/lib/image";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
+import type { CatalogFacet } from "@/lib/taxonomy";
 
 type ManagedStoreCategory = {
   name: string;
@@ -17,6 +18,13 @@ type ManagedStoreCategory = {
   slug: string;
   image_url: string | null;
   sort_order: number;
+};
+
+type CategoryDisplayItem = {
+  slug: string;
+  label: string;
+  imageUrl: string | undefined;
+  glyphSlug: string;
 };
 
 async function fetchManagedStoreCategories(): Promise<ManagedStoreCategory[] | null> {
@@ -63,9 +71,9 @@ function CategoriesPage() {
   const { managedCategories } = Route.useLoaderData();
   const { language } = useLanguage();
 
-  const items =
+  const items: CategoryDisplayItem[] =
     managedCategories !== null
-      ? managedCategories.map((category) => {
+      ? managedCategories.map((category: ManagedStoreCategory) => {
           const artwork = findCategoryArtworkCollection(
             collections,
             category.slug,
@@ -82,7 +90,7 @@ function CategoriesPage() {
             glyphSlug: category.slug,
           };
         })
-      : catalog.categories.map((category) => {
+      : catalog.categories.map((category: CatalogFacet) => {
           const artwork = findCategoryArtworkCollection(
             collections,
             category.slug,
@@ -116,7 +124,7 @@ function CategoriesPage() {
           role="list"
           aria-label={language === "ar" ? "تصنيفات المتجر" : "Store categories"}
         >
-          {items.map((category) => (
+          {items.map((category: CategoryDisplayItem) => (
             <Link
               key={category.slug}
               to="/category/$slug"

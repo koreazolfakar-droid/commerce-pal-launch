@@ -63,7 +63,7 @@ test("login provides accessible inline errors and loading states", () => {
   assert.match(login, /Loader2/);
   assert.match(login, /disabled=\{loading\}/);
   assert.match(login, /autoComplete="username"/);
-  assert.match(login, /autoComplete="current-password"/);
+  assert.match(login, /autoComplete = "current-password"/);
   assert.match(login, /spellCheck=\{false\}/);
   assert.match(login, /getModifierState\("CapsLock"\)/);
   assert.match(login, /Caps Lock is on\. Check your password before continuing\./);
@@ -71,17 +71,36 @@ test("login provides accessible inline errors and loading states", () => {
 });
 
 test("login UI clears sensitive password state when changing authentication flows", () => {
-  assert.match(
-    login,
-    /setPassword\("")[\s\S]+setShowPassword\(false\)[\s\S]+setView\("forgot"\)/,
+  const forgotView = login.indexOf('setView("forgot");');
+  const forgotPasswordClear = login.lastIndexOf('setPassword("");', forgotView);
+  const forgotVisibilityClear = login.lastIndexOf("setShowPassword(false);", forgotView);
+  assert.ok(
+    forgotView >= 0 &&
+      forgotPasswordClear >= 0 &&
+      forgotVisibilityClear > forgotPasswordClear &&
+      forgotVisibilityClear < forgotView,
+    "forgot-password flow must clear password state before changing views",
   );
-  assert.match(
-    login,
-    /const backToSignIn = \(\) => \{[\s\S]+setPassword\("")[\s\S]+setNewPassword\("")[\s\S]+setConfirmPassword\("")/,
+
+  const backStart = login.indexOf("const backToSignIn");
+  const backPassword = login.indexOf('setPassword("");', backStart);
+  const backNewPassword = login.indexOf('setNewPassword("");', backPassword);
+  const backConfirm = login.indexOf('setConfirmPassword("");', backNewPassword);
+  assert.ok(
+    backStart >= 0 && backPassword > backStart && backNewPassword > backPassword && backConfirm > backNewPassword,
+    "back-to-sign-in must clear all password fields",
   );
-  assert.match(
-    login,
-    /const handleMfaCancel = useCallback\(\(\) => \{[\s\S]+setPassword\("")[\s\S]+setNewPassword\("")[\s\S]+setConfirmPassword\("")/,
+
+  const cancelStart = login.indexOf("const handleMfaCancel");
+  const cancelPassword = login.indexOf('setPassword("");', cancelStart);
+  const cancelNewPassword = login.indexOf('setNewPassword("");', cancelPassword);
+  const cancelConfirm = login.indexOf('setConfirmPassword("");', cancelNewPassword);
+  assert.ok(
+    cancelStart >= 0 &&
+      cancelPassword > cancelStart &&
+      cancelNewPassword > cancelPassword &&
+      cancelConfirm > cancelNewPassword,
+    "MFA cancellation must clear all password fields",
   );
 });
 
@@ -93,9 +112,16 @@ test("sign-in errors are sanitized and failed credentials are cleared", () => {
   assert.match(catalog, /status >= 500/);
   assert.doesNotMatch(catalog, /throwIfError\(error, "Sign in failed"\)/);
   assert.doesNotMatch(catalog, /This account does not have dashboard access\./);
-  assert.match(
-    login,
-    /catch \(cause\) \{[\s\S]+setPassword\("")[\s\S]+setShowPassword\(false\)[\s\S]+setInlineError\(message\)/,
+  const signInCatch = login.indexOf("catch (cause)");
+  const signInPasswordClear = login.indexOf('setPassword("");', signInCatch);
+  const signInVisibilityClear = login.indexOf("setShowPassword(false);", signInPasswordClear);
+  const signInInlineError = login.indexOf("setInlineError(message);", signInVisibilityClear);
+  assert.ok(
+    signInCatch >= 0 &&
+      signInPasswordClear > signInCatch &&
+      signInVisibilityClear > signInPasswordClear &&
+      signInInlineError > signInVisibilityClear,
+    "failed sign-in must clear password state before showing the sanitized error",
   );
 });
 

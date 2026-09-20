@@ -60,7 +60,8 @@ export default function OrdersPage() {
 
   const load = useCallback(
     async (manual = false) => {
-      manual ? setRefreshing(true) : setLoading(true);
+      if (manual) setRefreshing(true);
+      else setLoading(true);
       try {
         const next = await listDashboardOrders({
           search,

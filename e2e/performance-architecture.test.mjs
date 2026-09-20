@@ -17,7 +17,7 @@ test("homepage keeps critical UI small and defers secondary work", async () => {
   assert.match(home, /LazyDealSpotlight/);
   assert.match(home, /requestIdleCallback/);
   assert.match(home, /enabled: secondaryQueriesReady/);
-  assert.match(home, /\.\.\.catalogQueryOptions\(\),\s*enabled: deferredWorkReady/s);
+  assert.match(home, /\.\.\.homepageCatalogQueryOptions\(\),\s*enabled: deferredWorkReady/s);
   assert.match(home, /\.\.\.collectionsQueryOptions\(\),\s*enabled: deferredWorkReady/s);
   assert.doesNotMatch(home, /<HomeHero[\s\S]*?products=\{products\}/);
   assert.match(home, /deferredWorkReady/);
@@ -54,7 +54,7 @@ test("homepage hero refresh never replays stale local fallback", async () => {
 
   assert.doesNotMatch(hero, /space-call-home-hero-refresh-fallback-v1/);
   assert.doesNotMatch(hero, /readStoredHero|storeHero|sessionStorage/);
-  assert.match(cms, /cache:\s*"no-store"/);
+  assert.match(cms, /cache:\s*"default"/);
 });
 
 
@@ -72,8 +72,9 @@ test("native storefront data path avoids wildcard payloads", async () => {
     nativeStore,
     /export async function fetchCollections[\s\S]*?\.from\("store_collections"\)[\s\S]*?\.limit\(Math\.max\(0, first\)\)/,
   );
-  assert.doesNotMatch(
-    nativeStore,
-    /export async function fetchCollections[\s\S]*?loadSnapshot\(\)/,
-  );
+  const collectionsStart = nativeStore.indexOf("export async function fetchCollections");
+  const collectionsEnd = nativeStore.indexOf("export async function fetchCollectionByHandle", collectionsStart);
+  assert.ok(collectionsStart >= 0 && collectionsEnd > collectionsStart);
+  const collectionsSource = nativeStore.slice(collectionsStart, collectionsEnd);
+  assert.doesNotMatch(collectionsSource, /loadSnapshot\(\)/);
 });

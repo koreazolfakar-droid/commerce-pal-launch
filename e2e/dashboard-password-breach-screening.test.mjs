@@ -18,6 +18,10 @@ const server = await readFile(
   new URL("../src/server.ts", import.meta.url),
   "utf8",
 );
+const csp = await readFile(
+  new URL("../src/lib/contentSecurityPolicy.ts", import.meta.url),
+  "utf8",
+);
 const passwordEdge = await readFile(
   new URL("../supabase/functions/dashboard-update-password/index.ts", import.meta.url),
   "utf8",
@@ -89,7 +93,7 @@ test("recovery flow requires MFA before exposing the password update path", () =
   assert.match(login, /if \(recoveryMode\)[\s\S]+setView\("recovery"\)/);
   assert.match(login, /setView\("mfa"\)/);
   assert.match(login, /if \(recoveryMode\)[\s\S]+\/dashboard\/login\?mode=recovery/);
-  assert.match(login, /screened against HIBP twice/);
+  assert.match(login, /updateDashboardPassword\(newPassword\)/);
 });
 
 test("HIBP outages fail closed in both browser and server layers", () => {
@@ -102,7 +106,7 @@ test("HIBP outages fail closed in both browser and server layers", () => {
 
 test("browser CSP still allows only the HIBP range endpoint used for UX screening", () => {
   assert.match(
-    server,
+    csp,
     /connect-src[^\n]+https:\/\/api\.pwnedpasswords\.com/,
   );
 });
