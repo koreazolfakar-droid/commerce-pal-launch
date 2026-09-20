@@ -107,11 +107,8 @@ function useDeferredHomepageWork() {
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    const [heroCollection, cms] = await Promise.all([
-      context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
-      context.queryClient.ensureQueryData(cmsQueryOptions()),
-    ]);
-    const heroImage = heroCollection?.products?.[0]?.node.images.edges[0]?.node.url;
+    const cms = await context.queryClient.ensureQueryData(cmsQueryOptions());
+    const heroImage = cms.heroSlides.find((slide) => Boolean(slide.image_url))?.image_url;
     return { heroImage, cmsSeo: cmsSeoPage(cms, "home") };
   },
   head: ({ loaderData }) => {
@@ -449,8 +446,12 @@ function Index() {
     ...collectionsQueryOptions(),
     enabled: deferredWorkReady,
   });
-  const { data: heroCollection } = useQuery(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4));
-  const catalogReady = Boolean(catalog);
+  const heroCollectionQuery = useQuery({
+    ...collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
+    enabled: deferredWorkReady,
+  });
+  const heroCollection = heroCollectionQuery.data;
+  const catalogReady = Boolean(catalog) && !heroCollectionQuery.isPending;
   const secondaryQueriesReady = catalogReady && deferredWorkReady;
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
@@ -521,7 +522,7 @@ function Index() {
       node: (
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
           <HomePromoTicker heading={tickerHeading} details={tickerDetails} />
-          <HomeHero heroCollection={heroCollection} cmsHeroSlides={cms.heroSlides} />
+          <HomeHero cmsHeroSlides={cms.heroSlides} />
         </div>
       ),
     },
