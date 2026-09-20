@@ -27,13 +27,15 @@ test("GitHub Storefront CI is manual-only", async () => {
   assert.match(workflow, /bun run build/);
 });
 
-test("CircleCI runs a security gate on every pipeline and full validation for important branches", async () => {
+test("CircleCI runs separate source and dependency security gates on every pipeline", async () => {
   const circle = await read(".circleci/config.yml");
 
-  assert.match(circle, /security-gate:/);
+  assert.match(circle, /security-source:/);
+  assert.match(circle, /security-dependencies:/);
   assert.match(circle, /node scripts\/security-gate\.mjs/);
   assert.match(circle, /bun audit --audit-level=high/);
-  assert.match(circle, /- security-gate/);
+  assert.match(circle, /- security-source/);
+  assert.match(circle, /- security-dependencies/);
 
   assert.match(circle, /\/\^important\\\/\.\*\//);
   assert.match(circle, /bun install --frozen-lockfile/);
