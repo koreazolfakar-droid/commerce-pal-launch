@@ -125,6 +125,9 @@ const ARABIC_SCRIPT = /[\u0600-\u06ff]/;
 const CMS_PUBLIC_READ_TIMEOUT_MS = 4_000;
 const CMS_MEMORY_FRESH_MS = 30_000;
 const CMS_MEMORY_STALE_MS = 5 * 60_000;
+// The production database lives in Sydney. Keep the database-heavy CMS
+// function in the same region to avoid an extra cross-region DB round trip.
+const CMS_FUNCTION_REGION = "ap-southeast-2";
 
 let cmsMemoryCache:
   | {
@@ -170,7 +173,7 @@ async function requestCmsSnapshot(): Promise<CmsSnapshot | null> {
   const timeout = globalThis.setTimeout(() => controller.abort(), CMS_PUBLIC_READ_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${url}/functions/v1/public-cms`, {
+    const response = await fetch(`${url}/functions/v1/public-cms?forceFunctionRegion=${CMS_FUNCTION_REGION}`, {
       method: "GET",
       cache: "default",
       headers: {
