@@ -10,6 +10,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { toast } from "sonner";
+import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import {
   deleteDashboardProductImage,
   listDashboardProductImages,
@@ -49,6 +50,8 @@ export default function ProductMediaManager({
     getProductImageResolution(),
   );
   const [pendingInfo, setPendingInfo] = useState<ProductImageSourceInfo[]>([]);
+  const [pendingUploadFiles, setPendingUploadFiles] = useState<File[]>([]);
+  const [pendingReplaceFile, setPendingReplaceFile] = useState<File | null>(null);
   const [lastConversions, setLastConversions] = useState<ProductImageConversionResult[]>([]);
   const [storedMeta, setStoredMeta] = useState<Record<string, { width: number; height: number; bytes?: number }>>({});
 
@@ -211,7 +214,8 @@ export default function ProductMediaManager({
         onChange={(event) => {
           const files = Array.from(event.target.files ?? []);
           event.target.value = "";
-          void upload(files);
+          setPendingUploadFiles(files);
+          setPendingReplaceFile(null);
         }}
       />
       <input
@@ -220,9 +224,10 @@ export default function ProductMediaManager({
         accept="image/jpeg,image/png,image/webp,image/avif"
         className="hidden"
         onChange={(event) => {
-          const file = event.target.files?.[0];
+          const file = event.target.files?.[0] ?? null;
           event.target.value = "";
-          if (file) void replace(file);
+          setPendingReplaceFile(file);
+          setPendingUploadFiles([]);
         }}
       />
 
@@ -268,6 +273,74 @@ export default function ProductMediaManager({
           </button>
         </div>
       </div>
+
+      {pendingUploadFiles.length > 0 ? (
+        <div className="space-y-2">
+          <ImageOptimizationPreview
+            files={pendingUploadFiles}
+            resolution={resolution}
+            title="Product image compression preview"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingUploadFiles([])}
+              disabled={uploading}
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const files = pendingUploadFiles;
+                setPendingUploadFiles([]);
+                void upload(files);
+              }}
+              disabled={uploading}
+              className="h-9 rounded-xl bg-[#5968ea] px-3 text-[10px] font-bold text-white disabled:opacity-50"
+            >
+              Confirm & upload
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {pendingReplaceFile && replaceTarget ? (
+        <div className="space-y-2">
+          <ImageOptimizationPreview
+            files={[pendingReplaceFile]}
+            resolution={resolution}
+            title="Replacement image compression preview"
+            compact
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPendingReplaceFile(null);
+                setReplaceTarget(null);
+              }}
+              disabled={busyId !== null}
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const file = pendingReplaceFile;
+                setPendingReplaceFile(null);
+                void replace(file);
+              }}
+              disabled={busyId !== null}
+              className="h-9 rounded-xl bg-[#5968ea] px-3 text-[10px] font-bold text-white disabled:opacity-50"
+            >
+              Confirm replacement
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {(pendingInfo.length > 0 || lastConversions.length > 0) && (
         <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
