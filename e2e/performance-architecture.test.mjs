@@ -82,6 +82,8 @@ test("public CMS uses stale-while-revalidate memory caching for SSR", async () =
 
   assert.match(cms, /CMS_MEMORY_FRESH_MS\s*=\s*30_000/);
   assert.match(cms, /CMS_MEMORY_STALE_MS\s*=\s*5 \* 60_000/);
+  assert.match(cms, /CMS_FUNCTION_REGION\s*=\s*"ap-southeast-2"/);
+  assert.match(cms, /forceFunctionRegion=\$\{CMS_FUNCTION_REGION\}/);
   assert.match(cms, /let pendingCmsRefresh:/);
   assert.match(cms, /function startCmsRefresh\(\)/);
   assert.match(cms, /if \(cmsMemoryCache && cmsMemoryCache\.freshUntil > now\)/);
