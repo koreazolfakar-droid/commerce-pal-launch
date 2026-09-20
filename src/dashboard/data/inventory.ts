@@ -240,6 +240,33 @@ export type InventoryCategoryOptions = {
   hasUncategorized: boolean;
 };
 
+type InventoryPageRow = {
+  product_id: string;
+  variant_id: string;
+  product_name: string;
+  variant_title: string | null;
+  brand: string | null;
+  category_id: string | null;
+  category: string | null;
+  sku: string | null;
+  barcode: string | null;
+  image: string | null;
+  stock: number;
+  product_stock: number;
+  track_inventory: boolean;
+  variant_active: boolean;
+  product_status: string;
+  options: Json;
+  total_count: number;
+};
+
+type InventorySummaryRow = {
+  total_units: number | null;
+  variant_count: number | null;
+  low_count: number | null;
+  out_count: number | null;
+};
+
 export async function loadInventoryPage(input: {
   search?: string;
   category?: string;
