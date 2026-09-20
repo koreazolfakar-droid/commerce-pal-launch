@@ -2,6 +2,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  IMAGE_COMPRESSION_CHANGE_EVENT,
   IMAGE_COMPRESSION_PRESETS,
   PRODUCT_IMAGE_RESOLUTIONS,
   convertProductImageToWebp,
@@ -34,6 +35,17 @@ export default function ImageOptimizationPreview({
   const [results, setResults] = useState<ProductImageConversionResult[]>([]);
   const [error, setError] = useState("");
   const [previewing, setPreviewing] = useState(false);
+
+  useEffect(() => {
+    const syncCompression = (event: Event) => {
+      const value = (event as CustomEvent<ImageCompressionPreset>).detail;
+      if (IMAGE_COMPRESSION_PRESETS.some((option) => option.value === value)) {
+        setCompression(value);
+      }
+    };
+    window.addEventListener(IMAGE_COMPRESSION_CHANGE_EVENT, syncCompression);
+    return () => window.removeEventListener(IMAGE_COMPRESSION_CHANGE_EVENT, syncCompression);
+  }, []);
 
   useEffect(() => {
     if (!files.length) {
