@@ -205,7 +205,7 @@ function SectionHeader({
   return (
     <div className="home-section-header">
       <div className="min-w-0">
-        <h2 className="text-xl font-black tracking-tight">{title}</h2>
+        <h2 className="text-xl font-bold tracking-tight">{title}</h2>
         {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       {action ?? (
@@ -221,7 +221,7 @@ function SectionHeader({
 }
 
 function SectionFallback({ className = "h-52" }: { className?: string }) {
-  return <div className={`${className} rounded-3xl bg-surface`} aria-hidden="true" />;
+  return <div className={`${className} rounded-xl bg-surface`} aria-hidden="true" />;
 }
 
 function DealsCountdown() {
@@ -242,7 +242,7 @@ function DealsCountdown() {
   const total = Math.max(0, Math.floor(left / 1000));
   const parts = [Math.floor(total / 3600), Math.floor((total % 3600) / 60), total % 60];
   return (
-    <div className="flex shrink-0 items-center gap-2 rounded-full border bg-card px-3 py-1.5 shadow-card">
+    <div className="flex shrink-0 items-center gap-2 rounded-lg border border-border/70 bg-card px-3 py-1.5">
       <Timer className="h-3.5 w-3.5 text-primary" />
       <span className="hidden text-[11px] font-semibold text-muted-foreground sm:inline">
         {t("todayEnds")}
@@ -385,11 +385,11 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
 
   return (
     <section
-      className={`relative overflow-hidden rounded-3xl border p-5 shadow-card sm:p-8 ${
+      className={`relative overflow-hidden rounded-2xl border p-5 sm:p-8 ${
         background === "navy"
           ? "border-slate-800 bg-slate-950 text-white"
           : background === "purple"
-            ? "border-violet-500/20 bg-gradient-to-br from-violet-700 to-indigo-700 text-white"
+            ? "border-violet-500/20 bg-violet-700 text-white"
             : background === "mist"
               ? "bg-surface"
               : "bg-card"
@@ -429,7 +429,7 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
             {buttonText && buttonLink ? (
               <a
                 href={buttonLink}
-                className={`rounded-full px-5 py-2.5 text-xs font-bold ${
+                className={`rounded-lg px-5 py-2.5 text-xs font-bold ${
                   dark ? "bg-white text-slate-950" : "bg-primary text-primary-foreground"
                 }`}
               >
@@ -439,7 +439,7 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
             {secondaryButtonText && secondaryButtonLink ? (
               <a
                 href={secondaryButtonLink}
-                className={`rounded-full border px-5 py-2.5 text-xs font-bold ${
+                className={`rounded-lg border px-5 py-2.5 text-xs font-bold ${
                   dark ? "border-white/30 text-white" : "border-border"
                 }`}
               >
@@ -457,7 +457,7 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
             const answer = typeof item["answer"] === "string" ? item["answer"] : "";
             if (!question && !answer) return null;
             return (
-              <details key={`${section.id}-faq-${index}`} className="rounded-2xl border bg-background/85 p-4">
+              <details key={`${section.id}-faq-${index}`} className="rounded-xl border bg-background/85 p-4">
                 <summary className="cursor-pointer text-sm font-bold">{question}</summary>
                 {answer ? <p className="mt-2 text-sm text-muted-foreground">{answer}</p> : null}
               </details>
@@ -565,7 +565,7 @@ function Index() {
       node: catalog ? (
         <HomeCategorySection catalog={catalog} collections={collections} />
       ) : (
-        <div className="h-28 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+        <div className="h-28 animate-pulse rounded-xl bg-surface" aria-hidden="true" />
       ),
     },
     {
@@ -578,7 +578,7 @@ function Index() {
           <LazyTopBrands brands={brands} />
         </Suspense>
       ) : (
-        <div className="h-24 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+        <div className="h-24 animate-pulse rounded-xl bg-surface" aria-hidden="true" />
       ),
     },
     {
@@ -615,7 +615,7 @@ function Index() {
                 <Link
                   to="/shop"
                   search={{ availability: "on-sale" }}
-                  className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold hover:border-primary hover:text-primary"
+                  className="press inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-xs font-semibold hover:border-primary hover:text-primary"
                 >
                   {t("allDeals")} <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
@@ -654,7 +654,7 @@ function Index() {
           ) : null}
         </>
       ) : (
-        <div className="h-52 animate-pulse rounded-3xl bg-surface" aria-hidden="true" />
+        <div className="h-52 animate-pulse rounded-xl bg-surface" aria-hidden="true" />
       ),
     },
     {
