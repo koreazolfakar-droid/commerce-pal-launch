@@ -224,7 +224,7 @@ export default function ProductMediaManager({
               const edited = await imageEditor.editFile(file, {
                 title: files.length > 1 ? `Adjust product image ${adjusted.length + 1} of ${files.length}` : "Adjust product image",
                 preset: "square",
-                transparent: false,
+                transparent: true,
                 defaultFit: "contain",
               });
               if (edited) adjusted.push(edited);
@@ -247,7 +247,7 @@ export default function ProductMediaManager({
           void imageEditor.editFile(file, {
             title: "Adjust replacement image",
             preset: "square",
-            transparent: false,
+            transparent: true,
             defaultFit: "contain",
           }).then((edited) => {
             if (!edited) return;
@@ -480,7 +480,7 @@ export default function ProductMediaManager({
                       void imageEditor.editUrl(image.url, {
                         title: "Adjust existing product image",
                         preset: "square",
-                        transparent: false,
+                        transparent: true,
                         defaultFit: "contain",
                       }).then((edited) => {
                         if (!edited) {
