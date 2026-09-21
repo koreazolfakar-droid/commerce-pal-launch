@@ -86,7 +86,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         "hover:border-primary/35 hover:bg-background hover:text-primary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         market
-          ? "end-1.5 top-1.5 h-9 w-9 after:absolute after:-inset-1.5 after:content-['']"
+          ? "market-wishlist-button end-1.5 top-1.5 !min-h-8 !min-w-8 h-8 w-8 after:absolute after:-inset-2 after:content-['']"
           : "end-2.5 top-2.5 h-9 w-9",
       )}
     >
