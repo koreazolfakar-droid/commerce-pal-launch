@@ -355,6 +355,7 @@ function CartPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => void removeItem(item.variantId)}
+                          disabled={isLoading}
                           aria-label={t("removeItem")}
                           className="absolute end-2 top-2 h-8 w-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         >
@@ -424,7 +425,11 @@ function CartPage() {
                     <div className="rounded-xl border bg-surface/70 p-3">
                       <div className="flex items-end justify-between gap-4">
                         <span className="pb-0.5 text-sm font-extrabold">{copy.finalTotal}</span>
-                        <span className="text-2xl font-black tracking-tight tabular-nums text-primary">
+                        <span
+                          aria-live="polite"
+                          aria-atomic="true"
+                          className="text-2xl font-black tracking-tight tabular-nums text-primary"
+                        >
                           {formatPrice(grandTotal, currency)}
                         </span>
                       </div>
