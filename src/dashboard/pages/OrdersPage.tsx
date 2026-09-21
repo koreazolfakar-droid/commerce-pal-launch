@@ -21,11 +21,11 @@ import {
 function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
   const tone =
-    normalized === "delivered" || normalized === "paid"
+    normalized === "delivered" || normalized === "done" || normalized === "paid"
       ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
       : normalized === "processing" || normalized === "confirmed"
         ? "bg-blue-50 text-blue-700 ring-blue-100"
-        : normalized === "shipped"
+        : normalized === "out for delivery"
           ? "bg-violet-50 text-violet-700 ring-violet-100"
           : normalized === "cancelled" || normalized === "refunded"
             ? "bg-rose-50 text-rose-700 ring-rose-100"
