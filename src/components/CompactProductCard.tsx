@@ -82,18 +82,29 @@ export const CompactProductCard = memo(function CompactProductCard({
             alt={image?.altText ?? node.title}
             size={280}
             sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 44vw"
-            imageClassName="group-hover:scale-[1.045]"
+            imageClassName={cn(
+              "transition-[transform,filter,opacity] duration-300 group-hover:scale-[1.045]",
+              !inStock && "scale-[1.01] blur-[2px] opacity-70 grayscale-[0.12]",
+            )}
           />
         </Link>
 
-        {discount !== null && (
-          <span className="absolute start-2.5 top-2.5 z-10 rounded-full bg-destructive px-2 py-0.5 text-[9px] font-bold tracking-wide text-destructive-foreground">
-            -{discount}%
-          </span>
-        )}
         {!inStock && (
-          <span className="absolute bottom-2.5 start-2.5 z-10 rounded-full bg-foreground/80 px-2 py-0.5 text-[9px] font-semibold text-background">
-            {t("soldOut")}
+          <>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-[5] bg-black/20 backdrop-blur-[0.6px]"
+            />
+            <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center px-3">
+              <span className="rounded-full border border-red-300/70 bg-red-600/95 px-3.5 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.11em] text-white shadow-lg shadow-red-950/20 backdrop-blur-md sm:px-4 sm:py-2 sm:text-[10px]">
+                {t("soldOut")}
+              </span>
+            </div>
+          </>
+        )}
+        {discount !== null && (
+          <span className="absolute start-2.5 top-2.5 z-20 rounded-full bg-destructive px-2 py-0.5 text-[9px] font-bold tracking-wide text-destructive-foreground">
+            -{discount}%
           </span>
         )}
 
