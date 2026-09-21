@@ -509,11 +509,16 @@ function Index() {
     ...collectionsQueryOptions(),
     enabled: deferredWorkReady,
   });
-  const { data: heroCollection } = useQuery({
+  const {
+    data: heroCollection,
+    isFetched: heroCollectionFetched,
+    isError: heroCollectionFailed,
+  } = useQuery({
     ...collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
     enabled: deferredWorkReady,
   });
-  const catalogReady = Boolean(catalog);
+  const catalogReady =
+    Boolean(catalog) && (heroCollectionFetched || heroCollectionFailed);
   const secondaryQueriesReady = catalogReady && deferredWorkReady;
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
