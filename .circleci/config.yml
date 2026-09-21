@@ -67,128 +67,28 @@ jobs:
             - ~/.bun/install/cache
 
       - run:
-          name: Format cart targets for diagnostics
-          command: |
-            bun x prettier --write src/routes/cart.tsx src/components/CheckoutDetailsForm.tsx e2e/cart-delivery-dashboard.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-ux-polish.test.mjs e2e/storefront-orders-secure.test.mjs
-            for spec in \
-              "cart-polish-formatted-cart-20260921|src/routes/cart.tsx" \
-              "cart-polish-formatted-checkout-20260921|src/components/CheckoutDetailsForm.tsx" \
-              "cart-polish-formatted-dashboard-test-20260921|e2e/cart-delivery-dashboard.test.mjs" \
-              "cart-polish-formatted-security-test-20260921|e2e/cart-delivery-security.test.mjs" \
-              "cart-polish-formatted-ux-test-20260921|e2e/cart-ux-polish.test.mjs" \
-              "cart-polish-formatted-orders-test-20260921|e2e/storefront-orders-secure.test.mjs"
-            do
-              key="${spec%%|*}"
-              path="${spec#*|}"
-              curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
-                -H "x-ci-run-key: ${key}" \
-                -H "x-ci-job-name: lint" \
-                --data-binary @"${path}" || true
-            done
-
-      - run:
-          name: Cart targeted lint
-          command: |
-            set +e
-            bun x eslint src/routes/cart.tsx src/components/CheckoutDetailsForm.tsx e2e/cart-delivery-dashboard.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-ux-polish.test.mjs e2e/storefront-orders-secure.test.mjs > /tmp/cart-lint.log 2>&1
-            status=$?
-            cat /tmp/cart-lint.log
-            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
-              -H "x-ci-run-key: cart-polish-target-lint-20260921" \
-              -H "x-ci-job-name: lint" \
-              --data-binary @/tmp/cart-lint.log || true
-            exit $status
-
-      - run:
-          name: Cart targeted tests
-          command: |
-            set +e
-            node --test e2e/cart-delivery-dashboard.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-ux-polish.test.mjs e2e/storefront-orders-secure.test.mjs > /tmp/cart-tests.log 2>&1
-            status=$?
-            cat /tmp/cart-tests.log
-            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
-              -H "x-ci-run-key: cart-polish-target-tests-20260921" \
-              -H "x-ci-job-name: unit-tests" \
-              --data-binary @/tmp/cart-tests.log || true
-            exit $status
-
-      - run:
           name: TypeScript
-          command: |
-            set +e
-            bun run typecheck > /tmp/ci-step.log 2>&1
-            status=$?
-            cat /tmp/ci-step.log
-            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
-              -H "x-ci-run-key: cart-polish-typecheck-20260921" \
-              -H "x-ci-job-name: lint" \
-              --data-binary @/tmp/ci-step.log || true
-            exit $status
+          command: bun run typecheck
 
       - run:
           name: ESLint
-          command: |
-            set +e
-            bun run lint > /tmp/ci-step.log 2>&1
-            status=$?
-            cat /tmp/ci-step.log
-            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
-              -H "x-ci-run-key: cart-polish-eslint-20260921" \
-              -H "x-ci-job-name: lint" \
-              --data-binary @/tmp/ci-step.log || true
-            exit $status
+          command: bun run lint
 
       - run:
           name: Dashboard security regression tests
-          command: |
-            set +e
-            node --test e2e/dashboard-*.test.mjs > /tmp/ci-step.log 2>&1
-            status=$?
-            cat /tmp/ci-step.log
-            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
-              -H "x-ci-run-key: cart-polish-dashboard-20260921" \
-              -H "x-ci-job-name: dashboard-tests" \
-              --data-binary @/tmp/ci-step.log || true
-            exit $status
+          command: node --test e2e/dashboard-*.test.mjs
 
       - run:
           name: Unit and architecture tests
-          command: |
-            set +e
-            bun run test:unit > /tmp/ci-step.log 2>&1
-            status=$?
-            cat /tmp/ci-step.log
-            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
-              -H "x-ci-run-key: cart-polish-unit-20260921" \
-              -H "x-ci-job-name: unit-tests" \
-              --data-binary @/tmp/ci-step.log || true
-            exit $status
+          command: bun run test:unit
 
       - run:
           name: Production build
-          command: |
-            set +e
-            bun run build > /tmp/ci-step.log 2>&1
-            status=$?
-            cat /tmp/ci-step.log
-            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
-              -H "x-ci-run-key: cart-polish-build-20260921" \
-              -H "x-ci-job-name: unit-tests" \
-              --data-binary @/tmp/ci-step.log || true
-            exit $status
+          command: bun run build
 
       - run:
           name: SSR smoke test
-          command: |
-            set +e
-            bun run test:ssr > /tmp/ci-step.log 2>&1
-            status=$?
-            cat /tmp/ci-step.log
-            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
-              -H "x-ci-run-key: cart-polish-ssr-20260921" \
-              -H "x-ci-job-name: ssr" \
-              --data-binary @/tmp/ci-step.log || true
-            exit $status
+          command: bun run test:ssr
 
 workflows:
   security-and-storefront-validation:
