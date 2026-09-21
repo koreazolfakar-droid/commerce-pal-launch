@@ -106,21 +106,26 @@ export default function ProductMediaManager({
     }
   };
 
-  const replace = async (file: File) => {
-    if (!replaceTarget) return;
-    setBusyId(replaceTarget.id);
+  const replace = async (
+    file: File,
+    target: DashboardProductImage | null = replaceTarget,
+    successMessage = "Image replaced.",
+  ) => {
+    if (!target) return;
+    setBusyId(target.id);
     setLastConversions([]);
     try {
       setPendingInfo([await inspectProductImageSource(file)]);
-      const result = await replaceDashboardProductImage(replaceTarget, file, resolution);
+      const result = await replaceDashboardProductImage(target, file, resolution);
       sync(result.images);
       setLastConversions([result.conversion]);
-      toast.success("Image replaced.");
+      toast.success(successMessage);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image replacement failed.");
     } finally {
       setPendingInfo([]);
       setReplaceTarget(null);
+      setPendingReplaceFile(null);
       setBusyId(null);
     }
   };
@@ -478,7 +483,6 @@ export default function ProductMediaManager({
                   <button
                     type="button"
                     onClick={() => {
-                      setReplaceTarget(image);
                       void imageEditor.editUrl(image.url, {
                         title: "Adjust existing product image",
                         preset: "square",
@@ -486,12 +490,13 @@ export default function ProductMediaManager({
                         defaultFit: "contain",
                         previewContext: "product",
                       }).then((edited) => {
-                        if (!edited) {
-                          setReplaceTarget(null);
-                          return;
-                        }
-                        setPendingReplaceFile(edited);
+                        if (!edited) return;
                         setPendingUploadFiles([]);
+                        void replace(
+                          edited,
+                          image,
+                          "Image adjustment saved. Storefront refresh requested.",
+                        );
                       });
                     }}
                     disabled={busyId === image.id}
