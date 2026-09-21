@@ -13,7 +13,7 @@ import { categoryDefinition, displayCollections, productsInCategory } from "@/li
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import type { CatalogIndex } from "@/lib/taxonomy";
-import { BadgeCheck, Boxes, PackageCheck } from "lucide-react";
+import { BadgeCheck, Boxes } from "lucide-react";
 
 type ManagedStoreCategory = {
   name: string;
@@ -168,10 +168,6 @@ function CategoryPage() {
               <Boxes className="h-3.5 w-3.5" />
               {language === "ar" ? "تصنيف" : "Category"}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border bg-background/70 px-2.5 py-1 text-[10px] font-bold text-muted-foreground">
-              <PackageCheck className="h-3.5 w-3.5 text-success" />
-              {inCategory.length} {t(inCategory.length === 1 ? "product" : "products")}
-            </span>
           </div>
 
           <h1 className="mt-3 text-[1.65rem] font-black leading-tight tracking-[-0.035em] sm:text-3xl lg:text-[2.15rem]">
@@ -210,20 +206,10 @@ function CategoryPage() {
     </section>
   );
 
-  const header = (
-    <div className="rounded-2xl border bg-card p-4 sm:p-5">
-      <h2 className="text-base font-extrabold tracking-tight sm:text-lg">
-        {language === "ar" ? `${label} في لبنان` : `${label} in Lebanon`}
-      </h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{seoDescription}</p>
-    </div>
-  );
-
   return (
     <StoreLayout>
       <CatalogView
         title={label}
-        description={`${inCategory.length} ${t(inCategory.length === 1 ? "product" : "products")}`}
         topContent={topContent}
         hideHeading
         products={products}
@@ -236,7 +222,6 @@ function CategoryPage() {
         priceMin={catalog.priceMin}
         priceMax={catalog.priceMax}
         currency={catalog.currency}
-        header={header}
         onChange={update}
         onReset={() => navigate({ search: {} })}
       />
