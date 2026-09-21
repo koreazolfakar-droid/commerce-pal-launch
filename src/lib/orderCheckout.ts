@@ -10,6 +10,8 @@ type CheckoutAttempt = {
   createdAt: number;
 };
 
+let volatileAttempt: CheckoutAttempt | null = null;
+
 export type CreatedStoreOrder = {
   order_id: string;
   order_number: number;
@@ -59,6 +61,13 @@ export function checkoutIdempotencyKey(items: CartItem[]) {
   const fingerprint = cartFingerprint(items);
   const now = Date.now();
 
+  if (
+    volatileAttempt?.fingerprint === fingerprint &&
+    now - volatileAttempt.createdAt < CHECKOUT_ATTEMPT_MAX_AGE_MS
+  ) {
+    return volatileAttempt.idempotencyKey;
+  }
+
   try {
     const raw = window.localStorage.getItem(CHECKOUT_ATTEMPT_KEY);
     if (raw) {
@@ -70,6 +79,7 @@ export function checkoutIdempotencyKey(items: CartItem[]) {
         typeof existing.createdAt === "number" &&
         now - existing.createdAt < CHECKOUT_ATTEMPT_MAX_AGE_MS
       ) {
+        volatileAttempt = existing as CheckoutAttempt;
         return existing.idempotencyKey;
       }
     }
@@ -78,15 +88,23 @@ export function checkoutIdempotencyKey(items: CartItem[]) {
   }
 
   const idempotencyKey = randomIdempotencyKey();
+  const attempt = { fingerprint, idempotencyKey, createdAt: now } satisfies CheckoutAttempt;
+  volatileAttempt = attempt;
   try {
-    window.localStorage.setItem(
-      CHECKOUT_ATTEMPT_KEY,
-      JSON.stringify({ fingerprint, idempotencyKey, createdAt: now } satisfies CheckoutAttempt),
-    );
+    window.localStorage.setItem(CHECKOUT_ATTEMPT_KEY, JSON.stringify(attempt));
   } catch {
     // Idempotency still protects double-clicks in the current submit call.
   }
   return idempotencyKey;
+}
+
+export function clearCheckoutAttempt() {
+  volatileAttempt = null;
+  try {
+    window.localStorage.removeItem(CHECKOUT_ATTEMPT_KEY);
+  } catch {
+    // Storage is optional.
+  }
 }
 
 async function edgeErrorCode(error: unknown) {
