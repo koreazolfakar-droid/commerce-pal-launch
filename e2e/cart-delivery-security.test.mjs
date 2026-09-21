@@ -21,7 +21,10 @@ const settingsPage = await readFile(
   "utf8",
 );
 const migration = await readFile(
-  new URL("../supabase/migrations/20260921064500_harden_cart_delivery_pricing.sql", import.meta.url),
+  new URL(
+    "../supabase/migrations/20260921064500_harden_cart_delivery_pricing.sql",
+    import.meta.url,
+  ),
   "utf8",
 );
 
@@ -32,7 +35,10 @@ test("shopper-visible subtotal and delivery fee are sent only as pricing expecta
 
   const bodyStart = client.indexOf("const body = {");
   const invokeStart = client.indexOf("supabase.functions.invoke", bodyStart);
-  assert.ok(bodyStart > 0 && invokeStart > bodyStart, "checkout request body should be identifiable");
+  assert.ok(
+    bodyStart > 0 && invokeStart > bodyStart,
+    "checkout request body should be identifiable",
+  );
   const requestBodySource = client.slice(bodyStart, invokeStart);
 
   assert.match(requestBodySource, /expected_subtotal:/);
@@ -44,10 +50,7 @@ test("checkout blocks silent price changes before WhatsApp or stock completion",
   assert.match(edge, /pricing_changed/);
   assert.match(edge, /code === "pricing_changed"/);
   assert.match(migration, /v_expected_subtotal is distinct from v_subtotal/);
-  assert.match(
-    migration,
-    /v_expected_delivery_fee is distinct from v_shipping_total/,
-  );
+  assert.match(migration, /v_expected_delivery_fee is distinct from v_shipping_total/);
   assert.match(checkout, /code\.includes\("pricing_changed"\)/);
   assert.match(checkout, /await refetchCms\(\)/);
 });
@@ -56,10 +59,7 @@ test("delivery fee configuration fails closed instead of silently becoming free"
   assert.match(migration, /cms_site_settings_delivery_fee_valid/);
   assert.match(migration, /v_delivery_fee_text is null/);
   assert.match(migration, /raise exception 'invalid_delivery_fee_config'/);
-  assert.doesNotMatch(
-    migration,
-    /v_shipping_total := coalesce\(v_shipping_total, 0\)/,
-  );
+  assert.doesNotMatch(migration, /v_shipping_total := coalesce\(v_shipping_total, 0\)/);
 });
 
 test("global delivery fee is admin-only and audited", () => {
