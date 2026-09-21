@@ -860,65 +860,6 @@ export type Database = {
           },
         ]
       }
-      store_sales: {
-        Row: {
-          completed_at: string
-          created_at: string
-          currency: string
-          customer_name: string
-          customer_phone: string
-          discount_total: number
-          id: string
-          order_id: string
-          order_number: number
-          payment_method: string
-          payment_status: string
-          shipping_total: number
-          subtotal: number
-          total: number
-        }
-        Insert: {
-          completed_at: string
-          created_at?: string
-          currency: string
-          customer_name: string
-          customer_phone: string
-          discount_total: number
-          id?: string
-          order_id: string
-          order_number: number
-          payment_method: string
-          payment_status: string
-          shipping_total: number
-          subtotal: number
-          total: number
-        }
-        Update: {
-          completed_at?: string
-          created_at?: string
-          currency?: string
-          customer_name?: string
-          customer_phone?: string
-          discount_total?: number
-          id?: string
-          order_id?: string
-          order_number?: number
-          payment_method?: string
-          payment_status?: string
-          shipping_total?: number
-          subtotal?: number
-          total?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "store_sales_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: true
-            referencedRelation: "store_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       store_order_items: {
         Row: {
           created_at: string
@@ -989,7 +930,6 @@ export type Database = {
       store_orders: {
         Row: {
           city: string | null
-          completed_at: string | null
           created_at: string
           currency: string
           customer_email: string | null
@@ -997,12 +937,8 @@ export type Database = {
           customer_phone: string
           customer_reference: string | null
           delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
           discount_total: number
           id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
           notes: string | null
           order_number: number
           payment_method: string
@@ -1013,11 +949,9 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
-          version: number
         }
         Insert: {
           city?: string | null
-          completed_at?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
@@ -1025,12 +959,8 @@ export type Database = {
           customer_phone: string
           customer_reference?: string | null
           delivery_address?: string | null
-          delivery_location?: Json | null
-          delivery_type?: string
           discount_total?: number
           id?: string
-          idempotency_fingerprint?: string | null
-          idempotency_key?: string | null
           notes?: string | null
           order_number?: never
           payment_method?: string
@@ -1041,11 +971,9 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
-          version?: number
         }
         Update: {
           city?: string | null
-          completed_at?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
@@ -1053,12 +981,8 @@ export type Database = {
           customer_phone?: string
           customer_reference?: string | null
           delivery_address?: string | null
-          delivery_location?: Json | null
-          delivery_type?: string
           discount_total?: number
           id?: string
-          idempotency_fingerprint?: string | null
-          idempotency_key?: string | null
           notes?: string | null
           order_number?: never
           payment_method?: string
@@ -1069,7 +993,6 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
-          version?: number
         }
         Relationships: []
       }
@@ -2800,14 +2723,9 @@ export type Database = {
         }
       }
       update_store_order_payment_status: {
-        Args: {
-          p_expected_version?: number
-          p_order_id: string
-          p_payment_status: string
-        }
+        Args: { p_order_id: string; p_payment_status: string }
         Returns: {
           city: string | null
-          completed_at: string | null
           created_at: string
           currency: string
           customer_email: string | null
@@ -2815,12 +2733,8 @@ export type Database = {
           customer_phone: string
           customer_reference: string | null
           delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
           discount_total: number
           id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
           notes: string | null
           order_number: number
           payment_method: string
@@ -2831,7 +2745,6 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
-          version: number
         }
         SetofOptions: {
           from: "*"
@@ -2841,14 +2754,9 @@ export type Database = {
         }
       }
       update_store_order_status: {
-        Args: {
-          p_expected_version?: number
-          p_order_id: string
-          p_status: string
-        }
+        Args: { p_order_id: string; p_status: string }
         Returns: {
           city: string | null
-          completed_at: string | null
           created_at: string
           currency: string
           customer_email: string | null
@@ -2856,12 +2764,8 @@ export type Database = {
           customer_phone: string
           customer_reference: string | null
           delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
           discount_total: number
           id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
           notes: string | null
           order_number: number
           payment_method: string
@@ -2872,49 +2776,6 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
-          version: number
-        }
-        SetofOptions: {
-          from: "*"
-          to: "store_orders"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      update_store_order_delivery: {
-        Args: {
-          p_delivery_type: string
-          p_expected_version?: number
-          p_order_id: string
-          p_shipping_total: number
-        }
-        Returns: {
-          city: string | null
-          completed_at: string | null
-          created_at: string
-          currency: string
-          customer_email: string | null
-          customer_name: string
-          customer_phone: string
-          customer_reference: string | null
-          delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
-          discount_total: number
-          id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
-          notes: string | null
-          order_number: number
-          payment_method: string
-          payment_status: string
-          shipping_total: number
-          source: string
-          status: string
-          subtotal: number
-          total: number
-          updated_at: string
-          version: number
         }
         SetofOptions: {
           from: "*"

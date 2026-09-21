@@ -28,6 +28,7 @@ import { formatPrice, variantSummary } from "@/lib/shopify";
 import { STORE_NAME, storeUrl } from "@/lib/storeConfig";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { useCartStore, type CartItem } from "@/stores/cartStore";
+import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "space-call-whatsapp-checkout-customer";
 const WHISH_MONEY_ACCOUNT = (import.meta.env.VITE_WHISH_MONEY_ACCOUNT ?? "").trim();
@@ -570,7 +571,7 @@ export function CheckoutDetailsForm({
   };
 
   const fieldClass =
-    "mt-1.5 w-full rounded-xl border bg-background px-3.5 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
+    "mt-1.5 min-h-12 w-full rounded-xl border bg-background px-3.5 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
   const paymentCardClass = (selected: boolean) =>
     `flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition ${
       selected
@@ -587,15 +588,15 @@ export function CheckoutDetailsForm({
   return (
     <section
       id="whatsapp-checkout"
-      className="mt-5 scroll-mt-20 rounded-2xl border bg-card p-4 shadow-card sm:p-5"
+      className="scroll-mt-20 rounded-2xl border bg-card p-4 shadow-card sm:p-6"
       aria-labelledby="whatsapp-checkout-title"
     >
       <div className="flex items-start gap-3">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-success/10 text-success">
           <MessageCircle className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <h2 id="whatsapp-checkout-title" className="text-lg font-extrabold tracking-tight">
+          <h2 id="whatsapp-checkout-title" className="text-lg font-extrabold">
             {copy.title}
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">
@@ -604,7 +605,7 @@ export function CheckoutDetailsForm({
         </div>
       </div>
 
-      <form onSubmit={submit} className="mt-5 space-y-5" noValidate>
+      <form onSubmit={submit} className="mt-6 space-y-6" noValidate>
         <section aria-labelledby="delivery-details-title" className="space-y-4">
           <h3 id="delivery-details-title" className="text-sm font-extrabold tracking-tight">
             {copy.delivery}
@@ -928,11 +929,11 @@ export function CheckoutDetailsForm({
         ) : null}
 
         <div className="space-y-2.5">
-          <div className="sticky bottom-[4.75rem] z-20 -mx-1 rounded-2xl border border-emerald-500/20 bg-background/95 p-1 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
-            <button
+          <div className="sticky bottom-[4.75rem] z-20 -mx-1 rounded-2xl border border-success/20 bg-background/95 p-1 shadow-float backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+            <Button
               type="submit"
               disabled={actionDisabled || pdfBusy}
-              className="press flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-4 text-sm font-extrabold text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+              className="press min-h-14 w-full bg-success px-6 text-sm font-extrabold text-success-foreground shadow-card-hover hover:bg-success/90"
             >
               {locating || submitting ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -940,14 +941,15 @@ export function CheckoutDetailsForm({
                 <MessageCircle className="h-4 w-4" />
               )}
               {submitting ? copy.creating : locating ? copy.locating : copy.send}
-            </button>
+            </Button>
           </div>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={downloadPdf}
             disabled={actionDisabled || pdfBusy}
-            className="press flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-background px-5 py-3 text-sm font-bold text-foreground transition hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+            className="press min-h-12 w-full border-primary/20 px-5 text-sm font-bold"
           >
             {pdfBusy ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -955,7 +957,7 @@ export function CheckoutDetailsForm({
               <Download className="h-4 w-4" />
             )}
             {pdfBusy ? copy.preparingPdf : submitted ? copy.invoicePdf : copy.summaryPdf}
-          </button>
+          </Button>
         </div>
 
         {reference ? (
