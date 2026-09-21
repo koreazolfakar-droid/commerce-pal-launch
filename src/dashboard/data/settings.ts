@@ -87,7 +87,7 @@ function fallbackSettings(): DashboardSiteSettings {
     xUrl: STORE_CONFIG.socialX,
     youtubeUrl: STORE_CONFIG.socialYoutube,
     tiktokUrl: "",
-    deliveryFee: "0",
+    deliveryFee: "2.00",
   };
 }
 

@@ -165,6 +165,11 @@ export function CheckoutDetailsForm({
     typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
   const whatsappNumber =
     typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
+  const configuredDeliveryFee = Number(cms?.settings["delivery_fee"] ?? "2");
+  const deliveryFee =
+    Number.isFinite(configuredDeliveryFee) && configuredDeliveryFee >= 0
+      ? configuredDeliveryFee
+      : 2;
   const isArabic = language === "ar";
   const [details, setDetails] = useState<CustomerDetails>(EMPTY_DETAILS);
   const [shareLocation, setShareLocation] = useState(true);
@@ -397,14 +402,20 @@ export function CheckoutDetailsForm({
     }
   };
 
-  const buildInvoiceInput = (orderIdentity: { reference: string; createdAt: Date }) => ({
-    invoiceNumber: invoiceNumber(orderIdentity.reference),
-    orderReference: orderIdentity.reference,
-    createdAt: orderIdentity.createdAt,
-    language: (isArabic ? "ar" : "en") as "ar" | "en",
-    currency: createdOrder?.currency ?? currency,
-    total: createdOrder?.total ?? total,
-    customer: {
+  const buildInvoiceInput = (orderIdentity: { reference: string; createdAt: Date }) => {
+    const invoiceDeliveryFee = createdOrder?.shipping_total ?? deliveryFee;
+    const invoiceSubtotal = createdOrder?.subtotal ?? total;
+
+    return {
+      invoiceNumber: invoiceNumber(orderIdentity.reference),
+      orderReference: orderIdentity.reference,
+      createdAt: orderIdentity.createdAt,
+      language: (isArabic ? "ar" : "en") as "ar" | "en",
+      currency: createdOrder?.currency ?? currency,
+      subtotal: invoiceSubtotal,
+      deliveryFee: invoiceDeliveryFee,
+      total: createdOrder?.total ?? invoiceSubtotal + invoiceDeliveryFee,
+      customer: {
       name: details.name.trim(),
       phone: details.phone.trim(),
       area: details.area.trim(),
@@ -421,14 +432,15 @@ export function CheckoutDetailsForm({
         : isArabic
           ? "مستحق عند الاستلام"
           : "Due on delivery",
-    items: items.map((item) => ({
-      title: item.product.node.title,
-      variant: variantSummary(item.selectedOptions),
-      quantity: item.quantity,
-      unitPrice: Number(item.price.amount),
-      lineTotal: Number(item.price.amount) * item.quantity,
-    })),
-  });
+      items: items.map((item) => ({
+        title: item.product.node.title,
+        variant: variantSummary(item.selectedOptions),
+        quantity: item.quantity,
+        unitPrice: Number(item.price.amount),
+        lineTotal: Number(item.price.amount) * item.quantity,
+      })),
+    };
+  };
 
   const downloadPdf = async () => {
     if (!validateDetails() || items.length === 0) return;
