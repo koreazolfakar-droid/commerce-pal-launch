@@ -298,54 +298,54 @@ workflows:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-lint:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-unit:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-build-ssr:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-test-architecture:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-test-performance-architecture:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-arch-group-a:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-arch-group-b:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-arch-native-cart:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-arch-server:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
       - perf-arch-secrets:
           filters:
             branches:
               only:
-                - important/perf-diagnostics-20260921
+                - important/typecheck-revert-native-20260921
