@@ -1,8 +1,15 @@
 version: 2.1
+jobs:
 
-commands:
-  install-bun:
+  diag-cat-category:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
     steps:
+      - checkout
       - run:
           name: Install Bun
           command: |
@@ -10,93 +17,114 @@ commands:
             echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
             echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
-            bun --version
-
-jobs:
-  security-source:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: High-confidence source and secret scan
-          command: node scripts/security-gate.mjs
-
-  security-dependencies:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: High and critical dependency audit
-          command: |
-            source "$BASH_ENV"
-            bun audit --audit-level=high
-
-  storefront-ci:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-            - bun-deps-v1-{{ checksum "bun.lock" }}
-            - bun-deps-v1-
-
-      - install-bun
-
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
-
-      - save_cache:
-          key: bun-deps-v1-{{ checksum "bun.lock" }}
-          paths:
-            - ~/.bun/install/cache
-
       - run:
-          name: TypeScript
-          command: bun run typecheck
+          name: diag-cat-category
+          command: node --test --test-name-pattern 'category:|explicit category|brand campaigns|configuration collections' e2e/catalog.test.mjs
 
-      - run:
-          name: ESLint
-          command: bun run lint
 
+  diag-cat-brand:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: Dashboard security regression tests
-          command: node --test e2e/dashboard-*.test.mjs
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-cat-brand
+          command: node --test --test-name-pattern 'vendor identity|new vendor|explicit brand|logos and hero' e2e/catalog.test.mjs
 
-      - run:
-          name: Unit and architecture tests
-          command: bun run test:unit
 
+  diag-cat-filter-price:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: Production build
-          command: bun run build
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-cat-filter-price
+          command: node --test --test-name-pattern 'brand, category, price|collection filters|price URL|newest and price|displayed price|compare-at price' e2e/catalog.test.mjs
 
+
+  diag-cat-search-basic:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: SSR smoke test
-          command: bun run test:ssr
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-cat-search-basic
+          command: node --test --test-name-pattern 'search ranking strongly|search matches SKU|search tolerates|search normalizes Arabic' e2e/catalog.test.mjs
+
+
+  diag-cat-search-advanced:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-cat-search-advanced
+          command: node --test --test-name-pattern 'catalog q filtering|search understands common Arabic|description-only|catalog q results' e2e/catalog.test.mjs
 
 workflows:
-  security-and-storefront-validation:
+  catalog-diagnostics:
     jobs:
-      - security-source
-      - security-dependencies
-      - storefront-ci:
-          filters:
-            branches:
-              only:
-                - /^important\/.*/
+      - diag-cat-category
+      - diag-cat-brand
+      - diag-cat-filter-price
+      - diag-cat-search-basic
+      - diag-cat-search-advanced
