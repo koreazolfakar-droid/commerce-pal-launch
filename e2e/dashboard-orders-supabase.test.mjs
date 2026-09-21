@@ -16,7 +16,7 @@ const data = await readFile(
   "utf8",
 );
 const migration = await readFile(
-  new URL("../supabase/migrations/20260918211500_dashboard_order_management.sql", import.meta.url),
+  new URL("../supabase/migrations/20260921045000_secure_order_workflow.sql", import.meta.url),
   "utf8",
 );
 
@@ -36,21 +36,42 @@ test("orders pages contain no mock business data", () => {
   assert.doesNotMatch(detailPage, /Jan 31, 2026|Mock fulfillment|mock state/);
 });
 
-test("orders data layer reads Supabase order tables", () => {
+test("orders data layer reads Supabase and mutates only through guarded RPCs", () => {
   assert.match(data, /from\("store_orders"\)/);
   assert.match(data, /from\("store_order_items"\)/);
   assert.match(data, /from\("store_product_images"\)/);
   assert.match(data, /rpc\("update_store_order_status"/);
   assert.match(data, /rpc\("update_store_order_payment_status"/);
+  assert.match(data, /rpc\("update_store_order_delivery"/);
+  assert.match(data, /p_expected_version/);
 });
 
-test("order cancellation safely releases tracked stock", () => {
-  assert.match(migration, /security invoker/gi);
-  assert.match(migration, /movement_type,[\s\S]+quantity_delta/);
+test("secure order migration blocks direct client writes", () => {
+  assert.match(migration, /revoke insert, update, delete on public\.store_orders from authenticated/i);
+  assert.match(migration, /revoke insert, update, delete on public\.store_order_items from authenticated/i);
+  assert.match(migration, /security definer/gi);
+  assert.match(migration, /set search_path = ''/g);
+  assert.match(migration, /private\.is_dashboard_staff\(\)/);
+});
+
+test("order state machine releases stock only on cancellation and finishes in Sales", () => {
+  assert.match(migration, /'new',[\s\S]+'confirmed',[\s\S]+'processing',[\s\S]+'out_for_delivery'/);
+  assert.match(migration, /v_before\.status = 'delivered' and p_status = 'done'/);
   assert.match(migration, /'release'/);
   assert.match(migration, /'order_cancel'/);
   assert.match(migration, /stock_quantity = stock_quantity \+ v_item\.quantity/);
-  assert.match(migration, /final order status cannot be changed/);
+  assert.match(migration, /insert into public\.store_sales/);
+  assert.match(migration, /on conflict \(order_id\) do nothing/);
+});
+
+test("delivery changes are server-side, version checked and audited", () => {
+  assert.match(migration, /create or replace function public\.update_store_order_delivery/);
+  assert.match(migration, /p_expected_version/);
+  assert.match(migration, /order_version_conflict/);
+  assert.match(migration, /delivery fee is locked after payment/);
+  assert.match(migration, /'delivery_changed'/);
+  assert.match(detailPage, /Free Delivery/);
+  assert.match(detailPage, /Paid Delivery/);
 });
 
 test("orders UI has truthful empty state", () => {
