@@ -1,7 +1,7 @@
 import { productDiscountPercent, productInStock, productPrice } from "@/lib/productPricing";
 import type { ShopifyProduct } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
-import { matchesProductSearch } from "@/lib/searchRanking";
+import { matchesProductSearch, productSearchScore } from "@/lib/searchRanking";
 
 export const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -145,6 +145,17 @@ export function applyFilters(
       sorted.sort((a, b) => savingRatio(b) - savingRatio(a));
       break;
     default:
+      if (filters.q) {
+        sorted.sort(
+          (a, b) =>
+            productSearchScore(b, filters.q as string) -
+              productSearchScore(a, filters.q as string) ||
+            a.node.title.localeCompare(b.node.title, "en", {
+              numeric: true,
+              sensitivity: "base",
+            }),
+        );
+      }
       break;
   }
 
