@@ -614,9 +614,9 @@ export function CheckoutDetailsForm({
 
   const checkoutTotal = total + deliveryFee;
   const fieldClass =
-    "mt-1.5 min-h-11 w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground/70 hover:border-primary/25 focus:border-primary focus:ring-2 focus:ring-primary/15";
+    "mt-1.5 min-h-11 w-full rounded-xl border border-border/80 bg-background px-3 py-2.5 text-[13px] text-foreground outline-none transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground/70 hover:border-primary/25 focus:border-primary focus:ring-2 focus:ring-primary/15 sm:px-3.5 sm:text-sm";
   const paymentCardClass = (selected: boolean) =>
-    `flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-[border-color,background-color,box-shadow,transform] ${
+    `flex cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2.5 transition-[border-color,background-color,box-shadow,transform] sm:gap-3 sm:px-3.5 sm:py-3 ${
       selected
         ? "border-primary/35 bg-primary/[0.07] shadow-sm ring-2 ring-primary/10"
         : "border-border/80 bg-background hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
@@ -631,13 +631,13 @@ export function CheckoutDetailsForm({
   return (
     <section
       id="whatsapp-checkout"
-      className="scroll-mt-20 overflow-hidden rounded-2xl border bg-card shadow-card"
+      className="scroll-mt-20 overflow-hidden rounded-[1.1rem] border bg-card shadow-card sm:rounded-2xl"
       aria-labelledby="whatsapp-checkout-title"
     >
-      <div className="border-b bg-gradient-to-br from-success/[0.08] via-card to-primary/[0.04] px-4 py-4 sm:px-5 sm:py-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-success/15 bg-background/80 text-success shadow-sm">
+      <div className="border-b bg-gradient-to-br from-success/[0.08] via-card to-primary/[0.04] px-3.5 py-3.5 min-[390px]:px-4 sm:px-5 sm:py-5">
+        <div className="flex items-start justify-between gap-2.5 sm:gap-3">
+          <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-success/15 bg-background/80 text-success shadow-sm sm:h-10 sm:w-10">
               <MessageCircle className="h-4.5 w-4.5" />
             </div>
             <div className="min-w-0">
@@ -646,7 +646,7 @@ export function CheckoutDetailsForm({
               </span>
               <h2
                 id="whatsapp-checkout-title"
-                className="mt-2 text-lg font-extrabold tracking-tight"
+                className="mt-1.5 text-[17px] font-extrabold tracking-tight sm:mt-2 sm:text-lg"
               >
                 {copy.title}
               </h2>
@@ -667,14 +667,14 @@ export function CheckoutDetailsForm({
           </div>
         </div>
 
-        <div className="mt-3 flex items-start gap-2 rounded-xl border border-success/10 bg-background/60 px-3 py-2 text-[10px] leading-4 text-muted-foreground sm:hidden">
+        <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-success/10 bg-background/60 px-2.5 py-2 text-[10px] leading-4 text-muted-foreground sm:hidden">
           <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
           <span>{copy.savedBeforeWhatsapp}</span>
         </div>
       </div>
 
-      <form onSubmit={submit} className="space-y-5 p-4 sm:p-5" noValidate>
-        <section aria-labelledby="delivery-details-title" className="space-y-3.5">
+      <form onSubmit={submit} className="space-y-4.5 p-3.5 min-[390px]:p-4 sm:space-y-5 sm:p-5" noValidate>
+        <section aria-labelledby="delivery-details-title" className="space-y-3 sm:space-y-3.5">
           <div className="flex items-center justify-between gap-3">
             <h3 id="delivery-details-title" className="text-sm font-extrabold tracking-tight">
               {copy.delivery}
@@ -684,7 +684,7 @@ export function CheckoutDetailsForm({
             </span>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
             <label className="text-sm font-semibold">
               <span className="flex items-center gap-2">
                 <UserRound className="h-4 w-4 text-muted-foreground" />
@@ -770,7 +770,7 @@ export function CheckoutDetailsForm({
 
         <section
           aria-labelledby="location-section-title"
-          className="rounded-xl border bg-muted/20 p-3.5"
+          className="rounded-xl border bg-muted/20 p-3 sm:p-3.5"
         >
           <div className="flex items-start justify-between gap-3">
             <label className="flex min-w-0 cursor-pointer items-start gap-3">
@@ -800,7 +800,7 @@ export function CheckoutDetailsForm({
           </div>
 
           {shareLocation ? (
-            <div className="mt-3 space-y-3 sm:ps-7">
+            <div className="mt-2.5 space-y-2.5 sm:mt-3 sm:space-y-3 sm:ps-7">
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
@@ -878,7 +878,7 @@ export function CheckoutDetailsForm({
                     key={`${location.latitude.toFixed(6)}-${location.longitude.toFixed(6)}`}
                     src={googleMapsEmbedUrl(location)}
                     title={copy.mapPreview}
-                    className="h-40 w-full border-0 sm:h-48"
+                    className="h-36 w-full border-0 min-[390px]:h-40 sm:h-48"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                     allowFullScreen
@@ -894,7 +894,7 @@ export function CheckoutDetailsForm({
             <CreditCard className="h-4 w-4 text-muted-foreground" />
             {copy.payment}
           </legend>
-          <div className="grid gap-2.5 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2 sm:gap-2.5">
             <label className={paymentCardClass(details.paymentMethod === "cash_on_delivery")}>
               <input
                 type="radio"
@@ -1009,11 +1009,11 @@ export function CheckoutDetailsForm({
             <span>{copy.savedBeforeWhatsapp}</span>
           </div>
 
-          <div className="sticky bottom-[4.75rem] z-20 -mx-1 rounded-2xl border border-success/20 bg-background/95 p-1 shadow-float backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+          <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-1 rounded-2xl border border-success/20 bg-background/95 p-1 shadow-float backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
             <Button
               type="submit"
               disabled={actionDisabled || pdfBusy}
-              className="press min-h-14 w-full justify-start bg-success px-4 text-sm font-extrabold text-success-foreground shadow-card-hover hover:bg-success/90 sm:px-5"
+              className="press min-h-[3.25rem] w-full justify-start bg-success px-3.5 text-[13px] font-extrabold text-success-foreground shadow-card-hover hover:bg-success/90 min-[390px]:min-h-14 min-[390px]:px-4 sm:px-5 sm:text-sm"
             >
               {locating || submitting ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -1034,7 +1034,7 @@ export function CheckoutDetailsForm({
             variant="outline"
             onClick={downloadPdf}
             disabled={actionDisabled || pdfBusy}
-            className="press min-h-12 w-full border-primary/20 px-5 text-sm font-bold"
+            className="press min-h-11 w-full border-primary/20 px-4 text-[13px] font-bold sm:min-h-12 sm:px-5 sm:text-sm"
           >
             {pdfBusy ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
