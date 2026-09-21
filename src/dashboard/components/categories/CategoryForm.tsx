@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
-import { normalizeCategorySlug, type CatalogCategory } from "@/dashboard/data/categories";
+import {
+  canonicalCategoryFamilySlug,
+  normalizeCategorySlug,
+  type CatalogCategory,
+} from "@/dashboard/data/categories";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
 import { categoryIconOptions } from "@/dashboard/components/categories/category-icons";
 import {
@@ -157,11 +161,16 @@ export default function CategoryForm({
       return;
     }
 
-    const duplicateSlug = categories.some(
-      (item) => item.id !== draft.id && item.slug.trim().toLowerCase() === slug.toLowerCase(),
+    const family = canonicalCategoryFamilySlug(slug);
+    const duplicateFamily = categories.find(
+      (item) =>
+        item.id !== draft.id &&
+        canonicalCategoryFamilySlug(item.slug) === family,
     );
-    if (duplicateSlug) {
-      toast.error("That category slug is already in use.");
+    if (duplicateFamily) {
+      toast.error(
+        `Use the existing "${duplicateFamily.name}" category instead of creating a duplicate family.`,
+      );
       return;
     }
 
