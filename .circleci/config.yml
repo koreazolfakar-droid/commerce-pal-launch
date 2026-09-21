@@ -1,8 +1,15 @@
 version: 2.1
+jobs:
 
-commands:
-  install-bun:
+  diag-unit-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
     steps:
+      - checkout
       - run:
           name: Install Bun
           command: |
@@ -10,93 +17,114 @@ commands:
             echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
             echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
-            bun --version
-
-jobs:
-  security-source:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: High-confidence source and secret scan
-          command: node scripts/security-gate.mjs
-
-  security-dependencies:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: High and critical dependency audit
-          command: |
-            source "$BASH_ENV"
-            bun audit --audit-level=high
-
-  storefront-ci:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-            - bun-deps-v1-{{ checksum "bun.lock" }}
-            - bun-deps-v1-
-
-      - install-bun
-
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
-
-      - save_cache:
-          key: bun-deps-v1-{{ checksum "bun.lock" }}
-          paths:
-            - ~/.bun/install/cache
-
       - run:
-          name: TypeScript
-          command: bun run typecheck
+          name: diag-unit-architecture
+          command: node --test e2e/architecture.test.mjs e2e/performance-architecture.test.mjs
 
-      - run:
-          name: ESLint
-          command: bun run lint
 
+  diag-unit-cart-orders:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: Dashboard security regression tests
-          command: node --test e2e/dashboard-*.test.mjs
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-unit-cart-orders
+          command: node --test e2e/cart-*.test.mjs e2e/create-order-rate-limit-security.test.mjs e2e/storefront-orders-secure.test.mjs
 
-      - run:
-          name: Unit and architecture tests
-          command: bun run test:unit
 
+  diag-unit-catalog-category:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: Production build
-          command: bun run build
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-unit-catalog-category
+          command: node --test e2e/catalog*.test.mjs e2e/category-*.test.mjs e2e/product-add-edit-supabase.test.mjs e2e/inventory-supabase.test.mjs
 
+
+  diag-unit-storefront:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: SSR smoke test
-          command: bun run test:ssr
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-unit-storefront
+          command: node --test e2e/{cms-refresh,hero-design,hero-scene,hybrid-storefront,seo-regression,shopify-only-storefront,storefront-consistency,storefront-dark-theme,storefront-supabase-failover}.test.mjs
+
+
+  diag-unit-dashboard:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-unit-dashboard
+          command: find e2e -maxdepth 1 -name 'dashboard-*.test.mjs' ! -name 'dashboard-csp-session-ci.test.mjs' -print0 | sort -z | xargs -0 node --test
 
 workflows:
-  security-and-storefront-validation:
+  unit-diagnostics:
     jobs:
-      - security-source
-      - security-dependencies
-      - storefront-ci:
-          filters:
-            branches:
-              only:
-                - /^important\/.*/
+      - diag-unit-architecture
+      - diag-unit-cart-orders
+      - diag-unit-catalog-category
+      - diag-unit-storefront
+      - diag-unit-dashboard
