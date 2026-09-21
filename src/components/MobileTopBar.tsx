@@ -61,54 +61,61 @@ export function MobileTopBar({
 
   return (
     <>
-      <header className="mobile-top-bar sticky top-0 z-40 border-b border-border/60 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto flex max-w-md items-center gap-1 px-3 py-2.5">
-          <div className="flex w-[5.625rem] shrink-0 items-center sm:w-[8.5rem]">
+      <header className="mobile-top-bar sticky top-0 z-40 border-b border-border/55 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
+        <div className="mx-auto grid h-16 w-full max-w-md grid-cols-[1fr_auto_1fr] items-center px-3">
+          <div className="flex min-w-0 items-center justify-start gap-1.5">
             <button
               type="button"
               aria-label={t("openMenu")}
               onClick={() => setMenuOpen(true)}
-              className="press grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-surface"
+              className="press grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
             >
-              <Menu aria-hidden className="h-5 w-5" />
+              <Menu aria-hidden className="h-5 w-5" strokeWidth={1.9} />
             </button>
-            <CustomerAccountButton variant="icon" />
+            <CustomerAccountButton
+              variant="icon"
+              className="h-10 w-10 rounded-2xl border border-border/55 bg-card/65 shadow-sm hover:bg-surface"
+            />
           </div>
+
           <Link
             to="/"
             aria-label={`${storeName} home`}
             data-testid="mobile-brand"
-            className="flex min-w-0 flex-1 items-center justify-center gap-1.5"
+            className="mx-2 flex min-w-0 max-w-[11.5rem] items-center justify-center gap-1.5 sm:max-w-none"
           >
             <img
               src={logoUrl}
               alt={storeName}
-              width={51}
-              height={34}
+              width={48}
+              height={32}
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="h-[34px] w-auto shrink-0 object-contain drop-shadow-sm"
+              className="h-8 w-auto shrink-0 object-contain drop-shadow-sm"
             />
-            <span className="truncate text-[17px] font-black tracking-[-0.025em]">{storeName}</span>
+            <span className="truncate text-[16px] font-black leading-none tracking-[-0.025em] sm:text-[17px]">
+              {storeName}
+            </span>
           </Link>
-          <div className="flex w-[5.625rem] shrink-0 items-center justify-end gap-0.5 sm:w-[8.5rem]">
+
+          <div className="flex min-w-0 items-center justify-end gap-1.5">
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
-              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-full transition-colors hover:bg-surface sm:grid"
+              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface sm:grid"
             >
-              <Heart className="h-[21px] w-[21px]" strokeWidth={1.9} />
+              <Heart className="h-5 w-5" strokeWidth={1.9} />
               <Badge value={wishlistCount} />
             </Link>
-            <ThemeToggle className="h-10 w-10" />
+            <ThemeToggle className="h-10 w-10 rounded-2xl border border-border/55 bg-card/65 shadow-sm hover:bg-surface" />
             <button
               type="button"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
               aria-label={`Cart, ${cartCount} items`}
-              className="press relative grid h-10 w-10 place-items-center rounded-full border border-transparent transition-colors hover:border-border hover:bg-surface"
+              className="press relative grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
             >
-              <ShoppingBag className="h-[21px] w-[21px]" strokeWidth={1.9} />
+              <ShoppingBag className="h-5 w-5" strokeWidth={1.9} />
               <Badge value={cartCount} />
             </button>
           </div>
