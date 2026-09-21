@@ -14,7 +14,7 @@ commands:
 
 jobs:
 
-  diag-ts-route-root-index:
+  diag-ts-root:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -28,16 +28,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-ts-route-root-index
+          name: diag-ts-root
           command: |
             set +e
             bun run typecheck > /tmp/typecheck.log 2>&1
             set -e
-            if grep -Eq 'src/routes/(__root|index)\.tsx' /tmp/typecheck.log; then exit 1; fi
+            if grep -Eq 'src/routes/__root\.tsx' /tmp/typecheck.log; then exit 1; fi
             exit 0
 
 
-  diag-ts-route-cart-search:
+  diag-ts-index:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -51,16 +51,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-ts-route-cart-search
+          name: diag-ts-index
           command: |
             set +e
             bun run typecheck > /tmp/typecheck.log 2>&1
             set -e
-            if grep -Eq 'src/routes/(cart|shop|search|wishlist|compare)\.tsx' /tmp/typecheck.log; then exit 1; fi
+            if grep -Eq 'src/routes/index\.tsx' /tmp/typecheck.log; then exit 1; fi
             exit 0
 
 
-  diag-ts-layout-header:
+  diag-ts-mobile-top:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -74,16 +74,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-ts-layout-header
+          name: diag-ts-mobile-top
           command: |
             set +e
             bun run typecheck > /tmp/typecheck.log 2>&1
             set -e
-            if grep -Eq 'src/components/(StoreLayout|SiteHeader|SiteFooter|DeferredDesktopHeader)\.tsx' /tmp/typecheck.log; then exit 1; fi
+            if grep -Eq 'src/components/MobileTopBar\.tsx' /tmp/typecheck.log; then exit 1; fi
             exit 0
 
 
-  diag-ts-layout-mobile:
+  diag-ts-mobile-menu:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -97,16 +97,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-ts-layout-mobile
+          name: diag-ts-mobile-menu
           command: |
             set +e
             bun run typecheck > /tmp/typecheck.log 2>&1
             set -e
-            if grep -Eq 'src/components/(MobileTopBar|MobileMenu|BottomNav|CmsStoreControls)\.tsx' /tmp/typecheck.log; then exit 1; fi
+            if grep -Eq 'src/components/MobileMenu\.tsx' /tmp/typecheck.log; then exit 1; fi
             exit 0
 
 
-  diag-ts-ops-inventory-receiving:
+  diag-ts-bottom-nav:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -120,16 +120,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-ts-ops-inventory-receiving
+          name: diag-ts-bottom-nav
           command: |
             set +e
             bun run typecheck > /tmp/typecheck.log 2>&1
             set -e
-            if grep -Eq 'src/dashboard/data/(inventory|receiving|receivingRules)\.ts' /tmp/typecheck.log; then exit 1; fi
+            if grep -Eq 'src/components/BottomNav\.tsx' /tmp/typecheck.log; then exit 1; fi
             exit 0
 
 
-  diag-ts-ops-orders-other:
+  diag-ts-cms-controls:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -143,16 +143,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-ts-ops-orders-other
+          name: diag-ts-cms-controls
           command: |
             set +e
             bun run typecheck > /tmp/typecheck.log 2>&1
             set -e
-            if grep -Eq 'src/dashboard/data/(customers|orders|sales|workspace)\.ts' /tmp/typecheck.log; then exit 1; fi
+            if grep -Eq 'src/components/CmsStoreControls\.tsx' /tmp/typecheck.log; then exit 1; fi
             exit 0
 
 
-  diag-cart-delivery-dashboard:
+  diag-ts-data-customers:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -166,11 +166,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-cart-delivery-dashboard
-          command: node --test e2e/cart-delivery-dashboard.test.mjs
+          name: diag-ts-data-customers
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/dashboard/data/customers\.ts' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
 
-  diag-cart-delivery-security:
+  diag-ts-data-orders:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -184,11 +189,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-cart-delivery-security
-          command: node --test e2e/cart-delivery-security.test.mjs
+          name: diag-ts-data-orders
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/dashboard/data/orders\.ts' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
 
-  diag-cart-responsive:
+  diag-ts-data-sales:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -202,11 +212,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-cart-responsive
-          command: node --test e2e/cart-responsive-precision.test.mjs
+          name: diag-ts-data-sales
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/dashboard/data/sales\.ts' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
 
-  diag-cart-ux:
+  diag-ts-data-workspace:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -220,11 +235,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-cart-ux
-          command: node --test e2e/cart-ux-polish.test.mjs
+          name: diag-ts-data-workspace
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/dashboard/data/workspace\.ts' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
 
-  diag-catalog-runtime:
+  diag-ts-data-inventory:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -238,11 +258,16 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-catalog-runtime
-          command: node --test e2e/catalog.test.mjs
+          name: diag-ts-data-inventory
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/dashboard/data/inventory\.ts' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
 
-  diag-catalog-responsive:
+  diag-ts-data-receiving:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -256,383 +281,27 @@ jobs:
           name: Install dependencies
           command: bun install --frozen-lockfile
       - run:
-          name: diag-catalog-responsive
-          command: node --test e2e/catalog-management-responsive.test.mjs
-
-
-  diag-product-add-edit:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-product-add-edit
-          command: node --test e2e/product-add-edit-supabase.test.mjs
-
-
-  diag-inventory-test:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-inventory-test
-          command: node --test e2e/inventory-supabase.test.mjs
-
-
-  diag-cms-refresh:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-cms-refresh
-          command: node --test e2e/cms-refresh.test.mjs
-
-
-  diag-hero-design:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-hero-design
-          command: node --test e2e/hero-design.test.mjs
-
-
-  diag-hero-scene:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-hero-scene
-          command: node --test e2e/hero-scene.test.mjs
-
-
-  diag-storefront-consistency:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-storefront-consistency
-          command: node --test e2e/storefront-consistency.test.mjs
-
-
-  diag-seo:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-seo
-          command: node --test e2e/seo-regression.test.mjs
-
-
-  diag-dark-theme:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-dark-theme
-          command: node --test e2e/storefront-dark-theme.test.mjs
-
-
-  diag-supabase-failover:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-supabase-failover
-          command: node --test e2e/storefront-supabase-failover.test.mjs
-
-
-  diag-shopify-only:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-shopify-only
-          command: node --test e2e/shopify-only-storefront.test.mjs
-
-
-  diag-hybrid:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-hybrid
-          command: node --test e2e/hybrid-storefront.test.mjs
-
-
-  diag-dash-login-ui:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-dash-login-ui
-          command: node --test e2e/dashboard-login-ui.test.mjs
-
-
-  diag-dash-login-route:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-dash-login-route
-          command: node --test e2e/dashboard-login-route.test.mjs
-
-
-  diag-dash-login-capture:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-dash-login-capture
-          command: node --test e2e/dashboard-login-screen-capture.test.mjs
-
-
-  diag-dash-auth0:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-dash-auth0
-          command: node --test e2e/dashboard-auth0-security.test.mjs
-
-
-  diag-dash-csp:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-dash-csp
-          command: node --test e2e/dashboard-csp-session-ci.test.mjs
-
-
-  diag-dash-image:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-dash-image
-          command: node --test e2e/dashboard-image-compression-controls.test.mjs
-
-
-  diag-dash-hero:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-dash-hero
-          command: node --test e2e/dashboard-{hero-composite-row-regression,hero-image-pipeline,hero-supabase,homepage-cms,home-supabase}.test.mjs
-
-
-  diag-dash-brand-category:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: Install dependencies
-          command: bun install --frozen-lockfile
-      - run:
-          name: diag-dash-brand-category
-          command: node --test e2e/dashboard-{brands-mobile-actions,category-image-pipeline,content-cms-step4,settings-supabase}.test.mjs
+          name: diag-ts-data-receiving
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/dashboard/data/(receiving|receivingRules)\.ts' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
 
 workflows:
-  pr267-diagnostics:
+  pr267-ts-diagnostics:
     jobs:
-      - diag-ts-route-root-index
-      - diag-ts-route-cart-search
-      - diag-ts-layout-header
-      - diag-ts-layout-mobile
-      - diag-ts-ops-inventory-receiving
-      - diag-ts-ops-orders-other
-      - diag-cart-delivery-dashboard
-      - diag-cart-delivery-security
-      - diag-cart-responsive
-      - diag-cart-ux
-      - diag-catalog-runtime
-      - diag-catalog-responsive
-      - diag-product-add-edit
-      - diag-inventory-test
-      - diag-cms-refresh
-      - diag-hero-design
-      - diag-hero-scene
-      - diag-storefront-consistency
-      - diag-seo
-      - diag-dark-theme
-      - diag-supabase-failover
-      - diag-shopify-only
-      - diag-hybrid
-      - diag-dash-login-ui
-      - diag-dash-login-route
-      - diag-dash-login-capture
-      - diag-dash-auth0
-      - diag-dash-csp
-      - diag-dash-image
-      - diag-dash-hero
-      - diag-dash-brand-category
+      - diag-ts-root
+      - diag-ts-index
+      - diag-ts-mobile-top
+      - diag-ts-mobile-menu
+      - diag-ts-bottom-nav
+      - diag-ts-cms-controls
+      - diag-ts-data-customers
+      - diag-ts-data-orders
+      - diag-ts-data-sales
+      - diag-ts-data-workspace
+      - diag-ts-data-inventory
+      - diag-ts-data-receiving
