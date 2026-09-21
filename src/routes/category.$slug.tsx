@@ -1,4 +1,4 @@
-import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 
 import { CatalogView } from "@/components/CatalogView";
@@ -43,8 +43,28 @@ async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory 
   return (data as ManagedStoreCategory | null) ?? null;
 }
 
+const LEGACY_CATEGORY_REDIRECTS: Record<string, string> = {
+  "mobile-phones": "smartphone",
+  "foldable-smartphone": "smartphone",
+  "smartphone-bundle": "smartphone",
+  "gaming-tablet": "tablet",
+  "wall-charger": "charger",
+  "charging-cable": "cable",
+  "هاتف-مستعمل": "used-phone",
+};
+
 export const Route = createFileRoute("/category/$slug")({
   validateSearch: parseProductSearch,
+  beforeLoad: ({ params }) => {
+    const canonicalSlug = LEGACY_CATEGORY_REDIRECTS[params.slug];
+    if (canonicalSlug) {
+      throw redirect({
+        to: "/category/$slug",
+        params: { slug: canonicalSlug },
+        replace: true,
+      });
+    }
+  },
   loader: async ({ context, params }) => {
     const [catalog, managedCategory] = await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
