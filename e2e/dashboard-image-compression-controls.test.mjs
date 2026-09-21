@@ -144,3 +144,13 @@ test("global legacy optimizer covers all old dashboard image sources", async () 
   assert.match(media, /role !== "admin"/);
   assert.match(media, /rollback failed/);
 });
+
+
+test("global image optimizer shows explicit size before and after conversion", async () => {
+  const ui = await read("src/dashboard/components/GlobalLegacyImageOptimizer.tsx");
+  assert.match(ui, /Current size/);
+  assert.match(ui, /After WebP size/);
+  assert.match(ui, /Before conversion/);
+  assert.match(ui, /After conversion/);
+  assert.match(ui, /Saved \$\{formatImageBytes\(conversion\.source\.bytes - conversion\.output\.bytes\)\}/);
+});
