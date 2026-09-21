@@ -24,3 +24,10 @@ test("create-order uses independent IP and hashed-phone abuse buckets", () => {
   assert.match(source, /sha256\(customerPhone\)/);
   assert.doesNotMatch(source, /_key:\s*customerPhone/);
 });
+
+test("create-order applies the IP bucket before reading malformed bodies", () => {
+  const ipLimitIndex = source.indexOf("const ipRateLimit = await enforceRateLimit");
+  const bodyReadIndex = source.indexOf("const text = await req.text()");
+  assert.ok(ipLimitIndex > 0, "IP rate limit should exist");
+  assert.ok(bodyReadIndex > ipLimitIndex, "body parsing must happen after the IP limiter");
+});
