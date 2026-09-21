@@ -49,7 +49,7 @@ test("storefront internal navigation stays client-side", async () => {
     read("src/routes/index.tsx"),
   ]);
 
-  assert.match(bottom, /href=\{item\.href \?\? "\/"\}[\s\S]*?preload="intent"/);
+  assert.match(bottom, /to=\{\(item\.href \?\? "\/"\) as never\}[\s\S]*?preload="intent"/);
   assert.match(cmsControls, /function isInternalStoreHref/);
   assert.match(cmsControls, /<Link key=\{item\.id\} to=\{item\.href as never\} preload="intent"/);
   assert.doesNotMatch(cartDrawer, /href="\/cart(?:#whatsapp-checkout)?"/);
