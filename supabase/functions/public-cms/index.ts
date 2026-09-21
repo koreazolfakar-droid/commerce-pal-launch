@@ -1,6 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
+const CMS_EDGE_MEMORY_TTL_MS = 30_000;
+let cmsBodyCache: { expiresAt: number; body: string } | null = null;
+
 function headers(_req: Request) {
   return {
     "Access-Control-Allow-Origin": "*",
@@ -44,14 +47,19 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  const cachedBody = cmsBodyCache;
+  if (cachedBody && cachedBody.expiresAt > Date.now()) {
+    return new Response(cachedBody.body, { status: 200, headers: headers(req) });
+  }
+
   const db = createClient(url, secret, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const nowIso = new Date().toISOString();
 
-  // Use select("*") for the localized content tables so this function stays
-  // deploy-safe both immediately before and after the bilingual migration runs.
-  // The response below still explicitly projects only storefront-safe fields.
+  // Keep database payloads bounded to storefront-safe fields. The bilingual
+  // schema is now part of the production contract, so wildcard reads only add
+  // transfer and JSON parsing work on the latency-sensitive CMS path.
   const [settingsResult, heroesResult, sectionsResult, navigationResult, brandsResult, seoResult] =
     await Promise.all([
       db
@@ -61,20 +69,26 @@ Deno.serve(async (req: Request) => {
         .order("key"),
       db
         .from("cms_hero_slides")
-        .select("*")
+        .select(
+          "id,title,title_en,title_ar,subtitle,subtitle_en,subtitle_ar,eyebrow_en,eyebrow_ar,image_url,mobile_image_url,image_alt_en,image_alt_ar,mobile_image_alt_en,mobile_image_alt_ar,button_label,button_label_en,button_label_ar,target_type,target_value,secondary_button_label_en,secondary_button_label_ar,secondary_target_type,secondary_target_value,sort_order,content_alignment,overlay_opacity,button_style,secondary_button_style,content_theme,open_in_new_tab,secondary_open_in_new_tab,visual_config",
+        )
         .eq("is_published", true)
         .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
         .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
         .order("sort_order"),
       db
         .from("cms_sections")
-        .select("*")
+        .select(
+          "id,page_slug,section_key,section_type,title,title_en,title_ar,subtitle,subtitle_en,subtitle_ar,content,content_en,content_ar,sort_order,is_visible",
+        )
         .eq("is_visible", true)
         .order("page_slug")
         .order("sort_order"),
       db
         .from("cms_navigation_items")
-        .select("*")
+        .select(
+          "id,area,label,label_en,label_ar,icon_type,icon_value,href,sort_order,is_visible",
+        )
         .eq("is_visible", true)
         .order("area")
         .order("sort_order"),
@@ -84,7 +98,13 @@ Deno.serve(async (req: Request) => {
         .eq("is_visible", true)
         .order("sort_order")
         .order("name"),
-      db.from("cms_seo_pages").select("*").eq("is_public", true).order("page_slug"),
+      db
+        .from("cms_seo_pages")
+        .select(
+          "page_slug,title,title_en,title_ar,description,description_en,description_ar,og_image_url,canonical_url,robots,json_ld,is_public",
+        )
+        .eq("is_public", true)
+        .order("page_slug"),
     ]);
 
   const firstError =
@@ -200,15 +220,18 @@ Deno.serve(async (req: Request) => {
     }),
   );
 
-  return new Response(
-    JSON.stringify({
-      settings,
-      heroSlides,
-      sections,
-      navigation,
-      brands: brandsResult.data ?? [],
-      seoPages,
-    }),
-    { status: 200, headers: headers(req) },
-  );
+  const body = JSON.stringify({
+    settings,
+    heroSlides,
+    sections,
+    navigation,
+    brands: brandsResult.data ?? [],
+    seoPages,
+  });
+  cmsBodyCache = {
+    expiresAt: Date.now() + CMS_EDGE_MEMORY_TTL_MS,
+    body,
+  };
+
+  return new Response(body, { status: 200, headers: headers(req) });
 });
