@@ -228,3 +228,5 @@ workflows:
       - diag-storefront-consistency
       - diag-storefront-dark-theme
       - diag-storefront-supabase-failover
+
+# diagnostic refresh
