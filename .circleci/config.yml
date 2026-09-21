@@ -24,58 +24,66 @@ commands:
           command: bun install --frozen-lockfile
 
 jobs:
-  dashboard-auth-a1:
+  test-dashboard-auth0:
     docker:
       - image: cimg/node:lts
     resource_class: small
     working_directory: ~/project
     steps:
       - prepare
-      - run:
-          name: Auth0 and CSP tests
-          command: |
-            node --test               e2e/dashboard-auth0-security.test.mjs               e2e/dashboard-csp-session-ci.test.mjs
+      - run: node --test e2e/dashboard-auth0-security.test.mjs
 
-  dashboard-auth-a2:
+  test-dashboard-csp:
     docker:
       - image: cimg/node:lts
     resource_class: small
     working_directory: ~/project
     steps:
       - prepare
-      - run:
-          name: Login route and screen capture tests
-          command: |
-            node --test               e2e/dashboard-login-route.test.mjs               e2e/dashboard-login-screen-capture.test.mjs
+      - run: node --test e2e/dashboard-csp-session-ci.test.mjs
 
-  core-b1:
+  test-category-page:
     docker:
       - image: cimg/node:lts
     resource_class: small
     working_directory: ~/project
     steps:
       - prepare
-      - run:
-          name: Catalog and cleanup tests
-          command: |
-            node --test               e2e/catalog-management-responsive.test.mjs               e2e/catalog.test.mjs               e2e/category-cleanup-followup.test.mjs
+      - run: node --test e2e/category-page-premium.test.mjs
 
-  core-b2:
+  test-category-sync:
     docker:
       - image: cimg/node:lts
     resource_class: small
     working_directory: ~/project
     steps:
       - prepare
-      - run:
-          name: Category and CI tests
-          command: |
-            node --test               e2e/category-page-premium.test.mjs               e2e/category-storefront-sync.test.mjs               e2e/category-taxonomy-cleanup.test.mjs               e2e/ci-config.test.mjs
+      - run: node --test e2e/category-storefront-sync.test.mjs
+
+  test-category-taxonomy:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - prepare
+      - run: node --test e2e/category-taxonomy-cleanup.test.mjs
+
+  test-ci-config:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - prepare
+      - run: node --test e2e/ci-config.test.mjs
 
 workflows:
-  isolate-current-test-failures-stage-3:
+  isolate-exact-current-test-failures:
     jobs:
-      - dashboard-auth-a1
-      - dashboard-auth-a2
-      - core-b1
-      - core-b2
+      - test-dashboard-auth0
+      - test-dashboard-csp
+      - test-category-page
+      - test-category-sync
+      - test-category-taxonomy
+      - test-ci-config
