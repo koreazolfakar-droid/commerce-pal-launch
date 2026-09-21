@@ -37,7 +37,7 @@ const EMPTY: DashboardSiteSettings = {
   xUrl: "",
   youtubeUrl: "",
   tiktokUrl: "",
-  deliveryFee: "0.00",
+  deliveryFee: "2.00",
 };
 
 function Field({
@@ -412,7 +412,7 @@ export default function SettingsPage() {
           {tab === "delivery" ? (
             <Panel
               title="Delivery pricing"
-              subtitle="The server uses this value when creating a storefront order. Enter 0 for Free Delivery."
+              subtitle="This fee is shared by the storefront cart and the secure server-side order flow. Enter 0 for Free Delivery."
             >
               <div className="grid gap-4 p-5 sm:grid-cols-2">
                 <Field
@@ -421,15 +421,16 @@ export default function SettingsPage() {
                   onChange={(value) => update("deliveryFee", value)}
                   type="number"
                   dir="ltr"
-                  placeholder="0.00"
+                  placeholder="2.00"
                 />
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-[11px] leading-5 text-slate-500">
                   <div className="font-bold text-slate-700">
                     {Number(settings.deliveryFee || 0) === 0 ? "Free Delivery" : "Paid Delivery"}
                   </div>
                   <div className="mt-1">
-                    0 means free delivery. A positive amount is added server-side to the validated
-                    product subtotal. Staff can still override delivery on an unpaid order.
+                    The default is USD 2.00 per order. Changes here are reflected in the storefront
+                    cart and are enforced server-side for new orders. Staff can still override delivery
+                    on an unpaid order.
                   </div>
                 </div>
               </div>
