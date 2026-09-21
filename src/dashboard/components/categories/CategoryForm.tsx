@@ -137,7 +137,7 @@ export default function CategoryForm({
       const edited = await imageEditor.editFile(file, {
         title: "Adjust category image",
         preset: "square",
-        transparent: false,
+        transparent: true,
         defaultFit: "contain",
       });
       if (!edited) return;
@@ -398,13 +398,13 @@ export default function CategoryForm({
                                 ? imageEditor.editFile(source, {
                                     title: "Adjust category image",
                                     preset: "square",
-                                    transparent: false,
+                                    transparent: true,
                                     defaultFit: "contain",
                                   })
                                 : imageEditor.editUrl(source, {
                                     title: "Adjust category image",
                                     preset: "square",
-                                    transparent: false,
+                                    transparent: true,
                                     defaultFit: "contain",
                                   });
                             void editPromise.then(async (edited) => {
