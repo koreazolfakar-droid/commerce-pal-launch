@@ -214,7 +214,14 @@ begin
     raise exception 'idempotency_key_required';
   end if;
 
-  v_payload_fingerprint := pg_catalog.md5((payload - 'idempotency_key')::text);
+  v_payload_fingerprint := pg_catalog.md5(
+    pg_catalog.jsonb_build_object(
+      'customer', payload -> 'customer',
+      'items', payload -> 'items',
+      'payment_method', payload -> 'payment_method',
+      'notes', payload -> 'notes'
+    )::text
+  );
 
   -- Serialize requests that reuse the same checkout key before checking whether
   -- an order already exists. This prevents duplicate stock deduction.
