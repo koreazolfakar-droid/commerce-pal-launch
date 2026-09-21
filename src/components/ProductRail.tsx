@@ -218,7 +218,7 @@ export function ProductRail({
         <div className="relative">
           <div
             ref={railRef}
-            className={viewMode === "dense" ? "scroll-rail product-rail-items max-sm:[&>*]:!basis-[calc(33.333%-0.42rem)] max-sm:[&>*]:!max-w-[calc(33.333%-0.42rem)]" : "scroll-rail product-rail-items"}
+            className={viewMode === "dense" ? "scroll-rail product-rail-items max-sm:[&>*]:!basis-[31%] max-sm:[&>*]:!max-w-[31%]" : "scroll-rail product-rail-items"}
             role="list"
             aria-label="Products"
             aria-busy={shouldRender ? undefined : "true"}
