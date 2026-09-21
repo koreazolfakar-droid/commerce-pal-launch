@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import {
   getProductImageResolution,
   setProductImageResolution,
@@ -154,6 +155,7 @@ export default function ProductVariantManager({
   const [draft, setDraft] = useState<VariantDraft>(EMPTY_DRAFT);
   const [open, setOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const imageEditor = useSmartImageEditor();
   const onCountChangeRef = useRef(onCountChange);
   const onSingleVariantChangeRef = useRef(onSingleVariantChange);
 
@@ -331,6 +333,7 @@ export default function ProductVariantManager({
 
   return (
     <div className="px-5 py-5">
+      {imageEditor.dialog}
       <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <div className="text-[12px] font-bold text-slate-700">
@@ -495,8 +498,17 @@ export default function ProductVariantManager({
                     accept="image/jpeg,image/png,image/webp,image/avif"
                     className="hidden"
                     onChange={(event) => {
-                      setPendingImageFile(event.target.files?.[0] ?? null);
+                      const file = event.target.files?.[0] ?? null;
                       event.currentTarget.value = "";
+                      if (!file) return;
+                      void imageEditor.editFile(file, {
+                        title: "Adjust variant image",
+                        preset: "square",
+                        transparent: false,
+                        defaultFit: "contain",
+                      }).then((edited) => {
+                        if (edited) setPendingImageFile(edited);
+                      });
                     }}
                   />
                   <button
@@ -509,13 +521,32 @@ export default function ProductVariantManager({
                     {editing ? "Upload / replace" : "Save variant first"}
                   </button>
                   {editing && draft.imageUrl ? (
-                    <button
-                      type="button"
-                      onClick={() => void clearImage()}
-                      className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-600"
-                    >
-                      Clear image
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void imageEditor.editUrl(draft.imageUrl, {
+                            title: "Adjust existing variant image",
+                            preset: "square",
+                            transparent: false,
+                            defaultFit: "contain",
+                          }).then((edited) => {
+                            if (edited) setPendingImageFile(edited);
+                          });
+                        }}
+                        disabled={uploading}
+                        className="h-9 rounded-xl border border-indigo-200 px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
+                      >
+                        Adjust
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void clearImage()}
+                        className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-600"
+                      >
+                        Clear image
+                      </button>
+                    </>
                   ) : null}
                 </div>
               </div>
