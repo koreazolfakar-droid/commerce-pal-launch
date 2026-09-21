@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
-import { BrandLogo } from "@/components/BrandLogo";
+import { BrandLogo } from "@/components/BrandLogo";\nimport { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
@@ -137,13 +137,7 @@ export function SiteHeader() {
               </Link>
             </li>
             <li>
-              <Link
-                to="/help"
-                hash="account-orders"
-                className="flex items-center gap-1.5 whitespace-nowrap hover:text-primary"
-              >
-                <User className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("account")}
-              </Link>
+              <CustomerAccountButton variant="utility" />
             </li>
             <li>
               <Link
