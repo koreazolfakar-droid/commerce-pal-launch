@@ -18,7 +18,7 @@ test("cart keeps the purchase flow compact and visible", () => {
 });
 
 test("cart summary remains sticky on desktop and links directly to checkout", () => {
-  assert.match(cart, /lg:sticky lg:top-24/);
+  assert.match(cart, /lg:sticky lg:top-\[5\.75rem\]/);
   assert.match(cart, /href="#whatsapp-checkout"/);
   assert.match(cart, /const grandTotal = subtotal \+ deliveryFee/);
 });
