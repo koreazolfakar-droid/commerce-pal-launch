@@ -54,6 +54,16 @@ function isUuid(value: unknown): value is string {
   );
 }
 
+function isMoney(value: unknown, max: number) {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= max &&
+    Math.abs(value * 100 - Math.round(value * 100)) < 1e-7
+  );
+}
+
 function validatePayload(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return "invalid_payload";
   const payload = value as Record<string, unknown>;
@@ -143,10 +153,17 @@ function publicError(message: string | undefined) {
     "invalid_delivery_location",
     "customer_name_required",
     "customer_phone_required",
+    "customer_city_required",
+    "customer_address_required",
+    "invalid_expected_subtotal",
+    "invalid_expected_delivery_fee",
+    "invalid_notes",
+    "invalid_reference",
     "invalid_payment_method",
     "product_or_variant_unavailable",
     "insufficient_stock",
     "mixed_currency_order",
+    "pricing_changed",
     "invalid_delivery_fee_config",
   ];
   return known.find((code) => message?.includes(code)) ?? "order_failed";
@@ -233,7 +250,8 @@ Deno.serve(async (req: Request) => {
     const status =
       code === "insufficient_stock" ||
       code === "product_or_variant_unavailable" ||
-      code === "idempotency_key_conflict"
+      code === "idempotency_key_conflict" ||
+      code === "pricing_changed"
         ? 409
         : code === "invalid_delivery_fee_config"
           ? 503
