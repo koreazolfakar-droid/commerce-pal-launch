@@ -860,6 +860,65 @@ export type Database = {
           },
         ]
       }
+      store_sales: {
+        Row: {
+          completed_at: string
+          created_at: string
+          currency: string
+          customer_name: string
+          customer_phone: string
+          discount_total: number
+          id: string
+          order_id: string
+          order_number: number
+          payment_method: string
+          payment_status: string
+          shipping_total: number
+          subtotal: number
+          total: number
+        }
+        Insert: {
+          completed_at: string
+          created_at?: string
+          currency: string
+          customer_name: string
+          customer_phone: string
+          discount_total: number
+          id?: string
+          order_id: string
+          order_number: number
+          payment_method: string
+          payment_status: string
+          shipping_total: number
+          subtotal: number
+          total: number
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          currency?: string
+          customer_name?: string
+          customer_phone?: string
+          discount_total?: number
+          id?: string
+          order_id?: string
+          order_number?: number
+          payment_method?: string
+          payment_status?: string
+          shipping_total?: number
+          subtotal?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_sales_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "store_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_order_items: {
         Row: {
           created_at: string
