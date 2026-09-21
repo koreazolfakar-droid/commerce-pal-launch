@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import GlobalLegacyImageOptimizer from "@/dashboard/components/GlobalLegacyImageOptimizer";
 
 import {
@@ -19,6 +20,7 @@ import {
   loadDashboardMediaWorkspace,
   updateDashboardMediaAltText,
   uploadDashboardMediaImage,
+  replaceDashboardMediaAssetWithWebp,
   type DashboardMediaAsset,
 } from "@/dashboard/data/media";
 
@@ -38,7 +40,9 @@ export default function MediaLibraryPage() {
   const [editing, setEditing] = useState<DashboardMediaAsset | null>(null);
   const [altText, setAltText] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [adjustingId, setAdjustingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const imageEditor = useSmartImageEditor();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,6 +94,28 @@ export default function MediaLibraryPage() {
     }
   };
 
+  const adjustImage = async (asset: DashboardMediaAsset) => {
+    if (adjustingId) return;
+    try {
+      const edited = await imageEditor.editUrl(asset.url, {
+        title: "Adjust media image",
+        preset: "free",
+        transparent: true,
+        defaultFit: "contain",
+        outputFormat: "webp",
+      });
+      if (!edited) return;
+      setAdjustingId(asset.id);
+      const next = await replaceDashboardMediaAssetWithWebp(asset, edited);
+      setAssets((current) => current.map((row) => (row.id === asset.id ? next : row)));
+      toast.success("Image adjustment saved without changing its media URL.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Image adjustment failed.");
+    } finally {
+      setAdjustingId(null);
+    }
+  };
+
   const remove = async (asset: DashboardMediaAsset) => {
     if (!canDelete) return toast.error("Only admins can delete media.");
     if (!window.confirm(`Permanently delete "${asset.fileName}"?`)) return;
@@ -104,6 +130,7 @@ export default function MediaLibraryPage() {
 
   return (
     <div>
+      {imageEditor.dialog}
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-indigo-500">Management / Supabase Storage</div>
@@ -118,8 +145,17 @@ export default function MediaLibraryPage() {
             accept="image/jpeg,image/png,image/webp,image/avif"
             className="hidden"
             onChange={(event) => {
-              setPendingFile(event.target.files?.[0] ?? null);
+              const file = event.target.files?.[0] ?? null;
               event.currentTarget.value = "";
+              if (!file) return;
+              void imageEditor.editFile(file, {
+                title: "Adjust media image",
+                preset: "free",
+                transparent: true,
+                defaultFit: "contain",
+              }).then((edited) => {
+                if (edited) setPendingFile(edited);
+              });
             }}
           />
           <button onClick={()=>fileRef.current?.click()} disabled={uploading} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-50">{uploading?<Loader2 className="size-4 animate-spin" />:<UploadCloud className="size-4" />} Upload image</button>
@@ -177,6 +213,16 @@ export default function MediaLibraryPage() {
                 <div className="mt-3 flex gap-1 border-t border-slate-100 pt-3">
                   <button onClick={()=>{void navigator.clipboard.writeText(asset.url);toast.success("Media URL copied.");}} className="grid size-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-50" title="Copy URL"><Copy className="size-3.5" /></button>
                   <button onClick={()=>{setEditing(asset);setAltText(asset.altText);}} className="grid size-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-50" title="Edit alt text"><Pencil className="size-3.5" /></button>
+                  {canDelete ? (
+                    <button
+                      onClick={() => void adjustImage(asset)}
+                      disabled={adjustingId !== null}
+                      className="h-8 rounded-lg px-2 text-[9px] font-bold text-indigo-600 hover:bg-indigo-50 disabled:opacity-40"
+                      title="Adjust image"
+                    >
+                      {adjustingId === asset.id ? <Loader2 className="size-3.5 animate-spin" /> : "Adjust"}
+                    </button>
+                  ) : null}
                   {canDelete?<button onClick={()=>void remove(asset)} className="grid size-8 place-items-center rounded-lg text-rose-500 hover:bg-rose-50" title="Delete"><Trash2 className="size-3.5" /></button>:null}
                 </div>
               </div>

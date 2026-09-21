@@ -2,6 +2,7 @@ import { Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 
 import {
   loadDashboardMediaWorkspace,
@@ -24,6 +25,7 @@ export function DashboardMediaPicker({
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const imageEditor = useSmartImageEditor();
 
   useEffect(() => {
     if (!open) return;
@@ -66,6 +68,7 @@ export function DashboardMediaPicker({
 
   return (
     <div>
+      {imageEditor.dialog}
       <div className="mb-1.5 text-[11px] font-bold text-slate-600">{label}</div>
       <div className="flex gap-3">
         <div className="relative grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
@@ -89,8 +92,17 @@ export function DashboardMediaPicker({
             accept="image/jpeg,image/png,image/webp,image/avif"
             className="hidden"
             onChange={(event) => {
-              setPendingFile(event.target.files?.[0] ?? null);
+              const file = event.target.files?.[0] ?? null;
               event.currentTarget.value = "";
+              if (!file) return;
+              void imageEditor.editFile(file, {
+                title: `Adjust ${label.toLowerCase()}`,
+                preset: "free",
+                transparent: true,
+                defaultFit: "contain",
+              }).then((edited) => {
+                if (edited) setPendingFile(edited);
+              });
             }}
           />
           <button
@@ -103,13 +115,43 @@ export function DashboardMediaPicker({
             Upload new
           </button>
           {value ? (
-            <button
-              type="button"
-              onClick={() => onChange("")}
-              className="text-left text-[10px] font-semibold text-rose-500"
-            >
-              Remove image
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  void imageEditor.editUrl(value, {
+                    title: `Adjust ${label.toLowerCase()}`,
+                    preset: "free",
+                    transparent: true,
+                    defaultFit: "contain",
+                  }).then(async (edited) => {
+                    if (!edited) return;
+                    try {
+                      setUploading(true);
+                      const asset = await uploadDashboardMediaImage(edited, label);
+                      setAssets((current) => [asset, ...current]);
+                      onChange(asset.url);
+                      toast.success("Adjusted copy saved to the media library.");
+                    } catch (cause) {
+                      toast.error(cause instanceof Error ? cause.message : "Image adjustment failed.");
+                    } finally {
+                      setUploading(false);
+                    }
+                  });
+                }}
+                disabled={uploading}
+                className="text-left text-[10px] font-semibold text-indigo-600 disabled:opacity-50"
+              >
+                Adjust image
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange("")}
+                className="text-left text-[10px] font-semibold text-rose-500"
+              >
+                Remove image
+              </button>
+            </>
           ) : null}
         </div>
       </div>

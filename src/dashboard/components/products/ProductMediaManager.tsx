@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import {
   deleteDashboardProductImage,
   listDashboardProductImages,
@@ -41,6 +42,7 @@ export default function ProductMediaManager({
 }) {
   const uploadRef = useRef<HTMLInputElement>(null);
   const replaceRef = useRef<HTMLInputElement>(null);
+  const imageEditor = useSmartImageEditor();
   const [images, setImages] = useState<DashboardProductImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -205,6 +207,7 @@ export default function ProductMediaManager({
 
   return (
     <div className="space-y-4 p-5">
+      {imageEditor.dialog}
       <input
         ref={uploadRef}
         type="file"
@@ -214,8 +217,22 @@ export default function ProductMediaManager({
         onChange={(event) => {
           const files = Array.from(event.target.files ?? []);
           event.target.value = "";
-          setPendingUploadFiles(files);
-          setPendingReplaceFile(null);
+          if (!files.length) return;
+          void (async () => {
+            const adjusted: File[] = [];
+            for (const file of files) {
+              const edited = await imageEditor.editFile(file, {
+                title: files.length > 1 ? `Adjust product image ${adjusted.length + 1} of ${files.length}` : "Adjust product image",
+                preset: "square",
+                transparent: true,
+                defaultFit: "contain",
+              });
+              if (edited) adjusted.push(edited);
+            }
+            if (!adjusted.length) return;
+            setPendingUploadFiles(adjusted);
+            setPendingReplaceFile(null);
+          })();
         }}
       />
       <input
@@ -226,8 +243,17 @@ export default function ProductMediaManager({
         onChange={(event) => {
           const file = event.target.files?.[0] ?? null;
           event.target.value = "";
-          setPendingReplaceFile(file);
-          setPendingUploadFiles([]);
+          if (!file) return;
+          void imageEditor.editFile(file, {
+            title: "Adjust replacement image",
+            preset: "square",
+            transparent: true,
+            defaultFit: "contain",
+          }).then((edited) => {
+            if (!edited) return;
+            setPendingReplaceFile(edited);
+            setPendingUploadFiles([]);
+          });
         }}
       />
 
@@ -446,6 +472,29 @@ export default function ProductMediaManager({
                     className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-2 text-[9px] font-bold text-slate-600 disabled:opacity-40"
                   >
                     <Star className="size-3" /> Primary
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplaceTarget(image);
+                      void imageEditor.editUrl(image.url, {
+                        title: "Adjust existing product image",
+                        preset: "square",
+                        transparent: true,
+                        defaultFit: "contain",
+                      }).then((edited) => {
+                        if (!edited) {
+                          setReplaceTarget(null);
+                          return;
+                        }
+                        setPendingReplaceFile(edited);
+                        setPendingUploadFiles([]);
+                      });
+                    }}
+                    disabled={busyId === image.id}
+                    className="flex h-8 items-center gap-1.5 rounded-lg border border-indigo-200 px-2 text-[9px] font-bold text-indigo-600 disabled:opacity-40"
+                  >
+                    Adjust
                   </button>
                   <button
                     type="button"
