@@ -77,26 +77,74 @@ function validatePayload(value: unknown) {
   }
 
   const customer = payload.customer;
-  if (!customer || typeof customer !== "object" || Array.isArray(customer))
+  if (!customer || typeof customer !== "object" || Array.isArray(customer)) {
     return "invalid_customer";
+  }
   const customerRecord = customer as Record<string, unknown>;
-  if (typeof customerRecord.name !== "string" || customerRecord.name.trim().length < 2) {
+
+  if (
+    typeof customerRecord.name !== "string" ||
+    customerRecord.name.trim().length < 2 ||
+    customerRecord.name.trim().length > 120
+  ) {
     return "customer_name_required";
   }
+
   if (
     typeof customerRecord.phone !== "string" ||
-    customerRecord.phone.replace(/\D/g, "").length < 6
+    customerRecord.phone.replace(/\D/g, "").length < 7 ||
+    customerRecord.phone.length > 32
   ) {
     return "customer_phone_required";
   }
 
+  if (
+    typeof customerRecord.city !== "string" ||
+    customerRecord.city.trim().length < 2 ||
+    customerRecord.city.trim().length > 120
+  ) {
+    return "customer_city_required";
+  }
+
+  if (
+    typeof customerRecord.address !== "string" ||
+    customerRecord.address.trim().length < 2 ||
+    customerRecord.address.trim().length > 500
+  ) {
+    return "customer_address_required";
+  }
+
+  if (!isMoney(payload.expected_subtotal, 1_000_000_000)) {
+    return "invalid_expected_subtotal";
+  }
+  if (!isMoney(payload.expected_delivery_fee, 10_000)) {
+    return "invalid_expected_delivery_fee";
+  }
+
+  if (
+    payload.notes !== undefined &&
+    (typeof payload.notes !== "string" || payload.notes.length > 1000)
+  ) {
+    return "invalid_notes";
+  }
+
+  if (
+    payload.reference !== undefined &&
+    (typeof payload.reference !== "string" || payload.reference.length > 120)
+  ) {
+    return "invalid_reference";
+  }
+
   const items = payload.items;
   if (!Array.isArray(items) || items.length < 1 || items.length > 50) return "invalid_items";
+
   const variantIds = new Set<string>();
   for (const item of items) {
     if (!item || typeof item !== "object" || Array.isArray(item)) return "invalid_item";
     const record = item as Record<string, unknown>;
-    if (!isUuid(record.product_id) || !isUuid(record.variant_id)) return "invalid_item_identifier";
+    if (!isUuid(record.product_id) || !isUuid(record.variant_id)) {
+      return "invalid_item_identifier";
+    }
     if (
       !Number.isInteger(record.quantity) ||
       Number(record.quantity) < 1 ||
@@ -122,7 +170,12 @@ function validatePayload(value: unknown) {
       typeof point.longitude !== "number" ||
       !Number.isFinite(point.longitude) ||
       point.longitude < -180 ||
-      point.longitude > 180
+      point.longitude > 180 ||
+      (point.accuracy !== undefined &&
+        (typeof point.accuracy !== "number" ||
+          !Number.isFinite(point.accuracy) ||
+          point.accuracy < 0 ||
+          point.accuracy > 100_000))
     ) {
       return "invalid_delivery_location";
     }
@@ -132,6 +185,7 @@ function validatePayload(value: unknown) {
   if (payment !== undefined && payment !== "cash" && payment !== "whish") {
     return "invalid_payment_method";
   }
+
   return null;
 }
 
@@ -157,6 +211,7 @@ function publicError(message: string | undefined) {
     "customer_address_required",
     "invalid_expected_subtotal",
     "invalid_expected_delivery_fee",
+    "invalid_expected_pricing",
     "invalid_notes",
     "invalid_reference",
     "invalid_payment_method",
