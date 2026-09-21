@@ -11,10 +11,36 @@ const NON_WORD = /[^\p{L}\p{N}]+/gu;
 const TOKEN_ALIASES: Record<string, string[]> = {
   iphone: ["iphone", "ايفون"],
   ايفون: ["ايفون", "iphone"],
+  apple: ["apple", "ابل"],
+  ابل: ["ابل", "apple"],
   samsung: ["samsung", "سامسونج"],
   سامسونج: ["سامسونج", "samsung"],
   xiaomi: ["xiaomi", "شاومي"],
   شاومي: ["شاومي", "xiaomi"],
+  redmi: ["redmi", "ريدمي"],
+  ريدمي: ["ريدمي", "redmi"],
+  poco: ["poco", "بوكو"],
+  بوكو: ["بوكو", "poco"],
+  honor: ["honor", "هونر"],
+  هونر: ["هونر", "honor"],
+  infinix: ["infinix", "انفنكس"],
+  انفنكس: ["انفنكس", "infinix"],
+  tecno: ["tecno", "تكنو"],
+  تكنو: ["تكنو", "tecno"],
+  realme: ["realme", "ريلمي"],
+  ريلمي: ["ريلمي", "realme"],
+  oneplus: ["oneplus", "ونبلس"],
+  ونبلس: ["ونبلس", "oneplus"],
+  anker: ["anker", "انكر"],
+  انكر: ["انكر", "anker"],
+  ugreen: ["ugreen", "يوجرين"],
+  يوجرين: ["يوجرين", "ugreen"],
+  smartphone: ["smartphone", "phone", "phones", "هاتف", "هواتف", "موبايل"],
+  phone: ["phone", "smartphone", "هاتف", "هواتف", "موبايل"],
+  phones: ["phones", "phone", "smartphone", "هواتف", "موبايل"],
+  هاتف: ["هاتف", "هواتف", "phone", "smartphone"],
+  هواتف: ["هواتف", "هاتف", "phones", "smartphone"],
+  موبايل: ["موبايل", "phone", "smartphone"],
   charger: ["charger", "شاحن", "شواحن"],
   شاحن: ["شاحن", "charger"],
   شواحن: ["شواحن", "charger"],
@@ -22,14 +48,20 @@ const TOKEN_ALIASES: Record<string, string[]> = {
   كابل: ["كابل", "cable"],
   كيبل: ["كيبل", "cable"],
   كابلات: ["كابلات", "cable"],
-  earbuds: ["earbuds", "سماعات", "سماعه"],
+  earbuds: ["earbuds", "سماعات", "سماعه", "سماعة"],
   سماعات: ["سماعات", "earbuds"],
+  سماعه: ["سماعه", "سماعة", "earbuds"],
+  سماعة: ["سماعة", "سماعه", "earbuds"],
   watch: ["watch", "ساعه", "ساعة"],
   ساعه: ["ساعه", "watch"],
   tablet: ["tablet", "تابلت"],
   تابلت: ["تابلت", "tablet"],
   laptop: ["laptop", "لابتوب"],
   لابتوب: ["لابتوب", "laptop"],
+  power: ["power", "باور"],
+  باور: ["باور", "power"],
+  bank: ["bank", "بانك"],
+  بانك: ["بانك", "bank"],
 };
 
 export function normalizeSearchText(value: string) {
@@ -180,7 +212,11 @@ export function productSearchScore(product: ShopifyProduct, term: string) {
     { value: node.description ?? "", weight: 24 },
   ];
 
-  return scoreFields(term, fields);
+  const score = scoreFields(term, fields);
+  // Description-only matches are intentionally excluded. They create noisy
+  // results for generic marketing copy while titles, brands, tags, variants,
+  // model numbers and categories remain searchable.
+  return score >= 60 ? score : 0;
 }
 
 export function matchesProductSearch(product: ShopifyProduct, term: string) {
