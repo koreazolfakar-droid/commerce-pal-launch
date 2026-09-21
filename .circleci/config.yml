@@ -176,6 +176,105 @@ jobs:
           command: |
             find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'architecture.test.mjs' ! -name 'performance-architecture.test.mjs' -print0 | sort -z | xargs -0 node --test
 
+  diag-type-routes:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript path diagnostic
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq '(^|[ (])src/routes/' /tmp/typecheck.log; then
+              exit 1
+            fi
+            exit 0
+
+
+  diag-type-components:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript path diagnostic
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq '(^|[ (])src/components/' /tmp/typecheck.log; then
+              exit 1
+            fi
+            exit 0
+
+
+  diag-type-dashboard:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript path diagnostic
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq '(^|[ (])src/dashboard/' /tmp/typecheck.log; then
+              exit 1
+            fi
+            exit 0
+
+
+  diag-type-lib:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript path diagnostic
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq '(^|[ (])src/(lib|integrations|hooks|stores)/' /tmp/typecheck.log; then
+              exit 1
+            fi
+            exit 0
+
 workflows:
   security-and-storefront-validation:
     jobs:
@@ -207,6 +306,27 @@ workflows:
               only:
                 - /^important\/.*/
       - diag-unit-rest:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+
+      - diag-type-routes:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - diag-type-components:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - diag-type-dashboard:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - diag-type-lib:
           filters:
             branches:
               only:
