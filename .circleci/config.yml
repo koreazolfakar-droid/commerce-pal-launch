@@ -162,6 +162,41 @@ jobs:
           name: SSR smoke test
           command: bun run test:ssr
 
+
+  perf-test-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Architecture test only
+          command: node --test e2e/architecture.test.mjs
+
+  perf-test-performance-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Performance architecture test only
+          command: node --test e2e/performance-architecture.test.mjs
+
 workflows:
   security-and-storefront-validation:
     jobs:
@@ -188,6 +223,16 @@ workflows:
               only:
                 - important/perf-diagnostics-20260921
       - perf-build-ssr:
+          filters:
+            branches:
+              only:
+                - important/perf-diagnostics-20260921
+      - perf-test-architecture:
+          filters:
+            branches:
+              only:
+                - important/perf-diagnostics-20260921
+      - perf-test-performance-architecture:
           filters:
             branches:
               only:
