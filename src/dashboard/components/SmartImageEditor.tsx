@@ -263,15 +263,18 @@ function SmartImageEditorDialog({
 }) {
   const preset = request.options.preset ?? "square";
   const transparent = request.options.transparent ?? preset === "logo";
+  const initialFit: "contain" | "cover" =
+    request.options.defaultFit ?? (preset === "cover" || preset.startsWith("hero-") ? "cover" : "contain");
+  const initialPadding = preset === "logo" ? 10 : preset === "square" ? 5 : 0;
   const [loaded, setLoaded] = useState<LoadedImage | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [fit, setFit] = useState<"contain" | "cover">(request.options.defaultFit ?? (preset === "cover" || preset.startsWith("hero-") ? "cover" : "contain"));
+  const [fit, setFit] = useState<"contain" | "cover">(initialFit);
   const [zoom, setZoom] = useState(1);
   const [x, setX] = useState(0);
   const [y, setY] = useState(0);
-  const [padding, setPadding] = useState(preset === "logo" ? 10 : preset === "square" ? 5 : 0);
+  const [padding, setPadding] = useState(initialPadding);
   const dragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
 
   useEffect(() => {
@@ -296,7 +299,7 @@ function SmartImageEditorDialog({
         };
         setLoaded(next);
         const [width, height] = targetSize(preset, next);
-        const smart = smartTransform(next, width, height, fit, padding);
+        const smart = smartTransform(next, width, height, initialFit, initialPadding);
         setZoom(smart.zoom);
         setX(smart.x);
         setY(smart.y);
@@ -311,7 +314,7 @@ function SmartImageEditorDialog({
       cancelled = true;
       if (activePreviewUrl) URL.revokeObjectURL(activePreviewUrl);
     };
-  }, [request.source]);
+  }, [initialFit, initialPadding, preset, request.source]);
 
   const dimensions = useMemo(() => {
     if (!loaded) return [1, 1] as const;
@@ -330,8 +333,8 @@ function SmartImageEditorDialog({
     setZoom(1);
     setX(0);
     setY(0);
-    setPadding(preset === "logo" ? 10 : preset === "square" ? 5 : 0);
-    setFit(request.options.defaultFit ?? (preset === "cover" || preset.startsWith("hero-") ? "cover" : "contain"));
+    setPadding(initialPadding);
+    setFit(initialFit);
   };
 
   const save = async () => {
