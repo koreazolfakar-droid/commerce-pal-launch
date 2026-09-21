@@ -309,7 +309,8 @@ function ProductStorefrontPreview({
   y: number;
   mode: ProductPreviewMode;
 }) {
-  const profile = PRODUCT_STOREFRONT_PREVIEWS.find((item) => item.id === mode) ?? PRODUCT_STOREFRONT_PREVIEWS[0]!;
+  const profile = PRODUCT_STOREFRONT_PREVIEWS.find((item) => item.id === mode) ?? PRODUCT_STOREFRONT_PREVIEWS[0];
+  if (!profile) return null;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
