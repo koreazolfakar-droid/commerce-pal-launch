@@ -42,6 +42,16 @@ test("variant manager uses atomic RPCs and inventory-aware stock updates", () =>
   assert.match(migration, /'variant_manager'/);
 });
 
+test("variant loading is stable across product-form rerenders and exposes recovery UI", () => {
+  assert.match(form, /useCallback/);
+  assert.match(form, /const handleSingleVariantChange = useCallback/);
+  assert.match(variants, /onCountChangeRef/);
+  assert.match(variants, /onSingleVariantChangeRef/);
+  assert.match(variants, /const publishState = useCallback/);
+  assert.match(variants, /setLoadError\(message\)/);
+  assert.match(variants, />\s*Retry/);
+});
+
 test("product management supports multi-collection, duplication, bulk status and safe deletion", () => {
   assert.match(data, /set_store_product_collections/);
   assert.match(data, /duplicate_store_product/);

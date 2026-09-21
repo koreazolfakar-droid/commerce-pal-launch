@@ -394,7 +394,7 @@ export default function ProductMediaManager({
           <Loader2 className="size-5 animate-spin text-[#5968ea]" />
         </div>
       ) : images.length ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {images.map((image, index) => (
             <div
               key={image.id}

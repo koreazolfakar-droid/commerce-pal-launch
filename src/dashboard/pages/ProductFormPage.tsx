@@ -7,7 +7,7 @@ import {
   Trash2,
   UploadCloud,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -142,17 +142,30 @@ export default function ProductFormPage({ id }: { id?: string }) {
 
   const variantLocked = variantCount > 1;
 
-  const handleSingleVariantChange = (variant: DashboardProductVariant | null) => {
+  const handleSingleVariantChange = useCallback((variant: DashboardProductVariant | null) => {
     if (!variant) return;
-    setForm((current) => ({
-      ...current,
-      price: String(variant.price),
-      compareAt: variant.compareAt == null ? "" : String(variant.compareAt),
-      sku: variant.sku,
-      barcode: variant.barcode,
-      stock: String(variant.stock),
-    }));
-  };
+    setForm((current) => {
+      const next = {
+        price: String(variant.price),
+        compareAt: variant.compareAt == null ? "" : String(variant.compareAt),
+        sku: variant.sku,
+        barcode: variant.barcode,
+        stock: String(variant.stock),
+      };
+
+      if (
+        current.price === next.price &&
+        current.compareAt === next.compareAt &&
+        current.sku === next.sku &&
+        current.barcode === next.barcode &&
+        current.stock === next.stock
+      ) {
+        return current;
+      }
+
+      return { ...current, ...next };
+    });
+  }, []);
 
   const handleSave = async () => {
     const validation = validateProductDraft({
