@@ -16,7 +16,7 @@ const data = await readFile(
   "utf8",
 );
 const migration = await readFile(
-  new URL("../supabase/migrations/20260921045000_secure_order_workflow.sql", import.meta.url),
+  new URL("../supabase/migrations/20260921053341_secure_order_workflow.sql", import.meta.url),
   "utf8",
 );
 
