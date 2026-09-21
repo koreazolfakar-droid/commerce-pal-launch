@@ -91,7 +91,7 @@ export default function OrdersPage() {
 
   const stats = result?.stats;
   const openOrders = useMemo(
-    () => (stats ? stats.pending + stats.confirmed + stats.processing : 0),
+    () => (stats ? stats.new + stats.confirmed + stats.processing + stats.outForDelivery : 0),
     [stats],
   );
 
@@ -148,9 +148,9 @@ export default function OrdersPage() {
 
       <div className="mb-4 grid gap-3 sm:grid-cols-4">
         <StatCard label="All orders" value={stats?.all ?? 0} detail="All time" />
-        <StatCard label="Open" value={openOrders} detail="Pending, confirmed, processing" />
-        <StatCard label="Shipped" value={stats?.shipped ?? 0} detail="In transit" />
-        <StatCard label="Delivered" value={stats?.delivered ?? 0} detail="Completed" />
+        <StatCard label="Open" value={openOrders} detail="New through out for delivery" />
+        <StatCard label="Delivered" value={stats?.delivered ?? 0} detail="Awaiting DONE" />
+        <StatCard label="Done" value={stats?.done ?? 0} detail="Recorded in Sales" />
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
@@ -178,7 +178,7 @@ export default function OrdersPage() {
               className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600"
             >
               <option value="all">All statuses</option>
-              {(["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"] as const).map(
+              {(["new", "confirmed", "processing", "out_for_delivery", "delivered", "done", "cancelled"] as const).map(
                 (value) => (
                   <option key={value} value={value}>
                     {orderStatusLabel(value)}
