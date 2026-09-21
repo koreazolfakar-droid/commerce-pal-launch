@@ -181,7 +181,7 @@ export function BottomNav() {
               return (
                 <Link
                   key={item.id}
-                  href={item.href ?? "/"}
+                  to={(item.href ?? "/") as never}
                   preload="intent"
                   data-nav-id={item.id}
                   data-active={active ? "true" : "false"}

@@ -108,18 +108,15 @@ function useDeferredHomepageWork() {
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
-    const [heroCollection, cms] = await Promise.all([
-      context.queryClient.ensureQueryData(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4)),
-      context.queryClient.ensureQueryData(cmsQueryOptions()),
-    ]);
-    const heroImage = heroCollection?.products?.[0]?.node.images.edges[0]?.node.url;
+    // The CMS hero is the storefront's only visual hero source. Keep legacy
+    // merchandising reads out of the SSR/LCP critical path.
+    const cms = await context.queryClient.ensureQueryData(cmsQueryOptions());
     const firstCmsHero = cms.heroSlides[0];
     const desktopHeroPreload = firstCmsHero?.image_url?.trim() || undefined;
     const mobileHeroPreload =
       firstCmsHero?.mobile_image_url?.trim() || desktopHeroPreload;
 
     return {
-      heroImage,
       heroPreload:
         desktopHeroPreload && mobileHeroPreload
           ? { desktop: desktopHeroPreload, mobile: mobileHeroPreload }
@@ -134,23 +131,23 @@ export const Route = createFileRoute("/")({
     const description =
       cmsSeo?.description?.trim() ||
       `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
-    const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroImage;
+    const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroPreload?.desktop;
     const canonicalUrl = cmsSeo?.canonical_url?.trim();
     const customJsonLd = cmsSeo?.json_ld;
     const heroPreload = loaderData?.heroPreload;
     const heroPreloadLinks = heroPreload
       ? heroPreload.mobile === heroPreload.desktop
-        ? [{ rel: "preload", as: "image", href: heroPreload.desktop }]
+        ? [{ rel: "preload" as const, as: "image" as const, href: heroPreload.desktop }]
         : [
             {
-              rel: "preload",
-              as: "image",
+              rel: "preload" as const,
+              as: "image" as const,
               href: heroPreload.mobile,
               media: "(max-width: 639px)",
             },
             {
-              rel: "preload",
-              as: "image",
+              rel: "preload" as const,
+              as: "image" as const,
               href: heroPreload.desktop,
               media: "(min-width: 640px)",
             },
@@ -341,7 +338,7 @@ function CmsActionLink({
 }) {
   if (href.startsWith("/") && !href.startsWith("//")) {
     return (
-      <Link href={href} preload="intent" className={className}>
+      <Link to={href as never} preload="intent" className={className}>
         {children}
       </Link>
     );
@@ -510,8 +507,16 @@ function Index() {
     ...collectionsQueryOptions(),
     enabled: deferredWorkReady,
   });
-  const { data: heroCollection } = useQuery(collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4));
-  const catalogReady = Boolean(catalog);
+  const {
+    data: heroCollection,
+    isFetched: heroCollectionFetched,
+    isError: heroCollectionFailed,
+  } = useQuery({
+    ...collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
+    enabled: deferredWorkReady,
+  });
+  const catalogReady =
+    Boolean(catalog) && (heroCollectionFetched || heroCollectionFailed);
   const secondaryQueriesReady = catalogReady && deferredWorkReady;
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),

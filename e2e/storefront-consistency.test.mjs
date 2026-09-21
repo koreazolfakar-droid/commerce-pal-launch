@@ -83,7 +83,7 @@ test("homepage hero remains CMS-first", async () => {
   assert.match(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
   assert.match(home, /const firstCmsHero = cms\.heroSlides\[0\]/);
-  assert.match(home, /rel: "preload", as: "image"/);
+  assert.match(home, /rel: "preload"(?: as const)?, as: "image"(?: as const)?/);
   assert.match(home, /media: "\(max-width: 639px\)"/);
   assert.match(home, /media: "\(min-width: 640px\)"/);
   assert.match(hero, /localizeHeroSlide/);

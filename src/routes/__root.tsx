@@ -143,7 +143,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://rtwyankpxtffqqrasyzw.supabase.co",
         crossOrigin: "anonymous",
       },
-      { rel: "preconnect", href: "https://cdn.shopify.com" },
       {
         rel: "preload",
         href: FONT_STYLESHEET_URL,

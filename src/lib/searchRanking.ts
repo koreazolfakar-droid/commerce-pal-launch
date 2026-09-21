@@ -182,8 +182,16 @@ function scoreFields(term: string, fields: SearchField[]) {
   const title = normalizeSearchText(fields[0]?.value ?? "");
   if (title === normalizedTerm) score += 1200;
   else if (title.startsWith(normalizedTerm)) score += 850;
-  else if (title.includes(normalizedTerm)) score += 650;
-  else if (compact(title).includes(compact(normalizedTerm)) && compact(normalizedTerm).length >= 4)
+  else if (title.includes(normalizedTerm)) {
+    score += 650;
+    // Prefer the product whose title is closest to the searched phrase.
+    // This keeps "iPhone 17 Pro Max" ahead of accessory titles such as
+    // "Case for Apple iPhone 17 Pro Max" without weakening SKU/Arabic/typo matching.
+    const titleTokenCount = title.split(" ").filter(Boolean).length;
+    const queryTokenCount = tokens.length;
+    const extraTitleTokens = Math.max(0, titleTokenCount - queryTokenCount);
+    score += Math.max(0, 160 - extraTitleTokens * 30);
+  } else if (compact(title).includes(compact(normalizedTerm)) && compact(normalizedTerm).length >= 4)
     score += 450;
 
   return score;

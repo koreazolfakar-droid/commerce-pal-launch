@@ -49,13 +49,13 @@ test("storefront internal navigation stays client-side", async () => {
     read("src/routes/index.tsx"),
   ]);
 
-  assert.match(bottom, /href=\{item\.href \?\? "\/"\}[\s\S]*?preload="intent"/);
+  assert.match(bottom, /to=\{\(item\.href \?\? "\/"\) as never\}[\s\S]*?preload="intent"/);
   assert.match(cmsControls, /function isInternalStoreHref/);
-  assert.match(cmsControls, /<Link key=\{item\.id\} href=\{item\.href\} preload="intent"/);
+  assert.match(cmsControls, /<Link key=\{item\.id\} to=\{item\.href as never\} preload="intent"/);
   assert.doesNotMatch(cartDrawer, /href="\/cart(?:#whatsapp-checkout)?"/);
   assert.doesNotMatch(siteHeader, /href="\/help#(?:track-order|account-orders)"/);
   assert.match(home, /function CmsActionLink/);
-  assert.match(home, /<Link href=\{href\} preload="intent"/);
+  assert.match(home, /<Link to=\{href as never\} preload="intent"/);
 });
 
 
@@ -65,6 +65,28 @@ test("root warms the primary storefront backend connection", async () => {
     root,
     /rel:\s*"preconnect"[\s\S]*?href:\s*"https:\/\/rtwyankpxtffqqrasyzw\.supabase\.co"[\s\S]*?crossOrigin:\s*"anonymous"/,
   );
+  assert.doesNotMatch(root, /preconnect"[\s\S]*?cdn\.shopify\.com/);
+});
+
+test("homepage LCP uses CMS data without legacy hero work on the critical path", async () => {
+  const [home, heroScene] = await Promise.all([
+    read("src/routes/index.tsx"),
+    read("src/components/HeroScene.tsx"),
+  ]);
+
+  const loaderStart = home.indexOf("loader: async");
+  const loaderEnd = home.indexOf("head:", loaderStart);
+  assert.ok(loaderStart >= 0 && loaderEnd > loaderStart);
+  const loaderSource = home.slice(loaderStart, loaderEnd);
+
+  assert.match(loaderSource, /ensureQueryData\(cmsQueryOptions\(\)\)/);
+  assert.doesNotMatch(loaderSource, /HOME_HERO_COLLECTION_HANDLE|collectionQueryOptions/);
+  assert.match(
+    home,
+    /\.\.\.collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\),\s*enabled:\s*deferredWorkReady/s,
+  );
+  assert.match(heroScene, /loading=\{priority \? "eager" : "lazy"\}/);
+  assert.match(heroScene, /fetchPriority=\{priority \? "high" : "auto"\}/);
 });
 
 

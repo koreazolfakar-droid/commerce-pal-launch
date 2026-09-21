@@ -91,7 +91,7 @@ export function CmsNavigationStrip({
           const className =
             "inline-flex min-h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
           return isInternalStoreHref(item.href) ? (
-            <Link key={item.id} href={item.href} preload="intent" className={className}>
+            <Link key={item.id} to={item.href as never} preload="intent" className={className}>
               <ItemIcon item={item} />
               <span>{item.label}</span>
             </Link>
@@ -133,7 +133,7 @@ export function CmsTrustStrip() {
         {items.map((item) => {
           const className = "inline-flex items-center gap-2 hover:text-foreground";
           return isInternalStoreHref(item.href) ? (
-            <Link key={item.id} href={item.href} preload="intent" className={className}>
+            <Link key={item.id} to={item.href as never} preload="intent" className={className}>
               <ItemIcon item={item} />
               <span>{item.label}</span>
             </Link>
