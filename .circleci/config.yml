@@ -90,6 +90,235 @@ jobs:
           name: SSR smoke test
           command: bun run test:ssr
 
+
+  perf-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript only
+          command: bun run typecheck
+
+  perf-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: ESLint only
+          command: bun run lint
+
+  perf-unit:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit and architecture tests only
+          command: bun run test:unit
+
+  perf-build-ssr:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Production build
+          command: bun run build
+      - run:
+          name: SSR smoke test
+          command: bun run test:ssr
+
+
+  perf-test-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Architecture test only
+          command: node --test e2e/architecture.test.mjs
+
+  perf-test-performance-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Performance architecture test only
+          command: node --test e2e/performance-architecture.test.mjs
+
+
+  perf-arch-group-a:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Architecture group A
+          command: node --test --test-name-pattern="store identity|storefront commerce|homepage uses bounded|global navigation" e2e/architecture.test.mjs
+
+  perf-arch-group-b:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Architecture group B
+          command: node --test --test-name-pattern="native cart|server blocks|secret environment" e2e/architecture.test.mjs
+
+
+  perf-arch-native-cart:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Native cart architecture test
+          command: node --test --test-name-pattern="native cart" e2e/architecture.test.mjs
+
+  perf-arch-server:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Server security architecture test
+          command: node --test --test-name-pattern="server blocks" e2e/architecture.test.mjs
+
+  perf-arch-secrets:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Secret-file architecture test
+          command: node --test --test-name-pattern="secret environment" e2e/architecture.test.mjs
+
+
+  perf-unit-rest-a:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit rest group A
+          command: node --test e2e/catalog-management-responsive.test.mjs e2e/catalog.test.mjs e2e/category-storefront-sync.test.mjs e2e/ci-config.test.mjs e2e/cms-refresh.test.mjs e2e/create-order-rate-limit-security.test.mjs e2e/dashboard-auth0-security.test.mjs e2e/dashboard-brands-mobile-actions.test.mjs e2e/dashboard-category-image-pipeline.test.mjs e2e/dashboard-collections-supabase.test.mjs e2e/dashboard-content-cms-step4.test.mjs e2e/dashboard-csp-session-ci.test.mjs e2e/dashboard-customers-supabase.test.mjs e2e/dashboard-hero-composite-row-regression.test.mjs e2e/dashboard-hero-image-pipeline.test.mjs e2e/dashboard-hero-supabase.test.mjs e2e/dashboard-home-supabase.test.mjs e2e/dashboard-homepage-cms.test.mjs e2e/dashboard-image-compression-controls.test.mjs e2e/dashboard-inventory-rpc-security.test.mjs e2e/dashboard-live-workspace.test.mjs e2e/dashboard-login-route.test.mjs e2e/dashboard-login-screen-capture.test.mjs e2e/dashboard-login-ui.test.mjs e2e/dashboard-orders-supabase.test.mjs e2e/dashboard-passkey-client.test.mjs
+
+  perf-unit-rest-b:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit rest group B
+          command: node --test e2e/dashboard-passkey-second-factor.test.mjs e2e/dashboard-passkey-step-up.test.mjs e2e/dashboard-password-breach-screening.test.mjs e2e/dashboard-procurement-schema-step2.test.mjs e2e/dashboard-product-image-metadata.test.mjs e2e/dashboard-product-management-step5.test.mjs e2e/dashboard-receiving-rules.test.mjs e2e/dashboard-receiving-workflow.test.mjs e2e/dashboard-security-hardening.test.mjs e2e/dashboard-session-security.test.mjs e2e/dashboard-settings-supabase.test.mjs e2e/dashboard-supabase-source-guard.test.mjs e2e/dashboard-totp-mfa.test.mjs e2e/dashboard-truthful-shell.test.mjs e2e/hero-design.test.mjs e2e/hero-scene.test.mjs e2e/hybrid-storefront.test.mjs e2e/inventory-supabase.test.mjs e2e/product-add-edit-supabase.test.mjs e2e/security-pipeline-config.test.mjs e2e/seo-regression.test.mjs e2e/shopify-only-storefront.test.mjs e2e/storefront-consistency.test.mjs e2e/storefront-dark-theme.test.mjs e2e/storefront-supabase-failover.test.mjs
+
 workflows:
   security-and-storefront-validation:
     jobs:
@@ -100,3 +329,68 @@ workflows:
             branches:
               only:
                 - /^important\/.*/
+      - perf-typecheck:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-lint:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-unit:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-build-ssr:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-test-architecture:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-test-performance-architecture:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-arch-group-a:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-arch-group-b:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-arch-native-cart:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-arch-server:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-arch-secrets:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-unit-rest-a:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
+      - perf-unit-rest-b:
+          filters:
+            branches:
+              only:
+                - important/main-rest-diagnostics-20260921
