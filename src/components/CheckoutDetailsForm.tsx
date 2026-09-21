@@ -186,8 +186,13 @@ export function CheckoutDetailsForm({
 
   const copy = isArabic
     ? {
-        title: "إتمام الطلب عبر واتساب",
-        description: "أدخل بيانات التوصيل، حدّد الموقع إن رغبت، ثم اختر طريقة الدفع.",
+        title: "بيانات التوصيل وإتمام الطلب",
+        description:
+          "أدخل بياناتك واختر طريقة الدفع. نحفظ الطلب بأمان أولًا ثم نفتح واتساب للتأكيد.",
+        stepLabel: "الخطوة 2 من 3",
+        totalDue: "الإجمالي",
+        deliveryIncluded: "يشمل رسوم التوصيل",
+        savedBeforeWhatsapp: "يتم حفظ الطلب والتحقق من السعر والمخزون قبل فتح واتساب.",
         delivery: "بيانات التوصيل",
         name: "الاسم الكامل",
         namePlaceholder: "مثال: حسين علي",
@@ -231,10 +236,13 @@ export function CheckoutDetailsForm({
         notesPlaceholder: "لون مفضل، وقت التوصيل، أو أي ملاحظة",
         send: "إنشاء الطلب والمتابعة عبر واتساب",
         creating: "جارٍ إنشاء الطلب بأمان...",
-        stockUnavailable: "تغيّر المخزون ولم تعد بعض العناصر متاحة بالكمية المطلوبة. راجع السلة ثم حاول مجددًا.",
+        stockUnavailable:
+          "تغيّر المخزون ولم تعد بعض العناصر متاحة بالكمية المطلوبة. راجع السلة ثم حاول مجددًا.",
         rateLimited: "تم إرسال محاولات كثيرة خلال وقت قصير. حاول مجددًا بعد قليل.",
-        orderConflict: "تعذر إعادة استخدام محاولة الطلب السابقة بأمان. راجع بيانات الطلب قبل المحاولة من جديد.",
-        pricingChanged: "تغيّر سعر منتج أو رسوم التوصيل قبل إنشاء الطلب. تم إيقاف العملية حتى لا يتم اعتماد مبلغ مختلف. راجع الإجمالي ثم حاول مجددًا.",
+        orderConflict:
+          "تعذر إعادة استخدام محاولة الطلب السابقة بأمان. راجع بيانات الطلب قبل المحاولة من جديد.",
+        pricingChanged:
+          "تغيّر سعر منتج أو رسوم التوصيل قبل إنشاء الطلب. تم إيقاف العملية حتى لا يتم اعتماد مبلغ مختلف. راجع الإجمالي ثم حاول مجددًا.",
         orderFailed: "تعذر حفظ الطلب الآن. لم يتم فتح واتساب ولم يتم خصم المخزون مرتين.",
         summaryPdf: "تحميل ملخص الطلب PDF",
         invoicePdf: "تحميل الفاتورة PDF",
@@ -248,8 +256,14 @@ export function CheckoutDetailsForm({
         mapLabel: "الموقع على الخريطة",
       }
     : {
-        title: "Complete your order on WhatsApp",
-        description: "Add delivery details, optionally attach your location, then choose payment.",
+        title: "Delivery & checkout",
+        description:
+          "Add your delivery details and payment method. We securely save the order before opening WhatsApp.",
+        stepLabel: "Step 2 of 3",
+        totalDue: "Order total",
+        deliveryIncluded: "Delivery included",
+        savedBeforeWhatsapp:
+          "Price and stock are verified and the order is saved before WhatsApp opens.",
         delivery: "Delivery details",
         name: "Full name",
         namePlaceholder: "e.g. Hussein Ali",
@@ -293,18 +307,24 @@ export function CheckoutDetailsForm({
         notesPlaceholder: "Preferred colour, delivery time, or any request",
         send: "Create order & continue on WhatsApp",
         creating: "Creating your order securely...",
-        stockUnavailable: "Stock changed and one or more items are no longer available in the requested quantity. Review your bag and try again.",
-        rateLimited: "Too many checkout attempts were sent in a short time. Please try again shortly.",
-        orderConflict: "The previous checkout attempt cannot be safely reused. Review the order details before trying again.",
-        pricingChanged: "A product price or delivery fee changed before the order was created. Checkout was stopped so a different amount is never accepted silently. Review the updated total and try again.",
-        orderFailed: "We couldn't save the order. WhatsApp was not opened and stock was not deducted twice.",
+        stockUnavailable:
+          "Stock changed and one or more items are no longer available in the requested quantity. Review your bag and try again.",
+        rateLimited:
+          "Too many checkout attempts were sent in a short time. Please try again shortly.",
+        orderConflict:
+          "The previous checkout attempt cannot be safely reused. Review the order details before trying again.",
+        pricingChanged:
+          "A product price or delivery fee changed before the order was created. Checkout was stopped so a different amount is never accepted silently. Review the updated total and try again.",
+        orderFailed:
+          "We couldn't save the order. WhatsApp was not opened and stock was not deducted twice.",
         summaryPdf: "Download order summary PDF",
         invoicePdf: "Download invoice PDF",
         preparingPdf: "Preparing PDF...",
         required: "Please fill in your name, phone number, area and address first.",
         invalidPhone: "Enter a valid phone number with at least 7 digits.",
         pdfError: "We couldn't generate the PDF right now. Please try again.",
-        ready: "Your order was saved successfully. You can keep a PDF copy or continue on WhatsApp.",
+        ready:
+          "Your order was saved successfully. You can keep a PDF copy or continue on WhatsApp.",
         privacy:
           "We use your location only after approval, and the PDF is generated locally on your device.",
         invoiceLabel: "Invoice number",
@@ -421,22 +441,22 @@ export function CheckoutDetailsForm({
       deliveryFee: invoiceDeliveryFee,
       total: createdOrder?.total ?? invoiceSubtotal + invoiceDeliveryFee,
       customer: {
-      name: details.name.trim(),
-      phone: details.phone.trim(),
-      area: details.area.trim(),
-      address: details.address.trim(),
-      landmark: details.landmark.trim(),
-      notes: details.notes.trim(),
-    },
-    paymentMethod: details.paymentMethod === "whish_money" ? copy.whish : copy.cash,
-    paymentStatus:
-      details.paymentMethod === "whish_money"
-        ? isArabic
-          ? "بانتظار تأكيد التحويل"
-          : "Pending transfer confirmation"
-        : isArabic
-          ? "مستحق عند الاستلام"
-          : "Due on delivery",
+        name: details.name.trim(),
+        phone: details.phone.trim(),
+        area: details.area.trim(),
+        address: details.address.trim(),
+        landmark: details.landmark.trim(),
+        notes: details.notes.trim(),
+      },
+      paymentMethod: details.paymentMethod === "whish_money" ? copy.whish : copy.cash,
+      paymentStatus:
+        details.paymentMethod === "whish_money"
+          ? isArabic
+            ? "بانتظار تأكيد التحويل"
+            : "Pending transfer confirmation"
+          : isArabic
+            ? "مستحق عند الاستلام"
+            : "Due on delivery",
       items: items.map((item) => ({
         title: item.product.node.title,
         variant: variantSummary(item.selectedOptions),
@@ -592,13 +612,14 @@ export function CheckoutDetailsForm({
     if (!popup) window.location.assign(target);
   };
 
+  const checkoutTotal = total + deliveryFee;
   const fieldClass =
-    "mt-1.5 min-h-12 w-full rounded-xl border bg-background px-3.5 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
+    "mt-1.5 min-h-11 w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground/70 hover:border-primary/25 focus:border-primary focus:ring-2 focus:ring-primary/15";
   const paymentCardClass = (selected: boolean) =>
-    `flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition ${
+    `flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-[border-color,background-color,box-shadow,transform] ${
       selected
-        ? "border-primary bg-primary/5 ring-2 ring-primary/10"
-        : "border-border bg-background hover:border-primary/40"
+        ? "border-primary/35 bg-primary/[0.07] shadow-sm ring-2 ring-primary/10"
+        : "border-border/80 bg-background hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
     }`;
   const actionDisabled =
     disabled ||
@@ -610,30 +631,60 @@ export function CheckoutDetailsForm({
   return (
     <section
       id="whatsapp-checkout"
-      className="scroll-mt-20 rounded-2xl border bg-card p-4 shadow-card sm:p-6"
+      className="scroll-mt-20 overflow-hidden rounded-2xl border bg-card shadow-card"
       aria-labelledby="whatsapp-checkout-title"
     >
-      <div className="flex items-start gap-3">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-success/10 text-success">
-          <MessageCircle className="h-5 w-5" />
+      <div className="border-b bg-gradient-to-br from-success/[0.08] via-card to-primary/[0.04] px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-success/15 bg-background/80 text-success shadow-sm">
+              <MessageCircle className="h-4.5 w-4.5" />
+            </div>
+            <div className="min-w-0">
+              <span className="inline-flex rounded-full border border-success/15 bg-success/[0.08] px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-success">
+                {copy.stepLabel}
+              </span>
+              <h2
+                id="whatsapp-checkout-title"
+                className="mt-2 text-lg font-extrabold tracking-tight"
+              >
+                {copy.title}
+              </h2>
+              <p className="mt-1 max-w-xl text-[11px] leading-5 text-muted-foreground sm:text-xs">
+                {copy.description}
+              </p>
+            </div>
+          </div>
+
+          <div className="hidden shrink-0 rounded-xl border bg-background/85 px-3 py-2 text-end shadow-sm sm:block">
+            <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
+              {copy.totalDue}
+            </p>
+            <p className="mt-0.5 text-lg font-black tracking-tight tabular-nums text-primary">
+              {formatPrice(checkoutTotal, currency)}
+            </p>
+            <p className="mt-0.5 text-[9px] text-muted-foreground">{copy.deliveryIncluded}</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h2 id="whatsapp-checkout-title" className="text-lg font-extrabold">
-            {copy.title}
-          </h2>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">
-            {copy.description}
-          </p>
+
+        <div className="mt-3 flex items-start gap-2 rounded-xl border border-success/10 bg-background/60 px-3 py-2 text-[10px] leading-4 text-muted-foreground sm:hidden">
+          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+          <span>{copy.savedBeforeWhatsapp}</span>
         </div>
       </div>
 
-      <form onSubmit={submit} className="mt-6 space-y-6" noValidate>
-        <section aria-labelledby="delivery-details-title" className="space-y-4">
-          <h3 id="delivery-details-title" className="text-sm font-extrabold tracking-tight">
-            {copy.delivery}
-          </h3>
+      <form onSubmit={submit} className="space-y-5 p-4 sm:p-5" noValidate>
+        <section aria-labelledby="delivery-details-title" className="space-y-3.5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 id="delivery-details-title" className="text-sm font-extrabold tracking-tight">
+              {copy.delivery}
+            </h3>
+            <span className="rounded-full bg-muted px-2 py-1 text-[9px] font-bold text-muted-foreground">
+              {formatPrice(checkoutTotal, currency)}
+            </span>
+          </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-sm font-semibold">
               <span className="flex items-center gap-2">
                 <UserRound className="h-4 w-4 text-muted-foreground" />
@@ -945,24 +996,36 @@ export function CheckoutDetailsForm({
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>
               {copy.ready}
-              {createdOrder ? ` #${createdOrder.order_number} · ${formatPrice(createdOrder.total, createdOrder.currency)}` : ""}
+              {createdOrder
+                ? ` #${createdOrder.order_number} · ${formatPrice(createdOrder.total, createdOrder.currency)}`
+                : ""}
             </span>
           </p>
         ) : null}
 
         <div className="space-y-2.5">
+          <div className="hidden items-start gap-2 rounded-xl border border-success/10 bg-success/[0.05] px-3 py-2.5 text-[10px] leading-4 text-muted-foreground sm:flex">
+            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+            <span>{copy.savedBeforeWhatsapp}</span>
+          </div>
+
           <div className="sticky bottom-[4.75rem] z-20 -mx-1 rounded-2xl border border-success/20 bg-background/95 p-1 shadow-float backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
             <Button
               type="submit"
               disabled={actionDisabled || pdfBusy}
-              className="press min-h-14 w-full bg-success px-6 text-sm font-extrabold text-success-foreground shadow-card-hover hover:bg-success/90"
+              className="press min-h-14 w-full justify-start bg-success px-4 text-sm font-extrabold text-success-foreground shadow-card-hover hover:bg-success/90 sm:px-5"
             >
               {locating || submitting ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : (
                 <MessageCircle className="h-4 w-4" />
               )}
-              {submitting ? copy.creating : locating ? copy.locating : copy.send}
+              <span className="min-w-0 flex-1 truncate text-start">
+                {submitting ? copy.creating : locating ? copy.locating : copy.send}
+              </span>
+              <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-xs font-black tabular-nums">
+                {formatPrice(checkoutTotal, currency)}
+              </span>
             </Button>
           </div>
 

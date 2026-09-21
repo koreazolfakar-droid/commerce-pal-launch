@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
+  BadgeCheck,
+  MapPin,
+  MessageCircle,
   Minus,
   Plus,
   ReceiptText,
@@ -66,52 +69,123 @@ function CartPage() {
       ? {
           title: "سلة التسوق",
           item: totalItems === 1 ? "منتج واحد" : `${totalItems} منتجات`,
-          review: "راجع منتجاتك، رسوم التوصيل، ثم أكمل بيانات الطلب بأمان.",
+          review: "راجع منتجاتك، رسوم التوصيل، ثم أكمل بياناتك لإرسال الطلب.",
           emptyTitle: "سلتك فارغة حالياً",
           emptyDescription: "اكتشف أحدث الهواتف والإكسسوارات وأضف ما يناسبك إلى السلة.",
+          yourItems: "منتجاتك",
           summary: "ملخص الطلب",
           subtotal: "مجموع المنتجات",
           delivery: "رسوم التوصيل",
           deliveryNote: "توصيل سريع إلى مختلف المناطق اللبنانية",
           freeDelivery: "مجاني",
           finalTotal: "الإجمالي",
-          secure: "المبلغ النهائي يُثبت من الخادم قبل إنشاء الطلب",
+          secure: "السعر والمخزون يتم التحقق منهما على الخادم قبل تثبيت الطلب.",
           continueShopping: "متابعة التسوق",
-          continueCheckout: "متابعة إلى بيانات التوصيل",
+          continueCheckout: "إكمال بيانات التوصيل",
+          reviewStep: "مراجعة السلة",
+          deliveryStep: "بيانات التوصيل",
+          whatsappStep: "تأكيد واتساب",
+          fastDelivery: "توصيل سريع",
+          lebanon: "مناطق لبنان",
+          protected: "طلب محمي",
+          serverChecked: "تحقق خادمي",
+          whatsapp: "واتساب",
+          afterSave: "بعد حفظ الطلب",
+          lineTotal: "المجموع",
         }
       : {
           title: "Shopping bag",
           item: totalItems === 1 ? "1 product" : `${totalItems} products`,
-          review: "Review your products and delivery fee, then complete the order securely.",
+          review:
+            "Review your products and delivery fee, then add your details to place the order.",
           emptyTitle: "Your bag is empty",
-          emptyDescription: "Explore the latest phones and accessories, then add your favourites here.",
+          emptyDescription:
+            "Explore the latest phones and accessories, then add your favourites here.",
+          yourItems: "Your items",
           summary: "Order summary",
           subtotal: "Items subtotal",
           delivery: "Delivery fee",
           deliveryNote: "Fast delivery across Lebanon",
           freeDelivery: "Free",
           finalTotal: "Total",
-          secure: "The server confirms the final amount before the order is created",
+          secure: "Price and stock are verified server-side before the order is confirmed.",
           continueShopping: "Continue shopping",
           continueCheckout: "Continue to delivery details",
+          reviewStep: "Review bag",
+          deliveryStep: "Delivery details",
+          whatsappStep: "WhatsApp confirmation",
+          fastDelivery: "Fast delivery",
+          lebanon: "Across Lebanon",
+          protected: "Protected order",
+          serverChecked: "Server verified",
+          whatsapp: "WhatsApp",
+          afterSave: "After order save",
+          lineTotal: "Line total",
         };
+
+  const steps = [
+    { number: "1", label: copy.reviewStep, active: true },
+    { number: "2", label: copy.deliveryStep, active: false },
+    { number: "3", label: copy.whatsappStep, active: false },
+  ];
 
   return (
     <StoreLayout>
-      <div className="cart-page mx-auto w-full max-w-6xl px-3 pb-10 pt-5 sm:px-5 sm:pb-14 sm:pt-8 lg:px-6">
-        <header className="mb-5 flex items-end justify-between gap-4 border-b pb-5 sm:mb-6 sm:pb-6">
-          <div className="min-w-0">
-            <p className="mb-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">
-              Space Call
-            </p>
-            <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{copy.title}</h1>
-            <p className="mt-1.5 max-w-xl text-sm leading-6 text-muted-foreground">{copy.review}</p>
+      <div className="cart-page mx-auto w-full max-w-6xl px-3 pb-10 pt-4 sm:px-5 sm:pb-14 sm:pt-7 lg:px-6">
+        <header className="mb-4 overflow-hidden rounded-2xl border bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-card sm:mb-5">
+          <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                  <ShoppingBag className="h-4 w-4" />
+                </span>
+                <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-primary">
+                  Space Call
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{copy.title}</h1>
+                {items.length > 0 ? (
+                  <span className="rounded-full border border-primary/15 bg-primary/[0.07] px-2.5 py-1 text-[11px] font-extrabold text-primary">
+                    {copy.item}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-1.5 max-w-xl text-xs leading-5 text-muted-foreground sm:text-sm">
+                {copy.review}
+              </p>
+            </div>
+
+            {items.length > 0 ? (
+              <div className="grid grid-cols-3 gap-1.5 sm:min-w-[25rem]">
+                {steps.map((step) => (
+                  <div
+                    key={step.number}
+                    className={`rounded-xl border px-2.5 py-2 transition ${
+                      step.active
+                        ? "border-primary/25 bg-primary/10 text-primary"
+                        : "border-border/70 bg-background/70 text-muted-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-extrabold ${
+                          step.active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {step.number}
+                      </span>
+                      <span className="line-clamp-1 text-[10px] font-bold sm:text-[11px]">
+                        {step.label}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
-          {items.length > 0 ? (
-            <span className="shrink-0 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">
-              {copy.item}
-            </span>
-          ) : null}
         </header>
 
         {items.length === 0 ? (
@@ -132,176 +206,264 @@ function CartPage() {
             </Button>
           </section>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
-            <div className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-1">
-              <ul className="space-y-3" aria-label={copy.title}>
-                {items.map((item) => {
-                  const image = item.product.node.images?.edges?.[0]?.node;
-                  return (
-                    <li
-                      key={item.variantId}
-                      className="group relative flex gap-3 rounded-2xl border bg-card p-3 shadow-card transition-[border-color,box-shadow] duration-200 hover:border-primary/20 hover:shadow-card-hover sm:gap-4 sm:p-4"
-                    >
-                      <Link
-                        to="/product/$handle"
-                        params={{ handle: item.product.node.handle }}
-                        className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-xl border bg-image-stage sm:h-28 sm:w-28"
-                      >
-                        {image ? (
-                          <img
-                            src={cdnImage(image.url, 160)}
-                            alt={image.altText ?? item.product.node.title}
-                            className="h-full w-full object-contain p-2.5"
-                            loading="lazy"
-                            decoding="async"
-                            width={80}
-                            height={80}
-                          />
-                        ) : null}
-                      </Link>
+          <>
+            <section
+              aria-label={language === "ar" ? "مزايا الطلب" : "Order benefits"}
+              className="mb-4 grid grid-cols-3 gap-2 sm:mb-5"
+            >
+              <div className="flex min-w-0 items-center gap-2 rounded-xl border bg-card px-2.5 py-2 shadow-card">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                  <Truck className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-extrabold sm:text-xs">
+                    {copy.fastDelivery}
+                  </p>
+                  <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">
+                    {copy.lebanon}
+                  </p>
+                </div>
+              </div>
 
-                      <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex min-w-0 items-center gap-2 rounded-xl border bg-card px-2.5 py-2 shadow-card">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <BadgeCheck className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-extrabold sm:text-xs">{copy.protected}</p>
+                  <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">
+                    {copy.serverChecked}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex min-w-0 items-center gap-2 rounded-xl border bg-card px-2.5 py-2 shadow-card">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-success/10 text-success">
+                  <MessageCircle className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-extrabold sm:text-xs">{copy.whatsapp}</p>
+                  <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">
+                    {copy.afterSave}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21.5rem] lg:items-start lg:gap-5">
+              <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+                <div className="mb-2.5 flex items-center justify-between gap-3 px-1">
+                  <h2 className="text-sm font-extrabold tracking-tight sm:text-base">
+                    {copy.yourItems}
+                  </h2>
+                  <span className="text-[11px] font-semibold text-muted-foreground">
+                    {copy.item}
+                  </span>
+                </div>
+
+                <ul className="space-y-2.5" aria-label={copy.title}>
+                  {items.map((item) => {
+                    const image = item.product.node.images?.edges?.[0]?.node;
+                    const lineTotal = Number(item.price.amount) * item.quantity;
+
+                    return (
+                      <li
+                        key={item.variantId}
+                        className="group relative flex gap-3 rounded-2xl border bg-card p-3 shadow-card transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-primary/20 hover:shadow-card-hover sm:gap-4 sm:p-3.5"
+                      >
                         <Link
                           to="/product/$handle"
                           params={{ handle: item.product.node.handle }}
-                          className="line-clamp-2 pe-8 text-sm font-bold leading-5 transition-colors hover:text-primary sm:text-base"
+                          className="grid h-[5.25rem] w-[5.25rem] shrink-0 place-items-center overflow-hidden rounded-xl border bg-image-stage sm:h-24 sm:w-24"
                         >
-                          {item.product.node.title}
+                          {image ? (
+                            <img
+                              src={cdnImage(image.url, 160)}
+                              alt={image.altText ?? item.product.node.title}
+                              className="h-full w-full object-contain p-2"
+                              loading="lazy"
+                              decoding="async"
+                              width={96}
+                              height={96}
+                            />
+                          ) : null}
                         </Link>
-                        <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-                          {variantSummary(item.selectedOptions)}
-                        </p>
-                        <p className="mt-2 text-base font-extrabold tabular-nums text-primary">
-                          {formatPrice(item.price.amount, item.price.currencyCode)}
-                        </p>
 
-                        <div className="mt-auto flex items-end justify-between gap-2 pt-3">
-                          <div className="flex h-10 items-center rounded-xl border bg-background p-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              aria-label={t("decreaseQuantity")}
-                              onClick={() => void updateQuantity(item.variantId, item.quantity - 1)}
-                              className="h-8 w-8 rounded-lg"
-                            >
-                              <Minus className="h-3.5 w-3.5" />
-                            </Button>
-                            <span className="w-8 text-center text-sm font-bold tabular-nums">
-                              {item.quantity}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              aria-label={t("increaseQuantity")}
-                              onClick={() => void updateQuantity(item.variantId, item.quantity + 1)}
-                              className="h-8 w-8 rounded-lg"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </Button>
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <Link
+                            to="/product/$handle"
+                            params={{ handle: item.product.node.handle }}
+                            className="line-clamp-2 pe-8 text-[13px] font-extrabold leading-[1.3] transition-colors hover:text-primary sm:text-[15px]"
+                          >
+                            {item.product.node.title}
+                          </Link>
+
+                          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                            <p className="max-w-full truncate text-[10px] text-muted-foreground sm:text-[11px]">
+                              {variantSummary(item.selectedOptions)}
+                            </p>
+                            <span className="text-[10px] text-border">•</span>
+                            <p className="text-[11px] font-bold tabular-nums text-primary sm:text-xs">
+                              {formatPrice(item.price.amount, item.price.currencyCode)}
+                            </p>
                           </div>
 
-                          <span className="text-xs font-semibold tabular-nums text-muted-foreground sm:text-sm">
-                            {formatPrice(
-                              Number(item.price.amount) * item.quantity,
-                              item.price.currencyCode,
-                            )}
-                          </span>
+                          <div className="mt-auto flex items-end justify-between gap-2 pt-2.5">
+                            <div className="flex h-9 items-center rounded-xl border bg-background p-0.5 shadow-sm">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                aria-label={t("decreaseQuantity")}
+                                onClick={() =>
+                                  void updateQuantity(item.variantId, item.quantity - 1)
+                                }
+                                className="h-8 w-8 rounded-[0.6rem]"
+                              >
+                                <Minus className="h-3.5 w-3.5" />
+                              </Button>
+                              <span className="w-7 text-center text-xs font-extrabold tabular-nums">
+                                {item.quantity}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                aria-label={t("increaseQuantity")}
+                                onClick={() =>
+                                  void updateQuantity(item.variantId, item.quantity + 1)
+                                }
+                                className="h-8 w-8 rounded-[0.6rem]"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+
+                            <div className="text-end">
+                              <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                {copy.lineTotal}
+                              </p>
+                              <p className="mt-0.5 text-sm font-extrabold tabular-nums sm:text-[15px]">
+                                {formatPrice(lineTotal, item.price.currencyCode)}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
 
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => void removeItem(item.variantId)}
-                        aria-label={t("removeItem")}
-                        className="absolute end-2 top-2 h-9 w-9 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:end-3 sm:top-3"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  );
-                })}
-              </ul>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => void removeItem(item.variantId)}
+                          disabled={isLoading}
+                          aria-label={t("removeItem")}
+                          className="absolute end-2 top-2 h-8 w-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
 
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="px-0 text-muted-foreground hover:bg-transparent hover:text-primary"
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 px-1 text-muted-foreground hover:bg-transparent hover:text-primary"
+                >
+                  <Link to="/shop">
+                    <ArrowRight className="rtl:rotate-180" />
+                    {copy.continueShopping}
+                  </Link>
+                </Button>
+              </div>
+
+              <aside
+                className="overflow-hidden rounded-2xl border bg-card shadow-card lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+                aria-label={copy.summary}
               >
-                <Link to="/shop">
-                  <ArrowRight className="rtl:rotate-180" />
-                  {copy.continueShopping}
-                </Link>
-              </Button>
-            </div>
-
-            <aside
-              className="rounded-2xl border bg-card p-4 shadow-card sm:p-5 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1"
-              aria-label={copy.summary}
-            >
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
-                  <ReceiptText className="h-4.5 w-4.5" />
-                </span>
-                <div className="min-w-0">
-                  <h2 className="text-sm font-extrabold">{copy.summary}</h2>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">{copy.item}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-3 text-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{copy.subtotal}</span>
-                  <span className="font-bold tabular-nums">{formatPrice(subtotal, currency)}</span>
-                </div>
-
-                <div className="rounded-xl border border-primary/10 bg-primary/[0.04] p-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="flex items-center gap-2 font-semibold">
-                      <Truck className="h-4 w-4 text-primary" />
-                      {copy.delivery}
+                <div className="border-b bg-gradient-to-r from-primary/[0.08] via-primary/[0.03] to-transparent px-4 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/15 bg-background/80 text-primary shadow-sm">
+                      <ReceiptText className="h-4 w-4" />
                     </span>
-                    <span className="font-extrabold tabular-nums text-primary">
-                      {deliveryFee === 0 ? copy.freeDelivery : formatPrice(deliveryFee, currency)}
-                    </span>
+                    <div className="min-w-0">
+                      <h2 className="text-sm font-extrabold">{copy.summary}</h2>
+                      <p className="mt-0.5 text-[10px] text-muted-foreground">{copy.item}</p>
+                    </div>
                   </div>
-                  <p className="mt-1.5 text-[11px] leading-4 text-muted-foreground">
-                    {copy.deliveryNote}
+                </div>
+
+                <div className="p-4">
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-muted-foreground">{copy.subtotal}</span>
+                      <span className="font-bold tabular-nums">
+                        {formatPrice(subtotal, currency)}
+                      </span>
+                    </div>
+
+                    <div className="rounded-xl border border-sky-500/15 bg-sky-500/[0.05] p-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="flex min-w-0 items-center gap-2 font-semibold">
+                          <Truck className="h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400" />
+                          <span className="truncate">{copy.delivery}</span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-background px-2 py-1 text-xs font-extrabold tabular-nums text-primary shadow-sm">
+                          {deliveryFee === 0
+                            ? copy.freeDelivery
+                            : formatPrice(deliveryFee, currency)}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 flex items-center gap-1.5 text-[10px] leading-4 text-muted-foreground">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        {copy.deliveryNote}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border bg-surface/70 p-3">
+                      <div className="flex items-end justify-between gap-4">
+                        <span className="pb-0.5 text-sm font-extrabold">{copy.finalTotal}</span>
+                        <span
+                          aria-live="polite"
+                          aria-atomic="true"
+                          className="text-2xl font-black tracking-tight tabular-nums text-primary"
+                        >
+                          {formatPrice(grandTotal, currency)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 flex items-start gap-2 rounded-xl border border-success/15 bg-success/[0.06] px-3 py-2.5 text-[10px] leading-4 text-muted-foreground">
+                    <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+                    {copy.secure}
                   </p>
-                </div>
 
-                <div className="flex items-end justify-between gap-4 border-t pt-3">
-                  <span className="font-extrabold">{copy.finalTotal}</span>
-                  <span className="text-2xl font-extrabold tabular-nums text-primary">
-                    {formatPrice(grandTotal, currency)}
-                  </span>
+                  <Button
+                    asChild
+                    className="mt-3 min-h-11 w-full rounded-xl font-extrabold shadow-sm"
+                  >
+                    <a href="#whatsapp-checkout">
+                      {copy.continueCheckout}
+                      <ArrowRight className="rtl:rotate-180" />
+                    </a>
+                  </Button>
                 </div>
+              </aside>
+
+              <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+                <CheckoutDetailsForm
+                  items={items}
+                  total={subtotal}
+                  deliveryFee={deliveryFee}
+                  currency={currency}
+                  disabled={isLoading}
+                />
               </div>
-
-              <p className="mt-4 flex items-start gap-2 rounded-xl bg-surface px-3 py-2.5 text-[11px] leading-4 text-muted-foreground">
-                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
-                {copy.secure}
-              </p>
-
-              <Button asChild className="mt-4 min-h-11 w-full rounded-xl">
-                <a href="#whatsapp-checkout">{copy.continueCheckout}</a>
-              </Button>
-            </aside>
-
-            <div className="min-w-0 lg:col-start-1 lg:row-start-2">
-              <CheckoutDetailsForm
-                items={items}
-                total={subtotal}
-                deliveryFee={deliveryFee}
-                currency={currency}
-                disabled={isLoading}
-              />
             </div>
-          </div>
+          </>
         )}
       </div>
     </StoreLayout>

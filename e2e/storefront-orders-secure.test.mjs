@@ -58,7 +58,16 @@ test("delivery fee is server-owned and participates in the final total", () => {
   assert.match(settings, /deliveryFeeNumber/);
   assert.match(migration, /where setting\.key = 'delivery_fee'/);
   assert.match(migration, /v_total := v_subtotal \+ v_shipping_total/);
-  assert.doesNotMatch(client, /shipping_total\s*:/);
+
+  const bodyStart = client.indexOf("const body = {");
+  const invokeStart = client.indexOf("supabase.functions.invoke", bodyStart);
+  assert.ok(
+    bodyStart > 0 && invokeStart > bodyStart,
+    "checkout request body should be identifiable",
+  );
+  const requestBodySource = client.slice(bodyStart, invokeStart);
+  assert.doesNotMatch(requestBodySource, /shipping_total\s*:/);
+  assert.match(requestBodySource, /expected_delivery_fee:/);
 });
 
 test("successful creation writes an audit event in the same transaction", () => {
