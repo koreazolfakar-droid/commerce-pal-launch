@@ -2,6 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { routeTree } from "./routeTree.gen";
+import { subscribeStorefrontRefresh } from "@/lib/nativeStore";
 
 const getSSROptions = createIsomorphicFn().server(() => {
   const bytes = new Uint8Array(16);
@@ -21,6 +22,14 @@ export const getRouter = () => {
       },
     },
   });
+
+  if (typeof window !== "undefined") {
+    subscribeStorefrontRefresh(() => {
+      void queryClient.invalidateQueries({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "supabase",
+      });
+    });
+  }
 
   const router = createRouter({
     routeTree,

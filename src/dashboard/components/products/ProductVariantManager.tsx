@@ -263,7 +263,10 @@ export default function ProductVariantManager({
     }
   };
 
-  const upload = async (file?: File) => {
+  const upload = async (
+    file?: File,
+    successMessage?: string,
+  ) => {
     if (!file || !editing || uploading) return;
     setUploading(true);
     try {
@@ -276,7 +279,8 @@ export default function ProductVariantManager({
       setEditing(updated);
       setDraft((current) => ({ ...current, imageUrl: result.url }));
       toast.success(
-        `Variant image optimized to ${result.conversion.output.width}×${result.conversion.output.height} WebP.`,
+        successMessage ??
+          `Variant image optimized to ${result.conversion.output.width}×${result.conversion.output.height} WebP.`,
       );
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Variant image upload failed.");
@@ -533,7 +537,11 @@ export default function ProductVariantManager({
                             defaultFit: "contain",
                             previewContext: "product",
                           }).then((edited) => {
-                            if (edited) setPendingImageFile(edited);
+                            if (!edited) return;
+                            void upload(
+                              edited,
+                              "Variant image adjustment saved. Storefront refresh requested.",
+                            );
                           });
                         }}
                         disabled={uploading}

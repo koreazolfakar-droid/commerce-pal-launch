@@ -105,6 +105,37 @@ const STALE_TTL_MS = 5 * 60_000;
 let cachedSnapshot: { expiresAt: number; staleUntil: number; value: NativeSnapshot } | null = null;
 let pendingSnapshot: Promise<NativeSnapshot> | null = null;
 
+const STOREFRONT_REFRESH_STORAGE_KEY = "space-call-storefront-refresh-v1";
+const STOREFRONT_REFRESH_EVENT = "space-call:storefront-refresh";
+const storefrontRefreshSubscribers = new Set<() => void>();
+let storefrontRefreshListenerInstalled = false;
+
+function notifyStorefrontRefreshSubscribers() {
+  for (const subscriber of storefrontRefreshSubscribers) subscriber();
+}
+
+function installStorefrontRefreshBridge() {
+  if (typeof window === "undefined" || storefrontRefreshListenerInstalled) return;
+  storefrontRefreshListenerInstalled = true;
+
+  const refresh = () => {
+    invalidateNativeStoreCache();
+    notifyStorefrontRefreshSubscribers();
+  };
+  const storageRefresh = (event: StorageEvent) => {
+    if (event.key === STOREFRONT_REFRESH_STORAGE_KEY) refresh();
+  };
+
+  window.addEventListener(STOREFRONT_REFRESH_EVENT, refresh);
+  window.addEventListener("storage", storageRefresh);
+}
+
+export function subscribeStorefrontRefresh(subscriber: () => void) {
+  storefrontRefreshSubscribers.add(subscriber);
+  installStorefrontRefreshBridge();
+  return () => storefrontRefreshSubscribers.delete(subscriber);
+}
+
 function assertResult<T>(
   result: { data: T | null; error: { message: string } | null },
   label: string,
@@ -421,6 +452,21 @@ async function loadSnapshot(): Promise<NativeSnapshot> {
 export function invalidateNativeStoreCache() {
   cachedSnapshot = null;
   hydratedProductCache.clear();
+}
+
+export function broadcastStorefrontRefresh() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(
+      STOREFRONT_REFRESH_STORAGE_KEY,
+      `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+  } catch {
+    // Cross-tab refresh is best effort; the current tab still receives the event below.
+  }
+
+  window.dispatchEvent(new Event(STOREFRONT_REFRESH_EVENT));
 }
 
 function publicProducts(snapshot: NativeSnapshot) {
