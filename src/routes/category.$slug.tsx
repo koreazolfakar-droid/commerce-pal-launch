@@ -14,6 +14,9 @@ import type { CatalogIndex } from "@/lib/taxonomy";
 
 const CATEGORY_SLUG_REDIRECTS: Record<string, string> = {
   "mobile-phones": "smartphone",
+  "foldable-smartphone": "smartphone",
+  "smartphone-bundle": "smartphone",
+  "gaming-tablet": "tablet",
   "wall-charger": "charger",
   "charging-cable": "cable",
 };
