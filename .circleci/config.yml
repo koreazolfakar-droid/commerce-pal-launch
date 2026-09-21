@@ -95,8 +95,4 @@ workflows:
     jobs:
       - security-source
       - security-dependencies
-      - storefront-ci:
-          filters:
-            branches:
-              only:
-                - /^important\/.*/
+      - storefront-ci
