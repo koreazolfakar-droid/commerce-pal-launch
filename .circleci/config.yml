@@ -11,7 +11,6 @@ commands:
             echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
             bun --version
-
   prepare:
     steps:
       - checkout
@@ -25,7 +24,7 @@ commands:
           command: bun install --frozen-lockfile
 
 jobs:
-  dashboard-group-a:
+  dashboard-auth-a:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -33,11 +32,11 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Dashboard auth and login tests
+          name: Dashboard auth shell tests
           command: |
-            node --test               e2e/dashboard-auth0-security.test.mjs               e2e/dashboard-csp-session-ci.test.mjs               e2e/dashboard-login-route.test.mjs               e2e/dashboard-login-screen-capture.test.mjs               e2e/dashboard-login-ui.test.mjs               e2e/dashboard-passkey-client.test.mjs               e2e/dashboard-passkey-second-factor.test.mjs               e2e/dashboard-passkey-step-up.test.mjs               e2e/dashboard-password-breach-screening.test.mjs               e2e/dashboard-security-hardening.test.mjs               e2e/dashboard-session-security.test.mjs               e2e/dashboard-totp-mfa.test.mjs
+            node --test               e2e/dashboard-auth0-security.test.mjs               e2e/dashboard-csp-session-ci.test.mjs               e2e/dashboard-login-route.test.mjs               e2e/dashboard-login-screen-capture.test.mjs
 
-  dashboard-group-b:
+  dashboard-auth-b:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -45,11 +44,11 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Dashboard CMS and catalog tests
+          name: Dashboard login and passkey tests
           command: |
-            node --test               e2e/dashboard-brand-delete-safety.test.mjs               e2e/dashboard-brands-mobile-actions.test.mjs               e2e/dashboard-category-image-pipeline.test.mjs               e2e/dashboard-collections-supabase.test.mjs               e2e/dashboard-content-cms-step4.test.mjs               e2e/dashboard-customers-supabase.test.mjs               e2e/dashboard-hero-composite-row-regression.test.mjs               e2e/dashboard-hero-image-pipeline.test.mjs               e2e/dashboard-hero-supabase.test.mjs               e2e/dashboard-home-supabase.test.mjs               e2e/dashboard-homepage-cms.test.mjs
+            node --test               e2e/dashboard-login-ui.test.mjs               e2e/dashboard-passkey-client.test.mjs               e2e/dashboard-passkey-second-factor.test.mjs               e2e/dashboard-passkey-step-up.test.mjs
 
-  dashboard-group-c:
+  dashboard-auth-c:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -57,11 +56,11 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Dashboard commerce tests
+          name: Dashboard password and session security tests
           command: |
-            node --test               e2e/dashboard-inventory-rpc-security.test.mjs               e2e/dashboard-orders-supabase.test.mjs               e2e/dashboard-procurement-schema-step2.test.mjs               e2e/dashboard-product-image-metadata.test.mjs               e2e/dashboard-product-management-step5.test.mjs               e2e/dashboard-receiving-rules.test.mjs               e2e/dashboard-receiving-workflow.test.mjs               e2e/dashboard-sales-supabase.test.mjs
+            node --test               e2e/dashboard-password-breach-screening.test.mjs               e2e/dashboard-security-hardening.test.mjs               e2e/dashboard-session-security.test.mjs               e2e/dashboard-totp-mfa.test.mjs
 
-  dashboard-group-d:
+  core-a:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -69,11 +68,11 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Dashboard media settings and shell tests
+          name: Architecture and cart tests
           command: |
-            node --test               e2e/dashboard-image-compression-controls.test.mjs               e2e/dashboard-live-workspace.test.mjs               e2e/dashboard-settings-supabase.test.mjs               e2e/dashboard-smart-image-editor.test.mjs               e2e/dashboard-supabase-source-guard.test.mjs               e2e/dashboard-truthful-shell.test.mjs
+            node --test               e2e/architecture.test.mjs               e2e/cart-delivery-dashboard.test.mjs               e2e/cart-delivery-security.test.mjs               e2e/cart-responsive-precision.test.mjs               e2e/cart-ux-polish.test.mjs
 
-  non-dashboard-group-a:
+  core-b:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -81,11 +80,11 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Core storefront architecture tests
+          name: Catalog category and CI tests
           command: |
-            node --test               e2e/architecture.test.mjs               e2e/cart-delivery-dashboard.test.mjs               e2e/cart-delivery-security.test.mjs               e2e/cart-responsive-precision.test.mjs               e2e/cart-ux-polish.test.mjs               e2e/catalog-management-responsive.test.mjs               e2e/catalog.test.mjs               e2e/category-cleanup-followup.test.mjs               e2e/category-page-premium.test.mjs               e2e/category-storefront-sync.test.mjs               e2e/category-taxonomy-cleanup.test.mjs               e2e/ci-config.test.mjs               e2e/cms-refresh.test.mjs               e2e/create-order-rate-limit-security.test.mjs               e2e/customer-auth-ui.test.mjs               e2e/hero-design.test.mjs               e2e/hero-scene.test.mjs
+            node --test               e2e/catalog-management-responsive.test.mjs               e2e/catalog.test.mjs               e2e/category-cleanup-followup.test.mjs               e2e/category-page-premium.test.mjs               e2e/category-storefront-sync.test.mjs               e2e/category-taxonomy-cleanup.test.mjs               e2e/ci-config.test.mjs
 
-  non-dashboard-group-b:
+  core-c:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -93,16 +92,16 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Storefront integration and regression tests
+          name: CMS auth and hero tests
           command: |
-            node --test               e2e/hybrid-storefront.test.mjs               e2e/inventory-supabase.test.mjs               e2e/performance-architecture.test.mjs               e2e/product-add-edit-supabase.test.mjs               e2e/product-rail-carousel.test.mjs               e2e/security-pipeline-config.test.mjs               e2e/seo-regression.test.mjs               e2e/shopify-only-storefront.test.mjs               e2e/storefront-consistency.test.mjs               e2e/storefront-dark-theme.test.mjs               e2e/storefront-orders-secure.test.mjs               e2e/storefront-supabase-failover.test.mjs
+            node --test               e2e/cms-refresh.test.mjs               e2e/create-order-rate-limit-security.test.mjs               e2e/customer-auth-ui.test.mjs               e2e/hero-design.test.mjs               e2e/hero-scene.test.mjs
 
 workflows:
-  isolate-current-test-failures:
+  isolate-current-test-failures-stage-2:
     jobs:
-      - dashboard-group-a
-      - dashboard-group-b
-      - dashboard-group-c
-      - dashboard-group-d
-      - non-dashboard-group-a
-      - non-dashboard-group-b
+      - dashboard-auth-a
+      - dashboard-auth-b
+      - dashboard-auth-c
+      - core-a
+      - core-b
+      - core-c
