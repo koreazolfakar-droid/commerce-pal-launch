@@ -348,7 +348,7 @@ export default function BrandForm({
                     void imageEditor.editFile(file, {
                       title: "Adjust brand cover",
                       preset: "cover",
-                      transparent: false,
+                      transparent: true,
                       defaultFit: "cover",
                     }).then((edited) => {
                       if (!edited) return;
@@ -379,13 +379,13 @@ export default function BrandForm({
                               ? imageEditor.editFile(source, {
                                   title: "Adjust brand cover",
                                   preset: "cover",
-                                  transparent: false,
+                                  transparent: true,
                                   defaultFit: "cover",
                                 })
                               : imageEditor.editUrl(source, {
                                   title: "Adjust brand cover",
                                   preset: "cover",
-                                  transparent: false,
+                                  transparent: true,
                                   defaultFit: "cover",
                                 });
                           void editPromise.then((edited) => {
