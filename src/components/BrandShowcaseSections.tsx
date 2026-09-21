@@ -86,24 +86,39 @@ function Header({
   compact?: boolean;
 }) {
   const { t } = useLanguage();
+
+  const titleRow = (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+      <h2 id={id} className="break-words text-xl font-black tracking-tight">
+        {title}
+      </h2>
+      <Link
+        to={href as "/shop"}
+        className="inline-flex shrink-0 items-center gap-1 rounded-full px-1 py-1 text-xs font-bold text-primary transition-colors hover:text-primary/80 hover:underline"
+      >
+        {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
+      </Link>
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <div className="home-section-header !mb-0 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5">
+        <div className="min-w-0">{titleRow}</div>
+        {actions && <div className="shrink-0">{actions}</div>}
+        {subtitle && (
+          <p className="col-span-2 line-clamp-2 text-sm leading-5 text-muted-foreground">
+            {subtitle}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={
-        compact ? "home-section-header !mb-0 flex-nowrap items-start" : "home-section-header"
-      }
-    >
+    <div className="home-section-header">
       <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-          <h2 id={id} className="break-words text-xl font-black tracking-tight">
-            {title}
-          </h2>
-          <Link
-            to={href as "/shop"}
-            className="inline-flex shrink-0 items-center gap-1 rounded-full px-1 py-1 text-xs font-bold text-primary transition-colors hover:text-primary/80 hover:underline"
-          >
-            {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
-          </Link>
-        </div>
+        {titleRow}
         {subtitle && (
           <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{subtitle}</p>
         )}
@@ -393,9 +408,9 @@ function FacetSection({
       aria-labelledby={id}
       data-facet-kind={kind}
       data-facet-slug={slug}
-      className="overflow-hidden rounded-[1.35rem] border border-border/75 bg-card shadow-card"
+      className="overflow-hidden rounded-[1.35rem] border border-border/75 bg-card shadow-card max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:shadow-none"
     >
-      <div className="px-3.5 pt-3.5 sm:px-5 sm:pt-5">
+      <div className="px-1 pt-2 sm:px-5 sm:pt-5">
         <Header
           id={id}
           title={title}
@@ -405,7 +420,7 @@ function FacetSection({
           actions={<ProductViewToggle mode={viewMode} onChange={setViewMode} />}
         />
       </div>
-      <div className="px-3.5 pb-3.5 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
+      <div className="px-1 pb-2 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
         {loading && products.length === 0 ? (
           <div className="shimmer min-h-96 rounded-2xl bg-surface" aria-hidden="true" />
         ) : (
@@ -435,7 +450,7 @@ function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
       className="overflow-hidden rounded-[1.35rem] border border-border/75 bg-card shadow-card"
       aria-labelledby={`showcase-${collection.handle}`}
     >
-      <div className="px-3.5 pt-3.5 sm:px-5 sm:pt-5">
+      <div className="px-1 pt-2 sm:px-5 sm:pt-5">
         <Header
           id={`showcase-${collection.handle}`}
           title={collection.title}
@@ -445,7 +460,7 @@ function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
           actions={<ProductViewToggle mode={viewMode} onChange={setViewMode} />}
         />
       </div>
-      <div className="px-3.5 pb-3.5 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
+      <div className="px-1 pb-2 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
         {data?.products.length ? (
           <ProductRail
             products={data.products}
