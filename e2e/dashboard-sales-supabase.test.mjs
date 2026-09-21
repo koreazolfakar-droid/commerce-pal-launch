@@ -8,7 +8,7 @@ const [app, nav, page, data, migration] = await Promise.all([
   readFile(new URL("../src/dashboard/pages/SalesPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/sales.ts", import.meta.url), "utf8"),
   readFile(
-    new URL("../supabase/migrations/20260921045000_secure_order_workflow.sql", import.meta.url),
+    new URL("../supabase/migrations/20260921053341_secure_order_workflow.sql", import.meta.url),
     "utf8",
   ),
 ]);
