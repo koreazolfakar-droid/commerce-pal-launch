@@ -315,6 +315,7 @@ function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 aria-label={t("decreaseQuantity")}
+                                disabled={isLoading}
                                 onClick={() =>
                                   void updateQuantity(item.variantId, item.quantity - 1)
                                 }
@@ -330,6 +331,7 @@ function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 aria-label={t("increaseQuantity")}
+                                disabled={isLoading}
                                 onClick={() =>
                                   void updateQuantity(item.variantId, item.quantity + 1)
                                 }
