@@ -1,6 +1,8 @@
--- Harden checkout pricing consent and global delivery-fee administration.
--- Prevents silent total changes, fail-open free delivery, and editor-level
--- mutation of the store-wide delivery configuration.
+-- Harden cart/order pricing and delivery configuration.
+-- 1) Delivery fee is fail-closed and structurally validated.
+-- 2) Only dashboard admins may change the global delivery fee.
+-- 3) Orders are rejected before insert/stock deduction if product or delivery
+--    pricing differs from what the shopper reviewed in the cart.
 
 alter table public.cms_site_settings
   drop constraint if exists cms_site_settings_delivery_fee_valid;
@@ -65,12 +67,12 @@ with check (
   and (select private.is_dashboard_admin())
 );
 
-create or replace function public.create_store_order_internal(payload jsonb)
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
+CREATE OR REPLACE FUNCTION public.create_store_order_internal(payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
 declare
   v_items jsonb;
   v_item jsonb;
@@ -509,8 +511,7 @@ begin
     'replayed', false
   );
 end;
-$$;
-
+$function$
  then
     raise exception 'invalid_delivery_fee_config';
   end if;
@@ -520,9 +521,8 @@ $$;
     raise exception 'invalid_delivery_fee_config';
   end if;
 
-  -- Never create an order for a price the shopper did not see. The browser
-  -- sends expectations only; the authoritative subtotal and delivery fee are
-  -- still recalculated here from locked catalog rows and server configuration.
+  -- Price-consent barrier: the browser sends only the amounts the shopper saw.
+  -- The database remains authoritative and recalculates both values itself.
   if v_expected_subtotal is distinct from v_subtotal
     or v_expected_delivery_fee is distinct from v_shipping_total then
     raise exception 'pricing_changed';
@@ -694,8 +694,8 @@ $$;
     'replayed', false
   );
 end;
-$$;
-
+$function$
+;
 
 revoke all on function public.create_store_order_internal(jsonb)
   from public, anon, authenticated;
