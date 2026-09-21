@@ -10,17 +10,32 @@ const context = { waitUntil: (promise) => pending.push(promise), passThroughOnEx
 async function request(path) {
   let url = new URL(path, "https://spacecallapp.store");
   let response;
+  const startedAt = performance.now();
+  let responseAt = startedAt;
+
   for (let hop = 0; hop < 4; hop++) {
     response = await handler.fetch(new Request(url), {}, context);
+    responseAt = performance.now();
     if (![301, 302, 307, 308].includes(response.status)) break;
     const location = response.headers.get("location");
     assert.ok(location, "Redirect must include a destination");
     url = new URL(location, url);
     assert.equal(url.origin, "https://spacecallapp.store", "SSR tests only follow internal redirects");
   }
+
   const body = await response.text();
+  const completedAt = performance.now();
   assert.equal(response.status, 200, `${path} must render successfully`);
-  return { response, body };
+
+  return {
+    response,
+    body,
+    metrics: {
+      responseMs: Math.round((responseAt - startedAt) * 100) / 100,
+      completeMs: Math.round((completedAt - startedAt) * 100) / 100,
+      htmlBytes: Buffer.byteLength(body),
+    },
+  };
 }
 
 const home = await request("/");
@@ -42,6 +57,8 @@ const nonce = csp.match(/script-src[^;]*'nonce-([a-f0-9]{32})'/)?.[1];
 assert.ok(nonce, "SSR CSP includes a request nonce");
 
 const second = await request("/");
+assert.ok(home.metrics.htmlBytes > 0, "Homepage SSR emits a non-empty document");
+assert.ok(second.metrics.htmlBytes > 0, "Warm homepage SSR emits a non-empty document");
 const secondNonce = (second.response.headers.get("content-security-policy") ?? "")
   .match(/script-src[^;]*'nonce-([a-f0-9]{32})'/)?.[1];
 assert.ok(secondNonce);
@@ -66,5 +83,15 @@ const robots = await readFile(new URL("../public/robots.txt", import.meta.url), 
 assert.ok(!/^Disallow:\s*\/$/m.test(robots));
 
 await Promise.allSettled(pending);
-console.log(JSON.stringify({ passed: true, source: "supabase-native", paths: ["/", "/help", "/privacy", "/sitemap.xml"] }));
+console.log(
+  JSON.stringify({
+    passed: true,
+    source: "supabase-native",
+    paths: ["/", "/help", "/privacy", "/sitemap.xml"],
+    homepageSsr: {
+      cold: home.metrics,
+      warm: second.metrics,
+    },
+  }),
+);
 process.exit(0);
