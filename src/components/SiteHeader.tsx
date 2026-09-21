@@ -143,6 +143,15 @@ export function SiteHeader() {
             <li>
               <Link
                 to="/help"
+                hash="account-orders"
+                className="flex items-center gap-1.5 whitespace-nowrap hover:text-primary"
+              >
+                <User className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("account")}
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/help"
                 className="flex items-center gap-1.5 whitespace-nowrap hover:text-primary"
               >
                 <LifeBuoy className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("help")}
