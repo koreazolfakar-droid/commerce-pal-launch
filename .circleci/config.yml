@@ -90,6 +90,200 @@ jobs:
           name: SSR smoke test
           command: bun run test:ssr
 
+
+  perf-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript only
+          command: bun run typecheck
+
+  perf-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: ESLint only
+          command: bun run lint
+
+  perf-unit:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit and architecture tests only
+          command: bun run test:unit
+
+  perf-build-ssr:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Production build
+          command: bun run build
+      - run:
+          name: SSR smoke test
+          command: bun run test:ssr
+
+
+  perf-test-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Architecture test only
+          command: node --test e2e/architecture.test.mjs
+
+  perf-test-performance-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Performance architecture test only
+          command: node --test e2e/performance-architecture.test.mjs
+
+
+  perf-arch-group-a:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Architecture group A
+          command: node --test --test-name-pattern="store identity|storefront commerce|homepage uses bounded|global navigation" e2e/architecture.test.mjs
+
+  perf-arch-group-b:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Architecture group B
+          command: node --test --test-name-pattern="native cart|server blocks|secret environment" e2e/architecture.test.mjs
+
+
+  perf-arch-native-cart:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Native cart architecture test
+          command: node --test --test-name-pattern="native cart" e2e/architecture.test.mjs
+
+  perf-arch-server:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Server security architecture test
+          command: node --test --test-name-pattern="server blocks" e2e/architecture.test.mjs
+
+  perf-arch-secrets:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Secret-file architecture test
+          command: node --test --test-name-pattern="secret environment" e2e/architecture.test.mjs
+
 workflows:
   security-and-storefront-validation:
     jobs:
@@ -100,3 +294,58 @@ workflows:
             branches:
               only:
                 - /^important\/.*/
+      - perf-typecheck:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-lint:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-unit:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-build-ssr:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-test-architecture:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-test-performance-architecture:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-arch-group-a:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-arch-group-b:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-arch-native-cart:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-arch-server:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
+      - perf-arch-secrets:
+          filters:
+            branches:
+              only:
+                - important/perf-final-diagnostics-20260921
