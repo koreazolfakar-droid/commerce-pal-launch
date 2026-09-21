@@ -756,7 +756,7 @@ export default function HeroBannersPage() {
                         void imageEditor.editFile(file, {
                           title: isDesktop ? "Adjust desktop hero" : "Adjust mobile hero",
                           preset: isDesktop ? "hero-desktop" : "hero-mobile",
-                          transparent: false,
+                          transparent: true,
                           defaultFit: "cover",
                         }).then((edited) => {
                           if (!edited) return;
@@ -781,7 +781,7 @@ export default function HeroBannersPage() {
                           void imageEditor.editUrl(url, {
                             title: isDesktop ? "Adjust existing desktop hero" : "Adjust existing mobile hero",
                             preset: isDesktop ? "hero-desktop" : "hero-mobile",
-                            transparent: false,
+                            transparent: true,
                             defaultFit: "cover",
                           }).then((edited) => {
                             if (!edited) return;
