@@ -124,6 +124,58 @@ jobs:
           name: Unit diagnostic
           command: bun run test:unit
 
+  diag-unit-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Architecture diagnostic
+          command: node --test e2e/architecture.test.mjs
+
+  diag-unit-performance:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Performance architecture diagnostic
+          command: node --test e2e/performance-architecture.test.mjs
+
+  diag-unit-rest:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Remaining unit diagnostics
+          command: |
+            find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'architecture.test.mjs' ! -name 'performance-architecture.test.mjs' -print0 | sort -z | xargs -0 node --test
+
 workflows:
   security-and-storefront-validation:
     jobs:
@@ -140,6 +192,21 @@ workflows:
               only:
                 - /^important\/.*/
       - diag-unit:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - diag-unit-architecture:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - diag-unit-performance:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - diag-unit-rest:
           filters:
             branches:
               only:
