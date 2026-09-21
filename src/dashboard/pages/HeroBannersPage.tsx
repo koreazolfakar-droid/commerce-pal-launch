@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import {
   createDashboardHeroSlide,
   DEFAULT_HERO_VISUAL_CONFIG,
@@ -268,6 +269,7 @@ export default function HeroBannersPage() {
   >({});
   const desktopFileRef = useRef<HTMLInputElement>(null);
   const mobileFileRef = useRef<HTMLInputElement>(null);
+  const imageEditor = useSmartImageEditor();
 
   const selected = useMemo(
     () => slides.find((slide) => slide.id === selectedId) ?? null,
@@ -485,6 +487,7 @@ export default function HeroBannersPage() {
 
   return (
     <div>
+      {imageEditor.dialog}
       <div className="mb-7 flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
         <div>
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">Store content / CMS</div>
@@ -750,7 +753,15 @@ export default function HeroBannersPage() {
                       event.currentTarget.value = "";
                       if (!file) return;
                       if (["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
-                        setPendingHeroImages((current) => ({ ...current, [target]: file }));
+                        void imageEditor.editFile(file, {
+                          title: isDesktop ? "Adjust desktop hero" : "Adjust mobile hero",
+                          preset: isDesktop ? "hero-desktop" : "hero-mobile",
+                          transparent: false,
+                          defaultFit: "cover",
+                        }).then((edited) => {
+                          if (!edited) return;
+                          setPendingHeroImages((current) => ({ ...current, [target]: edited }));
+                        });
                       } else {
                         void upload(file, target);
                       }
@@ -763,6 +774,26 @@ export default function HeroBannersPage() {
                     <button onClick={() => setMediaTarget(target)} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600">
                       <ImageIcon className="size-3.5" /> Library
                     </button>
+                    {url ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void imageEditor.editUrl(url, {
+                            title: isDesktop ? "Adjust existing desktop hero" : "Adjust existing mobile hero",
+                            preset: isDesktop ? "hero-desktop" : "hero-mobile",
+                            transparent: false,
+                            defaultFit: "cover",
+                          }).then((edited) => {
+                            if (!edited) return;
+                            setPendingHeroImages((current) => ({ ...current, [target]: edited }));
+                          });
+                        }}
+                        disabled={uploading !== null}
+                        className="h-9 rounded-xl border border-indigo-200 px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
+                      >
+                        Adjust
+                      </button>
+                    ) : null}
                     {url ? (
                       <button
                         onClick={() => {
