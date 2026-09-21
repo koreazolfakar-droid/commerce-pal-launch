@@ -4,45 +4,29 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-const [rail, styles] = await Promise.all([
-  read("src/components/ProductRail.tsx"),
-  read("src/styles.css"),
-]);
+const rail = await read("src/components/ProductRail.tsx");
 
-test("product grid mode stays a horizontal swipe rail on every breakpoint", () => {
-  assert.match(rail, /className="scroll-rail product-rail-items"/);
-  assert.doesNotMatch(rail, /sm:grid sm:snap-none/);
-  assert.match(styles, /\.product-rail-items\s*\{[\s\S]*display:\s*flex/);
-  assert.doesNotMatch(
-    styles,
-    /@container \(min-width: 36rem\)[\s\S]{0,260}\.product-rail-items\s*\{[\s\S]{0,120}display:\s*grid/,
-  );
-  assert.match(styles, /padding-inline-end:\s*clamp\(/);
+test("dense product layout is a real three-column grid with a second row", () => {
+  assert.match(rail, /gridProducts = products\.slice\(0, 6\)/);
+  assert.match(rail, /viewMode === "dense"/);
+  assert.match(rail, /grid-cols-3/);
+  assert.match(rail, /gap-y-5/);
+  assert.match(rail, /data-product-layout=\{viewMode\}/);
 });
 
-test("product rail exposes touch scrolling and contextual previous-next arrows", () => {
-  assert.match(rail, /useRailNavigation/);
-  assert.match(rail, /scrollBy\(\{/);
-  assert.match(rail, /behavior:\s*"smooth"/);
-  assert.match(rail, /navigation\.canPrevious/);
-  assert.match(rail, /navigation\.canNext/);
-  assert.match(rail, /Previous products/);
-  assert.match(rail, /Next products/);
-  assert.match(rail, /ChevronLeft/);
-  assert.match(rail, /ChevronRight/);
+test("two-column product layout is also a static grid", () => {
+  assert.match(rail, /grid-cols-2/);
+  assert.doesNotMatch(rail, /scroll-rail|overflow-x-auto|snap-x|snap-start/);
 });
 
-test("carousel navigation handles RTL and hides arrows when all items fit", () => {
-  assert.match(rail, /getComputedStyle\(node\)\.direction === "rtl"/);
-  assert.match(rail, /node\.scrollWidth <= node\.clientWidth \+ 2/);
-  assert.match(rail, /rtl \? -1 : 1/);
-  assert.match(rail, /rtl:rotate-180/);
+test("static product grids do not expose carousel arrows or scrolling navigation", () => {
+  assert.doesNotMatch(rail, /useRailNavigation|scrollBy\(|ChevronLeft|ChevronRight/);
+  assert.doesNotMatch(rail, /Previous products|Next products/);
 });
 
-test("list view remains intact and compact rails keep deferred rendering", () => {
+test("list view remains intact and purchase cards keep the market presentation", () => {
   assert.match(rail, /viewMode === "list"/);
   assert.match(rail, /ProductListCard/);
-  assert.match(rail, /useCompactGridVisibility/);
-  assert.match(rail, /IntersectionObserver/);
-  assert.match(rail, /aria-busy/);
+  assert.match(rail, /CompactProductCard/);
+  assert.match(rail, /market/);
 });

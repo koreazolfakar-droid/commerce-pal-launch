@@ -203,7 +203,7 @@ export const homeVendorProductsQueryOptions = (vendor: string) => {
   const normalizedVendor = vendor.trim();
   return queryOptions({
     queryKey: ["supabase", "home-vendor-products", normalizedVendor],
-    queryFn: () => fetchProductsByVendor(normalizedVendor, 4),
+    queryFn: () => fetchProductsByVendor(normalizedVendor, 6),
     enabled: Boolean(normalizedVendor),
     staleTime: CATALOG_STALE_TIME,
     retry: QUERY_RETRY_COUNT,

@@ -180,6 +180,15 @@ export const CompactProductCard = memo(function CompactProductCard({
         </div>
 
         <div className="market-product-copy flex min-w-0 flex-1 flex-col pt-3.5">
+          {brand ? (
+            <div className="mb-1 flex min-w-0 items-center gap-1">
+              <BrandLogo slug={brand.slug} label={brand.label} size={14} className="rounded" />
+              <span className="break-words text-[9px] font-bold uppercase leading-3 tracking-[0.045em] text-muted-foreground sm:text-[10px]">
+                {brand.label}
+              </span>
+            </div>
+          ) : null}
+
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
             <bdi className="whitespace-nowrap text-[0.95rem] font-extrabold tracking-tight text-foreground sm:text-base">
               {formatPrice(price.amount, price.currencyCode)}
@@ -196,18 +205,25 @@ export const CompactProductCard = memo(function CompactProductCard({
             params={{ handle: node.handle }}
             className="mt-1 min-w-0"
           >
-            <h3 className="line-clamp-2 min-h-[2.35rem] break-normal text-[0.8rem] font-medium leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
+            <h3 className="break-words text-[0.8rem] font-medium leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
               {node.title}
             </h3>
           </Link>
 
           {summary ? (
-            <p className="mt-0.5 truncate text-[10px] leading-4 text-muted-foreground sm:text-xs">
+            <p className="mt-0.5 break-words text-[10px] leading-4 text-muted-foreground sm:text-xs">
               {summary}
             </p>
-          ) : (
-            <span className="min-h-4" aria-hidden="true" />
-          )}
+          ) : null}
+
+          <p
+            className={cn(
+              "mt-1 text-[10px] font-semibold leading-4 sm:text-xs",
+              inStock ? "text-success" : "text-destructive",
+            )}
+          >
+            {inStock ? t("inStock") : t("outOfStock")}
+          </p>
         </div>
       </article>
     );
