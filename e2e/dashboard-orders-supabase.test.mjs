@@ -74,6 +74,24 @@ test("delivery changes are server-side, version checked and audited", () => {
   assert.match(detailPage, /Paid Delivery/);
 });
 
+test("orders queue has responsive OMS controls without changing order business rules", () => {
+  assert.match(listPage, /STATUS_TABS/);
+  assert.match(listPage, /All payments/);
+  assert.match(listPage, /Highest total/);
+  assert.match(listPage, /Clear filters/);
+  assert.match(listPage, /lg:hidden/);
+  assert.match(listPage, /hidden overflow-x-auto lg:block/);
+  assert.match(listPage, /Open order →/);
+  assert.match(listPage, /pageSize: 25/);
+  assert.match(listPage, /Updating order queue/);
+
+  assert.match(data, /paymentStatus\?: "all" \| DashboardPaymentStatus/);
+  assert.match(data, /sort\?: DashboardOrdersSort/);
+  assert.match(data, /query = query\.eq\("payment_status", paymentStatus\)/);
+  assert.match(data, /order\("total", \{ ascending: false \}\)/);
+  assert.match(data, /order\("total", \{ ascending: true \}\)/);
+});
+
 test("orders UI has truthful empty state", () => {
   assert.match(listPage, /No orders yet\./);
   assert.match(listPage, /first successful storefront order will appear here automatically/i);
