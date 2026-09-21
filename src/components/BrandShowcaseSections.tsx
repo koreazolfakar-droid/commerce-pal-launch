@@ -24,7 +24,7 @@ import { fetchCollectionByHandle } from "@/lib/storefrontData";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
 
-const HOME_BRAND_PRODUCT_TARGET = 4;
+const HOME_BRAND_PRODUCT_TARGET = 6;
 
 function mergeUniqueProducts(...groups: ShopifyProduct[][]) {
   const seen = new Set<string>();
@@ -425,7 +425,7 @@ function FacetSection({
           <div className="shimmer min-h-96 rounded-2xl bg-surface" aria-hidden="true" />
         ) : (
           <ProductRail
-            products={products.slice(0, 8)}
+            products={products.slice(0, 6)}
             storageKey={storageKey}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
