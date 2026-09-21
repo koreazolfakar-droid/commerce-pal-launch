@@ -2,7 +2,7 @@ import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { createEphemeralPasskeyClient, supabase } from "@/integrations/supabase/client";
 import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassword";
 import type { Tables } from "@/integrations/supabase/types";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 import { convertProductImageToWebp, type ProductImageConversionResult, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
 
 type ProductRow = Tables<"store_products">;
@@ -1481,6 +1481,7 @@ export async function uploadDashboardProductImage(
   }
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return {
     images: await listDashboardProductImages(productId),
     conversion: uploaded.conversion,
@@ -1512,6 +1513,7 @@ export async function replaceDashboardProductImage(
 
   await removeOwnedProductImageFile(image.url).catch(() => undefined);
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return {
     images: await listDashboardProductImages(image.productId),
     conversion: uploaded.conversion,
@@ -1538,6 +1540,7 @@ export async function setDashboardPrimaryProductImage(
   throwIfError(error, "Setting primary product image failed");
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return listDashboardProductImages(productId);
 }
 
@@ -1561,6 +1564,7 @@ export async function deleteDashboardProductImage(
   }
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return remaining;
 }
 
@@ -1580,5 +1584,6 @@ export async function reorderDashboardProductImages(
   }
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return listDashboardProductImages(productId);
 }
