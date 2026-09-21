@@ -219,6 +219,42 @@ function smartTransform(
   return { zoom, x, y };
 }
 
+function RangeControl({
+  label,
+  value,
+  min,
+  max,
+  step,
+  display,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  display: string;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className="block rounded-2xl border border-slate-200 p-3">
+      <span className="flex items-center justify-between text-[10px] font-bold text-slate-600">
+        <span>{label}</span>
+        <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-black text-slate-600">{display}</span>
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="mt-2 w-full accent-indigo-600"
+      />
+    </label>
+  );
+}
+
 function SmartImageEditorDialog({
   request,
   onDone,
@@ -351,11 +387,21 @@ function SmartImageEditorDialog({
     dragRef.current = null;
   };
 
-  const previewScale = loaded
-    ? (fit === "cover"
-        ? Math.max(100 / loaded.width, (100 * dimensions[1] / dimensions[0]) / loaded.height)
-        : Math.min(100 / loaded.width, (100 * dimensions[1] / dimensions[0]) / loaded.height)) * zoom
-    : 1;
+  const previewSize = useMemo(() => {
+    if (!loaded) return { width: 0, height: 0 };
+    const [frameWidth, frameHeight] = dimensions;
+    const innerW = frameWidth * (1 - (padding / 100) * 2);
+    const innerH = frameHeight * (1 - (padding / 100) * 2);
+    const baseScale =
+      fit === "cover"
+        ? Math.max(innerW / loaded.width, innerH / loaded.height)
+        : Math.min(innerW / loaded.width, innerH / loaded.height);
+    const scale = baseScale * zoom;
+    return {
+      width: (loaded.width * scale * 100) / frameWidth,
+      height: (loaded.height * scale * 100) / frameHeight,
+    };
+  }, [dimensions, fit, loaded, padding, zoom]);
 
   return (
     <div className="fixed inset-0 z-[140] grid place-items-end bg-slate-950/65 p-0 backdrop-blur-sm sm:place-items-center sm:p-4">
@@ -390,9 +436,11 @@ function SmartImageEditorDialog({
                   draggable={false}
                   className="pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none"
                   style={{
-                    width: `${loaded.width * previewScale}%`,
-                    height: "auto",
-                    transform: `translate(calc(-50% + ${x}vw), calc(-50% + ${y}vh))`,
+                    width: `${previewSize.width}%`,
+                    height: `${previewSize.height}%`,
+                    left: `calc(50% + ${x}%)`,
+                    top: `calc(50% + ${y}%)`,
+                    transform: "translate(-50%, -50%)",
                     transformOrigin: "center",
                   }}
                 />
@@ -436,28 +484,10 @@ function SmartImageEditorDialog({
               </div>
             </div>
 
-            {[
-              ["Zoom", zoom, 0.55, 3, 0.01, setZoom, `${Math.round(zoom * 100)}%`],
-              ["Horizontal", x, -45, 45, 1, setX, `${Math.round(x)}`],
-              ["Vertical", y, -45, 45, 1, setY, `${Math.round(y)}`],
-              ["Padding", padding, 0, 30, 1, setPadding, `${Math.round(padding)}%`],
-            ].map(([label, value, min, max, step, setter, display]) => (
-              <label key={String(label)} className="block rounded-2xl border border-slate-200 p-3">
-                <span className="flex items-center justify-between text-[10px] font-bold text-slate-600">
-                  <span>{String(label)}</span>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-black text-slate-600">{String(display)}</span>
-                </span>
-                <input
-                  type="range"
-                  min={Number(min)}
-                  max={Number(max)}
-                  step={Number(step)}
-                  value={Number(value)}
-                  onChange={(event) => (setter as (value: number) => void)(Number(event.target.value))}
-                  className="mt-2 w-full accent-indigo-600"
-                />
-              </label>
-            ))}
+            <RangeControl label="Zoom" value={zoom} min={0.55} max={3} step={0.01} display={`${Math.round(zoom * 100)}%`} onChange={setZoom} />
+            <RangeControl label="Horizontal" value={x} min={-45} max={45} step={1} display={String(Math.round(x))} onChange={setX} />
+            <RangeControl label="Vertical" value={y} min={-45} max={45} step={1} display={String(Math.round(y))} onChange={setY} />
+            <RangeControl label="Padding" value={padding} min={0} max={30} step={1} display={`${Math.round(padding)}%`} onChange={setPadding} />
 
             <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-[9px] leading-4 text-slate-500">
               Output: {dimensions[0]}×{dimensions[1]} WebP. The source image remains untouched until the normal save/upload step succeeds.
