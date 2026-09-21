@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
-export type ProductViewMode = "grid" | "list";
+export type ProductViewMode = "dense" | "grid" | "list";
 
 const DEFAULT_STORAGE_KEY = "space-cell-product-view-mode";
 
 export function useProductViewMode(
-  defaultMode: ProductViewMode = "grid",
+  defaultMode: ProductViewMode = "dense",
   storageKey = DEFAULT_STORAGE_KEY,
 ) {
   const [mode, setMode] = useState<ProductViewMode>(defaultMode);
@@ -13,7 +13,7 @@ export function useProductViewMode(
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(storageKey);
-      if (stored === "grid" || stored === "list") setMode(stored);
+      if (stored === "dense" || stored === "grid" || stored === "list") setMode(stored);
     } catch {
       // Storage can be unavailable in private/restricted browser contexts.
     }
