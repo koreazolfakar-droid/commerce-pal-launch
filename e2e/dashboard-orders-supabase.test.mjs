@@ -15,6 +15,10 @@ const data = await readFile(
   new URL("../src/dashboard/data/orders.ts", import.meta.url),
   "utf8",
 );
+const quickDrawer = await readFile(
+  new URL("../src/dashboard/components/orders/OrderQuickDrawer.tsx", import.meta.url),
+  "utf8",
+);
 const migration = await readFile(
   new URL("../supabase/migrations/20260921053341_secure_order_workflow.sql", import.meta.url),
   "utf8",
@@ -90,6 +94,22 @@ test("orders queue has responsive OMS controls without changing order business r
   assert.match(data, /query = query\.eq\("payment_status", paymentStatus\)/);
   assert.match(data, /order\("total", \{ ascending: false \}\)/);
   assert.match(data, /order\("total", \{ ascending: true \}\)/);
+});
+
+test("orders queue opens an on-demand quick drawer before full detail navigation", () => {
+  assert.match(listPage, /OrderQuickDrawer/);
+  assert.match(listPage, /setQuickOrderId\(order\.id\)/);
+  assert.match(listPage, /orderId=\{quickOrderId\}/);
+  assert.match(listPage, /onOpenFull=\{\(orderId\) =>/);
+
+  assert.match(quickDrawer, /getDashboardOrder\(orderId\)/);
+  assert.match(quickDrawer, /role="dialog"/);
+  assert.match(quickDrawer, /Order quick view/);
+  assert.match(quickDrawer, /Open full order/);
+  assert.match(quickDrawer, /Copy order #/);
+  assert.match(quickDrawer, /event\.key === "Escape"/);
+  assert.match(quickDrawer, /href=\{\`tel:\$\{order\.customerPhone\}\`\}/);
+  assert.doesNotMatch(quickDrawer, /updateDashboardOrderStatus|updateDashboardOrderPaymentStatus|updateDashboardOrderDelivery/);
 });
 
 test("orders UI has truthful empty state", () => {

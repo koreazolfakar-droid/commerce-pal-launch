@@ -16,6 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import OrderQuickDrawer from "@/dashboard/components/orders/OrderQuickDrawer";
 import {
   listDashboardOrders,
   orderStatusLabel,
@@ -181,6 +182,7 @@ export default function OrdersPage() {
   const [sort, setSort] = useState<DashboardOrdersSort>("newest");
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<DashboardOrdersResult | null>(null);
+  const [quickOrderId, setQuickOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -434,7 +436,7 @@ export default function OrdersPage() {
             <OrderMobileCard
               key={order.id}
               order={order}
-              onOpen={() => navigate(`/dashboard/orders/${order.id}`)}
+              onOpen={() => setQuickOrderId(order.id)}
             />
           ))}
         </div>
@@ -456,7 +458,7 @@ export default function OrdersPage() {
               {orders.map((order) => (
                 <tr
                   key={order.id}
-                  onClick={() => navigate(`/dashboard/orders/${order.id}`)}
+                  onClick={() => setQuickOrderId(order.id)}
                   className="cursor-pointer border-b border-slate-50 transition hover:bg-[#fafbff]"
                 >
                   <td className="px-5 py-4">
@@ -553,6 +555,15 @@ export default function OrdersPage() {
           Last refresh warning: {error}
         </div>
       ) : null}
+
+      <OrderQuickDrawer
+        orderId={quickOrderId}
+        onClose={() => setQuickOrderId(null)}
+        onOpenFull={(orderId) => {
+          setQuickOrderId(null);
+          navigate(`/dashboard/orders/${orderId}`);
+        }}
+      />
     </div>
   );
 }
