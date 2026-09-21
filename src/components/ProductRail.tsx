@@ -32,7 +32,7 @@ export function ProductRail({
   const viewMode = controlledViewMode ?? storedViewMode;
   const setViewMode = onViewModeChange ?? setStoredViewMode;
 
-  const gridProducts = products.slice(0, compactGrid ? 6 : 6);
+  const gridProducts = products.slice(0, 6);
   const listProducts = products.slice(0, compactGrid ? 6 : 10);
 
   return (
