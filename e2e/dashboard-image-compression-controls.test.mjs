@@ -154,3 +154,18 @@ test("global image optimizer shows explicit size before and after conversion", a
   assert.match(ui, /After conversion/);
   assert.match(ui, /Saved \$\{formatImageBytes\(conversion\.source\.bytes - conversion\.output\.bytes\)\}/);
 });
+
+
+test("global optimizer auto-previews current and expected sizes when settings change", async () => {
+  const ui = await read("src/dashboard/components/GlobalLegacyImageOptimizer.tsx");
+  assert.match(ui, /sourceFileCache/);
+  assert.match(ui, /previewRunId/);
+  assert.match(ui, /useEffect\(\(\) => \{/);
+  assert.match(ui, /selectedSignature/);
+  assert.match(ui, /resolution, compression/);
+  assert.match(ui, /void analyzeAssets\(selectedAssets\)/);
+  assert.match(ui, /formatImageBytes\(conversion\.source\.bytes\)/);
+  assert.match(ui, /formatImageBytes\(conversion\.output\.bytes\)/);
+  assert.match(ui, /Before conversion/);
+  assert.match(ui, /After conversion/);
+});

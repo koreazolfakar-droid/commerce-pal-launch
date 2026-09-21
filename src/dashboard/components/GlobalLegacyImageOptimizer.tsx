@@ -10,7 +10,7 @@ import {
   WandSparkles,
   XCircle,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -67,6 +67,8 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
+  const sourceFileCache = useRef(new Map<string, File>());
+  const previewRunId = useRef(0);
 
   const visibleAssets = useMemo(
     () => (filter === "all" ? assets : assets.filter((asset) => asset.source === filter)),
@@ -75,6 +77,10 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
   const selectedAssets = useMemo(
     () => assets.filter((asset) => selected.has(asset.key)),
     [assets, selected],
+  );
+  const selectedSignature = useMemo(
+    () => selectedAssets.map((asset) => asset.key).join("|"),
+    [selectedAssets],
   );
 
   const sourceCounts = useMemo(() => {
@@ -96,6 +102,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
     setLoading(true);
     try {
       const next = await loadGlobalLegacyImageAssets();
+      sourceFileCache.current.clear();
       setAssets(next);
       setSelected(new Set(next.map((asset) => asset.key)));
       setRows([]);
@@ -116,20 +123,25 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
       }
       return next;
     });
-    setRows([]);
   };
 
-  const analyze = async () => {
-    if (!selectedAssets.length || analyzing || optimizing) return;
+  const analyzeAssets = async (items: GlobalLegacyImageAsset[]) => {
+    if (!items.length || optimizing) return;
+    const runId = ++previewRunId.current;
     setAnalyzing(true);
-    const initial = selectedAssets.map<Row>((asset) => ({ asset, status: "analyzing" }));
-    setRows(initial);
+    setRows(items.map<Row>((asset) => ({ asset, status: "analyzing" })));
 
     const next: Row[] = [];
-    for (const item of selectedAssets) {
+    for (const item of items) {
+      if (previewRunId.current !== runId) return;
       try {
-        const file = await downloadGlobalLegacyImage(item);
+        let file = sourceFileCache.current.get(item.key);
+        if (!file) {
+          file = await downloadGlobalLegacyImage(item);
+          sourceFileCache.current.set(item.key, file);
+        }
         const conversion = await convertProductImageToWebp(file, resolution, compression);
+        if (previewRunId.current !== runId) return;
         next.push({ asset: item, conversion, status: "ready" });
       } catch (cause) {
         next.push({
@@ -140,8 +152,23 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
       }
       setRows([...next]);
     }
-    setAnalyzing(false);
+    if (previewRunId.current === runId) setAnalyzing(false);
   };
+
+  const analyze = async () => {
+    if (!selectedAssets.length || analyzing || optimizing) return;
+    await analyzeAssets(selectedAssets);
+  };
+
+  useEffect(() => {
+    if (!open || !enabled || !selectedAssets.length || optimizing || loading) return;
+    const timer = window.setTimeout(() => {
+      void analyzeAssets(selectedAssets);
+    }, 350);
+    return () => window.clearTimeout(timer);
+    // Recalculate automatically whenever the chosen output settings or selection changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, enabled, selectedSignature, resolution, compression, optimizing, loading]);
 
   const optimize = async () => {
     const ready = rows.filter((row) => row.status === "ready" && row.conversion);
@@ -242,7 +269,6 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                 value={resolution}
                 onChange={(event) => {
                   setResolution(event.target.value as ProductImageResolution);
-                  setRows([]);
                 }}
                 className="mt-1 w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none"
               >
@@ -260,7 +286,6 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                   const value = event.target.value as ImageCompressionPreset;
                   setCompression(value);
                   setImageCompressionPreset(value);
-                  setRows([]);
                 }}
                 className="mt-1 w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none"
               >
@@ -369,7 +394,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                               else next.add(item.key);
                               return next;
                             });
-                            setRows([]);
+                            // Automatic preview recalculates for the new selection.
                           }}
                           className="size-4 rounded border-slate-300"
                         />
