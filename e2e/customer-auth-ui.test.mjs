@@ -1,0 +1,44 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+
+test("customer login is visible in desktop and mobile store chrome", async () => {
+  const [desktop, mobile] = await Promise.all([
+    read("src/components/SiteHeader.tsx"),
+    read("src/components/MobileTopBar.tsx"),
+  ]);
+
+  assert.match(desktop, /CustomerAccountButton/);
+  assert.match(desktop, /variant="utility"/);
+  assert.match(mobile, /CustomerAccountButton/);
+  assert.match(mobile, /variant="icon"/);
+});
+
+test("customer auth supports Google and passwordless phone OTP", async () => {
+  const dialog = await read("src/components/customer-auth/CustomerAuthDialog.tsx");
+
+  assert.match(dialog, /signInWithOAuth/);
+  assert.match(dialog, /provider:\s*"google"/);
+  assert.match(dialog, /signInWithOtp/);
+  assert.match(dialog, /verifyOtp/);
+  assert.match(dialog, /type:\s*"sms"/);
+  assert.match(dialog, /OTP_COOLDOWN_SECONDS\s*=\s*60/);
+  assert.match(dialog, /shouldCreateUser:\s*true/);
+  assert.doesNotMatch(dialog, /SUPABASE_SERVICE_ROLE_KEY/);
+});
+
+test("customer session is shared at the root and cleaned up safely", async () => {
+  const [root, provider] = await Promise.all([
+    read("src/routes/__root.tsx"),
+    read("src/components/customer-auth/CustomerAuthProvider.tsx"),
+  ]);
+
+  assert.match(root, /CustomerAuthProvider/);
+  assert.match(root, /CustomerAuthDialog/);
+  assert.match(provider, /onAuthStateChange/);
+  assert.match(provider, /subscription\.unsubscribe\(\)/);
+  assert.match(provider, /supabase\.auth\.signOut\(\)/);
+  assert.doesNotMatch(provider, /service_role/i);
+});
