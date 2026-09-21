@@ -1,6 +1,5 @@
 import { PackageSearch } from "lucide-react";
 
-import { ProductCard } from "@/components/ProductCard";
 import { CompactProductCard } from "@/components/CompactProductCard";
 import { ProductListCard } from "@/components/ProductListCard";
 import { ProductViewToggle } from "@/components/ProductViewToggle";
@@ -17,13 +16,12 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
     <div className={DENSE} aria-hidden>
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="overflow-hidden rounded-2xl border bg-card shadow-card">
-          <div className="shimmer aspect-square w-full border-b bg-surface" />
-          <div className="space-y-2.5 p-3.5 sm:p-4">
-            <div className="h-2.5 w-1/3 rounded-full bg-surface" />
-            <div className="h-3.5 w-4/5 rounded-full bg-surface" />
+        <div key={index} className="min-w-0">
+          <div className="shimmer aspect-square w-full rounded-xl bg-surface" />
+          <div className="mt-3 space-y-2">
             <div className="h-4 w-1/2 rounded-full bg-surface" />
-            <div className="h-11 w-full rounded-xl bg-surface" />
+            <div className="h-3 w-full rounded-full bg-surface" />
+            <div className="h-3 w-3/4 rounded-full bg-surface" />
           </div>
         </div>
       ))}
@@ -86,15 +84,14 @@ export function ProductGrid({
         {products.map((product, index) =>
           viewMode === "list" ? (
             <ProductListCard key={product.node.id} product={product} eager={index < eagerCount} />
-          ) : viewMode === "dense" ? (
+          ) : (
             <CompactProductCard
               key={product.node.id}
               product={product}
               eager={index < eagerCount}
-              className="catalog-dense-product-card max-sm:!overflow-visible max-sm:!rounded-none max-sm:!border-0 max-sm:!bg-transparent max-sm:!shadow-none max-sm:[&>div:first-child]:overflow-hidden max-sm:[&>div:first-child]:rounded-xl max-sm:[&>div:last-child]:px-0.5"
+              market
+              className={viewMode === "dense" ? "catalog-dense-product-card" : undefined}
             />
-          ) : (
-            <ProductCard key={product.node.id} product={product} eager={index < eagerCount} />
           ),
         )}
       </div>

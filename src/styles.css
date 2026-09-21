@@ -975,3 +975,79 @@
     background-color: var(--color-card);
   }
 }
+
+
+/* Toters-style product density layouts.
+ * Keep product content readable at two or three columns without heavy card chrome,
+ * while preserving horizontal swipe rails between homepage sections.
+ */
+@layer components {
+  .market-product-card {
+    min-inline-size: 0;
+  }
+
+  .market-product-card .market-product-media {
+    overflow: visible;
+  }
+
+  .market-product-card .market-product-image {
+    border-radius: 0.75rem !important;
+  }
+
+  .market-product-card .market-product-copy {
+    min-width: 0;
+  }
+
+  .market-product-card .market-product-copy bdi {
+    overflow-wrap: normal !important;
+    word-break: normal;
+  }
+
+  .market-product-card h3 {
+    overflow-wrap: normal !important;
+    word-break: normal;
+  }
+
+  @media (max-width: 639px) {
+    .product-rail-items.product-rail--dense {
+      gap: 0.5rem;
+    }
+
+    .product-rail-items.product-rail--dense > * {
+      flex: 0 0 calc((100% - 1rem) / 3);
+      max-width: calc((100% - 1rem) / 3);
+    }
+
+    .product-rail-items.product-rail--grid {
+      gap: 0.625rem;
+    }
+
+    .product-rail-items.product-rail--grid > * {
+      flex: 0 0 calc((100% - 0.625rem) / 2);
+      max-width: calc((100% - 0.625rem) / 2);
+    }
+
+    .market-product-card.homepage-product-card {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .market-product-card.homepage-product-card > .market-product-copy {
+      gap: 0;
+      padding: 0.875rem 0.125rem 0;
+    }
+
+    .market-product-card.homepage-product-card h3 {
+      min-height: 2.3rem;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .market-product-card .market-wishlist-button {
+      min-width: 2rem !important;
+      min-height: 2rem !important;
+    }
+  }
+}
