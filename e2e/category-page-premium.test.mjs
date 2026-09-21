@@ -19,12 +19,15 @@ test("category detail uses Dashboard-managed artwork and description", () => {
   assert.match(category, /CategoryGlyph slug=\{slug\}/);
 });
 
-test("category page has a responsive visual hero without duplicating the page heading", () => {
+test("category page has one primary intro without duplicated count or SEO copy", () => {
   assert.match(category, /topContent=\{topContent\}/);
   assert.match(category, /hideHeading/);
   assert.match(category, /sm:grid-cols-\[minmax\(0,1fr\)_10\.5rem\]/);
   assert.match(category, /lg:grid-cols-\[minmax\(0,1fr\)_12rem\]/);
   assert.match(category, /Live availability/);
+  assert.doesNotMatch(category, /const header =/);
+  assert.doesNotMatch(category, /<PackageCheck/);
+  assert.doesNotMatch(category, /header=\{header\}/);
 });
 
 test("catalog controls remain usable on narrow phones and precise on desktop", () => {
