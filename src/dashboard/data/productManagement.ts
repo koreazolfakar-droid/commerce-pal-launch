@@ -7,7 +7,7 @@ import {
   getProductImageResolution,
   type ProductImageConversionResult,
 } from "@/dashboard/lib/imageProcessing";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 
 type VariantRow = Tables<"store_product_variants">;
 
@@ -223,6 +223,7 @@ export async function uploadDashboardVariantImage(
     .eq("product_id", productId);
   throwIfError(updateError, "Linking variant image failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return { url, conversion };
 }
 
@@ -238,6 +239,7 @@ export async function clearDashboardVariantImage(
     .eq("product_id", productId);
   throwIfError(error, "Clearing variant image failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function loadDashboardProductCollectionIds(productId: string): Promise<string[]> {
