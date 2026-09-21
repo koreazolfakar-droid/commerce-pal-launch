@@ -1,4 +1,4 @@
-import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 
 import { CatalogView } from "@/components/CatalogView";
@@ -11,6 +11,12 @@ import { categoryDefinition, displayCollections, productsInCategory } from "@/li
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import type { CatalogIndex } from "@/lib/taxonomy";
+
+const CATEGORY_SLUG_REDIRECTS: Record<string, string> = {
+  "mobile-phones": "smartphone",
+  "wall-charger": "charger",
+  "charging-cable": "cable",
+};
 
 type ManagedStoreCategory = {
   name: string;
@@ -45,6 +51,16 @@ async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory 
 
 export const Route = createFileRoute("/category/$slug")({
   validateSearch: parseProductSearch,
+  beforeLoad: ({ params }) => {
+    const canonicalSlug = CATEGORY_SLUG_REDIRECTS[params.slug];
+    if (canonicalSlug) {
+      throw redirect({
+        to: "/category/$slug",
+        params: { slug: canonicalSlug },
+        replace: true,
+      });
+    }
+  },
   loader: async ({ context, params }) => {
     const [catalog, managedCategory] = await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
