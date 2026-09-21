@@ -301,7 +301,7 @@ function ProductStorefrontPreview({
   y: number;
   mode: ProductPreviewMode;
 }) {
-  const profile = PRODUCT_STOREFRONT_PREVIEWS.find((item) => item.id === mode) ?? PRODUCT_STOREFRONT_PREVIEWS[0];
+  const profile = PRODUCT_STOREFRONT_PREVIEWS.find((item) => item.id === mode) ?? PRODUCT_STOREFRONT_PREVIEWS[0]!;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
@@ -322,7 +322,7 @@ function ProductStorefrontPreview({
           padding: profile.padding,
         }}
       >
-        <div className="relative h-full max-w-full overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
+        <div className="relative h-full w-auto max-w-full overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
           <img
             src={loaded.previewUrl}
             alt=""
