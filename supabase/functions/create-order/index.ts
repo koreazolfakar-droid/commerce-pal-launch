@@ -17,7 +17,7 @@ function responseHeaders(req: Request) {
     ...(origin && ALLOWED_ORIGINS.has(origin)
       ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" }
       : {}),
-    "Access-Control-Allow-Headers": "content-type, apikey, authorization",
+    "Access-Control-Allow-Headers": "content-type, apikey, authorization, x-client-info",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store, max-age=0",
@@ -57,6 +57,15 @@ function isUuid(value: unknown): value is string {
 function validatePayload(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return "invalid_payload";
   const payload = value as Record<string, unknown>;
+
+  if (
+    typeof payload.idempotency_key !== "string" ||
+    payload.idempotency_key.trim().length < 16 ||
+    payload.idempotency_key.trim().length > 128
+  ) {
+    return "idempotency_key_required";
+  }
+
   const customer = payload.customer;
   if (!customer || typeof customer !== "object" || Array.isArray(customer))
     return "invalid_customer";
@@ -73,6 +82,7 @@ function validatePayload(value: unknown) {
 
   const items = payload.items;
   if (!Array.isArray(items) || items.length < 1 || items.length > 50) return "invalid_items";
+  const variantIds = new Set<string>();
   for (const item of items) {
     if (!item || typeof item !== "object" || Array.isArray(item)) return "invalid_item";
     const record = item as Record<string, unknown>;
@@ -83,6 +93,28 @@ function validatePayload(value: unknown) {
       Number(record.quantity) > 99
     ) {
       return "invalid_quantity";
+    }
+    if (variantIds.has(record.variant_id)) return "duplicate_variant";
+    variantIds.add(record.variant_id);
+  }
+
+  const location = payload.delivery_location;
+  if (location !== undefined && location !== null) {
+    if (!location || typeof location !== "object" || Array.isArray(location)) {
+      return "invalid_delivery_location";
+    }
+    const point = location as Record<string, unknown>;
+    if (
+      typeof point.latitude !== "number" ||
+      !Number.isFinite(point.latitude) ||
+      point.latitude < -90 ||
+      point.latitude > 90 ||
+      typeof point.longitude !== "number" ||
+      !Number.isFinite(point.longitude) ||
+      point.longitude < -180 ||
+      point.longitude > 180
+    ) {
+      return "invalid_delivery_location";
     }
   }
 
@@ -105,12 +137,17 @@ function publicError(message: string | undefined) {
     "invalid_items",
     "invalid_item_identifier",
     "invalid_quantity",
+    "duplicate_variant",
+    "idempotency_key_required",
+    "idempotency_key_conflict",
+    "invalid_delivery_location",
     "customer_name_required",
     "customer_phone_required",
     "invalid_payment_method",
     "product_or_variant_unavailable",
     "insufficient_stock",
     "mixed_currency_order",
+    "invalid_delivery_fee_config",
   ];
   return known.find((code) => message?.includes(code)) ?? "order_failed";
 }
@@ -194,7 +231,13 @@ Deno.serve(async (req: Request) => {
     const code = publicError(error.message);
     console.warn("create-order rejected", code);
     const status =
-      code === "insufficient_stock" || code === "product_or_variant_unavailable" ? 409 : 400;
+      code === "insufficient_stock" ||
+      code === "product_or_variant_unavailable" ||
+      code === "idempotency_key_conflict"
+        ? 409
+        : code === "invalid_delivery_fee_config"
+          ? 503
+          : 400;
     return json(req, status, { error: code });
   }
 
