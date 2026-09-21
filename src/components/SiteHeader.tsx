@@ -31,7 +31,8 @@ import {
 } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
-import { BrandLogo } from "@/components/BrandLogo";\nimport { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
+import { BrandLogo } from "@/components/BrandLogo";
+import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
