@@ -14,7 +14,7 @@ import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n"
 import { absoluteUrl } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
-import { DeferredToaster } from "@/components/DeferredToaster";
+import { CustomerAuthDialog } from "@/components/customer-auth/CustomerAuthDialog";\nimport { CustomerAuthProvider } from "@/components/customer-auth/CustomerAuthProvider";\nimport { DeferredToaster } from "@/components/DeferredToaster";
 import { useCartSync } from "@/hooks/useCartSync";
 import { usePersistedStoreHydration } from "@/hooks/usePersistedStoreHydration";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -187,8 +187,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <CustomerAuthProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <CustomerAuthDialog />
+      </CustomerAuthProvider>
       <DeferredToaster />
     </QueryClientProvider>
   );
