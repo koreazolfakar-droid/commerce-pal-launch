@@ -24,6 +24,12 @@ export type DashboardPaymentStatus =
   | "refunded"
   | "partially_refunded";
 
+export type DashboardOrdersSort =
+  | "newest"
+  | "oldest"
+  | "total_high"
+  | "total_low";
+
 export type DashboardOrderListItem = {
   id: string;
   orderNumber: number;
@@ -164,6 +170,8 @@ async function loadOrderStats(): Promise<DashboardOrderStats> {
 export async function listDashboardOrders(input?: {
   search?: string;
   status?: "all" | DashboardOrderStatus;
+  paymentStatus?: "all" | DashboardPaymentStatus;
+  sort?: DashboardOrdersSort;
   page?: number;
   pageSize?: number;
 }): Promise<DashboardOrdersResult> {
@@ -175,17 +183,18 @@ export async function listDashboardOrders(input?: {
   const end = start + pageSize - 1;
   const search = input?.search?.trim() ?? "";
   const status = input?.status ?? "all";
+  const paymentStatus = input?.paymentStatus ?? "all";
+  const sort = input?.sort ?? "newest";
 
   let query = supabase
     .from("store_orders")
     .select(
       "id,order_number,status,payment_status,payment_method,customer_name,customer_phone,customer_email,total,currency,created_at",
       { count: "exact" },
-    )
-    .order("created_at", { ascending: false })
-    .range(start, end);
+    );
 
   if (status !== "all") query = query.eq("status", status);
+  if (paymentStatus !== "all") query = query.eq("payment_status", paymentStatus);
 
   if (search) {
     if (/^\d+$/.test(search)) {
@@ -199,6 +208,22 @@ export async function listDashboardOrders(input?: {
       }
     }
   }
+
+  if (sort === "oldest") {
+    query = query.order("created_at", { ascending: true });
+  } else if (sort === "total_high") {
+    query = query
+      .order("total", { ascending: false })
+      .order("created_at", { ascending: false });
+  } else if (sort === "total_low") {
+    query = query
+      .order("total", { ascending: true })
+      .order("created_at", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  query = query.range(start, end);
 
   const [orderResult, stats] = await Promise.all([query, loadOrderStats()]);
   throwIfError(orderResult.error, "Loading orders failed");
