@@ -1,0 +1,88 @@
+language: "en-US"
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  review_details: true
+  changed_files_summary: true
+  estimate_code_review_effort: true
+  poem: false
+  in_progress_fortune: false
+  enable_prompt_for_ai_agents: true
+
+  path_filters:
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!.output/**"
+    - "!coverage/**"
+    - "!src/routeTree.gen.ts"
+    - "!pnpm-lock.yaml"
+    - "!**/*.min.*"
+
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        Space Call is a production commerce application. Review conservatively and prioritize high-confidence, actionable findings.
+
+        Preserve all existing behavior unless the PR explicitly states otherwise. Do not recommend deleting a feature, route, UI flow, compatibility layer, fallback, integration, configuration, or seemingly unused code merely because it appears redundant or unreferenced. Before calling code dead or removable, require clear repository-wide evidence that it is unreachable and has no runtime, SSR, dynamic import, reflection, environment, migration, webhook, external integration, or backward-compatibility role.
+
+        For refactors, prefer the smallest safe change. Flag behavior changes disguised as cleanup. Watch for duplicated logic, unnecessary complexity, unsafe type assertions, stale abstractions, N+1 queries, extra network round-trips, hydration/SSR issues, race conditions, concurrency bugs, memory leaks, missing cleanup, weak error handling, and avoidable bundle or render cost.
+
+        Treat existing public behavior and data contracts as compatibility requirements: routes, SEO metadata, SSR, cart, wishlist, compare, search, checkout, WhatsApp continuation, dashboard flows, authentication, authorization, inventory, orders, media, homepage CMS, categories, brands, settings, and responsive behavior must not regress.
+
+        Do not suggest weakening or deleting tests to make CI pass. Prefer fixing the implementation or updating only genuinely stale assertions with evidence.
+
+        When a cleanup suggestion could alter behavior, label the risk clearly and require tests that prove behavioral equivalence.
+
+    - path: "supabase/**"
+      instructions: |
+        Treat Supabase changes as security- and data-critical. Scrutinize RLS, grants, SECURITY DEFINER functions, search_path, auth assumptions, service-role exposure, SQL injection, tenant/user boundaries, privilege escalation, destructive DDL, data loss, idempotency, transactionality, concurrency, inventory consistency, and order integrity.
+
+        Historical migrations should be treated as immutable after deployment unless the PR explicitly documents why editing one is safe. Prefer a new migration for production schema changes. Flag DROP/TRUNCATE/destructive ALTER operations unless the migration includes a clear safe data-preservation strategy.
+
+        Never accept moving authorization or business-critical validation from the server/database to client-side code.
+
+    - path: "src/dashboard/**"
+      instructions: |
+        Treat dashboard code as privileged admin/editor functionality. Verify authorization is enforced server-side or by trusted database policies, not only by hidden UI. Preserve MFA/passkey/security flows, auditability, validation, and least privilege. Flag client-side trust of roles, unsafe direct table mutation that bypasses business rules, or exposure of secrets/sensitive data.
+
+    - path: "src/routes/**"
+      instructions: |
+        Preserve TanStack Router route behavior, SSR, hydration, loaders, redirects, error boundaries, SEO metadata, canonical/hreflang behavior, and mobile/desktop parity. Flag changes that turn server-validated flows into client-only validation, introduce duplicate data fetching, or break direct navigation/refresh.
+
+    - path: ".github/workflows/**"
+      instructions: |
+        Review CI changes for least-privilege permissions, untrusted PR execution, secret exposure, unsafe shell interpolation, dependency pinning risks, and accidental bypass of tests/security gates. Do not recommend disabling a failing gate merely to make CI green.
+
+    - path: "scripts/**"
+      instructions: |
+        Treat build, migration, security, and maintenance scripts as potentially production-impacting. Flag commands that can delete data, rewrite assets, weaken security checks, silently swallow failures, or behave differently in CI versus local environments.
+
+    - path: "e2e/**"
+      instructions: |
+        Tests must protect behavior rather than be relaxed to accommodate regressions. Flag removed assertions, broad skips, flaky timing workarounds, and mocks that hide real integration failures. For behavior-changing refactors, request regression coverage for the affected flow.
+
+  auto_review:
+    enabled: true
+    drafts: true
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 0
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    simplify:
+      enabled: false
+    autofix:
+      enabled: false
+    fix_ci:
+      enabled: false
+    resolve_merge_conflict:
+      enabled: false
+
+chat:
+  auto_reply: true
