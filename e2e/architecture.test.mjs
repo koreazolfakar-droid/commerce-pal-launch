@@ -65,7 +65,7 @@ test("homepage uses bounded product reads and keeps brand shelves lazy", async (
   assert.match(queries, /homeVendorProductsQueryOptions/);
   assert.match(queries, /fetchProductsByVendor\(normalizedVendor, 4\)/);
   assert.match(shelves, /homeVendorProductsQueryOptions/);
-  assert.match(shelves, /HOME_BRAND_PRODUCT_TARGET = 4/);
+  assert.match(shelves, /HOME_BRAND_PRODUCT_TARGET = 6/);
   assert.match(shelves, /IntersectionObserver/);
 
   const homepageStart = nativeStore.indexOf("export async function fetchHomepageProducts");
