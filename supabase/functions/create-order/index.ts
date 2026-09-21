@@ -239,24 +239,11 @@ Deno.serve(async (req: Request) => {
   if (!contentType.includes("application/json")) {
     return json(req, 415, { error: "content_type_required" });
   }
+
   const contentLength = Number(req.headers.get("content-length") || "0");
   if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
     return json(req, 413, { error: "payload_too_large" });
   }
-
-  let body: unknown;
-  try {
-    const text = await req.text();
-    if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
-      return json(req, 413, { error: "payload_too_large" });
-    }
-    body = JSON.parse(text);
-  } catch {
-    return json(req, 400, { error: "invalid_json" });
-  }
-
-  const validationError = validatePayload(body);
-  if (validationError) return json(req, 400, { error: validationError });
 
   const url = Deno.env.get("SUPABASE_URL")?.trim() || "";
   const secret = serviceKey();
@@ -265,25 +252,6 @@ Deno.serve(async (req: Request) => {
   const db = createClient(url, secret, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-
-  const forwarded =
-    req.headers.get("cf-connecting-ip")?.trim() ||
-    req.headers.get("x-real-ip")?.trim() ||
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "unknown";
-  const customerPhone = (
-    ((body as Record<string, unknown>).customer as Record<string, unknown>).phone as string
-  )
-    .replace(/\D/g, "")
-    .slice(0, 32);
-
-  // Use two independent buckets. A wider IP bucket avoids punishing many real
-  // shoppers behind the same carrier NAT, while the tighter hashed-phone bucket
-  // still limits repeated checkout abuse without storing the phone number.
-  const [ipFingerprint, phoneFingerprint] = await Promise.all([
-    sha256(forwarded.slice(0, 128)),
-    sha256(customerPhone),
-  ]);
 
   const enforceRateLimit = async (key: string, limit: number) => {
     const { data: rateRows, error: rateError } = await db.rpc("consume_edge_rate_limit", {
@@ -312,12 +280,43 @@ Deno.serve(async (req: Request) => {
     );
   };
 
+  const forwarded =
+    req.headers.get("cf-connecting-ip")?.trim() ||
+    req.headers.get("x-real-ip")?.trim() ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "unknown";
+  const ipFingerprint = await sha256(forwarded.slice(0, 128));
+
+  // Apply the IP bucket before reading/parsing the body so malformed requests
+  // cannot bypass rate limiting and repeatedly consume edge CPU.
   const ipRateLimit = await enforceRateLimit(
     `create-order:ip:${ipFingerprint}`,
     RATE_LIMIT_PER_IP,
   );
   if (ipRateLimit) return ipRateLimit;
 
+  let body: unknown;
+  try {
+    const text = await req.text();
+    if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
+      return json(req, 413, { error: "payload_too_large" });
+    }
+    body = JSON.parse(text);
+  } catch {
+    return json(req, 400, { error: "invalid_json" });
+  }
+
+  const validationError = validatePayload(body);
+  if (validationError) return json(req, 400, { error: validationError });
+
+  const customerPhone = (
+    ((body as Record<string, unknown>).customer as Record<string, unknown>).phone as string
+  )
+    .replace(/\D/g, "")
+    .slice(0, 32);
+  const phoneFingerprint = await sha256(customerPhone);
+
+  // The phone number itself is never persisted in the limiter key.
   const phoneRateLimit = await enforceRateLimit(
     `create-order:phone:${phoneFingerprint}`,
     RATE_LIMIT_PER_PHONE,
