@@ -43,6 +43,7 @@ type LoadedImage = {
   height: number;
   bounds: Bounds;
   sourceName: string;
+  previewUrl: string;
 };
 
 const PRESET_SIZE: Record<Exclude<SmartImagePreset, "free">, [number, number]> = {
@@ -83,28 +84,26 @@ function outputName(source: File | string) {
 }
 
 async function imageFromSource(source: File | string) {
-  let url = "";
-  let revoke = false;
+  let blob: Blob;
 
   if (source instanceof File) {
-    url = URL.createObjectURL(source);
-    revoke = true;
+    blob = source;
   } else {
-    const response = await fetch(source, { mode: "cors", credentials: "omit" });
+    const response = await fetch(source, { mode: "cors", credentials: "omit", cache: "no-store" });
     if (!response.ok) throw new Error("Could not load this image for editing.");
-    const blob = await response.blob();
-    url = URL.createObjectURL(blob);
-    revoke = true;
+    blob = await response.blob();
   }
 
+  const previewUrl = URL.createObjectURL(blob);
+  const image = new Image();
+  image.decoding = "async";
+  image.src = previewUrl;
   try {
-    const image = new Image();
-    image.decoding = "async";
-    image.src = url;
     await image.decode();
-    return image;
-  } finally {
-    if (revoke) URL.revokeObjectURL(url);
+    return { image, previewUrl };
+  } catch (error) {
+    URL.revokeObjectURL(previewUrl);
+    throw error;
   }
 }
 
@@ -279,15 +278,21 @@ function SmartImageEditorDialog({
     let cancelled = false;
     setLoading(true);
     setError("");
+    let activePreviewUrl = "";
     imageFromSource(request.source)
-      .then((element) => {
-        if (cancelled) return;
+      .then(({ image: element, previewUrl }) => {
+        activePreviewUrl = previewUrl;
+        if (cancelled) {
+          URL.revokeObjectURL(previewUrl);
+          return;
+        }
         const next: LoadedImage = {
           element,
           width: element.naturalWidth,
           height: element.naturalHeight,
           bounds: detectContentBounds(element),
           sourceName: sourceName(request.source),
+          previewUrl,
         };
         setLoaded(next);
         const [width, height] = targetSize(preset, next);
@@ -304,6 +309,7 @@ function SmartImageEditorDialog({
       });
     return () => {
       cancelled = true;
+      if (activePreviewUrl) URL.revokeObjectURL(activePreviewUrl);
     };
   }, [request.source]);
 
@@ -431,7 +437,7 @@ function SmartImageEditorDialog({
               {!transparent ? <div className="absolute inset-0 bg-white" /> : null}
               {loaded ? (
                 <img
-                  src={loaded.element.src}
+                  src={loaded.previewUrl}
                   alt=""
                   draggable={false}
                   className="pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none"
