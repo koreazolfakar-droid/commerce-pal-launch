@@ -145,6 +145,7 @@ export default function ProductVariantManager({
   const [variants, setVariants] = useState<DashboardProductVariant[]>([]);
   const [canDelete, setCanDelete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
@@ -153,24 +154,31 @@ export default function ProductVariantManager({
   const [draft, setDraft] = useState<VariantDraft>(EMPTY_DRAFT);
   const [open, setOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const onCountChangeRef = useRef(onCountChange);
+  const onSingleVariantChangeRef = useRef(onSingleVariantChange);
 
-  const publishState = useCallback(
-    (next: DashboardProductVariant[]) => {
-      setVariants(next);
-      onCountChange?.(next.length);
-      onSingleVariantChange?.(next.length === 1 ? next[0] : null);
-    },
-    [onCountChange, onSingleVariantChange],
-  );
+  useEffect(() => {
+    onCountChangeRef.current = onCountChange;
+    onSingleVariantChangeRef.current = onSingleVariantChange;
+  }, [onCountChange, onSingleVariantChange]);
+
+  const publishState = useCallback((next: DashboardProductVariant[]) => {
+    setVariants(next);
+    onCountChangeRef.current?.(next.length);
+    onSingleVariantChangeRef.current?.(next.length === 1 ? next[0] : null);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const workspace = await loadDashboardProductVariants(productId);
       publishState(workspace.variants);
       setCanDelete(workspace.role === "admin");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Unable to load variants.");
+      const message = cause instanceof Error ? cause.message : "Unable to load variants.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -296,8 +304,27 @@ export default function ProductVariantManager({
 
   if (loading) {
     return (
-      <div className="grid min-h-36 place-items-center">
-        <Loader2 className="size-5 animate-spin text-indigo-500" />
+      <div className="grid min-h-36 place-items-center" role="status" aria-live="polite">
+        <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
+          <Loader2 className="size-5 animate-spin text-indigo-500" />
+          Loading variants…
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="m-5 rounded-2xl border border-rose-100 bg-rose-50 p-4">
+        <div className="text-[11px] font-bold text-rose-700">Variants could not be loaded.</div>
+        <div className="mt-1 break-words text-[10px] leading-5 text-rose-600">{loadError}</div>
+        <button
+          type="button"
+          onClick={() => void load()}
+          className="mt-3 h-9 rounded-xl border border-rose-200 bg-white px-3 text-[10px] font-bold text-rose-700"
+        >
+          Retry
+        </button>
       </div>
     );
   }
