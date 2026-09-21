@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Heart, Menu, Search, ShoppingBag } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
+import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
@@ -71,6 +72,7 @@ export function MobileTopBar({
             >
               <Menu aria-hidden className="h-5 w-5" />
             </button>
+            <CustomerAccountButton variant="icon" />
           </div>
           <Link
             to="/"

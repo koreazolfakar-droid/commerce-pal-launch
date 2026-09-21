@@ -32,6 +32,7 @@ import {
 import { lazy, Suspense, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
@@ -135,6 +136,9 @@ export function SiteHeader() {
               >
                 <MapPin className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("trackOrder")}
               </Link>
+            </li>
+            <li>
+              <CustomerAccountButton variant="utility" />
             </li>
             <li>
               <Link
