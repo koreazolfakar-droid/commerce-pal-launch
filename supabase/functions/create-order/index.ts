@@ -9,7 +9,8 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 const MAX_BODY_BYTES = 64 * 1024;
 const RATE_WINDOW_SECONDS = 10 * 60;
-const RATE_LIMIT = 5;
+const RATE_LIMIT_PER_IP = 30;
+const RATE_LIMIT_PER_PHONE = 5;
 
 function responseHeaders(req: Request) {
   const origin = req.headers.get("origin")?.trim() || "";
@@ -270,22 +271,35 @@ Deno.serve(async (req: Request) => {
     req.headers.get("x-real-ip")?.trim() ||
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     "unknown";
-  // Rate limiting must be stable for a client IP. User-Agent is caller-controlled
-  // and including it lets an attacker reset the bucket simply by rotating headers.
-  const fingerprint = await sha256(forwarded.slice(0, 128));
+  const customerPhone = (
+    ((body as Record<string, unknown>).customer as Record<string, unknown>).phone as string
+  )
+    .replace(/\D/g, "")
+    .slice(0, 32);
 
-  const { data: rateRows, error: rateError } = await db.rpc("consume_edge_rate_limit", {
-    _key: `create-order:${fingerprint}`,
-    _window_seconds: RATE_WINDOW_SECONDS,
-    _limit: RATE_LIMIT,
-  });
-  if (rateError) {
-    console.error("create-order rate limiter failed", rateError.message);
-    return json(req, 503, { error: "temporarily_unavailable" });
-  }
+  // Use two independent buckets. A wider IP bucket avoids punishing many real
+  // shoppers behind the same carrier NAT, while the tighter hashed-phone bucket
+  // still limits repeated checkout abuse without storing the phone number.
+  const [ipFingerprint, phoneFingerprint] = await Promise.all([
+    sha256(forwarded.slice(0, 128)),
+    sha256(customerPhone),
+  ]);
 
-  const rate = Array.isArray(rateRows) ? rateRows[0] : rateRows;
-  if (!rate?.allowed) {
+  const enforceRateLimit = async (key: string, limit: number) => {
+    const { data: rateRows, error: rateError } = await db.rpc("consume_edge_rate_limit", {
+      _key: key,
+      _window_seconds: RATE_WINDOW_SECONDS,
+      _limit: limit,
+    });
+
+    if (rateError) {
+      console.error("create-order rate limiter failed", rateError.message);
+      return json(req, 503, { error: "temporarily_unavailable" });
+    }
+
+    const rate = Array.isArray(rateRows) ? rateRows[0] : rateRows;
+    if (rate?.allowed) return null;
+
     const resetAt = typeof rate?.reset_at === "string" ? Date.parse(rate.reset_at) : NaN;
     const retryAfter = Number.isFinite(resetAt)
       ? Math.max(1, Math.ceil((resetAt - Date.now()) / 1000))
@@ -296,7 +310,19 @@ Deno.serve(async (req: Request) => {
       { error: "rate_limited", retry_after: retryAfter },
       { "Retry-After": String(retryAfter) },
     );
-  }
+  };
+
+  const ipRateLimit = await enforceRateLimit(
+    `create-order:ip:${ipFingerprint}`,
+    RATE_LIMIT_PER_IP,
+  );
+  if (ipRateLimit) return ipRateLimit;
+
+  const phoneRateLimit = await enforceRateLimit(
+    `create-order:phone:${phoneFingerprint}`,
+    RATE_LIMIT_PER_PHONE,
+  );
+  if (phoneRateLimit) return phoneRateLimit;
 
   const { data, error } = await db.rpc("create_store_order_internal", { payload: body });
   if (error) {
