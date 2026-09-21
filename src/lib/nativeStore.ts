@@ -2,6 +2,7 @@ import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
 import { buildCatalogIndex } from "@/lib/taxonomy";
+import { productSearchScore, textSearchScore } from "@/lib/searchRanking";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -873,39 +874,43 @@ export async function fetchProductRecommendations(handle: string, first = 8) {
 }
 
 export async function searchStorefront(term: string) {
-  const normalized = term.trim().toLowerCase();
-  if (!normalized) return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
+  const normalized = term.trim();
+  if (!normalized) {
+    return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
+  }
 
-  const words = normalized.split(/\s+/).filter(Boolean);
   const snapshot = await loadSnapshot();
-  const products = publicProducts(snapshot).filter((product) => {
-    const node = product.node;
-    const variantText = node.variants.edges
-      .map((edge) =>
-        [
-          edge.node.sku ?? "",
-          edge.node.barcode ?? "",
-          ...edge.node.selectedOptions.map((option) => option.value),
-        ].join(" "),
-      )
-      .join(" ");
-    const haystack = [
-      node.title,
-      node.description,
-      node.vendor ?? "",
-      node.productType ?? "",
-      ...(node.tags ?? []),
-      variantText,
-    ]
-      .join(" ")
-      .toLowerCase();
-    return words.every((word) => haystack.includes(word));
-  });
+  const products = publicProducts(snapshot)
+    .map((product) => ({ product, score: productSearchScore(product, normalized) }))
+    .filter((entry) => entry.score > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        a.product.node.title.localeCompare(b.product.node.title, "en", {
+          numeric: true,
+          sensitivity: "base",
+        }),
+    )
+    .map((entry) => entry.product);
 
-  const collections = (await fetchCollections(500)).filter((collection) => {
-    const haystack = `${collection.title} ${collection.handle} ${collection.description}`.toLowerCase();
-    return words.every((word) => haystack.includes(word));
-  });
+  const collections = (await fetchCollections(500))
+    .map((collection) => ({
+      collection,
+      score: textSearchScore(normalized, collection.title, [
+        collection.handle,
+        collection.description,
+      ]),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        a.collection.title.localeCompare(b.collection.title, "en", {
+          numeric: true,
+          sensitivity: "base",
+        }),
+    )
+    .map((entry) => entry.collection);
 
   return { products, collections };
 }
