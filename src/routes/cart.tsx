@@ -96,9 +96,11 @@ function CartPage() {
       : {
           title: "Shopping bag",
           item: totalItems === 1 ? "1 product" : `${totalItems} products`,
-          review: "Review your products and delivery fee, then add your details to place the order.",
+          review:
+            "Review your products and delivery fee, then add your details to place the order.",
           emptyTitle: "Your bag is empty",
-          emptyDescription: "Explore the latest phones and accessories, then add your favourites here.",
+          emptyDescription:
+            "Explore the latest phones and accessories, then add your favourites here.",
           yourItems: "Your items",
           summary: "Order summary",
           subtotal: "Items subtotal",
@@ -214,8 +216,12 @@ function CartPage() {
                   <Truck className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[10px] font-extrabold sm:text-xs">{copy.fastDelivery}</p>
-                  <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">{copy.lebanon}</p>
+                  <p className="truncate text-[10px] font-extrabold sm:text-xs">
+                    {copy.fastDelivery}
+                  </p>
+                  <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">
+                    {copy.lebanon}
+                  </p>
                 </div>
               </div>
 
@@ -225,7 +231,9 @@ function CartPage() {
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-[10px] font-extrabold sm:text-xs">{copy.protected}</p>
-                  <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">{copy.serverChecked}</p>
+                  <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">
+                    {copy.serverChecked}
+                  </p>
                 </div>
               </div>
 
@@ -235,7 +243,9 @@ function CartPage() {
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-[10px] font-extrabold sm:text-xs">{copy.whatsapp}</p>
-                  <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">{copy.afterSave}</p>
+                  <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">
+                    {copy.afterSave}
+                  </p>
                 </div>
               </div>
             </section>
@@ -243,8 +253,12 @@ function CartPage() {
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21.5rem] lg:items-start lg:gap-5">
               <div className="min-w-0 lg:col-start-1 lg:row-start-1">
                 <div className="mb-2.5 flex items-center justify-between gap-3 px-1">
-                  <h2 className="text-sm font-extrabold tracking-tight sm:text-base">{copy.yourItems}</h2>
-                  <span className="text-[11px] font-semibold text-muted-foreground">{copy.item}</span>
+                  <h2 className="text-sm font-extrabold tracking-tight sm:text-base">
+                    {copy.yourItems}
+                  </h2>
+                  <span className="text-[11px] font-semibold text-muted-foreground">
+                    {copy.item}
+                  </span>
                 </div>
 
                 <ul className="space-y-2.5" aria-label={copy.title}>
@@ -301,7 +315,9 @@ function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 aria-label={t("decreaseQuantity")}
-                                onClick={() => void updateQuantity(item.variantId, item.quantity - 1)}
+                                onClick={() =>
+                                  void updateQuantity(item.variantId, item.quantity - 1)
+                                }
                                 className="h-8 w-8 rounded-[0.6rem]"
                               >
                                 <Minus className="h-3.5 w-3.5" />
@@ -314,7 +330,9 @@ function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 aria-label={t("increaseQuantity")}
-                                onClick={() => void updateQuantity(item.variantId, item.quantity + 1)}
+                                onClick={() =>
+                                  void updateQuantity(item.variantId, item.quantity + 1)
+                                }
                                 className="h-8 w-8 rounded-[0.6rem]"
                               >
                                 <Plus className="h-3.5 w-3.5" />
@@ -380,7 +398,9 @@ function CartPage() {
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-muted-foreground">{copy.subtotal}</span>
-                      <span className="font-bold tabular-nums">{formatPrice(subtotal, currency)}</span>
+                      <span className="font-bold tabular-nums">
+                        {formatPrice(subtotal, currency)}
+                      </span>
                     </div>
 
                     <div className="rounded-xl border border-sky-500/15 bg-sky-500/[0.05] p-3">
@@ -390,7 +410,9 @@ function CartPage() {
                           <span className="truncate">{copy.delivery}</span>
                         </span>
                         <span className="shrink-0 rounded-full bg-background px-2 py-1 text-xs font-extrabold tabular-nums text-primary shadow-sm">
-                          {deliveryFee === 0 ? copy.freeDelivery : formatPrice(deliveryFee, currency)}
+                          {deliveryFee === 0
+                            ? copy.freeDelivery
+                            : formatPrice(deliveryFee, currency)}
                         </span>
                       </div>
                       <p className="mt-1.5 flex items-center gap-1.5 text-[10px] leading-4 text-muted-foreground">
@@ -414,7 +436,10 @@ function CartPage() {
                     {copy.secure}
                   </p>
 
-                  <Button asChild className="mt-3 min-h-11 w-full rounded-xl font-extrabold shadow-sm">
+                  <Button
+                    asChild
+                    className="mt-3 min-h-11 w-full rounded-xl font-extrabold shadow-sm"
+                  >
                     <a href="#whatsapp-checkout">
                       {copy.continueCheckout}
                       <ArrowRight className="rtl:rotate-180" />
