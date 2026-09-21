@@ -23,8 +23,9 @@ test("cart reads the public dashboard delivery fee and shows it in the total", (
   assert.match(cart, /Fast delivery across Lebanon/);
 });
 
-test("checkout PDF uses the same delivery fee and server response when available", () => {
-  assert.match(checkout, /settings\["delivery_fee"\]/);
+test("checkout receives the cart delivery fee and prefers the server-confirmed fee after creation", () => {
+  assert.match(cart, /deliveryFee=\{deliveryFee\}/);
+  assert.match(checkout, /deliveryFee: number/);
   assert.match(checkout, /createdOrder\?\.shipping_total \?\? deliveryFee/);
   assert.match(checkout, /deliveryFee: invoiceDeliveryFee/);
   assert.match(checkout, /createdOrder\?\.total \?\? invoiceSubtotal \+ invoiceDeliveryFee/);
