@@ -296,6 +296,7 @@ function CartPage() {
               <CheckoutDetailsForm
                 items={items}
                 total={subtotal}
+                deliveryFee={deliveryFee}
                 currency={currency}
                 disabled={isLoading}
               />

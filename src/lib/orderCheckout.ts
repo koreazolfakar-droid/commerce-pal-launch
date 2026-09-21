@@ -132,6 +132,8 @@ export async function createStorefrontOrder(input: {
     email?: string;
   };
   paymentMethod: "cash" | "whish";
+  expectedSubtotal: number;
+  expectedDeliveryFee: number;
   notes?: string;
   reference?: string;
   deliveryLocation?: {
@@ -155,6 +157,8 @@ export async function createStorefrontOrder(input: {
       quantity: item.quantity,
     })),
     payment_method: input.paymentMethod,
+    expected_subtotal: Number(input.expectedSubtotal.toFixed(2)),
+    expected_delivery_fee: Number(input.expectedDeliveryFee.toFixed(2)),
     notes: input.notes || undefined,
     reference: input.reference || undefined,
     delivery_location: input.deliveryLocation || undefined,

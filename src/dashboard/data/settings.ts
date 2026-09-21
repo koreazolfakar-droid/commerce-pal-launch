@@ -140,7 +140,7 @@ export async function loadDashboardSiteSettings(): Promise<DashboardSiteSettings
 export async function saveDashboardSiteSettings(
   input: DashboardSiteSettings,
 ): Promise<DashboardSiteSettings> {
-  await requireDashboardStaff();
+  const role = await requireDashboardStaff();
 
   const siteName = input.siteName.trim();
   if (siteName.length < 2 || siteName.length > 80) {
@@ -180,8 +180,22 @@ export async function saveDashboardSiteSettings(
     throw new Error("WhatsApp number is too short.");
   }
 
+  if (role !== "admin") {
+    const { data: currentDelivery, error: deliveryError } = await supabase
+      .from("cms_site_settings")
+      .select("value_text")
+      .eq("key", "delivery_fee")
+      .maybeSingle();
+    throwIfError(deliveryError, "Loading protected delivery setting failed");
+    normalized.deliveryFee = currentDelivery?.value_text?.trim() || "2.00";
+  }
+
   const now = new Date().toISOString();
-  const rows = DEFINITIONS.map((definition) => ({
+  const writableDefinitions =
+    role === "admin"
+      ? DEFINITIONS
+      : DEFINITIONS.filter((definition) => definition.key !== "delivery_fee");
+  const rows = writableDefinitions.map((definition) => ({
     key: definition.key,
     value_text: normalized[definition.field],
     value_json: null,

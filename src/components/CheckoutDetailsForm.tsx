@@ -73,6 +73,7 @@ const EMPTY_DETAILS: CustomerDetails = {
 interface CheckoutDetailsFormProps {
   items: CartItem[];
   total: number;
+  deliveryFee: number;
   currency: string;
   disabled?: boolean;
 }
@@ -153,23 +154,19 @@ async function getCurrentLocation(): Promise<LocationResult> {
 export function CheckoutDetailsForm({
   items,
   total,
+  deliveryFee,
   currency,
   disabled = false,
 }: CheckoutDetailsFormProps) {
   const { language } = useLanguage();
   const clearCart = useCartStore((state) => state.clearCart);
-  const { data: cms } = useQuery(cmsQueryOptions());
+  const { data: cms, refetch: refetchCms } = useQuery(cmsQueryOptions());
   const cmsStoreName = cms?.settings["site_name"];
   const cmsWhatsApp = cms?.settings["whatsapp_number"];
   const storeName =
     typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
   const whatsappNumber =
     typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
-  const configuredDeliveryFee = Number(cms?.settings["delivery_fee"] ?? "2");
-  const deliveryFee =
-    Number.isFinite(configuredDeliveryFee) && configuredDeliveryFee >= 0
-      ? configuredDeliveryFee
-      : 2;
   const isArabic = language === "ar";
   const [details, setDetails] = useState<CustomerDetails>(EMPTY_DETAILS);
   const [shareLocation, setShareLocation] = useState(true);
@@ -237,11 +234,13 @@ export function CheckoutDetailsForm({
         stockUnavailable: "تغيّر المخزون ولم تعد بعض العناصر متاحة بالكمية المطلوبة. راجع السلة ثم حاول مجددًا.",
         rateLimited: "تم إرسال محاولات كثيرة خلال وقت قصير. حاول مجددًا بعد قليل.",
         orderConflict: "تعذر إعادة استخدام محاولة الطلب السابقة بأمان. راجع بيانات الطلب قبل المحاولة من جديد.",
+        pricingChanged: "تغيّر سعر منتج أو رسوم التوصيل قبل إنشاء الطلب. تم إيقاف العملية حتى لا يتم اعتماد مبلغ مختلف. راجع الإجمالي ثم حاول مجددًا.",
         orderFailed: "تعذر حفظ الطلب الآن. لم يتم فتح واتساب ولم يتم خصم المخزون مرتين.",
         summaryPdf: "تحميل ملخص الطلب PDF",
         invoicePdf: "تحميل الفاتورة PDF",
         preparingPdf: "جارٍ تجهيز PDF...",
         required: "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان أولًا.",
+        invalidPhone: "أدخل رقم هاتف صحيحًا يحتوي على 7 أرقام على الأقل.",
         pdfError: "تعذر إنشاء ملف PDF الآن. جرّب مرة أخرى.",
         ready: "تم حفظ الطلب في النظام بنجاح. يمكنك الاحتفاظ بنسخة PDF أو متابعة واتساب.",
         privacy: "لا نستخدم موقعك إلا بعد موافقتك، ويتم إنشاء ملف PDF محليًا على جهازك.",
@@ -297,11 +296,13 @@ export function CheckoutDetailsForm({
         stockUnavailable: "Stock changed and one or more items are no longer available in the requested quantity. Review your bag and try again.",
         rateLimited: "Too many checkout attempts were sent in a short time. Please try again shortly.",
         orderConflict: "The previous checkout attempt cannot be safely reused. Review the order details before trying again.",
+        pricingChanged: "A product price or delivery fee changed before the order was created. Checkout was stopped so a different amount is never accepted silently. Review the updated total and try again.",
         orderFailed: "We couldn't save the order. WhatsApp was not opened and stock was not deducted twice.",
         summaryPdf: "Download order summary PDF",
         invoicePdf: "Download invoice PDF",
         preparingPdf: "Preparing PDF...",
         required: "Please fill in your name, phone number, area and address first.",
+        invalidPhone: "Enter a valid phone number with at least 7 digits.",
         pdfError: "We couldn't generate the PDF right now. Please try again.",
         ready: "Your order was saved successfully. You can keep a PDF copy or continue on WhatsApp.",
         privacy:
@@ -339,6 +340,10 @@ export function CheckoutDetailsForm({
     const required = [details.name, details.phone, details.area, details.address];
     if (required.some((value) => value.trim().length < 2)) {
       setError(copy.required);
+      return false;
+    }
+    if (details.phone.replace(/\D/g, "").length < 7 || details.phone.length > 32) {
+      setError(copy.invalidPhone);
       return false;
     }
     if (details.paymentMethod === "whish_money" && !whishConfigured) {
@@ -491,6 +496,8 @@ export function CheckoutDetailsForm({
             .join("\n"),
         },
         paymentMethod: details.paymentMethod === "whish_money" ? "whish" : "cash",
+        expectedSubtotal: total,
+        expectedDeliveryFee: deliveryFee,
         notes: details.notes.trim(),
         reference: referenceValue,
         deliveryLocation:
@@ -511,6 +518,9 @@ export function CheckoutDetailsForm({
         setError(copy.rateLimited);
       } else if (code.includes("idempotency_key_conflict")) {
         setError(copy.orderConflict);
+      } else if (code.includes("pricing_changed")) {
+        await refetchCms();
+        setError(copy.pricingChanged);
       } else {
         setError(copy.orderFailed);
       }
