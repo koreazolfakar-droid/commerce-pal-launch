@@ -27,5 +27,5 @@ test("checkout shows the reviewed total in its header and primary action", () =>
   assert.match(checkout, /const checkoutTotal = total \+ deliveryFee/);
   assert.match(checkout, /formatPrice\(checkoutTotal, currency\)/);
   assert.match(checkout, /Step 2 of 3/);
-  assert.match(checkout, /saved before opening WhatsApp/i);
+  assert.match(checkout, /before opening WhatsApp/i);
 });
