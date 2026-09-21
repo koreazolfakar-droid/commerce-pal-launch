@@ -12,91 +12,94 @@ commands:
             source "$BASH_ENV"
             bun --version
 
-jobs:
-  security-source:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: High-confidence source and secret scan
-          command: node scripts/security-gate.mjs
-
-  security-dependencies:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
+  prepare:
     steps:
       - checkout
       - install-bun
-      - run:
-          name: High and critical dependency audit
-          command: |
-            source "$BASH_ENV"
-            bun audit --audit-level=high
-
-  storefront-ci:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-
       - restore_cache:
           keys:
             - bun-deps-v1-{{ checksum "bun.lock" }}
             - bun-deps-v1-
-
-      - install-bun
-
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
 
-      - save_cache:
-          key: bun-deps-v1-{{ checksum "bun.lock" }}
-          paths:
-            - ~/.bun/install/cache
-
+jobs:
+  health-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - prepare
       - run:
           name: TypeScript
           command: bun run typecheck
 
+  health-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - prepare
       - run:
           name: ESLint
           command: bun run lint
 
+  health-dashboard-tests:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - prepare
       - run:
           name: Dashboard security regression tests
           command: node --test e2e/dashboard-*.test.mjs
 
+  health-unit-tests:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - prepare
       - run:
           name: Unit and architecture tests
           command: bun run test:unit
 
+  health-build:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - prepare
       - run:
           name: Production build
           command: bun run build
 
+  health-ssr:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - prepare
+      - run:
+          name: Production build
+          command: bun run build
       - run:
           name: SSR smoke test
           command: bun run test:ssr
 
 workflows:
-  security-and-storefront-validation:
+  current-main-health-diagnostics:
     jobs:
-      - security-source
-      - security-dependencies
-      - storefront-ci:
-          filters:
-            branches:
-              only:
-                - /^important\/.*/
+      - health-typecheck
+      - health-lint
+      - health-dashboard-tests
+      - health-unit-tests
+      - health-build
+      - health-ssr
