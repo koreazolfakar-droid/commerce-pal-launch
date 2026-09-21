@@ -18,6 +18,11 @@ import {
 import { useLanguage } from "@/lib/i18n";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { downloadOrderInvoicePdf } from "@/lib/orderInvoice";
+import {
+  createStorefrontOrder,
+  StoreOrderError,
+  type CreatedStoreOrder,
+} from "@/lib/orderCheckout";
 import { formatPrice, variantSummary } from "@/lib/shopify";
 import { STORE_NAME, storeUrl } from "@/lib/storeConfig";
 import { whatsappUrl } from "@/lib/whatsapp";
@@ -169,6 +174,8 @@ export function CheckoutDetailsForm({
   const [reference, setReference] = useState<string | null>(null);
   const [referenceCreatedAt, setReferenceCreatedAt] = useState<Date | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<CreatedStoreOrder | null>(null);
 
   const whishConfigured = WHISH_MONEY_ACCOUNT.length > 0;
 
@@ -217,13 +224,18 @@ export function CheckoutDetailsForm({
         whishUnavailable: "حساب Whish Money غير مضبوط بعد.",
         notes: "ملاحظات الطلب (اختياري)",
         notesPlaceholder: "لون مفضل، وقت التوصيل، أو أي ملاحظة",
-        send: "إرسال الطلب عبر واتساب",
+        send: "إنشاء الطلب والمتابعة عبر واتساب",
+        creating: "جارٍ إنشاء الطلب بأمان...",
+        stockUnavailable: "تغيّر المخزون ولم تعد بعض العناصر متاحة بالكمية المطلوبة. راجع السلة ثم حاول مجددًا.",
+        rateLimited: "تم إرسال محاولات كثيرة خلال وقت قصير. حاول مجددًا بعد قليل.",
+        orderConflict: "تعذر إعادة استخدام محاولة الطلب السابقة بأمان. راجع بيانات الطلب قبل المحاولة من جديد.",
+        orderFailed: "تعذر حفظ الطلب الآن. لم يتم فتح واتساب ولم يتم خصم المخزون مرتين.",
         summaryPdf: "تحميل ملخص الطلب PDF",
         invoicePdf: "تحميل الفاتورة PDF",
         preparingPdf: "جارٍ تجهيز PDF...",
         required: "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان أولًا.",
         pdfError: "تعذر إنشاء ملف PDF الآن. جرّب مرة أخرى.",
-        ready: "تم تجهيز الطلب. يمكنك الاحتفاظ بنسخة PDF أو متابعة واتساب.",
+        ready: "تم حفظ الطلب في النظام بنجاح. يمكنك الاحتفاظ بنسخة PDF أو متابعة واتساب.",
         privacy: "لا نستخدم موقعك إلا بعد موافقتك، ويتم إنشاء ملف PDF محليًا على جهازك.",
         invoiceLabel: "رقم الفاتورة",
         mapLabel: "الموقع على الخريطة",
@@ -272,13 +284,18 @@ export function CheckoutDetailsForm({
         whishUnavailable: "Whish Money account is not configured yet.",
         notes: "Order notes (optional)",
         notesPlaceholder: "Preferred colour, delivery time, or any request",
-        send: "Send order on WhatsApp",
+        send: "Create order & continue on WhatsApp",
+        creating: "Creating your order securely...",
+        stockUnavailable: "Stock changed and one or more items are no longer available in the requested quantity. Review your bag and try again.",
+        rateLimited: "Too many checkout attempts were sent in a short time. Please try again shortly.",
+        orderConflict: "The previous checkout attempt cannot be safely reused. Review the order details before trying again.",
+        orderFailed: "We couldn't save the order. WhatsApp was not opened and stock was not deducted twice.",
         summaryPdf: "Download order summary PDF",
         invoicePdf: "Download invoice PDF",
         preparingPdf: "Preparing PDF...",
         required: "Please fill in your name, phone number, area and address first.",
         pdfError: "We couldn't generate the PDF right now. Please try again.",
-        ready: "Order prepared. You can keep a PDF copy or continue on WhatsApp.",
+        ready: "Your order was saved successfully. You can keep a PDF copy or continue on WhatsApp.",
         privacy:
           "We use your location only after approval, and the PDF is generated locally on your device.",
         invoiceLabel: "Invoice number",
@@ -382,8 +399,8 @@ export function CheckoutDetailsForm({
     orderReference: orderIdentity.reference,
     createdAt: orderIdentity.createdAt,
     language: (isArabic ? "ar" : "en") as "ar" | "en",
-    currency,
-    total,
+    currency: createdOrder?.currency ?? currency,
+    total: createdOrder?.total ?? total,
     customer: {
       name: details.name.trim(),
       phone: details.phone.trim(),
@@ -428,8 +445,9 @@ export function CheckoutDetailsForm({
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!validateDetails()) return;
+    if (!validateDetails() || submitting) return;
     persistDetails();
+    setError("");
 
     let resolvedLocation = location;
     if (shareLocation && !resolvedLocation) resolvedLocation = await locateCustomer();
@@ -438,6 +456,54 @@ export function CheckoutDetailsForm({
     const referenceValue = orderIdentity.reference;
     const invoiceValue = invoiceNumber(referenceValue);
     const paymentLabel = details.paymentMethod === "whish_money" ? copy.whish : copy.cash;
+
+    setSubmitting(true);
+    let order: CreatedStoreOrder;
+    try {
+      order = await createStorefrontOrder({
+        items,
+        customer: {
+          name: details.name.trim(),
+          phone: details.phone.trim(),
+          city: details.area.trim(),
+          address: [
+            details.address.trim(),
+            details.landmark.trim()
+              ? `${isArabic ? "نقطة دالة" : "Landmark"}: ${details.landmark.trim()}`
+              : "",
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        },
+        paymentMethod: details.paymentMethod === "whish_money" ? "whish" : "cash",
+        notes: details.notes.trim(),
+        reference: referenceValue,
+        deliveryLocation:
+          shareLocation && resolvedLocation
+            ? {
+                latitude: resolvedLocation.latitude,
+                longitude: resolvedLocation.longitude,
+                accuracy: resolvedLocation.accuracy,
+              }
+            : null,
+      });
+      setCreatedOrder(order);
+    } catch (cause) {
+      const code = cause instanceof StoreOrderError ? cause.code : "order_failed";
+      if (code.includes("insufficient_stock") || code.includes("product_or_variant_unavailable")) {
+        setError(copy.stockUnavailable);
+      } else if (code.includes("rate_limited")) {
+        setError(copy.rateLimited);
+      } else if (code.includes("idempotency_key_conflict")) {
+        setError(copy.orderConflict);
+      } else {
+        setError(copy.orderFailed);
+      }
+      return;
+    } finally {
+      setSubmitting(false);
+    }
+
     const itemLines = items.flatMap((item, index) => {
       const options = variantSummary(item.selectedOptions);
       const unitPrice = formatPrice(item.price.amount, item.price.currencyCode);
@@ -456,7 +522,8 @@ export function CheckoutDetailsForm({
 
     const message = [
       `🛍️ ${isArabic ? "طلب جديد" : "New order"} — ${storeName}`,
-      `${isArabic ? "رقم الطلب" : "Order ref"}: ${referenceValue}`,
+      `${isArabic ? "رقم الطلب" : "Order"}: #${order.order_number}`,
+      `${isArabic ? "المرجع" : "Reference"}: ${referenceValue}`,
       `${copy.invoiceLabel}: ${invoiceValue}`,
       "",
       `👤 ${isArabic ? "بيانات الزبون" : "Customer details"}`,
@@ -482,7 +549,11 @@ export function CheckoutDetailsForm({
       `📦 ${isArabic ? "المنتجات" : "Items"}`,
       ...itemLines,
       "",
-      `💰 ${isArabic ? "المجموع" : "Total"}: ${formatPrice(total, currency)}`,
+      `💵 ${isArabic ? "مجموع المنتجات" : "Items subtotal"}: ${formatPrice(order.subtotal, order.currency)}`,
+      order.delivery_type === "free"
+        ? `🚚 ${isArabic ? "التوصيل" : "Delivery"}: ${isArabic ? "مجاني" : "Free"}`
+        : `🚚 ${isArabic ? "رسوم التوصيل" : "Delivery fee"}: ${formatPrice(order.shipping_total, order.currency)}`,
+      `💰 ${isArabic ? "الإجمالي النهائي" : "Final total"}: ${formatPrice(order.total, order.currency)}`,
       details.notes.trim() ? `📝 ${isArabic ? "ملاحظات" : "Notes"}: ${details.notes.trim()}` : "",
       "",
       `${isArabic ? "تم إنشاء الطلب من" : "Order created from"}: ${storeUrl("/cart")}`,
@@ -504,6 +575,7 @@ export function CheckoutDetailsForm({
     }`;
   const actionDisabled =
     disabled ||
+    submitting ||
     items.length === 0 ||
     locating ||
     (details.paymentMethod === "whish_money" && !whishConfigured);
@@ -844,7 +916,10 @@ export function CheckoutDetailsForm({
         {submitted ? (
           <p className="flex items-center gap-2 rounded-xl bg-emerald-500/10 px-3.5 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
-            {copy.ready}
+            <span>
+              {copy.ready}
+              {createdOrder ? ` #${createdOrder.order_number} · ${formatPrice(createdOrder.total, createdOrder.currency)}` : ""}
+            </span>
           </p>
         ) : null}
 
@@ -855,12 +930,12 @@ export function CheckoutDetailsForm({
               disabled={actionDisabled || pdfBusy}
               className="press flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-4 text-sm font-extrabold text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {locating ? (
+              {locating || submitting ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : (
                 <MessageCircle className="h-4 w-4" />
               )}
-              {locating ? copy.locating : copy.send}
+              {submitting ? copy.creating : locating ? copy.locating : copy.send}
             </button>
           </div>
 
