@@ -113,6 +113,9 @@ test("global navigation uses lightweight facets instead of the full catalog snap
   const navigationRead = nativeStore.slice(start, end);
   assert.doesNotMatch(navigationRead, /store_product_variants|store_product_images/);
   assert.doesNotMatch(navigationRead, /STOREFRONT_VARIANT_SELECT|STOREFRONT_IMAGE_SELECT/);
+  assert.match(navigationRead, /STOREFRONT_NAVIGATION_COLLECTION_SELECT/);
+  assert.match(navigationRead, /STOREFRONT_NAVIGATION_COLLECTION_LINK_SELECT/);
+  assert.doesNotMatch(navigationRead, /\.order\("sort_order"/);
 });
 
 test("native cart keeps local totals and native checkout", async () => {
@@ -123,7 +126,7 @@ test("native cart keeps local totals and native checkout", async () => {
   ]);
   assert.match(store, /function localCartState/);
   assert.match(store, /syncCart:\s*async \(\) => undefined/);
-  assert.match(drawer, /href="\/cart"/);
+  assert.match(drawer, /\bto="\/cart"/);
   assert.doesNotMatch(drawer, /checkoutShopify|getCheckoutUrl|myshopify/);
   assert.match(productRoute, /window\.location\.assign\("\/cart"\)/);
 });
