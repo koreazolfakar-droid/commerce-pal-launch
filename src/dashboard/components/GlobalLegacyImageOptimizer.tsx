@@ -7,6 +7,7 @@ import {
   Loader2,
   RefreshCw,
   ShieldCheck,
+  Trash2,
   WandSparkles,
   XCircle,
 } from "lucide-react";
@@ -14,11 +15,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
+  deleteSafeOldOriginals,
   downloadGlobalLegacyImage,
   loadGlobalLegacyImageAssets,
   replaceGlobalLegacyImageWithWebp,
+  scanSafeOldOriginals,
   type GlobalImageSource,
   type GlobalLegacyImageAsset,
+  type SafeCleanupScan,
 } from "@/dashboard/data/globalImageOptimizer";
 import {
   IMAGE_COMPRESSION_PRESETS,
@@ -67,6 +71,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
+  const [cleanupScan, setCleanupScan] = useState<SafeCleanupScan | null>(null);
+  const [scanningCleanup, setScanningCleanup] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
   const sourceFileCache = useRef(new Map<string, File>());
   const previewRunId = useRef(0);
 
@@ -169,6 +176,53 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
     // Recalculate automatically whenever the chosen output settings or selection changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, enabled, selectedSignature, resolution, compression, optimizing, loading]);
+
+  const scanCleanup = async () => {
+    if (scanningCleanup || cleaning || optimizing) return;
+    setScanningCleanup(true);
+    try {
+      const result = await scanSafeOldOriginals();
+      setCleanupScan(result);
+      if (result.candidates.length) {
+        toast.success(
+          `Found ${result.candidates.length} safe old original${result.candidates.length === 1 ? "" : "s"} · ${formatImageBytes(result.reclaimableBytes)} reclaimable.`,
+        );
+      } else {
+        toast.success("No safe old originals are waiting for cleanup.");
+      }
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Old-original cleanup scan failed.");
+    } finally {
+      setScanningCleanup(false);
+    }
+  };
+
+  const cleanOldOriginals = async () => {
+    if (!cleanupScan?.candidates.length || cleaning || optimizing) return;
+    const confirmed = window.confirm(
+      `Permanently delete ${cleanupScan.candidates.length} unreferenced old original${cleanupScan.candidates.length === 1 ? "" : "s"} and reclaim about ${formatImageBytes(cleanupScan.reclaimableBytes)}? References will be checked again immediately before deletion. This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setCleaning(true);
+    try {
+      const result = await deleteSafeOldOriginals(cleanupScan.candidates);
+      if (result.deleted) {
+        toast.success(
+          `Deleted ${result.deleted} safe old original${result.deleted === 1 ? "" : "s"} · reclaimed ${formatImageBytes(result.reclaimedBytes)}.`,
+        );
+      }
+      if (result.failed.length) {
+        toast.error(`${result.failed.length} file${result.failed.length === 1 ? "" : "s"} could not be deleted and were left untouched.`);
+      }
+      const refreshed = await scanSafeOldOriginals();
+      setCleanupScan(refreshed);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Safe cleanup failed.");
+    } finally {
+      setCleaning(false);
+    }
+  };
 
   const optimize = async () => {
     const ready = rows.filter((row) => row.status === "ready" && row.conversion);
@@ -481,6 +535,82 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
               </tbody>
             </table>
           </div>
+
+          <section className="mt-4 rounded-2xl border border-rose-100 bg-rose-50/40 p-4">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <div className="flex items-center gap-2 text-[12px] font-black text-slate-800">
+                  <Trash2 className="size-4 text-rose-500" />
+                  Clean old originals safely
+                </div>
+                <p className="mt-1 max-w-2xl text-[9px] leading-4 text-slate-500">
+                  Scans managed Supabase Storage and only proposes old files with no current Product, Variant, Brand, Category, Hero, Media Library or Store Logo reference. Optimized files are never cleanup candidates.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void scanCleanup()}
+                disabled={scanningCleanup || cleaning || optimizing}
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 text-[10px] font-black text-rose-600 disabled:opacity-50"
+              >
+                {scanningCleanup ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
+                Scan old originals
+              </button>
+            </div>
+
+            {cleanupScan ? (
+              <div className="mt-3">
+                <div className="grid gap-2 sm:grid-cols-4">
+                  {[
+                    ["Safe to delete", String(cleanupScan.candidates.length)],
+                    ["Space to reclaim", formatImageBytes(cleanupScan.reclaimableBytes)],
+                    ["Storage objects scanned", String(cleanupScan.scannedObjects)],
+                    ["Known references protected", String(cleanupScan.referencedObjects)],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-xl border border-rose-100 bg-white px-3 py-2.5">
+                      <div className="text-[8px] font-black uppercase tracking-[.1em] text-slate-400">{label}</div>
+                      <div className="mt-1 text-[12px] font-black text-slate-800">{value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {cleanupScan.candidates.length ? (
+                  <>
+                    <div className="mt-3 max-h-48 overflow-auto rounded-xl border border-rose-100 bg-white">
+                      {cleanupScan.candidates.slice(0, 100).map((item) => (
+                        <div key={item.key} className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 last:border-0">
+                          <div className="min-w-0">
+                            <div className="truncate text-[9px] font-bold text-slate-600">{item.objectPath}</div>
+                            <div className="mt-0.5 text-[8px] text-slate-400">{item.mimeType || "image"} · no active database reference</div>
+                          </div>
+                          <div className="shrink-0 text-[9px] font-black text-rose-600">{formatImageBytes(item.sizeBytes)}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-[9px] font-semibold text-emerald-700">
+                        <ShieldCheck className="size-3.5" />
+                        References are checked again immediately before deletion.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void cleanOldOriginals()}
+                        disabled={cleaning || scanningCleanup || optimizing}
+                        className="inline-flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[10px] font-black text-white disabled:opacity-50"
+                      >
+                        {cleaning ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                        Delete {cleanupScan.candidates.length} safe originals · {formatImageBytes(cleanupScan.reclaimableBytes)}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-3 text-[10px] font-bold text-emerald-700">
+                    Nothing is eligible for safe cleanup right now.
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </section>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[9px] leading-4 text-slate-400">
             <span>
