@@ -267,3 +267,22 @@ test("catalog q filtering uses the same precise search matcher", () => {
   const matches = applyFilters(products, catalog, { q: "samsng fixture 4" });
   assert.deepEqual(matches.map((item) => item.node.handle), ["fixture-phone-4"]);
 });
+
+
+test("search understands common Arabic category and brand terms", () => {
+  const phone = product({ title: "Xiaomi 17 Ultra", vendor: "Xiaomi", productType: "Smartphone" });
+  const charger = product({ title: "Anker Nano Charger 45W", vendor: "Anker", productType: "Charger" });
+  assert.ok(productSearchScore(phone, "شاومي موبايل") > 0);
+  assert.ok(productSearchScore(charger, "انكر شاحن") > 0);
+});
+
+test("description-only marketing words do not create noisy product matches", () => {
+  const item = product({
+    title: "USB-C Cable",
+    vendor: "Anker",
+    productType: "Cable",
+    tags: ["usb-c"],
+    description: "Compatible with smartphones and tablets.",
+  });
+  assert.equal(productSearchScore(item, "compatible"), 0);
+});
