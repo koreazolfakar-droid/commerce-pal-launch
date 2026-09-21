@@ -151,6 +151,7 @@ export default function BrandsPage() {
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CatalogBrand | null>(null);
   const [deleteDestination, setDeleteDestination] = useState("unbranded");
+  const [deleting, setDeleting] = useState(false);
   const [moveProduct, setMoveProduct] = useState<DashboardProduct | null>(null);
   const [moveDestination, setMoveDestination] = useState("");
   const [productMenuId, setProductMenuId] = useState<string | null>(null);
@@ -357,15 +358,17 @@ export default function BrandsPage() {
       toast.error("Keep at least one brand in the catalog.");
       return;
     }
+    setDeleting(false);
     setDeleteTarget(brand);
     setDeleteDestination("unbranded");
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || deleting) return;
     const destinationId =
       deleteDestination === "unbranded" ? null : deleteDestination || null;
 
+    setDeleting(true);
     try {
       await deleteDashboardBrand(deleteTarget.id, destinationId);
       const workspace = await loadBrandsWorkspace();
@@ -377,9 +380,11 @@ export default function BrandsPage() {
           : current,
       );
       setDeleteTarget(null);
-      toast.success("Brand deleted and product assignments updated in Supabase.");
+      toast.success("Brand deleted safely. Product assignments were preserved.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand deletion failed.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -638,8 +643,8 @@ export default function BrandsPage() {
         </div>
       )}
 
-      <div className="grid items-start gap-4 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-        <section id="brand-list" className="self-start scroll-mt-[6.5rem] rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_24px_rgba(33,47,82,.04)] lg:sticky lg:top-[6.5rem]">
+      <div className="space-y-4">
+        <section id="brand-list" className="scroll-mt-[6.5rem] rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-3">
           {listBrands.length ? (
             <BrandList
               brands={listBrands}
@@ -662,7 +667,7 @@ export default function BrandsPage() {
               onViewProducts={scrollToProducts}
               onAddProduct={(brand) => {
                 setSelectedId(brand.id);
-                navigate("/dashboard/products/new");
+                setAssignmentOpen(true);
               }}
               onToggleFeatured={(brand) => toggleBrand(brand, { featured: !brand.featured })}
               onToggleActive={(brand) => toggleBrand(brand, { active: !brand.active })}
@@ -742,10 +747,18 @@ export default function BrandsPage() {
                   <button
                     type="button"
                     onClick={() => openEdit(selected)}
-                    className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600"
+                    className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 active:scale-[.98]"
                   >
                     <Pencil className="size-3.5" />
                     Edit Brand
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssignmentOpen(true)}
+                    className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 transition hover:bg-indigo-100 active:scale-[.98]"
+                  >
+                    <Plus className="size-3.5" />
+                    Assign Products
                   </button>
                   <button
                     type="button"
@@ -754,10 +767,18 @@ export default function BrandsPage() {
                         .getElementById("brand-homepage-preview")
                         ?.scrollIntoView({ behavior: "smooth", block: "center" })
                     }
-                    className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600"
+                    className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 active:scale-[.98]"
                   >
                     <Eye className="size-3.5" />
                     Preview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => requestDelete(selected)}
+                    className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 text-[10px] font-bold text-rose-700 transition hover:bg-rose-100 active:scale-[.98]"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete Brand
                   </button>
                 </div>
               </div>
@@ -1065,8 +1086,10 @@ export default function BrandsPage() {
       {deleteTarget && (
         <Modal
           title={"Delete " + deleteTarget.name + "?"}
-          subtitle="Products are never deleted. Reassign them first when necessary."
-          onClose={() => setDeleteTarget(null)}
+          subtitle="This permanently removes the brand record. Products are never deleted and can be reassigned first."
+          onClose={() => {
+            if (!deleting) setDeleteTarget(null);
+          }}
         >
           {getBrandProductCount(products, deleteTarget) > 0 ? (
             <div className="space-y-4">
@@ -1107,17 +1130,20 @@ export default function BrandsPage() {
             <button
               type="button"
               onClick={() => setDeleteTarget(null)}
-              className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
+              disabled={deleting}
+              className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={confirmDelete}
-              className="flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[11px] font-bold text-white"
+              disabled={deleting}
+              aria-busy={deleting}
+              className="flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Trash2 className="size-4" />
-              Delete Brand
+              {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+              {deleting ? "Deleting…" : "Delete Brand"}
             </button>
           </div>
         </Modal>

@@ -42,14 +42,14 @@ export default function BrandList({
   onMove: (brandId: string, direction: -1 | 1) => void;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
       {brands.map((brand, index) => {
         const selected = brand.id === selectedId;
         return (
           <div
             key={brand.id}
             className={
-              "relative rounded-2xl border transition " +
+              "relative min-w-0 rounded-2xl border transition " +
               (selected
                 ? "border-indigo-200 bg-indigo-50/65 shadow-[0_6px_20px_rgba(89,104,234,.08)]"
                 : "border-transparent bg-white hover:border-slate-200 hover:bg-slate-50/70")
@@ -58,41 +58,46 @@ export default function BrandList({
             <button
               type="button"
               onClick={() => onSelect(brand)}
-              className={`flex min-h-[72px] w-full items-center gap-3 px-3 py-2.5 text-start sm:min-h-[68px] ${reorderMode ? "pe-24 sm:pe-20" : "pe-14"}`}
+              aria-pressed={selected}
+              className={`flex min-h-[112px] w-full flex-col items-start justify-between gap-3 px-3 py-3 text-start transition active:scale-[.99] ${reorderMode ? "pb-14" : "pe-12"}`}
             >
-              <BrandMark brand={brand} className="size-11 sm:size-10" />
-              <span className="min-w-0 flex-1">
-                <span className="flex min-w-0 items-center gap-2">
-                  <span className="truncate text-[13px] font-black text-slate-700 sm:text-[11.5px]">
-                    {brand.name}
-                  </span>
-                  {brand.featured && (
-                    <span className="shrink-0 rounded-full bg-violet-50 px-1.5 py-0.5 text-[7.5px] font-black uppercase tracking-wide text-violet-700">
-                      Featured
+              <span className="flex w-full min-w-0 items-center gap-2.5">
+                <BrandMark brand={brand} className="size-10 shrink-0" />
+                <span className="min-w-0 flex-1">
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="truncate text-[11.5px] font-black text-slate-700">
+                      {brand.name}
                     </span>
-                  )}
-                </span>
-                <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400 sm:text-[9px]">
-                  <span className="max-w-[140px] truncate">/{brand.slug}</span>
-                  <span>•</span>
-                  <span>{getProductCount(brand)} products</span>
-                  <span
-                    className={
-                      "rounded-full px-2 py-0.5 font-bold " +
-                      (brand.active
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-slate-100 text-slate-500")
-                    }
-                  >
-                    {brand.active ? "Active" : "Hidden"}
+                    {brand.featured && (
+                      <span className="shrink-0 rounded-full bg-violet-50 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wide text-violet-700">
+                        Featured
+                      </span>
+                    )}
                   </span>
+                  <span className="mt-1 block truncate text-[8.5px] text-slate-400">/{brand.slug}</span>
+                </span>
+              </span>
+
+              <span className="flex w-full flex-wrap items-center gap-1.5 text-[9px] text-slate-400">
+                <span className="rounded-full bg-slate-50 px-2 py-1 font-semibold text-slate-500">
+                  {getProductCount(brand)} products
+                </span>
+                <span
+                  className={
+                    "rounded-full px-2 py-1 font-bold " +
+                    (brand.active
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-slate-100 text-slate-500")
+                  }
+                >
+                  {brand.active ? "Active" : "Hidden"}
                 </span>
               </span>
             </button>
 
-            <div className="absolute end-2 top-1/2 -translate-y-1/2">
+            <div className={reorderMode ? "absolute inset-x-2 bottom-2" : "absolute end-2 top-2"}>
               {reorderMode ? (
-                <div className="flex gap-1">
+                <div className="flex justify-end gap-1">
                   <button
                     type="button"
                     disabled={index === 0}
@@ -119,7 +124,7 @@ export default function BrandList({
                   actions={[
                     { label: "Edit", icon: Pencil, onClick: () => onEdit(brand) },
                     { label: "View Products", icon: Eye, onClick: () => onViewProducts(brand) },
-                    { label: "Add Product", icon: Plus, onClick: () => onAddProduct(brand) },
+                    { label: "Assign Products", icon: Plus, onClick: () => onAddProduct(brand) },
                     {
                       label: brand.featured ? "Unfeature" : "Feature",
                       icon: Sparkles,
