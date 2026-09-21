@@ -131,9 +131,9 @@ function CartPage() {
 
   return (
     <StoreLayout>
-      <div className="cart-page mx-auto w-full max-w-6xl px-3 pb-10 pt-4 sm:px-5 sm:pb-14 sm:pt-7 lg:px-6">
-        <header className="mb-4 overflow-hidden rounded-2xl border bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-card sm:mb-5">
-          <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 sm:py-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="cart-page mx-auto w-full max-w-[74rem] px-3 pb-10 pt-3.5 sm:px-5 sm:pb-14 sm:pt-6 lg:px-6 xl:px-7">
+        <header className="mb-3.5 overflow-hidden rounded-[1.25rem] border bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-card sm:mb-5 sm:rounded-2xl">
+          <div className="flex flex-col gap-3.5 px-3.5 py-3.5 min-[390px]:px-4 sm:gap-4 sm:px-5 sm:py-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
               <div className="mb-2 flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
@@ -157,11 +157,11 @@ function CartPage() {
             </div>
 
             {items.length > 0 ? (
-              <div className="grid grid-cols-3 gap-1.5 sm:min-w-[25rem]">
+              <div className="grid w-full grid-cols-3 gap-1.5 lg:w-auto lg:min-w-[25rem]">
                 {steps.map((step) => (
                   <div
                     key={step.number}
-                    className={`rounded-xl border px-2.5 py-2 transition ${
+                    className={`min-w-0 rounded-xl border px-2 py-2 transition sm:px-2.5 ${
                       step.active
                         ? "border-primary/25 bg-primary/10 text-primary"
                         : "border-border/70 bg-background/70 text-muted-foreground"
@@ -177,7 +177,7 @@ function CartPage() {
                       >
                         {step.number}
                       </span>
-                      <span className="line-clamp-1 text-[10px] font-bold sm:text-[11px]">
+                      <span className="line-clamp-1 text-[9px] font-bold leading-tight min-[390px]:text-[10px] sm:text-[11px]">
                         {step.label}
                       </span>
                     </div>
@@ -209,9 +209,9 @@ function CartPage() {
           <>
             <section
               aria-label={language === "ar" ? "مزايا الطلب" : "Order benefits"}
-              className="mb-4 grid grid-cols-3 gap-2 sm:mb-5"
+              className="-mx-3 mb-3.5 flex snap-x snap-mandatory gap-2 overflow-x-auto px-3 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:mb-5 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0"
             >
-              <div className="flex min-w-0 items-center gap-2 rounded-xl border bg-card px-2.5 py-2 shadow-card">
+              <div className="flex min-w-[9.75rem] flex-1 snap-start items-center gap-2 rounded-xl border bg-card px-2.5 py-2 shadow-card sm:min-w-0">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
                   <Truck className="h-4 w-4" />
                 </span>
@@ -225,7 +225,7 @@ function CartPage() {
                 </div>
               </div>
 
-              <div className="flex min-w-0 items-center gap-2 rounded-xl border bg-card px-2.5 py-2 shadow-card">
+              <div className="flex min-w-[9.75rem] flex-1 snap-start items-center gap-2 rounded-xl border bg-card px-2.5 py-2 shadow-card sm:min-w-0">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   <BadgeCheck className="h-4 w-4" />
                 </span>
@@ -237,7 +237,7 @@ function CartPage() {
                 </div>
               </div>
 
-              <div className="flex min-w-0 items-center gap-2 rounded-xl border bg-card px-2.5 py-2 shadow-card">
+              <div className="flex min-w-[9.75rem] flex-1 snap-start items-center gap-2 rounded-xl border bg-card px-2.5 py-2 shadow-card sm:min-w-0">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-success/10 text-success">
                   <MessageCircle className="h-4 w-4" />
                 </span>
@@ -250,9 +250,9 @@ function CartPage() {
               </div>
             </section>
 
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21.5rem] lg:items-start lg:gap-5">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21.5rem] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1fr)_22.5rem] xl:gap-6">
               <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-                <div className="mb-2.5 flex items-center justify-between gap-3 px-1">
+                <div className="mb-2 flex items-center justify-between gap-3 px-0.5 sm:mb-2.5 sm:px-1">
                   <h2 className="text-sm font-extrabold tracking-tight sm:text-base">
                     {copy.yourItems}
                   </h2>
@@ -269,12 +269,12 @@ function CartPage() {
                     return (
                       <li
                         key={item.variantId}
-                        className="group relative flex gap-3 rounded-2xl border bg-card p-3 shadow-card transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-primary/20 hover:shadow-card-hover sm:gap-4 sm:p-3.5"
+                        className="group relative flex gap-2.5 rounded-[1.1rem] border bg-card p-2.5 shadow-card transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-primary/20 hover:shadow-card-hover min-[390px]:gap-3 min-[390px]:p-3 sm:gap-4 sm:rounded-2xl sm:p-3.5"
                       >
                         <Link
                           to="/product/$handle"
                           params={{ handle: item.product.node.handle }}
-                          className="grid h-[5.25rem] w-[5.25rem] shrink-0 place-items-center overflow-hidden rounded-xl border bg-image-stage sm:h-24 sm:w-24"
+                          className="grid h-[4.75rem] w-[4.75rem] shrink-0 place-items-center overflow-hidden rounded-[0.8rem] border bg-image-stage min-[390px]:h-[5.25rem] min-[390px]:w-[5.25rem] sm:h-24 sm:w-24 sm:rounded-xl"
                         >
                           {image ? (
                             <img
@@ -293,7 +293,7 @@ function CartPage() {
                           <Link
                             to="/product/$handle"
                             params={{ handle: item.product.node.handle }}
-                            className="line-clamp-2 pe-8 text-[13px] font-extrabold leading-[1.3] transition-colors hover:text-primary sm:text-[15px]"
+                            className="line-clamp-2 pe-7 text-[12px] font-extrabold leading-[1.3] transition-colors hover:text-primary min-[390px]:pe-8 min-[390px]:text-[13px] sm:text-[15px]"
                           >
                             {item.product.node.title}
                           </Link>
@@ -308,8 +308,8 @@ function CartPage() {
                             </p>
                           </div>
 
-                          <div className="mt-auto flex items-end justify-between gap-2 pt-2.5">
-                            <div className="flex h-9 items-center rounded-xl border bg-background p-0.5 shadow-sm">
+                          <div className="mt-auto flex items-end justify-between gap-2 pt-2 min-[390px]:pt-2.5">
+                            <div className="flex h-8.5 items-center rounded-xl border bg-background p-0.5 shadow-sm sm:h-9">
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -318,7 +318,7 @@ function CartPage() {
                                 onClick={() =>
                                   void updateQuantity(item.variantId, item.quantity - 1)
                                 }
-                                className="h-8 w-8 rounded-[0.6rem]"
+                                className="h-7.5 w-7.5 rounded-[0.6rem] sm:h-8 sm:w-8"
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </Button>
@@ -333,7 +333,7 @@ function CartPage() {
                                 onClick={() =>
                                   void updateQuantity(item.variantId, item.quantity + 1)
                                 }
-                                className="h-8 w-8 rounded-[0.6rem]"
+                                className="h-7.5 w-7.5 rounded-[0.6rem] sm:h-8 sm:w-8"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                               </Button>
@@ -380,10 +380,10 @@ function CartPage() {
               </div>
 
               <aside
-                className="overflow-hidden rounded-2xl border bg-card shadow-card lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+                className="overflow-hidden rounded-[1.1rem] border bg-card shadow-card sm:rounded-2xl lg:sticky lg:top-[5.75rem] lg:col-start-2 lg:row-span-2 lg:row-start-1"
                 aria-label={copy.summary}
               >
-                <div className="border-b bg-gradient-to-r from-primary/[0.08] via-primary/[0.03] to-transparent px-4 py-3.5">
+                <div className="border-b bg-gradient-to-r from-primary/[0.08] via-primary/[0.03] to-transparent px-3.5 py-3 sm:px-4 sm:py-3.5">
                   <div className="flex items-center gap-3">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/15 bg-background/80 text-primary shadow-sm">
                       <ReceiptText className="h-4 w-4" />
@@ -395,7 +395,7 @@ function CartPage() {
                   </div>
                 </div>
 
-                <div className="p-4">
+                <div className="p-3.5 sm:p-4">
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-muted-foreground">{copy.subtotal}</span>
@@ -443,7 +443,7 @@ function CartPage() {
 
                   <Button
                     asChild
-                    className="mt-3 min-h-11 w-full rounded-xl font-extrabold shadow-sm"
+                    className="mt-3 min-h-11 w-full rounded-xl px-3 text-[13px] font-extrabold shadow-sm sm:px-4 sm:text-sm"
                   >
                     <a href="#whatsapp-checkout">
                       {copy.continueCheckout}
