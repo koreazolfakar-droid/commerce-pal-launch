@@ -10,10 +10,7 @@ function GridGlyph({ columns }: { columns: 2 | 3 }) {
   return (
     <span
       aria-hidden="true"
-      className={cn(
-        "grid size-4 gap-[2px]",
-        columns === 3 ? "grid-cols-3" : "grid-cols-2",
-      )}
+      className={cn("grid size-4 gap-[2px]", columns === 3 ? "grid-cols-3" : "grid-cols-2")}
     >
       {Array.from({ length: cells }).map((_, index) => (
         <span key={index} className="rounded-[1px] bg-current" />
@@ -48,9 +45,9 @@ export function ProductViewToggle({
       <button
         type="button"
         onClick={() => onChange("dense")}
-        aria-label={`${t("viewGrid")} — 3 columns`}
+        aria-label={t("viewThreeColumns")}
         aria-pressed={mode === "dense"}
-        title={`${t("viewGrid")} — 3 columns`}
+        title={t("viewThreeColumns")}
         className={buttonClass(mode === "dense")}
       >
         <GridGlyph columns={3} />
@@ -59,9 +56,9 @@ export function ProductViewToggle({
       <button
         type="button"
         onClick={() => onChange("grid")}
-        aria-label={`${t("viewGrid")} — 2 columns`}
+        aria-label={t("viewTwoColumns")}
         aria-pressed={mode === "grid"}
-        title={`${t("viewGrid")} — 2 columns`}
+        title={t("viewTwoColumns")}
         className={buttonClass(mode === "grid")}
       >
         <GridGlyph columns={2} />
@@ -73,7 +70,7 @@ export function ProductViewToggle({
         aria-label={t("viewList")}
         aria-pressed={mode === "list"}
         title={t("viewList")}
-        className={cn(buttonClass(mode === "list"), "hidden sm:grid")}
+        className={buttonClass(mode === "list")}
       >
         <List className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       </button>
