@@ -133,7 +133,7 @@ export function CmsTrustStrip() {
         {items.map((item) => {
           const className = "inline-flex items-center gap-2 hover:text-foreground";
           return isInternalStoreHref(item.href) ? (
-            <Link key={item.id} href={item.href} preload="intent" className={className}>
+            <Link key={item.id} to={item.href as never} preload="intent" className={className}>
               <ItemIcon item={item} />
               <span>{item.label}</span>
             </Link>
