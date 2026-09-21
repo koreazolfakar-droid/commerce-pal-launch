@@ -65,6 +65,29 @@ test("root warms the primary storefront backend connection", async () => {
     root,
     /rel:\s*"preconnect"[\s\S]*?href:\s*"https:\/\/rtwyankpxtffqqrasyzw\.supabase\.co"[\s\S]*?crossOrigin:\s*"anonymous"/,
   );
+  assert.doesNotMatch(root, /preconnect"[\s\S]*?cdn\.shopify\.com/);
+});
+
+test("homepage LCP uses CMS data without legacy hero work on the critical path", async () => {
+  const [home, heroScene] = await Promise.all([
+    read("src/routes/index.tsx"),
+    read("src/components/HeroScene.tsx"),
+  ]);
+
+  const loaderStart = home.indexOf("loader: async");
+  const loaderEnd = home.indexOf("head:", loaderStart);
+  assert.ok(loaderStart >= 0 && loaderEnd > loaderStart);
+  const loaderSource = home.slice(loaderStart, loaderEnd);
+
+  assert.match(loaderSource, /ensureQueryData\(cmsQueryOptions\(\)\)/);
+  assert.doesNotMatch(loaderSource, /HOME_HERO_COLLECTION_HANDLE|collectionQueryOptions/);
+  assert.match(home, /fetchPriority:\s*"high"/);
+  assert.match(
+    home,
+    /\.\.\.collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\),\s*enabled:\s*deferredWorkReady/s,
+  );
+  assert.match(heroScene, /loading=\{priority \? "eager" : "lazy"\}/);
+  assert.match(heroScene, /fetchPriority=\{priority \? "high" : "auto"\}/);
 });
 
 
