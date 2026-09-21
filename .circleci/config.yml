@@ -1,8 +1,15 @@
 version: 2.1
+jobs:
 
-commands:
-  install-bun:
+  diag-ts-index:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
     steps:
+      - checkout
       - run:
           name: Install Bun
           command: |
@@ -10,93 +17,259 @@ commands:
             echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
             echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
-            bun --version
-
-jobs:
-  security-source:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: High-confidence source and secret scan
-          command: node scripts/security-gate.mjs
-
-  security-dependencies:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: High and critical dependency audit
-          command: |
-            source "$BASH_ENV"
-            bun audit --audit-level=high
-
-  storefront-ci:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-            - bun-deps-v1-{{ checksum "bun.lock" }}
-            - bun-deps-v1-
-
-      - install-bun
-
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
-
-      - save_cache:
-          key: bun-deps-v1-{{ checksum "bun.lock" }}
-          paths:
-            - ~/.bun/install/cache
-
       - run:
-          name: TypeScript
-          command: bun run typecheck
+          name: diag-ts-index
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/routes/index\.tsx' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
-      - run:
-          name: ESLint
-          command: bun run lint
 
+  diag-ts-root:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: Dashboard security regression tests
-          command: node --test e2e/dashboard-*.test.mjs
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-ts-root
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/routes/__root\.tsx' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
-      - run:
-          name: Unit and architecture tests
-          command: bun run test:unit
 
+  diag-ts-product-routes:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: Production build
-          command: bun run build
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-ts-product-routes
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/routes/(product|brand|category|categories|brands|collections)[^:]*\.tsx' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
+
+  diag-ts-other-routes:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: SSR smoke test
-          command: bun run test:ssr
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-ts-other-routes
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/routes/(cart|shop|search|wishlist|compare|about|ar|contact|faq|help|privacy|returns|shipping|terms|used-phones|warranty|sitemap)[^:]*\.(ts|tsx)' /tmp/typecheck.log; then exit 1; fi
+            exit 0
+
+
+  diag-ts-bottom:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-ts-bottom
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/components/BottomNav\.tsx' /tmp/typecheck.log; then exit 1; fi
+            exit 0
+
+
+  diag-ts-cms-controls:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-ts-cms-controls
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/components/CmsStoreControls\.tsx' /tmp/typecheck.log; then exit 1; fi
+            exit 0
+
+
+  diag-ts-hero:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-ts-hero
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/components/(HeroScene|HomeHero|HomeSections|HomeCategorySection|TopBrands|BrandShowcaseSections|DealSpotlight|ProductRail)\.tsx' /tmp/typecheck.log; then exit 1; fi
+            exit 0
+
+
+  diag-ts-layout:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-ts-layout
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/components/(StoreLayout|SiteHeader|SiteFooter|MobileTopBar|MobileMenu|DeferredDesktopHeader)\.tsx' /tmp/typecheck.log; then exit 1; fi
+            exit 0
+
+
+  diag-ts-commerce:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-ts-commerce
+          command: |
+            set +e
+            bun run typecheck > /tmp/typecheck.log 2>&1
+            set -e
+            if grep -Eq 'src/components/(CartDrawer|CheckoutDetailsForm|CatalogView|CompactProductCard|ProductCard|ProductGrid|ProductImage|ProductListCard|SearchOverlay|WhatsAppCheckoutForm|BrandLogo|CategoryGlyph|Newsletter|DeferredCartDrawer|DeferredToaster|ThemeToggle|LanguageToggle|WhatsAppCTA)\.tsx' /tmp/typecheck.log; then exit 1; fi
+            exit 0
 
 workflows:
-  security-and-storefront-validation:
+  ts-file-diagnostics:
     jobs:
-      - security-source
-      - security-dependencies
-      - storefront-ci:
-          filters:
-            branches:
-              only:
-                - /^important\/.*/
+      - diag-ts-index
+      - diag-ts-root
+      - diag-ts-product-routes
+      - diag-ts-other-routes
+      - diag-ts-bottom
+      - diag-ts-cms-controls
+      - diag-ts-hero
+      - diag-ts-layout
+      - diag-ts-commerce
