@@ -102,31 +102,45 @@ test("all dashboard image upload surfaces preview compression before convertible
 });
 
 
-test("media library bulk optimizer previews and safely replaces images in place", async () => {
-  const [page, bulk, media] = await Promise.all([
+test("global legacy optimizer covers all old dashboard image sources", async () => {
+  const [page, globalUi, globalData, media] = await Promise.all([
     read("src/dashboard/pages/MediaLibraryPage.tsx"),
-    read("src/dashboard/components/BulkMediaOptimizer.tsx"),
+    read("src/dashboard/components/GlobalLegacyImageOptimizer.tsx"),
+    read("src/dashboard/data/globalImageOptimizer.ts"),
     read("src/dashboard/data/media.ts"),
   ]);
 
-  assert.match(page, /BulkMediaOptimizer/);
-  assert.match(page, /canOptimize=\{canDelete\}/);
-  assert.match(bulk, /Bulk WebP optimizer/);
-  assert.match(bulk, /Analyze selected/);
-  assert.match(bulk, /Convert to WebP/);
-  assert.match(bulk, /Select all/);
-  assert.match(bulk, /Current/);
-  assert.match(bulk, /Dimensions/);
-  assert.match(bulk, /New dimensions/);
-  assert.match(bulk, /Size change/);
-  assert.match(bulk, /convertProductImageToWebp/);
-  assert.match(bulk, /replaceDashboardMediaAssetWithWebp/);
+  assert.match(page, /GlobalLegacyImageOptimizer/);
+  assert.match(page, /enabled=\{canDelete\}/);
+  assert.match(globalUi, /Global old-image WebP optimizer/);
+  assert.match(globalUi, /Products, brands, categories, hero and media library/);
+  assert.match(globalUi, /Analyze selected/);
+  assert.match(globalUi, /Convert all ready/);
+  assert.match(globalUi, /Current resolution/);
+  assert.match(globalUi, /New resolution/);
+  assert.match(globalUi, /Estimated saving/);
+  assert.match(globalUi, /convertProductImageToWebp/);
+  assert.match(globalUi, /replaceGlobalLegacyImageWithWebp/);
 
-  assert.match(media, /downloadDashboardMediaAsset/);
+  for (const table of [
+    "cms_media_assets",
+    "store_product_images",
+    "store_products",
+    "cms_brands",
+    "store_categories",
+    "cms_hero_slides",
+  ]) {
+    assert.match(globalData, new RegExp(table));
+  }
+  assert.match(globalData, /logo_url/);
+  assert.match(globalData, /cover_image_url/);
+  assert.match(globalData, /mobile_image_url/);
+  assert.match(globalData, /optimized\/\$\{assetRow\.source\}/);
+  assert.match(globalData, /Only dashboard admins can optimize existing media/);
+  assert.match(globalData, /replaceDashboardMediaAssetWithWebp/);
+  assert.match(globalData, /invalidateNativeStoreCache/);
+
   assert.match(media, /replaceDashboardMediaAssetWithWebp/);
   assert.match(media, /role !== "admin"/);
-  assert.match(media, /upsert: true/);
-  assert.match(media, /contentType: "image\/webp"/);
-  assert.match(media, /mime_type: "image\/webp"/);
   assert.match(media, /rollback failed/);
 });
