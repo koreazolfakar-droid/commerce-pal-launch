@@ -197,7 +197,7 @@ begin
   end if;
 
   v_items := payload -> 'items';
-  v_customer := pg_catalog.coalesce(payload -> 'customer', '{}'::jsonb);
+  v_customer := coalesce(payload -> 'customer', '{}'::jsonb);
 
   if v_items is null
     or pg_catalog.jsonb_typeof(v_items) <> 'array'
@@ -207,7 +207,7 @@ begin
   end if;
 
   v_idempotency_key := pg_catalog.left(
-    pg_catalog.btrim(pg_catalog.coalesce(payload ->> 'idempotency_key', '')),
+    pg_catalog.btrim(coalesce(payload ->> 'idempotency_key', '')),
     128
   );
   if pg_catalog.length(v_idempotency_key) < 16 then
@@ -248,39 +248,39 @@ begin
   end if;
 
   v_name := pg_catalog.left(
-    pg_catalog.btrim(pg_catalog.coalesce(v_customer ->> 'name', '')),
+    pg_catalog.btrim(coalesce(v_customer ->> 'name', '')),
     120
   );
   v_phone := pg_catalog.left(
     pg_catalog.regexp_replace(
-      pg_catalog.coalesce(v_customer ->> 'phone', ''),
+      coalesce(v_customer ->> 'phone', ''),
       '[^0-9+]',
       '',
       'g'
     ),
     32
   );
-  v_email := pg_catalog.nullif(
-    pg_catalog.left(pg_catalog.btrim(pg_catalog.coalesce(v_customer ->> 'email', '')), 200),
+  v_email := nullif(
+    pg_catalog.left(pg_catalog.btrim(coalesce(v_customer ->> 'email', '')), 200),
     ''
   );
-  v_address := pg_catalog.nullif(
-    pg_catalog.left(pg_catalog.btrim(pg_catalog.coalesce(v_customer ->> 'address', '')), 500),
+  v_address := nullif(
+    pg_catalog.left(pg_catalog.btrim(coalesce(v_customer ->> 'address', '')), 500),
     ''
   );
-  v_city := pg_catalog.nullif(
-    pg_catalog.left(pg_catalog.btrim(pg_catalog.coalesce(v_customer ->> 'city', '')), 120),
+  v_city := nullif(
+    pg_catalog.left(pg_catalog.btrim(coalesce(v_customer ->> 'city', '')), 120),
     ''
   );
-  v_notes := pg_catalog.nullif(
-    pg_catalog.left(pg_catalog.btrim(pg_catalog.coalesce(payload ->> 'notes', '')), 1000),
+  v_notes := nullif(
+    pg_catalog.left(pg_catalog.btrim(coalesce(payload ->> 'notes', '')), 1000),
     ''
   );
-  v_reference := pg_catalog.nullif(
-    pg_catalog.left(pg_catalog.btrim(pg_catalog.coalesce(payload ->> 'reference', '')), 120),
+  v_reference := nullif(
+    pg_catalog.left(pg_catalog.btrim(coalesce(payload ->> 'reference', '')), 120),
     ''
   );
-  v_payment := pg_catalog.coalesce(pg_catalog.nullif(payload ->> 'payment_method', ''), 'cash');
+  v_payment := coalesce(nullif(payload ->> 'payment_method', ''), 'cash');
   v_location := payload -> 'delivery_location';
 
   if pg_catalog.length(v_name) < 2 then
@@ -393,7 +393,7 @@ begin
 
   select
     case
-      when pg_catalog.coalesce(setting.value_text, '') ~ '^[0-9]+([.][0-9]{1,2})?$'
+      when coalesce(setting.value_text, '') ~ '^[0-9]+([.][0-9]{1,2})?$'
         then setting.value_text::numeric(12,2)
       else 0::numeric(12,2)
     end
@@ -402,7 +402,7 @@ begin
   where setting.key = 'delivery_fee'
   limit 1;
 
-  v_shipping_total := pg_catalog.coalesce(v_shipping_total, 0);
+  v_shipping_total := coalesce(v_shipping_total, 0);
   if v_shipping_total < 0 or v_shipping_total > 10000 then
     raise exception 'invalid_delivery_fee_config';
   end if;
@@ -443,7 +443,7 @@ begin
     v_city,
     v_notes,
     v_reference,
-    pg_catalog.coalesce(v_order_currency, 'USD'),
+    coalesce(v_order_currency, 'USD'),
     v_subtotal,
     v_shipping_total,
     0,
@@ -506,13 +506,13 @@ begin
       v_price,
       v_qty,
       v_price * v_qty,
-      pg_catalog.coalesce(v_options, '{}'::jsonb)
+      coalesce(v_options, '{}'::jsonb)
     );
 
     if v_track then
       update public.store_product_variants
       set
-        stock_quantity = pg_catalog.greatest(0, stock_quantity - v_qty),
+        stock_quantity = greatest(0, stock_quantity - v_qty),
         updated_at = pg_catalog.now()
       where id = v_variant_id;
 
@@ -563,7 +563,7 @@ begin
   return pg_catalog.jsonb_build_object(
     'order_id', v_order_id,
     'order_number', v_order_number,
-    'currency', pg_catalog.coalesce(v_order_currency, 'USD'),
+    'currency', coalesce(v_order_currency, 'USD'),
     'subtotal', v_subtotal,
     'shipping_total', v_shipping_total,
     'delivery_type', v_delivery_type,
@@ -665,7 +665,7 @@ begin
       order by order_item.variant_id
     loop
       if v_item.variant_id is not null
-        and pg_catalog.coalesce(v_item.track_inventory, false) then
+        and coalesce(v_item.track_inventory, false) then
         update public.store_product_variants
         set
           stock_quantity = stock_quantity + v_item.quantity,
@@ -700,7 +700,7 @@ begin
     status = p_status,
     version = version + 1,
     completed_at = case
-      when p_status = 'done' then pg_catalog.coalesce(completed_at, pg_catalog.now())
+      when p_status = 'done' then coalesce(completed_at, pg_catalog.now())
       else completed_at
     end
   where id = p_order_id
@@ -732,7 +732,7 @@ begin
       v_after.shipping_total,
       v_after.discount_total,
       v_after.total,
-      pg_catalog.coalesce(v_after.completed_at, pg_catalog.now())
+      coalesce(v_after.completed_at, pg_catalog.now())
     )
     on conflict (order_id) do nothing;
   end if;
@@ -915,7 +915,7 @@ begin
 
   v_fee := case
     when p_delivery_type = 'free' then 0
-    else pg_catalog.round(pg_catalog.coalesce(p_shipping_total, 0)::numeric, 2)
+    else pg_catalog.round(coalesce(p_shipping_total, 0)::numeric, 2)
   end;
 
   if v_fee < 0 or v_fee > 10000 then
@@ -926,7 +926,7 @@ begin
   set
     delivery_type = p_delivery_type,
     shipping_total = v_fee,
-    total = pg_catalog.greatest(0, subtotal + v_fee - discount_total),
+    total = greatest(0, subtotal + v_fee - discount_total),
     version = version + 1
   where id = p_order_id
   returning * into v_after;
