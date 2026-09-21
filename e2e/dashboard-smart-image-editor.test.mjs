@@ -78,6 +78,7 @@ test("hero images have separate desktop and mobile smart crops and can be re-edi
 test("shared media surfaces support smart adjustment without breaking existing links", () => {
   assert.match(media, /useSmartImageEditor/);
   assert.match(media, /replaceDashboardMediaAssetWithWebp/);
+  assert.match(media, /outputFormat: "webp"/);
   assert.match(media, /without changing its media URL/);
   assert.match(picker, /useSmartImageEditor/);
   assert.match(picker, /Adjust image/);
