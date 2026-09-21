@@ -29,9 +29,15 @@ test("shopper-visible subtotal and delivery fee are sent only as pricing expecta
   assert.match(cart, /deliveryFee=\{deliveryFee\}/);
   assert.match(checkout, /expectedSubtotal: total/);
   assert.match(checkout, /expectedDeliveryFee: deliveryFee/);
-  assert.match(client, /expected_subtotal:/);
-  assert.match(client, /expected_delivery_fee:/);
-  assert.doesNotMatch(client, /shipping_total\s*:/);
+
+  const bodyStart = client.indexOf("const body = {");
+  const invokeStart = client.indexOf("supabase.functions.invoke", bodyStart);
+  assert.ok(bodyStart > 0 && invokeStart > bodyStart, "checkout request body should be identifiable");
+  const requestBodySource = client.slice(bodyStart, invokeStart);
+
+  assert.match(requestBodySource, /expected_subtotal:/);
+  assert.match(requestBodySource, /expected_delivery_fee:/);
+  assert.doesNotMatch(requestBodySource, /shipping_total\s*:/);
 });
 
 test("checkout blocks silent price changes before WhatsApp or stock completion", () => {
