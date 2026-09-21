@@ -100,8 +100,9 @@ export default function MediaLibraryPage() {
       const edited = await imageEditor.editUrl(asset.url, {
         title: "Adjust media image",
         preset: "free",
-        transparent: false,
+        transparent: true,
         defaultFit: "contain",
+        outputFormat: "webp",
       });
       if (!edited) return;
       setAdjustingId(asset.id);
@@ -150,7 +151,7 @@ export default function MediaLibraryPage() {
               void imageEditor.editFile(file, {
                 title: "Adjust media image",
                 preset: "free",
-                transparent: false,
+                transparent: true,
                 defaultFit: "contain",
               }).then((edited) => {
                 if (edited) setPendingFile(edited);
