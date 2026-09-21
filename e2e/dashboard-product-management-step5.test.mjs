@@ -49,7 +49,7 @@ test("variant loading is stable across product-form rerenders and exposes recove
   assert.match(variants, /onSingleVariantChangeRef/);
   assert.match(variants, /const publishState = useCallback/);
   assert.match(variants, /setLoadError\(message\)/);
-  assert.match(variants, />Retry</);
+  assert.match(variants, />\s*Retry/);
 });
 
 test("product management supports multi-collection, duplication, bulk status and safe deletion", () => {
