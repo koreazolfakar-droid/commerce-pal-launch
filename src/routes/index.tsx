@@ -137,21 +137,19 @@ export const Route = createFileRoute("/")({
     const heroPreload = loaderData?.heroPreload;
     const heroPreloadLinks = heroPreload
       ? heroPreload.mobile === heroPreload.desktop
-        ? [{ rel: "preload" as const, as: "image" as const, href: heroPreload.desktop, fetchPriority: "high" as const }]
+        ? [{ rel: "preload" as const, as: "image" as const, href: heroPreload.desktop }]
         : [
             {
               rel: "preload" as const,
               as: "image" as const,
               href: heroPreload.mobile,
               media: "(max-width: 639px)",
-              fetchPriority: "high" as const,
             },
             {
               rel: "preload" as const,
               as: "image" as const,
               href: heroPreload.desktop,
               media: "(min-width: 640px)",
-              fetchPriority: "high" as const,
             },
           ]
       : [];
