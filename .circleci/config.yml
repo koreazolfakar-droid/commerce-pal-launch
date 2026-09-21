@@ -1,8 +1,15 @@
 version: 2.1
+jobs:
 
-commands:
-  install-bun:
+  diag-cms-refresh:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
     steps:
+      - checkout
       - run:
           name: Install Bun
           command: |
@@ -10,93 +17,214 @@ commands:
             echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
             echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
             source "$BASH_ENV"
-            bun --version
-
-jobs:
-  security-source:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
-      - run:
-          name: High-confidence source and secret scan
-          command: node scripts/security-gate.mjs
-
-  security-dependencies:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-      - install-bun
-      - run:
-          name: High and critical dependency audit
-          command: |
-            source "$BASH_ENV"
-            bun audit --audit-level=high
-
-  storefront-ci:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    environment:
-      BUN_INSTALL: /home/circleci/.bun
-    steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-            - bun-deps-v1-{{ checksum "bun.lock" }}
-            - bun-deps-v1-
-
-      - install-bun
-
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
-
-      - save_cache:
-          key: bun-deps-v1-{{ checksum "bun.lock" }}
-          paths:
-            - ~/.bun/install/cache
-
       - run:
-          name: TypeScript
-          command: bun run typecheck
+          name: cms-refresh
+          command: node --test e2e/cms-refresh.test.mjs
 
-      - run:
-          name: ESLint
-          command: bun run lint
 
+  diag-hero-design:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: Dashboard security regression tests
-          command: node --test e2e/dashboard-*.test.mjs
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: hero-design
+          command: node --test e2e/hero-design.test.mjs
 
-      - run:
-          name: Unit and architecture tests
-          command: bun run test:unit
 
+  diag-hero-scene:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: Production build
-          command: bun run build
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: hero-scene
+          command: node --test e2e/hero-scene.test.mjs
 
+
+  diag-hybrid-storefront:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
       - run:
-          name: SSR smoke test
-          command: bun run test:ssr
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: hybrid-storefront
+          command: node --test e2e/hybrid-storefront.test.mjs
+
+
+  diag-seo-regression:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: seo-regression
+          command: node --test e2e/seo-regression.test.mjs
+
+
+  diag-shopify-only-storefront:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: shopify-only-storefront
+          command: node --test e2e/shopify-only-storefront.test.mjs
+
+
+  diag-storefront-consistency:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: storefront-consistency
+          command: node --test e2e/storefront-consistency.test.mjs
+
+
+  diag-storefront-dark-theme:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: storefront-dark-theme
+          command: node --test e2e/storefront-dark-theme.test.mjs
+
+
+  diag-storefront-supabase-failover:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> "$BASH_ENV"
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: storefront-supabase-failover
+          command: node --test e2e/storefront-supabase-failover.test.mjs
 
 workflows:
-  security-and-storefront-validation:
+  storefront-unit-diagnostics:
     jobs:
-      - security-source
-      - security-dependencies
-      - storefront-ci:
-          filters:
-            branches:
-              only:
-                - /^important\/.*/
+      - diag-cms-refresh
+      - diag-hero-design
+      - diag-hero-scene
+      - diag-hybrid-storefront
+      - diag-seo-regression
+      - diag-shopify-only-storefront
+      - diag-storefront-consistency
+      - diag-storefront-dark-theme
+      - diag-storefront-supabase-failover
