@@ -338,7 +338,7 @@ function CmsActionLink({
 }) {
   if (href.startsWith("/") && !href.startsWith("//")) {
     return (
-      <Link href={href} preload="intent" className={className}>
+      <Link to={href as never} preload="intent" className={className}>
         {children}
       </Link>
     );
