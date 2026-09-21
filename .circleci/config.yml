@@ -90,6 +90,78 @@ jobs:
           name: SSR smoke test
           command: bun run test:ssr
 
+
+  perf-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript only
+          command: bun run typecheck
+
+  perf-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: ESLint only
+          command: bun run lint
+
+  perf-unit:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit and architecture tests only
+          command: bun run test:unit
+
+  perf-build-ssr:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Production build
+          command: bun run build
+      - run:
+          name: SSR smoke test
+          command: bun run test:ssr
+
 workflows:
   security-and-storefront-validation:
     jobs:
@@ -100,3 +172,23 @@ workflows:
             branches:
               only:
                 - /^important\/.*/
+      - perf-typecheck:
+          filters:
+            branches:
+              only:
+                - important/perf-diagnostics-20260921
+      - perf-lint:
+          filters:
+            branches:
+              only:
+                - important/perf-diagnostics-20260921
+      - perf-unit:
+          filters:
+            branches:
+              only:
+                - important/perf-diagnostics-20260921
+      - perf-build-ssr:
+          filters:
+            branches:
+              only:
+                - important/perf-diagnostics-20260921
