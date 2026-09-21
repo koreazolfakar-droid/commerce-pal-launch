@@ -169,3 +169,35 @@ test("global optimizer auto-previews current and expected sizes when settings ch
   assert.match(ui, /Before conversion/);
   assert.match(ui, /After conversion/);
 });
+
+test("safe old-original cleanup scans references again before deletion", async () => {
+  const [ui, data] = await Promise.all([
+    read("src/dashboard/components/GlobalLegacyImageOptimizer.tsx"),
+    read("src/dashboard/data/globalImageOptimizer.ts"),
+  ]);
+
+  assert.match(ui, /Clean old originals safely/);
+  assert.match(ui, /Scan old originals/);
+  assert.match(ui, /Space to reclaim/);
+  assert.match(ui, /References are checked again immediately before deletion/);
+  assert.match(ui, /safe originals/);
+
+  for (const table of [
+    "cms_media_assets",
+    "store_product_images",
+    "store_product_variants",
+    "cms_brands",
+    "store_categories",
+    "cms_hero_slides",
+    "cms_site_settings",
+  ]) {
+    assert.match(data, new RegExp(table));
+  }
+
+  assert.match(data, /scanSafeOldOriginals/);
+  assert.match(data, /deleteSafeOldOriginals/);
+  assert.match(data, /loadAllKnownReferencedObjectPaths/);
+  assert.match(data, /!referenced\.has\(item\.objectPath\)/);
+  assert.match(data, /OUTPUT_PREFIX/);
+  assert.match(data, /storage\.from\(item\.bucketId\)\.remove/);
+});
