@@ -19,10 +19,12 @@ export const CompactProductCard = memo(function CompactProductCard({
   product,
   className,
   listItem = false,
+  eager = false,
 }: {
   product: ShopifyProduct;
   className?: string;
   listItem?: boolean;
+  eager?: boolean;
 }) {
   const { t } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
@@ -82,6 +84,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             alt={image?.altText ?? node.title}
             size={280}
             sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 44vw"
+            eager={eager}
             imageClassName={cn(
               "transition-[transform,filter,opacity] duration-300 group-hover:scale-[1.045]",
               !inStock && "scale-[1.01] blur-[2px] opacity-70 grayscale-[0.12]",

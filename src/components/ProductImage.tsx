@@ -44,7 +44,7 @@ export function ProductImage({
           sizes={sizes}
           alt={alt}
           loading={eager ? "eager" : "lazy"}
-          fetchPriority={eager ? "high" : "low"}
+          fetchPriority={eager ? "high" : "auto"}
           decoding="async"
           width={size}
           height={size}
