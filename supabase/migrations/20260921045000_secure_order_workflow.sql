@@ -94,6 +94,10 @@ create table if not exists public.store_order_audit_log (
 create index if not exists store_order_audit_order_created_idx
   on public.store_order_audit_log(order_id, created_at desc);
 
+create index if not exists store_order_audit_actor_idx
+  on public.store_order_audit_log(actor_user_id)
+  where actor_user_id is not null;
+
 alter table public.store_order_audit_log enable row level security;
 revoke all on public.store_order_audit_log from public, anon, authenticated;
 grant select on public.store_order_audit_log to authenticated;
