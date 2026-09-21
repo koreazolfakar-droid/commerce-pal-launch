@@ -19,33 +19,35 @@ test("brand and category rows share the same responsive action surface", async (
 
   assert.match(brands, /CatalogRowActions/);
   assert.match(categories, /CatalogRowActions/);
-  assert.match(brands, /min-h-\[72px\]/);
+  assert.match(brands, /grid-cols-2/);
+  assert.match(brands, /sm:grid-cols-3/);
+  assert.match(brands, /lg:grid-cols-4/);
+  assert.match(brands, /min-h-\[112px\]/);
+  assert.match(brands, /Assign Products/);
   assert.match(categories, /min-h-\[72px\]/);
-  assert.match(brands, /size-11 sm:size-10/);
   assert.match(categories, /size-11 shrink-0/);
 });
 
-test("Brands and Categories use the same phone and desktop master-detail breakpoints", async () => {
+test("Brands use a full-width card grid while Categories keep master-detail navigation", async () => {
   const [brands, categories] = await Promise.all([
     read("src/dashboard/pages/BrandsPage.tsx"),
     read("src/dashboard/pages/CategoriesPage.tsx"),
   ]);
 
-  for (const source of [brands, categories]) {
-    assert.match(source, /lg:grid-cols-\[320px_minmax\(0,1fr\)\]/);
-    assert.match(source, /xl:grid-cols-\[340px_minmax\(0,1fr\)\]/);
-    assert.match(source, /lg:sticky lg:top-\[6\.5rem\]/);
-    assert.match(source, /window\.innerWidth < 1024/);
-    assert.match(source, /text-\[24px\].*sm:text-\[30px\]/);
-    assert.match(source, /grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto/);
-    assert.match(source, /bottom-\[calc\(4\.75rem\+env\(safe-area-inset-bottom\)\)\]/);
-    assert.match(source, /xl:grid-cols-\[minmax\(0,1\.5fr\)_minmax\(90px,\.8fr\)_80px_80px_82px_36px\]/);
-  }
-
+  assert.doesNotMatch(brands, /lg:grid-cols-\[320px_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(brands, /lg:sticky lg:top-\[6\.5rem\]/);
   assert.match(brands, /id="brand-list"/);
   assert.match(brands, /id="brand-details"/);
   assert.match(brands, /Back to brands/);
+  assert.match(brands, /Assign Products/);
+  assert.match(brands, /Delete Brand/);
+  assert.match(brands, /requestDelete\(selected\)/);
+  assert.match(brands, /aria-busy=\{deleting\}/);
 
+  assert.match(categories, /lg:grid-cols-\[320px_minmax\(0,1fr\)\]/);
+  assert.match(categories, /xl:grid-cols-\[340px_minmax\(0,1fr\)\]/);
+  assert.match(categories, /lg:sticky lg:top-\[6\.5rem\]/);
+  assert.match(categories, /window\.innerWidth < 1024/);
   assert.match(categories, /id="category-list"/);
   assert.match(categories, /id="category-details"/);
   assert.match(categories, /Back to categories/);
