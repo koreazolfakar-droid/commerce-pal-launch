@@ -92,9 +92,25 @@ export const ProductCard = memo(function ProductCard({
             size={480}
             sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
             eager={eager}
-            imageClassName="group-hover:scale-[1.045]"
+            imageClassName={cn(
+              "transition-[transform,filter,opacity] duration-300 group-hover:scale-[1.045]",
+              !inStock && "scale-[1.01] blur-[2px] opacity-70 grayscale-[0.12]",
+            )}
           />
         </Link>
+        {!inStock && (
+          <>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-[5] bg-black/20 backdrop-blur-[0.6px]"
+            />
+            <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center px-4">
+              <span className="rounded-full border border-red-300/70 bg-red-600/95 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white shadow-lg shadow-red-950/20 backdrop-blur-md sm:px-5 sm:py-2.5 sm:text-xs">
+                {t("soldOut")}
+              </span>
+            </div>
+          </>
+        )}
         <QuickViewButton product={product} />
 
         <div className="pointer-events-none absolute start-2.5 top-2.5 z-10 flex flex-col gap-1.5 sm:start-3 sm:top-3">
@@ -106,11 +122,6 @@ export const ProductCard = memo(function ProductCard({
           {discount !== null && (
             <span className="rounded-full bg-destructive px-2.5 py-1 text-[10px] font-bold text-destructive-foreground">
               -{discount}%
-            </span>
-          )}
-          {!inStock && (
-            <span className="rounded-full bg-foreground/80 px-2.5 py-1 text-[10px] font-semibold text-background">
-              {t("soldOut")}
             </span>
           )}
         </div>
@@ -167,14 +178,14 @@ export const ProductCard = memo(function ProductCard({
         <p
           className={cn(
             "inline-flex items-center gap-1.5 text-xs font-medium",
-            inStock ? "text-success" : "text-muted-foreground",
+            inStock ? "text-success" : "text-destructive",
           )}
         >
           <span
             aria-hidden
             className={cn(
               "h-1.5 w-1.5 rounded-full",
-              inStock ? "bg-success" : "bg-muted-foreground",
+              inStock ? "bg-success" : "bg-destructive",
             )}
           />
           {t(inStock ? "inStock" : "outOfStock")}
