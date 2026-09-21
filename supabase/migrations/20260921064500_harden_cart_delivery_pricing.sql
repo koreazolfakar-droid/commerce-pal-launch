@@ -67,6 +67,75 @@ with check (
   and (select private.is_dashboard_admin())
 );
 
+create or replace function private.audit_delivery_fee_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_old_value text;
+  v_new_value text;
+begin
+  if tg_op = 'INSERT' then
+    if new.key <> 'delivery_fee' then
+      return new;
+    end if;
+    v_old_value := null;
+    v_new_value := new.value_text;
+  elsif tg_op = 'UPDATE' then
+    if new.key <> 'delivery_fee' and old.key <> 'delivery_fee' then
+      return new;
+    end if;
+    if new.value_text is not distinct from old.value_text then
+      return new;
+    end if;
+    v_old_value := old.value_text;
+    v_new_value := new.value_text;
+  else
+    if old.key <> 'delivery_fee' then
+      return old;
+    end if;
+    v_old_value := old.value_text;
+    v_new_value := null;
+  end if;
+
+  insert into public.cms_audit_log (
+    actor_email,
+    action,
+    entity_type,
+    entity_id,
+    details
+  ) values (
+    nullif(auth.jwt() ->> 'email', ''),
+    case
+      when tg_op = 'INSERT' then 'delivery_fee_created'
+      when tg_op = 'UPDATE' then 'delivery_fee_updated'
+      else 'delivery_fee_deleted'
+    end,
+    'site_setting',
+    'delivery_fee',
+    pg_catalog.jsonb_build_object(
+      'old_value', v_old_value,
+      'new_value', v_new_value,
+      'source', 'database_trigger'
+    )
+  );
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function private.audit_delivery_fee_change() from public, anon, authenticated;
+
+drop trigger if exists audit_delivery_fee_change on public.cms_site_settings;
+create trigger audit_delivery_fee_change
+after insert or update or delete on public.cms_site_settings
+for each row execute function private.audit_delivery_fee_change();
+
 CREATE OR REPLACE FUNCTION public.create_store_order_internal(payload jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
