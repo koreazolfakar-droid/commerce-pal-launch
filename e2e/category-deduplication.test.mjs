@@ -10,9 +10,16 @@ const migration = await readFile(
   new URL("../supabase/migrations/20260921082500_deduplicate_store_categories.sql", import.meta.url),
   "utf8",
 );
+const consolidation = await readFile(
+  new URL("../supabase/migrations/20260921090500_consolidate_top_level_categories.sql", import.meta.url),
+  "utf8",
+);
 
 test("legacy duplicate category URLs redirect to canonical categories", () => {
   assert.match(categoryRoute, /"mobile-phones": "smartphone"/);
+  assert.match(categoryRoute, /"foldable-smartphone": "smartphone"/);
+  assert.match(categoryRoute, /"smartphone-bundle": "smartphone"/);
+  assert.match(categoryRoute, /"gaming-tablet": "tablet"/);
   assert.match(categoryRoute, /"wall-charger": "charger"/);
   assert.match(categoryRoute, /"charging-cable": "cable"/);
   assert.match(categoryRoute, /throw redirect\(/);
@@ -35,4 +42,13 @@ test("category migration protects canonical rows and prevents blank slugs", () =
   assert.match(migration, /canonical Cable category missing/);
   assert.match(migration, /store_categories_slug_nonempty/);
   assert.match(migration, /check \(length\(trim\(slug\)\) > 0\)/);
+});
+
+test("narrow duplicate categories are consolidated while preserving subtype tags", () => {
+  assert.match(consolidation, /foldable-smartphone/);
+  assert.match(consolidation, /smartphone-bundle/);
+  assert.match(consolidation, /gaming-tablet/);
+  assert.match(consolidation, /array_append/);
+  assert.match(consolidation, /product_type = case/);
+  assert.match(consolidation, /delete from public\.store_categories/);
 });
