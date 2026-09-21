@@ -70,7 +70,7 @@ jobs:
           name: Cart targeted lint
           command: |
             set +e
-            bunx eslint src/routes/cart.tsx src/components/CheckoutDetailsForm.tsx e2e/cart-delivery-dashboard.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-ux-polish.test.mjs e2e/storefront-orders-secure.test.mjs > /tmp/cart-lint.log 2>&1
+            bun x eslint src/routes/cart.tsx src/components/CheckoutDetailsForm.tsx e2e/cart-delivery-dashboard.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-ux-polish.test.mjs e2e/storefront-orders-secure.test.mjs > /tmp/cart-lint.log 2>&1
             status=$?
             cat /tmp/cart-lint.log
             curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
