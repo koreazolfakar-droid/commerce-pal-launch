@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("mobile density modes use real stacked grids and keep product details visible", async ({ page }) => {
+test("mobile density modes use real stacked grids and keep product details visible", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 850 });
   await page.goto("/shop");
 
@@ -78,6 +80,13 @@ test("mobile density modes use real stacked grids and keep product details visib
   );
 
   await page.getByRole("button", { name: "List view", exact: true }).click();
+  await expect(page.locator("main .product-list-card")).toHaveCount(9);
+
+  await page.reload();
+  await expect(page.getByRole("button", { name: "List view", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(page.locator("main .product-list-card")).toHaveCount(9);
 });
 
