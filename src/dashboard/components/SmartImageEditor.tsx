@@ -23,7 +23,40 @@ type EditorOptions = {
   transparent?: boolean;
   defaultFit?: "contain" | "cover";
   outputFormat?: "png" | "webp";
+  previewContext?: "product";
 };
+
+type ProductPreviewMode = "card" | "mobile" | "desktop";
+
+const PRODUCT_STOREFRONT_PREVIEWS: Array<{
+  id: ProductPreviewMode;
+  label: string;
+  aspectRatio: string;
+  padding: string;
+  note: string;
+}> = [
+  {
+    id: "card",
+    label: "Product Card",
+    aspectRatio: "1 / 1",
+    padding: "6%",
+    note: "Exact card media: 1:1 · object-contain · 6% padding",
+  },
+  {
+    id: "mobile",
+    label: "Product Page · Mobile",
+    aspectRatio: "1 / 0.92",
+    padding: "10px",
+    note: "Exact mobile gallery: 1/0.92 · object-contain · 10px padding",
+  },
+  {
+    id: "desktop",
+    label: "Product Page · Desktop",
+    aspectRatio: "1 / 1",
+    padding: "32px",
+    note: "Exact desktop gallery: 1:1 · object-contain · 32px padding",
+  },
+];
 
 type EditorRequest = {
   source: File | string;
@@ -255,6 +288,61 @@ function RangeControl({
   );
 }
 
+function ProductStorefrontPreview({
+  loaded,
+  previewSize,
+  x,
+  y,
+  mode,
+}: {
+  loaded: LoadedImage;
+  previewSize: { width: number; height: number };
+  x: number;
+  y: number;
+  mode: ProductPreviewMode;
+}) {
+  const profile = PRODUCT_STOREFRONT_PREVIEWS.find((item) => item.id === mode) ?? PRODUCT_STOREFRONT_PREVIEWS[0];
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div>
+          <div className="text-[10px] font-black text-slate-700">Website preview</div>
+          <div className="mt-0.5 text-[9px] text-slate-400">{profile.note}</div>
+        </div>
+        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase tracking-[.1em] text-emerald-700">
+          Exact CSS
+        </span>
+      </div>
+
+      <div
+        className="mx-auto grid w-full max-w-[360px] place-items-center overflow-hidden rounded-[1.25rem] border border-slate-200 bg-image-stage shadow-sm"
+        style={{
+          aspectRatio: profile.aspectRatio,
+          padding: profile.padding,
+        }}
+      >
+        <div className="relative h-full max-w-full overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
+          <img
+            src={loaded.previewUrl}
+            alt=""
+            draggable={false}
+            className="pointer-events-none absolute max-w-none select-none"
+            style={{
+              width: `${previewSize.width}%`,
+              height: `${previewSize.height}%`,
+              left: `calc(50% + ${x}%)`,
+              top: `calc(50% + ${y}%)`,
+              transform: "translate(-50%, -50%)",
+              transformOrigin: "center",
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SmartImageEditorDialog({
   request,
   onDone,
@@ -268,7 +356,8 @@ function SmartImageEditorDialog({
   const outputType = outputFormat === "webp" ? "image/webp" : "image/png";
   const initialFit: "contain" | "cover" =
     request.options.defaultFit ?? (preset === "cover" || preset.startsWith("hero-") ? "cover" : "contain");
-  const initialPadding = preset === "logo" ? 10 : preset === "square" ? 5 : 0;
+  const initialPadding =
+    preset === "logo" ? 10 : request.options.previewContext === "product" ? 0 : preset === "square" ? 5 : 0;
   const [loaded, setLoaded] = useState<LoadedImage | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -278,6 +367,7 @@ function SmartImageEditorDialog({
   const [x, setX] = useState(0);
   const [y, setY] = useState(0);
   const [padding, setPadding] = useState(initialPadding);
+  const [productPreviewMode, setProductPreviewMode] = useState<ProductPreviewMode>("card");
   const dragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
 
   useEffect(() => {
@@ -470,6 +560,38 @@ function SmartImageEditorDialog({
             <p className="text-center text-[10px] leading-4 text-slate-400">
               Drag the image directly. Auto Center detects the visible subject, trims empty space and centers it visually.
             </p>
+
+            {request.options.previewContext === "product" && loaded ? (
+              <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1">
+                  {PRODUCT_STOREFRONT_PREVIEWS.map((profile) => (
+                    <button
+                      key={profile.id}
+                      type="button"
+                      onClick={() => setProductPreviewMode(profile.id)}
+                      className={`min-h-9 rounded-lg px-2 text-[8px] font-black transition ${
+                        productPreviewMode === profile.id
+                          ? "bg-white text-indigo-700 shadow-sm"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      {profile.id === "card" ? "Card" : profile.id === "mobile" ? "Mobile PDP" : "Desktop PDP"}
+                    </button>
+                  ))}
+                </div>
+                <ProductStorefrontPreview
+                  loaded={loaded}
+                  previewSize={previewSize}
+                  x={x}
+                  y={y}
+                  mode={productPreviewMode}
+                />
+                <div className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[9px] leading-4 text-amber-800">
+                  Product files are saved with 0% default baked-in padding. The storefront adds its own exact spacing, so the saved image is not padded twice.
+                </div>
+              </div>
+            ) : null}
+
             {error ? <div className="rounded-xl bg-rose-50 px-3 py-2 text-[10px] font-bold text-rose-700">{error}</div> : null}
           </div>
 
@@ -499,10 +621,21 @@ function SmartImageEditorDialog({
             <RangeControl label="Zoom" value={zoom} min={0.55} max={3} step={0.01} display={`${Math.round(zoom * 100)}%`} onChange={setZoom} />
             <RangeControl label="Horizontal" value={x} min={-45} max={45} step={1} display={String(Math.round(x))} onChange={setX} />
             <RangeControl label="Vertical" value={y} min={-45} max={45} step={1} display={String(Math.round(y))} onChange={setY} />
-            <RangeControl label="Padding" value={padding} min={0} max={30} step={1} display={`${Math.round(padding)}%`} onChange={setPadding} />
+            <RangeControl
+              label={request.options.previewContext === "product" ? "Extra image padding" : "Padding"}
+              value={padding}
+              min={0}
+              max={30}
+              step={1}
+              display={`${Math.round(padding)}%`}
+              onChange={setPadding}
+            />
 
             <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-[9px] leading-4 text-slate-500">
-              Output: {dimensions[0]}×{dimensions[1]} {outputFormat.toUpperCase()}. PNG is used losslessly before the existing WebP upload pipeline; direct media replacement uses WebP once.
+              Output: {dimensions[0]}×{dimensions[1]} {outputFormat.toUpperCase()}.
+              {request.options.previewContext === "product"
+                ? " Product output uses no default baked-in padding; the Website Preview applies the storefront spacing exactly."
+                : " PNG is used losslessly before the existing WebP upload pipeline; direct media replacement uses WebP once."}
             </div>
 
             <button type="button" onClick={() => void save()} disabled={!loaded || loading || saving} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-black text-white disabled:opacity-50">
