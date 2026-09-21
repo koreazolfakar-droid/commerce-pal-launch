@@ -226,6 +226,7 @@ export default function ProductMediaManager({
                 preset: "square",
                 transparent: true,
                 defaultFit: "contain",
+                previewContext: "product",
               });
               if (edited) adjusted.push(edited);
             }
@@ -249,6 +250,7 @@ export default function ProductMediaManager({
             preset: "square",
             transparent: true,
             defaultFit: "contain",
+            previewContext: "product",
           }).then((edited) => {
             if (!edited) return;
             setPendingReplaceFile(edited);
@@ -482,6 +484,7 @@ export default function ProductMediaManager({
                         preset: "square",
                         transparent: true,
                         defaultFit: "contain",
+                        previewContext: "product",
                       }).then((edited) => {
                         if (!edited) {
                           setReplaceTarget(null);
