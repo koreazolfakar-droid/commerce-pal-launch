@@ -331,17 +331,19 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
           ) : null}
 
           <div className="mt-3 max-h-[520px] overflow-auto rounded-xl border border-slate-200">
-            <table className="w-full min-w-[1080px] border-collapse text-left">
+            <table className="w-full min-w-[1220px] border-collapse text-left">
               <thead className="sticky top-0 z-10 bg-slate-50">
                 <tr className="border-b border-slate-200 text-[8px] font-black uppercase tracking-[.1em] text-slate-400">
                   <th className="w-10 px-3 py-2.5">Use</th>
                   <th className="px-3 py-2.5">Source</th>
                   <th className="px-3 py-2.5">Image</th>
-                  <th className="px-3 py-2.5">Current</th>
+                  <th className="px-3 py-2.5">Current format</th>
+                  <th className="px-3 py-2.5">Current size</th>
                   <th className="px-3 py-2.5">Current resolution</th>
-                  <th className="px-3 py-2.5">After</th>
+                  <th className="px-3 py-2.5">After format</th>
+                  <th className="px-3 py-2.5">After WebP size</th>
                   <th className="px-3 py-2.5">New resolution</th>
-                  <th className="px-3 py-2.5">Change</th>
+                  <th className="px-3 py-2.5">Saved</th>
                   <th className="px-3 py-2.5">Status</th>
                 </tr>
               </thead>
@@ -390,28 +392,47 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                         <div className="text-[10px] font-black text-slate-700">
                           {conversion ? formatMime(conversion.source.mimeType) : formatMime(item.mimeType)}
                         </div>
-                        <div className="mt-0.5 text-[8px] text-slate-400">
-                          {conversion ? formatImageBytes(conversion.source.bytes) : item.sizeBytes ? formatImageBytes(item.sizeBytes) : "Analyze for size"}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="text-[11px] font-black text-slate-800">
+                          {conversion
+                            ? formatImageBytes(conversion.source.bytes)
+                            : item.sizeBytes
+                              ? formatImageBytes(item.sizeBytes)
+                              : "Run Analyze"}
                         </div>
+                        <div className="mt-0.5 text-[8px] text-slate-400">Before conversion</div>
                       </td>
                       <td className="px-3 py-2.5 text-[10px] font-semibold text-slate-600">
                         {conversion ? `${conversion.source.width} × ${conversion.source.height}` : "Analyze to inspect"}
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="text-[10px] font-black text-emerald-700">{conversion ? "WEBP" : "—"}</div>
-                        <div className="mt-0.5 text-[8px] text-slate-400">{conversion ? formatImageBytes(conversion.output.bytes) : "—"}</div>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="text-[11px] font-black text-emerald-700">
+                          {conversion ? formatImageBytes(conversion.output.bytes) : "—"}
+                        </div>
+                        <div className="mt-0.5 text-[8px] text-slate-400">After conversion</div>
                       </td>
                       <td className="px-3 py-2.5 text-[10px] font-semibold text-slate-600">
                         {conversion ? `${conversion.output.width} × ${conversion.output.height}` : "—"}
                       </td>
                       <td className="px-3 py-2.5">
-                        {saving !== null ? (
-                          <span className={
-                            "rounded-full px-2 py-1 text-[9px] font-black " +
-                            (saving >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")
-                          }>
-                            {saving >= 0 ? `${saving}% smaller` : `${Math.abs(saving)}% larger`}
-                          </span>
+                        {saving !== null && conversion ? (
+                          <div>
+                            <span className={
+                              "rounded-full px-2 py-1 text-[9px] font-black " +
+                              (saving >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")
+                            }>
+                              {saving >= 0 ? `${saving}% smaller` : `${Math.abs(saving)}% larger`}
+                            </span>
+                            <div className="mt-1.5 text-[8px] font-bold text-slate-500">
+                              {saving >= 0
+                                ? `Saved ${formatImageBytes(conversion.source.bytes - conversion.output.bytes)}`
+                                : `+${formatImageBytes(conversion.output.bytes - conversion.source.bytes)}`}
+                            </div>
+                          </div>
                         ) : "—"}
                       </td>
                       <td className="px-3 py-2.5">
