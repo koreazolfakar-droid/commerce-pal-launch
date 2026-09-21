@@ -255,6 +255,14 @@ export async function deleteDashboardBrand(
   destinationBrandId: string | null,
 ) {
   await requireDashboardStaff();
+
+  const { data: media, error: mediaError } = await supabase
+    .from("cms_brands")
+    .select("logo_url,cover_image_url")
+    .eq("id", brandId)
+    .single();
+  throwIfError(mediaError, "Loading brand before deletion failed");
+
   const { error } = await supabase.rpc(
     "delete_store_brand",
     rpcArgs(destinationBrandId
@@ -262,6 +270,14 @@ export async function deleteDashboardBrand(
       : { p_brand_id: brandId },
   ));
   throwIfError(error, "Deleting brand failed");
+
+  const unusedMedia = [media?.logo_url, media?.cover_image_url].filter(
+    (url): url is string => Boolean(url),
+  );
+  await Promise.all(
+    unusedMedia.map((url) => removeDashboardBrandImage(url).catch(() => undefined)),
+  );
+
   invalidateNativeStoreCache();
 }
 
