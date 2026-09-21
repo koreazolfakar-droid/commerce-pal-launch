@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import { getDashboardRole, type DashboardRole } from "@/dashboard/data/catalog";
 import {
   loadDashboardSiteSettings,
@@ -104,6 +105,7 @@ export default function SettingsPage() {
   const [uploading, setUploading] = useState(false);
   const [pendingLogo, setPendingLogo] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const imageEditor = useSmartImageEditor();
 
   const load = useCallback(async (manual = false) => {
     if (!manual) setLoading(true);
@@ -184,6 +186,7 @@ export default function SettingsPage() {
 
   return (
     <div>
+      {imageEditor.dialog}
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
@@ -279,8 +282,17 @@ export default function SettingsPage() {
                       accept="image/jpeg,image/png,image/webp,image/avif"
                       className="hidden"
                       onChange={(event) => {
-                        setPendingLogo(event.target.files?.[0] ?? null);
+                        const file = event.target.files?.[0] ?? null;
                         event.currentTarget.value = "";
+                        if (!file) return;
+                        void imageEditor.editFile(file, {
+                          title: "Adjust store logo",
+                          preset: "logo",
+                          transparent: true,
+                          defaultFit: "contain",
+                        }).then((edited) => {
+                          if (edited) setPendingLogo(edited);
+                        });
                       }}
                     />
                     {pendingLogo ? (
@@ -303,9 +315,37 @@ export default function SettingsPage() {
                         Upload
                       </button>
                       <button
+                        type="button"
+                        onClick={() => {
+                          const source = pendingLogo ?? settings.logoUrl;
+                          if (!source) return;
+                          const editPromise =
+                            source instanceof File
+                              ? imageEditor.editFile(source, {
+                                  title: "Adjust store logo",
+                                  preset: "logo",
+                                  transparent: true,
+                                  defaultFit: "contain",
+                                })
+                              : imageEditor.editUrl(source, {
+                                  title: "Adjust store logo",
+                                  preset: "logo",
+                                  transparent: true,
+                                  defaultFit: "contain",
+                                });
+                          void editPromise.then((edited) => {
+                            if (edited) setPendingLogo(edited);
+                          });
+                        }}
+                        disabled={(!settings.logoUrl && !pendingLogo) || uploading}
+                        className="h-9 rounded-xl border border-indigo-200 bg-white text-[10px] font-bold text-indigo-600 disabled:opacity-40"
+                      >
+                        Adjust
+                      </button>
+                      <button
                         onClick={() => { setPendingLogo(null); update("logoUrl", ""); }}
                         disabled={!settings.logoUrl || uploading}
-                        className="h-9 rounded-xl border border-slate-200 bg-white text-[10px] font-bold text-slate-500 disabled:opacity-40"
+                        className="col-span-2 h-9 rounded-xl border border-slate-200 bg-white text-[10px] font-bold text-slate-500 disabled:opacity-40"
                       >
                         Use default
                       </button>
