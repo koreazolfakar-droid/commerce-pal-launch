@@ -16,8 +16,10 @@ import {
   nextOrderStatus,
   orderStatusLabel,
   paymentStatusLabel,
+  updateDashboardOrderDelivery,
   updateDashboardOrderPaymentStatus,
   updateDashboardOrderStatus,
+  type DashboardDeliveryType,
   type DashboardOrderDetail,
   type DashboardOrderStatus,
   type DashboardPaymentStatus,
@@ -55,9 +57,9 @@ function Panel({
 }
 
 function statusTone(status: DashboardOrderStatus) {
-  if (status === "delivered") return "green" as const;
+  if (status === "delivered" || status === "done") return "green" as const;
   if (status === "cancelled") return "rose" as const;
-  if (status === "pending") return "amber" as const;
+  if (status === "new") return "amber" as const;
   return "blue" as const;
 }
 
@@ -67,12 +69,18 @@ export default function OrderDetailPage({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [deliveryType, setDeliveryType] = useState<Exclude<DashboardDeliveryType, "pending">>("free");
+  const [deliveryFee, setDeliveryFee] = useState("0");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const next = await getDashboardOrder(id);
       setOrder(next);
+      if (next) {
+        setDeliveryType(next.deliveryType === "paid" ? "paid" : "free");
+        setDeliveryFee(String(next.shippingTotal));
+      }
       setError("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to load order.");
@@ -91,7 +99,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     if (!order || saving) return;
     setSaving(true);
     try {
-      const next = await updateDashboardOrderStatus(order.id, status);
+      const next = await updateDashboardOrderStatus(order.id, status, order.version);
       setOrder(next);
       toast.success(`Order #${order.orderNumber} marked ${orderStatusLabel(status)}.`);
     } catch (cause) {
@@ -105,11 +113,40 @@ export default function OrderDetailPage({ id }: { id: string }) {
     if (!order || saving || status === order.paymentStatus) return;
     setSaving(true);
     try {
-      const next = await updateDashboardOrderPaymentStatus(order.id, status);
+      const next = await updateDashboardOrderPaymentStatus(order.id, status, order.version);
       setOrder(next);
       toast.success(`Payment status changed to ${paymentStatusLabel(status)}.`);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Payment status update failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const changeDelivery = async () => {
+    if (!order || saving) return;
+    const fee = deliveryType === "free" ? 0 : Number(deliveryFee);
+    if (!Number.isFinite(fee) || fee < 0 || fee > 10000) {
+      toast.error("Delivery fee must be between 0 and 10000.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const next = await updateDashboardOrderDelivery(
+        order.id,
+        deliveryType,
+        fee,
+        order.version,
+      );
+      setOrder(next);
+      if (next) {
+        setDeliveryType(next.deliveryType === "paid" ? "paid" : "free");
+        setDeliveryFee(String(next.shippingTotal));
+      }
+      toast.success(deliveryType === "free" ? "Free delivery applied." : "Delivery fee updated.");
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Delivery update failed.");
     } finally {
       setSaving(false);
     }
@@ -158,7 +195,10 @@ export default function OrderDetailPage({ id }: { id: string }) {
     );
   }
 
-  const canCancel = ["pending", "confirmed", "processing"].includes(order.status);
+  const canCancel = ["new", "confirmed", "processing", "out_for_delivery"].includes(order.status);
+  const canEditDelivery =
+    order.paymentStatus === "unpaid" &&
+    !["delivered", "done", "cancelled"].includes(order.status);
   const money = (value: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -219,9 +259,11 @@ export default function OrderDetailPage({ id }: { id: string }) {
                 ? "Confirm order"
                 : nextStatus === "processing"
                   ? "Start processing"
-                  : nextStatus === "shipped"
-                    ? "Mark shipped"
-                    : "Mark delivered"}
+                  : nextStatus === "out_for_delivery"
+                    ? "Out for delivery"
+                    : nextStatus === "delivered"
+                      ? "Mark delivered"
+                      : "Mark DONE"}
             </button>
           ) : null}
         </div>
@@ -284,9 +326,10 @@ export default function OrderDetailPage({ id }: { id: string }) {
 
           <Panel title="Order status" subtitle="Validated status progression">
             <div className="grid gap-3 px-5 py-5 sm:grid-cols-3">
-              {(["pending", "confirmed", "processing", "shipped", "delivered"] as const).map((step) => {
-                const orderIndex = ["pending", "confirmed", "processing", "shipped", "delivered"].indexOf(order.status);
-                const stepIndex = ["pending", "confirmed", "processing", "shipped", "delivered"].indexOf(step);
+              {(["new", "confirmed", "processing", "out_for_delivery", "delivered", "done"] as const).map((step) => {
+                const flow = ["new", "confirmed", "processing", "out_for_delivery", "delivered", "done"] as const;
+                const orderIndex = flow.indexOf(order.status as (typeof flow)[number]);
+                const stepIndex = flow.indexOf(step);
                 const reached = order.status !== "cancelled" && stepIndex <= orderIndex;
                 return (
                   <div
@@ -319,12 +362,64 @@ export default function OrderDetailPage({ id }: { id: string }) {
             </div>
           </Panel>
 
-          <Panel title="Delivery">
-            <div className="space-y-2 px-5 py-4 text-[12px] text-slate-500">
-              <div>{order.deliveryAddress || "No delivery address provided."}</div>
-              {order.city ? <div>{order.city}</div> : null}
-              <div className="pt-2 text-[10px] text-slate-400">
-                Source: {order.source} · Payment method: {order.paymentMethod}
+          <Panel title="Delivery" subtitle="Server-controlled fee. Changes are version-checked and audited.">
+            <div className="space-y-4 px-5 py-4 text-[12px] text-slate-500">
+              <div>
+                <div>{order.deliveryAddress || "No delivery address provided."}</div>
+                {order.city ? <div className="mt-1">{order.city}</div> : null}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+                <label>
+                  <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                    Delivery
+                  </span>
+                  <select
+                    value={deliveryType}
+                    onChange={(event) =>
+                      setDeliveryType(event.target.value as Exclude<DashboardDeliveryType, "pending">)
+                    }
+                    disabled={!canEditDelivery || saving}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 disabled:bg-slate-50 disabled:opacity-60"
+                  >
+                    <option value="free">Free Delivery</option>
+                    <option value="paid">Paid Delivery</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                    Fee
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={deliveryType === "free" ? "0" : deliveryFee}
+                    onChange={(event) => setDeliveryFee(event.target.value)}
+                    disabled={!canEditDelivery || saving || deliveryType === "free"}
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 disabled:bg-slate-50 disabled:opacity-60"
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => void changeDelivery()}
+                  disabled={!canEditDelivery || saving}
+                  className="mt-auto h-10 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-40"
+                >
+                  Save delivery
+                </button>
+              </div>
+
+              {!canEditDelivery ? (
+                <div className="rounded-xl bg-slate-50 px-3 py-2 text-[10px] text-slate-400">
+                  Delivery pricing locks after payment or when the order reaches a final stage.
+                </div>
+              ) : null}
+
+              <div className="pt-1 text-[10px] text-slate-400">
+                Source: {order.source} · Payment method: {order.paymentMethod} · Version {order.version}
               </div>
             </div>
           </Panel>

@@ -8,12 +8,15 @@ type OrderItemRow = Tables<"store_order_items">;
 type ProductImageRow = Tables<"store_product_images">;
 
 export type DashboardOrderStatus =
-  | "pending"
+  | "new"
   | "confirmed"
   | "processing"
-  | "shipped"
+  | "out_for_delivery"
   | "delivered"
+  | "done"
   | "cancelled";
+
+export type DashboardDeliveryType = "pending" | "paid" | "free";
 
 export type DashboardPaymentStatus =
   | "unpaid"
@@ -70,6 +73,10 @@ export type DashboardOrderDetail = {
   discountTotal: number;
   total: number;
   source: string;
+  deliveryType: DashboardDeliveryType;
+  deliveryLocation: unknown;
+  version: number;
+  completedAt: string | null;
   createdAt: string;
   updatedAt: string;
   items: DashboardOrderItem[];
@@ -77,11 +84,12 @@ export type DashboardOrderDetail = {
 
 export type DashboardOrderStats = {
   all: number;
-  pending: number;
+  new: number;
   confirmed: number;
   processing: number;
-  shipped: number;
+  outForDelivery: number;
   delivered: number;
+  done: number;
   cancelled: number;
 };
 
@@ -105,16 +113,17 @@ async function requireDashboardStaff() {
 
 function statusFromRow(value: string): DashboardOrderStatus {
   if (
-    value === "pending" ||
+    value === "new" ||
     value === "confirmed" ||
     value === "processing" ||
-    value === "shipped" ||
+    value === "out_for_delivery" ||
     value === "delivered" ||
+    value === "done" ||
     value === "cancelled"
   ) {
     return value;
   }
-  return "pending";
+  return "new";
 }
 
 function paymentFromRow(value: string): DashboardPaymentStatus {
@@ -138,16 +147,18 @@ async function countOrders(status?: DashboardOrderStatus) {
 }
 
 async function loadOrderStats(): Promise<DashboardOrderStats> {
-  const [all, pending, confirmed, processing, shipped, delivered, cancelled] = await Promise.all([
-    countOrders(),
-    countOrders("pending"),
-    countOrders("confirmed"),
-    countOrders("processing"),
-    countOrders("shipped"),
-    countOrders("delivered"),
-    countOrders("cancelled"),
-  ]);
-  return { all, pending, confirmed, processing, shipped, delivered, cancelled };
+  const [all, fresh, confirmed, processing, outForDelivery, delivered, done, cancelled] =
+    await Promise.all([
+      countOrders(),
+      countOrders("new"),
+      countOrders("confirmed"),
+      countOrders("processing"),
+      countOrders("out_for_delivery"),
+      countOrders("delivered"),
+      countOrders("done"),
+      countOrders("cancelled"),
+    ]);
+  return { all, new: fresh, confirmed, processing, outForDelivery, delivered, done, cancelled };
 }
 
 export async function listDashboardOrders(input?: {
@@ -313,6 +324,11 @@ export async function getDashboardOrder(id: string): Promise<DashboardOrderDetai
     discountTotal: Number(order.discount_total) || 0,
     total: Number(order.total) || 0,
     source: order.source,
+    deliveryType:
+      order.delivery_type === "paid" || order.delivery_type === "free" ? order.delivery_type : "pending",
+    deliveryLocation: order.delivery_location,
+    version: order.version,
+    completedAt: order.completed_at,
     createdAt: order.created_at,
     updatedAt: order.updated_at,
     items: items.map((item) => ({
@@ -334,11 +350,13 @@ export async function getDashboardOrder(id: string): Promise<DashboardOrderDetai
 export async function updateDashboardOrderStatus(
   id: string,
   status: DashboardOrderStatus,
+  expectedVersion: number,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
   const { error } = await supabase.rpc("update_store_order_status", rpcArgs({
     p_order_id: id,
     p_status: status,
+    p_expected_version: expectedVersion,
   }));
   throwIfError(error, "Updating order status failed");
   return getDashboardOrder(id);
@@ -347,25 +365,48 @@ export async function updateDashboardOrderStatus(
 export async function updateDashboardOrderPaymentStatus(
   id: string,
   paymentStatus: DashboardPaymentStatus,
+  expectedVersion: number,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
   const { error } = await supabase.rpc("update_store_order_payment_status", rpcArgs({
     p_order_id: id,
     p_payment_status: paymentStatus,
+    p_expected_version: expectedVersion,
   }));
   throwIfError(error, "Updating order payment status failed");
   return getDashboardOrder(id);
 }
 
+export async function updateDashboardOrderDelivery(
+  id: string,
+  deliveryType: Exclude<DashboardDeliveryType, "pending">,
+  shippingTotal: number,
+  expectedVersion: number,
+): Promise<DashboardOrderDetail | null> {
+  await requireDashboardStaff();
+  const { error } = await supabase.rpc("update_store_order_delivery", rpcArgs({
+    p_order_id: id,
+    p_delivery_type: deliveryType,
+    p_shipping_total: deliveryType === "free" ? 0 : shippingTotal,
+    p_expected_version: expectedVersion,
+  }));
+  throwIfError(error, "Updating order delivery failed");
+  return getDashboardOrder(id);
+}
+
 export function nextOrderStatus(status: DashboardOrderStatus): DashboardOrderStatus | null {
-  if (status === "pending") return "confirmed";
+  if (status === "new") return "confirmed";
   if (status === "confirmed") return "processing";
-  if (status === "processing") return "shipped";
-  if (status === "shipped") return "delivered";
+  if (status === "processing") return "out_for_delivery";
+  if (status === "out_for_delivery") return "delivered";
+  if (status === "delivered") return "done";
   return null;
 }
 
 export function orderStatusLabel(status: DashboardOrderStatus) {
+  if (status === "out_for_delivery") return "Out for delivery";
+  if (status === "done") return "Done";
+  if (status === "new") return "New";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 

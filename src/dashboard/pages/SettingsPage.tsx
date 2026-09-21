@@ -18,7 +18,7 @@ import {
 } from "@/dashboard/data/settings";
 import { SITE_URL } from "@/lib/storeConfig";
 
-type Tab = "identity" | "contact" | "social";
+type Tab = "identity" | "contact" | "social" | "delivery";
 
 const EMPTY: DashboardSiteSettings = {
   siteName: "",
@@ -37,6 +37,7 @@ const EMPTY: DashboardSiteSettings = {
   xUrl: "",
   youtubeUrl: "",
   tiktokUrl: "",
+  deliveryFee: "0.00",
 };
 
 function Field({
@@ -169,6 +170,7 @@ export default function SettingsPage() {
     { id: "identity", label: "Store identity" },
     { id: "contact", label: "Contact & WhatsApp" },
     { id: "social", label: "Social media" },
+    { id: "delivery", label: "Delivery" },
   ];
 
   return (
@@ -403,6 +405,33 @@ export default function SettingsPage() {
                   placeholder="LB"
                   dir="ltr"
                 />
+              </div>
+            </Panel>
+          ) : null}
+
+          {tab === "delivery" ? (
+            <Panel
+              title="Delivery pricing"
+              subtitle="The server uses this value when creating a storefront order. Enter 0 for Free Delivery."
+            >
+              <div className="grid gap-4 p-5 sm:grid-cols-2">
+                <Field
+                  label="Default delivery fee"
+                  value={settings.deliveryFee}
+                  onChange={(value) => update("deliveryFee", value)}
+                  type="number"
+                  dir="ltr"
+                  placeholder="0.00"
+                />
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-[11px] leading-5 text-slate-500">
+                  <div className="font-bold text-slate-700">
+                    {Number(settings.deliveryFee || 0) === 0 ? "Free Delivery" : "Paid Delivery"}
+                  </div>
+                  <div className="mt-1">
+                    0 means free delivery. A positive amount is added server-side to the validated
+                    product subtotal. Staff can still override delivery on an unpaid order.
+                  </div>
+                </div>
               </div>
             </Panel>
           ) : null}

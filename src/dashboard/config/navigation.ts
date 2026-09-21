@@ -7,6 +7,7 @@ export const navSections = [
     label: "Commerce",
     items: [
       { label: "Orders", href: "/dashboard/orders", icon: "ShoppingBag" },
+      { label: "Sales", href: "/dashboard/sales", icon: "ChartNoAxesCombined" },
       { label: "Products", href: "/dashboard/products", icon: "Package" },
       { label: "Collections", href: "/dashboard/collections", icon: "Layers3" },
       { label: "Categories", href: "/dashboard/categories", icon: "Tags" },
@@ -89,6 +90,11 @@ export const pageMeta: Record<string, { eyebrow: string; title: string; descript
     eyebrow: "Commerce / Orders",
     title: "Orders",
     description: "Track, filter, and manage every customer order.",
+  },
+  "/dashboard/sales": {
+    eyebrow: "Commerce / Sales",
+    title: "Sales",
+    description: "Review completed order snapshots recorded when orders reach DONE.",
   },
   "/dashboard/products": {
     eyebrow: "Commerce / Catalog",

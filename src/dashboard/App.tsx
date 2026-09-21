@@ -31,6 +31,7 @@ import PurchaseOrderEditPage from "@/dashboard/pages/PurchaseOrderEditPage";
 import PurchaseOrdersPage from "@/dashboard/pages/PurchaseOrdersPage";
 import ReceivingDetailPage from "@/dashboard/pages/ReceivingDetailPage";
 import ReceivingPage from "@/dashboard/pages/ReceivingPage";
+import SalesPage from "@/dashboard/pages/SalesPage";
 import SecurityPage from "@/dashboard/pages/SecurityPage";
 import SeoPage from "@/dashboard/pages/SeoPage";
 import SettingsPage from "@/dashboard/pages/SettingsPage";
@@ -674,6 +675,7 @@ function DashboardLayout() {
   if (route === "/dashboard" || route === "/dashboard/") content = <DashboardHomePage />;
   else if (route === "/dashboard/analytics") content = <DashboardHomePage />;
   else if (route === "/dashboard/orders") content = <OrdersPageLive />;
+  else if (route === "/dashboard/sales") content = <SalesPage />;
   else if (orderDetail) content = <OrderDetailPageLive id={orderDetail[1]} />;
   else if (route === "/dashboard/collections") content = <CollectionsPageLive />;
   else if (collectionDetail) content = <CollectionDetailPageLive id={collectionDetail[1]} />;
@@ -746,6 +748,7 @@ export default function App() {
             System: "النظام",
             Dashboard: "لوحة التحكم",
             Orders: "الطلبات",
+            Sales: "المبيعات",
             Products: "المنتجات",
             Collections: "المجموعات",
             Categories: "التصنيفات",

@@ -24,13 +24,14 @@ export type DashboardSiteSettings = {
   xUrl: string;
   youtubeUrl: string;
   tiktokUrl: string;
+  deliveryFee: string;
 };
 
 type SettingDefinition = {
   field: keyof DashboardSiteSettings;
   key: string;
   group: string;
-  type: "text" | "url";
+  type: "text" | "url" | "number";
   label: string;
 };
 
@@ -51,6 +52,7 @@ const DEFINITIONS: SettingDefinition[] = [
   { field: "xUrl", key: "x_url", group: "social", type: "url", label: "X" },
   { field: "youtubeUrl", key: "youtube_url", group: "social", type: "url", label: "YouTube" },
   { field: "tiktokUrl", key: "tiktok_url", group: "social", type: "url", label: "TikTok" },
+  { field: "deliveryFee", key: "delivery_fee", group: "commerce", type: "number", label: "Default delivery fee" },
 ];
 
 const SETTINGS_BUCKET = "cms-media";
@@ -85,6 +87,7 @@ function fallbackSettings(): DashboardSiteSettings {
     xUrl: STORE_CONFIG.socialX,
     youtubeUrl: STORE_CONFIG.socialYoutube,
     tiktokUrl: "",
+    deliveryFee: "0",
   };
 }
 
@@ -144,6 +147,15 @@ export async function saveDashboardSiteSettings(
     throw new Error("Store name must be between 2 and 80 characters.");
   }
 
+  const deliveryFeeRaw = input.deliveryFee.trim();
+  if (!/^\d+(?:\.\d{1,2})?$/.test(deliveryFeeRaw)) {
+    throw new Error("Delivery fee must be a non-negative number with up to 2 decimals.");
+  }
+  const deliveryFeeNumber = Number(deliveryFeeRaw);
+  if (!Number.isFinite(deliveryFeeNumber) || deliveryFeeNumber < 0 || deliveryFeeNumber > 10000) {
+    throw new Error("Delivery fee must be between 0 and 10000.");
+  }
+
   const normalized: DashboardSiteSettings = {
     siteName,
     logoUrl: validateOptionalHttpUrl(input.logoUrl, "Logo URL"),
@@ -161,6 +173,7 @@ export async function saveDashboardSiteSettings(
     xUrl: validateOptionalHttpUrl(input.xUrl, "X URL"),
     youtubeUrl: validateOptionalHttpUrl(input.youtubeUrl, "YouTube URL"),
     tiktokUrl: validateOptionalHttpUrl(input.tiktokUrl, "TikTok URL"),
+    deliveryFee: deliveryFeeNumber.toFixed(2),
   };
 
   if (normalized.whatsappNumber && normalized.whatsappNumber.length < 7) {
