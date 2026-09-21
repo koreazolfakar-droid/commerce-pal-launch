@@ -34,6 +34,8 @@ const PRODUCT_STOREFRONT_PREVIEWS: Array<{
   aspectRatio: string;
   padding: string;
   note: string;
+  borderRadius: string;
+  bordered: boolean;
 }> = [
   {
     id: "card",
@@ -41,6 +43,8 @@ const PRODUCT_STOREFRONT_PREVIEWS: Array<{
     aspectRatio: "1 / 1",
     padding: "6%",
     note: "Exact card media: 1:1 · object-contain · 6% padding",
+    borderRadius: "0.95rem",
+    bordered: false,
   },
   {
     id: "mobile",
@@ -48,6 +52,8 @@ const PRODUCT_STOREFRONT_PREVIEWS: Array<{
     aspectRatio: "1 / 0.92",
     padding: "10px",
     note: "Exact mobile gallery: 1/0.92 · object-contain · 10px padding",
+    borderRadius: "1.6rem",
+    bordered: true,
   },
   {
     id: "desktop",
@@ -55,6 +61,8 @@ const PRODUCT_STOREFRONT_PREVIEWS: Array<{
     aspectRatio: "1 / 1",
     padding: "32px",
     note: "Exact desktop gallery: 1:1 · object-contain · 32px padding",
+    borderRadius: "1.6rem",
+    bordered: true,
   },
 ];
 
@@ -316,10 +324,13 @@ function ProductStorefrontPreview({
       </div>
 
       <div
-        className="mx-auto grid w-full max-w-[360px] place-items-center overflow-hidden rounded-[1.25rem] border border-slate-200 bg-image-stage shadow-sm"
+        className={`mx-auto grid w-full max-w-[360px] place-items-center overflow-hidden bg-image-stage shadow-sm ${
+          profile.bordered ? "border border-slate-200" : ""
+        }`}
         style={{
           aspectRatio: profile.aspectRatio,
           padding: profile.padding,
+          borderRadius: profile.borderRadius,
         }}
       >
         <div className="relative h-full w-auto max-w-full overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
