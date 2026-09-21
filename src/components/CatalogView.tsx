@@ -209,6 +209,8 @@ export function CatalogView({
   onChange,
   onReset,
   header,
+  topContent,
+  hideHeading = false,
 }: {
   title: string;
   description?: string;
@@ -222,25 +224,30 @@ export function CatalogView({
   onChange: (patch: Patch) => void;
   onReset: () => void;
   header?: React.ReactNode;
+  topContent?: React.ReactNode;
+  hideHeading?: boolean;
 }) {
   const { t, direction, language } = useLanguage();
   const activeCount = activeFilterCount(filters);
   const [viewMode, setViewMode] = useProductViewMode();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-5 lg:py-10">
-      <header className="mb-4 sm:mb-5">
-        <h1 className="text-2xl font-extrabold tracking-tight lg:text-[2rem]">{title}</h1>
-        {description && (
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            {description}
-          </p>
-        )}
-      </header>
+    <div className="mx-auto w-full max-w-[80rem] px-3 py-4 min-[390px]:px-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7">
+      {topContent}
+      {!hideHeading ? (
+        <header className="mb-4 sm:mb-5">
+          <h1 className="text-2xl font-extrabold tracking-tight lg:text-[2rem]">{title}</h1>
+          {description && (
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          )}
+        </header>
+      ) : null}
 
-      <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
+      <div className="lg:grid lg:grid-cols-[224px_minmax(0,1fr)] lg:gap-7 xl:grid-cols-[240px_minmax(0,1fr)] xl:gap-9">
         <aside className="hidden lg:block">
-          <div className="sticky top-24 space-y-5">
+          <div className="sticky top-[5.75rem] space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">{t("filters")}</h2>
               {activeCount > 0 && (
@@ -265,7 +272,7 @@ export function CatalogView({
         </aside>
 
         <div>
-          <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 lg:hidden">
+          <div className="-mx-3 mb-3.5 flex items-center gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[390px]:-mx-4 min-[390px]:px-4 sm:mx-0 sm:mb-4 sm:px-0 lg:hidden">
             <span className="shrink-0 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground">
               {t("all")}
             </span>
@@ -287,13 +294,13 @@ export function CatalogView({
             })}
           </div>
 
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <p className="min-w-0 truncate text-sm text-muted-foreground">
+          <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 sm:mb-4 sm:flex-nowrap">
+            <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground sm:text-sm">
               <span className="font-medium text-foreground">{products.length}</span> {t("ofLabel")}{" "}
               {total} {products.length === 1 ? t("product") : t("products")}
             </p>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:w-auto sm:justify-start">
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="press rounded-full lg:hidden">
@@ -337,7 +344,7 @@ export function CatalogView({
                 onChange={(event) =>
                   onChange({ sort: event.target.value as ProductFilters["sort"] })
                 }
-                className="h-9 max-w-[122px] rounded-full border bg-background px-3 text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-none"
+                className="h-9 min-w-0 max-w-[10.5rem] flex-1 rounded-full border bg-background px-3 text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-none sm:flex-none sm:text-[13px]"
                 aria-label={t("sort")}
               >
                 {SORT_OPTIONS.map((option) => (
@@ -361,7 +368,7 @@ export function CatalogView({
           </div>
 
           {activeCount > 0 && (
-            <div className="mb-4 flex flex-wrap gap-2">
+            <div className="mb-3.5 flex flex-wrap gap-1.5 sm:mb-4 sm:gap-2">
               {[
                 ...(filters.category ?? []).map((slug) => ({
                   key: `category-${slug}`,
@@ -433,7 +440,7 @@ export function CatalogView({
             }
           />
 
-          {header ? <div className="mt-10 border-t pt-7 sm:mt-12 sm:pt-8">{header}</div> : null}
+          {header ? <div className="mt-8 border-t pt-6 sm:mt-10 sm:pt-7">{header}</div> : null}
         </div>
       </div>
     </div>
