@@ -57,7 +57,8 @@ test("delivery fee configuration fails closed instead of silently becoming free"
 });
 
 test("global delivery fee is admin-only and audited", () => {
-  assert.match(migration, /dashboard_admin_delivery_fee_update/);
+  assert.match(migration, /dashboard_staff_site_settings_update/);
+  assert.match(migration, /key <> 'delivery_fee'/);
   assert.match(migration, /private\.is_dashboard_admin\(\)/);
   assert.match(migration, /key <> 'delivery_fee'/);
   assert.match(migration, /audit_delivery_fee_change/);
