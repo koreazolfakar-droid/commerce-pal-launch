@@ -11,23 +11,14 @@ const catalog = await readFile(
   "utf8",
 );
 
-test("category detail uses Dashboard-managed artwork and description", () => {
+test("category detail keeps Dashboard-managed description without a custom hero", () => {
   assert.match(category, /select\("name,name_ar,slug,description,image_url"\)/);
   assert.match(category, /loaderData\.description/);
-  assert.match(category, /loaderData\.imageUrl/);
-  assert.match(category, /cdnImage\(loaderData\.imageUrl/);
-  assert.match(category, /CategoryGlyph slug=\{slug\}/);
-});
-
-test("category page has one primary intro without duplicated count or SEO copy", () => {
-  assert.match(category, /topContent=\{topContent\}/);
-  assert.match(category, /hideHeading/);
-  assert.match(category, /sm:grid-cols-\[minmax\(0,1fr\)_10\.5rem\]/);
-  assert.match(category, /lg:grid-cols-\[minmax\(0,1fr\)_12rem\]/);
-  assert.match(category, /Live availability/);
-  assert.doesNotMatch(category, /const header =/);
-  assert.doesNotMatch(category, /<PackageCheck/);
-  assert.doesNotMatch(category, /header=\{header\}/);
+  assert.match(category, /description=\{loaderData\.description\?\.trim\(\) \|\| undefined\}/);
+  assert.doesNotMatch(category, /topContent=\{topContent\}/);
+  assert.doesNotMatch(category, /hideHeading/);
+  assert.doesNotMatch(category, /CategoryGlyph/);
+  assert.doesNotMatch(category, /Live availability/);
 });
 
 test("catalog controls remain usable on narrow phones and precise on desktop", () => {
