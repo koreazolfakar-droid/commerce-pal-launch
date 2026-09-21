@@ -22,6 +22,7 @@ type EditorOptions = {
   preset?: SmartImagePreset;
   transparent?: boolean;
   defaultFit?: "contain" | "cover";
+  outputFormat?: "png" | "webp";
 };
 
 type EditorRequest = {
@@ -78,9 +79,9 @@ function sourceName(source: File | string) {
   }
 }
 
-function outputName(source: File | string) {
+function outputName(source: File | string, outputFormat: "png" | "webp") {
   const base = sourceName(source).replace(/\.[a-z0-9]+$/i, "").replace(/[^a-z0-9._-]+/gi, "-");
-  return `${base || "image"}-adjusted.webp`;
+  return `${base || "image"}-adjusted.${outputFormat}`;
 }
 
 async function imageFromSource(source: File | string) {
@@ -262,7 +263,9 @@ function SmartImageEditorDialog({
   onDone: (file: File | null) => void;
 }) {
   const preset = request.options.preset ?? "square";
-  const transparent = request.options.transparent ?? preset === "logo";
+  const transparent = request.options.transparent ?? true;
+  const outputFormat = request.options.outputFormat ?? "png";
+  const outputType = outputFormat === "webp" ? "image/webp" : "image/png";
   const initialFit: "contain" | "cover" =
     request.options.defaultFit ?? (preset === "cover" || preset.startsWith("hero-") ? "cover" : "contain");
   const initialPadding = preset === "logo" ? 10 : preset === "square" ? 5 : 0;
@@ -369,8 +372,8 @@ function SmartImageEditorDialog({
       context.imageSmoothingQuality = "high";
       context.drawImage(loaded.element, drawX, drawY, drawW, drawH);
 
-      const blob = await canvasBlob(canvas);
-      onDone(new File([blob], outputName(request.source), { type: "image/webp" }));
+      const blob = await canvasBlob(canvas, outputType);
+      onDone(new File([blob], outputName(request.source, outputFormat), { type: outputType }));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not save the edited image.");
     } finally {
@@ -499,7 +502,7 @@ function SmartImageEditorDialog({
             <RangeControl label="Padding" value={padding} min={0} max={30} step={1} display={`${Math.round(padding)}%`} onChange={setPadding} />
 
             <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-[9px] leading-4 text-slate-500">
-              Output: {dimensions[0]}×{dimensions[1]} WebP. The source image remains untouched until the normal save/upload step succeeds.
+              Output: {dimensions[0]}×{dimensions[1]} {outputFormat.toUpperCase()}. PNG is used losslessly before the existing WebP upload pipeline; direct media replacement uses WebP once.
             </div>
 
             <button type="button" onClick={() => void save()} disabled={!loaded || loading || saving} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-black text-white disabled:opacity-50">
