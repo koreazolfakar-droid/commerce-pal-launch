@@ -29,7 +29,10 @@ for insert
 to authenticated
 with check (
   (select private.is_dashboard_staff())
-  and key <> 'delivery_fee'
+  and (
+    key <> 'delivery_fee'
+    or (select private.is_dashboard_admin())
+  )
 );
 
 create policy dashboard_staff_site_settings_update
@@ -38,33 +41,17 @@ for update
 to authenticated
 using (
   (select private.is_dashboard_staff())
-  and key <> 'delivery_fee'
+  and (
+    key <> 'delivery_fee'
+    or (select private.is_dashboard_admin())
+  )
 )
 with check (
   (select private.is_dashboard_staff())
-  and key <> 'delivery_fee'
-);
-
-create policy dashboard_admin_delivery_fee_insert
-on public.cms_site_settings
-for insert
-to authenticated
-with check (
-  key = 'delivery_fee'
-  and (select private.is_dashboard_admin())
-);
-
-create policy dashboard_admin_delivery_fee_update
-on public.cms_site_settings
-for update
-to authenticated
-using (
-  key = 'delivery_fee'
-  and (select private.is_dashboard_admin())
-)
-with check (
-  key = 'delivery_fee'
-  and (select private.is_dashboard_admin())
+  and (
+    key <> 'delivery_fee'
+    or (select private.is_dashboard_admin())
+  )
 );
 
 create or replace function private.audit_delivery_fee_change()
