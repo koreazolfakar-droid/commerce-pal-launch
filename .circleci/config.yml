@@ -24,7 +24,7 @@ commands:
           command: bun install --frozen-lockfile
 
 jobs:
-  dashboard-auth-a:
+  dashboard-auth-a1:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -32,11 +32,11 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Dashboard auth shell tests
+          name: Auth0 and CSP tests
           command: |
-            node --test               e2e/dashboard-auth0-security.test.mjs               e2e/dashboard-csp-session-ci.test.mjs               e2e/dashboard-login-route.test.mjs               e2e/dashboard-login-screen-capture.test.mjs
+            node --test               e2e/dashboard-auth0-security.test.mjs               e2e/dashboard-csp-session-ci.test.mjs
 
-  dashboard-auth-b:
+  dashboard-auth-a2:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -44,11 +44,11 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Dashboard login and passkey tests
+          name: Login route and screen capture tests
           command: |
-            node --test               e2e/dashboard-login-ui.test.mjs               e2e/dashboard-passkey-client.test.mjs               e2e/dashboard-passkey-second-factor.test.mjs               e2e/dashboard-passkey-step-up.test.mjs
+            node --test               e2e/dashboard-login-route.test.mjs               e2e/dashboard-login-screen-capture.test.mjs
 
-  dashboard-auth-c:
+  core-b1:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -56,11 +56,11 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Dashboard password and session security tests
+          name: Catalog and cleanup tests
           command: |
-            node --test               e2e/dashboard-password-breach-screening.test.mjs               e2e/dashboard-security-hardening.test.mjs               e2e/dashboard-session-security.test.mjs               e2e/dashboard-totp-mfa.test.mjs
+            node --test               e2e/catalog-management-responsive.test.mjs               e2e/catalog.test.mjs               e2e/category-cleanup-followup.test.mjs
 
-  core-a:
+  core-b2:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -68,40 +68,14 @@ jobs:
     steps:
       - prepare
       - run:
-          name: Architecture and cart tests
+          name: Category and CI tests
           command: |
-            node --test               e2e/architecture.test.mjs               e2e/cart-delivery-dashboard.test.mjs               e2e/cart-delivery-security.test.mjs               e2e/cart-responsive-precision.test.mjs               e2e/cart-ux-polish.test.mjs
-
-  core-b:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - prepare
-      - run:
-          name: Catalog category and CI tests
-          command: |
-            node --test               e2e/catalog-management-responsive.test.mjs               e2e/catalog.test.mjs               e2e/category-cleanup-followup.test.mjs               e2e/category-page-premium.test.mjs               e2e/category-storefront-sync.test.mjs               e2e/category-taxonomy-cleanup.test.mjs               e2e/ci-config.test.mjs
-
-  core-c:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - prepare
-      - run:
-          name: CMS auth and hero tests
-          command: |
-            node --test               e2e/cms-refresh.test.mjs               e2e/create-order-rate-limit-security.test.mjs               e2e/customer-auth-ui.test.mjs               e2e/hero-design.test.mjs               e2e/hero-scene.test.mjs
+            node --test               e2e/category-page-premium.test.mjs               e2e/category-storefront-sync.test.mjs               e2e/category-taxonomy-cleanup.test.mjs               e2e/ci-config.test.mjs
 
 workflows:
-  isolate-current-test-failures-stage-2:
+  isolate-current-test-failures-stage-3:
     jobs:
-      - dashboard-auth-a
-      - dashboard-auth-b
-      - dashboard-auth-c
-      - core-a
-      - core-b
-      - core-c
+      - dashboard-auth-a1
+      - dashboard-auth-a2
+      - core-b1
+      - core-b2
