@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import BulkMediaOptimizer from "@/dashboard/components/BulkMediaOptimizer";
 
 import {
   deleteDashboardMediaAsset,
@@ -124,6 +125,14 @@ export default function MediaLibraryPage() {
           <button onClick={()=>fileRef.current?.click()} disabled={uploading} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-50">{uploading?<Loader2 className="size-4 animate-spin" />:<UploadCloud className="size-4" />} Upload image</button>
         </div>
       </div>
+
+      {!loading && assets.length ? (
+        <BulkMediaOptimizer
+          assets={assets}
+          canOptimize={canDelete}
+          onAssetsChanged={setAssets}
+        />
+      ) : null}
 
       {pendingFile ? (
         <div className="mb-4 space-y-2">

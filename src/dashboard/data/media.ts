@@ -140,3 +140,80 @@ export async function deleteDashboardMediaAsset(asset: DashboardMediaAsset): Pro
     console.warn("[dashboard-media] database row deleted but storage cleanup failed", storageError.message);
   }
 }
+
+
+export async function downloadDashboardMediaAsset(asset: DashboardMediaAsset): Promise<File> {
+  await requireDashboardStaff();
+  const response = await fetch(asset.url, { cache: "no-store" });
+  if (!response.ok) throw new Error(`Downloading ${asset.fileName} failed (${response.status}).`);
+  const blob = await response.blob();
+  const mimeType = blob.type || asset.mimeType || "image/jpeg";
+  return new File([blob], asset.fileName || "media-image", {
+    type: mimeType,
+    lastModified: Date.now(),
+  });
+}
+
+export async function replaceDashboardMediaAssetWithWebp(
+  asset: DashboardMediaAsset,
+  output: File,
+): Promise<DashboardMediaAsset> {
+  const role = await requireDashboardStaff();
+  if (role !== "admin") throw new Error("Only dashboard admins can bulk-optimize media.");
+  if (output.type !== "image/webp") throw new Error("Optimized output must be WebP.");
+  if (output.size <= 0) throw new Error("Optimized image is empty.");
+  if (output.size > MAX_STORED_BYTES) throw new Error("Optimized image must be 10 MB or smaller.");
+
+  const backupResponse = await fetch(asset.url, { cache: "no-store" });
+  if (!backupResponse.ok) {
+    throw new Error(`Unable to create a backup for ${asset.fileName}.`);
+  }
+  const backupBlob = await backupResponse.blob();
+  const backupType = backupBlob.type || asset.mimeType || "application/octet-stream";
+
+  const { error: uploadError } = await supabase.storage.from(asset.bucketId).upload(
+    asset.objectPath,
+    output,
+    {
+      cacheControl: "31536000",
+      upsert: true,
+      contentType: "image/webp",
+    },
+  );
+  throwIfError(uploadError, "Replacing media with WebP failed");
+
+  const nextFileName = asset.fileName.replace(/\.[^.]+$/, "") + ".webp";
+  const { data, error: updateError } = await supabase
+    .from("cms_media_assets")
+    .update({
+      file_name: nextFileName,
+      mime_type: "image/webp",
+      size_bytes: output.size,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", asset.id)
+    .select("*")
+    .single();
+
+  if (updateError) {
+    const backupFile = new File([backupBlob], asset.fileName || "media-backup", {
+      type: backupType,
+      lastModified: Date.now(),
+    });
+    const { error: rollbackError } = await supabase.storage.from(asset.bucketId).upload(
+      asset.objectPath,
+      backupFile,
+      {
+        cacheControl: "31536000",
+        upsert: true,
+        contentType: backupType,
+      },
+    );
+    if (rollbackError) {
+      console.error("[dashboard-media] rollback failed", rollbackError.message);
+    }
+    throw new Error(`Updating media metadata failed: ${updateError.message}`);
+  }
+
+  return mapMedia(data as MediaRow);
+}
