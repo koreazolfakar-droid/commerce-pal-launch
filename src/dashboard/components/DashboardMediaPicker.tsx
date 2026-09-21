@@ -98,7 +98,7 @@ export function DashboardMediaPicker({
               void imageEditor.editFile(file, {
                 title: `Adjust ${label.toLowerCase()}`,
                 preset: "free",
-                transparent: false,
+                transparent: true,
                 defaultFit: "contain",
               }).then((edited) => {
                 if (edited) setPendingFile(edited);
@@ -122,7 +122,7 @@ export function DashboardMediaPicker({
                   void imageEditor.editUrl(value, {
                     title: `Adjust ${label.toLowerCase()}`,
                     preset: "free",
-                    transparent: false,
+                    transparent: true,
                     defaultFit: "contain",
                   }).then(async (edited) => {
                     if (!edited) return;
