@@ -1,6 +1,7 @@
 import { productDiscountPercent, productInStock, productPrice } from "@/lib/productPricing";
 import type { ShopifyProduct } from "@/lib/shopify";
 import type { CatalogIndex } from "@/lib/taxonomy";
+import { matchesProductSearch, productSearchScore } from "@/lib/searchRanking";
 
 export const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -78,24 +79,6 @@ export function parseProductSearch(search: Record<string, unknown>): ProductFilt
   };
 }
 
-function matchesText(product: ShopifyProduct, term: string) {
-  const node = product.node;
-  const text = [
-    node.title,
-    node.vendor ?? "",
-    node.productType ?? "",
-    (node.tags ?? []).join(" "),
-  ].join(" ");
-  return term
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((word) => {
-      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      return new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?:$|[^\\p{L}\\p{N}])`, "iu").test(text);
-    });
-}
-
 /** Applies the active facets and sort order to a product list. */
 export function applyFilters(
   products: ShopifyProduct[],
@@ -104,7 +87,9 @@ export function applyFilters(
 ): ShopifyProduct[] {
   let result = products;
 
-  if (filters.q) result = result.filter((product) => matchesText(product, filters.q as string));
+  if (filters.q) {
+    result = result.filter((product) => matchesProductSearch(product, filters.q as string));
+  }
 
   if (filters.category?.length) {
     result = result.filter((product) => {
@@ -160,6 +145,17 @@ export function applyFilters(
       sorted.sort((a, b) => savingRatio(b) - savingRatio(a));
       break;
     default:
+      if (filters.q) {
+        sorted.sort(
+          (a, b) =>
+            productSearchScore(b, filters.q as string) -
+              productSearchScore(a, filters.q as string) ||
+            a.node.title.localeCompare(b.node.title, "en", {
+              numeric: true,
+              sensitivity: "base",
+            }),
+        );
+      }
       break;
   }
 

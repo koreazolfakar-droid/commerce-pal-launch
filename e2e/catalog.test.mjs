@@ -28,6 +28,7 @@ async function sourceUrl(name) {
 }
 const taxonomy = await import(await sourceUrl("taxonomy"));
 const { applyFilters, parseProductSearch } = await import(await sourceUrl("filters"));
+const { productSearchScore, normalizeSearchText } = await import(await sourceUrl("searchRanking"));
 const { productPrice, productDiscountPercent, productPrimaryVariant } = await import(
   await sourceUrl("productPricing")
 );
@@ -209,4 +210,101 @@ test("configuration collections do not clutter customer navigation", () => {
     taxonomy.displayCollections(collections).map((c) => c.handle),
     ["summer-offers"],
   );
+});
+
+
+test("search ranking strongly prefers an exact product title", () => {
+  const exact = product({ title: "Apple iPhone 17 Pro Max", vendor: "Apple" });
+  const broad = product({ title: "Case for Apple iPhone 17 Pro Max", vendor: "Spigen" });
+  assert.ok(
+    productSearchScore(exact, "iphone 17 pro max") >
+      productSearchScore(broad, "iphone 17 pro max"),
+  );
+});
+
+test("search matches SKU and variant option values precisely", () => {
+  const item = product({
+    title: "Generic Device",
+    vendor: "Example",
+    variants: {
+      edges: [
+        {
+          node: {
+            id: "variant-search",
+            title: "512GB Black",
+            sku: "SM-S938BZK",
+            barcode: "8806095812345",
+            selectedOptions: [
+              { name: "Storage", value: "512GB" },
+              { name: "Color", value: "Black" },
+            ],
+          },
+        },
+      ],
+    },
+  });
+  assert.ok(productSearchScore(item, "SM-S938BZK") > 0);
+  assert.ok(productSearchScore(item, "8806095812345") > 0);
+  assert.ok(productSearchScore(item, "512GB black") > 0);
+});
+
+test("search tolerates one useful typo without making short model numbers fuzzy", () => {
+  const samsung = product({ title: "Samsung Galaxy S26 Ultra", vendor: "Samsung" });
+  assert.ok(productSearchScore(samsung, "samsng s26 ultra") > 0);
+  assert.equal(productSearchScore(samsung, "s27"), 0);
+});
+
+test("search normalizes Arabic spelling and supports conservative brand aliases", () => {
+  const iphone = product({ title: "Apple iPhone 17 Pro", vendor: "Apple" });
+  const samsung = product({ title: "Samsung Galaxy S26", vendor: "Samsung" });
+  assert.ok(productSearchScore(iphone, "آيفون 17") > 0);
+  assert.ok(productSearchScore(samsung, "سامسونج s26") > 0);
+  assert.equal(normalizeSearchText("  آيــفون  "), "ايفون");
+});
+
+test("catalog q filtering uses the same precise search matcher", () => {
+  const catalog = taxonomy.buildCatalogIndex(products);
+  const matches = applyFilters(products, catalog, { q: "samsng fixture 4" });
+  assert.deepEqual(matches.map((item) => item.node.handle), ["fixture-phone-4"]);
+});
+
+
+test("search understands common Arabic category and brand terms", () => {
+  const phone = product({ title: "Xiaomi 17 Ultra", vendor: "Xiaomi", productType: "Smartphone" });
+  const charger = product({ title: "Anker Nano Charger 45W", vendor: "Anker", productType: "Charger" });
+  assert.ok(productSearchScore(phone, "شاومي موبايل") > 0);
+  assert.ok(productSearchScore(charger, "انكر شاحن") > 0);
+});
+
+test("description-only marketing words do not create noisy product matches", () => {
+  const item = product({
+    title: "USB-C Cable",
+    vendor: "Anker",
+    productType: "Cable",
+    tags: ["usb-c"],
+    description: "Compatible with smartphones and tablets.",
+  });
+  assert.equal(productSearchScore(item, "compatible"), 0);
+});
+
+
+test("catalog q results are ordered by relevance when no explicit sort is selected", () => {
+  const exact = product({
+    id: "search-exact",
+    handle: "search-exact",
+    title: "Samsung Galaxy S26",
+    vendor: "Samsung",
+    productType: "Smartphone",
+  });
+  const accessory = product({
+    id: "search-accessory",
+    handle: "search-accessory",
+    title: "Case for Samsung Galaxy S26",
+    vendor: "Spigen",
+    productType: "Phone Cases",
+  });
+  const items = [accessory, exact];
+  const catalog = taxonomy.buildCatalogIndex(items);
+  const matches = applyFilters(items, catalog, { q: "Samsung Galaxy S26" });
+  assert.deepEqual(matches.map((item) => item.node.handle), ["search-exact", "search-accessory"]);
 });
