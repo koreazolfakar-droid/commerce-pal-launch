@@ -8,14 +8,19 @@ const source = await readFile(
 );
 
 test("create-order rate limiter cannot be bypassed by rotating User-Agent", () => {
-  assert.match(source, /const fingerprint = await sha256\(forwarded\.slice\(0, 128\)\)/);
+  assert.match(source, /sha256\(forwarded\.slice\(0, 128\)\)/);
   assert.doesNotMatch(source, /sha256\([^\n]*user-agent/i);
   assert.doesNotMatch(source, /\$\{forwarded\}\|\$\{agent\}/);
 });
 
-test("create-order rate limiter prefers edge-provided client IP headers", () => {
+test("create-order uses independent IP and hashed-phone abuse buckets", () => {
   assert.match(source, /cf-connecting-ip/);
   assert.match(source, /x-real-ip/);
   assert.match(source, /x-forwarded-for/);
-  assert.match(source, /_key: `create-order:\$\{fingerprint\}`/);
+  assert.match(source, /RATE_LIMIT_PER_IP = 30/);
+  assert.match(source, /RATE_LIMIT_PER_PHONE = 5/);
+  assert.match(source, /create-order:ip:\$\{ipFingerprint\}/);
+  assert.match(source, /create-order:phone:\$\{phoneFingerprint\}/);
+  assert.match(source, /sha256\(customerPhone\)/);
+  assert.doesNotMatch(source, /_key:\s*customerPhone/);
 });
