@@ -19,7 +19,9 @@ test("mobile product density modes render and persist", async ({ page }) => {
   await expect(page.locator("main .catalog-dense-product-card")).toHaveCount(9);
   await expect
     .poll(async () =>
-      productLayout.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length),
+      productLayout.evaluate(
+        (element) => getComputedStyle(element).gridTemplateColumns.split(" ").length,
+      ),
     )
     .toBe(3);
 
