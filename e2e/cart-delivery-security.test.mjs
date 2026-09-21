@@ -60,7 +60,6 @@ test("global delivery fee is admin-only and audited", () => {
   assert.match(migration, /dashboard_staff_site_settings_update/);
   assert.match(migration, /key <> 'delivery_fee'/);
   assert.match(migration, /private\.is_dashboard_admin\(\)/);
-  assert.match(migration, /key <> 'delivery_fee'/);
   assert.match(migration, /audit_delivery_fee_change/);
   assert.match(migration, /delivery_fee_updated/);
   assert.match(settings, /role === "admin"/);
