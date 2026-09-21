@@ -90,12 +90,100 @@ jobs:
           name: SSR smoke test
           command: bun run test:ssr
 
+  auth-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript
+          command: bun run typecheck
+
+  auth-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: ESLint
+          command: bun run lint
+
+  auth-tests:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit and architecture tests
+          command: bun run test:unit
+
+  auth-build:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Production build
+          command: bun run build
+
 workflows:
   security-and-storefront-validation:
     jobs:
       - security-source
       - security-dependencies
       - storefront-ci:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - auth-typecheck:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - auth-lint:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - auth-tests:
+          filters:
+            branches:
+              only:
+                - /^important\/.*/
+      - auth-build:
           filters:
             branches:
               only:
