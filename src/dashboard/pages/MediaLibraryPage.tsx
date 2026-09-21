@@ -12,7 +12,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
-import BulkMediaOptimizer from "@/dashboard/components/BulkMediaOptimizer";
+import GlobalLegacyImageOptimizer from "@/dashboard/components/GlobalLegacyImageOptimizer";
 
 import {
   deleteDashboardMediaAsset,
@@ -126,13 +126,7 @@ export default function MediaLibraryPage() {
         </div>
       </div>
 
-      {!loading && assets.length ? (
-        <BulkMediaOptimizer
-          assets={assets}
-          canOptimize={canDelete}
-          onAssetsChanged={setAssets}
-        />
-      ) : null}
+      {!loading ? <GlobalLegacyImageOptimizer enabled={canDelete} /> : null}
 
       {pendingFile ? (
         <div className="mb-4 space-y-2">
