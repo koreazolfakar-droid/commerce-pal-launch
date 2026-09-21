@@ -119,7 +119,7 @@ function installStorefrontRefreshBridge() {
   storefrontRefreshListenerInstalled = true;
 
   const refresh = () => {
-    invalidateNativeStoreCache({ broadcast: false });
+    invalidateNativeStoreCache();
     notifyStorefrontRefreshSubscribers();
   };
   const storageRefresh = (event: StorageEvent) => {
@@ -449,11 +449,13 @@ async function loadSnapshot(): Promise<NativeSnapshot> {
   return startSnapshotRefresh();
 }
 
-export function invalidateNativeStoreCache(options: { broadcast?: boolean } = {}) {
+export function invalidateNativeStoreCache() {
   cachedSnapshot = null;
   hydratedProductCache.clear();
+}
 
-  if (options.broadcast === false || typeof window === "undefined") return;
+export function broadcastStorefrontRefresh() {
+  if (typeof window === "undefined") return;
 
   try {
     window.localStorage.setItem(
