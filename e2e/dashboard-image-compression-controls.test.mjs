@@ -135,7 +135,7 @@ test("global legacy optimizer covers all old dashboard image sources", async () 
   assert.match(globalData, /logo_url/);
   assert.match(globalData, /cover_image_url/);
   assert.match(globalData, /mobile_image_url/);
-  assert.match(globalData, /optimized\/\$\{assetRow\.source\}/);
+  assert.match(globalData, /\$\{OUTPUT_PREFIX\}\/\$\{assetRow\.source\}/);
   assert.match(globalData, /Only dashboard admins can optimize existing media/);
   assert.match(globalData, /replaceDashboardMediaAssetWithWebp/);
   assert.match(globalData, /invalidateNativeStoreCache/);
