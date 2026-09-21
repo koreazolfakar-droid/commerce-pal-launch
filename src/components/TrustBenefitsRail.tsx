@@ -16,7 +16,7 @@ export function TrustBenefitsRail() {
     <section
       aria-label={t("shoppingBenefits")}
       data-testid="trust-benefits-rail"
-      className="min-w-0 flex-1"
+      className="min-w-0"
     >
       <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
         {BENEFITS.map((benefit) => (
@@ -27,7 +27,7 @@ export function TrustBenefitsRail() {
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-primary/15 bg-primary/[0.08] text-primary transition group-hover:bg-primary/15">
               <benefit.icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-[15px] font-extrabold leading-tight tracking-[-0.015em]">
                 {t(benefit.title)}
               </p>
