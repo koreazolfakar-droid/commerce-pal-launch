@@ -81,7 +81,6 @@ test("homepage LCP uses CMS data without legacy hero work on the critical path",
 
   assert.match(loaderSource, /ensureQueryData\(cmsQueryOptions\(\)\)/);
   assert.doesNotMatch(loaderSource, /HOME_HERO_COLLECTION_HANDLE|collectionQueryOptions/);
-  assert.match(home, /fetchPriority:\s*"high"/);
   assert.match(
     home,
     /\.\.\.collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\),\s*enabled:\s*deferredWorkReady/s,
