@@ -277,7 +277,7 @@ export function HeroScene({
             }
             draggable={false}
             onError={onImageError}
-            loading="eager"
+            loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
             decoding="async"
             style={{
