@@ -115,3 +115,52 @@ alter table public.store_categories
 
 create unique index if not exists store_categories_slug_lower_uidx
   on public.store_categories (lower(slug));
+
+create or replace function private.canonical_store_category_slug(p_slug text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case lower(btrim(coalesce(p_slug, '')))
+    when 'mobile-phones' then 'smartphone'
+    when 'foldable-smartphone' then 'smartphone'
+    when 'smartphone-bundle' then 'smartphone'
+    when 'gaming-tablet' then 'tablet'
+    when 'wall-charger' then 'charger'
+    when 'charging-cable' then 'cable'
+    when 'هاتف-مستعمل' then 'used-phone'
+    else lower(btrim(coalesce(p_slug, '')))
+  end
+$$;
+
+create or replace function private.prevent_duplicate_store_category_family()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_family text;
+begin
+  v_family := private.canonical_store_category_slug(new.slug);
+
+  if exists (
+    select 1
+    from public.store_categories c
+    where c.id <> new.id
+      and private.canonical_store_category_slug(c.slug) = v_family
+  ) then
+    raise exception 'duplicate_category_family';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists prevent_duplicate_store_category_family on public.store_categories;
+create trigger prevent_duplicate_store_category_family
+before insert or update of slug on public.store_categories
+for each row execute function private.prevent_duplicate_store_category_family();
+
+revoke all on function private.canonical_store_category_slug(text) from public, anon, authenticated;
+revoke all on function private.prevent_duplicate_store_category_family() from public, anon, authenticated;
