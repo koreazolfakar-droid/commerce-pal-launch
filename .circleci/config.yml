@@ -67,6 +67,32 @@ jobs:
             - ~/.bun/install/cache
 
       - run:
+          name: Cart targeted lint
+          command: |
+            set +e
+            bunx eslint src/routes/cart.tsx src/components/CheckoutDetailsForm.tsx e2e/cart-delivery-dashboard.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-ux-polish.test.mjs e2e/storefront-orders-secure.test.mjs > /tmp/cart-lint.log 2>&1
+            status=$?
+            cat /tmp/cart-lint.log
+            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
+              -H "x-ci-run-key: cart-polish-target-lint-20260921" \
+              -H "x-ci-job-name: lint" \
+              --data-binary @/tmp/cart-lint.log || true
+            exit $status
+
+      - run:
+          name: Cart targeted tests
+          command: |
+            set +e
+            node --test e2e/cart-delivery-dashboard.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-ux-polish.test.mjs e2e/storefront-orders-secure.test.mjs > /tmp/cart-tests.log 2>&1
+            status=$?
+            cat /tmp/cart-tests.log
+            curl -fsS -X POST "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/ci-debug-log" \
+              -H "x-ci-run-key: cart-polish-target-tests-20260921" \
+              -H "x-ci-job-name: unit-tests" \
+              --data-binary @/tmp/cart-tests.log || true
+            exit $status
+
+      - run:
           name: TypeScript
           command: |
             set +e
