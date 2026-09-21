@@ -1,6 +1,7 @@
 import { PackageSearch } from "lucide-react";
 
 import { ProductCard } from "@/components/ProductCard";
+import { CompactProductCard } from "@/components/CompactProductCard";
 import { ProductListCard } from "@/components/ProductListCard";
 import { ProductViewToggle } from "@/components/ProductViewToggle";
 import { useProductViewMode, type ProductViewMode } from "@/hooks/useProductViewMode";
@@ -8,12 +9,13 @@ import type { ShopifyProduct } from "@/lib/shopify";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
 
+const DENSE = "grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-4 md:grid-cols-4 xl:grid-cols-5";
 const GRID = "grid grid-cols-2 gap-x-2.5 gap-y-4 sm:gap-5 md:grid-cols-3 xl:grid-cols-4";
 const LIST = "grid gap-3 sm:gap-4";
 
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <div className={GRID} aria-hidden>
+    <div className={DENSE} aria-hidden>
       {Array.from({ length: count }).map((_, index) => (
         <div key={index} className="overflow-hidden rounded-2xl border bg-card shadow-card">
           <div className="shimmer aspect-square w-full border-b bg-surface" />
@@ -78,10 +80,17 @@ export function ProductGrid({
           <ProductViewToggle mode={viewMode} onChange={setViewMode} />
         </div>
       )}
-      <div className={cn(viewMode === "list" ? LIST : GRID, className)}>
+      <div className={cn(viewMode === "list" ? LIST : viewMode === "dense" ? DENSE : GRID, className)}>
         {products.map((product, index) =>
           viewMode === "list" ? (
             <ProductListCard key={product.node.id} product={product} eager={index < eagerCount} />
+          ) : viewMode === "dense" ? (
+            <CompactProductCard
+              key={product.node.id}
+              product={product}
+              eager={index < eagerCount}
+              className="catalog-dense-product-card max-sm:!overflow-visible max-sm:!rounded-none max-sm:!border-0 max-sm:!bg-transparent max-sm:!shadow-none max-sm:[&>div:first-child]:overflow-hidden max-sm:[&>div:first-child]:rounded-xl max-sm:[&>div:last-child]:px-0.5"
+            />
           ) : (
             <ProductCard key={product.node.id} product={product} eager={index < eagerCount} />
           ),
