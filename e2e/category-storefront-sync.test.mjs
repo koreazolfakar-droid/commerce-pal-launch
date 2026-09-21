@@ -11,7 +11,8 @@ test("public categories page uses dashboard-managed store_categories as source o
   assert.match(page, /\.eq\("is_active", true\)/);
   assert.match(page, /\.order\("sort_order", \{ ascending: true \}\)/);
   assert.match(page, /select\("name,name_ar,slug,image_url,sort_order"\)/);
-  assert.match(page, /category\.image_url \|\| artwork\?\.image\?\.url/);
+  assert.match(page, /cdnImage\(category\.image_url \|\| undefined, 240\)/);
+  assert.doesNotMatch(page, /findCategoryArtworkCollection/);
   assert.match(page, /managedCategories !== null/);
 });
 
