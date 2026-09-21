@@ -84,11 +84,12 @@ export function ProductRail({
           aria-busy={shouldRender ? undefined : "true"}
         >
           {shouldRender ? (
-            visible.map((product) => (
+            visible.map((product, index) => (
               <CompactProductCard
                 key={product.node.id}
                 product={product}
                 listItem
+                eager={index < 2}
                 className="homepage-product-card w-[72%] shrink-0 snap-start transition-transform duration-150 ease-out active:scale-[0.99] sm:w-auto sm:shrink sm:snap-none sm:hover:-translate-y-0.5"
               />
             ))
@@ -106,10 +107,11 @@ export function ProductRail({
             visible.length === 1 ? "mx-auto w-full max-w-sm" : "scroll-rail product-rail-items"
           }
         >
-          {visible.map((product) => (
+          {visible.map((product, index) => (
             <CompactProductCard
               key={product.node.id}
               product={product}
+              eager={index < 2}
               className="homepage-product-card"
             />
           ))}
