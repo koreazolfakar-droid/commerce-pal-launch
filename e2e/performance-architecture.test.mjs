@@ -25,6 +25,15 @@ test("homepage keeps critical UI small and defers secondary work", async () => {
   assert.match(home, /HOME_SECONDARY_FALLBACK_DELAY_MS\s*=\s*40/);
   assert.match(home, /navigationCatalogQueryOptions/);
   assert.match(home, /<HomeCategorySection categories=\{navigationCategories\}/);
+  assert.doesNotMatch(
+    home,
+    /ensureQueryData\(collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE/,
+  );
+  assert.match(
+    home,
+    /\.\.\.collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\),\s*enabled: deferredWorkReady/s,
+  );
+  assert.match(home, /loaderData\?\.heroPreload\?\.desktop/);
 
   assert.match(categories, /data-testid="category-section"/);
   assert.match(categories, /loading="lazy"/);
@@ -65,6 +74,43 @@ test("root warms the primary storefront backend connection", async () => {
     root,
     /rel:\s*"preconnect"[\s\S]*?href:\s*"https:\/\/rtwyankpxtffqqrasyzw\.supabase\.co"[\s\S]*?crossOrigin:\s*"anonymous"/,
   );
+});
+
+
+test("public CMS uses stale-while-revalidate memory caching for SSR", async () => {
+  const cms = await read("src/lib/cms.ts");
+
+  assert.match(cms, /CMS_MEMORY_FRESH_MS\s*=\s*30_000/);
+  assert.match(cms, /CMS_MEMORY_STALE_MS\s*=\s*5 \* 60_000/);
+  assert.match(cms, /CMS_FUNCTION_REGION\s*=\s*"ap-southeast-2"/);
+  assert.match(cms, /forceFunctionRegion=\$\{CMS_FUNCTION_REGION\}/);
+  assert.match(cms, /let pendingCmsRefresh:/);
+  assert.match(cms, /function startCmsRefresh\(\)/);
+  assert.match(cms, /if \(cmsMemoryCache && cmsMemoryCache\.freshUntil > now\)/);
+  assert.match(cms, /void startCmsRefresh\(\);/);
+  assert.match(cms, /return cmsMemoryCache\.value;/);
+});
+
+
+test("public CMS edge function avoids wildcard database payloads", async () => {
+  const edge = await read("supabase/functions/public-cms/index.ts");
+
+  assert.doesNotMatch(edge, /\.select\("\*"\)/);
+  assert.match(edge, /cms_hero_slides"[\s\S]*?image_url,mobile_image_url/);
+  assert.match(edge, /cms_sections"[\s\S]*?content_en,content_ar/);
+  assert.match(edge, /cms_navigation_items"[\s\S]*?label_en,label_ar/);
+  assert.match(edge, /cms_seo_pages"[\s\S]*?description_en,description_ar/);
+});
+
+
+test("public CMS edge function serves warm payloads without repeating database reads", async () => {
+  const edge = await read("supabase/functions/public-cms/index.ts");
+
+  assert.match(edge, /CMS_EDGE_MEMORY_TTL_MS\s*=\s*30_000/);
+  assert.match(edge, /let cmsBodyCache:/);
+  assert.match(edge, /cachedBody\.expiresAt > Date\.now\(\)/);
+  assert.match(edge, /return new Response\(cachedBody\.body/);
+  assert.match(edge, /cmsBodyCache = \{[\s\S]*?expiresAt: Date\.now\(\) \+ CMS_EDGE_MEMORY_TTL_MS,[\s\S]*?body/);
 });
 
 
