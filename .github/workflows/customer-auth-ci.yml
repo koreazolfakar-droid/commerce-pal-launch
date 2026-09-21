@@ -1,0 +1,57 @@
+name: Customer Auth CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/components/customer-auth/**"
+      - "src/components/SiteHeader.tsx"
+      - "src/components/MobileTopBar.tsx"
+      - "src/routes/__root.tsx"
+      - "e2e/customer-auth-ui.test.mjs"
+      - ".github/workflows/customer-auth-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: customer-auth-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Source security gate
+        run: node scripts/security-gate.mjs
+
+      - name: TypeScript
+        run: bun run typecheck
+
+      - name: ESLint
+        run: bun run lint
+
+      - name: Customer auth regression tests
+        run: node --test e2e/customer-auth-ui.test.mjs
+
+      - name: Unit and architecture tests
+        run: bun run test:unit
+
+      - name: Production build
+        run: bun run build
+
+      - name: SSR smoke test
+        run: bun run test:ssr
