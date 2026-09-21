@@ -240,6 +240,7 @@ export function CheckoutDetailsForm({
         invoicePdf: "تحميل الفاتورة PDF",
         preparingPdf: "جارٍ تجهيز PDF...",
         required: "يرجى تعبئة الاسم ورقم الهاتف والمنطقة والعنوان أولًا.",
+        invalidPhone: "أدخل رقم هاتف صحيحًا يحتوي على 7 أرقام على الأقل.",
         pdfError: "تعذر إنشاء ملف PDF الآن. جرّب مرة أخرى.",
         ready: "تم حفظ الطلب في النظام بنجاح. يمكنك الاحتفاظ بنسخة PDF أو متابعة واتساب.",
         privacy: "لا نستخدم موقعك إلا بعد موافقتك، ويتم إنشاء ملف PDF محليًا على جهازك.",
@@ -301,6 +302,7 @@ export function CheckoutDetailsForm({
         invoicePdf: "Download invoice PDF",
         preparingPdf: "Preparing PDF...",
         required: "Please fill in your name, phone number, area and address first.",
+        invalidPhone: "Enter a valid phone number with at least 7 digits.",
         pdfError: "We couldn't generate the PDF right now. Please try again.",
         ready: "Your order was saved successfully. You can keep a PDF copy or continue on WhatsApp.",
         privacy:
@@ -338,6 +340,10 @@ export function CheckoutDetailsForm({
     const required = [details.name, details.phone, details.area, details.address];
     if (required.some((value) => value.trim().length < 2)) {
       setError(copy.required);
+      return false;
+    }
+    if (details.phone.replace(/\D/g, "").length < 7 || details.phone.length > 32) {
+      setError(copy.invalidPhone);
       return false;
     }
     if (details.paymentMethod === "whish_money" && !whishConfigured) {
