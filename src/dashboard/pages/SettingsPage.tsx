@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import { getDashboardRole, type DashboardRole } from "@/dashboard/data/catalog";
 import {
   loadDashboardSiteSettings,
   saveDashboardSiteSettings,
@@ -47,6 +48,7 @@ function Field({
   placeholder,
   dir,
   type = "text",
+  disabled = false,
 }: {
   label: string;
   value: string;
@@ -54,6 +56,7 @@ function Field({
   placeholder?: string;
   dir?: "ltr" | "rtl";
   type?: string;
+  disabled?: boolean;
 }) {
   return (
     <label className="block">
@@ -64,7 +67,8 @@ function Field({
         dir={dir}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
+        disabled={disabled}
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
       />
     </label>
   );
@@ -94,6 +98,7 @@ export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>("identity");
   const [settings, setSettings] = useState<DashboardSiteSettings>(EMPTY);
   const [saved, setSaved] = useState<DashboardSiteSettings>(EMPTY);
+  const [role, setRole] = useState<DashboardRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -103,9 +108,13 @@ export default function SettingsPage() {
   const load = useCallback(async (manual = false) => {
     if (!manual) setLoading(true);
     try {
-      const next = await loadDashboardSiteSettings();
+      const [next, nextRole] = await Promise.all([
+        loadDashboardSiteSettings(),
+        getDashboardRole(),
+      ]);
       setSettings(next);
       setSaved(next);
+      setRole(nextRole);
       if (manual) toast.success("Settings refreshed from Supabase.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Unable to load settings.");
@@ -422,15 +431,16 @@ export default function SettingsPage() {
                   type="number"
                   dir="ltr"
                   placeholder="2.00"
+                  disabled={role !== "admin"}
                 />
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-[11px] leading-5 text-slate-500">
                   <div className="font-bold text-slate-700">
                     {Number(settings.deliveryFee || 0) === 0 ? "Free Delivery" : "Paid Delivery"}
                   </div>
                   <div className="mt-1">
-                    The default is USD 2.00 per order. Changes here are reflected in the storefront
-                    cart and are enforced server-side for new orders. Staff can still override delivery
-                    on an unpaid order.
+                    {role === "admin"
+                      ? "The default is USD 2.00 per order. Changes here are reflected in the storefront cart and are enforced server-side for new orders. Staff can still override delivery on an unpaid order."
+                      : "Only an admin with MFA or passkey step-up can change the global delivery fee. You can view the current fee, but editing is locked for your role."}
                   </div>
                 </div>
               </div>
