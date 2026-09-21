@@ -286,3 +286,25 @@ test("description-only marketing words do not create noisy product matches", () 
   });
   assert.equal(productSearchScore(item, "compatible"), 0);
 });
+
+
+test("catalog q results are ordered by relevance when no explicit sort is selected", () => {
+  const exact = product({
+    id: "search-exact",
+    handle: "search-exact",
+    title: "Samsung Galaxy S26",
+    vendor: "Samsung",
+    productType: "Smartphone",
+  });
+  const accessory = product({
+    id: "search-accessory",
+    handle: "search-accessory",
+    title: "Case for Samsung Galaxy S26",
+    vendor: "Spigen",
+    productType: "Phone Cases",
+  });
+  const items = [accessory, exact];
+  const catalog = taxonomy.buildCatalogIndex(items);
+  const matches = applyFilters(items, catalog, { q: "Samsung Galaxy S26" });
+  assert.deepEqual(matches.map((item) => item.node.handle), ["search-exact", "search-accessory"]);
+});
