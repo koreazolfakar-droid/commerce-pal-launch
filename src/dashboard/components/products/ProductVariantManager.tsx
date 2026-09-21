@@ -504,7 +504,7 @@ export default function ProductVariantManager({
                       void imageEditor.editFile(file, {
                         title: "Adjust variant image",
                         preset: "square",
-                        transparent: false,
+                        transparent: true,
                         defaultFit: "contain",
                       }).then((edited) => {
                         if (edited) setPendingImageFile(edited);
@@ -528,7 +528,7 @@ export default function ProductVariantManager({
                           void imageEditor.editUrl(draft.imageUrl, {
                             title: "Adjust existing variant image",
                             preset: "square",
-                            transparent: false,
+                            transparent: true,
                             defaultFit: "contain",
                           }).then((edited) => {
                             if (edited) setPendingImageFile(edited);
