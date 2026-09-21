@@ -80,7 +80,9 @@ export function ProductGrid({
           <ProductViewToggle mode={viewMode} onChange={setViewMode} />
         </div>
       )}
-      <div className={cn(viewMode === "list" ? LIST : viewMode === "dense" ? DENSE : GRID, className)}>
+      <div
+        className={cn(viewMode === "list" ? LIST : viewMode === "dense" ? DENSE : GRID, className)}
+      >
         {products.map((product, index) =>
           viewMode === "list" ? (
             <ProductListCard key={product.node.id} product={product} eager={index < eagerCount} />
