@@ -211,14 +211,22 @@ export function ProductRail({
           <CompactProductCard
             product={visible[0]!}
             eager
-            className={viewMode === "dense" ? "homepage-product-card max-sm:!overflow-visible max-sm:!rounded-none max-sm:!border-0 max-sm:!bg-transparent max-sm:!shadow-none max-sm:[&>div:first-child]:overflow-hidden max-sm:[&>div:first-child]:rounded-xl max-sm:[&>div:last-child]:px-0.5" : "homepage-product-card"}
+            className={
+              viewMode === "dense"
+                ? "homepage-product-card max-sm:!overflow-visible max-sm:!rounded-none max-sm:!border-0 max-sm:!bg-transparent max-sm:!shadow-none max-sm:[&>div:first-child]:overflow-hidden max-sm:[&>div:first-child]:rounded-xl max-sm:[&>div:last-child]:px-0.5"
+                : "homepage-product-card"
+            }
           />
         </div>
       ) : (
         <div className="relative">
           <div
             ref={railRef}
-            className={viewMode === "dense" ? "scroll-rail product-rail-items max-sm:[&>*]:!basis-[31%] max-sm:[&>*]:!max-w-[31%]" : "scroll-rail product-rail-items"}
+            className={
+              viewMode === "dense"
+                ? "scroll-rail product-rail-items max-sm:[&>*]:!basis-[31%] max-sm:[&>*]:!max-w-[31%]"
+                : "scroll-rail product-rail-items"
+            }
             role="list"
             aria-label="Products"
             aria-busy={shouldRender ? undefined : "true"}
@@ -230,7 +238,11 @@ export function ProductRail({
                   product={product}
                   listItem={compactGrid || undefined}
                   eager={index < 2}
-                  className={viewMode === "dense" ? "homepage-product-card shrink-0 snap-start transition-transform duration-150 ease-out active:scale-[0.99] max-sm:!overflow-visible max-sm:!rounded-none max-sm:!border-0 max-sm:!bg-transparent max-sm:!shadow-none max-sm:[&>div:first-child]:overflow-hidden max-sm:[&>div:first-child]:rounded-xl max-sm:[&>div:last-child]:px-0.5 sm:hover:-translate-y-0.5" : "homepage-product-card shrink-0 snap-start transition-transform duration-150 ease-out active:scale-[0.99] sm:hover:-translate-y-0.5"}
+                  className={
+                    viewMode === "dense"
+                      ? "homepage-product-card shrink-0 snap-start transition-transform duration-150 ease-out active:scale-[0.99] max-sm:!overflow-visible max-sm:!rounded-none max-sm:!border-0 max-sm:!bg-transparent max-sm:!shadow-none max-sm:[&>div:first-child]:overflow-hidden max-sm:[&>div:first-child]:rounded-xl max-sm:[&>div:last-child]:px-0.5 sm:hover:-translate-y-0.5"
+                      : "homepage-product-card shrink-0 snap-start transition-transform duration-150 ease-out active:scale-[0.99] sm:hover:-translate-y-0.5"
+                  }
                 />
               ))
             ) : (
