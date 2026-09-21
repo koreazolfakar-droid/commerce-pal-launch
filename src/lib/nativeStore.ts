@@ -64,8 +64,6 @@ type NavigationProductRow = Pick<
   ProductRow,
   "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
 >;
-type NavigationCollectionRow = Pick<CollectionRow, "id" | "handle" | "title">;
-type NavigationCollectionLinkRow = Pick<CollectionLinkRow, "collection_id" | "product_id">;
 
 const STOREFRONT_PRODUCT_SELECT =
   "id,title,description,description_html,handle,brand_id,product_type,created_at,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
@@ -80,8 +78,6 @@ const STOREFRONT_COLLECTION_LINK_SELECT =
 const STOREFRONT_BRAND_SELECT = "id,name" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
   "id,title,handle,brand_id,product_type,tags" as const;
-const STOREFRONT_NAVIGATION_COLLECTION_SELECT = "id,handle,title" as const;
-const STOREFRONT_NAVIGATION_COLLECTION_LINK_SELECT = "collection_id,product_id" as const;
 
 type NativeProduct = {
   product: ShopifyProduct;
@@ -470,29 +466,26 @@ export async function fetchNavigationCatalogFacets() {
     publicSupabase
       .from("store_products")
       .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
-      .eq("status", "active"),
+      .eq("status", "active")
+      .order("sort_order", { ascending: true }),
     publicSupabase
       .from("store_collections")
-      .select(STOREFRONT_NAVIGATION_COLLECTION_SELECT)
+      .select(STOREFRONT_COLLECTION_SELECT)
       .eq("is_active", true),
     publicSupabase
       .from("store_collection_products")
-      .select(STOREFRONT_NAVIGATION_COLLECTION_LINK_SELECT),
+      .select(STOREFRONT_COLLECTION_LINK_SELECT)
+      .order("sort_order", { ascending: true }),
     publicSupabase
       .from("cms_brands")
       .select(STOREFRONT_BRAND_SELECT)
-      .eq("is_visible", true),
+      .eq("is_visible", true)
+      .order("sort_order", { ascending: true }),
   ]);
 
   const productRows = assertResult(productResult, "navigation products") as NavigationProductRow[];
-  const collectionRows = assertResult(
-    collectionResult,
-    "navigation collections",
-  ) as NavigationCollectionRow[];
-  const links = assertResult(
-    linkResult,
-    "navigation collection links",
-  ) as NavigationCollectionLinkRow[];
+  const collectionRows = assertResult(collectionResult, "navigation collections");
+  const links = assertResult(linkResult, "navigation collection links");
   const brands = assertResult(brandResult, "navigation brands");
 
   const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
@@ -502,7 +495,7 @@ export async function fetchNavigationCatalogFacets() {
   const products: ShopifyProduct[] = productRows.map((row) => {
     const productCollections = (linksByProduct.get(row.id) ?? [])
       .map((link) => collectionsById.get(link.collection_id))
-      .filter((collection): collection is NavigationCollectionRow => Boolean(collection));
+      .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
 
     return {
       node: {
