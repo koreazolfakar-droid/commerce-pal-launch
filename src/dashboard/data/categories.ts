@@ -88,6 +88,16 @@ function mapCategory(row: CategoryRow): CatalogCategory {
   };
 }
 
+const CATEGORY_FAMILY_ALIASES: Record<string, string> = {
+  "mobile-phones": "smartphone",
+  "foldable-smartphone": "smartphone",
+  "smartphone-bundle": "smartphone",
+  "gaming-tablet": "tablet",
+  "wall-charger": "charger",
+  "charging-cable": "cable",
+  "used-phones": "used-phone",
+};
+
 export function normalizeCategorySlug(value: string) {
   return value
     .normalize("NFKD")
@@ -95,6 +105,11 @@ export function normalizeCategorySlug(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+export function canonicalCategoryFamilySlug(value: string) {
+  const slug = normalizeCategorySlug(value);
+  return CATEGORY_FAMILY_ALIASES[slug] ?? slug;
 }
 
 export function createUniqueCategorySlug(

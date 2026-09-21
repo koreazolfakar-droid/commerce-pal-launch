@@ -4,10 +4,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { StoreLayout } from "@/components/StoreLayout";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
-import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { cdnImage } from "@/lib/image";
-import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import { catalogQueryOptions } from "@/lib/queries";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import type { CatalogFacet } from "@/lib/taxonomy";
@@ -41,13 +40,12 @@ async function fetchManagedStoreCategories(): Promise<ManagedStoreCategory[] | n
 
 export const Route = createFileRoute("/categories")({
   loader: async ({ context }) => {
-    const [catalog, collections, managedCategories] = await Promise.all([
+    const [catalog, managedCategories] = await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
-      context.queryClient.ensureQueryData(collectionsQueryOptions()),
       fetchManagedStoreCategories(),
     ]);
 
-    return { catalog, collections, managedCategories };
+    return { catalog, managedCategories };
   },
   head: () => ({
     meta: [
@@ -67,43 +65,26 @@ export const Route = createFileRoute("/categories")({
 
 function CategoriesPage() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
-  const { data: collections = [] } = useSuspenseQuery(collectionsQueryOptions());
   const { managedCategories } = Route.useLoaderData();
   const { language } = useLanguage();
 
   const items: CategoryDisplayItem[] =
     managedCategories !== null
-      ? managedCategories.map((category: ManagedStoreCategory) => {
-          const artwork = findCategoryArtworkCollection(
-            collections,
-            category.slug,
-            category.name,
-          );
-
-          return {
-            slug: category.slug,
-            label:
-              language === "ar" && category.name_ar?.trim()
-                ? category.name_ar.trim()
-                : category.name,
-            imageUrl: cdnImage(category.image_url || artwork?.image?.url, 240),
-            glyphSlug: category.slug,
-          };
-        })
-      : catalog.categories.map((category: CatalogFacet) => {
-          const artwork = findCategoryArtworkCollection(
-            collections,
-            category.slug,
-            category.label,
-          );
-
-          return {
-            slug: category.slug,
-            label: categoryLabel(category, language),
-            imageUrl: cdnImage(artwork?.image?.url, 240),
-            glyphSlug: category.slug,
-          };
-        });
+      ? managedCategories.map((category: ManagedStoreCategory) => ({
+          slug: category.slug,
+          label:
+            language === "ar" && category.name_ar?.trim()
+              ? category.name_ar.trim()
+              : category.name,
+          imageUrl: cdnImage(category.image_url || undefined, 240),
+          glyphSlug: category.slug,
+        }))
+      : catalog.categories.map((category: CatalogFacet) => ({
+          slug: category.slug,
+          label: categoryLabel(category, language),
+          imageUrl: undefined,
+          glyphSlug: category.slug,
+        }));
 
   return (
     <StoreLayout>
