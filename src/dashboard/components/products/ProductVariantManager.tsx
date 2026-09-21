@@ -506,6 +506,7 @@ export default function ProductVariantManager({
                         preset: "square",
                         transparent: true,
                         defaultFit: "contain",
+                        previewContext: "product",
                       }).then((edited) => {
                         if (edited) setPendingImageFile(edited);
                       });
