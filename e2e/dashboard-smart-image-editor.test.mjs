@@ -39,7 +39,8 @@ test("smart image editor detects visible content and exposes precise positioning
   assert.match(editor, /label="Zoom"/);
   assert.match(editor, /label="Horizontal"/);
   assert.match(editor, /label="Vertical"/);
-  assert.match(editor, /label="Padding"/);
+  assert.match(editor, /Extra image padding/);
+  assert.match(editor, /"Padding"/);
   assert.match(editor, /Fit mode/);
   assert.match(editor, /editFile/);
   assert.match(editor, /editUrl/);
