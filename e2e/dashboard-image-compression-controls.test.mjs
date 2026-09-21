@@ -144,3 +144,40 @@ test("global legacy optimizer covers all old dashboard image sources", async () 
   assert.match(media, /role !== "admin"/);
   assert.match(media, /rollback failed/);
 });
+
+
+test("global legacy optimizer scans products brands categories hero and media safely", async () => {
+  const [page, ui, data] = await Promise.all([
+    read("src/dashboard/pages/MediaLibraryPage.tsx"),
+    read("src/dashboard/components/GlobalLegacyImageOptimizer.tsx"),
+    read("src/dashboard/data/globalImageOptimizer.ts"),
+  ]);
+
+  assert.match(page, /GlobalLegacyImageOptimizer/);
+  assert.match(page, /enabled=\{canDelete\}/);
+
+  assert.match(ui, /Global old-image WebP optimizer/);
+  assert.match(ui, /Products/);
+  assert.match(ui, /Brands/);
+  assert.match(ui, /Categories/);
+  assert.match(ui, /Hero/);
+  assert.match(ui, /Media library/);
+  assert.match(ui, /Analyze selected/);
+  assert.match(ui, /Convert all ready/);
+  assert.match(ui, /Current resolution/);
+  assert.match(ui, /New resolution/);
+  assert.match(ui, /Size change|Change/);
+  assert.match(ui, /convertProductImageToWebp/);
+  assert.match(ui, /replaceGlobalLegacyImageWithWebp/);
+
+  assert.match(data, /cms_media_assets/);
+  assert.match(data, /store_product_images/);
+  assert.match(data, /cms_brands/);
+  assert.match(data, /store_categories/);
+  assert.match(data, /cms_hero_slides/);
+  assert.match(data, /Only dashboard admins can optimize existing media/);
+  assert.match(data, /optimized\/\$\{assetRow\.source\}/);
+  assert.match(data, /image\/webp/);
+  assert.match(data, /remove\(\[uploaded\.objectPath\]\)/);
+  assert.match(data, /invalidateNativeStoreCache/);
+});
