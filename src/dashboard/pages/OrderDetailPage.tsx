@@ -59,7 +59,7 @@ function Panel({
 function statusTone(status: DashboardOrderStatus) {
   if (status === "delivered" || status === "done") return "green" as const;
   if (status === "cancelled") return "rose" as const;
-  if (status === "pending") return "amber" as const;
+  if (status === "new") return "amber" as const;
   return "blue" as const;
 }
 
