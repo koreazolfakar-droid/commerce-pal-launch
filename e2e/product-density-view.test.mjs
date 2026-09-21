@@ -4,14 +4,14 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("storefront keeps list view and uses market cards for 3-up and 2-up modes", async () => {
-  const [hook, toggle, grid, rail, card, styles] = await Promise.all([
+test("storefront density modes use static grids and preserve product information", async () => {
+  const [hook, toggle, grid, rail, card, showcase] = await Promise.all([
     read("src/hooks/useProductViewMode.ts"),
     read("src/components/ProductViewToggle.tsx"),
     read("src/components/ProductGrid.tsx"),
     read("src/components/ProductRail.tsx"),
     read("src/components/CompactProductCard.tsx"),
-    read("src/styles.css"),
+    read("src/components/BrandShowcaseSections.tsx"),
   ]);
 
   assert.match(hook, /"dense"\s*\|\s*"grid"\s*\|\s*"list"/);
@@ -22,15 +22,21 @@ test("storefront keeps list view and uses market cards for 3-up and 2-up modes",
   assert.match(grid, /grid-cols-3/);
   assert.match(grid, /grid-cols-2/);
   assert.match(grid, /market/);
-  assert.doesNotMatch(grid, /ProductCard key=/);
 
-  assert.match(rail, /product-rail--\$\{viewMode\}/);
-  assert.match(rail, /market/);
+  assert.match(rail, /gridProducts = products\.slice\(0, 6\)/);
+  assert.match(rail, /data-product-layout=\{viewMode\}/);
+  assert.match(rail, /grid-cols-3/);
+  assert.match(rail, /grid-cols-2/);
+  assert.doesNotMatch(rail, /overflow-x-auto|scroll-rail|RailArrow|ChevronLeft|ChevronRight/);
+
+  assert.match(showcase, /HOME_BRAND_PRODUCT_TARGET = 6/);
+  assert.match(showcase, /products=\{products\.slice\(0, 6\)\}/);
+
   assert.match(card, /market-product-card/);
   assert.match(card, /whitespace-nowrap/);
-
-  assert.match(styles, /product-rail-items\.product-rail--dense/);
-  assert.match(styles, /calc\(\(100% - 1rem\) \/ 3\)/);
-  assert.match(styles, /product-rail-items\.product-rail--grid/);
-  assert.match(styles, /calc\(\(100% - 0\.625rem\) \/ 2\)/);
+  assert.doesNotMatch(card, /line-clamp-2 min-h-\[2\.35rem\]/);
+  assert.match(card, /brand\.label/);
+  assert.match(card, /t\("inStock"\)/);
+  assert.match(card, /t\("outOfStock"\)/);
+  assert.match(card, /Add \$\{node\.title\} to bag/);
 });
