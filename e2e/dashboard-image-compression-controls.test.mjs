@@ -100,3 +100,33 @@ test("all dashboard image upload surfaces preview compression before convertible
   assert.match(hero, /Desktop hero compression preview/);
   assert.match(hero, /Mobile hero compression preview/);
 });
+
+
+test("media library bulk optimizer previews and safely replaces images in place", async () => {
+  const [page, bulk, media] = await Promise.all([
+    read("src/dashboard/pages/MediaLibraryPage.tsx"),
+    read("src/dashboard/components/BulkMediaOptimizer.tsx"),
+    read("src/dashboard/data/media.ts"),
+  ]);
+
+  assert.match(page, /BulkMediaOptimizer/);
+  assert.match(page, /canOptimize=\{canDelete\}/);
+  assert.match(bulk, /Bulk WebP optimizer/);
+  assert.match(bulk, /Analyze selected/);
+  assert.match(bulk, /Convert to WebP/);
+  assert.match(bulk, /Select all/);
+  assert.match(bulk, /Current/);
+  assert.match(bulk, /Dimensions/);
+  assert.match(bulk, /New dimensions/);
+  assert.match(bulk, /Size change/);
+  assert.match(bulk, /convertProductImageToWebp/);
+  assert.match(bulk, /replaceDashboardMediaAssetWithWebp/);
+
+  assert.match(media, /downloadDashboardMediaAsset/);
+  assert.match(media, /replaceDashboardMediaAssetWithWebp/);
+  assert.match(media, /role !== "admin"/);
+  assert.match(media, /upsert: true/);
+  assert.match(media, /contentType: "image\/webp"/);
+  assert.match(media, /mime_type: "image\/webp"/);
+  assert.match(media, /rollback failed/);
+});
