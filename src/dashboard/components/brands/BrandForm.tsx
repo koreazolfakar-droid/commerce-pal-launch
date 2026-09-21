@@ -2,6 +2,7 @@ import { Check, Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
+import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import type { ImageBackgroundRemovalOptions } from "@/dashboard/lib/imageProcessing";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
 import { normalizeBrandSlug, type CatalogBrand } from "@/dashboard/data/brands";
@@ -105,6 +106,7 @@ export default function BrandForm({
   const [logoBackgroundTolerance, setLogoBackgroundTolerance] = useState(18);
   const logoInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
+  const imageEditor = useSmartImageEditor();
   const patch = (next: Partial<CatalogBrand>) => setDraft((current) => ({ ...current, ...next }));
 
   const submit = async () => {
@@ -176,6 +178,7 @@ export default function BrandForm({
         if (event.target === event.currentTarget && !saving) onClose();
       }}
     >
+      {imageEditor.dialog}
       <div className="max-h-[94vh] w-full overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[28px]">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -254,9 +257,18 @@ export default function BrandForm({
                       className="sr-only"
                       onChange={(event) => {
                         const file = event.target.files?.[0] ?? null;
-                        setPendingLogo(file);
-                        if (file) setRemoveLogo(false);
                         event.currentTarget.value = "";
+                        if (!file) return;
+                        void imageEditor.editFile(file, {
+                          title: "Adjust brand logo",
+                          preset: "logo",
+                          transparent: true,
+                          defaultFit: "contain",
+                        }).then((edited) => {
+                          if (!edited) return;
+                          setPendingLogo(edited);
+                          setRemoveLogo(false);
+                        });
                       }}
                     />
                     <button
@@ -269,17 +281,48 @@ export default function BrandForm({
                       {pendingLogo ? "Change selection" : draft.logo && !removeLogo ? "Replace logo" : "Upload logo"}
                     </button>
                     {(draft.logo || pendingLogo) && !removeLogo && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPendingLogo(null);
-                          setRemoveLogo(true);
-                          patch({ logo: undefined });
-                        }}
-                        className="text-[9px] font-bold text-rose-600"
-                      >
-                        Remove logo
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const source = pendingLogo ?? draft.logo;
+                            if (!source) return;
+                            const editPromise =
+                              source instanceof File
+                                ? imageEditor.editFile(source, {
+                                    title: "Adjust brand logo",
+                                    preset: "logo",
+                                    transparent: true,
+                                    defaultFit: "contain",
+                                  })
+                                : imageEditor.editUrl(source, {
+                                    title: "Adjust brand logo",
+                                    preset: "logo",
+                                    transparent: true,
+                                    defaultFit: "contain",
+                                  });
+                            void editPromise.then((edited) => {
+                              if (!edited) return;
+                              setPendingLogo(edited);
+                              setRemoveLogo(false);
+                            });
+                          }}
+                          className="text-[9px] font-bold text-indigo-600"
+                        >
+                          Adjust
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPendingLogo(null);
+                            setRemoveLogo(true);
+                            patch({ logo: undefined });
+                          }}
+                          className="text-[9px] font-bold text-rose-600"
+                        >
+                          Remove logo
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -300,9 +343,18 @@ export default function BrandForm({
                   className="sr-only"
                   onChange={(event) => {
                     const file = event.target.files?.[0] ?? null;
-                    setPendingCover(file);
-                    if (file) setRemoveCover(false);
                     event.currentTarget.value = "";
+                    if (!file) return;
+                    void imageEditor.editFile(file, {
+                      title: "Adjust brand cover",
+                      preset: "cover",
+                      transparent: false,
+                      defaultFit: "cover",
+                    }).then((edited) => {
+                      if (!edited) return;
+                      setPendingCover(edited);
+                      setRemoveCover(false);
+                    });
                   }}
                 />
                 <div className="mt-2 flex items-center gap-3">
@@ -316,17 +368,48 @@ export default function BrandForm({
                     {pendingCover ? "Change selection" : draft.coverImage && !removeCover ? "Replace" : "Upload cover"}
                   </button>
                   {(draft.coverImage || pendingCover) && !removeCover && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPendingCover(null);
-                        setRemoveCover(true);
-                        patch({ coverImage: undefined });
-                      }}
-                      className="text-[9px] font-bold text-rose-600"
-                    >
-                      Remove
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const source = pendingCover ?? draft.coverImage;
+                          if (!source) return;
+                          const editPromise =
+                            source instanceof File
+                              ? imageEditor.editFile(source, {
+                                  title: "Adjust brand cover",
+                                  preset: "cover",
+                                  transparent: false,
+                                  defaultFit: "cover",
+                                })
+                              : imageEditor.editUrl(source, {
+                                  title: "Adjust brand cover",
+                                  preset: "cover",
+                                  transparent: false,
+                                  defaultFit: "cover",
+                                });
+                          void editPromise.then((edited) => {
+                            if (!edited) return;
+                            setPendingCover(edited);
+                            setRemoveCover(false);
+                          });
+                        }}
+                        className="text-[9px] font-bold text-indigo-600"
+                      >
+                        Adjust
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPendingCover(null);
+                          setRemoveCover(true);
+                          patch({ coverImage: undefined });
+                        }}
+                        className="text-[9px] font-bold text-rose-600"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
