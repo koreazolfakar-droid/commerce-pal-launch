@@ -61,7 +61,10 @@ test("delivery fee is server-owned and participates in the final total", () => {
 
   const bodyStart = client.indexOf("const body = {");
   const invokeStart = client.indexOf("supabase.functions.invoke", bodyStart);
-  assert.ok(bodyStart > 0 && invokeStart > bodyStart, "checkout request body should be identifiable");
+  assert.ok(
+    bodyStart > 0 && invokeStart > bodyStart,
+    "checkout request body should be identifiable",
+  );
   const requestBodySource = client.slice(bodyStart, invokeStart);
   assert.doesNotMatch(requestBodySource, /shipping_total\s*:/);
   assert.match(requestBodySource, /expected_delivery_fee:/);
