@@ -261,13 +261,30 @@
   min-height: 2.5rem;
   letter-spacing: normal;
 }
-.store-layout :is(.sc-product-card, .product-list-card) button {
+.store-layout :is(.sc-product-card, .product-list-card) button:not(.product-action-button) {
   min-width: var(--sc-touch);
   min-height: var(--sc-touch);
 }
-.store-layout :is(.sc-product-card, .product-list-card) button svg.lucide {
+.store-layout .product-action-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+}
+.store-layout .product-action-button::after {
+  content: "";
+  position: absolute;
+  inset: -0.25rem;
+}
+.store-layout :is(.sc-product-card, .product-list-card) button:not(.product-action-button) svg.lucide {
   width: var(--sc-icon-action);
   height: var(--sc-icon-action);
+  flex-shrink: 0;
+  stroke-width: 1.9;
+}
+.store-layout .product-action-button svg.lucide {
+  width: 1.0625rem;
+  height: 1.0625rem;
   flex-shrink: 0;
   stroke-width: 1.9;
 }
