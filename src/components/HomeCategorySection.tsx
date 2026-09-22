@@ -163,10 +163,10 @@ export function HomeCategorySection({
                 params={{ slug: category.slug }}
                 role="listitem"
                 aria-label={label}
-                className="group flex w-[5.8rem] shrink-0 snap-start flex-col items-center gap-2 rounded-lg px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.6rem] sm:gap-2.5 lg:w-[7.1rem]"
+                className="category-home-item group flex w-[6.15rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-lg px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.75rem] sm:gap-2 lg:w-[7.1rem]"
               >
                 <span
-                  className="relative grid h-[4.65rem] w-[4.65rem] shrink-0 place-items-center overflow-hidden rounded-lg border border-border/70 bg-card shadow-card transition-colors duration-150 group-hover:border-primary/25 sm:h-[5.2rem] sm:w-[5.2rem] lg:h-[5.6rem] lg:w-[5.6rem]"
+                  className="category-home-media relative grid h-[4.8rem] w-[4.8rem] shrink-0 place-items-center overflow-hidden rounded-lg border border-border/70 bg-card shadow-card transition-colors duration-150 group-hover:border-primary/25 sm:h-[5.2rem] sm:w-[5.2rem] lg:h-[5.6rem] lg:w-[5.6rem]"
                   aria-hidden="true"
                 >
                   <span className="pointer-events-none absolute inset-0 bg-card" />
@@ -187,7 +187,7 @@ export function HomeCategorySection({
                     />
                   )}
                 </span>
-                <h3 className="line-clamp-2 min-h-[2rem] max-w-full text-center text-[11px] font-extrabold leading-[1.15] tracking-[-0.015em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.1rem] sm:text-xs">
+                <h3 className="category-home-label line-clamp-2 min-h-[2.2rem] w-full max-w-full text-center text-[11px] font-bold leading-[1.2] tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.25rem] sm:text-xs">
                   {label}
                 </h3>
               </Link>
