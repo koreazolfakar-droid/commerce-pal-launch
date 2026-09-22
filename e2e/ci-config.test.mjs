@@ -47,7 +47,8 @@ test("CircleCI runs separate source and dependency security gates on every pipel
   assert.match(circle, /bun run build/);
   assert.match(circle, /bun run test:ssr/);
   assert.match(circle, /ui-browser:/);
-  assert.match(circle, /playwright install --with-deps << parameters\.engine >>/);
+  assert.match(circle, /mcr\.microsoft\.com\/playwright:v1\.63\.0-noble/);
+  assert.doesNotMatch(circle, /playwright install --with-deps << parameters\.engine >>/);
   assert.match(circle, /node e2e\/ui-polish-responsive-check\.mjs/);
 });
 
