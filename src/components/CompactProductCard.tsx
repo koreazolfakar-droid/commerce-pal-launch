@@ -166,9 +166,9 @@ export const CompactProductCard = memo(function CompactProductCard({
               size={320}
               sizes="(min-width: 1024px) 220px, (min-width: 640px) 24vw, 31vw"
               eager={eager}
-              className="aspect-square w-full !bg-white dark:!bg-image-stage"
+              className="aspect-square w-full !bg-image-stage"
               imageClassName={cn(
-                "!bg-white !p-[7%] transition-[transform,filter,opacity] duration-200 group-hover:scale-[1.025] dark:!bg-image-stage",
+                "!bg-image-stage !p-[7%] transition-[transform,filter,opacity] duration-200 group-hover:scale-[1.025]",
                 !inStock && "blur-[2px] opacity-65 grayscale-[0.12]",
               )}
             />
