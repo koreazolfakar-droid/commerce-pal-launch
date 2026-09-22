@@ -302,6 +302,22 @@ async function runModeProbe(browser) {
       });
     }
 
+    const isolationStyles = {
+      "overflow-mobile-en-no-chrome":
+        '.mobile-top-bar, .mobile-top-bar + div, [data-testid="bottom-nav"] { display: none !important; }',
+      "overflow-mobile-en-no-hero":
+        '[data-testid="homepage-promo-ticker"], [data-testid="home-hero"] { display: none !important; }',
+      "overflow-mobile-en-no-navigation-sections":
+        '[data-testid="category-section"], [data-testid="top-brands"] { display: none !important; }',
+      "overflow-mobile-en-no-deferred":
+        '[data-testid="best-sellers"], [data-testid="deals-section"], [data-testid="new-items"], [data-testid="brand-showcases"], [data-testid="benefits-bar"], [data-testid="trust-benefits-rail"], section[aria-labelledby="recently-viewed"], section[aria-labelledby="why-shop"] { display: none !important; }',
+    };
+
+    const isolationStyle = isolationStyles[routeGroup];
+    if (isolationStyle) {
+      await page.addStyleTag({ content: isolationStyle });
+    }
+
     const overflowOnly = routeGroup === "overflow" || routeGroup.startsWith("overflow-");
 
     if (!overflowOnly) {
