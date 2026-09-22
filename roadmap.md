@@ -1,5 +1,10 @@
 # Space Call — Roadmap
 
+## Product card layout polish
+
+- [x] Standardize product card media, copy, prices, and actions across product grids.
+- [x] Remove the horizontal list display mode and default mobile products to an orderly two-column grid.
+
 ## In progress: Brands dashboard usability
 
 - [ ] Improve the add/edit brand flow with direct logo and cover uploads, live previews, validation, and clear save states.
