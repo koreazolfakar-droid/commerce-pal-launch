@@ -2,7 +2,7 @@ import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
@@ -40,6 +40,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const cartItems = useCartStore((state) => state.items);
   const [isAdding, setIsAdding] = useState(false);
+  const replacementAddButtonRef = useRef<HTMLButtonElement>(null);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
   const toggleWishlist = useWishlistToggle();
 
@@ -87,6 +88,17 @@ export const CompactProductCard = memo(function CompactProductCard({
       await updateQuantity(variant.id, nextQuantity);
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleDecrement = async (currentQuantity: number, trigger: HTMLButtonElement) => {
+    const restoreFocus =
+      currentQuantity === 1 && typeof document !== "undefined" && document.activeElement === trigger;
+
+    await handleQuantityChange(currentQuantity - 1);
+
+    if (restoreFocus && typeof window !== "undefined") {
+      window.requestAnimationFrame(() => replacementAddButtonRef.current?.focus());
     }
   };
 
@@ -166,9 +178,9 @@ export const CompactProductCard = memo(function CompactProductCard({
               size={320}
               sizes="(min-width: 1024px) 220px, (min-width: 640px) 24vw, 31vw"
               eager={eager}
-              className="aspect-square w-full !bg-white dark:!bg-image-stage"
+              className="aspect-square w-full !bg-image-stage"
               imageClassName={cn(
-                "!bg-white !p-[7%] transition-[transform,filter,opacity] duration-200 group-hover:scale-[1.025] dark:!bg-image-stage",
+                "!bg-image-stage !p-[7%] transition-[transform,filter,opacity] duration-200 group-hover:scale-[1.025]",
                 !inStock && "blur-[2px] opacity-65 grayscale-[0.12]",
               )}
             />
@@ -232,7 +244,7 @@ export const CompactProductCard = memo(function CompactProductCard({
               >
                 <button
                   type="button"
-                  onClick={() => handleQuantityChange(cartQuantity - 1)}
+                  onClick={(event) => void handleDecrement(cartQuantity, event.currentTarget)}
                   disabled={isAdding}
                   aria-label={`Decrease ${node.title} quantity`}
                   className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40 sm:w-8"
@@ -258,6 +270,7 @@ export const CompactProductCard = memo(function CompactProductCard({
               </div>
             ) : (
               <button
+                ref={replacementAddButtonRef}
                 type="button"
                 onClick={handleAdd}
                 disabled={isAdding || !variant || !inStock}
@@ -301,7 +314,7 @@ export const CompactProductCard = memo(function CompactProductCard({
               eager={eager}
               className="market-product-image"
               imageClassName={cn(
-                "!p-[5%] transition-[transform,filter,opacity] duration-300 group-hover:scale-[1.035]",
+                "!p-[3%] sm:!p-[4%] transition-[transform,filter,opacity] duration-300 group-hover:scale-[1.035]",
                 !inStock && "scale-[1.01] blur-[2px] opacity-70 grayscale-[0.12]",
               )}
             />
@@ -332,16 +345,29 @@ export const CompactProductCard = memo(function CompactProductCard({
         </div>
 
         <div className="product-card-body market-product-copy flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
-          {brand ? (
-            <div className="market-product-brand mb-1 flex min-w-0 items-center gap-1">
-              <BrandLogo slug={brand.slug} label={brand.label} size={14} className="rounded" />
-              <span className="market-product-brand-label break-words text-[9px] font-semibold leading-3 text-muted-foreground sm:text-[10px]">
+          <div className="market-product-brand flex min-h-4 min-w-0 items-center">
+            {brand ? (
+              <span className="market-product-brand-label truncate text-[9px] font-semibold leading-4 text-muted-foreground sm:text-[10px]">
                 {brand.label}
               </span>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
 
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+          <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-0.5 min-w-0">
+            <h3 className="product-card-title line-clamp-2 min-h-[2.35rem] break-words text-[0.8rem] font-semibold leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
+              {node.title}
+            </h3>
+          </Link>
+
+          <div className="market-product-variant min-h-4">
+            {summary ? (
+              <p className="market-product-summary truncate text-[10px] leading-4 text-muted-foreground sm:text-xs">
+                {summary}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="mt-1 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
             <bdi className="product-card-price whitespace-nowrap text-[0.95rem] font-bold tabular-nums tracking-tight text-foreground sm:text-base">
               {formatPrice(price.amount, price.currencyCode)}
             </bdi>
@@ -352,32 +378,70 @@ export const CompactProductCard = memo(function CompactProductCard({
             )}
           </div>
 
-          <Link
-            to="/product/$handle"
-            params={{ handle: node.handle }}
-            className="mt-1 min-w-0"
-          >
-            <h3 className="product-card-title line-clamp-2 min-h-[2.35rem] break-words text-[0.8rem] font-semibold leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
-              {node.title}
-            </h3>
-          </Link>
-
-          {summary ? (
-            <p className="market-product-summary mt-0.5 break-words text-[10px] leading-4 text-muted-foreground sm:text-xs">
-              {summary}
-            </p>
-          ) : null}
-
-          <div className="market-product-footer mt-auto flex min-w-0 items-end justify-between gap-1.5 pt-1">
+          <div className="market-product-footer mt-auto flex min-w-0 items-center justify-between gap-1.5 pt-2">
             <p
               className={cn(
-                "product-card-status market-product-stock min-w-0 flex-1 text-[10px] font-semibold leading-4 sm:text-xs",
+                "product-card-status market-product-stock inline-flex min-w-0 flex-1 items-center gap-1.5 text-[10px] font-semibold leading-4 sm:text-xs",
                 inStock ? "text-success" : "text-destructive",
               )}
             >
-              {inStock ? t("inStock") : t("outOfStock")}
+              <span
+                aria-hidden
+                className={cn(
+                  "h-1.5 w-1.5 shrink-0 rounded-full",
+                  inStock ? "bg-success" : "bg-destructive",
+                )}
+              />
+              <span className="truncate">{inStock ? t("inStock") : t("outOfStock")}</span>
             </p>
-            {addButton}
+
+            {cartQuantity > 0 ? (
+              <div
+                className="market-product-quantity inline-flex h-9 shrink-0 items-center overflow-hidden rounded-full border border-primary/15 bg-primary/10 text-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                aria-label={`${node.title} quantity ${cartQuantity}`}
+              >
+                <button
+                  type="button"
+                  onClick={(event) => void handleDecrement(cartQuantity, event.currentTarget)}
+                  disabled={isAdding}
+                  aria-label={`Decrease ${node.title} quantity`}
+                  className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40"
+                >
+                  <Minus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.15} />
+                </button>
+                <span className="min-w-5 px-0.5 text-center text-[11px] font-bold tabular-nums">
+                  {cartQuantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleQuantityChange(cartQuantity + 1)}
+                  disabled={isAdding || !inStock}
+                  aria-label={`Increase ${node.title} quantity`}
+                  className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40"
+                >
+                  {isAdding ? (
+                    <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Plus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.15} />
+                  )}
+                </button>
+              </div>
+            ) : (
+              <button
+                ref={replacementAddButtonRef}
+                type="button"
+                onClick={handleAdd}
+                disabled={isAdding || !variant || !inStock}
+                aria-label={`Add ${node.title} to bag`}
+                className="market-product-action product-card-primary-action product-action-button press relative grid h-9 w-9 shrink-0 place-items-center rounded-full border border-primary/15 bg-primary/10 text-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-[background-color,color,transform,box-shadow] hover:bg-primary hover:text-primary-foreground hover:shadow-md active:scale-95 disabled:opacity-40"
+              >
+                {isAdding ? (
+                  <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Plus aria-hidden className="h-4 w-4" strokeWidth={2.15} />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </article>
