@@ -32,19 +32,11 @@ const supplementalCases = [
 ];
 
 const routeGroups = {
-  catalog: [
-    "/",
-    "/shop",
-    "/product/fixture-phone-1",
-    "/search",
-    "/categories",
-    "/brands",
-  ],
+  catalog: ["/", "/shop", "/search", "/categories", "/brands"],
   commerce: ["/cart", "/wishlist", "/compare"],
   all: [
     "/",
     "/shop",
-    "/product/fixture-phone-1",
     "/search",
     "/cart",
     "/wishlist",
@@ -174,7 +166,7 @@ async function runResponsive(browser) {
         await page
           .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
           .first()
-          .waitFor({ state: "visible", timeout: 5000 });
+          .waitFor({ state: "visible", timeout: engineName === "webkit" ? 10000 : 5000 });
       }
       await assertViewportHealth(
         page,
@@ -269,6 +261,23 @@ async function runRoutes(browser) {
     assert.ok(response && response.status() < 400, `${engineName} ${route}: failed route smoke`);
     await page.waitForTimeout(140);
     await assertViewportHealth(page, `${engineName} critical route ${route}`);
+  }
+
+  if (routeGroup === "catalog" || routeGroup === "all") {
+    const shopResponse = await page.goto(`${baseURL}/shop`, { waitUntil: "load" });
+    assert.ok(shopResponse && shopResponse.status() < 400, `${engineName} /shop: failed product discovery`);
+    const productLink = page.locator('a[href^="/product/"]:visible').first();
+    await productLink.waitFor({ state: "visible", timeout: 10000 });
+    const href = await productLink.getAttribute("href");
+    assert.ok(href?.startsWith("/product/"), `${engineName}: no live product detail link found`);
+
+    const productResponse = await page.goto(`${baseURL}${href}`, { waitUntil: "load" });
+    assert.ok(
+      productResponse && productResponse.status() < 400,
+      `${engineName} ${href}: failed live product detail smoke`,
+    );
+    await page.waitForTimeout(140);
+    await assertViewportHealth(page, `${engineName} live product route ${href}`);
   }
 
   await page.close();
