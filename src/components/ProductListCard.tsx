@@ -101,11 +101,11 @@ export const ProductListCard = memo(function ProductListCard({
         onClick={() => toggleWishlist(node.handle)}
         aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
         aria-pressed={wishlisted}
-        className="product-action-button press absolute end-2.5 top-2.5 z-30 grid h-9 w-9 place-items-center rounded-full border border-border/65 bg-background/95 text-muted-foreground shadow-sm transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:end-3 sm:top-3"
+        className="product-action-button press absolute end-2.5 top-2.5 z-30 grid h-8 w-8 place-items-center rounded-full border border-border/65 bg-background/95 text-muted-foreground shadow-sm transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:end-3 sm:top-3 sm:h-9 sm:w-9"
       >
         <Heart
           aria-hidden
-          className={cn("h-[17px] w-[17px]", wishlisted && "fill-primary text-primary")}
+          className={cn("h-[15px] w-[15px] sm:h-[17px] sm:w-[17px]", wishlisted && "fill-primary text-primary")}
           strokeWidth={1.9}
         />
       </button>
@@ -127,7 +127,7 @@ export const ProductListCard = memo(function ProductListCard({
         )}
 
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0 pe-10">
-          <h3 className="break-words text-sm font-semibold leading-[1.5] tracking-[-0.018em] transition-colors group-hover:text-primary sm:text-sm">
+          <h3 className="line-clamp-3 break-words text-sm font-semibold leading-[1.45] tracking-[-0.018em] transition-colors group-hover:text-primary sm:text-sm">
             {node.title}
           </h3>
         </Link>
@@ -165,7 +165,7 @@ export const ProductListCard = memo(function ProductListCard({
             disabled={isAdding || !variant || !inStock}
             size="sm"
             aria-label={t(inStock ? "addToCart" : "outOfStock")}
-            className="press h-11 w-11 shrink-0 rounded-full p-0 shadow-sm sm:w-auto sm:min-w-[7.25rem] sm:px-3 sm:text-xs"
+            className="press h-12 w-12 shrink-0 rounded-full p-0 shadow-sm sm:h-11 sm:w-auto sm:min-w-[7.25rem] sm:px-3 sm:text-xs"
           >
             {isAdding ? (
               <Loader2 className="h-4 w-4 animate-spin" />
