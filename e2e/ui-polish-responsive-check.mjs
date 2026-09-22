@@ -2,9 +2,13 @@ import assert from "node:assert/strict";
 import { chromium, firefox, webkit } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:4173";
-const engineMode = process.env.UI_ENGINE ?? "all";
-const suiteMode = process.env.UI_SUITE ?? "all";
+const engineName = process.env.UI_ENGINE ?? "chromium";
+const suite = process.env.UI_SUITE ?? "all";
 const routeGroup = process.env.UI_ROUTE_GROUP ?? "all";
+
+const launchers = { chromium, firefox, webkit };
+const launcher = launchers[engineName];
+assert.ok(launcher, `Unsupported browser engine: ${engineName}`);
 
 const responsiveCases = [
   { width: 320, height: 700, lang: "en", theme: "light" },
@@ -27,15 +31,28 @@ const supplementalCases = [
   { width: 1440, height: 1000, lang: "en", theme: "light" },
 ];
 
-const criticalRouteGroups = {
-  catalog: ["/", "/shop", "/search", "/categories", "/brands"],
-  commerce: ["/product/fixture-phone-1", "/cart", "/wishlist", "/compare"],
+const routeGroups = {
+  catalog: [
+    "/",
+    "/shop",
+    "/product/fixture-phone-1",
+    "/search",
+    "/categories",
+    "/brands",
+  ],
+  commerce: ["/cart", "/wishlist", "/compare"],
+  all: [
+    "/",
+    "/shop",
+    "/product/fixture-phone-1",
+    "/search",
+    "/cart",
+    "/wishlist",
+    "/compare",
+    "/categories",
+    "/brands",
+  ],
 };
-
-const criticalRoutes =
-  routeGroup === "all"
-    ? [...criticalRouteGroups.catalog, ...criticalRouteGroups.commerce]
-    : criticalRouteGroups[routeGroup] ?? [];
 
 async function configure(page, lang, theme) {
   await page.addInitScript(
@@ -89,7 +106,6 @@ async function assertViewportHealth(page, label) {
   const card = page
     .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
     .first();
-
   if (!(await card.count())) return;
 
   const cardBox = await card.boundingBox();
@@ -125,71 +141,24 @@ async function assertViewportHealth(page, label) {
   }
 }
 
-async function assertLanguageAndTheme(page, testCase, label) {
+async function assertDocumentMode(page, testCase, route) {
   const expectedDir = testCase.lang === "ar" ? "rtl" : "ltr";
   assert.equal(
     await page.locator("html").getAttribute("dir"),
     expectedDir,
-    `${label}: direction mismatch`,
+    `${engineName} ${testCase.width}px ${route}: direction mismatch`,
   );
   assert.equal(
     await page.locator("html").getAttribute("data-theme"),
     testCase.theme,
-    `${label}: theme mismatch`,
+    `${engineName} ${testCase.width}px ${route}: theme mismatch`,
   );
 }
 
-async function runResponsiveSuite(browser) {
-  for (const testCase of responsiveCases) {
-    const page = await browser.newPage({
-      viewport: { width: testCase.width, height: testCase.height },
-    });
-    await configure(page, testCase.lang, testCase.theme);
+async function runResponsive(browser) {
+  const cases = engineName === "chromium" ? responsiveCases : supplementalCases;
 
-    try {
-      for (const route of ["/", "/shop"]) {
-        const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
-        assert.ok(response && response.status() < 400, `${route}: failed to load`);
-        await page.waitForTimeout(180);
-
-        const label = `${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`;
-        await assertLanguageAndTheme(page, testCase, label);
-        await assertViewportHealth(page, label);
-      }
-
-      console.log(
-        `PASS responsive ${testCase.width}px ${testCase.lang}/${testCase.theme}: home + shop`,
-      );
-    } finally {
-      await page.close();
-    }
-  }
-}
-
-async function runCriticalRouteSuite(browser) {
-  assert.ok(criticalRoutes.length > 0, `unknown route group: ${routeGroup}`);
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await configure(page, "en", "light");
-  const pageErrors = [];
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-
-  try {
-    for (const route of criticalRoutes) {
-      const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
-      assert.ok(response && response.status() < 400, `${route}: failed route smoke`);
-      await page.waitForTimeout(120);
-      await assertViewportHealth(page, `critical route ${route}`);
-    }
-
-    assert.deepEqual(pageErrors, [], `page errors detected: ${pageErrors.join(" | ")}`);
-    console.log(`PASS critical storefront routes (${routeGroup}): no overflow or page errors`);
-  } finally {
-    await page.close();
-  }
-}
-
-async function runSupplementalSuite(engineName, browser) {
-  for (const testCase of supplementalCases) {
+  for (const testCase of cases) {
     const page = await browser.newPage({
       viewport: { width: testCase.width, height: testCase.height },
     });
@@ -197,60 +166,58 @@ async function runSupplementalSuite(engineName, browser) {
     const pageErrors = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
 
-    try {
-      for (const route of ["/", "/shop", "/cart"]) {
-        const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
-        assert.ok(response && response.status() < 400, `${engineName} ${route}: failed to load`);
-        await page.waitForTimeout(140);
-
-        const label = `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`;
-        await assertLanguageAndTheme(page, testCase, label);
-        await assertViewportHealth(page, label);
-      }
-
-      assert.deepEqual(
-        pageErrors,
-        [],
-        `${engineName} page errors detected: ${pageErrors.join(" | ")}`,
+    const routes = engineName === "chromium" ? ["/", "/shop"] : ["/", "/shop", "/cart"];
+    for (const route of routes) {
+      const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+      assert.ok(response && response.status() < 400, `${engineName} ${route}: failed to load`);
+      await page.waitForTimeout(180);
+      await assertDocumentMode(page, testCase, route);
+      await assertViewportHealth(
+        page,
+        `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`,
       );
-    } finally {
-      await page.close();
     }
+
+    assert.deepEqual(
+      pageErrors,
+      [],
+      `${engineName} page errors detected: ${pageErrors.join(" | ")}`,
+    );
+    await page.close();
   }
 
-  console.log(`PASS ${engineName}: responsive LTR/RTL light/dark smoke checks`);
+  console.log(`PASS ${engineName}: responsive LTR/RTL light/dark checks`);
 }
 
-if (engineMode === "all" || engineMode === "chromium") {
-  const engineScope = process.env.UI_BROWSER_ENGINE ?? "all";
-const browser = engineScope === "cross" ? null : await chromium.launch({ headless: true });
-  try {
-    if (suiteMode === "all" || suiteMode === "responsive") {
-      await runResponsiveSuite(browser);
-    }
-    if (suiteMode === "all" || suiteMode === "routes") {
-      await runCriticalRouteSuite(browser);
-    }
-  } finally {
-    await browser.close();
+async function runRoutes(browser) {
+  const routes = routeGroups[routeGroup] ?? routeGroups.all;
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await configure(page, "en", "light");
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  for (const route of routes) {
+    const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+    assert.ok(response && response.status() < 400, `${engineName} ${route}: failed route smoke`);
+    await page.waitForTimeout(140);
+    await assertViewportHealth(page, `${engineName} critical route ${route}`);
   }
+
+  assert.deepEqual(
+    pageErrors,
+    [],
+    `${engineName} route page errors detected: ${pageErrors.join(" | ")}`,
+  );
+  await page.close();
+  console.log(`PASS ${engineName}: ${routeGroup} route smoke checks`);
 }
 
-const supplementalEngines = [
-  { name: "firefox", launcher: firefox },
-  { name: "webkit", launcher: webkit },
-];
-
-if (engineScope !== "chromium") {
-for (const engine of supplementalEngines) {
-  if (engineMode !== "all" && engineMode !== engine.name) continue;
-
-  const browser = await engine.launcher.launch({ headless: true });
-  try {
-    await runSupplementalSuite(engine.name, browser);
-  } finally {
-    await browser.close();
+const browser = await launcher.launch({ headless: true });
+try {
+  if (suite === "responsive" || suite === "all") await runResponsive(browser);
+  if (engineName === "chromium" && (suite === "routes" || suite === "all")) {
+    await runRoutes(browser);
   }
-}
-
+} finally {
+  await browser.close();
 }
