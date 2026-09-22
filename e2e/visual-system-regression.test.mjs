@@ -1,0 +1,47 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+const root = new URL("../", import.meta.url);
+const source = (path) => readFile(new URL(path, root), "utf8");
+
+test("storefront visual system keeps one canonical shell and radius language", async () => {
+  const [consistency, overhaul, layout] = await Promise.all([
+    source("src/design-consistency.css"),
+    source("src/ui-overhaul.css"),
+    source("src/components/StoreLayout.tsx"),
+  ]);
+
+  assert.match(consistency, /--sc-shell-max:\s*80rem/);
+  assert.match(consistency, /--sc-card-radius:\s*0\.9375rem/);
+  assert.match(consistency, /--sc-control-radius:\s*0\.75rem/);
+  assert.match(overhaul, /--ui-shell-max:\s*var\(--sc-shell-max, 80rem\)/);
+  assert.match(overhaul, /--ui-radius-card:\s*var\(--sc-card-radius, 0\.9375rem\)/);
+  assert.match(overhaul, /--ui-radius-control:\s*var\(--sc-control-radius, 0\.75rem\)/);
+  assert.doesNotMatch(overhaul, /--ui-shell-max:\s*84rem/);
+
+  const overhaulImport = layout.indexOf('import "../ui-overhaul.css"');
+  const consistencyImport = layout.indexOf('import "../design-consistency.css"');
+  assert.ok(overhaulImport >= 0, "StoreLayout must import ui-overhaul.css");
+  assert.ok(consistencyImport > overhaulImport, "canonical consistency layer must load last");
+});
+
+test("storefront polish avoids restoring decorative page gradients", async () => {
+  const overhaul = await source("src/ui-overhaul.css");
+  assert.match(overhaul, /\.store-layout\s*\{\s*background:\s*var\(--color-background\);\s*\}/);
+  assert.doesNotMatch(
+    overhaul,
+    /\.store-layout\s*\{[\s\S]{0,240}radial-gradient/,
+    "storefront page background should stay clean rather than decorative",
+  );
+});
+
+test("dashboard shared chrome stays compact without changing navigation structure", async () => {
+  const dashboard = await source("src/dashboard/App.tsx");
+
+  assert.match(dashboard, /backdrop-blur-md/);
+  assert.match(dashboard, /grid min-h-\[64px\] grid-cols-5/);
+  assert.match(dashboard, /rounded-lg \$\{active \? "bg-accent" : ""\}/);
+  assert.match(dashboard, /shadow-\[0_-4px_18px_rgba\(15,23,42,\.07\)\]/);
+  assert.match(dashboard, /<MobileBottomNav onMore=/);
+});
