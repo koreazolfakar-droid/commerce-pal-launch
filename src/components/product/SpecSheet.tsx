@@ -12,7 +12,7 @@ export function SpecSheet({ groups }: { groups: SpecGroup[] }) {
       {groups.map((group) => (
         <section
           key={group.title}
-          className="overflow-hidden rounded-2xl border bg-card shadow-card"
+          className="overflow-hidden rounded-lg border bg-card shadow-card"
           aria-labelledby={`spec-${group.title.replace(/\s+/g, "-").toLowerCase()}`}
         >
           <h3
