@@ -11,9 +11,13 @@
   --sc-gutter-mobile: 0.875rem;
   --sc-gutter-tablet: 1rem;
   --sc-gutter-desktop: 1.5rem;
-  --sc-card-radius: 1.25rem;
-  --sc-control-radius: 1rem;
+  --sc-card-radius: 0.9375rem;
+  --sc-control-radius: 0.75rem;
+  --sc-media-radius: 0.75rem;
   --sc-touch: 2.75rem;
+  --sc-section-gap-mobile: 1.375rem;
+  --sc-section-gap-tablet: 1.75rem;
+  --sc-section-gap-desktop: 2.25rem;
 
   /* Keep the remaining polish layer aligned while old selectors are retired. */
   --ui-shell-max: var(--sc-shell-max);
@@ -67,6 +71,10 @@
 }
 
 @media (min-width: 1024px) {
+  .store-layout .home-page {
+    gap: var(--sc-section-gap-desktop);
+  }
+
   .store-layout > div[class*="lg:block"] > div:first-child > div,
   .store-layout > div[class*="lg:block"] header[class*="sticky"] > div:first-child,
   .store-layout > div[class*="lg:block"] header nav > div {
@@ -92,7 +100,7 @@
 .store-layout[data-cart-page="true"] main ul button {
   min-width: var(--sc-touch);
   min-height: var(--sc-touch);
-  border-radius: 999px;
+  border-radius: var(--sc-control-radius);
 }
 
 .store-layout[data-cart-page="true"] main ul button:hover {
@@ -174,8 +182,9 @@
   gap: 0.5rem 0.75rem;
 }
 .store-layout .home-section-header h2 {
-  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
-  line-height: 1.5;
+  font-size: clamp(1.125rem, 1.02rem + 0.45vw, 1.4rem);
+  line-height: 1.25;
+  font-weight: 700;
 }
 .store-layout .home-section-header > a {
   display: inline-flex;
@@ -185,7 +194,7 @@
   min-height: var(--sc-touch);
   max-width: 100%;
   font-size: var(--sc-text-body);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 .store-layout .home-section-header > a svg {
   width: var(--sc-icon-inline);
@@ -224,8 +233,8 @@
 
 .store-layout .category-icon-label {
   font-size: var(--sc-text-label);
-  line-height: 1.5;
-  min-height: 2.25rem;
+  line-height: 1.35;
+  min-height: 2.125rem;
   overflow-wrap: anywhere;
 }
 .store-layout .category-icon-badge {
@@ -238,8 +247,8 @@
 
 .store-layout .sc-product-card h3 {
   font-size: var(--sc-text-body);
-  line-height: 1.5;
-  min-height: 2.625rem;
+  line-height: 1.4;
+  min-height: 2.5rem;
   letter-spacing: normal;
 }
 .store-layout :is(.sc-product-card, .product-list-card) button {
@@ -259,7 +268,7 @@
   gap: 0.5rem;
   white-space: normal;
   font-size: var(--sc-text-body);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 .store-layout .sc-product-card button.w-full svg.lucide {
   width: var(--sc-icon-inline);
@@ -288,7 +297,7 @@
 }
 .store-layout .market-product-card h3 {
   font-size: var(--sc-text-product);
-  line-height: 1.5;
+  line-height: 1.4;
   letter-spacing: normal;
   text-wrap: wrap;
 }
@@ -301,7 +310,7 @@
 .store-layout .market-product-copy > p,
 .store-layout .market-product-copy > div:first-child > span {
   font-size: var(--sc-text-detail);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 .store-layout .home-section-header > :first-child {
   flex: 1 1 10rem;
@@ -315,21 +324,25 @@
     padding-inline: var(--sc-gutter-mobile);
   }
   .store-layout .home-page {
-    gap: 1.5rem;
+    gap: var(--sc-section-gap-mobile);
   }
   .store-layout .home-section-header {
-    margin-block-end: 0.75rem;
+    margin-block-end: 0.625rem;
   }
   .store-layout .home-section-header > a {
     font-size: var(--sc-text-label);
   }
   .store-layout .market-product-card.homepage-product-card h3 {
     font-size: var(--sc-text-product);
-    line-height: 1.5;
-    min-height: 2.4375rem;
+    line-height: 1.4;
+    min-height: 2.3rem;
   }
 }
 @media (min-width: 640px) {
+  .store-layout .home-page {
+    gap: var(--sc-section-gap-tablet);
+  }
+
   .store-layout .market-product-card h3 {
     font-size: var(--sc-text-body);
   }
