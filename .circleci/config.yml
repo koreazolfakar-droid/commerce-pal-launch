@@ -273,6 +273,85 @@ jobs:
           name: Product tests
           command: node --test e2e/product-*.test.mjs
 
+  visual-unit-product-add-edit:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Product add edit test
+          command: node --test e2e/product-add-edit-supabase.test.mjs
+
+  visual-unit-product-density:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Product density test
+          command: node --test e2e/product-density-view.test.mjs
+
+  visual-unit-product-rail:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Product rail test
+          command: node --test e2e/product-rail-carousel.test.mjs
+
+  baseline-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Reset to PR base
+          command: git reset --hard 53ee1552dc3351e8b4d2fe8a6241d39333209c32
+      - install-bun
+      - run:
+          name: Install base dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Base architecture test
+          command: node --test e2e/architecture.test.mjs
+
+  baseline-product:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - run:
+          name: Reset to PR base
+          command: git reset --hard 53ee1552dc3351e8b4d2fe8a6241d39333209c32
+      - install-bun
+      - run:
+          name: Install base dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Base product tests
+          command: node --test e2e/product-*.test.mjs
+
   visual-unit-seo:
     docker:
       - image: cimg/node:lts
@@ -449,6 +528,31 @@ workflows:
               only:
                 - /^design\/.*/
       - visual-unit-product:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-product-add-edit:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-product-density:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-product-rail:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - baseline-architecture:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - baseline-product:
           filters:
             branches:
               only:
