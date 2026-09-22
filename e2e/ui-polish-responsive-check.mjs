@@ -4,6 +4,7 @@ import { chromium, firefox, webkit } from "@playwright/test";
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:4173";
 const engineMode = process.env.UI_ENGINE ?? "all";
 const suiteMode = process.env.UI_SUITE ?? "all";
+const routeGroup = process.env.UI_ROUTE_GROUP ?? "all";
 
 const responsiveCases = [
   { width: 320, height: 700, lang: "en", theme: "light" },
@@ -26,17 +27,15 @@ const supplementalCases = [
   { width: 1440, height: 1000, lang: "en", theme: "light" },
 ];
 
-const criticalRoutes = [
-  "/",
-  "/shop",
-  "/product/fixture-phone-1",
-  "/search",
-  "/cart",
-  "/wishlist",
-  "/compare",
-  "/categories",
-  "/brands",
-];
+const criticalRouteGroups = {
+  catalog: ["/", "/shop", "/search", "/categories", "/brands"],
+  commerce: ["/product/fixture-phone-1", "/cart", "/wishlist", "/compare"],
+};
+
+const criticalRoutes =
+  routeGroup === "all"
+    ? [...criticalRouteGroups.catalog, ...criticalRouteGroups.commerce]
+    : criticalRouteGroups[routeGroup] ?? [];
 
 async function configure(page, lang, theme) {
   await page.addInitScript(
@@ -168,6 +167,7 @@ async function runResponsiveSuite(browser) {
 }
 
 async function runCriticalRouteSuite(browser) {
+  assert.ok(criticalRoutes.length > 0, `unknown route group: ${routeGroup}`);
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await configure(page, "en", "light");
   const pageErrors = [];
@@ -182,7 +182,7 @@ async function runCriticalRouteSuite(browser) {
     }
 
     assert.deepEqual(pageErrors, [], `page errors detected: ${pageErrors.join(" | ")}`);
-    console.log("PASS critical storefront routes: no overflow or page errors");
+    console.log(`PASS critical storefront routes (${routeGroup}): no overflow or page errors`);
   } finally {
     await page.close();
   }
