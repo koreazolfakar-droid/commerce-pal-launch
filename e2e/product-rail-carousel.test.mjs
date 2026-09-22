@@ -10,7 +10,7 @@ test("dense product layout is a real three-column grid with a second row", () =>
   assert.match(rail, /gridProducts = products\.slice\(0, 6\)/);
   assert.match(rail, /viewMode === "dense"/);
   assert.match(rail, /grid-cols-3/);
-  assert.match(rail, /gap-y-5/);
+  assert.match(rail, /gap-y-4/);
   assert.match(rail, /data-product-layout=\{viewMode\}/);
 });
 
