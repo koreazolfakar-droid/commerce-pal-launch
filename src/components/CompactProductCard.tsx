@@ -91,6 +91,7 @@ export const CompactProductCard = memo(function CompactProductCard({
     }
   };
 
+  /** Keeps keyboard focus stable when decrementing the final cart item back to the add button. */
   const handleDecrement = async (currentQuantity: number, trigger: HTMLButtonElement) => {
     const restoreFocus =
       currentQuantity === 1 && typeof document !== "undefined" && document.activeElement === trigger;
