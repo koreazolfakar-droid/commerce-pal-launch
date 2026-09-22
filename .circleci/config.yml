@@ -60,6 +60,9 @@ jobs:
       - run:
           name: TypeScript diagnostic
           command: bun run typecheck
+      - run:
+          name: ESLint diagnostic
+          command: bun run lint
 
 
   ui-browser-deps:
