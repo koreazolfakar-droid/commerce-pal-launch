@@ -330,7 +330,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
           {mobileSearchOpen ? <X className="size-5" /> : <Search className="size-5" />}
         </button>
         <div className="relative hidden max-w-[480px] flex-1 sm:block">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             id="global-search"
             value={query}
@@ -340,13 +340,13 @@ function Header({ onMenu }: { onMenu: () => void }) {
             }}
             onFocus={() => setOpen(true)}
             placeholder={t("Search products...")}
-            className="h-11 w-full rounded-lg border border-input bg-card pl-10 pr-14 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="h-11 w-full rounded-lg border border-input bg-card ps-10 pe-14 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
-          <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+          <div className="absolute end-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
             <Command className="size-3" />K
           </div>
           {open && query && (
-            <div className="absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-card">
+            <div className="absolute inset-x-0 top-[calc(100%+8px)] overflow-hidden rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-card">
               {results.length ? (
                 results.map((item) => (
                   <button
@@ -355,7 +355,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                       setOpen(false);
                       navigate(`/dashboard/products/${item.id}`);
                     }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-muted"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start hover:bg-muted"
                   >
                     <div className="grid size-8 place-items-center rounded-lg bg-accent text-primary">
                       <Package className="size-4" />
@@ -411,14 +411,14 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <div className="relative">
           <button
             onClick={() => setProfileOpen((current) => !current)}
-            className="flex items-center gap-2.5 rounded-lg p-1.5 pr-2 transition hover:bg-card"
+            className="flex items-center gap-2.5 rounded-lg p-1.5 pe-2 transition hover:bg-card"
             aria-haspopup="menu"
             aria-expanded={profileOpen}
           >
             <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-background">
               SC
             </div>
-            <div className="hidden text-left sm:block">
+            <div className="hidden text-start sm:block">
               <div className="text-[12px] font-bold text-foreground">Space Call Staff</div>
               <div className="text-[10px] font-medium text-muted-foreground">
                 {lang === "ar" ? "فريق المتجر" : "Store staff"}
@@ -429,7 +429,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
 
           {profileOpen && (
             <div
-              className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-xl border border-border bg-popover p-2 text-left text-popover-foreground shadow-card"
+              className="absolute end-0 top-[calc(100%+8px)] w-48 rounded-xl border border-border bg-popover p-2 text-start text-popover-foreground shadow-card"
               role="menu"
             >
               <button
@@ -512,7 +512,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                       <Package className="size-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[12px] font-semibold text-slate-800">
+                      <div className="truncate text-[12px] font-semibold text-foreground">
                         {item.name}
                       </div>
                       <div className="truncate text-[11px] text-muted-foreground">{`${item.brand || "No brand"} · ${item.sku || "No SKU"}`}</div>
@@ -520,7 +520,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                   </button>
                 ))
               ) : (
-                <div className="px-3 py-4 text-center text-xs text-slate-400">
+                <div className="px-3 py-4 text-center text-xs text-muted-foreground">
                   {searchIndexLoading ? "Loading products…" : "No matching products"}
                 </div>
               )}
