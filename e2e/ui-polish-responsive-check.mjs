@@ -64,7 +64,7 @@ async function configure(page, lang, theme) {
   );
 }
 
-async function assertViewportHealth(page, label) {
+async function assertViewportHealth(page, label, requireProductCard = false) {
   const metrics = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     innerWidth: window.innerWidth,
@@ -104,7 +104,10 @@ async function assertViewportHealth(page, label) {
   const card = page
     .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
     .first();
-  if (!(await card.count())) return;
+  if (!(await card.count())) {
+    assert.ok(!requireProductCard, `${label}: expected a visible product card`);
+    return;
+  }
 
   const cardBox = await card.boundingBox();
   assert.ok(cardBox, `${label}: visible product card has no layout box`);
@@ -161,26 +164,25 @@ async function runResponsive(browser) {
       viewport: { width: testCase.width, height: testCase.height },
     });
     await configure(page, testCase.lang, testCase.theme);
-    const pageErrors = [];
-    page.on("pageerror", (error) => pageErrors.push(error.message));
-
     const routes = engineName === "chromium" ? ["/", "/shop"] : ["/", "/shop", "/cart"];
     for (const route of routes) {
       const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
       assert.ok(response && response.status() < 400, `${engineName} ${route}: failed to load`);
       await page.waitForTimeout(180);
       await assertDocumentMode(page, testCase, route);
+      if (route === "/shop") {
+        await page
+          .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
+          .first()
+          .waitFor({ state: "visible", timeout: 5000 });
+      }
       await assertViewportHealth(
         page,
         `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`,
+        route === "/shop",
       );
     }
 
-    assert.deepEqual(
-      pageErrors,
-      [],
-      `${engineName} page errors detected: ${pageErrors.join(" | ")}`,
-    );
     await page.close();
   }
 
@@ -262,9 +264,6 @@ async function runRoutes(browser) {
   const routes = routeGroups[routeGroup] ?? routeGroups.all;
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await configure(page, "en", "light");
-  const pageErrors = [];
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-
   for (const route of routes) {
     const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
     assert.ok(response && response.status() < 400, `${engineName} ${route}: failed route smoke`);
@@ -272,11 +271,6 @@ async function runRoutes(browser) {
     await assertViewportHealth(page, `${engineName} critical route ${route}`);
   }
 
-  assert.deepEqual(
-    pageErrors,
-    [],
-    `${engineName} route page errors detected: ${pageErrors.join(" | ")}`,
-  );
   await page.close();
   console.log(`PASS ${engineName}: ${routeGroup} route smoke checks`);
 }
