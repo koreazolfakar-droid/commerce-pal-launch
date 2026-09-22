@@ -20,6 +20,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const onHomePage = pathname === "/";
   const onCartPage = pathname === "/cart";
+  const onShopPage = pathname === "/shop";
   const onProductPage = pathname.startsWith("/product/");
   const mobileNavStyle = {
     "--mobile-nav-height": MOBILE_NAV_HEIGHT,
@@ -40,7 +41,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       </a>
       <CmsAnnouncementBar />
       <DeferredDesktopHeader />
-      <MobileTopBar showCategoryRail={!onHomePage && !onCartPage} />
+      <MobileTopBar showCategoryRail={!onHomePage && !onCartPage && !onShopPage} />
       <CmsNavigationStrip area="header" className="hidden lg:block" />
       <CmsNavigationStrip area="mobile_menu" className="lg:hidden" />
       <main id="main-content" tabIndex={-1} className={onCartPage ? "min-w-0" : "min-w-0 flex-1"}>
