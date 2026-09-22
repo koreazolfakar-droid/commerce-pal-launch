@@ -187,17 +187,19 @@ export const CompactProductCard = memo(function CompactProductCard({
           )}
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col pt-1.5">
-          {brand ? (
-            <p className="truncate text-[9px] font-medium leading-3 text-muted-foreground sm:text-[10px]">
-              {brand.label}
-            </p>
-          ) : null}
-          <bdi className="mt-0.5 whitespace-nowrap text-[0.9rem] font-bold tabular-nums tracking-tight text-foreground sm:text-base">
+        <div className="flex min-w-0 flex-1 flex-col pt-2">
+          <div className="min-h-3.5">
+            {brand ? (
+              <p className="truncate text-[9px] font-medium leading-3.5 text-muted-foreground sm:text-[10px]">
+                {brand.label}
+              </p>
+            ) : null}
+          </div>
+          <bdi className="mt-0.5 whitespace-nowrap text-[0.9rem] font-bold leading-[1.15] tabular-nums tracking-tight text-foreground sm:text-base">
             {formatPrice(price.amount, price.currencyCode)}
           </bdi>
-          <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-0.5 min-w-0">
-            <h3 className="line-clamp-2 min-h-[2.1rem] break-words text-[0.72rem] font-medium leading-[1.4] text-foreground sm:text-sm">
+          <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-1 min-w-0">
+            <h3 className="line-clamp-2 min-h-[2.15rem] break-words text-[0.72rem] font-medium leading-[1.45] text-foreground sm:min-h-[2.5rem] sm:text-sm">
               {node.title}
             </h3>
           </Link>
@@ -206,14 +208,26 @@ export const CompactProductCard = memo(function CompactProductCard({
               {summary}
             </p>
           ) : null}
-          <div className="mt-auto flex items-center justify-between gap-1 pt-1.5">
-            <span className={cn("truncate text-[9px] font-medium sm:text-[10px]", inStock ? "text-success" : "text-destructive")}>
+          <div className="mt-auto flex min-h-8 items-center justify-between gap-1.5 pt-2">
+            <span
+              className={cn(
+                "inline-flex min-w-0 items-center gap-1.5 truncate text-[9px] font-semibold sm:text-[10px]",
+                inStock ? "text-success" : "text-destructive",
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "h-1.5 w-1.5 shrink-0 rounded-full",
+                  inStock ? "bg-success" : "bg-destructive",
+                )}
+              />
               {inStock ? t("inStock") : t("outOfStock")}
             </span>
 
             {cartQuantity > 0 ? (
               <div
-                className="inline-flex h-7 shrink-0 items-center overflow-hidden rounded-full border border-primary/15 bg-primary/10 text-primary sm:h-8"
+                className="inline-flex h-8 shrink-0 items-center overflow-hidden rounded-full border border-primary/15 bg-primary/10 text-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)] sm:h-9"
                 aria-label={`${node.title} quantity ${cartQuantity}`}
               >
                 <button
@@ -223,9 +237,9 @@ export const CompactProductCard = memo(function CompactProductCard({
                   aria-label={`Decrease ${node.title} quantity`}
                   className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40 sm:w-8"
                 >
-                  <Minus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.1} />
+                  <Minus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.15} />
                 </button>
-                <span className="min-w-5 px-0.5 text-center text-[10px] font-bold tabular-nums sm:text-xs">
+                <span className="min-w-5 px-0.5 text-center text-[11px] font-bold tabular-nums sm:text-xs">
                   {cartQuantity}
                 </span>
                 <button
@@ -238,7 +252,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                   {isAdding ? (
                     <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Plus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.1} />
+                    <Plus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.15} />
                   )}
                 </button>
               </div>
@@ -248,15 +262,12 @@ export const CompactProductCard = memo(function CompactProductCard({
                 onClick={handleAdd}
                 disabled={isAdding || !variant || !inStock}
                 aria-label={`Add ${node.title} to bag`}
-                className="press inline-flex h-7 shrink-0 items-center justify-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-2.5 text-[10px] font-semibold text-primary transition-[background-color,color,transform] hover:bg-primary hover:text-primary-foreground active:scale-95 disabled:opacity-40 sm:h-8 sm:px-3 sm:text-xs"
+                className="press grid h-8 w-8 shrink-0 place-items-center rounded-full border border-primary/15 bg-primary/10 text-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-[background-color,color,transform,box-shadow] hover:bg-primary hover:text-primary-foreground hover:shadow-md active:scale-95 disabled:opacity-40 sm:h-9 sm:w-9"
               >
                 {isAdding ? (
                   <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <>
-                    <Plus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.2} />
-                    <span>{t("add")}</span>
-                  </>
+                  <Plus aria-hidden className="h-4 w-4" strokeWidth={2.15} />
                 )}
               </button>
             )}
