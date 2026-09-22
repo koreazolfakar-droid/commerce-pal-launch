@@ -203,7 +203,7 @@ function SectionHeader({
   return (
     <div className="home-section-header">
       <div className="min-w-0">
-        <h2 className="text-xl font-black tracking-tight">{title}</h2>
+        <h2 className="text-xl font-bold tracking-tight">{title}</h2>
         {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       {action ?? (
@@ -432,12 +432,12 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
       ) : null}
       <div className={`relative z-10 flex max-w-2xl flex-col gap-3 ${alignmentClass}`}>
         {eyebrow ? (
-          <div className={`text-xs font-bold uppercase tracking-[.16em] ${dark ? "text-indigo-200" : "text-primary"}`}>
+          <div className={`text-xs font-semibold uppercase tracking-[.06em] ${dark ? "text-indigo-200" : "text-primary"}`}>
             {eyebrow}
           </div>
         ) : null}
         {displayTitle ? (
-          <h2 className="text-2xl font-black tracking-tight sm:text-3xl">{displayTitle}</h2>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{displayTitle}</h2>
         ) : null}
         {displaySubtitle ? (
           <p className={`text-sm font-semibold ${dark ? "text-white/80" : "text-muted-foreground"}`}>
