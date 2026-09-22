@@ -232,7 +232,7 @@ export function CatalogView({
   const [viewMode, setViewMode] = useProductViewMode("grid", "space-call-catalog-view-mode");
 
   return (
-    <div className="mx-auto w-full max-w-[80rem] bg-background px-3 py-4 min-[390px]:px-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7">
+    <div className="catalog-page mx-auto w-full max-w-[80rem] bg-white px-3 py-4 min-[390px]:px-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7 dark:bg-background">
       {topContent}
       {!hideHeading ? (
         <header className="mb-4 sm:mb-5">

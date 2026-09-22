@@ -465,3 +465,14 @@
     transform: none !important;
   }
 }
+
+
+/* Catalog light mode uses one continuous white surface so the borderless
+ * product media does not read as separate tiles. Dark mode keeps semantic tokens. */
+html:not(.dark) .store-layout:has(.catalog-page) {
+  background: #fff;
+}
+
+html:not(.dark) .catalog-page {
+  background: #fff;
+}
