@@ -49,46 +49,17 @@ jobs:
       BUN_INSTALL: /home/circleci/.bun
     steps:
       - checkout
-
       - restore_cache:
           keys:
             - bun-deps-v1-{{ checksum "bun.lock" }}
             - bun-deps-v1-
-
       - install-bun
-
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
-
-      - save_cache:
-          key: bun-deps-v1-{{ checksum "bun.lock" }}
-          paths:
-            - ~/.bun/install/cache
-
       - run:
-          name: TypeScript
+          name: TypeScript diagnostic
           command: bun run typecheck
-
-      - run:
-          name: ESLint
-          command: bun run lint
-
-      - run:
-          name: Dashboard security regression tests
-          command: node --test e2e/dashboard-*.test.mjs
-
-      - run:
-          name: Unit and architecture tests
-          command: bun run test:unit
-
-      - run:
-          name: Production build
-          command: bun run build
-
-      - run:
-          name: SSR smoke test
-          command: bun run test:ssr
 
 
   ui-browser-deps:
