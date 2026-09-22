@@ -84,7 +84,7 @@ export function ProductGrid({
             key={product.node.id}
             product={product}
             eager={index < eagerCount}
-            market
+            borderless
             className={viewMode === "dense" ? "catalog-dense-product-card dense-product-card" : undefined}
           />
         ))}
