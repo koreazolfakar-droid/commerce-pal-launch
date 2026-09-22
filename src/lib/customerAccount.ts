@@ -1,0 +1,367 @@
+import type { SupabaseClient, User } from "@supabase/supabase-js";
+
+import { supabase } from "@/integrations/supabase/client";
+
+const customerDb = supabase as unknown as SupabaseClient;
+const MEDIA_BUCKET = "customer-address-media";
+
+export type CustomerAddressType =
+  | "apartment"
+  | "house_villa"
+  | "compound"
+  | "office"
+  | "hotel"
+  | "other";
+
+export type CustomerProfile = {
+  userId: string;
+  fullName: string;
+  phone: string;
+  email: string;
+};
+
+export type CustomerAddress = {
+  id: string;
+  userId: string;
+  nickname: string;
+  addressType: CustomerAddressType | null;
+  formattedAddress: string;
+  areaStreet: string;
+  buildingName: string;
+  buildingNumber: string;
+  floor: string;
+  unit: string;
+  doorDetails: string;
+  phone: string;
+  deliveryInstructions: string;
+  latitude: number | null;
+  longitude: number | null;
+  placeId: string;
+  photoPaths: string[];
+  voiceNotePath: string;
+  isDefault: boolean;
+  isDraft: boolean;
+  draftStep: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AddressPatch = Partial<
+  Pick<
+    CustomerAddress,
+    | "nickname"
+    | "addressType"
+    | "formattedAddress"
+    | "areaStreet"
+    | "buildingName"
+    | "buildingNumber"
+    | "floor"
+    | "unit"
+    | "doorDetails"
+    | "phone"
+    | "deliveryInstructions"
+    | "latitude"
+    | "longitude"
+    | "placeId"
+    | "photoPaths"
+    | "voiceNotePath"
+    | "draftStep"
+  >
+>;
+
+function text(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function nullableNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function toAddress(row: Record<string, unknown>): CustomerAddress {
+  return {
+    id: text(row.id),
+    userId: text(row.user_id),
+    nickname: text(row.nickname),
+    addressType:
+      row.address_type === "apartment" ||
+      row.address_type === "house_villa" ||
+      row.address_type === "compound" ||
+      row.address_type === "office" ||
+      row.address_type === "hotel" ||
+      row.address_type === "other"
+        ? row.address_type
+        : null,
+    formattedAddress: text(row.formatted_address),
+    areaStreet: text(row.area_street),
+    buildingName: text(row.building_name),
+    buildingNumber: text(row.building_number),
+    floor: text(row.floor),
+    unit: text(row.unit),
+    doorDetails: text(row.door_details),
+    phone: text(row.phone),
+    deliveryInstructions: text(row.delivery_instructions),
+    latitude: nullableNumber(row.latitude),
+    longitude: nullableNumber(row.longitude),
+    placeId: text(row.place_id),
+    photoPaths: Array.isArray(row.photo_paths)
+      ? row.photo_paths.filter((value): value is string => typeof value === "string")
+      : [],
+    voiceNotePath: text(row.voice_note_path),
+    isDefault: row.is_default === true,
+    isDraft: row.is_draft !== false,
+    draftStep:
+      typeof row.draft_step === "number" && Number.isFinite(row.draft_step)
+        ? row.draft_step
+        : 1,
+    createdAt: text(row.created_at),
+    updatedAt: text(row.updated_at),
+  };
+}
+
+function toProfile(row: Record<string, unknown>, userId: string): CustomerProfile {
+  return {
+    userId,
+    fullName: text(row.full_name),
+    phone: text(row.phone),
+    email: text(row.email),
+  };
+}
+
+function metadataName(user: User) {
+  const metadata = user.user_metadata as Record<string, unknown> | undefined;
+  const candidate =
+    (typeof metadata?.["full_name"] === "string" && metadata["full_name"]) ||
+    (typeof metadata?.["name"] === "string" && metadata["name"]) ||
+    "";
+  return candidate.trim();
+}
+
+function mapAddressPatch(patch: AddressPatch) {
+  const payload: Record<string, unknown> = {};
+  if ("nickname" in patch) payload.nickname = patch.nickname || null;
+  if ("addressType" in patch) payload.address_type = patch.addressType;
+  if ("formattedAddress" in patch) payload.formatted_address = patch.formattedAddress || null;
+  if ("areaStreet" in patch) payload.area_street = patch.areaStreet || null;
+  if ("buildingName" in patch) payload.building_name = patch.buildingName || null;
+  if ("buildingNumber" in patch) payload.building_number = patch.buildingNumber || null;
+  if ("floor" in patch) payload.floor = patch.floor || null;
+  if ("unit" in patch) payload.unit = patch.unit || null;
+  if ("doorDetails" in patch) payload.door_details = patch.doorDetails || null;
+  if ("phone" in patch) payload.phone = patch.phone || null;
+  if ("deliveryInstructions" in patch) {
+    payload.delivery_instructions = patch.deliveryInstructions || null;
+  }
+  if ("latitude" in patch) payload.latitude = patch.latitude;
+  if ("longitude" in patch) payload.longitude = patch.longitude;
+  if ("placeId" in patch) payload.place_id = patch.placeId || null;
+  if ("photoPaths" in patch) payload.photo_paths = patch.photoPaths ?? [];
+  if ("voiceNotePath" in patch) payload.voice_note_path = patch.voiceNotePath || null;
+  if ("draftStep" in patch) payload.draft_step = patch.draftStep;
+  return payload;
+}
+
+function throwError(error: { message?: string } | null, fallback: string) {
+  if (error) throw new Error(error.message || fallback);
+}
+
+export async function ensureCustomerProfile(user: User): Promise<CustomerProfile> {
+  const { data: current, error: readError } = await customerDb
+    .from("store_customer_profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  throwError(readError, "Loading customer profile failed");
+
+  if (current && typeof current === "object") {
+    const row = current as Record<string, unknown>;
+    const patch: Record<string, unknown> = {};
+    if (!text(row.full_name) && metadataName(user)) patch.full_name = metadataName(user);
+    if (!text(row.phone) && user.phone) patch.phone = user.phone;
+    if (!text(row.email) && user.email) patch.email = user.email;
+    if (Object.keys(patch).length > 0) {
+      const { data: updated, error } = await customerDb
+        .from("store_customer_profiles")
+        .update(patch)
+        .eq("user_id", user.id)
+        .select("*")
+        .single();
+      throwError(error, "Updating customer profile failed");
+      return toProfile(updated as Record<string, unknown>, user.id);
+    }
+    return toProfile(row, user.id);
+  }
+
+  const { data, error } = await customerDb
+    .from("store_customer_profiles")
+    .insert({
+      user_id: user.id,
+      full_name: metadataName(user) || null,
+      phone: user.phone || null,
+      email: user.email || null,
+    })
+    .select("*")
+    .single();
+  throwError(error, "Creating customer profile failed");
+  return toProfile(data as Record<string, unknown>, user.id);
+}
+
+export async function updateCustomerProfile(
+  userId: string,
+  patch: Partial<Pick<CustomerProfile, "fullName" | "phone" | "email">>,
+) {
+  const payload: Record<string, unknown> = {};
+  if ("fullName" in patch) payload.full_name = patch.fullName?.trim() || null;
+  if ("phone" in patch) payload.phone = patch.phone?.trim() || null;
+  if ("email" in patch) payload.email = patch.email?.trim() || null;
+
+  const { data, error } = await customerDb
+    .from("store_customer_profiles")
+    .update(payload)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+  throwError(error, "Saving customer profile failed");
+  return toProfile(data as Record<string, unknown>, userId);
+}
+
+export async function loadCustomerAddresses(userId: string): Promise<CustomerAddress[]> {
+  const { data, error } = await customerDb
+    .from("store_customer_addresses")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_draft", false)
+    .order("is_default", { ascending: false })
+    .order("updated_at", { ascending: false });
+  throwError(error, "Loading saved addresses failed");
+
+  return Array.isArray(data)
+    ? data.map((row) => toAddress(row as Record<string, unknown>))
+    : [];
+}
+
+export async function getOrCreateAddressDraft(userId: string): Promise<CustomerAddress> {
+  const { data: existing, error: existingError } = await customerDb
+    .from("store_customer_addresses")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_draft", true)
+    .maybeSingle();
+  throwError(existingError, "Loading address draft failed");
+  if (existing && typeof existing === "object") {
+    return toAddress(existing as Record<string, unknown>);
+  }
+
+  const { data, error } = await customerDb
+    .from("store_customer_addresses")
+    .insert({ user_id: userId, is_draft: true, draft_step: 1 })
+    .select("*")
+    .single();
+  throwError(error, "Creating address draft failed");
+  return toAddress(data as Record<string, unknown>);
+}
+
+export async function saveAddressDraft(
+  userId: string,
+  addressId: string,
+  patch: AddressPatch,
+): Promise<CustomerAddress> {
+  const { data, error } = await customerDb
+    .from("store_customer_addresses")
+    .update(mapAddressPatch(patch))
+    .eq("id", addressId)
+    .eq("user_id", userId)
+    .eq("is_draft", true)
+    .select("*")
+    .single();
+  throwError(error, "Saving address draft failed");
+  return toAddress(data as Record<string, unknown>);
+}
+
+export async function finalizeAddress(addressId: string): Promise<CustomerAddress> {
+  const { data, error } = await customerDb.rpc("finalize_customer_address", {
+    p_address_id: addressId,
+  });
+  throwError(error, "Finalizing address failed");
+  return toAddress(data as Record<string, unknown>);
+}
+
+export async function setDefaultAddress(addressId: string): Promise<CustomerAddress> {
+  const { data, error } = await customerDb.rpc("set_customer_default_address", {
+    p_address_id: addressId,
+  });
+  throwError(error, "Updating default address failed");
+  return toAddress(data as Record<string, unknown>);
+}
+
+export async function deleteAddress(userId: string, address: CustomerAddress) {
+  for (const path of [...address.photoPaths, address.voiceNotePath].filter(Boolean)) {
+    await supabase.storage.from(MEDIA_BUCKET).remove([path]);
+  }
+  const { error } = await customerDb
+    .from("store_customer_addresses")
+    .delete()
+    .eq("id", address.id)
+    .eq("user_id", userId);
+  throwError(error, "Deleting address failed");
+}
+
+function extensionFromFile(file: File) {
+  const nameExtension = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (nameExtension && nameExtension.length <= 8) return nameExtension;
+  if (file.type === "image/jpeg") return "jpg";
+  if (file.type === "image/png") return "png";
+  if (file.type === "image/webp") return "webp";
+  if (file.type === "audio/webm") return "webm";
+  if (file.type === "audio/mp4") return "m4a";
+  return "bin";
+}
+
+export async function uploadAddressMedia(args: {
+  userId: string;
+  addressId: string;
+  file: File;
+  kind: "photo" | "voice";
+}) {
+  const extension = extensionFromFile(args.file);
+  const path =
+    args.userId +
+    "/" +
+    args.addressId +
+    "/" +
+    args.kind +
+    "-" +
+    crypto.randomUUID() +
+    "." +
+    extension;
+  const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(path, args.file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: args.file.type || undefined,
+  });
+  throwError(error, "Uploading address media failed");
+  return path;
+}
+
+export function addressDisplayLine(address: CustomerAddress) {
+  return (
+    address.areaStreet ||
+    address.formattedAddress ||
+    [address.buildingName, address.buildingNumber].filter(Boolean).join(" ") ||
+    address.nickname
+  );
+}
+
+export function addressCheckoutText(address: CustomerAddress) {
+  return [
+    address.formattedAddress || address.areaStreet,
+    address.buildingName
+      ? address.buildingName + (address.buildingNumber ? " " + address.buildingNumber : "")
+      : address.buildingNumber,
+    address.floor ? "Floor: " + address.floor : "",
+    address.unit ? "Unit: " + address.unit : "",
+    address.doorDetails,
+    address.deliveryInstructions,
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
