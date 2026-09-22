@@ -162,7 +162,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .store-layout :is(a, button) {
+  .store-layout :is(a, button, input, select, textarea) {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto;
   }
 }
@@ -176,6 +178,14 @@
   --sc-text-product: 0.8125rem;
   --sc-text-detail: 0.6875rem;
 }
+
+/* The base stylesheet suppresses storefront motion globally. Restore only short,
+ * purposeful feedback on controls; content/media motion stays disabled. */
+.store-layout :is(a, button, input, select, textarea) {
+  transition-duration: 140ms !important;
+  transition-delay: 0s !important;
+}
+
 
 .store-layout .home-section-header {
   align-items: center;
