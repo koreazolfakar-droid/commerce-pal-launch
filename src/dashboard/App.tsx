@@ -170,7 +170,7 @@ function Sidebar({
         />
       )}
       <aside
-        className={`fixed inset-y-0 start-0 z-50 flex w-[min(86vw,320px)] flex-col overscroll-contain bg-[#101b32] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-2xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 start-0 z-50 flex w-[min(86vw,320px)] flex-col overscroll-contain bg-[#101b32] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
       >
         <div
           className={`flex h-[76px] items-center border-b border-white/[.07] px-5 lg:h-[92px] ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
@@ -197,7 +197,7 @@ function Sidebar({
                         navigate(item.href);
                         setMobileOpen(false);
                       }}
-                      className={`group flex w-full items-center gap-3 rounded-[11px] px-3 py-3 text-left text-[13px] font-medium transition active:scale-[.99] lg:py-2.5 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-[#5361ef] text-white shadow-[0_7px_20px_rgba(83,97,239,.32)]" : "text-slate-400 hover:bg-white/[.07] hover:text-white"}`}
+                      className={`group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[13px] font-medium transition active:scale-[.99] lg:py-2.5 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-[#5361ef] text-white shadow-[0_4px_14px_rgba(83,97,239,.22)]" : "text-slate-400 hover:bg-white/[.07] hover:text-white"}`}
                     >
                       <Icon
                         className={`size-[17px] shrink-0 ${active ? "text-white" : "text-slate-500 group-hover:text-slate-200"}`}
@@ -217,7 +217,7 @@ function Sidebar({
         </div>
         <div className="border-t border-white/[.07] p-4">
           {(!collapsed || mobileOpen) && (
-            <div className="mb-3 rounded-2xl border border-white/[.08] bg-white/[.05] p-3">
+            <div className="mb-3 rounded-xl border border-white/[.08] bg-white/[.05] p-3">
               <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-slate-300">
                 <Sparkles className="size-3.5 text-[#8c8aff]" /> {t("Live workspace")}
               </div>
@@ -311,11 +311,11 @@ function Header({ onMenu }: { onMenu: () => void }) {
     : [];
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-xl sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
+    <header className="sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           onClick={onMenu}
-          className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 lg:hidden"
+          className="grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 lg:hidden"
           aria-label="Open dashboard menu"
         >
           <Menu className="size-5" />
@@ -323,7 +323,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           type="button"
           onClick={() => setMobileSearchOpen((current) => !current)}
-          className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 sm:hidden"
+          className="grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 sm:hidden"
           aria-label={t("Search products...")}
           aria-expanded={mobileSearchOpen}
         >
@@ -340,13 +340,13 @@ function Header({ onMenu }: { onMenu: () => void }) {
             }}
             onFocus={() => setOpen(true)}
             placeholder={t("Search products...")}
-            className="h-11 w-full rounded-xl border border-input bg-card pl-10 pr-14 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="h-11 w-full rounded-lg border border-input bg-card pl-10 pr-14 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
           <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
             <Command className="size-3" />K
           </div>
           {open && query && (
-            <div className="absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden rounded-2xl border border-border bg-popover p-2 text-popover-foreground shadow-xl">
+            <div className="absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-card">
               {results.length ? (
                 results.map((item) => (
                   <button
@@ -355,7 +355,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                       setOpen(false);
                       navigate(`/dashboard/products/${item.id}`);
                     }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-muted"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-muted"
                   >
                     <div className="grid size-8 place-items-center rounded-lg bg-accent text-primary">
                       <Package className="size-4" />
@@ -383,7 +383,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
       <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         <button
           onClick={() => navigate("/dashboard/activity")}
-          className="grid size-10 place-items-center rounded-xl text-muted-foreground transition hover:bg-card hover:text-foreground"
+          className="grid size-10 place-items-center rounded-lg text-muted-foreground transition hover:bg-card hover:text-foreground"
           aria-label={t("Activity logs")}
           title={t("Activity logs")}
         >
@@ -392,7 +392,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           type="button"
           onClick={toggleTheme}
-          className="grid size-10 place-items-center rounded-xl border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
+          className="grid size-10 place-items-center rounded-lg border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
           aria-label={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
           aria-pressed={theme === "dark"}
           title={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
@@ -411,7 +411,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <div className="relative">
           <button
             onClick={() => setProfileOpen((current) => !current)}
-            className="flex items-center gap-2.5 rounded-xl p-1.5 pr-2 transition hover:bg-card"
+            className="flex items-center gap-2.5 rounded-lg p-1.5 pr-2 transition hover:bg-card"
             aria-haspopup="menu"
             aria-expanded={profileOpen}
           >
@@ -429,7 +429,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
 
           {profileOpen && (
             <div
-              className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-2xl border border-border bg-popover p-2 text-left text-popover-foreground shadow-xl"
+              className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-xl border border-border bg-popover p-2 text-left text-popover-foreground shadow-card"
               role="menu"
             >
               <button
@@ -482,7 +482,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("Search products...")}
-              className="h-11 w-full rounded-xl border border-input bg-card pe-10 ps-10 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-11 w-full rounded-lg border border-input bg-card pe-10 ps-10 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
             />
             {query ? (
               <button
@@ -496,7 +496,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
             ) : null}
           </div>
           {query ? (
-            <div className="mt-2 max-h-[42dvh] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-popover p-2 text-popover-foreground shadow-xl">
+            <div className="mt-2 max-h-[42dvh] overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-card">
               {results.length ? (
                 results.map((item) => (
                   <button
@@ -506,7 +506,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                       setQuery("");
                       navigate(`/dashboard/products/${item.id}`);
                     }}
-                    className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start active:bg-muted"
+                    className="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start active:bg-muted"
                   >
                     <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-primary">
                       <Package className="size-4" />
@@ -544,7 +544,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/90 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_rgba(15,23,42,.08)] backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/90 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(15,23,42,.07)] backdrop-blur-md lg:hidden"
       aria-label="Dashboard mobile navigation"
     >
       <div className="grid min-h-[64px] grid-cols-5">
@@ -562,7 +562,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
               aria-current={active ? "page" : undefined}
             >
               <span
-                className={`grid size-8 place-items-center rounded-xl ${active ? "bg-accent" : ""}`}
+                className={`grid size-8 place-items-center rounded-lg ${active ? "bg-accent" : ""}`}
               >
                 <Icon className="size-[18px]" strokeWidth={active ? 2.2 : 1.8} />
               </span>
@@ -575,7 +575,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
           onClick={onMore}
           className="flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold text-muted-foreground transition active:scale-95"
         >
-          <span className="grid size-8 place-items-center rounded-xl">
+          <span className="grid size-8 place-items-center rounded-lg">
             <Menu className="size-[18px]" />
           </span>
           <span>{t("More")}</span>
