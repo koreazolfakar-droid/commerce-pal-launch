@@ -221,10 +221,10 @@ export const CompactProductCard = memo(function CompactProductCard({
             </p>
           ) : null}
 
-          <div className="mt-auto flex min-w-0 items-end justify-between gap-1.5 pt-1">
+          <div className="market-product-footer mt-auto flex min-w-0 items-end justify-between gap-1.5 pt-1">
             <p
               className={cn(
-                "min-w-0 text-[10px] font-semibold leading-4 sm:text-xs",
+                "market-product-stock min-w-0 flex-1 text-[10px] font-semibold leading-4 sm:text-xs",
                 inStock ? "text-success" : "text-destructive",
               )}
             >
