@@ -227,60 +227,54 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-chromium-responsive
-          engine: chromium
-          suite: responsive
-          filters:
-            branches:
-              only:
-                - /^ui\/.*/
-      - ui-browser:
-          requires:
-            - ui-browser-deps
-          name: ui-browser-chromium-routes-catalog
-          engine: chromium
-          suite: routes
-          route_group: catalog
-          filters:
-            branches:
-              only:
-                - /^ui\/.*/
-      - ui-browser:
-          requires:
-            - ui-browser-deps
-          name: ui-browser-chromium-routes-commerce
-          engine: chromium
-          suite: routes
-          route_group: commerce
-          filters:
-            branches:
-              only:
-                - /^ui\/.*/
-      - ui-browser:
-          requires:
-            - ui-browser-deps
-          name: ui-browser-firefox
-          engine: firefox
-          filters:
-            branches:
-              only:
-                - /^ui\/.*/
-      - ui-browser:
-          requires:
-            - ui-browser-deps
-          name: ui-browser-webkit
-          engine: webkit
-          filters:
-            branches:
-              only:
-                - /^ui\/.*/
-      - ui-browser:
-          requires:
-            - ui-browser-deps
           name: ui-browser-webkit-overflow-mobile-en
           engine: webkit
           suite: mode
           route_group: overflow-mobile-en
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
+          name: ui-browser-webkit-no-chrome
+          engine: webkit
+          suite: mode
+          route_group: overflow-mobile-en-no-chrome
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
+          name: ui-browser-webkit-no-hero
+          engine: webkit
+          suite: mode
+          route_group: overflow-mobile-en-no-hero
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
+          name: ui-browser-webkit-no-navigation-sections
+          engine: webkit
+          suite: mode
+          route_group: overflow-mobile-en-no-navigation-sections
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
+          name: ui-browser-webkit-no-deferred
+          engine: webkit
+          suite: mode
+          route_group: overflow-mobile-en-no-deferred
           filters:
             branches:
               only:
