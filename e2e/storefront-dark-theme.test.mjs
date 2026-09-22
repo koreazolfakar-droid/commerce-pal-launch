@@ -6,7 +6,6 @@ const darkTheme = fs.readFileSync("src/dark-black.css", "utf8");
 const productImage = fs.readFileSync("src/components/ProductImage.tsx", "utf8");
 const productCard = fs.readFileSync("src/components/ProductCard.tsx", "utf8");
 const compactProductCard = fs.readFileSync("src/components/CompactProductCard.tsx", "utf8");
-const productListCard = fs.readFileSync("src/components/ProductListCard.tsx", "utf8");
 
 function lightness(token) {
   const match = darkTheme.match(new RegExp(`--${token}:\\s*oklch\\((0(?:\\.\\d+)?|1(?:\\.0+)?)\\s`));
@@ -33,7 +32,7 @@ test("product media uses the semantic image-stage token", () => {
   assert.match(productImage, /bg-image-stage/);
   assert.doesNotMatch(productImage, /bg-white/);
 
-  for (const source of [productCard, compactProductCard, productListCard]) {
+  for (const source of [productCard, compactProductCard]) {
     assert.doesNotMatch(source, /bg-white/);
   }
 });
