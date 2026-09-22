@@ -42,6 +42,7 @@ async function fetchManagedHomeCategories(): Promise<ManagedHomeCategory[]> {
   return (data ?? []) as ManagedHomeCategory[];
 }
 
+/** Normalizes category names for fallback matching without changing their displayed labels. */
 function normalizeCategoryName(value: string | undefined) {
   return value?.trim().toLocaleLowerCase() ?? "";
 }
