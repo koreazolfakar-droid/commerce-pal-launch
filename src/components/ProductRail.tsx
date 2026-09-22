@@ -58,7 +58,7 @@ export function ProductRail({
             listItem
             eager={index < 3}
             market
-            className="homepage-product-card"
+            className={cn("homepage-product-card", viewMode === "dense" && "dense-product-card")}
           />
         ))}
       </div>

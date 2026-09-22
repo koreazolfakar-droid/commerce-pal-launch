@@ -108,7 +108,7 @@ function CartBadge({ value }: { value: number }) {
   return (
     <span
       data-testid="bottom-nav-cart-badge"
-      className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-extrabold leading-none text-primary-foreground ring-2 ring-background"
+      className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-primary-foreground ring-2 ring-background"
       aria-hidden="true"
     >
       {value > 99 ? "99+" : value}
@@ -153,7 +153,7 @@ export function BottomNav() {
 
   const itemClass = (active: boolean) =>
     cn(
-      "press relative flex h-16 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-1 px-0.5 text-center text-[10px] font-semibold leading-none transition-[color,transform] duration-200 ease-out active:scale-[.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/35",
+      "press relative flex h-16 min-w-0 touch-manipulation select-none flex-col items-center justify-center gap-1 px-0.5 text-center text-[11px] font-semibold leading-none transition-[color,transform] duration-200 ease-out active:scale-[.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/35",
       active ? "text-primary" : "text-muted-foreground hover:text-foreground",
     );
 

@@ -331,7 +331,7 @@ function GuideSection({ guide, language }: { guide: PageGuide; language: Languag
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
-              <h2 className="mt-4 text-lg font-black tracking-tight">
+              <h2 className="mt-4 text-lg font-semibold tracking-tight">
                 {copy(language, card.title)}
               </h2>
               <p className="mt-2 text-sm leading-7 text-muted-foreground">
@@ -411,7 +411,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
           <span className="grid h-12 w-12 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <PageIcon className="h-6 w-6" aria-hidden="true" />
           </span>
-          <h1 className="mt-5 text-3xl font-black tracking-[-0.035em] sm:text-4xl">
+          <h1 className="mt-5 text-3xl font-bold tracking-[-0.025em] sm:text-4xl">
             {t(INFO_PAGES[page])}
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8">
@@ -428,7 +428,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
         {contactPage && (
           <div className="grid gap-5 md:grid-cols-2">
             <section className="rounded-lg border bg-card p-6 shadow-card">
-              <h2 className="text-xl font-black">{t("contactTitle")}</h2>
+              <h2 className="text-xl font-semibold">{t("contactTitle")}</h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {t("immediateSupport")}
               </p>
@@ -451,7 +451,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 className="pointer-events-none absolute -top-28 start-0"
                 aria-hidden="true"
               />
-              <h2 className="text-xl font-black">{t("accountOrders")}</h2>
+              <h2 className="text-xl font-semibold">{t("accountOrders")}</h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {t("accountDescription")}
               </p>
@@ -509,7 +509,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 <FileText className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <h2 className="text-lg font-black">
+                <h2 className="text-lg font-semibold">
                   {language === "ar" ? "السياسة الرسمية للمتجر" : "Published store policy"}
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
@@ -555,7 +555,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
 
         {page === "warranty" ? (
           <section className="rounded-lg border border-primary/15 bg-primary/[0.04] p-5 sm:p-6">
-            <h2 className="text-lg font-black">
+            <h2 className="text-lg font-semibold">
               {language === "ar" ? "هل تحتاج تأكيد الضمان؟" : "Need warranty confirmation?"}
             </h2>
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
@@ -576,7 +576,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
 
         {(page === "help" || page === "faq") && (
           <section>
-            <h2 className="text-xl font-black">{t("policiesTitle")}</h2>
+            <h2 className="text-xl font-semibold">{t("policiesTitle")}</h2>
             <div className="mt-4 flex flex-wrap gap-3">
               {POLICY_LINKS.map((name) => (
                 <Link

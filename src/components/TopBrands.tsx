@@ -311,7 +311,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
     <section aria-labelledby="top-brands" data-testid="top-brands" className="-mt-2 -mb-4 min-w-0 max-w-full overflow-x-hidden sm:-mb-5">
       <div className="home-section-header !mb-0 flex-nowrap items-end">
         <div className="min-w-0 flex-1">
-          <h2 id="top-brands" className="text-xl font-black tracking-tight">
+          <h2 id="top-brands" className="text-xl font-bold tracking-[-0.02em]">
             {sectionTitle}
           </h2>
         </div>

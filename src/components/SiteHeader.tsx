@@ -118,7 +118,7 @@ export function SiteHeader() {
   return (
     <>
       <div className="bg-hero text-hero-muted">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2 text-[11px]">
+        <div className="store-utility-bar mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2 text-[11px] font-medium">
           <ul className="flex items-center gap-5">
             {UTILITY.map((item, index) => (
               <li key={index} className="flex items-center gap-1.5 whitespace-nowrap">
@@ -127,7 +127,7 @@ export function SiteHeader() {
               </li>
             ))}
           </ul>
-          <ul className="flex items-center gap-5 font-semibold">
+          <ul className="flex items-center gap-5 font-medium">
             <li>
               <Link
                 to="/help"
@@ -174,7 +174,7 @@ export function SiteHeader() {
               decoding="async"
               className="h-9 w-auto shrink-0 object-contain"
             />
-            <span className="truncate text-[19px] font-extrabold tracking-tight">{storeName}</span>
+            <span className="truncate text-[19px] font-bold tracking-tight">{storeName}</span>
           </Link>
 
           <button
@@ -219,13 +219,13 @@ export function SiteHeader() {
           </div>
         </div>
 
-        <nav className="border-t" aria-label="Primary">
+        <nav className="store-primary-nav border-t" aria-label="Primary">
           <div className="mx-auto flex max-w-7xl min-w-0 items-center gap-0.5 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link
               to="/"
               activeOptions={{ exact: true }}
               activeProps={{ className: "bg-accent text-accent-foreground" }}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3.5 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface"
             >
               <Grid2x2 className="h-3.5 w-3.5" /> {t("all")}
             </Link>
@@ -236,7 +236,7 @@ export function SiteHeader() {
                 to="/category/$slug"
                 params={{ slug: item.slug }}
                 activeProps={{ className: "bg-accent text-accent-foreground" }}
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-[13px] font-semibold transition-colors hover:bg-surface"
               >
                 {(() => {
                   const Icon = NAV_ICONS[item.label];
@@ -263,7 +263,7 @@ export function SiteHeader() {
                     type="button"
                     aria-haspopup="menu"
                     aria-expanded={brandsOpen}
-                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-[12px] font-semibold hover:bg-surface focus-within:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-accent"
+                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-[13px] font-semibold hover:bg-surface focus-within:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-accent"
                   >
                     <Tag className="h-4 w-4" aria-hidden="true" /> {t("brands")}
                     <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -274,7 +274,7 @@ export function SiteHeader() {
                     <DropdownMenuItem key={brand.slug} asChild>
                       <a
                         href={brand.href || `/brand/${brand.slug}`}
-                        className="flex min-w-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm"
+                        className="flex min-w-0 items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium"
                       >
                         <BrandLogo
                           slug={brand.slug}
@@ -300,7 +300,7 @@ export function SiteHeader() {
                     type="button"
                     aria-haspopup="menu"
                     aria-expanded={categoriesOpen}
-                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-[12px] font-semibold hover:bg-surface focus-within:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-accent"
+                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-[13px] font-semibold hover:bg-surface focus-within:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-accent"
                   >
                     {t("allCategories")}
                     <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -315,7 +315,7 @@ export function SiteHeader() {
                       <Link
                         to="/category/$slug"
                         params={{ slug: category.slug }}
-                        className="flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-sm"
+                        className="flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium"
                       >
                         {category.icon && (
                           <category.icon className="h-4 w-4 text-primary" aria-hidden="true" />
@@ -337,7 +337,7 @@ export function SiteHeader() {
               <Link
                 to="/collections"
                 activeProps={{ className: "bg-accent text-accent-foreground" }}
-                className="shrink-0 whitespace-nowrap rounded-md px-3.5 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
+                className="shrink-0 whitespace-nowrap rounded-md px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface"
               >
                 {t("collections")}
               </Link>
@@ -345,7 +345,7 @@ export function SiteHeader() {
 
             <Link
               to="/used-phones"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-[13px] font-semibold transition-colors hover:bg-surface"
             >
               {t("usedPhones")}
             </Link>
@@ -353,13 +353,13 @@ export function SiteHeader() {
             <Link
               to="/shop"
               search={{ availability: "on-sale" } as never}
-              className="ms-auto inline-flex shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 py-2 text-[12px] font-bold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+              className="ms-auto inline-flex shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 py-2 text-[13px] font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
             >
               <Sparkles className="h-3.5 w-3.5" /> {t("deals")}
             </Link>
             <Link
               to="/help"
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-[12px] font-semibold text-muted-foreground transition-colors hover:bg-surface"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-surface"
             >
               <Headphones className="h-3.5 w-3.5" /> {t("support")}
             </Link>

@@ -30,7 +30,7 @@ const LazyMobileCategoryRail = lazy(() =>
 function Badge({ value }: { value: number }) {
   if (value <= 0) return null;
   return (
-    <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-2 ring-background">
+    <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground ring-2 ring-background">
       {value > 99 ? "99+" : value}
     </span>
   );
@@ -94,7 +94,7 @@ export function MobileTopBar({
               decoding="async"
               className="h-8 w-auto shrink-0 object-contain drop-shadow-sm"
             />
-            <span className="truncate text-[16px] font-black leading-none tracking-[-0.025em] sm:text-[17px]">
+            <span className="truncate text-[16px] font-bold leading-none tracking-[-0.02em] sm:text-[17px]">
               {storeName}
             </span>
           </Link>
@@ -127,7 +127,7 @@ export function MobileTopBar({
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-md border border-border/70 bg-card px-4 text-start text-sm text-muted-foreground shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
+            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-md border border-border/70 bg-card px-4 text-start text-[13px] font-normal text-muted-foreground shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
           >
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="truncate">{t("search")}</span>

@@ -1,7 +1,7 @@
 function ProductContext({ title, vendor }: { title: string; vendor: string | null | undefined }) {
   return (
     <div>
-      <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <h3 className="text-sm font-semibold text-muted-foreground">
         {title} in Lebanon
       </h3>
       <p className="mt-3 text-sm leading-7 text-foreground/80">

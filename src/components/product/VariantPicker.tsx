@@ -140,7 +140,7 @@ export function VariantPicker({
         return (
           <div key={option.name}>
             <div className="mb-2 flex items-baseline gap-2 sm:mb-2.5">
-              <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              <h2 className="text-[11px] font-semibold text-muted-foreground">
                 {option.name}
               </h2>
               {selected[option.name] && (

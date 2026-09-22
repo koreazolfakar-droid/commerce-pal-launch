@@ -325,7 +325,7 @@ function ProductPage() {
                 <Link
                   to="/brand/$slug"
                   params={{ slug: brand.slug }}
-                  className="inline-flex items-center gap-2 rounded-full border bg-card py-1 pl-1 pr-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
+                  className="inline-flex items-center gap-2 rounded-full border bg-card py-1 pl-1 pr-3 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
                 >
                   <BrandLogo
                     slug={brand.slug}
@@ -336,11 +336,11 @@ function ProductPage() {
                   {brand.label}
                 </Link>
               )}
-              <h1 className="mt-3 text-[1.55rem] font-extrabold leading-tight tracking-tight sm:text-3xl lg:text-[2.35rem] lg:leading-[1.1]">
+              <h1 className="mt-3 text-[1.55rem] font-bold leading-[1.2] tracking-[-0.02em] sm:text-3xl lg:text-[2.35rem] lg:leading-[1.12]">
                 {node.title}
               </h1>
               <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-2">
-                <span className="text-2xl font-extrabold tracking-tight text-foreground lg:text-[2rem]">
+                <span className="text-2xl font-bold tabular-nums tracking-[-0.02em] text-foreground lg:text-[2rem]">
                   {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
                 </span>
                 {discount !== null && compareAt && (

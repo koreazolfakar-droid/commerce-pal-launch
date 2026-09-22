@@ -174,7 +174,7 @@ export const CartDrawer = ({
 
                 <Button
                   asChild
-                  className="min-h-12 w-full bg-[#25D366] font-extrabold text-white hover:bg-[#20bd5a]"
+                  className="min-h-12 w-full bg-[#25D366] font-semibold text-white hover:bg-[#20bd5a]"
                   size="lg"
                 >
                   <Link
@@ -187,7 +187,7 @@ export const CartDrawer = ({
                   </Link>
                 </Button>
 
-                <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                <div className="flex items-center gap-3 text-[10px] font-medium tracking-[0.02em] text-muted-foreground">
                   <span className="h-px flex-1 bg-border" />
                   <span>{orLabel}</span>
                   <span className="h-px flex-1 bg-border" />

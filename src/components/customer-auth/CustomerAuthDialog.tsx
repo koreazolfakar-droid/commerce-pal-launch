@@ -249,7 +249,7 @@ export function CustomerAuthDialog() {
                 <div className="mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
                   <UserRound className="h-6 w-6" aria-hidden="true" />
                 </div>
-                <DialogTitle className="text-2xl font-black tracking-tight">{copy.account}</DialogTitle>
+                <DialogTitle className="text-2xl font-bold tracking-[-0.02em]">{copy.account}</DialogTitle>
                 <DialogDescription>{copy.signedIn}</DialogDescription>
               </DialogHeader>
 
@@ -296,7 +296,7 @@ export function CustomerAuthDialog() {
                     <div className="mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
                       <UserRound className="h-6 w-6" aria-hidden="true" />
                     </div>
-                    <DialogTitle className="text-2xl font-black tracking-tight">{copy.welcome}</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold tracking-[-0.02em]">{copy.welcome}</DialogTitle>
                     <DialogDescription className="text-sm leading-6">{copy.subtitle}</DialogDescription>
                   </DialogHeader>
 
@@ -312,7 +312,7 @@ export function CustomerAuthDialog() {
                       <Loader2 className="me-2 h-4 w-4 animate-spin" aria-hidden="true" />
                     ) : (
                       <span
-                        className="me-2 grid h-5 w-5 place-items-center rounded-full bg-white text-[13px] font-black text-[#4285F4] shadow-sm ring-1 ring-border/60"
+                        className="me-2 grid h-5 w-5 place-items-center rounded-full bg-white text-[13px] font-bold text-[#4285F4] shadow-sm ring-1 ring-border/60"
                         aria-hidden="true"
                       >
                         G
@@ -357,7 +357,7 @@ export function CustomerAuthDialog() {
                       <BackIcon className="h-4 w-4" aria-hidden="true" />
                       {copy.back}
                     </button>
-                    <DialogTitle className="text-2xl font-black tracking-tight">{copy.phoneTitle}</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold tracking-[-0.02em]">{copy.phoneTitle}</DialogTitle>
                     <DialogDescription className="leading-6">{copy.phoneHelp}</DialogDescription>
                   </DialogHeader>
 
@@ -409,7 +409,7 @@ export function CustomerAuthDialog() {
                       <BackIcon className="h-4 w-4" aria-hidden="true" />
                       {copy.back}
                     </button>
-                    <DialogTitle className="text-2xl font-black tracking-tight">{copy.codeTitle}</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold tracking-[-0.02em]">{copy.codeTitle}</DialogTitle>
                     <DialogDescription className="leading-6">
                       {copy.codeHelp} <bdi className="font-bold text-foreground">{verifiedPhone}</bdi>
                     </DialogDescription>
@@ -426,7 +426,7 @@ export function CustomerAuthDialog() {
                     }}
                     aria-label={copy.codeTitle}
                     data-testid="customer-otp-input"
-                    className="h-14 w-full rounded-2xl border border-border/80 bg-card px-4 text-center text-2xl font-black tracking-[0.45em] outline-none shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    className="h-14 w-full rounded-2xl border border-border/80 bg-card px-4 text-center text-2xl font-bold tabular-nums tracking-[0.38em] outline-none shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/15"
                   />
 
                   <Button

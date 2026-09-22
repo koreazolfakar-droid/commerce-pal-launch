@@ -90,7 +90,7 @@ function CategoriesPage() {
     <StoreLayout>
       <div className="mx-auto w-full max-w-7xl px-4 py-7 sm:py-9 lg:px-6">
         <header className="mb-6 max-w-2xl sm:mb-8">
-          <h1 className="text-2xl font-black tracking-[-0.035em] sm:text-4xl">
+          <h1 className="text-2xl font-bold tracking-[-0.025em] sm:text-4xl">
             {language === "ar" ? "كل التصنيفات" : "All Categories"}
           </h1>
           <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground sm:mt-2 sm:text-base">
@@ -137,7 +137,7 @@ function CategoriesPage() {
                 )}
               </span>
 
-              <h2 className="line-clamp-2 min-h-[2rem] max-w-full text-[11px] font-extrabold leading-[1.15] tracking-[-0.015em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.15rem] sm:text-xs">
+              <h2 className="line-clamp-2 min-h-[2rem] max-w-full text-[11px] font-semibold leading-[1.3] tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.15rem] sm:text-xs">
                 {category.label}
               </h2>
             </Link>
