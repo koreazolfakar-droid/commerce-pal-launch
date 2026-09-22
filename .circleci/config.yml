@@ -99,6 +99,9 @@ jobs:
       suite:
         type: string
         default: all
+      route_group:
+        type: string
+        default: all
     docker:
       - image: cimg/node:lts
     resource_class: medium
@@ -107,6 +110,7 @@ jobs:
       BUN_INSTALL: /home/circleci/.bun
       UI_ENGINE: << parameters.engine >>
       UI_SUITE: << parameters.suite >>
+      UI_ROUTE_GROUP: << parameters.route_group >>
     steps:
       - checkout
       - install-bun
@@ -157,9 +161,19 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
-          name: ui-browser-chromium-routes
+          name: ui-browser-chromium-routes-catalog
           engine: chromium
           suite: routes
+          route_group: catalog
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          name: ui-browser-chromium-routes-commerce
+          engine: chromium
+          suite: routes
+          route_group: commerce
           filters:
             branches:
               only:
