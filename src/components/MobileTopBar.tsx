@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Heart, Menu, Search, ShoppingBag } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
+import { CustomerAddressSelector } from "@/components/customer-account/CustomerAddressSelector";
 import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
@@ -123,6 +124,9 @@ export function MobileTopBar({
       </header>
 
       <div className="border-b border-border/50 bg-background lg:hidden">
+        <div className="mx-auto max-w-md px-3 pt-2.5">
+          <CustomerAddressSelector variant="mobile" className="w-full" />
+        </div>
         <div className="mx-auto flex max-w-md min-w-0 items-center gap-2 px-3 py-2.5">
           <button
             type="button"
