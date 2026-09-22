@@ -293,10 +293,21 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-pageerrors-chromium
+          name: ui-browser-pageerrors-home-chromium
           engine: chromium
           suite: probe
-          route_group: pageerrors
+          route_group: pageerrors-home
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
+          name: ui-browser-pageerrors-cart-chromium
+          engine: chromium
+          suite: probe
+          route_group: pageerrors-cart
           filters:
             branches:
               only:
