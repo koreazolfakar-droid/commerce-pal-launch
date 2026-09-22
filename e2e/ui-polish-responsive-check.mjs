@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { chromium, firefox, webkit } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:4173";
+const engineMode = process.env.UI_ENGINE ?? "all";
 const responsiveCases = [
   { width: 320, height: 700, lang: "en", theme: "light" },
   { width: 360, height: 780, lang: "en", theme: "light" },
@@ -29,7 +30,10 @@ const criticalRoutes = [
   "/brands",
 ];
 
-const browser = await chromium.launch({ headless: true });
+const browser =
+  engineMode === "all" || engineMode === "chromium"
+    ? await chromium.launch({ headless: true })
+    : null;
 
 async function configure(page, lang, theme) {
   await page.addInitScript(
@@ -118,8 +122,9 @@ async function assertViewportHealth(page, label) {
   }
 }
 
-try {
-  for (const testCase of responsiveCases) {
+if (browser) {
+  try {
+    for (const testCase of responsiveCases) {
     const page = await browser.newPage({
       viewport: { width: testCase.width, height: testCase.height },
     });
@@ -185,7 +190,9 @@ const supplementalCases = [
   { width: 1440, height: 1000, lang: "en", theme: "light" },
 ];
 
-for (const engine of supplementalEngines) {
+for (const engine of supplementalEngines.filter(
+  (candidate) => engineMode === "all" || engineMode === candidate.name,
+)) {
   const engineBrowser = await engine.launcher.launch({ headless: true });
   try {
     for (const testCase of supplementalCases) {
