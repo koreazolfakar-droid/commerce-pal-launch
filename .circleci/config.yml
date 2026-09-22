@@ -103,11 +103,11 @@ jobs:
         type: string
         default: all
     docker:
-      - image: mcr.microsoft.com/playwright:v1.63.0-noble
+      - image: cimg/node:lts
     resource_class: medium
     working_directory: ~/project
     environment:
-      BUN_INSTALL: /root/.bun
+      BUN_INSTALL: /home/circleci/.bun
       UI_ENGINE: << parameters.engine >>
       UI_SUITE: << parameters.suite >>
       UI_ROUTE_GROUP: << parameters.route_group >>
@@ -117,6 +117,9 @@ jobs:
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
+      - run:
+          name: Install browser runtime
+          command: ./node_modules/.bin/playwright install --with-deps << parameters.engine >>
       - run:
           name: Responsive multi-engine UI checks
           command: |
