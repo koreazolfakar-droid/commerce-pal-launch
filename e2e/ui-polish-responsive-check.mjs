@@ -288,16 +288,21 @@ async function runModeProbe(browser) {
 
     const response = await page.goto(`${baseURL}/`, { waitUntil: "load" });
     assert.ok(response && response.status() < 400, `${engineName} /: failed to load`);
-    await assertDocumentMode(page, testCase, "/");
 
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth > window.innerWidth + 1,
-    );
-    assert.equal(
-      overflow,
-      false,
-      `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme}: overflow`,
-    );
+    if (routeGroup !== "overflow") {
+      await assertDocumentMode(page, testCase, "/");
+    }
+
+    if (routeGroup !== "document") {
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth + 1,
+      );
+      assert.equal(
+        overflow,
+        false,
+        `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme}: overflow`,
+      );
+    }
     await page.close();
   }
 
