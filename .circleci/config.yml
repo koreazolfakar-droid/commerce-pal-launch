@@ -91,6 +91,92 @@ jobs:
           command: bun run test:ssr
 
 
+  diag-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript
+          command: bun run typecheck
+
+  diag-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: ESLint
+          command: bun run lint
+
+  diag-unit:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit and architecture tests
+          command: bun run test:unit
+
+  diag-build:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Production build
+          command: bun run build
+
+  diag-ssr:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: SSR smoke test
+          command: bun run test:ssr
+
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -212,6 +298,11 @@ workflows:
     jobs:
       - security-source
       - security-dependencies
+      - diag-typecheck
+      - diag-lint
+      - diag-unit
+      - diag-build
+      - diag-ssr
       - ui-browser-deps:
           filters:
             branches:
