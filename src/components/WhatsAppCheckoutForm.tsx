@@ -536,7 +536,7 @@ export function WhatsAppCheckoutForm({
     "mt-1.5 w-full rounded-xl border bg-background px-3.5 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
 
   const paymentCardClass = (selected: boolean) =>
-    `flex cursor-pointer gap-3 rounded-2xl border p-4 transition ${
+    `flex cursor-pointer gap-3 rounded-lg border p-4 transition ${
       selected
         ? "border-primary bg-primary/5 ring-2 ring-primary/10"
         : "border-border bg-background hover:border-primary/40"
@@ -551,7 +551,7 @@ export function WhatsAppCheckoutForm({
   return (
     <section
       id="whatsapp-checkout"
-      className="mt-6 scroll-mt-24 rounded-2xl border bg-card p-5 shadow-card"
+      className="mt-6 scroll-mt-24 rounded-lg border bg-card p-5 shadow-card"
       aria-labelledby="whatsapp-checkout-title"
     >
       <div className="flex items-start gap-3">
@@ -652,7 +652,7 @@ export function WhatsAppCheckoutForm({
           />
         </label>
 
-        <div className="rounded-2xl border bg-muted/30 p-4">
+        <div className="rounded-lg border bg-muted/30 p-4">
           <label className="flex cursor-pointer items-start gap-3">
             <input
               type="checkbox"
@@ -758,7 +758,7 @@ export function WhatsAppCheckoutForm({
               ) : null}
 
               {location ? (
-                <div className="overflow-hidden rounded-2xl border bg-background shadow-sm">
+                <div className="overflow-hidden rounded-lg border bg-background shadow-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3.5 py-3">
                     <div>
                       <p className="text-xs font-extrabold text-foreground">{copy.mapPreview}</p>
@@ -841,7 +841,7 @@ export function WhatsAppCheckoutForm({
 
           {details.paymentMethod === "whish_money" ? (
             whishConfigured ? (
-              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -892,7 +892,7 @@ export function WhatsAppCheckoutForm({
           />
         </label>
 
-        <div className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4">
+        <div className="rounded-lg border border-primary/15 bg-primary/[0.04] p-4">
           <div className="flex items-start gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
               <FileText className="h-4 w-4" />
