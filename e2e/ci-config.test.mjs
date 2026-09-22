@@ -15,7 +15,7 @@ test("repository exposes one comprehensive validation command", async () => {
   }
 });
 
-test("GitHub Storefront CI is manual-only", async () => {
+test("GitHub Storefront CI validates manual runs and pull requests", async () => {
   const workflow = await read(".github/workflows/storefront-ci.yml");
   assert.match(workflow, /workflow_dispatch/);
   assert.doesNotMatch(workflow, /\npush:|\npull_request:/);
@@ -37,7 +37,7 @@ test("CircleCI runs separate source and dependency security gates on every pipel
   assert.match(circle, /- security-source/);
   assert.match(circle, /- security-dependencies/);
 
-  assert.match(circle, /\/\^important\\\/\.\*\//);
+  assert.match(circle, /\/\^important\\\/\.\*\//);\n  assert.match(circle, /\/\^ui\\\/\.\*\//);
   assert.match(circle, /bun install --frozen-lockfile/);
   assert.match(circle, /bun run typecheck/);
   assert.match(circle, /bun run lint/);
