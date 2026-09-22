@@ -885,6 +885,105 @@
 .dashboard-theme-scope {
   --dashboard-card-radius: 1rem;
   --dashboard-control-radius: 0.75rem;
+  --dashboard-control-height: 2.5rem;
+  --dashboard-touch: 2.75rem;
+  --dashboard-icon-size: 1.125rem;
+  --dashboard-hairline: color-mix(in oklab, var(--color-border) 82%, transparent);
+  --dashboard-focus: color-mix(in oklab, var(--color-ring) 22%, transparent);
+}
+
+/* Shared dashboard geometry. Keep these rules semantic and scoped so individual
+ * business screens can retain their layout while controls feel like one app. */
+.dashboard-theme-scope .dashboard-main,
+.dashboard-theme-scope .dashboard-main > * {
+  min-inline-size: 0;
+}
+
+.dashboard-theme-scope :where(button, a, [role="button"]) svg.lucide {
+  flex-shrink: 0;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dashboard-theme-scope :where(button, a, [role="button"]):focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.dashboard-theme-scope .dashboard-icon-button {
+  width: var(--dashboard-touch);
+  height: var(--dashboard-touch);
+  min-width: var(--dashboard-touch);
+  min-height: var(--dashboard-touch);
+  border-radius: var(--dashboard-control-radius);
+}
+
+.dashboard-theme-scope .dashboard-icon-button svg.lucide {
+  width: var(--dashboard-icon-size);
+  height: var(--dashboard-icon-size);
+  stroke-width: 1.9;
+}
+
+.dashboard-theme-scope .dashboard-compact-control {
+  min-height: var(--dashboard-control-height);
+  border-radius: var(--dashboard-control-radius);
+}
+
+.dashboard-theme-scope .dashboard-sidebar-action {
+  min-height: var(--dashboard-control-height);
+  border-radius: var(--dashboard-control-radius);
+}
+
+.dashboard-theme-scope .dashboard-mobile-nav button {
+  min-width: 0;
+  min-height: 4rem;
+}
+
+.dashboard-theme-scope :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select
+) {
+  min-height: var(--dashboard-control-height);
+  max-inline-size: 100%;
+  border-radius: var(--dashboard-control-radius);
+}
+
+.dashboard-theme-scope textarea {
+  min-height: 6rem;
+  max-inline-size: 100%;
+  border-radius: var(--dashboard-control-radius);
+  resize: vertical;
+}
+
+.dashboard-theme-scope :where(input, select, textarea):focus-visible {
+  border-color: var(--color-ring);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--dashboard-focus);
+}
+
+.dashboard-theme-scope :where(table) {
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-theme-scope :where(dialog, [role="dialog"]) {
+  max-inline-size: calc(100vw - 1.5rem);
+}
+
+@media (max-width: 639px) {
+  .dashboard-theme-scope .dashboard-header {
+    column-gap: 0.25rem;
+  }
+
+  .dashboard-theme-scope .dashboard-sidebar-action {
+    min-height: var(--dashboard-touch);
+  }
+
+  .dashboard-theme-scope :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    select
+  ) {
+    font-size: 0.875rem;
+  }
 }
 
 /* Normalize legacy dashboard geometry without touching circular avatars, badges,
