@@ -14,10 +14,11 @@ test("storefront density modes use static grids and preserve product information
     read("src/components/BrandShowcaseSections.tsx"),
   ]);
 
-  assert.match(hook, /"dense"\s*\|\s*"grid"\s*\|\s*"list"/);
+  assert.match(hook, /"dense"\s*\|\s*"grid"/);
+  assert.doesNotMatch(hook, /ProductViewMode = .*"list"/);
   assert.match(toggle, /onChange\("dense"\)/);
   assert.match(toggle, /onChange\("grid"\)/);
-  assert.match(toggle, /onChange\("list"\)/);
+  assert.doesNotMatch(toggle, /onChange\("list"\)/);
 
   assert.match(grid, /grid-cols-3/);
   assert.match(grid, /grid-cols-2/);
@@ -33,8 +34,8 @@ test("storefront density modes use static grids and preserve product information
   assert.match(showcase, /products=\{products\.slice\(0, 6\)\}/);
 
   assert.match(card, /market-product-card/);
+  assert.match(card, /line-clamp-2 min-h-\[2\.35rem\]/);
   assert.match(card, /whitespace-nowrap/);
-  assert.doesNotMatch(card, /line-clamp-2 min-h-\[2\.35rem\]/);
   assert.match(card, /brand\.label/);
   assert.match(card, /t\("inStock"\)/);
   assert.match(card, /t\("outOfStock"\)/);

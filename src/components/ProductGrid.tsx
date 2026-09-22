@@ -1,7 +1,6 @@
 import { PackageSearch } from "lucide-react";
 
 import { CompactProductCard } from "@/components/CompactProductCard";
-import { ProductListCard } from "@/components/ProductListCard";
 import { ProductViewToggle } from "@/components/ProductViewToggle";
 import { useProductViewMode, type ProductViewMode } from "@/hooks/useProductViewMode";
 import type { ShopifyProduct } from "@/lib/shopify";
@@ -10,7 +9,6 @@ import { useLanguage } from "@/lib/i18n";
 
 const DENSE = "grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-4 md:grid-cols-4 xl:grid-cols-5";
 const GRID = "grid grid-cols-2 gap-x-2.5 gap-y-4 sm:gap-5 md:grid-cols-3 xl:grid-cols-4";
-const LIST = "grid gap-3 sm:gap-4";
 
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
@@ -79,21 +77,17 @@ export function ProductGrid({
         </div>
       )}
       <div
-        className={cn(viewMode === "list" ? LIST : viewMode === "dense" ? DENSE : GRID, className)}
+        className={cn(viewMode === "dense" ? DENSE : GRID, className)}
       >
-        {products.map((product, index) =>
-          viewMode === "list" ? (
-            <ProductListCard key={product.node.id} product={product} eager={index < eagerCount} />
-          ) : (
-            <CompactProductCard
-              key={product.node.id}
-              product={product}
-              eager={index < eagerCount}
-              market
-              className={viewMode === "dense" ? "catalog-dense-product-card" : undefined}
-            />
-          ),
-        )}
+        {products.map((product, index) => (
+          <CompactProductCard
+            key={product.node.id}
+            product={product}
+            eager={index < eagerCount}
+            market
+            className={viewMode === "dense" ? "catalog-dense-product-card" : undefined}
+          />
+        ))}
       </div>
     </div>
   );

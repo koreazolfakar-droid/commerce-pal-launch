@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("mobile density modes use real stacked grids and keep product details visible", async ({
+test("mobile density modes use ordered grids and keep product details visible", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 850 });
@@ -8,11 +8,10 @@ test("mobile density modes use real stacked grids and keep product details visib
 
   const denseButton = page.getByRole("button", { name: "3-column view", exact: true });
   const gridButton = page.getByRole("button", { name: "2-column view", exact: true });
-  const listButton = page.getByRole("button", { name: "List view", exact: true });
 
   await expect(denseButton).toBeVisible();
   await expect(gridButton).toBeVisible();
-  await expect(listButton).toBeVisible();
+  await expect(page.getByRole("button", { name: "List view", exact: true })).toHaveCount(0);
 
   await denseButton.click();
   await expect(denseButton).toHaveAttribute("aria-pressed", "true");
@@ -79,15 +78,7 @@ test("mobile density modes use real stacked grids and keep product details visib
     "true",
   );
 
-  await page.getByRole("button", { name: "List view", exact: true }).click();
-  await expect(page.locator("main .product-list-card")).toHaveCount(9);
-
-  await page.reload();
-  await expect(page.getByRole("button", { name: "List view", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await expect(page.locator("main .product-list-card")).toHaveCount(9);
+  await expect(page.locator("main .product-list-card")).toHaveCount(0);
 });
 
 test("homepage brand section renders six products as 3 plus 3 without horizontal rail", async ({

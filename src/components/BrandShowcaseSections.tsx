@@ -401,7 +401,7 @@ function FacetSection({
   loading?: boolean;
 }) {
   const storageKey = `space-cell-${kind}-${slug}-view`;
-  const [viewMode, setViewMode] = useProductViewMode("dense", storageKey);
+  const [viewMode, setViewMode] = useProductViewMode("grid", storageKey);
 
   return (
     <section
@@ -441,7 +441,7 @@ function FacetSection({
 function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
   const { t } = useLanguage();
   const storageKey = `showcase-${collection.handle}-view`;
-  const [viewMode, setViewMode] = useProductViewMode("dense", storageKey);
+  const [viewMode, setViewMode] = useProductViewMode("grid", storageKey);
   const { data, isPending } = useQuery(collectionQueryOptions(collection.handle, 12));
   const productLabel = `${collection.productCount} ${t(collection.productCount === 1 ? "product" : "products")}`;
 
