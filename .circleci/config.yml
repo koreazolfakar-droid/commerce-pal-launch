@@ -96,6 +96,9 @@ jobs:
       engine:
         type: string
         default: chromium
+      suite:
+        type: string
+        default: all
     docker:
       - image: mcr.microsoft.com/playwright:v1.63.0-noble
     resource_class: medium
@@ -103,6 +106,7 @@ jobs:
     environment:
       BUN_INSTALL: /root/.bun
       UI_ENGINE: << parameters.engine >>
+      UI_SUITE: << parameters.suite >>
     steps:
       - checkout
       - install-bun
@@ -142,8 +146,17 @@ workflows:
                 - /^design\/.*/
                 - /^ui\/.*/
       - ui-browser:
-          name: ui-browser-chromium
+          name: ui-browser-chromium-responsive
           engine: chromium
+          suite: responsive
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          name: ui-browser-chromium-routes
+          engine: chromium
+          suite: routes
           filters:
             branches:
               only:
