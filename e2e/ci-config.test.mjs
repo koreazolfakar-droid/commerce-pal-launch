@@ -17,9 +17,9 @@ test("repository exposes one comprehensive validation command", async () => {
 
 test("GitHub Storefront CI validates manual runs and pull requests", async () => {
   const workflow = await read(".github/workflows/storefront-ci.yml");
-  assert.match(workflow, /workflow_dispatch/);
-  assert.doesNotMatch(workflow, /\npush:/);
-  assert.match(workflow, /\npull_request:/);
+  assert.match(workflow, /^\s+workflow_dispatch:/m);
+  assert.doesNotMatch(workflow, /^\s*push:/m);
+  assert.match(workflow, /^\s+pull_request:/m);
   assert.match(workflow, /bun install --frozen-lockfile/);
   assert.match(workflow, /bun run typecheck/);
   assert.match(workflow, /bun run lint/);
