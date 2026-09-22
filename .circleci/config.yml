@@ -91,6 +91,29 @@ jobs:
           command: bun run test:ssr
 
 
+  diag-test-product-density:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Product density regression
+          command: node --test e2e/product-density-view.test.mjs
+
+  diag-test-dark:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Dark theme regression
+          command: node --test e2e/storefront-dark-theme.test.mjs
+
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -212,6 +235,8 @@ workflows:
     jobs:
       - security-source
       - security-dependencies
+      - diag-test-product-density
+      - diag-test-dark
       - ui-browser-deps:
           filters:
             branches:
