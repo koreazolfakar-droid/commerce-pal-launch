@@ -71,7 +71,7 @@ export default function QuickViewDialog({
   return (
     <DialogContent
       dir={direction}
-      className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-2xl p-5 sm:p-7"
+      className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-lg p-5 sm:p-7"
     >
       <DialogHeader className="pe-7 text-start sm:text-start">
         <DialogTitle className="break-words leading-snug">{node.title}</DialogTitle>
