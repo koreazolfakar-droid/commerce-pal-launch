@@ -882,6 +882,21 @@
  * Keep these overrides scoped to the dashboard so the storefront is never affected.
  * New dashboard code should prefer bg-card/bg-background/text-foreground/border-border.
  */
+.dashboard-theme-scope {
+  --dashboard-card-radius: 1rem;
+  --dashboard-control-radius: 0.75rem;
+}
+
+/* Normalize legacy dashboard geometry without touching circular avatars, badges,
+ * image crops, or other intentionally full-round elements. */
+.dashboard-theme-scope :where([class~="rounded-xl"]) {
+  border-radius: var(--dashboard-control-radius);
+}
+
+.dashboard-theme-scope :where([class~="rounded-2xl"], [class~="rounded-3xl"]) {
+  border-radius: var(--dashboard-card-radius);
+}
+
 .dark .dashboard-theme-scope {
   color-scheme: dark;
 }
