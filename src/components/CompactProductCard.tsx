@@ -80,13 +80,13 @@ export const CompactProductCard = memo(function CompactProductCard({
       aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
       aria-pressed={wishlisted}
       className={cn(
-        "press absolute z-20 grid place-items-center rounded-full border border-border/65",
+        "product-action-button press absolute z-20 grid place-items-center rounded-full border border-border/65",
         "bg-background/95 text-muted-foreground shadow-sm backdrop-blur",
         "transition-[color,background-color,border-color,transform]",
         "hover:border-primary/35 hover:bg-background hover:text-primary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         market
-          ? "market-product-action market-wishlist-button end-1.5 top-1.5 h-9 w-9 after:absolute after:-inset-1 after:content-['']"
+          ? "market-product-action market-wishlist-button end-1.5 top-1.5 h-9 w-9"
           : "end-2.5 top-2.5 h-9 w-9",
       )}
     >
@@ -108,13 +108,13 @@ export const CompactProductCard = memo(function CompactProductCard({
       disabled={isAdding || !variant || !inStock}
       aria-label={`Add ${node.title} to bag`}
       className={cn(
-        "press relative grid shrink-0 place-items-center rounded-full bg-primary text-primary-foreground",
+        "product-action-button press relative grid shrink-0 place-items-center rounded-full bg-primary text-primary-foreground",
         "shadow-md transition-[opacity,transform,box-shadow]",
         "hover:scale-[1.03] hover:shadow-lg",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:scale-100 disabled:opacity-40",
         market
-          ? "market-product-action h-9 w-9 after:absolute after:-inset-1 after:content-['']"
+          ? "market-product-action h-9 w-9"
           : "h-9 w-9",
       )}
     >
