@@ -302,3 +302,28 @@ workflows:
             branches:
               only:
                 - /^ui\/.*/
+      - ui-browser:
+          name: ui-browser-webkit-navigation
+          engine: webkit
+          suite: probe
+          route_group: navigation
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          name: ui-browser-webkit-mode
+          engine: webkit
+          suite: mode
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          name: ui-browser-webkit-shop
+          engine: webkit
+          suite: shop
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
