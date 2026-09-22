@@ -10,7 +10,6 @@ import { localizeSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 
-const COMPACT_MARKS = new Set(["apple", "xiaomi"]);
 const AUTO_SCROLL_ENABLED = false;
 const AUTO_SCROLL_PX_PER_SECOND = 24;
 const AUTO_SCROLL_START_DELAY_MS = 5000;
@@ -18,10 +17,8 @@ const ACTIVE_MEASURE_INTERVAL_MS = 160;
 const INFINITE_CYCLES = [0, 1, 2] as const;
 
 function brandSlotWidth(brand: ShopifyBrand) {
-  if (COMPACT_MARKS.has(brand.slug)) return 78;
-
   const compactLength = brand.label.replace(/[^a-z0-9]/gi, "").length;
-  return Math.min(122, Math.max(88, 72 + compactLength * 5));
+  return Math.min(106, Math.max(96, 90 + compactLength * 2));
 }
 
 /**
@@ -400,7 +397,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
                         <BrandLogo
                           slug={brand.slug}
                           label={brand.label}
-                          size={36}
+                          size={32}
                           wordmark
                           frameless
                           normalizeForRail
