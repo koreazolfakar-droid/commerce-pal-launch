@@ -57,7 +57,11 @@ test("CircleCI runs separate source and dependency security gates on every pipel
   assert.match(uiBrowserJob, /playwright install --with-deps << parameters\.engine >>/);
   assert.match(uiBrowserJob, /\.\/node_modules\/\.bin\/vite dev/);
   assert.match(uiBrowserJob, /node e2e\/ui-polish-responsive-check\.mjs/);
-  assert.match(circle, /^\s+- ui-server-smoke:/m);
+  assert.match(circle, /name: ui-browser-chromium-responsive/);
+  assert.match(circle, /name: ui-browser-chromium-routes-catalog/);
+  assert.match(circle, /name: ui-browser-chromium-routes-commerce/);
+  assert.match(circle, /name: ui-browser-firefox/);
+  assert.match(circle, /name: ui-browser-webkit/);
 });
 
 test("native security scanner protects secrets and dangerous production primitives", async () => {
