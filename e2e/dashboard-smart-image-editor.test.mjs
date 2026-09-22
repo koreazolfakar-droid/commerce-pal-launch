@@ -28,7 +28,7 @@ const [
   read("src/dashboard/pages/MediaLibraryPage.tsx"),
   read("src/dashboard/components/DashboardMediaPicker.tsx"),
   read("src/components/ProductImage.tsx"),
-  read("src/components/ProductListCard.tsx"),
+  read("src/components/CompactProductCard.tsx"),
   read("src/components/product/ProductGallery.tsx"),
 ]);
 
@@ -76,13 +76,13 @@ test("product and variant images can adjust both new and already-uploaded media"
 
 test("product editor mirrors the live storefront media geometry without double padding", () => {
   assert.match(storefrontProductImage, /object-contain/);
-  assert.match(storefrontProductCard, /imageClassName="!p-\[6%\]/);
+  assert.match(storefrontProductCard, /!p-\[5%\]/);
   assert.match(storefrontProductGallery, /aspect-\[1\/0\.92\]/);
   assert.match(storefrontProductGallery, /p-2\.5/);
   assert.match(storefrontProductGallery, /lg:p-8/);
 
   assert.match(editor, /previewContext\?: "product"/);
-  assert.match(editor, /id: "card"[\s\S]*padding: "6%"/);
+  assert.match(editor, /id: "card"[\s\S]*padding: "5%"/);
   assert.match(editor, /id: "mobile"[\s\S]*aspectRatio: "1 \/ 0\.92"[\s\S]*padding: "10px"/);
   assert.match(editor, /id: "desktop"[\s\S]*padding: "32px"/);
   assert.match(editor, /request\.options\.previewContext === "product" \? 0/);
