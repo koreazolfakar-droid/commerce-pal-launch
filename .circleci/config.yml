@@ -208,6 +208,84 @@ jobs:
           name: Architecture unit tests
           command: node --test e2e/architecture.test.mjs e2e/performance-architecture.test.mjs
 
+  visual-unit-architecture-core:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Architecture core test
+          command: node --test e2e/architecture.test.mjs
+
+  visual-unit-performance:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Performance architecture test
+          command: node --test e2e/performance-architecture.test.mjs
+
+  visual-unit-customer-auth:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Customer auth UI test
+          command: node --test e2e/customer-auth-ui.test.mjs
+
+  visual-unit-category:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Category tests
+          command: node --test e2e/category-*.test.mjs
+
+  visual-unit-product:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Product tests
+          command: node --test e2e/product-*.test.mjs
+
+  visual-unit-seo:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: SEO regression test
+          command: node --test e2e/seo-regression.test.mjs
+
   visual-unit-storefront-core:
     docker:
       - image: cimg/node:lts
@@ -346,6 +424,36 @@ workflows:
               only:
                 - /^design\/.*/
       - visual-unit-architecture:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-architecture-core:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-performance:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-customer-auth:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-category:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-product:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-seo:
           filters:
             branches:
               only:
