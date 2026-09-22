@@ -46,6 +46,9 @@ test("CircleCI runs separate source and dependency security gates on every pipel
   assert.match(circle, /bun run test:unit/);
   assert.match(circle, /bun run build/);
   assert.match(circle, /bun run test:ssr/);
+  assert.match(circle, /ui-browser:/);
+  assert.match(circle, /mcr\.microsoft\.com\/playwright:v1\.63\.0-noble/);
+  assert.match(circle, /node e2e\/ui-polish-responsive-check\.mjs/);
 });
 
 test("native security scanner protects secrets and dangerous production primitives", async () => {
