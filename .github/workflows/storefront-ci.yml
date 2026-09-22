@@ -12,6 +12,7 @@ on:
       - "src/dark-black.css"
       - "src/components/**"
       - "src/routes/**"
+      - "src/dashboard/**"
 
 permissions:
   contents: read
