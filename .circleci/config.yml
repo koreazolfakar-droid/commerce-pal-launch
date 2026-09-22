@@ -189,6 +189,14 @@ workflows:
                 - /^design\/.*/
                 - /^ui\/.*/
       - ui-browser:
+          name: ui-browser-runtime-chromium
+          engine: chromium
+          suite: runtime
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
           name: ui-browser-chromium-responsive
           engine: chromium
           suite: responsive
