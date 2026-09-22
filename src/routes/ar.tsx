@@ -88,7 +88,7 @@ function ArabicLandingPage() {
       <main dir="rtl" lang="ar" className="mx-auto w-full max-w-6xl px-4 py-8 pb-28 sm:py-12">
         <section className="overflow-hidden rounded-[2rem] border bg-card p-6 shadow-card sm:p-10">
           <p className="text-sm font-bold text-primary">{storeName} لبنان</p>
-          <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-5xl">
+          <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-[1.3] sm:text-5xl">
             هواتف وإلكترونيات مع معلومات واضحة واختيار أسهل
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
@@ -114,7 +114,7 @@ function ArabicLandingPage() {
         </section>
 
         <section className="mt-8" aria-labelledby="arabic-categories">
-          <h2 id="arabic-categories" className="text-2xl font-black">
+          <h2 id="arabic-categories" className="text-2xl font-bold">
             تسوّق حسب الفئة
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -137,7 +137,7 @@ function ArabicLandingPage() {
         <section className="mt-8 grid gap-4 md:grid-cols-3" aria-label="مزايا التسوق">
           <article className="rounded-2xl border bg-card p-5">
             <Truck className="h-6 w-6 text-primary" />
-            <h2 className="mt-4 font-black">معلومات التوصيل</h2>
+            <h2 className="mt-4 font-semibold">معلومات التوصيل</h2>
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
               راجع تفاصيل الشحن والتوصيل قبل الطلب وتواصل معنا إذا احتجت تأكيداً لمنطقتك.
             </p>
@@ -150,7 +150,7 @@ function ArabicLandingPage() {
           </article>
           <article className="rounded-2xl border bg-card p-5">
             <ShieldCheck className="h-6 w-6 text-primary" />
-            <h2 className="mt-4 font-black">الضمان والإرجاع</h2>
+            <h2 className="mt-4 font-semibold">الضمان والإرجاع</h2>
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
               تجد معلومات الضمان والإرجاع وخطوات التواصل مع الدعم ضمن صفحات السياسات.
             </p>
@@ -163,7 +163,7 @@ function ArabicLandingPage() {
           </article>
           <article className="rounded-2xl border bg-card p-5">
             <MessageCircle className="h-6 w-6 text-primary" />
-            <h2 className="mt-4 font-black">مساعدة قبل الشراء</h2>
+            <h2 className="mt-4 font-semibold">مساعدة قبل الشراء</h2>
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
               اسأل عن المواصفات والتوافق والتوفر وأفضل خيار ضمن ميزانيتك قبل إتمام الطلب.
             </p>
