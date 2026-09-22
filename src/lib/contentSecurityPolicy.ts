@@ -19,6 +19,8 @@ export function buildContentSecurityPolicy(nonce?: string) {
     "'self'",
     ...(nonce ? [`'nonce-${nonce}'`] : []),
     "https://challenges.cloudflare.com",
+    "https://maps.googleapis.com",
+    "https://maps.gstatic.com",
   ];
   return [
     "default-src 'self'",
@@ -31,9 +33,9 @@ export function buildContentSecurityPolicy(nonce?: string) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "style-src-attr 'unsafe-inline'",
     "font-src 'self' data: https://fonts.gstatic.com",
-    `img-src 'self' data: blob: ${[...backendHttpOrigins].join(" ")} https://images.unsplash.com`,
+    `img-src 'self' data: blob: ${[...backendHttpOrigins].join(" ")} https://images.unsplash.com https://maps.gstatic.com https://maps.googleapis.com https://*.googleapis.com https://*.ggpht.com`,
     `media-src 'self' ${[...backendHttpOrigins].join(" ")}`,
-    `connect-src 'self' ${[...backendHttpOrigins].join(" ")} ${[...backendWebSocketOrigins].join(" ")} https://challenges.cloudflare.com https://api.pwnedpasswords.com`,
+    `connect-src 'self' ${[...backendHttpOrigins].join(" ")} ${[...backendWebSocketOrigins].join(" ")} https://challenges.cloudflare.com https://api.pwnedpasswords.com https://maps.googleapis.com https://*.googleapis.com`,
     "frame-src 'self' https://maps.google.com https://www.google.com https://challenges.cloudflare.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
