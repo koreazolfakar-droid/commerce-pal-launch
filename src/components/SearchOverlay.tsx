@@ -91,7 +91,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             <div className="space-y-6">
               {data.collections.length > 0 && (
                 <section>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <h3 className="mb-2 text-xs font-semibold tracking-[0.02em] text-muted-foreground">
                     Collections
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -112,7 +112,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
               {data.products.length > 0 && (
                 <section>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <h3 className="mb-2 text-xs font-semibold tracking-[0.02em] text-muted-foreground">
                     Products
                   </h3>
                   <ul className="divide-y">
