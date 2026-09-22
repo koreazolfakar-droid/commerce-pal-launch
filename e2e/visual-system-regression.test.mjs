@@ -26,6 +26,10 @@ test("storefront visual system keeps one canonical shell and radius language", a
   assert.ok(overhaulImport >= 0, "StoreLayout must import ui-overhaul.css");
   assert.ok(consistencyImport > overhaulImport, "canonical consistency layer must load last");
 
+  assert.match(styles, /--radius-md:\s*0\.75rem/);
+  assert.match(styles, /--radius-lg:\s*1rem/);
+  assert.match(styles, /--radius-2xl:\s*1\.25rem/);
+  assert.match(styles, /--radius-3xl:\s*1\.5rem/);
   assert.match(styles, /--dashboard-card-radius:\s*1rem/);
   assert.match(styles, /--dashboard-control-radius:\s*0\.75rem/);
   assert.match(styles, /\.dashboard-theme-scope :where\(\[class~="rounded-2xl"\], \[class~="rounded-3xl"\]\)/);
