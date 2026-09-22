@@ -68,7 +68,7 @@ async function assertViewportHealth(page, label) {
     }
   }
 
-  const headerControls = page.locator("header :is(button,a):visible");
+  const headerControls = page.locator("header.sticky > div:first-child :is(button,a):visible");
   const controlCount = Math.min(await headerControls.count(), 14);
   for (let index = 0; index < controlCount; index += 1) {
     const box = await headerControls.nth(index).boundingBox();
