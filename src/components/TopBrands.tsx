@@ -308,7 +308,7 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
   if (!railBrands.length) return null;
 
   return (
-    <section aria-labelledby="top-brands" data-testid="top-brands" className="-mt-2 -mb-4 sm:-mb-5">
+    <section aria-labelledby="top-brands" data-testid="top-brands" className="-mt-2 -mb-4 min-w-0 max-w-full overflow-x-hidden sm:-mb-5">
       <div className="home-section-header !mb-0 flex-nowrap items-end">
         <div className="min-w-0 flex-1">
           <h2 id="top-brands" className="text-xl font-black tracking-tight">
