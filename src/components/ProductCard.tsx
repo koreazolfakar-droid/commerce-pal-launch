@@ -79,7 +79,7 @@ export const ProductCard = memo(function ProductCard({
         className,
       )}
     >
-      <div className="relative bg-image-stage">
+      <div className="product-card-media relative bg-image-stage">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
@@ -131,7 +131,7 @@ export const ProductCard = memo(function ProductCard({
           onClick={handleWishlist}
           aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
           aria-pressed={wishlisted}
-          className="press absolute end-2.5 top-2.5 z-20 grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-background/95 text-muted-foreground shadow-sm backdrop-blur transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:end-3 sm:top-3"
+          className="product-card-secondary-action press absolute end-2.5 top-2.5 z-20 grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-background/95 text-muted-foreground shadow-sm backdrop-blur transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:end-3 sm:top-3"
         >
           <Heart
             aria-hidden
@@ -143,12 +143,12 @@ export const ProductCard = memo(function ProductCard({
           <CompareButton
             handle={node.handle}
             compact
-            className="absolute end-2.5 top-14 h-10 w-10 sm:end-3 sm:top-[3.65rem]"
+            className="product-card-secondary-action absolute end-2.5 top-14 h-10 w-10 sm:end-3 sm:top-[3.65rem]"
           />
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-2 p-3.5 sm:p-4">
+      <div className="product-card-body flex min-w-0 flex-1 flex-col gap-2 p-3.5 sm:p-4">
         {brand && (
           <div className="flex min-w-0 items-center gap-1.5">
             <BrandLogo slug={brand.slug} label={brand.label} size={20} className="rounded-md" />
@@ -158,14 +158,14 @@ export const ProductCard = memo(function ProductCard({
           </div>
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-          <h3 className="line-clamp-2 min-h-[2.65rem] break-words text-sm font-semibold leading-[1.4] transition-colors group-hover:text-primary">
+          <h3 className="product-card-title line-clamp-2 min-h-[2.65rem] break-words text-sm font-semibold leading-[1.4] transition-colors group-hover:text-primary">
             {node.title}
           </h3>
         </Link>
         {summary && <p className="truncate text-xs text-muted-foreground">{summary}</p>}
 
         <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="text-base font-extrabold tracking-tight">
+          <span className="product-card-price text-base font-extrabold tracking-tight">
             {formatPrice(price.amount, price.currencyCode)}
           </span>
           {discount !== null && compareAt && (
@@ -177,7 +177,7 @@ export const ProductCard = memo(function ProductCard({
 
         <p
           className={cn(
-            "inline-flex items-center gap-1.5 text-xs font-medium",
+            "product-card-status inline-flex items-center gap-1.5 text-xs font-medium",
             inStock ? "text-success" : "text-destructive",
           )}
         >
@@ -195,7 +195,7 @@ export const ProductCard = memo(function ProductCard({
           <Button
             onClick={handleAddToCart}
             disabled={isAdding || !selectedVariant || !inStock}
-            className="press h-11 w-full rounded-xl"
+            className="product-card-primary-action press h-11 w-full"
             size="sm"
           >
             {isAdding ? (
