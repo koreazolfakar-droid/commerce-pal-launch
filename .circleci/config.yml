@@ -12,6 +12,18 @@ commands:
             source "$BASH_ENV"
             bun --version
 
+  install-project:
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - bun-deps-v1-{{ checksum "bun.lock" }}
+            - bun-deps-v1-
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+
 jobs:
   security-source:
     docker:
@@ -90,6 +102,74 @@ jobs:
           name: SSR smoke test
           command: bun run test:ssr
 
+  visual-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: TypeScript
+          command: bun run typecheck
+
+  visual-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: ESLint
+          command: bun run lint
+
+  visual-unit:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Unit and architecture tests
+          command: bun run test:unit
+
+  visual-build:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Production build
+          command: bun run build
+
+  visual-ssr:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Production build
+          command: bun run build
+      - run:
+          name: SSR smoke test
+          command: bun run test:ssr
+
 workflows:
   security-and-storefront-validation:
     jobs:
@@ -100,4 +180,29 @@ workflows:
             branches:
               only:
                 - /^important\/.*/
+                - /^design\/.*/
+      - visual-typecheck:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-lint:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-build:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-ssr:
+          filters:
+            branches:
+              only:
                 - /^design\/.*/
