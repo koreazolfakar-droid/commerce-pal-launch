@@ -63,6 +63,13 @@ function statusTone(status: DashboardOrderStatus) {
   return "blue" as const;
 }
 
+function paymentStatusOptions(status: DashboardPaymentStatus): DashboardPaymentStatus[] {
+  if (status === "unpaid") return ["unpaid", "paid"];
+  if (status === "paid") return ["paid", "partially_refunded", "refunded"];
+  if (status === "partially_refunded") return ["partially_refunded", "refunded"];
+  return ["refunded"];
+}
+
 export default function OrderDetailPage({ id }: { id: string }) {
   const [, navigate] = useLocation();
   const [order, setOrder] = useState<DashboardOrderDetail | null>(null);
@@ -199,6 +206,8 @@ export default function OrderDetailPage({ id }: { id: string }) {
   const canEditDelivery =
     order.paymentStatus === "unpaid" &&
     !["delivered", "done", "cancelled"].includes(order.status);
+  const canAdvanceStatus = nextStatus !== "done" || order.paymentStatus !== "unpaid";
+  const allowedPaymentStatuses = paymentStatusOptions(order.paymentStatus);
   const money = (value: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -251,8 +260,13 @@ export default function OrderDetailPage({ id }: { id: string }) {
           {nextStatus ? (
             <button
               onClick={() => void changeStatus(nextStatus)}
-              disabled={saving}
-              className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-3.5 text-[11px] font-bold text-white disabled:opacity-50"
+              disabled={saving || !canAdvanceStatus}
+              title={
+                !canAdvanceStatus
+                  ? "Mark the payment as paid before completing this order."
+                  : undefined
+              }
+              className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-3.5 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? <Loader2 className="size-3.5 animate-spin" /> : nextStatus === "delivered" ? <Check className="size-3.5" /> : <Send className="size-3.5" />}
               {nextStatus === "confirmed"
@@ -436,7 +450,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
                   disabled={saving}
                   className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 disabled:opacity-60"
                 >
-                  {(["unpaid", "paid", "partially_refunded", "refunded"] as const).map((value) => (
+                  {allowedPaymentStatuses.map((value) => (
                     <option key={value} value={value}>
                       {paymentStatusLabel(value)}
                     </option>
