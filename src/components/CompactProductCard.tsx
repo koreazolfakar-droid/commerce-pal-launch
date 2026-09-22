@@ -1,7 +1,7 @@
 import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
-import { Heart, Loader2, ShoppingCart } from "lucide-react";
+import { Heart, Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { memo, useState } from "react";
 import { toast } from "sonner";
 
@@ -37,6 +37,8 @@ export const CompactProductCard = memo(function CompactProductCard({
 }) {
   const { t } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
+  const updateQuantity = useCartStore((state) => state.updateQuantity);
+  const cartItems = useCartStore((state) => state.items);
   const [isAdding, setIsAdding] = useState(false);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
   const toggleWishlist = useWishlistToggle();
@@ -50,6 +52,9 @@ export const CompactProductCard = memo(function CompactProductCard({
   const summary = variantSummary(variant?.selectedOptions);
   const inStock = variant?.availableForSale ?? node.availableForSale ?? true;
   const brand = resolveBrand(product);
+  const cartQuantity = variant
+    ? cartItems.find((item) => item.variantId === variant.id)?.quantity ?? 0
+    : 0;
 
   const handleAdd = async () => {
     if (!variant || isAdding) return;
@@ -70,6 +75,16 @@ export const CompactProductCard = memo(function CompactProductCard({
       } else {
         toast.error(t("addToCartFailed"), { position: "top-center" });
       }
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleQuantityChange = async (nextQuantity: number) => {
+    if (!variant || isAdding) return;
+    setIsAdding(true);
+    try {
+      await updateQuantity(variant.id, nextQuantity);
     } finally {
       setIsAdding(false);
     }
@@ -195,15 +210,56 @@ export const CompactProductCard = memo(function CompactProductCard({
             <span className={cn("truncate text-[9px] font-medium sm:text-[10px]", inStock ? "text-success" : "text-destructive")}>
               {inStock ? t("inStock") : t("outOfStock")}
             </span>
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={isAdding || !variant || !inStock}
-              aria-label={`Add ${node.title} to bag`}
-              className="press inline-flex h-7 shrink-0 items-center justify-center gap-0.5 rounded-full bg-primary/10 px-2 text-[10px] font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-40 sm:h-8 sm:px-2.5 sm:text-xs"
-            >
-              {isAdding ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <><span aria-hidden>+</span><span>{t("add")}</span></>}
-            </button>
+
+            {cartQuantity > 0 ? (
+              <div
+                className="inline-flex h-7 shrink-0 items-center overflow-hidden rounded-full border border-primary/15 bg-primary/10 text-primary sm:h-8"
+                aria-label={`${node.title} quantity ${cartQuantity}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleQuantityChange(cartQuantity - 1)}
+                  disabled={isAdding}
+                  aria-label={`Decrease ${node.title} quantity`}
+                  className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40 sm:w-8"
+                >
+                  <Minus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.1} />
+                </button>
+                <span className="min-w-5 px-0.5 text-center text-[10px] font-bold tabular-nums sm:text-xs">
+                  {cartQuantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleQuantityChange(cartQuantity + 1)}
+                  disabled={isAdding || !inStock}
+                  aria-label={`Increase ${node.title} quantity`}
+                  className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40 sm:w-8"
+                >
+                  {isAdding ? (
+                    <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Plus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.1} />
+                  )}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={isAdding || !variant || !inStock}
+                aria-label={`Add ${node.title} to bag`}
+                className="press inline-flex h-7 shrink-0 items-center justify-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-2.5 text-[10px] font-semibold text-primary transition-[background-color,color,transform] hover:bg-primary hover:text-primary-foreground active:scale-95 disabled:opacity-40 sm:h-8 sm:px-3 sm:text-xs"
+              >
+                {isAdding ? (
+                  <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <Plus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.2} />
+                    <span>{t("add")}</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </article>
