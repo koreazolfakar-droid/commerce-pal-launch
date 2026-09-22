@@ -49,7 +49,7 @@ function FacetList({
   if (items.length === 0) return null;
   return (
     <div className="border-b pb-5 last:border-0">
-      <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">
+      <h3 className="mb-3 text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
         {title}
       </h3>
       <ul className="space-y-2">
@@ -136,7 +136,7 @@ function FilterControls({
       />
 
       <div className="border-b pb-5">
-        <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">
+        <h3 className="mb-3 text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
           {t("availability")}
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -163,7 +163,7 @@ function FilterControls({
       </div>
 
       <div>
-        <h3 className="mb-1 text-[13px] font-bold uppercase tracking-wide text-muted-foreground">
+        <h3 className="mb-1 text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
           {t("price")}
         </h3>
         <p className="mb-3 text-xs text-muted-foreground">
@@ -236,7 +236,7 @@ export function CatalogView({
       {topContent}
       {!hideHeading ? (
         <header className="mb-4 sm:mb-5">
-          <h1 className="text-2xl font-extrabold tracking-tight lg:text-[2rem]">{title}</h1>
+          <h1 className="text-2xl font-bold tracking-[-0.02em] lg:text-[2rem]">{title}</h1>
           {description && (
             <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
               {description}
