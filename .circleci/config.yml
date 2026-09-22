@@ -87,6 +87,22 @@ jobs:
           paths:
             - node_modules
 
+  lint-probe:
+    parameters:
+      target:
+        type: string
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Targeted ESLint probe
+          command: ./node_modules/.bin/eslint << parameters.target >> --fix-dry-run
+
   ui-browser:
     parameters:
       engine:
@@ -192,6 +208,31 @@ workflows:
             branches:
               only:
                 - /^ui\/.*/
+      - lint-probe:
+          requires:
+            - ui-browser-deps
+          name: lint-customer-address-hub
+          target: src/components/customer-account/CustomerAddressHub.tsx
+      - lint-probe:
+          requires:
+            - ui-browser-deps
+          name: lint-customer-map
+          target: src/components/customer-account/GoogleDeliveryMap.tsx
+      - lint-probe:
+          requires:
+            - ui-browser-deps
+          name: lint-customer-provider-selector
+          target: src/components/customer-account/CustomerAccountProvider.tsx src/components/customer-account/CustomerAddressSelector.tsx
+      - lint-probe:
+          requires:
+            - ui-browser-deps
+          name: lint-customer-data-checkout
+          target: src/lib/customerAccount.ts src/components/CheckoutDetailsForm.tsx
+      - lint-probe:
+          requires:
+            - ui-browser-deps
+          name: lint-customer-integration-tests
+          target: src/components/SiteHeader.tsx src/components/MobileTopBar.tsx src/components/customer-auth/CustomerAuthDialog.tsx src/routes/__root.tsx src/lib/contentSecurityPolicy.ts e2e/customer-address-flow.test.mjs
       - ui-browser:
           requires:
             - ui-browser-deps
