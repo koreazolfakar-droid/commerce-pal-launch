@@ -80,6 +80,39 @@
 }
 
 :root {
+  /* Space Call typography scale: retail-first hierarchy, shared across storefront UI. */
+  --type-hero-mobile: 2rem;
+  --type-hero-desktop: 3rem;
+  --type-page-title-mobile: 1.75rem;
+  --type-page-title-desktop: 2.125rem;
+  --type-section-title-mobile: 1.375rem;
+  --type-section-title-desktop: 1.625rem;
+  --type-product-title: 0.8125rem;
+  --type-product-title-dense: 0.71875rem;
+  --type-price: 1rem;
+  --type-price-dense: 0.875rem;
+  --type-body: 0.9375rem;
+  --type-body-mobile: 0.875rem;
+  --type-secondary: 0.75rem;
+  --type-label: 0.6875rem;
+  --type-label-dense: 0.5625rem;
+  --type-nav: 0.8125rem;
+  --type-mobile-nav: 0.6875rem;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-price: 750;
+
+  --leading-tight: 1.18;
+  --leading-title: 1.35;
+  --leading-body: 1.6;
+  --leading-secondary: 1.4;
+  --tracking-tight: -0.02em;
+  --tracking-product: -0.012em;
+  --tracking-label: 0.02em;
+
   --radius: 1rem;
   --background: oklch(0.988 0.002 200);
   --surface: oklch(0.975 0.004 200);
@@ -208,7 +241,9 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    line-height: 1.6;
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-body);
+    letter-spacing: -0.004em;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     font-feature-settings: "cv11", "ss01";
@@ -219,9 +254,25 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.018em;
+    letter-spacing: var(--tracking-tight);
     text-wrap: balance;
     overflow-wrap: anywhere;
+  }
+
+  h1,
+  h2 {
+    font-weight: var(--weight-bold);
+  }
+
+  h3,
+  h4 {
+    font-weight: var(--weight-semibold);
+  }
+
+  bdi,
+  [data-price],
+  .product-card-price {
+    font-variant-numeric: tabular-nums lining-nums;
   }
 
   ::placeholder {
@@ -257,6 +308,16 @@
     --font-display: "Cairo", ui-sans-serif, system-ui, sans-serif;
   }
   html[dir="rtl"] :is(body, h1, h2, h3, h4) {
+    letter-spacing: 0;
+  }
+  html[dir="rtl"] body {
+    line-height: 1.7;
+  }
+  html[dir="rtl"] .product-card-title {
+    line-height: 1.45;
+    letter-spacing: 0;
+  }
+  html[dir="rtl"] :is(.market-product-brand-label, .hero-scene-eyebrow) {
     letter-spacing: 0;
   }
   html[dir="rtl"] :is(input, textarea, select) {
@@ -430,6 +491,30 @@
   }
   .home-section-header > a {
     flex-shrink: 0;
+  }
+  .home-section-header h2 {
+    font-size: var(--type-section-title-mobile);
+    line-height: 1.2;
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-tight);
+  }
+  .home-section-header p {
+    margin-top: 0.25rem;
+    font-size: var(--type-body-mobile);
+    line-height: 1.5;
+    font-weight: var(--weight-regular);
+    color: var(--color-muted-foreground);
+  }
+  .home-section-header > a {
+    font-size: var(--type-nav);
+    line-height: 1.25;
+    font-weight: var(--weight-semibold);
+  }
+
+  @media (min-width: 768px) {
+    .home-section-header h2 {
+      font-size: var(--type-section-title-desktop);
+    }
   }
 
   .category-icon-rail {
@@ -1197,83 +1282,132 @@
 }
 
 
-/* Compact 3-column catalog mode: preserve hierarchy and legibility on narrow cards. */
+/* Product typography hierarchy: calm, retail-grade, and consistent at every density. */
 @layer components {
+  .market-product-brand-label {
+    font-size: var(--type-label);
+    line-height: 1rem;
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-label);
+    text-transform: none;
+  }
+
+  .market-product-card .product-card-price {
+    font-size: var(--type-price);
+    line-height: 1.15;
+    font-weight: var(--weight-price);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .market-product-card .product-card-title {
+    font-size: var(--type-product-title);
+    line-height: var(--leading-title);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-product);
+  }
+
+  .market-product-summary,
+  .market-product-stock {
+    font-size: var(--type-secondary);
+    line-height: var(--leading-secondary);
+  }
+
+  .market-product-summary {
+    font-weight: var(--weight-regular);
+  }
+
+  .market-product-stock {
+    font-weight: var(--weight-semibold);
+  }
+
   @media (max-width: 639px) {
+    .dense-product-card .product-card-body,
     .catalog-dense-product-card .product-card-body {
-      padding: 0.5rem 0.5rem 0.55rem;
+      padding: 0.5rem 0.5rem 0.6rem;
     }
 
+    .dense-product-card .market-product-brand,
     .catalog-dense-product-card .market-product-brand {
-      margin-bottom: 0.2rem;
+      min-height: 0.875rem;
+      margin-bottom: 0.15rem;
       gap: 0.25rem;
-      min-height: 0.75rem;
     }
 
+    .dense-product-card .market-product-brand-label,
     .catalog-dense-product-card .market-product-brand-label {
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 0.5rem;
-      line-height: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.035em;
+      font-size: var(--type-label-dense);
+      line-height: 0.875rem;
+      font-weight: var(--weight-semibold);
+      letter-spacing: 0.015em;
     }
 
+    .dense-product-card .product-card-price,
     .catalog-dense-product-card .product-card-price {
-      font-size: 0.82rem;
+      font-size: var(--type-price-dense);
       line-height: 1.05rem;
-      font-weight: 800;
-      letter-spacing: -0.025em;
+      font-weight: var(--weight-price);
+      letter-spacing: var(--tracking-tight);
     }
 
+    .dense-product-card .product-card-title,
     .catalog-dense-product-card .product-card-title {
       min-height: 2rem;
       margin-top: 0.2rem;
-      font-size: 0.7rem;
+      font-size: var(--type-product-title-dense);
       line-height: 1rem;
-      font-weight: 600;
-      letter-spacing: -0.012em;
+      font-weight: var(--weight-semibold);
+      letter-spacing: var(--tracking-product);
     }
 
-    .catalog-dense-product-card .market-product-summary {
-      margin-top: 0.15rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 0.56rem;
-      line-height: 0.85rem;
-    }
-
-    .catalog-dense-product-card .market-product-footer {
-      gap: 0.25rem;
-      padding-top: 0.3rem;
-    }
-
+    .dense-product-card .market-product-summary,
+    .dense-product-card .market-product-stock,
+    .catalog-dense-product-card .market-product-summary,
     .catalog-dense-product-card .market-product-stock {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 0.56rem;
-      line-height: 0.85rem;
-      font-weight: 600;
+      font-size: 0.625rem;
+      line-height: 0.9rem;
     }
 
+    .dense-product-card .market-product-summary,
+    .catalog-dense-product-card .market-product-summary {
+      margin-top: 0.15rem;
+      font-weight: var(--weight-regular);
+    }
+
+    .dense-product-card .market-product-stock,
+    .catalog-dense-product-card .market-product-stock {
+      font-weight: var(--weight-semibold);
+    }
+
+    .dense-product-card .market-product-footer,
+    .catalog-dense-product-card .market-product-footer {
+      gap: 0.3rem;
+      padding-top: 0.3rem;
+    }
+
+    .dense-product-card .market-product-action,
     .catalog-dense-product-card .market-product-action {
       width: 2rem;
       height: 2rem;
       min-width: 2rem;
       min-height: 2rem;
-      box-shadow: 0 4px 10px color-mix(in oklab, var(--color-primary) 18%, transparent);
+      box-shadow: 0 4px 10px color-mix(in oklab, var(--color-primary) 16%, transparent);
     }
 
+    .dense-product-card .market-product-action svg,
     .catalog-dense-product-card .market-product-action svg {
       width: 0.95rem;
       height: 0.95rem;
       stroke-width: 1.8;
     }
 
+    .dense-product-card .market-wishlist-button,
     .catalog-dense-product-card .market-wishlist-button {
       inset-inline-end: 0.35rem;
       top: 0.35rem;
@@ -1285,17 +1419,20 @@
   }
 
   @media (max-width: 359px) {
+    .dense-product-card .product-card-body,
     .catalog-dense-product-card .product-card-body {
       padding-inline: 0.4rem;
     }
 
+    .dense-product-card .product-card-price,
     .catalog-dense-product-card .product-card-price {
-      font-size: 0.76rem;
+      font-size: 0.84375rem;
     }
 
+    .dense-product-card .product-card-title,
     .catalog-dense-product-card .product-card-title {
-      font-size: 0.66rem;
-      line-height: 0.94rem;
+      font-size: 0.6875rem;
+      line-height: 0.975rem;
     }
   }
 }
