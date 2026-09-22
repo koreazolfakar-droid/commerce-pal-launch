@@ -6,10 +6,11 @@ const root = new URL("../", import.meta.url);
 const source = (path) => readFile(new URL(path, root), "utf8");
 
 test("storefront visual system keeps one canonical shell and radius language", async () => {
-  const [consistency, overhaul, layout] = await Promise.all([
+  const [consistency, overhaul, layout, styles] = await Promise.all([
     source("src/design-consistency.css"),
     source("src/ui-overhaul.css"),
     source("src/components/StoreLayout.tsx"),
+    source("src/styles.css"),
   ]);
 
   assert.match(consistency, /--sc-shell-max:\s*80rem/);
@@ -24,6 +25,10 @@ test("storefront visual system keeps one canonical shell and radius language", a
   const consistencyImport = layout.indexOf('import "../design-consistency.css"');
   assert.ok(overhaulImport >= 0, "StoreLayout must import ui-overhaul.css");
   assert.ok(consistencyImport > overhaulImport, "canonical consistency layer must load last");
+
+  assert.match(styles, /--dashboard-card-radius:\s*1rem/);
+  assert.match(styles, /--dashboard-control-radius:\s*0\.75rem/);
+  assert.match(styles, /\.dashboard-theme-scope :where\(\[class~="rounded-2xl"\], \[class~="rounded-3xl"\]\)/);
 });
 
 test("storefront polish avoids restoring decorative page gradients", async () => {
