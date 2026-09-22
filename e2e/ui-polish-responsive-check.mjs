@@ -252,6 +252,58 @@ async function runProbe(browser) {
   console.log(`PASS ${engineName}: ${routeGroup} probe`);
 }
 
+
+async function runShopProbe(browser) {
+  for (const testCase of supplementalCases) {
+    const page = await browser.newPage({
+      viewport: { width: testCase.width, height: testCase.height },
+    });
+    await configure(page, testCase.lang, testCase.theme);
+
+    const response = await page.goto(`${baseURL}/shop`, { waitUntil: "load" });
+    assert.ok(response && response.status() < 400, `${engineName} /shop: failed to load`);
+    await assertDocumentMode(page, testCase, "/shop");
+
+    const card = page
+      .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
+      .first();
+    await card.waitFor({ state: "visible", timeout: 10000 });
+    await assertViewportHealth(
+      page,
+      `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme} /shop`,
+      true,
+    );
+    await page.close();
+  }
+
+  console.log(`PASS ${engineName}: shop product-card probe`);
+}
+
+async function runModeProbe(browser) {
+  for (const testCase of supplementalCases) {
+    const page = await browser.newPage({
+      viewport: { width: testCase.width, height: testCase.height },
+    });
+    await configure(page, testCase.lang, testCase.theme);
+
+    const response = await page.goto(`${baseURL}/`, { waitUntil: "load" });
+    assert.ok(response && response.status() < 400, `${engineName} /: failed to load`);
+    await assertDocumentMode(page, testCase, "/");
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth + 1,
+    );
+    assert.equal(
+      overflow,
+      false,
+      `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme}: overflow`,
+    );
+    await page.close();
+  }
+
+  console.log(`PASS ${engineName}: mode and RTL probe`);
+}
+
 async function runRoutes(browser) {
   const routes = routeGroups[routeGroup] ?? routeGroups.all;
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -288,6 +340,8 @@ const browser = await launcher.launch({ headless: true });
 try {
   if (suite === "responsive" || suite === "all") await runResponsive(browser);
   if (suite === "probe") await runProbe(browser);
+  if (suite === "shop") await runShopProbe(browser);
+  if (suite === "mode") await runModeProbe(browser);
   if (engineName === "chromium" && (suite === "routes" || suite === "all")) {
     await runRoutes(browser);
   }
