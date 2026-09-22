@@ -139,14 +139,14 @@ function CartPage() {
                 <span className="grid h-8 w-8 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
                   <ShoppingBag className="h-4 w-4" />
                 </span>
-                <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-primary">
+                <span className="text-[11px] font-semibold tracking-[0.02em] text-primary">
                   Space Call
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{copy.title}</h1>
+                <h1 className="text-2xl font-bold tracking-[-0.02em] sm:text-3xl">{copy.title}</h1>
                 {items.length > 0 ? (
-                  <span className="rounded-full border border-primary/15 bg-primary/[0.07] px-2.5 py-1 text-[11px] font-extrabold text-primary">
+                  <span className="rounded-full border border-primary/15 bg-primary/[0.07] px-2.5 py-1 text-[11px] font-semibold text-primary">
                     {copy.item}
                   </span>
                 ) : null}
@@ -169,7 +169,7 @@ function CartPage() {
                   >
                     <div className="flex items-center gap-1.5">
                       <span
-                        className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-extrabold ${
+                        className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-semibold ${
                           step.active
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted text-muted-foreground"
@@ -194,7 +194,7 @@ function CartPage() {
               <span className="absolute inset-2 rounded-full border border-primary/10" />
               <ShoppingBag className="relative h-8 w-8" strokeWidth={1.6} />
             </div>
-            <h2 className="mt-6 text-xl font-extrabold">{copy.emptyTitle}</h2>
+            <h2 className="mt-6 text-xl font-bold">{copy.emptyTitle}</h2>
             <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
               {copy.emptyDescription}
             </p>
@@ -216,7 +216,7 @@ function CartPage() {
                   <Truck className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[10px] font-extrabold sm:text-xs">
+                  <p className="truncate text-[10px] font-semibold sm:text-xs">
                     {copy.fastDelivery}
                   </p>
                   <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">
@@ -230,7 +230,7 @@ function CartPage() {
                   <BadgeCheck className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[10px] font-extrabold sm:text-xs">{copy.protected}</p>
+                  <p className="truncate text-[10px] font-semibold sm:text-xs">{copy.protected}</p>
                   <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">
                     {copy.serverChecked}
                   </p>
@@ -242,7 +242,7 @@ function CartPage() {
                   <MessageCircle className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[10px] font-extrabold sm:text-xs">{copy.whatsapp}</p>
+                  <p className="truncate text-[10px] font-semibold sm:text-xs">{copy.whatsapp}</p>
                   <p className="truncate text-[9px] text-muted-foreground sm:text-[10px]">
                     {copy.afterSave}
                   </p>
@@ -253,7 +253,7 @@ function CartPage() {
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21.5rem] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1fr)_22.5rem] xl:gap-6">
               <div className="min-w-0 lg:col-start-1 lg:row-start-1">
                 <div className="mb-2 flex items-center justify-between gap-3 px-0.5 sm:mb-2.5 sm:px-1">
-                  <h2 className="text-sm font-extrabold tracking-tight sm:text-base">
+                  <h2 className="text-sm font-semibold tracking-[-0.01em] sm:text-base">
                     {copy.yourItems}
                   </h2>
                   <span className="text-[11px] font-semibold text-muted-foreground">
@@ -293,7 +293,7 @@ function CartPage() {
                           <Link
                             to="/product/$handle"
                             params={{ handle: item.product.node.handle }}
-                            className="line-clamp-2 pe-7 text-[12px] font-extrabold leading-[1.3] transition-colors hover:text-primary min-[390px]:pe-8 min-[390px]:text-[13px] sm:text-[15px]"
+                            className="line-clamp-2 pe-7 text-[12px] font-semibold leading-[1.4] transition-colors hover:text-primary min-[390px]:pe-8 min-[390px]:text-[13px] sm:text-[15px]"
                           >
                             {item.product.node.title}
                           </Link>
@@ -323,7 +323,7 @@ function CartPage() {
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </Button>
-                              <span className="w-7 text-center text-xs font-extrabold tabular-nums">
+                              <span className="w-7 text-center text-xs font-semibold tabular-nums">
                                 {item.quantity}
                               </span>
                               <Button
@@ -342,10 +342,10 @@ function CartPage() {
                             </div>
 
                             <div className="text-end">
-                              <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              <p className="text-[10px] font-medium text-muted-foreground">
                                 {copy.lineTotal}
                               </p>
-                              <p className="mt-0.5 text-sm font-extrabold tabular-nums sm:text-[15px]">
+                              <p className="mt-0.5 text-sm font-bold tabular-nums sm:text-[15px]">
                                 {formatPrice(lineTotal, item.price.currencyCode)}
                               </p>
                             </div>
@@ -391,7 +391,7 @@ function CartPage() {
                       <ReceiptText className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
-                      <h2 className="text-sm font-extrabold">{copy.summary}</h2>
+                      <h2 className="text-sm font-semibold">{copy.summary}</h2>
                       <p className="mt-0.5 text-[10px] text-muted-foreground">{copy.item}</p>
                     </div>
                   </div>
@@ -412,7 +412,7 @@ function CartPage() {
                           <Truck className="h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400" />
                           <span className="truncate">{copy.delivery}</span>
                         </span>
-                        <span className="shrink-0 rounded-full bg-background px-2 py-1 text-xs font-extrabold tabular-nums text-primary shadow-sm">
+                        <span className="shrink-0 rounded-full bg-background px-2 py-1 text-xs font-semibold tabular-nums text-primary shadow-sm">
                           {deliveryFee === 0
                             ? copy.freeDelivery
                             : formatPrice(deliveryFee, currency)}
@@ -426,11 +426,11 @@ function CartPage() {
 
                     <div className="rounded-xl border bg-surface/70 p-3">
                       <div className="flex items-end justify-between gap-4">
-                        <span className="pb-0.5 text-sm font-extrabold">{copy.finalTotal}</span>
+                        <span className="pb-0.5 text-sm font-semibold">{copy.finalTotal}</span>
                         <span
                           aria-live="polite"
                           aria-atomic="true"
-                          className="text-2xl font-black tracking-tight tabular-nums text-primary"
+                          className="text-2xl font-bold tracking-[-0.02em] tabular-nums text-primary"
                         >
                           {formatPrice(grandTotal, currency)}
                         </span>
@@ -445,7 +445,7 @@ function CartPage() {
 
                   <Button
                     asChild
-                    className="mt-3 min-h-11 w-full rounded-xl px-3 text-[13px] font-extrabold shadow-sm sm:px-4 sm:text-sm"
+                    className="mt-3 min-h-11 w-full rounded-xl px-3 text-[13px] font-semibold shadow-sm sm:px-4 sm:text-sm"
                   >
                     <a href="#whatsapp-checkout">
                       {copy.continueCheckout}
