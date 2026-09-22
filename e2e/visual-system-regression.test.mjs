@@ -101,6 +101,13 @@ test("product actions stay aligned without overlapping compact card content", as
   assert.doesNotMatch(compact, /absolute -bottom-2 end-0\.5/);
   assert.match(compact, /market-product-footer/);
   assert.match(compact, /product-action-button/);
+  assert.match(compact, /replacementAddButtonRef/);
+  assert.match(compact, /handleDecrement/);
+  assert.match(
+    compact,
+    /requestAnimationFrame\(\(\) => replacementAddButtonRef\.current\?\.focus\(\)\)/,
+    "quantity controls should restore focus to the replacement add button",
+  );
   assert.match(
     compact,
     /product-card-title line-clamp-2 min-h-\[2\.35rem\]/,
