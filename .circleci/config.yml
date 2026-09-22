@@ -177,6 +177,95 @@ jobs:
           command: bun run test:ssr
 
 
+  diag-test-visual:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Visual system regression
+          command: node --test e2e/visual-system-regression.test.mjs
+
+  diag-test-product-density:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Product density regression
+          command: node --test e2e/product-density-view.test.mjs
+
+  diag-test-smart-image:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Smart image regression
+          command: node --test e2e/dashboard-smart-image-editor.test.mjs
+
+  diag-test-dark:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Dark theme regression
+          command: node --test e2e/storefront-dark-theme.test.mjs
+
+  diag-test-consistency:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Storefront consistency regression
+          command: node --test e2e/storefront-consistency.test.mjs
+
+  diag-test-performance:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Performance architecture regression
+          command: node --test e2e/performance-architecture.test.mjs
+
+  diag-test-category:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Category storefront sync regression
+          command: node --test e2e/category-storefront-sync.test.mjs
+
+  diag-test-homepage-cms:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Homepage CMS regression
+          command: node --test e2e/dashboard-homepage-cms.test.mjs
+
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -303,6 +392,14 @@ workflows:
       - diag-unit
       - diag-build
       - diag-ssr
+      - diag-test-visual
+      - diag-test-product-density
+      - diag-test-smart-image
+      - diag-test-dark
+      - diag-test-consistency
+      - diag-test-performance
+      - diag-test-category
+      - diag-test-homepage-cms
       - ui-browser-deps:
           filters:
             branches:
