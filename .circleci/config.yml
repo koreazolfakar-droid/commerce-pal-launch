@@ -212,13 +212,6 @@ workflows:
     jobs:
       - security-source
       - security-dependencies
-      - storefront-ci:
-          filters:
-            branches:
-              only:
-                - /^important\/.*/
-                - /^design\/.*/
-                - /^ui\/.*/
       - ui-browser-deps:
           filters:
             branches:
@@ -238,10 +231,10 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-webkit-no-chrome
+          name: ui-browser-webkit-no-hero-content
           engine: webkit
           suite: mode
-          route_group: overflow-mobile-en-no-chrome
+          route_group: overflow-mobile-en-no-hero-content
           filters:
             branches:
               only:
@@ -249,10 +242,10 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-webkit-no-hero
+          name: ui-browser-webkit-no-hero-dots
           engine: webkit
           suite: mode
-          route_group: overflow-mobile-en-no-hero
+          route_group: overflow-mobile-en-no-hero-dots
           filters:
             branches:
               only:
@@ -260,10 +253,10 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-webkit-no-navigation-sections
+          name: ui-browser-webkit-static-hero-parts
           engine: webkit
           suite: mode
-          route_group: overflow-mobile-en-no-navigation-sections
+          route_group: overflow-mobile-en-static-hero-parts
           filters:
             branches:
               only:
@@ -271,10 +264,10 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-webkit-no-deferred
+          name: ui-browser-webkit-no-hero-buttons
           engine: webkit
           suite: mode
-          route_group: overflow-mobile-en-no-deferred
+          route_group: overflow-mobile-en-no-hero-buttons
           filters:
             branches:
               only:
