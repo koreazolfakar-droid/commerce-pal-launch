@@ -44,11 +44,16 @@ function railOpticalScale(slug: string, label: string, aspectRatio: number) {
   // from the label length and clips inside that invisible slot, so no logo is
   // allowed to grow into its neighbour even when merchant artwork has padding.
   const knownScale: Record<string, number> = {
-    apple: 0.98,
-    xiaomi: 1,
-    samsung: 1.08,
-    anker: 1.05,
-    acefast: 1.28,
+    apple: 0.88,
+    xiaomi: 0.96,
+    samsung: 1,
+    anker: 1,
+    acefast: 1.1,
+    lenovo: 0.98,
+    oneplus: 0.96,
+    sony: 0.92,
+    huawei: 0.95,
+    dell: 0.92,
   };
   if (knownScale[key] !== undefined) return knownScale[key];
 
