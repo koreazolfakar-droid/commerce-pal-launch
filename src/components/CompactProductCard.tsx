@@ -186,9 +186,9 @@ export const CompactProductCard = memo(function CompactProductCard({
 
         <div className="product-card-body market-product-copy flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
           {brand ? (
-            <div className="mb-1 flex min-w-0 items-center gap-1">
+            <div className="market-product-brand mb-1 flex min-w-0 items-center gap-1">
               <BrandLogo slug={brand.slug} label={brand.label} size={14} className="rounded" />
-              <span className="break-words text-[9px] font-bold uppercase leading-3 tracking-[0.045em] text-muted-foreground sm:text-[10px]">
+              <span className="market-product-brand-label break-words text-[9px] font-bold uppercase leading-3 tracking-[0.045em] text-muted-foreground sm:text-[10px]">
                 {brand.label}
               </span>
             </div>
@@ -216,7 +216,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           </Link>
 
           {summary ? (
-            <p className="mt-0.5 break-words text-[10px] leading-4 text-muted-foreground sm:text-xs">
+            <p className="market-product-summary mt-0.5 break-words text-[10px] leading-4 text-muted-foreground sm:text-xs">
               {summary}
             </p>
           ) : null}
