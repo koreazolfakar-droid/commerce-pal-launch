@@ -407,9 +407,15 @@
     margin-inline: auto;
     padding: 1rem 1rem 2rem;
   }
-  .home-page > *,
+  .home-page > * {
+    width: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+  }
+
   .site-section {
     min-inline-size: 0;
+    max-inline-size: 100%;
   }
   .home-section-header {
     display: flex;
