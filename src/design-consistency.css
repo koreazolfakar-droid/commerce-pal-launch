@@ -488,7 +488,8 @@
   max-inline-size: 100%;
 }
 
-.store-layout :is(input, select, textarea):focus-visible {
+.store-layout
+  :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
   outline: none;
 }
 
