@@ -26,12 +26,14 @@ export const CompactProductCard = memo(function CompactProductCard({
   listItem = false,
   eager = false,
   market = false,
+  borderless = false,
 }: {
   product: ShopifyProduct;
   className?: string;
   listItem?: boolean;
   eager?: boolean;
   market?: boolean;
+  borderless?: boolean;
 }) {
   const { t } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
@@ -129,6 +131,84 @@ export const CompactProductCard = memo(function CompactProductCard({
       )}
     </button>
   );
+
+  if (borderless) {
+    return (
+      <article
+        role={listItem ? "listitem" : undefined}
+        className={cn("group flex h-full min-w-0 w-full flex-col", className)}
+      >
+        <div className="relative min-w-0">
+          <Link
+            to="/product/$handle"
+            params={{ handle: node.handle }}
+            aria-label={node.title}
+            className="block"
+          >
+            <ProductImage
+              url={image?.url}
+              alt={image?.altText ?? node.title}
+              size={320}
+              sizes="(min-width: 1024px) 220px, (min-width: 640px) 24vw, 31vw"
+              eager={eager}
+              className="aspect-square w-full"
+              imageClassName={cn(
+                "!p-[7%] transition-[transform,filter,opacity] duration-200 group-hover:scale-[1.025]",
+                !inStock && "blur-[2px] opacity-65 grayscale-[0.12]",
+              )}
+            />
+          </Link>
+          {!inStock && (
+            <div className="pointer-events-none absolute inset-0 grid place-items-center">
+              <span className="rounded-full bg-red-600/95 px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-white">
+                {t("soldOut")}
+              </span>
+            </div>
+          )}
+          {discount !== null && (
+            <span className="absolute start-0 top-0 rounded-md bg-destructive px-1.5 py-0.5 text-[8px] font-bold text-destructive-foreground">
+              -{discount}%
+            </span>
+          )}
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col pt-1.5">
+          {brand ? (
+            <p className="truncate text-[9px] font-medium leading-3 text-muted-foreground sm:text-[10px]">
+              {brand.label}
+            </p>
+          ) : null}
+          <bdi className="mt-0.5 whitespace-nowrap text-[0.9rem] font-bold tabular-nums tracking-tight text-foreground sm:text-base">
+            {formatPrice(price.amount, price.currencyCode)}
+          </bdi>
+          <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-0.5 min-w-0">
+            <h3 className="line-clamp-2 min-h-[2.1rem] break-words text-[0.72rem] font-medium leading-[1.4] text-foreground sm:text-sm">
+              {node.title}
+            </h3>
+          </Link>
+          {summary ? (
+            <p className="mt-0.5 truncate text-[9px] leading-4 text-muted-foreground sm:text-[10px]">
+              {summary}
+            </p>
+          ) : null}
+          <div className="mt-auto flex items-center justify-between gap-1 pt-1.5">
+            <span className={cn("truncate text-[9px] font-medium sm:text-[10px]", inStock ? "text-success" : "text-destructive")}>
+              {inStock ? t("inStock") : t("outOfStock")}
+            </span>
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={isAdding || !variant || !inStock}
+              aria-label={`Add ${node.title} to bag`}
+              className="press inline-flex h-7 shrink-0 items-center justify-center gap-0.5 rounded-full bg-primary/10 px-2 text-[10px] font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-40 sm:h-8 sm:px-2.5 sm:text-xs"
+            >
+              {isAdding ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <><span aria-hidden>+</span><span>{t("add")}</span></>}
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   if (market) {
     return (
