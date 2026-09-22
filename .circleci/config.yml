@@ -91,6 +91,75 @@ jobs:
           command: bun run test:ssr
 
 
+  diagnostic-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript
+          command: bun run typecheck
+
+  diagnostic-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: ESLint
+          command: bun run lint
+
+  diagnostic-unit:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit and architecture tests
+          command: bun run test:unit
+
+  diagnostic-build:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Production build
+          command: bun run build
+
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -213,6 +282,10 @@ workflows:
       - security-source
       - security-dependencies
       - storefront-ci
+      - diagnostic-typecheck
+      - diagnostic-lint
+      - diagnostic-unit
+      - diagnostic-build
       - ui-browser-deps:
           filters:
             branches:
