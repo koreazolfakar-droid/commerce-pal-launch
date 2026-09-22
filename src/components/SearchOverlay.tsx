@@ -45,7 +45,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       onClick={onClose}
     >
       <div
-        className="animate-rise mx-auto mt-0 w-full max-w-3xl bg-background p-4 shadow-float sm:mt-16 sm:rounded-3xl sm:border"
+        className="mx-auto mt-0 w-full max-w-3xl bg-background p-4 shadow-float sm:mt-16 sm:rounded-lg sm:border"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center gap-2">

@@ -68,13 +68,13 @@ export function MobileTopBar({
               type="button"
               aria-label={t("openMenu")}
               onClick={() => setMenuOpen(true)}
-              className="press grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+              className="press grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
             >
               <Menu aria-hidden className="h-5 w-5" strokeWidth={1.9} />
             </button>
             <CustomerAccountButton
               variant="icon"
-              className="h-10 w-10 rounded-2xl border border-border/55 bg-card/65 shadow-sm hover:bg-surface"
+              className="h-10 w-10 rounded-md border border-border/55 bg-card/65 shadow-sm hover:bg-surface"
             />
           </div>
 
@@ -103,17 +103,17 @@ export function MobileTopBar({
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
-              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface sm:grid"
+              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-md border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface sm:grid"
             >
               <Heart className="h-5 w-5" strokeWidth={1.9} />
               <Badge value={wishlistCount} />
             </Link>
-            <ThemeToggle className="h-10 w-10 rounded-2xl border border-border/55 bg-card/65 shadow-sm hover:bg-surface" />
+            <ThemeToggle className="h-10 w-10 rounded-md border border-border/55 bg-card/65 shadow-sm hover:bg-surface" />
             <button
               type="button"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
               aria-label={`Cart, ${cartCount} items`}
-              className="press relative grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+              className="press relative grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
             >
               <ShoppingBag className="h-5 w-5" strokeWidth={1.9} />
               <Badge value={cartCount} />
@@ -127,7 +127,7 @@ export function MobileTopBar({
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-2xl border border-border/70 bg-card px-4 text-start text-sm text-muted-foreground shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
+            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-md border border-border/70 bg-card px-4 text-start text-sm text-muted-foreground shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
           >
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="truncate">{t("search")}</span>

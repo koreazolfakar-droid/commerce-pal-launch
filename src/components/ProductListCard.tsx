@@ -101,7 +101,7 @@ export const ProductListCard = memo(function ProductListCard({
         onClick={() => toggleWishlist(node.handle)}
         aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
         aria-pressed={wishlisted}
-        className="press absolute end-2.5 top-2.5 z-30 grid h-11 w-11 place-items-center rounded-full border border-border/65 bg-background/95 text-muted-foreground shadow-sm transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:end-3 sm:top-3"
+        className="product-action-button press absolute end-2.5 top-2.5 z-30 grid h-9 w-9 place-items-center rounded-full border border-border/65 bg-background/95 text-muted-foreground shadow-sm transition-[color,background-color,border-color,transform] hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:end-3 sm:top-3"
       >
         <Heart
           aria-hidden
@@ -112,7 +112,7 @@ export const ProductListCard = memo(function ProductListCard({
 
       <div className="flex min-w-0 flex-col gap-1">
         {brand && (
-          <div className="flex min-w-0 items-center gap-1.5 pe-12">
+          <div className="flex min-w-0 items-center gap-1.5 pe-10">
             <BrandLogo
               slug={brand.slug}
               label={brand.label}
@@ -126,14 +126,14 @@ export const ProductListCard = memo(function ProductListCard({
           </div>
         )}
 
-        <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0 pe-12">
-          <h3 className="line-clamp-2 break-words text-sm font-semibold leading-[1.5] tracking-[-0.018em] transition-colors group-hover:text-primary sm:text-sm">
+        <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0 pe-10">
+          <h3 className="break-words text-sm font-semibold leading-[1.5] tracking-[-0.018em] transition-colors group-hover:text-primary sm:text-sm">
             {node.title}
           </h3>
         </Link>
 
         {summary && (
-          <p className="truncate pe-12 text-xs leading-5 text-muted-foreground sm:text-[11px]">
+          <p className="truncate pe-10 text-xs leading-5 text-muted-foreground sm:text-[11px]">
             {summary}
           </p>
         )}

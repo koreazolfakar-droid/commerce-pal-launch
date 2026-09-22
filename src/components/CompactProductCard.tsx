@@ -80,13 +80,13 @@ export const CompactProductCard = memo(function CompactProductCard({
       aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
       aria-pressed={wishlisted}
       className={cn(
-        "press absolute z-20 grid place-items-center rounded-full border border-border/65",
+        "product-action-button press absolute z-20 grid place-items-center rounded-full border border-border/65",
         "bg-background/95 text-muted-foreground shadow-sm backdrop-blur",
         "transition-[color,background-color,border-color,transform]",
         "hover:border-primary/35 hover:bg-background hover:text-primary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         market
-          ? "market-wishlist-button end-1.5 top-1.5 !min-h-8 !min-w-8 h-8 w-8 after:absolute after:-inset-2 after:content-['']"
+          ? "market-product-action market-wishlist-button end-1.5 top-1.5 h-9 w-9"
           : "end-2.5 top-2.5 h-9 w-9",
       )}
     >
@@ -108,18 +108,24 @@ export const CompactProductCard = memo(function CompactProductCard({
       disabled={isAdding || !variant || !inStock}
       aria-label={`Add ${node.title} to bag`}
       className={cn(
-        "press grid shrink-0 place-items-center rounded-full bg-primary text-primary-foreground",
+        "product-action-button press relative grid shrink-0 place-items-center rounded-full bg-primary text-primary-foreground",
         "shadow-md transition-[opacity,transform,box-shadow]",
         "hover:scale-[1.03] hover:shadow-lg",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:scale-100 disabled:opacity-40",
-        market ? "h-11 w-11" : "h-9 w-9",
+        market
+          ? "market-product-action h-9 w-9"
+          : "h-9 w-9",
       )}
     >
       {isAdding ? (
         <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
       ) : (
-        <ShoppingCart aria-hidden className={market ? "h-5 w-5" : "h-4 w-4"} strokeWidth={2} />
+        <ShoppingCart
+          aria-hidden
+          className={market ? "h-[17px] w-[17px]" : "h-4 w-4"}
+          strokeWidth={1.9}
+        />
       )}
     </button>
   );
@@ -176,7 +182,6 @@ export const CompactProductCard = memo(function CompactProductCard({
 
           {wishlistButton}
 
-          <div className="absolute -bottom-2 end-0.5 z-20">{addButton}</div>
         </div>
 
         <div className="market-product-copy flex min-w-0 flex-1 flex-col pt-3.5">
@@ -216,14 +221,17 @@ export const CompactProductCard = memo(function CompactProductCard({
             </p>
           ) : null}
 
-          <p
-            className={cn(
-              "mt-1 text-[10px] font-semibold leading-4 sm:text-xs",
-              inStock ? "text-success" : "text-destructive",
-            )}
-          >
-            {inStock ? t("inStock") : t("outOfStock")}
-          </p>
+          <div className="market-product-footer mt-auto flex min-w-0 items-end justify-between gap-1.5 pt-1">
+            <p
+              className={cn(
+                "market-product-stock min-w-0 flex-1 text-[10px] font-semibold leading-4 sm:text-xs",
+                inStock ? "text-success" : "text-destructive",
+              )}
+            >
+              {inStock ? t("inStock") : t("outOfStock")}
+            </p>
+            {addButton}
+          </div>
         </div>
       </article>
     );
@@ -296,7 +304,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         </div>
 
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-          <h3 className="line-clamp-2 min-h-[2.35rem] break-words text-[0.82rem] font-semibold leading-[1.35] transition-colors group-hover:text-primary sm:text-sm">
+          <h3 className="break-words text-[0.82rem] font-semibold leading-[1.35] transition-colors group-hover:text-primary sm:text-sm">
             {node.title}
           </h3>
         </Link>

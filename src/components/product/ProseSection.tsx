@@ -20,7 +20,7 @@ function DescriptionSection({ section }: { section: ContentSection }) {
   const [expanded, setExpanded] = useState(false);
   const long = section.paragraphs.length > 2 || section.bullets.length > 6;
   return (
-    <section className="max-w-3xl rounded-2xl border bg-surface/40 p-4 sm:p-5">
+    <section className="max-w-3xl rounded-lg border bg-surface/40 p-4 sm:p-5">
       {section.title && (
         <h3 className="mb-3 text-base font-bold tracking-tight text-foreground">{section.title}</h3>
       )}

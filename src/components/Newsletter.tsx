@@ -19,7 +19,7 @@ export function Newsletter() {
 
   return (
     <section className="" aria-labelledby="updates">
-      <div className="grid gap-5 rounded-3xl border bg-linear-to-br from-accent/80 to-surface p-6 shadow-card sm:p-9 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+      <div className="grid gap-5 rounded-lg border bg-card p-6 shadow-card sm:p-9 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div className="min-w-0">
           <h2 id="updates" className="text-lg font-extrabold tracking-tight sm:text-2xl">
             {ar ? "آخر العروض والمنتجات الجديدة" : "New drops and deals"}

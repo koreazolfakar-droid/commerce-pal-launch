@@ -326,7 +326,7 @@ function GuideSection({ guide, language }: { guide: PageGuide; language: Languag
           return (
             <article
               key={card.title.en}
-              className="rounded-2xl border bg-card p-5 shadow-card sm:p-6"
+              className="rounded-lg border bg-card p-5 shadow-card sm:p-6"
             >
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
                 <Icon className="h-5 w-5" aria-hidden="true" />
@@ -352,7 +352,7 @@ function GuideSection({ guide, language }: { guide: PageGuide; language: Languag
         })}
       </div>
       {guide.note ? (
-        <p className="rounded-2xl border border-primary/15 bg-primary/[0.045] px-5 py-4 text-sm leading-7 text-muted-foreground">
+        <p className="rounded-lg border border-primary/15 bg-primary/[0.045] px-5 py-4 text-sm leading-7 text-muted-foreground">
           {copy(language, guide.note)}
         </p>
       ) : null}
@@ -407,8 +407,8 @@ export function InfoPage({ page }: { page: InfoPageName }) {
   return (
     <StoreLayout>
       <article dir={direction} className="mx-auto w-full max-w-5xl space-y-8 px-4 py-8 sm:py-14">
-        <header className="overflow-hidden rounded-3xl border bg-gradient-to-br from-primary/[0.08] via-card to-card p-6 shadow-card sm:p-8">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+        <header className="overflow-hidden rounded-lg border bg-card p-6 shadow-card sm:p-8">
+          <span className="grid h-12 w-12 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <PageIcon className="h-6 w-6" aria-hidden="true" />
           </span>
           <h1 className="mt-5 text-3xl font-black tracking-[-0.035em] sm:text-4xl">
@@ -427,7 +427,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
 
         {contactPage && (
           <div className="grid gap-5 md:grid-cols-2">
-            <section className="rounded-2xl border bg-card p-6 shadow-card">
+            <section className="rounded-lg border bg-card p-6 shadow-card">
               <h2 className="text-xl font-black">{t("contactTitle")}</h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {t("immediateSupport")}
@@ -444,7 +444,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
             </section>
             <section
               id="account-orders"
-              className="relative scroll-mt-28 rounded-2xl border bg-card p-6 shadow-card"
+              className="relative scroll-mt-28 rounded-lg border bg-card p-6 shadow-card"
             >
               <span
                 id="track-order"
@@ -477,7 +477,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
           <Accordion
             type="single"
             collapsible
-            className="rounded-2xl border bg-card px-5 shadow-card"
+            className="rounded-lg border bg-card px-5 shadow-card"
           >
             {faqs.map(([question, answer]) => (
               <AccordionItem key={question} value={question}>
@@ -503,7 +503,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
         )}
 
         {policyBackedPage && (
-          <section className="space-y-4 rounded-2xl border bg-card p-5 shadow-card sm:p-7">
+          <section className="space-y-4 rounded-lg border bg-card p-5 shadow-card sm:p-7">
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                 <FileText className="h-5 w-5" aria-hidden="true" />
@@ -523,7 +523,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
             {policy?.body.trim() ? (
               <>
                 <div
-                  className="policy-content rounded-2xl border bg-background p-5 sm:p-7"
+                  className="policy-content rounded-lg border bg-background p-5 sm:p-7"
                   dangerouslySetInnerHTML={{ __html: policy.body }}
                 />
                 {policy.url ? (
@@ -554,7 +554,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
         )}
 
         {page === "warranty" ? (
-          <section className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-5 sm:p-6">
+          <section className="rounded-lg border border-primary/15 bg-primary/[0.04] p-5 sm:p-6">
             <h2 className="text-lg font-black">
               {language === "ar" ? "هل تحتاج تأكيد الضمان؟" : "Need warranty confirmation?"}
             </h2>

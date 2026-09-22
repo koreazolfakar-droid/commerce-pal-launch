@@ -37,7 +37,7 @@ export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
         {BENEFITS.map((benefit) => (
           <div
             key={benefit.title}
-            className="group flex min-h-[5.75rem] min-w-0 items-start gap-2.5 rounded-2xl border border-border/70 bg-card p-3 shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-card-hover sm:min-h-[6.25rem] sm:p-3.5"
+            className="group flex min-h-[5.75rem] min-w-0 items-start gap-2.5 rounded-lg border border-border/70 bg-card p-3 shadow-card transition-colors duration-150 hover:border-primary/20 sm:min-h-[6.25rem] sm:p-3.5"
           >
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-10 sm:w-10">
               <benefit.icon
@@ -104,7 +104,7 @@ export function ServicesStrip() {
       <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3">
         {SERVICES.map((service) => {
           const className =
-            "group flex min-w-0 flex-col items-start gap-3 rounded-2xl border bg-card p-4 shadow-card transition hover:border-primary/50 sm:flex-row";
+            "group flex min-w-0 flex-col items-start gap-3 rounded-lg border bg-card p-4 shadow-card transition-colors duration-150 hover:border-primary/40 sm:flex-row";
           const content = (
             <>
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface text-primary">
@@ -170,7 +170,7 @@ export function RecentlyViewed() {
             key={product.node.id}
             to="/product/$handle"
             params={{ handle: product.node.handle }}
-            className="group w-[10.5rem] shrink-0 rounded-xl border bg-card p-3 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover sm:w-auto"
+            className="group w-[10.5rem] shrink-0 rounded-lg border bg-card p-3 shadow-card transition-colors duration-150 hover:border-primary/20 sm:w-auto"
           >
             {product.node.images.edges[0]?.node && (
               <img

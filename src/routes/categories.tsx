@@ -112,14 +112,13 @@ function CategoriesPage() {
               params={{ slug: category.slug }}
               role="listitem"
               aria-label={category.label}
-              className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl px-1.5 py-2 text-center transition duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:gap-2.5 sm:px-2"
+              className="group flex min-w-0 flex-col items-center gap-2 rounded-lg px-1.5 py-2 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:gap-2.5 sm:px-2"
             >
               <span
-                className="relative grid h-[4.6rem] w-[4.6rem] shrink-0 place-items-center overflow-hidden rounded-[1.35rem] border border-border/70 bg-card shadow-card transition duration-300 group-hover:border-primary/25 group-hover:shadow-card-hover sm:h-[5.3rem] sm:w-[5.3rem] sm:rounded-[1.55rem]"
+                className="relative grid h-[4.6rem] w-[4.6rem] shrink-0 place-items-center overflow-hidden rounded-lg border border-border/70 bg-card shadow-card transition-colors duration-150 group-hover:border-primary/25 sm:h-[5.3rem] sm:w-[5.3rem]"
                 aria-hidden="true"
               >
-                <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white via-white to-slate-50 dark:from-card dark:via-card dark:to-surface" />
-                <span className="pointer-events-none absolute inset-x-3 top-1 h-px bg-white/80 dark:bg-white/10" />
+                <span className="pointer-events-none absolute inset-0 bg-card" />
                 {category.imageUrl ? (
                   <img
                     src={category.imageUrl}
@@ -128,12 +127,12 @@ function CategoriesPage() {
                     decoding="async"
                     width={240}
                     height={240}
-                    className="relative h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.06]"
+                    className="relative h-full w-full object-contain p-1.5"
                   />
                 ) : (
                   <CategoryGlyph
                     slug={category.glyphSlug}
-                    className="relative h-[4.1rem] w-[4.1rem] transition-transform duration-300 ease-out group-hover:scale-[1.06] sm:h-[4.75rem] sm:w-[4.75rem]"
+                    className="relative h-[4.1rem] w-[4.1rem] sm:h-[4.75rem] sm:w-[4.75rem]"
                   />
                 )}
               </span>

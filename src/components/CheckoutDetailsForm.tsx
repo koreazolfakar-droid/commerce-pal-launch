@@ -614,12 +614,12 @@ export function CheckoutDetailsForm({
 
   const checkoutTotal = total + deliveryFee;
   const fieldClass =
-    "mt-1.5 min-h-11 w-full rounded-xl border border-border/80 bg-background px-3 py-2.5 text-[13px] text-foreground outline-none transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground/70 hover:border-primary/25 focus:border-primary focus:ring-2 focus:ring-primary/15 sm:px-3.5 sm:text-sm";
+    "mt-1.5 min-h-11 w-full rounded-md border border-border/80 bg-background px-3 py-2.5 text-[13px] text-foreground outline-none transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground/70 hover:border-primary/25 focus:border-primary focus:ring-2 focus:ring-primary/15 sm:px-3.5 sm:text-sm";
   const paymentCardClass = (selected: boolean) =>
-    `flex cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2.5 transition-[border-color,background-color,box-shadow,transform] sm:gap-3 sm:px-3.5 sm:py-3 ${
+    `flex cursor-pointer items-start gap-2.5 rounded-md border px-3 py-2.5 transition-[border-color,background-color,box-shadow,transform] sm:gap-3 sm:px-3.5 sm:py-3 ${
       selected
         ? "border-primary/35 bg-primary/[0.07] shadow-sm ring-2 ring-primary/10"
-        : "border-border/80 bg-background hover:-translate-y-px hover:border-primary/30 hover:shadow-sm"
+        : "border-border/80 bg-background hover:border-primary/30"
     }`;
   const actionDisabled =
     disabled ||
@@ -631,13 +631,13 @@ export function CheckoutDetailsForm({
   return (
     <section
       id="whatsapp-checkout"
-      className="scroll-mt-20 overflow-hidden rounded-[1.1rem] border bg-card shadow-card sm:rounded-2xl"
+      className="scroll-mt-20 overflow-hidden rounded-lg border bg-card shadow-card"
       aria-labelledby="whatsapp-checkout-title"
     >
-      <div className="border-b bg-gradient-to-br from-success/[0.08] via-card to-primary/[0.04] px-3.5 py-3.5 min-[390px]:px-4 sm:px-5 sm:py-5">
+      <div className="border-b bg-surface/50 px-3.5 py-3.5 min-[390px]:px-4 sm:px-5 sm:py-5">
         <div className="flex items-start justify-between gap-2.5 sm:gap-3">
           <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-success/15 bg-background/80 text-success shadow-sm sm:h-10 sm:w-10">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-success/15 bg-background/80 text-success shadow-sm sm:h-10 sm:w-10">
               <MessageCircle className="h-4.5 w-4.5" />
             </div>
             <div className="min-w-0">
@@ -1009,7 +1009,7 @@ export function CheckoutDetailsForm({
             <span>{copy.savedBeforeWhatsapp}</span>
           </div>
 
-          <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-1 rounded-2xl border border-success/20 bg-background/95 p-1 shadow-float backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+          <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-1 rounded-lg border border-success/20 bg-background/95 p-1 shadow-float backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
             <Button
               type="submit"
               disabled={actionDisabled || pdfBusy}

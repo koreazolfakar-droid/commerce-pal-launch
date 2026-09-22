@@ -132,7 +132,7 @@ function CartPage() {
   return (
     <StoreLayout>
       <div className="cart-page mx-auto w-full max-w-[74rem] px-3 pb-10 pt-3.5 sm:px-5 sm:pb-14 sm:pt-6 lg:px-6 xl:px-7">
-        <header className="mb-3.5 overflow-hidden rounded-[1.25rem] border bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-card sm:mb-5 sm:rounded-2xl">
+        <header className="mb-3.5 overflow-hidden rounded-lg border bg-card shadow-card sm:mb-5">
           <div className="flex flex-col gap-3.5 px-3.5 py-3.5 min-[390px]:px-4 sm:gap-4 sm:px-5 sm:py-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
               <div className="mb-2 flex items-center gap-2">
@@ -189,7 +189,7 @@ function CartPage() {
         </header>
 
         {items.length === 0 ? (
-          <section className="flex min-h-[24rem] flex-col items-center justify-center rounded-2xl border bg-card px-6 py-14 text-center shadow-card">
+          <section className="flex min-h-[24rem] flex-col items-center justify-center rounded-lg border bg-card px-6 py-14 text-center shadow-card">
             <div className="relative grid h-20 w-20 place-items-center rounded-full border bg-surface text-muted-foreground">
               <span className="absolute inset-2 rounded-full border border-primary/10" />
               <ShoppingBag className="relative h-8 w-8" strokeWidth={1.6} />
@@ -269,7 +269,7 @@ function CartPage() {
                     return (
                       <li
                         key={item.variantId}
-                        className="group relative flex gap-2.5 rounded-[1.1rem] border bg-card p-2.5 shadow-card transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-primary/20 hover:shadow-card-hover min-[390px]:gap-3 min-[390px]:p-3 sm:gap-4 sm:rounded-2xl sm:p-3.5"
+                        className="group relative flex gap-2.5 rounded-lg border bg-card p-2.5 shadow-card transition-colors duration-150 hover:border-primary/20 min-[390px]:gap-3 min-[390px]:p-3 sm:gap-4 sm:p-3.5"
                       >
                         <Link
                           to="/product/$handle"
@@ -382,10 +382,10 @@ function CartPage() {
               </div>
 
               <aside
-                className="overflow-hidden rounded-[1.1rem] border bg-card shadow-card sm:rounded-2xl lg:sticky lg:top-[5.75rem] lg:col-start-2 lg:row-span-2 lg:row-start-1"
+                className="overflow-hidden rounded-lg border bg-card shadow-card lg:sticky lg:top-[5.75rem] lg:col-start-2 lg:row-span-2 lg:row-start-1"
                 aria-label={copy.summary}
               >
-                <div className="border-b bg-gradient-to-r from-primary/[0.08] via-primary/[0.03] to-transparent px-3.5 py-3 sm:px-4 sm:py-3.5">
+                <div className="border-b bg-surface/50 px-3.5 py-3 sm:px-4 sm:py-3.5">
                   <div className="flex items-center gap-3">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/15 bg-background/80 text-primary shadow-sm">
                       <ReceiptText className="h-4 w-4" />

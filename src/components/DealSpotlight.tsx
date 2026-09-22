@@ -20,7 +20,7 @@ export function DealSpotlight({ products }: { products: ShopifyProduct[] }) {
         return (
           <article
             key={node.id}
-            className="group grid min-w-0 overflow-hidden rounded-3xl border bg-card shadow-card sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
+            className="group grid min-w-0 overflow-hidden rounded-lg border bg-card shadow-card sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
           >
             <div className="relative min-w-0 bg-image-stage">
               <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title}>

@@ -219,7 +219,7 @@ function SectionHeader({
 }
 
 function SectionFallback({ className = "h-52" }: { className?: string }) {
-  return <div className={`${className} rounded-3xl bg-surface`} aria-hidden="true" />;
+  return <div className={`${className} rounded-lg bg-surface`} aria-hidden="true" />;
 }
 
 function DealsCountdown() {
@@ -387,7 +387,7 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
 
   if (type === "announcement") {
     return (
-      <section className="rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white">
+      <section className="rounded-lg bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white">
         {displayTitle || description}
         {buttonText && buttonLink ? (
           <CmsActionLink
@@ -410,7 +410,7 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
 
   return (
     <section
-      className={`relative overflow-hidden rounded-3xl border p-5 shadow-card sm:p-8 ${
+      className={`relative overflow-hidden rounded-lg border p-5 shadow-card sm:p-8 ${
         background === "navy"
           ? "border-slate-800 bg-slate-950 text-white"
           : background === "purple"
@@ -482,7 +482,10 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
             const answer = typeof item["answer"] === "string" ? item["answer"] : "";
             if (!question && !answer) return null;
             return (
-              <details key={`${section.id}-faq-${index}`} className="rounded-2xl border bg-background/85 p-4">
+              <details
+                key={`${section.id}-faq-${index}`}
+                className="rounded-lg border bg-background/85 p-4"
+              >
                 <summary className="cursor-pointer text-sm font-bold">{question}</summary>
                 {answer ? <p className="mt-2 text-sm text-muted-foreground">{answer}</p> : null}
               </details>
@@ -607,7 +610,7 @@ function Index() {
       node: navigationReady ? (
         <HomeCategorySection categories={navigationCategories} collections={collections} />
       ) : (
-        <div className="h-28 rounded-3xl bg-surface" aria-hidden="true" />
+        <div className="h-28 rounded-lg bg-surface" aria-hidden="true" />
       ),
     },
     {
@@ -620,7 +623,7 @@ function Index() {
           <LazyTopBrands brands={brands} />
         </Suspense>
       ) : (
-        <div className="h-24 rounded-3xl bg-surface" aria-hidden="true" />
+        <div className="h-24 rounded-lg bg-surface" aria-hidden="true" />
       ),
     },
     {
@@ -696,7 +699,7 @@ function Index() {
           ) : null}
         </>
       ) : (
-        <div className="h-52 rounded-3xl bg-surface" aria-hidden="true" />
+        <div className="h-52 rounded-lg bg-surface" aria-hidden="true" />
       ),
     },
     {

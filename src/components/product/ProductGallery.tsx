@@ -163,7 +163,7 @@ export function ProductGallery({
           onClick={() => setZoomed(false)}
         >
           <div
-            className="relative max-h-full w-full max-w-4xl overflow-hidden rounded-3xl border bg-image-stage shadow-float"
+            className="relative max-h-full w-full max-w-4xl overflow-hidden rounded-lg border bg-image-stage shadow-float"
             onClick={(event) => event.stopPropagation()}
           >
             <img
