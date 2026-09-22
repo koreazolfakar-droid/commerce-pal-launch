@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chromium } from "@playwright/test";
+import { chromium, firefox, webkit } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:4173";
 const responsiveCases = [
@@ -171,4 +171,66 @@ try {
   console.log("PASS critical storefront routes: no overflow or page errors");
 } finally {
   await browser.close();
+}
+
+
+const supplementalEngines = [
+  { name: "firefox", launcher: firefox },
+  { name: "webkit", launcher: webkit },
+];
+
+const supplementalCases = [
+  { width: 390, height: 844, lang: "en", theme: "light" },
+  { width: 390, height: 844, lang: "ar", theme: "dark" },
+  { width: 1440, height: 1000, lang: "en", theme: "light" },
+];
+
+for (const engine of supplementalEngines) {
+  const engineBrowser = await engine.launcher.launch({ headless: true });
+  try {
+    for (const testCase of supplementalCases) {
+      const page = await engineBrowser.newPage({
+        viewport: { width: testCase.width, height: testCase.height },
+      });
+      await configure(page, testCase.lang, testCase.theme);
+      const pageErrors = [];
+      page.on("pageerror", (error) => pageErrors.push(error.message));
+
+      for (const route of ["/", "/shop", "/cart"]) {
+        const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+        assert.ok(
+          response && response.status() < 400,
+          `${engine.name} ${route}: failed to load`,
+        );
+        await page.waitForTimeout(140);
+
+        const expectedDir = testCase.lang === "ar" ? "rtl" : "ltr";
+        assert.equal(
+          await page.locator("html").getAttribute("dir"),
+          expectedDir,
+          `${engine.name} ${testCase.width}px ${route}: direction mismatch`,
+        );
+        assert.equal(
+          await page.locator("html").getAttribute("data-theme"),
+          testCase.theme,
+          `${engine.name} ${testCase.width}px ${route}: theme mismatch`,
+        );
+        await assertViewportHealth(
+          page,
+          `${engine.name} ${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`,
+        );
+      }
+
+      assert.deepEqual(
+        pageErrors,
+        [],
+        `${engine.name} page errors detected: ${pageErrors.join(" | ")}`,
+      );
+      await page.close();
+    }
+
+    console.log(`PASS ${engine.name}: responsive LTR/RTL light/dark smoke checks`);
+  } finally {
+    await engineBrowser.close();
+  }
 }
