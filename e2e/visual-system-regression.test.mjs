@@ -31,6 +31,23 @@ test("storefront visual system keeps one canonical shell and radius language", a
   assert.match(styles, /\.dashboard-theme-scope :where\(\[class~="rounded-2xl"\], \[class~="rounded-3xl"\]\)/);
 });
 
+test("responsive spacing and reduced-motion rules keep correct cascade boundaries", async () => {
+  const consistency = await source("src/design-consistency.css");
+
+  assert.match(
+    consistency,
+    /@media \(min-width: 640px\) and \(max-width: 1023px\) \{[\s\S]*?gap: var\(--sc-section-gap-tablet\)/,
+  );
+  assert.match(
+    consistency,
+    /@media \(min-width: 1024px\) \{[\s\S]*?gap: var\(--sc-section-gap-desktop\)/,
+  );
+
+  const restoreIndex = consistency.indexOf("transition-duration: 140ms !important");
+  const reduceIndex = consistency.indexOf("@media (prefers-reduced-motion: reduce)");
+  assert.ok(restoreIndex >= 0 && reduceIndex > restoreIndex, "reduced-motion override must load after control transitions");
+});
+
 test("storefront polish avoids restoring decorative page gradients", async () => {
   const overhaul = await source("src/ui-overhaul.css");
   assert.match(overhaul, /\.store-layout\s*\{\s*background:\s*var\(--color-background\);\s*\}/);
