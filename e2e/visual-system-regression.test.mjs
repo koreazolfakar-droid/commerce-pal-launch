@@ -62,6 +62,29 @@ test("storefront polish avoids restoring decorative page gradients", async () =>
   );
 });
 
+test("shared RTL primitives use logical spacing and semantic dark-mode text", async () => {
+  const [dashboard, select, table, pagination] = await Promise.all([
+    source("src/dashboard/App.tsx"),
+    source("src/components/ui/select.tsx"),
+    source("src/components/ui/table.tsx"),
+    source("src/components/ui/pagination.tsx"),
+  ]);
+
+  assert.doesNotMatch(dashboard, /absolute left-3\.5 top-1\/2/);
+  assert.doesNotMatch(dashboard, /bg-card pl-10 pr-14/);
+  assert.doesNotMatch(dashboard, /text-slate-800/);
+  assert.match(dashboard, /absolute start-3\.5 top-1\/2/);
+  assert.match(dashboard, /bg-card ps-10 pe-14/);
+
+  assert.match(select, /py-1\.5 ps-2 pe-8/);
+  assert.match(select, /absolute end-2/);
+  assert.match(table, /text-start/);
+  assert.match(table, /\]:pe-0/);
+  assert.match(pagination, /ps-2\.5/);
+  assert.match(pagination, /pe-2\.5/);
+  assert.match(pagination, /rtl:rotate-180/);
+});
+
 test("dashboard shared chrome stays compact without changing navigation structure", async () => {
   const dashboard = await source("src/dashboard/App.tsx");
 
