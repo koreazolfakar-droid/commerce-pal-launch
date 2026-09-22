@@ -311,6 +311,14 @@ async function runModeProbe(browser) {
         '[data-testid="category-section"], [data-testid="top-brands"] { display: none !important; }',
       "overflow-mobile-en-no-deferred":
         '[data-testid="best-sellers"], [data-testid="deals-section"], [data-testid="new-items"], [data-testid="brand-showcases"], [data-testid="benefits-bar"], [data-testid="trust-benefits-rail"], section[aria-labelledby="recently-viewed"], section[aria-labelledby="why-shop"] { display: none !important; }',
+      "overflow-mobile-en-no-hero-content":
+        '[data-testid="home-hero-content"] { display: none !important; }',
+      "overflow-mobile-en-no-hero-dots":
+        '[data-testid="home-hero-dots"] { display: none !important; }',
+      "overflow-mobile-en-static-hero-parts":
+        '.hero-scene[data-free] .hero-scene-part { position: static !important; inset: auto !important; transform: none !important; }',
+      "overflow-mobile-en-no-hero-buttons":
+        '.hero-scene-buttons-row { display: none !important; }',
     };
 
     const isolationStyle = isolationStyles[routeGroup];
