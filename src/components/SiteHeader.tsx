@@ -181,7 +181,7 @@ export function SiteHeader() {
             type="button"
             onClick={() => setSearchOpen(true)}
             aria-label={t("search")}
-            className="flex h-10 w-full items-center gap-2.5 rounded-full border bg-surface px-5 text-[13px] text-muted-foreground transition-colors hover:border-primary"
+            className="flex h-10 w-full items-center gap-2.5 rounded-md border bg-surface px-4 text-[13px] text-muted-foreground transition-colors hover:border-primary"
           >
             <Search className="h-4 w-4 shrink-0" />
             <span className="truncate">{t("search")}</span>
@@ -193,7 +193,7 @@ export function SiteHeader() {
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} items`}
-              className="press relative grid h-10 w-10 place-items-center rounded-full text-foreground transition-colors hover:bg-surface"
+              className="press relative grid h-10 w-10 place-items-center rounded-md text-foreground transition-colors hover:bg-surface"
             >
               <Heart className="h-5 w-5" strokeWidth={1.8} />
               {wishlistCount > 0 && (
@@ -205,7 +205,7 @@ export function SiteHeader() {
             <Button
               variant="outline"
               size="icon"
-              className="press relative rounded-full"
+              className="press relative rounded-md"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
               aria-label={`${t("openBag")}, ${cartCount}`}
             >
@@ -225,7 +225,7 @@ export function SiteHeader() {
               to="/"
               activeOptions={{ exact: true }}
               activeProps={{ className: "bg-accent text-accent-foreground" }}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3.5 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
             >
               <Grid2x2 className="h-3.5 w-3.5" /> {t("all")}
             </Link>
@@ -236,7 +236,7 @@ export function SiteHeader() {
                 to="/category/$slug"
                 params={{ slug: item.slug }}
                 activeProps={{ className: "bg-accent text-accent-foreground" }}
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
               >
                 {(() => {
                   const Icon = NAV_ICONS[item.label];
@@ -263,7 +263,7 @@ export function SiteHeader() {
                     type="button"
                     aria-haspopup="menu"
                     aria-expanded={brandsOpen}
-                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold hover:bg-surface focus-within:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-accent"
+                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-[12px] font-semibold hover:bg-surface focus-within:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-accent"
                   >
                     <Tag className="h-4 w-4" aria-hidden="true" /> {t("brands")}
                     <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -300,7 +300,7 @@ export function SiteHeader() {
                     type="button"
                     aria-haspopup="menu"
                     aria-expanded={categoriesOpen}
-                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold hover:bg-surface focus-within:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-accent"
+                    className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-[12px] font-semibold hover:bg-surface focus-within:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:bg-accent"
                   >
                     {t("allCategories")}
                     <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -337,7 +337,7 @@ export function SiteHeader() {
               <Link
                 to="/collections"
                 activeProps={{ className: "bg-accent text-accent-foreground" }}
-                className="shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface"
+                className="shrink-0 whitespace-nowrap rounded-md px-3.5 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
               >
                 {t("collections")}
               </Link>
@@ -345,7 +345,7 @@ export function SiteHeader() {
 
             <Link
               to="/used-phones"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-surface"
             >
               {t("usedPhones")}
             </Link>
@@ -353,13 +353,13 @@ export function SiteHeader() {
             <Link
               to="/shop"
               search={{ availability: "on-sale" } as never}
-              className="ms-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3 py-2 text-[12px] font-bold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+              className="ms-auto inline-flex shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 py-2 text-[12px] font-bold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
             >
               <Sparkles className="h-3.5 w-3.5" /> {t("deals")}
             </Link>
             <Link
               to="/help"
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-[12px] font-semibold text-muted-foreground transition-colors hover:bg-surface"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-[12px] font-semibold text-muted-foreground transition-colors hover:bg-surface"
             >
               <Headphones className="h-3.5 w-3.5" /> {t("support")}
             </Link>

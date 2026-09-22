@@ -197,7 +197,7 @@ function Sidebar({
                         navigate(item.href);
                         setMobileOpen(false);
                       }}
-                      className={`group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[13px] font-medium transition active:scale-[.99] lg:py-2.5 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-[#5361ef] text-white shadow-[0_4px_14px_rgba(83,97,239,.22)]" : "text-slate-400 hover:bg-white/[.07] hover:text-white"}`}
+                      className={`dashboard-sidebar-action group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[13px] font-medium transition active:scale-[.99] lg:py-2.5 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-[#5361ef] text-white shadow-[0_4px_14px_rgba(83,97,239,.22)]" : "text-slate-400 hover:bg-white/[.07] hover:text-white"}`}
                     >
                       <Icon
                         className={`size-[17px] shrink-0 ${active ? "text-white" : "text-slate-500 group-hover:text-slate-200"}`}
@@ -311,11 +311,11 @@ function Header({ onMenu }: { onMenu: () => void }) {
     : [];
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
+    <header className="dashboard-header sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           onClick={onMenu}
-          className="grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 lg:hidden"
+          className="dashboard-icon-button dashboard-icon-button-lg grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 lg:hidden"
           aria-label="Open dashboard menu"
         >
           <Menu className="size-5" />
@@ -323,7 +323,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           type="button"
           onClick={() => setMobileSearchOpen((current) => !current)}
-          className="grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 sm:hidden"
+          className="dashboard-icon-button dashboard-icon-button-lg grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 sm:hidden"
           aria-label={t("Search products...")}
           aria-expanded={mobileSearchOpen}
         >
@@ -383,7 +383,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
       <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         <button
           onClick={() => navigate("/dashboard/activity")}
-          className="grid size-10 place-items-center rounded-lg text-muted-foreground transition hover:bg-card hover:text-foreground"
+          className="dashboard-icon-button grid size-10 place-items-center rounded-lg text-muted-foreground transition hover:bg-card hover:text-foreground"
           aria-label={t("Activity logs")}
           title={t("Activity logs")}
         >
@@ -392,7 +392,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           type="button"
           onClick={toggleTheme}
-          className="grid size-10 place-items-center rounded-lg border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
+          className="dashboard-icon-button grid size-10 place-items-center rounded-lg border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
           aria-label={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
           aria-pressed={theme === "dark"}
           title={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
@@ -402,7 +402,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <div className="hidden h-8 w-px bg-border sm:block" />
         <button
           onClick={() => setLang(lang === "en" ? "ar" : "en")}
-          className="rounded-lg border border-border bg-card px-2 py-1.5 text-[10px] font-bold text-muted-foreground transition hover:text-primary"
+          className="dashboard-compact-control rounded-lg border border-border bg-card px-2 py-1.5 text-[10px] font-bold text-muted-foreground transition hover:text-primary"
           title={lang === "en" ? "العربية" : "English"}
         >
           {lang === "en" ? "AR" : "EN"}
@@ -544,7 +544,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/90 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(15,23,42,.07)] backdrop-blur-md lg:hidden"
+      className="dashboard-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-border/90 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(15,23,42,.07)] backdrop-blur-md lg:hidden"
       aria-label="Dashboard mobile navigation"
     >
       <div className="grid min-h-[64px] grid-cols-5">
@@ -717,7 +717,7 @@ function DashboardLayout() {
         className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? (lang === "ar" ? "lg:pr-[82px]" : "lg:pl-[82px]") : lang === "ar" ? "lg:pr-[260px]" : "lg:pl-[260px]"}`}
       >
         <Header onMenu={() => setMobileOpen(true)} />
-        <main className="mx-auto min-w-0 max-w-[1600px] p-3 pb-24 sm:p-6 sm:pb-24 lg:p-9">
+        <main className="dashboard-main mx-auto min-w-0 max-w-[1600px] p-3 pb-24 sm:p-6 sm:pb-24 lg:p-9">
           {content}
         </main>
         <MobileBottomNav onMore={() => setMobileOpen(true)} />

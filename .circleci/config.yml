@@ -90,14 +90,174 @@ jobs:
           name: SSR smoke test
           command: bun run test:ssr
 
+
+  ui-browser-deps:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - bun-deps-v1-{{ checksum "bun.lock" }}
+            - bun-deps-v1-
+      - install-bun
+      - run:
+          name: Install browser-test dependencies
+          command: bun install --frozen-lockfile
+      - persist_to_workspace:
+          root: .
+          paths:
+            - node_modules
+
+  ui-browser:
+    parameters:
+      engine:
+        type: string
+        default: chromium
+      suite:
+        type: string
+        default: all
+      route_group:
+        type: string
+        default: all
+    docker:
+      - image: cimg/node:lts
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+      UI_ENGINE: << parameters.engine >>
+      UI_SUITE: << parameters.suite >>
+      UI_ROUTE_GROUP: << parameters.route_group >>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install browser runtime
+          command: ./node_modules/.bin/playwright install --with-deps << parameters.engine >>
+      - run:
+          name: Responsive multi-engine UI checks
+          command: |
+            ./node_modules/.bin/vite dev --host 0.0.0.0 --port 4173 > /tmp/ui-polish-vite.log 2>&1 &
+            SERVER_PID=$!
+            trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+            READY=0
+            for _ in {1..60}; do
+              if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+                READY=1
+                break
+              fi
+              sleep 1
+            done
+            if [ "$READY" -ne 1 ]; then
+              cat /tmp/ui-polish-vite.log
+              exit 1
+            fi
+            E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ui-polish-responsive-check.mjs
+
+
+  ui-server-smoke:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Start UI server and verify homepage
+          command: |
+            bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/ui-server.log 2>&1 &
+            SERVER_PID=$!
+            trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+            READY=0
+            for _ in {1..60}; do
+              if curl --fail --silent http://127.0.0.1:4173/ > /tmp/ui-home.html; then
+                READY=1
+                break
+              fi
+              sleep 1
+            done
+            if [ "$READY" -ne 1 ]; then
+              cat /tmp/ui-server.log
+              exit 1
+            fi
+            test -s /tmp/ui-home.html
+
+
+  ui-playwright-image-smoke:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.63.0-noble
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - run:
+          name: Verify Playwright image runtime
+          command: |
+            node --version
+            test -d /ms-playwright
+
 workflows:
   security-and-storefront-validation:
     jobs:
       - security-source
       - security-dependencies
-      - storefront-ci:
+      - ui-browser-deps:
           filters:
             branches:
               only:
-                - /^important\/.*/
-                - /^design\/.*/
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
+          name: ui-browser-webkit-overflow-mobile-en
+          engine: webkit
+          suite: mode
+          route_group: overflow-mobile-en
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
+          name: ui-browser-webkit-no-hero-container
+          engine: webkit
+          suite: mode
+          route_group: overflow-mobile-en-no-hero-container
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
+          name: ui-browser-webkit-contain-hero
+          engine: webkit
+          suite: mode
+          route_group: overflow-mobile-en-contain-hero
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
+          name: ui-browser-webkit-hide-hero-scene
+          engine: webkit
+          suite: mode
+          route_group: overflow-mobile-en-hide-hero-scene
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/

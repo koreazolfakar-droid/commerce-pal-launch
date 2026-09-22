@@ -303,7 +303,7 @@ export function CatalogView({
             <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:w-auto sm:justify-start">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="press rounded-full lg:hidden">
+                  <Button variant="outline" size="sm" className="press rounded-md lg:hidden">
                     <SlidersHorizontal className="me-1.5 h-4 w-4" />
                     {t("filters")}
                     {activeCount > 0 && (
@@ -344,7 +344,7 @@ export function CatalogView({
                 onChange={(event) =>
                   onChange({ sort: event.target.value as ProductFilters["sort"] })
                 }
-                className="h-9 min-w-0 max-w-[10.5rem] flex-1 rounded-full border bg-background px-3 text-[12px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-none sm:flex-none sm:text-[13px]"
+                className="h-9 min-w-0 max-w-[10.5rem] flex-1 rounded-md border bg-background px-3 text-[12px] font-medium outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 sm:max-w-none sm:flex-none sm:text-[13px]"
                 aria-label={t("sort")}
               >
                 {SORT_OPTIONS.map((option) => (

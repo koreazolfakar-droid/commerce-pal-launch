@@ -80,7 +80,7 @@ export const CompactProductCard = memo(function CompactProductCard({
       aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
       aria-pressed={wishlisted}
       className={cn(
-        "product-action-button press absolute z-20 grid place-items-center rounded-full border border-border/65",
+        "product-card-secondary-action product-action-button press absolute z-20 grid place-items-center rounded-full border border-border/65",
         "bg-background/95 text-muted-foreground shadow-sm backdrop-blur",
         "transition-[color,background-color,border-color,transform]",
         "hover:border-primary/35 hover:bg-background hover:text-primary",
@@ -108,7 +108,7 @@ export const CompactProductCard = memo(function CompactProductCard({
       disabled={isAdding || !variant || !inStock}
       aria-label={`Add ${node.title} to bag`}
       className={cn(
-        "product-action-button press relative grid shrink-0 place-items-center rounded-full bg-primary text-primary-foreground",
+        "product-card-primary-action product-action-button press relative grid shrink-0 place-items-center rounded-full bg-primary text-primary-foreground",
         "shadow-md transition-[opacity,transform,box-shadow]",
         "hover:scale-[1.03] hover:shadow-lg",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -139,7 +139,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           className,
         )}
       >
-        <div className="market-product-media relative min-w-0">
+        <div className="product-card-media market-product-media relative min-w-0">
           <Link
             to="/product/$handle"
             params={{ handle: node.handle }}
@@ -184,7 +184,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
         </div>
 
-        <div className="market-product-copy flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
+        <div className="product-card-body market-product-copy flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
           {brand ? (
             <div className="mb-1 flex min-w-0 items-center gap-1">
               <BrandLogo slug={brand.slug} label={brand.label} size={14} className="rounded" />
@@ -195,7 +195,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           ) : null}
 
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <bdi className="whitespace-nowrap text-[0.95rem] font-extrabold tracking-tight text-foreground sm:text-base">
+            <bdi className="product-card-price whitespace-nowrap text-[0.95rem] font-extrabold tracking-tight text-foreground sm:text-base">
               {formatPrice(price.amount, price.currencyCode)}
             </bdi>
             {discount !== null && compareAt && (
@@ -210,7 +210,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             params={{ handle: node.handle }}
             className="mt-1 min-w-0"
           >
-            <h3 className="line-clamp-2 min-h-[2.35rem] break-words text-[0.8rem] font-semibold leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
+            <h3 className="product-card-title line-clamp-2 min-h-[2.35rem] break-words text-[0.8rem] font-semibold leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
               {node.title}
             </h3>
           </Link>
@@ -224,7 +224,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           <div className="market-product-footer mt-auto flex min-w-0 items-end justify-between gap-1.5 pt-1">
             <p
               className={cn(
-                "market-product-stock min-w-0 flex-1 text-[10px] font-semibold leading-4 sm:text-xs",
+                "product-card-status market-product-stock min-w-0 flex-1 text-[10px] font-semibold leading-4 sm:text-xs",
                 inStock ? "text-success" : "text-destructive",
               )}
             >
@@ -241,11 +241,11 @@ export const CompactProductCard = memo(function CompactProductCard({
     <article
       role={listItem ? "listitem" : undefined}
       className={cn(
-        "sc-product-card group relative flex h-full min-w-0 w-full flex-col overflow-hidden rounded-[1.15rem] border border-border/75 bg-card shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card-hover",
+        "sc-product-card group relative flex h-full min-w-0 w-full flex-col overflow-hidden rounded-2xl border border-border/75 bg-card shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card-hover",
         className,
       )}
     >
-      <div className="relative bg-image-stage">
+      <div className="product-card-media relative bg-image-stage">
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
@@ -287,7 +287,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         {wishlistButton}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1 px-2.5 pb-2.5 pt-1 sm:px-3 sm:pb-3 sm:pt-1.5">
+      <div className="product-card-body flex min-w-0 flex-1 flex-col gap-1 px-2.5 pb-2.5 pt-1 sm:px-3 sm:pb-3 sm:pt-1.5">
         <div className="flex min-h-4 min-w-0 items-center gap-1.5">
           {brand ? (
             <>
@@ -304,7 +304,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         </div>
 
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-          <h3 className="break-words text-[0.82rem] font-semibold leading-[1.35] transition-colors group-hover:text-primary sm:text-sm">
+          <h3 className="product-card-title break-words text-[0.82rem] font-semibold leading-[1.35] transition-colors group-hover:text-primary sm:text-sm">
             {node.title}
           </h3>
         </Link>
@@ -312,7 +312,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         <div className="mt-auto flex min-h-9 min-w-0 items-center justify-between gap-2 pt-0.5">
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-              <bdi className="text-[0.95rem] font-extrabold tracking-tight sm:text-base">
+              <bdi className="product-card-price text-[0.95rem] font-extrabold tracking-tight sm:text-base">
                 {formatPrice(price.amount, price.currencyCode)}
               </bdi>
               {discount !== null && compareAt && (

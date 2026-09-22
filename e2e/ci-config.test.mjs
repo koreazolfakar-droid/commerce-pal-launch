@@ -15,10 +15,11 @@ test("repository exposes one comprehensive validation command", async () => {
   }
 });
 
-test("GitHub Storefront CI is manual-only", async () => {
+test("GitHub Storefront CI validates manual runs and pull requests", async () => {
   const workflow = await read(".github/workflows/storefront-ci.yml");
-  assert.match(workflow, /workflow_dispatch/);
-  assert.doesNotMatch(workflow, /\npush:|\npull_request:/);
+  assert.match(workflow, /^\s+workflow_dispatch:/m);
+  assert.doesNotMatch(workflow, /^\s*push:/m);
+  assert.match(workflow, /^\s+pull_request:/m);
   assert.match(workflow, /bun install --frozen-lockfile/);
   assert.match(workflow, /bun run typecheck/);
   assert.match(workflow, /bun run lint/);
@@ -38,12 +39,29 @@ test("CircleCI runs separate source and dependency security gates on every pipel
   assert.match(circle, /- security-dependencies/);
 
   assert.match(circle, /\/\^important\\\/\.\*\//);
+  assert.match(circle, /\/\^ui\\\/\.\*\//);
   assert.match(circle, /bun install --frozen-lockfile/);
   assert.match(circle, /bun run typecheck/);
   assert.match(circle, /bun run lint/);
   assert.match(circle, /bun run test:unit/);
   assert.match(circle, /bun run build/);
   assert.match(circle, /bun run test:ssr/);
+  assert.match(circle, /ui-browser-deps:/);
+  assert.match(circle, /persist_to_workspace:/);
+  assert.match(circle, /requires:\s*\n\s*- ui-browser-deps/);
+
+  const uiBrowserJob =
+    circle.match(/\n  ui-browser:\n[\s\S]*?\n\n  ui-server-smoke:/)?.[0] ?? "";
+  assert.match(uiBrowserJob, /attach_workspace:/);
+  assert.doesNotMatch(uiBrowserJob, /bun install --frozen-lockfile/);
+  assert.match(uiBrowserJob, /playwright install --with-deps << parameters\.engine >>/);
+  assert.match(uiBrowserJob, /\.\/node_modules\/\.bin\/vite dev/);
+  assert.match(uiBrowserJob, /node e2e\/ui-polish-responsive-check\.mjs/);
+  assert.match(circle, /name: ui-browser-chromium-responsive/);
+  assert.match(circle, /name: ui-browser-chromium-routes-catalog/);
+  assert.match(circle, /name: ui-browser-chromium-routes-commerce/);
+  assert.match(circle, /name: ui-browser-firefox/);
+  assert.match(circle, /name: ui-browser-webkit/);
 });
 
 test("native security scanner protects secrets and dangerous production primitives", async () => {

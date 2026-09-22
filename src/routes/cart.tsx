@@ -309,7 +309,7 @@ function CartPage() {
                           </div>
 
                           <div className="mt-auto flex items-end justify-between gap-2 pt-2 min-[390px]:pt-2.5">
-                            <div className="flex h-8.5 items-center rounded-xl border bg-background p-0.5 shadow-sm sm:h-9">
+                            <div className="flex h-10 items-center rounded-md border bg-background p-0.5 shadow-sm">
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -319,7 +319,7 @@ function CartPage() {
                                 onClick={() =>
                                   void updateQuantity(item.variantId, item.quantity - 1)
                                 }
-                                className="h-7.5 w-7.5 rounded-[0.6rem] sm:h-8 sm:w-8"
+                                className="h-9 w-9 rounded-md"
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </Button>
@@ -335,7 +335,7 @@ function CartPage() {
                                 onClick={() =>
                                   void updateQuantity(item.variantId, item.quantity + 1)
                                 }
-                                className="h-7.5 w-7.5 rounded-[0.6rem] sm:h-8 sm:w-8"
+                                className="h-9 w-9 rounded-md"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                               </Button>
@@ -359,7 +359,7 @@ function CartPage() {
                           onClick={() => void removeItem(item.variantId)}
                           disabled={isLoading}
                           aria-label={t("removeItem")}
-                          className="absolute end-2 top-2 h-8 w-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          className="absolute end-2 top-2 h-10 w-10 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>

@@ -1,0 +1,403 @@
+import assert from "node:assert/strict";
+import { chromium, firefox, webkit } from "@playwright/test";
+
+const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:4173";
+const engineName = process.env.UI_ENGINE ?? "chromium";
+const suite = process.env.UI_SUITE ?? "all";
+const routeGroup = process.env.UI_ROUTE_GROUP ?? "all";
+
+const launchers = { chromium, firefox, webkit };
+const launcher = launchers[engineName];
+assert.ok(launcher, `Unsupported browser engine: ${engineName}`);
+
+const responsiveCases = [
+  { width: 320, height: 700, lang: "en", theme: "light" },
+  { width: 360, height: 780, lang: "en", theme: "light" },
+  { width: 375, height: 812, lang: "en", theme: "light" },
+  { width: 390, height: 844, lang: "en", theme: "light" },
+  { width: 412, height: 915, lang: "en", theme: "light" },
+  { width: 430, height: 932, lang: "en", theme: "light" },
+  { width: 768, height: 1024, lang: "en", theme: "light" },
+  { width: 1440, height: 1000, lang: "en", theme: "light" },
+  { width: 320, height: 700, lang: "ar", theme: "dark" },
+  { width: 390, height: 844, lang: "ar", theme: "dark" },
+  { width: 768, height: 1024, lang: "ar", theme: "dark" },
+  { width: 1440, height: 1000, lang: "ar", theme: "dark" },
+];
+
+const supplementalCases = [
+  { width: 390, height: 844, lang: "en", theme: "light" },
+  { width: 390, height: 844, lang: "ar", theme: "dark" },
+  { width: 1440, height: 1000, lang: "en", theme: "light" },
+];
+
+const routeGroups = {
+  catalog: ["/", "/shop", "/search", "/categories", "/brands"],
+  commerce: ["/cart", "/wishlist", "/compare"],
+  all: ["/", "/shop", "/search", "/cart", "/wishlist", "/compare", "/categories", "/brands"],
+};
+
+async function configure(page, lang, theme) {
+  await page.addInitScript(
+    ({ language, selectedTheme }) => {
+      localStorage.setItem("space-cell-language", language);
+      localStorage.setItem("space-cell:theme", selectedTheme);
+    },
+    { language: lang, selectedTheme: theme },
+  );
+}
+
+async function assertViewportHealth(page, label, requireProductCard = false) {
+  const metrics = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+    bodyWidth: document.body.getBoundingClientRect().width,
+  }));
+
+  assert.ok(
+    metrics.scrollWidth <= metrics.innerWidth + 1,
+    `${label}: horizontal overflow ${metrics.scrollWidth}px > ${metrics.innerWidth}px`,
+  );
+  assert.ok(metrics.bodyWidth <= metrics.innerWidth + 1, `${label}: body exceeds viewport`);
+
+  const main = page.locator("main").first();
+  if (await main.count()) {
+    const mainBox = await main.boundingBox();
+    if (mainBox) {
+      assert.ok(mainBox.x >= -1, `${label}: main starts outside viewport`);
+      assert.ok(
+        mainBox.x + mainBox.width <= metrics.innerWidth + 1,
+        `${label}: main extends outside viewport`,
+      );
+    }
+  }
+
+  const headerControls = page.locator("header.sticky > div:first-child :is(button,a):visible");
+  const controlCount = Math.min(await headerControls.count(), 14);
+  for (let index = 0; index < controlCount; index += 1) {
+    const box = await headerControls.nth(index).boundingBox();
+    if (!box) continue;
+    assert.ok(box.x >= -1, `${label}: header control ${index} starts outside viewport`);
+    assert.ok(
+      box.x + box.width <= metrics.innerWidth + 1,
+      `${label}: header control ${index} exceeds viewport`,
+    );
+  }
+
+  const card = page
+    .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
+    .first();
+  if (!(await card.count())) {
+    assert.ok(!requireProductCard, `${label}: expected a visible product card`);
+    return;
+  }
+
+  const cardBox = await card.boundingBox();
+  assert.ok(cardBox, `${label}: visible product card has no layout box`);
+  assert.ok((cardBox?.width ?? 0) >= 72, `${label}: product card collapsed too narrow`);
+
+  const title = card.locator(".product-card-title").first();
+  if (await title.count()) {
+    const titleMetrics = await title.evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+      lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+      height: element.getBoundingClientRect().height,
+    }));
+    assert.ok(
+      titleMetrics.scrollWidth <= titleMetrics.clientWidth + 2 ||
+        titleMetrics.height > titleMetrics.lineHeight,
+      `${label}: product title clips instead of wrapping`,
+    );
+  }
+
+  const primary = card.locator(".product-card-primary-action:visible").first();
+  if (await primary.count()) {
+    const buttonBox = await primary.boundingBox();
+    assert.ok(buttonBox, `${label}: primary product action has no layout box`);
+    assert.ok((buttonBox?.height ?? 0) >= 36, `${label}: primary product action is too short`);
+    assert.ok(
+      (buttonBox?.x ?? 0) >= (cardBox?.x ?? 0) - 1 &&
+        (buttonBox?.x ?? 0) + (buttonBox?.width ?? 0) <=
+          (cardBox?.x ?? 0) + (cardBox?.width ?? 0) + 1,
+      `${label}: primary product action escapes its card`,
+    );
+  }
+}
+
+async function assertDocumentMode(page, testCase, route) {
+  const expectedDir = testCase.lang === "ar" ? "rtl" : "ltr";
+  assert.equal(
+    await page.locator("html").getAttribute("dir"),
+    expectedDir,
+    `${engineName} ${testCase.width}px ${route}: direction mismatch`,
+  );
+  assert.equal(
+    await page.locator("html").getAttribute("data-theme"),
+    testCase.theme,
+    `${engineName} ${testCase.width}px ${route}: theme mismatch`,
+  );
+}
+
+async function runResponsive(browser) {
+  const cases = engineName === "chromium" ? responsiveCases : supplementalCases;
+
+  for (const testCase of cases) {
+    const page = await browser.newPage({
+      viewport: { width: testCase.width, height: testCase.height },
+    });
+    await configure(page, testCase.lang, testCase.theme);
+    const routes = engineName === "chromium" ? ["/", "/shop"] : ["/", "/shop", "/cart"];
+    for (const route of routes) {
+      const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+      assert.ok(response && response.status() < 400, `${engineName} ${route}: failed to load`);
+      await page.waitForTimeout(180);
+      await assertDocumentMode(page, testCase, route);
+      if (route === "/shop") {
+        await page
+          .locator(
+            ".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible",
+          )
+          .first()
+          .waitFor({ state: "visible", timeout: engineName === "webkit" ? 10000 : 5000 });
+      }
+      await assertViewportHealth(
+        page,
+        `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`,
+        route === "/shop",
+      );
+    }
+
+    await page.close();
+  }
+
+  console.log(`PASS ${engineName}: responsive LTR/RTL light/dark checks`);
+}
+
+async function runProbe(browser) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await configure(page, "en", "light");
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  const routes =
+    routeGroup === "pageerrors-home"
+      ? ["/"]
+      : routeGroup === "pageerrors-cart"
+        ? ["/cart"]
+        : ["/", "/cart"];
+
+  for (const route of routes) {
+    const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+    assert.ok(response && response.status() < 400, `${engineName} ${route}: navigation failed`);
+
+    if (routeGroup === "navigation" || routeGroup.startsWith("pageerrors-")) continue;
+
+    if (routeGroup === "overflow") {
+      const metrics = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+        bodyWidth: document.body.getBoundingClientRect().width,
+      }));
+      assert.ok(
+        metrics.scrollWidth <= metrics.innerWidth + 1,
+        `${engineName} ${route}: document overflow ${metrics.scrollWidth}px > ${metrics.innerWidth}px`,
+      );
+      assert.ok(
+        metrics.bodyWidth <= metrics.innerWidth + 1,
+        `${engineName} ${route}: body exceeds viewport`,
+      );
+      continue;
+    }
+
+    if (routeGroup === "main") {
+      const main = page.locator("main").first();
+      if (await main.count()) {
+        const box = await main.boundingBox();
+        assert.ok(box, `${engineName} ${route}: main has no layout box`);
+        assert.ok((box?.x ?? -2) >= -1, `${engineName} ${route}: main starts outside viewport`);
+        assert.ok(
+          (box?.x ?? 0) + (box?.width ?? 0) <= 391,
+          `${engineName} ${route}: main extends outside viewport`,
+        );
+      }
+      continue;
+    }
+
+    if (routeGroup === "header") {
+      const controls = page.locator("header.sticky > div:first-child :is(button,a):visible");
+      const count = Math.min(await controls.count(), 14);
+      for (let index = 0; index < count; index += 1) {
+        const box = await controls.nth(index).boundingBox();
+        if (!box) continue;
+        assert.ok(box.x >= -1, `${engineName} ${route}: header control ${index} starts outside`);
+        assert.ok(
+          box.x + box.width <= 391,
+          `${engineName} ${route}: header control ${index} exceeds viewport`,
+        );
+      }
+    }
+  }
+
+  if (routeGroup.startsWith("pageerrors-")) {
+    assert.deepEqual(
+      pageErrors,
+      [],
+      `${engineName} page errors detected: ${pageErrors.join(" | ")}`,
+    );
+  }
+
+  await page.close();
+  console.log(`PASS ${engineName}: ${routeGroup} probe`);
+}
+
+async function runShopProbe(browser) {
+  for (const testCase of supplementalCases) {
+    const page = await browser.newPage({
+      viewport: { width: testCase.width, height: testCase.height },
+    });
+    await configure(page, testCase.lang, testCase.theme);
+
+    const response = await page.goto(`${baseURL}/shop`, { waitUntil: "load" });
+    assert.ok(response && response.status() < 400, `${engineName} /shop: failed to load`);
+    await assertDocumentMode(page, testCase, "/shop");
+
+    const card = page
+      .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
+      .first();
+    await card.waitFor({ state: "visible", timeout: 10000 });
+    await assertViewportHealth(
+      page,
+      `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme} /shop`,
+      true,
+    );
+    await page.close();
+  }
+
+  console.log(`PASS ${engineName}: shop product-card probe`);
+}
+
+async function runModeProbe(browser) {
+  const cases =
+    routeGroup.startsWith("overflow-mobile-en")
+      ? [supplementalCases[0]]
+      : routeGroup === "overflow-mobile-ar"
+        ? [supplementalCases[1]]
+        : routeGroup === "overflow-desktop-en"
+          ? [supplementalCases[2]]
+          : supplementalCases;
+
+  for (const testCase of cases) {
+    const page = await browser.newPage({
+      viewport: { width: testCase.width, height: testCase.height },
+    });
+    await configure(page, testCase.lang, testCase.theme);
+
+    const response = await page.goto(`${baseURL}/`, { waitUntil: "load" });
+    assert.ok(response && response.status() < 400, `${engineName} /: failed to load`);
+
+    if (routeGroup.endsWith("no-ticker")) {
+      await page.addStyleTag({
+        content: '[data-testid="homepage-promo-ticker"] { display: none !important; }',
+      });
+    }
+
+    const isolationStyles = {
+      "overflow-mobile-en-no-chrome":
+        '.mobile-top-bar, .mobile-top-bar + div, [data-testid="bottom-nav"] { display: none !important; }',
+      "overflow-mobile-en-no-hero":
+        '[data-testid="homepage-promo-ticker"], [data-testid="home-hero"] { display: none !important; }',
+      "overflow-mobile-en-no-navigation-sections":
+        '[data-testid="category-section"], [data-testid="top-brands"] { display: none !important; }',
+      "overflow-mobile-en-no-deferred":
+        '[data-testid="best-sellers"], [data-testid="deals-section"], [data-testid="new-items"], [data-testid="brand-showcases"], [data-testid="benefits-bar"], [data-testid="trust-benefits-rail"], section[aria-labelledby="recently-viewed"], section[aria-labelledby="why-shop"] { display: none !important; }',
+      "overflow-mobile-en-no-hero-content":
+        '[data-testid="home-hero-content"] { display: none !important; }',
+      "overflow-mobile-en-no-hero-dots":
+        '[data-testid="home-hero-dots"] { display: none !important; }',
+      "overflow-mobile-en-static-hero-parts":
+        '.hero-scene[data-free] .hero-scene-part { position: static !important; inset: auto !important; transform: none !important; }',
+      "overflow-mobile-en-no-hero-buttons":
+        '.hero-scene-buttons-row { display: none !important; }',
+      "overflow-mobile-en-no-hero-container":
+        '.hero-scene { container-type: normal !important; }',
+      "overflow-mobile-en-contain-hero":
+        '.hero-scene { contain: layout paint !important; }',
+      "overflow-mobile-en-hide-hero-scene":
+        '.hero-scene { display: none !important; }',
+    };
+
+    const isolationStyle = isolationStyles[routeGroup];
+    if (isolationStyle) {
+      await page.addStyleTag({ content: isolationStyle });
+    }
+
+    const overflowOnly = routeGroup === "overflow" || routeGroup.startsWith("overflow-");
+
+    if (!overflowOnly) {
+      await assertDocumentMode(page, testCase, "/");
+    }
+
+    if (routeGroup !== "document") {
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth + 1,
+      );
+      assert.equal(
+        overflow,
+        false,
+        `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme}: overflow`,
+      );
+    }
+    await page.close();
+  }
+
+  console.log(`PASS ${engineName}: mode and RTL probe`);
+}
+
+async function runRoutes(browser) {
+  const routes = routeGroups[routeGroup] ?? routeGroups.all;
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await configure(page, "en", "light");
+  for (const route of routes) {
+    const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+    assert.ok(response && response.status() < 400, `${engineName} ${route}: failed route smoke`);
+    await page.waitForTimeout(140);
+    await assertViewportHealth(page, `${engineName} critical route ${route}`);
+  }
+
+  if (routeGroup === "catalog" || routeGroup === "all") {
+    const shopResponse = await page.goto(`${baseURL}/shop`, { waitUntil: "load" });
+    assert.ok(
+      shopResponse && shopResponse.status() < 400,
+      `${engineName} /shop: failed product discovery`,
+    );
+    const productLink = page.locator('a[href^="/product/"]:visible').first();
+    await productLink.waitFor({ state: "visible", timeout: 10000 });
+    const href = await productLink.getAttribute("href");
+    assert.ok(href?.startsWith("/product/"), `${engineName}: no live product detail link found`);
+
+    const productResponse = await page.goto(`${baseURL}${href}`, { waitUntil: "load" });
+    assert.ok(
+      productResponse && productResponse.status() < 400,
+      `${engineName} ${href}: failed live product detail smoke`,
+    );
+    await page.waitForTimeout(140);
+    await assertViewportHealth(page, `${engineName} live product route ${href}`);
+  }
+
+  await page.close();
+  console.log(`PASS ${engineName}: ${routeGroup} route smoke checks`);
+}
+
+const browser = await launcher.launch({ headless: true });
+try {
+  if (suite === "responsive" || suite === "all") await runResponsive(browser);
+  if (suite === "probe") await runProbe(browser);
+  if (suite === "shop") await runShopProbe(browser);
+  if (suite === "mode") await runModeProbe(browser);
+  if (engineName === "chromium" && (suite === "routes" || suite === "all")) {
+    await runRoutes(browser);
+  }
+} finally {
+  await browser.close();
+}

@@ -1,11 +1,17 @@
 .hero-scene {
   container-type: inline-size;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   color: white;
 }
 .hero-scene-canvas {
   position: relative;
   isolation: isolate;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   height: clamp(240px, 62cqw, 320px);
   overflow: hidden;
   border-radius: 20px;
@@ -102,6 +108,8 @@
 }
 .hero-scene-buttons-row {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: inherit;
@@ -117,6 +125,8 @@
 }
 .hero-scene-button {
   display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
   align-items: center;
   justify-content: center;
   min-height: 44px;
@@ -128,6 +138,7 @@
   background: var(--primary, #5968ea);
   color: var(--primary-foreground, white);
   text-decoration: none;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 .hero-scene-button[data-style="light"] {
