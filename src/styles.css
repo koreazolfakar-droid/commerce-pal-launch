@@ -899,6 +899,18 @@
   min-inline-size: 0;
 }
 
+.dashboard-theme-scope .dashboard-main h1 {
+  max-inline-size: 100%;
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.dashboard-theme-scope :where([class~="text-[8px]"], [class~="text-[9px]"]) {
+  font-size: 0.625rem;
+}
+
 .dashboard-theme-scope :where(button, a, [role="button"]) svg.lucide {
   flex-shrink: 0;
   stroke-linecap: round;
