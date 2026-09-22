@@ -13,6 +13,8 @@ on:
       - "src/components/**"
       - "src/routes/**"
       - "src/dashboard/**"
+      - "e2e/**/*.test.mjs"
+      - ".github/workflows/storefront-ci.yml"
 
 permissions:
   contents: read
