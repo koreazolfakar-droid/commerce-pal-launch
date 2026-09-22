@@ -86,14 +86,14 @@ export const CompactProductCard = memo(function CompactProductCard({
         "hover:border-primary/35 hover:bg-background hover:text-primary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         market
-          ? "market-product-action market-wishlist-button end-1.5 top-1.5 h-9 w-9"
+          ? "market-product-action market-wishlist-button end-1.5 top-1.5 h-8 w-8"
           : "end-2.5 top-2.5 h-9 w-9",
       )}
     >
       <Heart
         aria-hidden
         className={cn(
-          market ? "h-[17px] w-[17px]" : "h-4 w-4",
+          market ? "h-[15px] w-[15px]" : "h-4 w-4",
           wishlisted && "fill-primary text-primary",
         )}
         strokeWidth={1.9}
@@ -114,7 +114,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:scale-100 disabled:opacity-40",
         market
-          ? "market-product-action h-9 w-9"
+          ? "market-product-action h-8 w-8"
           : "h-9 w-9",
       )}
     >
@@ -123,7 +123,7 @@ export const CompactProductCard = memo(function CompactProductCard({
       ) : (
         <ShoppingCart
           aria-hidden
-          className={market ? "h-[17px] w-[17px]" : "h-4 w-4"}
+          className={market ? "h-[15px] w-[15px]" : "h-4 w-4"}
           strokeWidth={1.9}
         />
       )}
@@ -139,7 +139,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           className,
         )}
       >
-        <div className="market-product-media relative min-w-0">
+        <div className="market-product-media relative aspect-square min-w-0 overflow-hidden">
           <Link
             to="/product/$handle"
             params={{ handle: node.handle }}
@@ -152,7 +152,7 @@ export const CompactProductCard = memo(function CompactProductCard({
               size={320}
               sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 31vw"
               eager={eager}
-              className="market-product-image"
+              className="market-product-image !aspect-square !w-full"
               imageClassName={cn(
                 "!p-[5%] transition-[transform,filter,opacity] duration-300 group-hover:scale-[1.035]",
                 !inStock && "scale-[1.01] blur-[2px] opacity-70 grayscale-[0.12]",
@@ -184,9 +184,9 @@ export const CompactProductCard = memo(function CompactProductCard({
 
         </div>
 
-        <div className="market-product-copy flex min-w-0 flex-1 flex-col pt-3.5">
+        <div className="market-product-copy flex min-w-0 flex-1 flex-col pt-3">
           {brand ? (
-            <div className="mb-1 flex min-w-0 items-center gap-1">
+            <div className="mb-1 flex min-h-4 min-w-0 items-center gap-1">
               <BrandLogo slug={brand.slug} label={brand.label} size={14} className="rounded" />
               <span className="break-words text-[9px] font-bold uppercase leading-3 tracking-[0.045em] text-muted-foreground sm:text-[10px]">
                 {brand.label}
@@ -210,18 +210,18 @@ export const CompactProductCard = memo(function CompactProductCard({
             params={{ handle: node.handle }}
             className="mt-1 min-w-0"
           >
-            <h3 className="break-words text-[0.8rem] font-medium leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
+            <h3 className="line-clamp-3 break-words text-[0.76rem] font-medium leading-[1.38] text-foreground transition-colors group-hover:text-primary sm:text-sm">
               {node.title}
             </h3>
           </Link>
 
           {summary ? (
-            <p className="mt-0.5 break-words text-[10px] leading-4 text-muted-foreground sm:text-xs">
+            <p className="mt-0.5 line-clamp-1 break-words text-[10px] leading-4 text-muted-foreground sm:text-xs">
               {summary}
             </p>
           ) : null}
 
-          <div className="market-product-footer mt-auto flex min-w-0 items-end justify-between gap-1.5 pt-1">
+          <div className="market-product-footer mt-auto flex min-h-9 min-w-0 items-end justify-between gap-1.5 pt-1.5">
             <p
               className={cn(
                 "market-product-stock min-w-0 flex-1 text-[10px] font-semibold leading-4 sm:text-xs",
