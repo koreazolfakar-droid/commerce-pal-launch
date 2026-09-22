@@ -3,6 +3,7 @@ import { chromium, firefox, webkit } from "@playwright/test";
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:4173";
 const engineMode = process.env.UI_ENGINE ?? "all";
+const suiteMode = process.env.UI_SUITE ?? "all";
 const responsiveCases = [
   { width: 320, height: 700, lang: "en", theme: "light" },
   { width: 360, height: 780, lang: "en", theme: "light" },
@@ -124,7 +125,8 @@ async function assertViewportHealth(page, label) {
 
 if (browser) {
   try {
-    for (const testCase of responsiveCases) {
+    if (suiteMode === "all" || suiteMode === "responsive") {
+      for (const testCase of responsiveCases) {
     const page = await browser.newPage({
       viewport: { width: testCase.width, height: testCase.height },
     });
@@ -153,13 +155,15 @@ if (browser) {
       );
     }
 
-    console.log(
-      `PASS responsive ${testCase.width}px ${testCase.lang}/${testCase.theme}: home + shop`,
-    );
-    await page.close();
+      console.log(
+        `PASS responsive ${testCase.width}px ${testCase.lang}/${testCase.theme}: home + shop`,
+      );
+      await page.close();
+    }
   }
 
-  const routePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    if (suiteMode === "all" || suiteMode === "routes") {
+      const routePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await configure(routePage, "en", "light");
   const pageErrors = [];
   routePage.on("pageerror", (error) => pageErrors.push(error.message));
