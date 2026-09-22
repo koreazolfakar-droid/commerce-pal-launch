@@ -4,6 +4,7 @@ import { chromium, firefox, webkit } from "@playwright/test";
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:4173";
 const engineMode = process.env.UI_ENGINE ?? "all";
 const suiteMode = process.env.UI_SUITE ?? "all";
+
 const responsiveCases = [
   { width: 320, height: 700, lang: "en", theme: "light" },
   { width: 360, height: 780, lang: "en", theme: "light" },
@@ -19,6 +20,12 @@ const responsiveCases = [
   { width: 1440, height: 1000, lang: "ar", theme: "dark" },
 ];
 
+const supplementalCases = [
+  { width: 390, height: 844, lang: "en", theme: "light" },
+  { width: 390, height: 844, lang: "ar", theme: "dark" },
+  { width: 1440, height: 1000, lang: "en", theme: "light" },
+];
+
 const criticalRoutes = [
   "/",
   "/shop",
@@ -30,11 +37,6 @@ const criticalRoutes = [
   "/categories",
   "/brands",
 ];
-
-const browser =
-  engineMode === "all" || engineMode === "chromium"
-    ? await chromium.launch({ headless: true })
-    : null;
 
 async function configure(page, lang, theme) {
   await page.addInitScript(
@@ -51,8 +53,6 @@ async function assertViewportHealth(page, label) {
     scrollWidth: document.documentElement.scrollWidth,
     innerWidth: window.innerWidth,
     bodyWidth: document.body.getBoundingClientRect().width,
-    dir: document.documentElement.dir,
-    theme: document.documentElement.getAttribute("data-theme"),
   }));
 
   assert.ok(
@@ -73,7 +73,9 @@ async function assertViewportHealth(page, label) {
     }
   }
 
-  const headerControls = page.locator("header.sticky > div:first-child :is(button,a):visible");
+  const headerControls = page.locator(
+    "header.sticky > div:first-child :is(button,a):visible",
+  );
   const controlCount = Math.min(await headerControls.count(), 14);
   for (let index = 0; index < controlCount; index += 1) {
     const box = await headerControls.nth(index).boundingBox();
@@ -88,160 +90,163 @@ async function assertViewportHealth(page, label) {
   const card = page
     .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
     .first();
-  if (await card.count()) {
-    const cardBox = await card.boundingBox();
-    assert.ok(cardBox, `${label}: visible product card has no layout box`);
-    assert.ok((cardBox?.width ?? 0) >= 72, `${label}: product card collapsed too narrow`);
 
-    const title = card.locator(".product-card-title").first();
-    if (await title.count()) {
-      const titleMetrics = await title.evaluate((element) => ({
-        scrollWidth: element.scrollWidth,
-        clientWidth: element.clientWidth,
-        lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
-        height: element.getBoundingClientRect().height,
-      }));
-      assert.ok(
-        titleMetrics.scrollWidth <= titleMetrics.clientWidth + 2 ||
-          titleMetrics.height > titleMetrics.lineHeight,
-        `${label}: product title clips instead of wrapping`,
-      );
-    }
+  if (!(await card.count())) return;
 
-    const primary = card.locator(".product-card-primary-action:visible").first();
-    if (await primary.count()) {
-      const buttonBox = await primary.boundingBox();
-      assert.ok(buttonBox, `${label}: primary product action has no layout box`);
-      assert.ok((buttonBox?.height ?? 0) >= 36, `${label}: primary product action is too short`);
-      assert.ok(
-        (buttonBox?.x ?? 0) >= (cardBox?.x ?? 0) - 1 &&
-          (buttonBox?.x ?? 0) + (buttonBox?.width ?? 0) <=
-            (cardBox?.x ?? 0) + (cardBox?.width ?? 0) + 1,
-        `${label}: primary product action escapes its card`,
-      );
-    }
+  const cardBox = await card.boundingBox();
+  assert.ok(cardBox, `${label}: visible product card has no layout box`);
+  assert.ok((cardBox?.width ?? 0) >= 72, `${label}: product card collapsed too narrow`);
+
+  const title = card.locator(".product-card-title").first();
+  if (await title.count()) {
+    const titleMetrics = await title.evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+      lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+      height: element.getBoundingClientRect().height,
+    }));
+    assert.ok(
+      titleMetrics.scrollWidth <= titleMetrics.clientWidth + 2 ||
+        titleMetrics.height > titleMetrics.lineHeight,
+      `${label}: product title clips instead of wrapping`,
+    );
+  }
+
+  const primary = card.locator(".product-card-primary-action:visible").first();
+  if (await primary.count()) {
+    const buttonBox = await primary.boundingBox();
+    assert.ok(buttonBox, `${label}: primary product action has no layout box`);
+    assert.ok((buttonBox?.height ?? 0) >= 36, `${label}: primary product action is too short`);
+    assert.ok(
+      (buttonBox?.x ?? 0) >= (cardBox?.x ?? 0) - 1 &&
+        (buttonBox?.x ?? 0) + (buttonBox?.width ?? 0) <=
+          (cardBox?.x ?? 0) + (cardBox?.width ?? 0) + 1,
+      `${label}: primary product action escapes its card`,
+    );
   }
 }
 
-if (browser) {
-  try {
-    if (suiteMode === "all" || suiteMode === "responsive") {
-      for (const testCase of responsiveCases) {
+async function assertLanguageAndTheme(page, testCase, label) {
+  const expectedDir = testCase.lang === "ar" ? "rtl" : "ltr";
+  assert.equal(
+    await page.locator("html").getAttribute("dir"),
+    expectedDir,
+    `${label}: direction mismatch`,
+  );
+  assert.equal(
+    await page.locator("html").getAttribute("data-theme"),
+    testCase.theme,
+    `${label}: theme mismatch`,
+  );
+}
+
+async function runResponsiveSuite(browser) {
+  for (const testCase of responsiveCases) {
     const page = await browser.newPage({
       viewport: { width: testCase.width, height: testCase.height },
     });
     await configure(page, testCase.lang, testCase.theme);
 
-    for (const route of ["/", "/shop"]) {
-      const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
-      assert.ok(response && response.status() < 400, `${route}: failed to load`);
-      await page.waitForTimeout(180);
+    try {
+      for (const route of ["/", "/shop"]) {
+        const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+        assert.ok(response && response.status() < 400, `${route}: failed to load`);
+        await page.waitForTimeout(180);
 
-      const expectedDir = testCase.lang === "ar" ? "rtl" : "ltr";
-      assert.equal(
-        await page.locator("html").getAttribute("dir"),
-        expectedDir,
-        `${testCase.width}px ${route}: direction mismatch`,
-      );
-      assert.equal(
-        await page.locator("html").getAttribute("data-theme"),
-        testCase.theme,
-        `${testCase.width}px ${route}: theme mismatch`,
-      );
-
-      await assertViewportHealth(
-        page,
-        `${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`,
-      );
-    }
+        const label = `${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`;
+        await assertLanguageAndTheme(page, testCase, label);
+        await assertViewportHealth(page, label);
+      }
 
       console.log(
         `PASS responsive ${testCase.width}px ${testCase.lang}/${testCase.theme}: home + shop`,
       );
+    } finally {
+      await page.close();
+    }
+  }
+}
+
+async function runCriticalRouteSuite(browser) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await configure(page, "en", "light");
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  try {
+    for (const route of criticalRoutes) {
+      const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+      assert.ok(response && response.status() < 400, `${route}: failed route smoke`);
+      await page.waitForTimeout(120);
+      await assertViewportHealth(page, `critical route ${route}`);
+    }
+
+    assert.deepEqual(pageErrors, [], `page errors detected: ${pageErrors.join(" | ")}`);
+    console.log("PASS critical storefront routes: no overflow or page errors");
+  } finally {
+    await page.close();
+  }
+}
+
+async function runSupplementalSuite(engineName, browser) {
+  for (const testCase of supplementalCases) {
+    const page = await browser.newPage({
+      viewport: { width: testCase.width, height: testCase.height },
+    });
+    await configure(page, testCase.lang, testCase.theme);
+    const pageErrors = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+
+    try {
+      for (const route of ["/", "/shop", "/cart"]) {
+        const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+        assert.ok(response && response.status() < 400, `${engineName} ${route}: failed to load`);
+        await page.waitForTimeout(140);
+
+        const label = `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`;
+        await assertLanguageAndTheme(page, testCase, label);
+        await assertViewportHealth(page, label);
+      }
+
+      assert.deepEqual(
+        pageErrors,
+        [],
+        `${engineName} page errors detected: ${pageErrors.join(" | ")}`,
+      );
+    } finally {
       await page.close();
     }
   }
 
-    if (suiteMode === "all" || suiteMode === "routes") {
-      const routePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await configure(routePage, "en", "light");
-  const pageErrors = [];
-  routePage.on("pageerror", (error) => pageErrors.push(error.message));
-
-  for (const route of criticalRoutes) {
-    const response = await routePage.goto(`${baseURL}${route}`, { waitUntil: "load" });
-    assert.ok(response && response.status() < 400, `${route}: failed route smoke`);
-    await routePage.waitForTimeout(120);
-    await assertViewportHealth(routePage, `critical route ${route}`);
-  }
-
-  assert.deepEqual(pageErrors, [], `page errors detected: ${pageErrors.join(" | ")}`);
-  await routePage.close();
-  console.log("PASS critical storefront routes: no overflow or page errors");
-} finally {
-  await browser.close();
+  console.log(`PASS ${engineName}: responsive LTR/RTL light/dark smoke checks`);
 }
 
+if (engineMode === "all" || engineMode === "chromium") {
+  const browser = await chromium.launch({ headless: true });
+  try {
+    if (suiteMode === "all" || suiteMode === "responsive") {
+      await runResponsiveSuite(browser);
+    }
+    if (suiteMode === "all" || suiteMode === "routes") {
+      await runCriticalRouteSuite(browser);
+    }
+  } finally {
+    await browser.close();
+  }
+}
 
 const supplementalEngines = [
   { name: "firefox", launcher: firefox },
   { name: "webkit", launcher: webkit },
 ];
 
-const supplementalCases = [
-  { width: 390, height: 844, lang: "en", theme: "light" },
-  { width: 390, height: 844, lang: "ar", theme: "dark" },
-  { width: 1440, height: 1000, lang: "en", theme: "light" },
-];
+for (const engine of supplementalEngines) {
+  if (engineMode !== "all" && engineMode !== engine.name) continue;
 
-for (const engine of supplementalEngines.filter(
-  (candidate) => engineMode === "all" || engineMode === candidate.name,
-)) {
-  const engineBrowser = await engine.launcher.launch({ headless: true });
+  const browser = await engine.launcher.launch({ headless: true });
   try {
-    for (const testCase of supplementalCases) {
-      const page = await engineBrowser.newPage({
-        viewport: { width: testCase.width, height: testCase.height },
-      });
-      await configure(page, testCase.lang, testCase.theme);
-      const pageErrors = [];
-      page.on("pageerror", (error) => pageErrors.push(error.message));
-
-      for (const route of ["/", "/shop", "/cart"]) {
-        const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
-        assert.ok(
-          response && response.status() < 400,
-          `${engine.name} ${route}: failed to load`,
-        );
-        await page.waitForTimeout(140);
-
-        const expectedDir = testCase.lang === "ar" ? "rtl" : "ltr";
-        assert.equal(
-          await page.locator("html").getAttribute("dir"),
-          expectedDir,
-          `${engine.name} ${testCase.width}px ${route}: direction mismatch`,
-        );
-        assert.equal(
-          await page.locator("html").getAttribute("data-theme"),
-          testCase.theme,
-          `${engine.name} ${testCase.width}px ${route}: theme mismatch`,
-        );
-        await assertViewportHealth(
-          page,
-          `${engine.name} ${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`,
-        );
-      }
-
-      assert.deepEqual(
-        pageErrors,
-        [],
-        `${engine.name} page errors detected: ${pageErrors.join(" | ")}`,
-      );
-      await page.close();
-    }
-
-    console.log(`PASS ${engine.name}: responsive LTR/RTL light/dark smoke checks`);
+    await runSupplementalSuite(engine.name, browser);
   } finally {
-    await engineBrowser.close();
+    await browser.close();
   }
 }
