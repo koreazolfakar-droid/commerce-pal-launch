@@ -236,6 +236,33 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          name: ui-browser-main-chromium
+          engine: chromium
+          suite: probe
+          route_group: main
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          name: ui-browser-header-chromium
+          engine: chromium
+          suite: probe
+          route_group: header
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          name: ui-browser-pageerrors-chromium
+          engine: chromium
+          suite: probe
+          route_group: pageerrors
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
           name: ui-browser-chromium-responsive
           engine: chromium
           suite: responsive
