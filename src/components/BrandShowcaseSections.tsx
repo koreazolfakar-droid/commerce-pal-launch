@@ -6,7 +6,6 @@ import {
 } from "@/lib/queries";
 import type { ShowcaseCollection } from "@/lib/merchandising";
 import { ProductRail } from "@/components/ProductRail";
-import { ProductViewToggle } from "@/components/ProductViewToggle";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
@@ -18,7 +17,6 @@ import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { findFacetMerchandising } from "@/lib/homeMerchandising";
 import { cdnImage } from "@/lib/image";
 import { productsInCategory, productsOfBrand } from "@/lib/taxonomy";
-import { useProductViewMode } from "@/hooks/useProductViewMode";
 
 import { fetchCollectionByHandle } from "@/lib/storefrontData";
 import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
@@ -401,7 +399,6 @@ function FacetSection({
   loading?: boolean;
 }) {
   const storageKey = `space-cell-${kind}-${slug}-view`;
-  const [viewMode, setViewMode] = useProductViewMode("grid", storageKey);
 
   return (
     <section
@@ -417,7 +414,6 @@ function FacetSection({
           subtitle={description || undefined}
           href={href}
           compact
-          actions={<ProductViewToggle mode={viewMode} onChange={setViewMode} />}
         />
       </div>
       <div className="px-1 pb-2 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
@@ -427,9 +423,6 @@ function FacetSection({
           <ProductRail
             products={products.slice(0, 6)}
             storageKey={storageKey}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            showViewToggle={false}
             compactGrid
           />
         )}
@@ -441,7 +434,6 @@ function FacetSection({
 function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
   const { t } = useLanguage();
   const storageKey = `showcase-${collection.handle}-view`;
-  const [viewMode, setViewMode] = useProductViewMode("grid", storageKey);
   const { data, isPending } = useQuery(collectionQueryOptions(collection.handle, 12));
   const productLabel = `${collection.productCount} ${t(collection.productCount === 1 ? "product" : "products")}`;
 
@@ -457,7 +449,6 @@ function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
           subtitle={collection.description || productLabel}
           href={`/collections/${collection.handle}`}
           compact
-          actions={<ProductViewToggle mode={viewMode} onChange={setViewMode} />}
         />
       </div>
       <div className="px-1 pb-2 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
@@ -465,9 +456,6 @@ function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
           <ProductRail
             products={data.products}
             storageKey={storageKey}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            showViewToggle={false}
             compactGrid
           />
         ) : isPending ? (
