@@ -8,7 +8,7 @@ import type { ShopifyProduct } from "@/lib/shopify";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
 
-const DENSE = "grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-4 md:grid-cols-4 xl:grid-cols-5";
+const DENSE = "grid grid-cols-3 gap-x-2 gap-y-3.5 sm:gap-4 md:grid-cols-4 xl:grid-cols-5";
 const GRID = "grid grid-cols-2 gap-x-2.5 gap-y-4 sm:gap-5 md:grid-cols-3 xl:grid-cols-4";
 const LIST = "grid gap-3 sm:gap-4";
 
