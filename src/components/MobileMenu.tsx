@@ -79,13 +79,13 @@ function SectionHeading({
     <div className="mb-2 flex items-center justify-between gap-3 px-1">
       <div className="flex min-w-0 items-center gap-2">
         <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.15} />
-        <h2 className="truncate text-[13px] font-black tracking-tight text-foreground">{title}</h2>
+        <h2 className="truncate text-[13px] font-semibold tracking-tight text-foreground">{title}</h2>
       </div>
       {action && to ? (
         <Link
           to={to}
           onClick={onClick}
-          className="inline-flex min-h-7 shrink-0 items-center gap-0.5 rounded-lg px-2 text-[10px] font-extrabold text-primary transition-colors hover:bg-primary/8 active:bg-primary/10"
+          className="inline-flex min-h-7 shrink-0 items-center gap-0.5 rounded-lg px-2 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/8 active:bg-primary/10"
         >
           {action}
           <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 rtl:rotate-180" />
@@ -177,7 +177,7 @@ export function MobileMenu({
             <Sparkles aria-hidden="true" className="h-[18px] w-[18px]" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-primary">
+            <p className="truncate text-[11px] font-bold tracking-[-0.01em] text-primary">
               Space Call
             </p>
             <p className="truncate text-[10px] font-medium text-muted-foreground">
@@ -263,7 +263,7 @@ export function MobileMenu({
                 className={quickLinkClass}
               >
                 <Sparkles aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-[11px] font-extrabold">{newArrivalsLabel}</span>
+                <span className="truncate text-[11px] font-semibold">{newArrivalsLabel}</span>
               </Link>
               <Link
                 to="/shop"
@@ -272,7 +272,7 @@ export function MobileMenu({
                 className={quickLinkClass}
               >
                 <Flame aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-[11px] font-extrabold">{bestSellersLabel}</span>
+                <span className="truncate text-[11px] font-semibold">{bestSellersLabel}</span>
               </Link>
               <Link
                 to="/shop"
@@ -281,18 +281,18 @@ export function MobileMenu({
                 className={quickLinkClass}
               >
                 <BadgePercent aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-[11px] font-extrabold">{offersLabel}</span>
+                <span className="truncate text-[11px] font-semibold">{offersLabel}</span>
               </Link>
               <Link to="/shop" onClick={close} className={quickLinkClass}>
                 <ShoppingBag aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-[11px] font-extrabold">{allProductsLabel}</span>
+                <span className="truncate text-[11px] font-semibold">{allProductsLabel}</span>
               </Link>
             </div>
 
             <Link
               to="/brands"
               onClick={close}
-              className="mt-1.5 flex min-h-[38px] items-center gap-2 rounded-xl px-2 text-[11px] font-extrabold text-primary transition-colors hover:bg-primary/[0.06] active:bg-primary/10"
+              className="mt-1.5 flex min-h-[38px] items-center gap-2 rounded-xl px-2 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/[0.06] active:bg-primary/10"
             >
               <Tags aria-hidden="true" className="h-4 w-4" />
               <span className="flex-1">{exploreBrandsLabel}</span>
