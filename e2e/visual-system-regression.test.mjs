@@ -171,4 +171,7 @@ test("semantic product and dashboard hooks replace fragile visual selectors", as
   assert.match(dashboard, /dashboard-mobile-nav/);
   assert.match(styles, /--dashboard-touch:\s*2\.75rem/);
   assert.match(styles, /\.dashboard-theme-scope \.dashboard-icon-button \{/);
+  assert.match(styles, /text-\[#14203a\]/);
+  assert.match(styles, /bg-\[#f5f6ff\]/);
+  assert.match(styles, /border-\[#dfe2ff\]/);
 });
