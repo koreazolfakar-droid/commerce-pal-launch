@@ -319,6 +319,12 @@ async function runModeProbe(browser) {
         '.hero-scene[data-free] .hero-scene-part { position: static !important; inset: auto !important; transform: none !important; }',
       "overflow-mobile-en-no-hero-buttons":
         '.hero-scene-buttons-row { display: none !important; }',
+      "overflow-mobile-en-no-hero-container":
+        '.hero-scene { container-type: normal !important; }',
+      "overflow-mobile-en-contain-hero":
+        '.hero-scene { contain: layout paint !important; }',
+      "overflow-mobile-en-hide-hero-scene":
+        '.hero-scene { display: none !important; }',
     };
 
     const isolationStyle = isolationStyles[routeGroup];
