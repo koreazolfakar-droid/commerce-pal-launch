@@ -63,7 +63,7 @@ test("homepage uses bounded product reads and keeps brand shelves lazy", async (
   assert.match(index, /categories: navigationCatalog\?\.categories \?\? catalog\.categories/);
   assert.match(index, /brands: navigationCatalog\?\.brands \?\? catalog\.brands/);
   assert.match(queries, /homeVendorProductsQueryOptions/);
-  assert.match(queries, /fetchProductsByVendor\(normalizedVendor, 4\)/);
+  assert.match(queries, /fetchProductsByVendor\(normalizedVendor, 6\)/);
   assert.match(shelves, /homeVendorProductsQueryOptions/);
   assert.match(shelves, /HOME_BRAND_PRODUCT_TARGET = 6/);
   assert.match(shelves, /IntersectionObserver/);
