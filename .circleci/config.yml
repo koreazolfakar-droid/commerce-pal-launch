@@ -347,6 +347,15 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          name: ui-browser-webkit-overflow-mobile-en-no-ticker
+          engine: webkit
+          suite: mode
+          route_group: overflow-mobile-en-no-ticker
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
           name: ui-browser-webkit-overflow-mobile-ar
           engine: webkit
           suite: mode
