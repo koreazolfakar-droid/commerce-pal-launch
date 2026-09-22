@@ -32,6 +32,7 @@ import {
 import { lazy, Suspense, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { CustomerAddressSelector } from "@/components/customer-account/CustomerAddressSelector";
 import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -120,6 +121,9 @@ export function SiteHeader() {
       <div className="bg-hero text-hero-muted">
         <div className="store-utility-bar mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2 text-[11px] font-medium">
           <ul className="flex items-center gap-5">
+            <li>
+              <CustomerAddressSelector variant="desktop" />
+            </li>
             {UTILITY.map((item, index) => (
               <li key={index} className="flex items-center gap-1.5 whitespace-nowrap">
                 <item.icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.7} />
