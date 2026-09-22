@@ -171,12 +171,30 @@ jobs:
             fi
             test -s /tmp/ui-home.html
 
+
+  ui-playwright-image-smoke:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.63.0-noble
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - run:
+          name: Verify Playwright image runtime
+          command: |
+            node --version
+            test -d /ms-playwright
+
 workflows:
   security-and-storefront-validation:
     jobs:
       - security-source
       - security-dependencies
       - ui-server-smoke:
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-playwright-image-smoke:
           filters:
             branches:
               only:
