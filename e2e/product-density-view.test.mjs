@@ -22,13 +22,13 @@ test("storefront density modes use static grids and preserve product information
 
   assert.match(grid, /grid-cols-3/);
   assert.match(grid, /grid-cols-2/);
-  assert.match(grid, /market/);
+  assert.match(grid, /borderless/);
 
-  assert.match(rail, /gridProducts = products\.slice\(0, 6\)/);
-  assert.match(rail, /data-product-layout=\{viewMode\}/);
-  assert.match(rail, /grid-cols-3/);
-  assert.match(rail, /grid-cols-2/);
-  assert.doesNotMatch(rail, /overflow-x-auto|scroll-rail|RailArrow|ChevronLeft|ChevronRight/);
+  assert.match(rail, /const visible = products\.slice\(0, compactGrid \? 6 : 10\)/);
+  assert.match(rail, /data-product-layout="swipe"/);
+  assert.match(rail, /scroll-rail product-rail-items product-swipe-rail/);
+  assert.match(rail, /market/);
+  assert.doesNotMatch(rail, /RailArrow|ChevronLeft|ChevronRight/);
 
   assert.match(showcase, /HOME_BRAND_PRODUCT_TARGET = 6/);
   assert.match(showcase, /products=\{products\.slice\(0, 6\)\}/);
