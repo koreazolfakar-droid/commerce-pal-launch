@@ -91,6 +91,28 @@ jobs:
           command: bun run test:ssr
 
 
+  ui-browser-deps:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - bun-deps-v1-{{ checksum "bun.lock" }}
+            - bun-deps-v1-
+      - install-bun
+      - run:
+          name: Install browser-test dependencies
+          command: bun install --frozen-lockfile
+      - persist_to_workspace:
+          root: .
+          paths:
+            - node_modules
+
   ui-browser:
     parameters:
       engine:
@@ -123,7 +145,7 @@ jobs:
       - run:
           name: Responsive multi-engine UI checks
           command: |
-            bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/ui-polish-vite.log 2>&1 &
+            ./node_modules/.bin/vite dev --host 0.0.0.0 --port 4173 > /tmp/ui-polish-vite.log 2>&1 &
             SERVER_PID=$!
             trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
             READY=0
@@ -209,7 +231,14 @@ workflows:
                 - /^important\/.*/
                 - /^design\/.*/
                 - /^ui\/.*/
+      - ui-browser-deps:
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-runtime-chromium
           engine: chromium
           suite: runtime
@@ -218,6 +247,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-navigation-chromium
           engine: chromium
           suite: probe
@@ -227,6 +258,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-overflow-chromium
           engine: chromium
           suite: probe
@@ -236,6 +269,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-main-chromium
           engine: chromium
           suite: probe
@@ -245,6 +280,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-header-chromium
           engine: chromium
           suite: probe
@@ -254,6 +291,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-pageerrors-chromium
           engine: chromium
           suite: probe
@@ -263,6 +302,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-chromium-responsive
           engine: chromium
           suite: responsive
@@ -271,6 +312,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-chromium-routes-catalog
           engine: chromium
           suite: routes
@@ -280,6 +323,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-chromium-routes-commerce
           engine: chromium
           suite: routes
@@ -289,6 +334,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-firefox
           engine: firefox
           filters:
@@ -296,6 +343,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit
           engine: webkit
           filters:
@@ -303,6 +352,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-navigation
           engine: webkit
           suite: probe
@@ -312,6 +363,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-mode
           engine: webkit
           suite: mode
@@ -320,6 +373,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-home-document
           engine: webkit
           suite: mode
@@ -329,6 +384,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-home-overflow
           engine: webkit
           suite: mode
@@ -338,6 +395,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-overflow-mobile-en
           engine: webkit
           suite: mode
@@ -347,6 +406,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-overflow-mobile-en-no-ticker
           engine: webkit
           suite: mode
@@ -356,6 +417,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-overflow-mobile-ar
           engine: webkit
           suite: mode
@@ -365,6 +428,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-overflow-desktop-en
           engine: webkit
           suite: mode
@@ -374,6 +439,8 @@ workflows:
               only:
                 - /^ui\/.*/
       - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-shop
           engine: webkit
           suite: shop
