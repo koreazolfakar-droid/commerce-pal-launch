@@ -163,14 +163,13 @@ export function HomeCategorySection({
                 params={{ slug: category.slug }}
                 role="listitem"
                 aria-label={label}
-                className="group flex w-[5.8rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl px-1 py-1.5 text-center transition duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.6rem] sm:gap-2.5 lg:w-[7.1rem]"
+                className="group flex w-[5.8rem] shrink-0 snap-start flex-col items-center gap-2 rounded-lg px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.6rem] sm:gap-2.5 lg:w-[7.1rem]"
               >
                 <span
-                  className="relative grid h-[4.65rem] w-[4.65rem] shrink-0 place-items-center overflow-hidden rounded-[1.35rem] border border-border/70 bg-card shadow-card transition duration-300 group-hover:border-primary/25 group-hover:shadow-card-hover sm:h-[5.2rem] sm:w-[5.2rem] sm:rounded-[1.5rem] lg:h-[5.6rem] lg:w-[5.6rem]"
+                  className="relative grid h-[4.65rem] w-[4.65rem] shrink-0 place-items-center overflow-hidden rounded-lg border border-border/70 bg-card shadow-card transition-colors duration-150 group-hover:border-primary/25 sm:h-[5.2rem] sm:w-[5.2rem] lg:h-[5.6rem] lg:w-[5.6rem]"
                   aria-hidden="true"
                 >
-                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white via-white to-slate-50 dark:from-card dark:via-card dark:to-surface" />
-                  <span className="pointer-events-none absolute inset-x-3 top-1 h-px bg-white/80 dark:bg-white/10" />
+                  <span className="pointer-events-none absolute inset-0 bg-card" />
                   {imageUrl ? (
                     <img
                       src={imageUrl}
@@ -179,12 +178,12 @@ export function HomeCategorySection({
                       decoding="async"
                       width={128}
                       height={128}
-                      className="relative h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.06]"
+                      className="relative h-full w-full object-contain p-1.5"
                     />
                   ) : (
                     <CategoryGlyph
                       slug={category.glyphSlug}
-                      className="relative h-[4.15rem] w-[4.15rem] transition-transform duration-300 ease-out group-hover:scale-[1.06] sm:h-[4.65rem] sm:w-[4.65rem] lg:h-[5rem] lg:w-[5rem]"
+                      className="relative h-[4.15rem] w-[4.15rem] sm:h-[4.65rem] sm:w-[4.65rem] lg:h-[5rem] lg:w-[5rem]"
                     />
                   )}
                 </span>
