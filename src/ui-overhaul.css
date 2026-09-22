@@ -266,7 +266,7 @@
 
 /* ---------- Product cards ---------- */
 .homepage-product-card,
-article.card-lift[class*="bg-card"],
+.sc-product-card,
 .product-list-card {
   border-color: color-mix(in oklab, var(--color-border) 84%, transparent);
   border-radius: var(--ui-radius-card);
@@ -274,26 +274,26 @@ article.card-lift[class*="bg-card"],
 }
 
 .homepage-product-card:hover,
-article.card-lift[class*="bg-card"]:hover,
+.sc-product-card:hover,
 .product-list-card:hover {
   border-color: color-mix(in oklab, var(--color-primary) 27%, var(--color-border));
   box-shadow: var(--shadow-card-hover);
 }
 
 .homepage-product-card > .card-lift,
-article.card-lift[class*="bg-card"] > div:first-child {
+.sc-product-card > div:first-child {
   background: var(--color-image-stage);
 }
 
 .homepage-product-card button[class*="absolute"],
-article.card-lift[class*="bg-card"] button[class*="absolute"],
+.sc-product-card button[class*="absolute"],
 .product-list-card button {
   border-color: color-mix(in oklab, var(--color-border) 76%, transparent);
   box-shadow: 0 9px 22px -16px color-mix(in oklab, var(--color-foreground) 50%, transparent);
 }
 
 .homepage-product-card h3,
-article.card-lift[class*="bg-card"] h3,
+.sc-product-card h3,
 .product-list-card h3 {
   text-wrap: pretty;
 }
@@ -363,7 +363,7 @@ article.card-lift[class*="bg-card"] h3,
 
 /* ---------- Dark mode ---------- */
 .dark .homepage-product-card,
-.dark article.card-lift[class*="bg-card"],
+.dark .sc-product-card,
 .dark .product-list-card,
 .dark [data-testid="brand-showcases"] > section,
 .dark [data-testid="brand-showcases"] > div > section,
@@ -426,12 +426,12 @@ article.card-lift[class*="bg-card"] h3,
   }
 
   .homepage-product-card,
-  article.card-lift[class*="bg-card"] {
+  .sc-product-card {
     border-radius: 0.875rem;
   }
 
   .homepage-product-card > div:last-child,
-  article.card-lift[class*="bg-card"] > div:last-child {
+  .sc-product-card > div:last-child {
     padding-inline: 0.72rem;
   }
 
@@ -460,7 +460,7 @@ article.card-lift[class*="bg-card"] h3,
   .category-icon-badge,
   .brand-logo-tile,
   .homepage-product-card,
-  article.card-lift[class*="bg-card"] {
+  .sc-product-card {
     transition: none !important;
     transform: none !important;
   }
