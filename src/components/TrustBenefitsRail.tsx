@@ -8,28 +8,28 @@ const BENEFITS = [
     title: "benefitFreeDelivery",
     detail: "benefitEligibleOrders",
     iconTone:
-      "border-sky-500/20 bg-gradient-to-br from-sky-500/20 via-blue-500/10 to-violet-500/15 text-blue-600 dark:text-sky-400",
+      "border-sky-500/20 bg-sky-500/10 text-blue-600 dark:text-sky-400",
   },
   {
     icon: ShieldCheck,
     title: "benefitWarranty",
     detail: "benefitAuthentic",
     iconTone:
-      "border-violet-500/20 bg-gradient-to-br from-indigo-500/20 via-violet-500/10 to-purple-500/15 text-violet-600 dark:text-violet-400",
+      "border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-400",
   },
   {
     icon: RotateCcw,
     title: "benefitReturns",
     detail: "benefitReturnsPolicy",
     iconTone:
-      "border-cyan-500/20 bg-gradient-to-br from-cyan-500/20 via-sky-500/10 to-blue-500/15 text-cyan-700 dark:text-cyan-400",
+      "border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
   },
   {
     icon: CreditCard,
     title: "benefitSecurePayment",
     detail: "benefitEncryptedCheckout",
     iconTone:
-      "border-emerald-500/20 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-cyan-500/15 text-emerald-700 dark:text-emerald-400",
+      "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   },
 ] as const;
 
@@ -46,10 +46,10 @@ export function TrustBenefitsRail() {
         {BENEFITS.map((benefit) => (
           <article
             key={benefit.title}
-            className="group flex min-h-[3.9rem] w-[58%] min-w-[12.25rem] max-w-[13rem] shrink-0 snap-start items-center gap-2 rounded-2xl border border-border/70 bg-gradient-to-br from-card via-card to-primary/[0.025] px-2.5 py-2 shadow-card transition duration-200 hover:border-primary/20 hover:shadow-card-hover sm:w-[12.75rem] sm:min-w-[12.75rem]"
+            className="group flex min-h-[3.9rem] w-[58%] min-w-[12.25rem] max-w-[13rem] shrink-0 snap-start items-center gap-2 rounded-lg border border-border/70 bg-card px-2.5 py-2 shadow-card transition-colors duration-150 hover:border-primary/20 sm:w-[12.75rem] sm:min-w-[12.75rem]"
           >
             <span
-              className={`relative grid h-8.5 w-8.5 shrink-0 place-items-center overflow-hidden rounded-[0.7rem] border shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_4px_10px_rgba(37,99,235,0.08)] transition duration-200 group-hover:-translate-y-px group-hover:scale-[1.03] ${benefit.iconTone}`}
+              className={`relative grid h-8.5 w-8.5 shrink-0 place-items-center overflow-hidden rounded-[0.7rem] border shadow-sm transition-colors duration-150 ${benefit.iconTone}`}
             >
               <span
                 aria-hidden="true"
