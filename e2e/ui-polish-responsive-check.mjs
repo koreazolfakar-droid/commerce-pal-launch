@@ -280,7 +280,16 @@ async function runShopProbe(browser) {
 }
 
 async function runModeProbe(browser) {
-  for (const testCase of supplementalCases) {
+  const cases =
+    routeGroup === "overflow-mobile-en"
+      ? [supplementalCases[0]]
+      : routeGroup === "overflow-mobile-ar"
+        ? [supplementalCases[1]]
+        : routeGroup === "overflow-desktop-en"
+          ? [supplementalCases[2]]
+          : supplementalCases;
+
+  for (const testCase of cases) {
     const page = await browser.newPage({
       viewport: { width: testCase.width, height: testCase.height },
     });
@@ -289,7 +298,9 @@ async function runModeProbe(browser) {
     const response = await page.goto(`${baseURL}/`, { waitUntil: "load" });
     assert.ok(response && response.status() < 400, `${engineName} /: failed to load`);
 
-    if (routeGroup !== "overflow") {
+    const overflowOnly = routeGroup === "overflow" || routeGroup.startsWith("overflow-");
+
+    if (!overflowOnly) {
       await assertDocumentMode(page, testCase, "/");
     }
 
