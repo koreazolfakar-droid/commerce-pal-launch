@@ -91,6 +91,97 @@ jobs:
           command: bun run test:ssr
 
 
+  final-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: ESLint and Prettier
+          command: bun run lint
+
+  final-regressions:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Storefront regression tests
+          command: |
+            node --test               e2e/visual-system-regression.test.mjs               e2e/dashboard-smart-image-editor.test.mjs               e2e/product-density-view.test.mjs               e2e/storefront-dark-theme.test.mjs               e2e/storefront-consistency.test.mjs               e2e/performance-architecture.test.mjs               e2e/category-storefront-sync.test.mjs               e2e/dashboard-homepage-cms.test.mjs
+
+  final-build-ssr:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Production build
+          command: bun run build
+      - run:
+          name: SSR smoke test
+          command: bun run test:ssr
+
+  final-ui-responsive:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.63.0-noble
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /root/.bun
+      UI_ENGINE: chromium
+      UI_SUITE: responsive
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Responsive Chromium storefront checks
+          command: |
+            bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/ui-polish-vite.log 2>&1 &
+            SERVER_PID=$!
+            trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+            READY=0
+            for _ in {1..60}; do
+              if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+                READY=1
+                break
+              fi
+              sleep 1
+            done
+            if [ "$READY" -ne 1 ]; then
+              cat /tmp/ui-polish-vite.log
+              exit 1
+            fi
+            E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ui-polish-responsive-check.mjs
+
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -212,6 +303,10 @@ workflows:
     jobs:
       - security-source
       - security-dependencies
+      - final-lint
+      - final-regressions
+      - final-build-ssr
+      - final-ui-responsive
       - ui-browser-deps:
           filters:
             branches:
