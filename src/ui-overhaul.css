@@ -6,9 +6,9 @@
  */
 
 :root {
-  --ui-shell-max: 84rem;
-  --ui-radius-card: 1.25rem;
-  --ui-radius-control: 0.9rem;
+  --ui-shell-max: var(--sc-shell-max, 80rem);
+  --ui-radius-card: var(--sc-card-radius, 0.9375rem);
+  --ui-radius-control: var(--sc-control-radius, 0.75rem);
   --ui-touch: 2.75rem;
   --ui-icon-size: 2.625rem;
   --ui-hairline: color-mix(in oklab, var(--color-border) 78%, transparent);
@@ -18,13 +18,7 @@
 
 /* ---------- Global visual consistency ---------- */
 .store-layout {
-  background:
-    radial-gradient(
-      circle at 50% -12rem,
-      color-mix(in oklab, var(--color-primary) 5%, transparent),
-      transparent 30rem
-    ),
-    var(--color-background);
+  background: var(--color-background);
 }
 
 .store-layout :is(button, a) svg.lucide {
@@ -57,8 +51,8 @@
 
 .home-section-header > a {
   min-height: 2.5rem;
-  border-radius: 999px;
-  padding-inline: 0.65rem;
+  border-radius: var(--ui-radius-control);
+  padding-inline: 0.75rem;
 }
 
 /* ---------- Desktop header ---------- */
@@ -94,6 +88,7 @@
   .store-layout > div[class*="lg:block"] header button[class*="rounded-full"][class*="bg-surface"] {
     min-height: 2.85rem;
     border: 1px solid color-mix(in oklab, var(--color-border) 86%, transparent);
+    border-radius: var(--ui-radius-control);
     background: color-mix(in oklab, var(--color-surface) 76%, var(--color-card));
     box-shadow:
       inset 0 1px 0 color-mix(in oklab, white 42%, transparent),
@@ -149,6 +144,7 @@
 
   .store-layout header[class*="lg:hidden"] :is(button, a)[class*="h-10"][class*="w-10"] {
     border: 1px solid transparent;
+    border-radius: var(--ui-radius-control);
     background: color-mix(in oklab, var(--color-surface) 74%, transparent);
   }
 
@@ -165,7 +161,7 @@
 
   .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] > div:first-child > button {
     border: 1px solid color-mix(in oklab, var(--color-border) 76%, transparent);
-    border-radius: 1rem;
+    border-radius: var(--ui-radius-control);
     background: color-mix(in oklab, var(--color-surface) 78%, var(--color-card));
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 32%, transparent);
   }
@@ -197,7 +193,7 @@
   gap: 0.65rem;
   padding: 0.7rem 0.45rem 0.6rem;
   border: 1px solid transparent;
-  border-radius: 1.35rem;
+  border-radius: var(--ui-radius-card);
   background: transparent;
 }
 
@@ -208,43 +204,18 @@
   height: 4rem;
   overflow: hidden;
   border: 1px solid var(--ui-soft-primary-border);
-  border-radius: 1.35rem;
-  background:
-    radial-gradient(
-      circle at 30% 24%,
-      color-mix(in oklab, white 82%, transparent),
-      transparent 38%
-    ),
-    linear-gradient(
-      145deg,
-      color-mix(in oklab, var(--color-primary) 14%, var(--color-card)),
-      var(--color-card)
-    );
-  box-shadow:
-    0 12px 26px -20px color-mix(in oklab, var(--color-primary) 72%, transparent),
-    inset 0 1px 0 color-mix(in oklab, white 62%, transparent);
+  border-radius: var(--ui-radius-card);
+  background: color-mix(in oklab, var(--color-primary) 6%, var(--color-card));
+  box-shadow: 0 4px 14px -12px color-mix(in oklab, var(--color-foreground) 34%, transparent);
 }
 
 .dark .category-icon-badge {
-  background:
-    radial-gradient(circle at 30% 24%, color-mix(in oklab, white 9%, transparent), transparent 42%),
-    linear-gradient(
-      145deg,
-      color-mix(in oklab, var(--color-primary) 16%, var(--color-card)),
-      var(--color-card)
-    );
-  box-shadow: 0 14px 30px -22px color-mix(in oklab, var(--color-primary) 66%, transparent);
+  background: color-mix(in oklab, var(--color-primary) 10%, var(--color-card));
+  box-shadow: none;
 }
 
 .category-icon-badge::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: auto -0.7rem -1.05rem auto;
-  width: 2.8rem;
-  height: 2.8rem;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+  content: none;
 }
 
 .category-icon-badge svg {
@@ -265,7 +236,7 @@
 .category-icon-card:focus-visible {
   border-color: color-mix(in oklab, var(--color-primary) 18%, var(--color-border));
   background: color-mix(in oklab, var(--color-card) 91%, var(--color-primary));
-  box-shadow: 0 16px 34px -28px color-mix(in oklab, var(--color-foreground) 45%, transparent);
+  box-shadow: 0 6px 18px -16px color-mix(in oklab, var(--color-foreground) 36%, transparent);
 }
 
 .category-icon-card:hover .category-icon-badge,
@@ -273,11 +244,7 @@
   transform: translateY(-1px) scale(1.035);
   border-color: color-mix(in oklab, var(--color-primary) 64%, var(--color-border));
   color: var(--color-primary-foreground);
-  background: linear-gradient(
-    145deg,
-    color-mix(in oklab, var(--color-primary) 88%, white),
-    var(--color-primary)
-  );
+  background: var(--color-primary);
 }
 
 /* ---------- Brand tiles ---------- */
@@ -288,13 +255,13 @@
 .brand-logo-tile {
   min-height: 6.4rem;
   border-color: color-mix(in oklab, var(--color-border) 82%, transparent);
-  border-radius: 1.25rem;
-  box-shadow: 0 7px 24px -24px color-mix(in oklab, var(--color-foreground) 46%, transparent);
+  border-radius: var(--ui-radius-card);
+  box-shadow: var(--shadow-card);
 }
 
 .brand-logo-tile:hover {
   border-color: color-mix(in oklab, var(--color-primary) 30%, var(--color-border));
-  box-shadow: 0 16px 34px -26px color-mix(in oklab, var(--color-foreground) 45%, transparent);
+  box-shadow: var(--shadow-card-hover);
 }
 
 /* ---------- Product cards ---------- */
@@ -303,27 +270,19 @@ article.card-lift[class*="bg-card"],
 .product-list-card {
   border-color: color-mix(in oklab, var(--color-border) 84%, transparent);
   border-radius: var(--ui-radius-card);
-  box-shadow:
-    0 1px 2px color-mix(in oklab, var(--color-foreground) 5%, transparent),
-    0 12px 28px -28px color-mix(in oklab, var(--color-foreground) 38%, transparent);
+  box-shadow: var(--shadow-card);
 }
 
 .homepage-product-card:hover,
 article.card-lift[class*="bg-card"]:hover,
 .product-list-card:hover {
   border-color: color-mix(in oklab, var(--color-primary) 27%, var(--color-border));
-  box-shadow:
-    0 2px 4px color-mix(in oklab, var(--color-foreground) 5%, transparent),
-    0 20px 42px -28px color-mix(in oklab, var(--color-foreground) 42%, transparent);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .homepage-product-card > .card-lift,
 article.card-lift[class*="bg-card"] > div:first-child {
-  background: linear-gradient(
-    180deg,
-    var(--color-image-stage),
-    color-mix(in oklab, var(--color-image-stage) 94%, var(--color-surface))
-  );
+  background: var(--color-image-stage);
 }
 
 .homepage-product-card button[class*="absolute"],
@@ -349,7 +308,7 @@ article.card-lift[class*="bg-card"] h3,
 .catalog-toolbar {
   border-color: color-mix(in oklab, var(--color-border) 82%, transparent);
   border-radius: var(--ui-radius-card);
-  box-shadow: 0 12px 30px -30px color-mix(in oklab, var(--color-foreground) 44%, transparent);
+  box-shadow: var(--shadow-card);
 }
 
 .catalog-toolbar {
@@ -360,13 +319,13 @@ article.card-lift[class*="bg-card"] h3,
 /* ---------- Bottom navigation ---------- */
 [data-testid="bottom-nav"] {
   border-top-color: color-mix(in oklab, var(--color-border) 66%, transparent);
-  background: color-mix(in oklab, var(--color-background) 88%, transparent);
-  box-shadow: 0 -16px 40px -30px color-mix(in oklab, var(--color-foreground) 56%, transparent);
-  backdrop-filter: blur(22px) saturate(1.15);
+  background: color-mix(in oklab, var(--color-background) 96%, transparent);
+  box-shadow: 0 -6px 18px -16px color-mix(in oklab, var(--color-foreground) 34%, transparent);
+  backdrop-filter: blur(12px);
 }
 
 [data-testid="bottom-nav"] > div {
-  min-height: 4.7rem;
+  min-height: 4rem;
   gap: 0.1rem;
   padding-inline: 0.35rem;
 }
@@ -374,15 +333,15 @@ article.card-lift[class*="bg-card"] h3,
 [data-testid="bottom-nav"] :is(a, button) {
   min-width: 0;
   min-height: 3.9rem;
-  border-radius: 1rem;
-  font-weight: 700;
+  border-radius: var(--ui-radius-control);
+  font-weight: 650;
 }
 
 [data-testid="bottom-nav"] :is(a, button) > span:first-child {
   width: 3.15rem;
   height: 2rem;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--ui-radius-control);
 }
 
 [data-testid="bottom-nav"] :is(a, button).text-primary > span:first-child {
@@ -399,9 +358,7 @@ article.card-lift[class*="bg-card"] h3,
 .store-contact-action,
 .store-ai-launcher {
   border: 1px solid color-mix(in oklab, white 20%, transparent);
-  box-shadow:
-    0 16px 34px -18px color-mix(in oklab, var(--color-foreground) 48%, transparent),
-    inset 0 1px 0 color-mix(in oklab, white 22%, transparent);
+  box-shadow: var(--shadow-card);
 }
 
 /* ---------- Dark mode ---------- */
@@ -451,7 +408,7 @@ article.card-lift[class*="bg-card"] h3,
   .category-icon-badge {
     width: 3.65rem;
     height: 3.65rem;
-    border-radius: 1.2rem;
+    border-radius: 0.875rem;
   }
 
   .category-icon-badge svg {
@@ -470,7 +427,7 @@ article.card-lift[class*="bg-card"] h3,
 
   .homepage-product-card,
   article.card-lift[class*="bg-card"] {
-    border-radius: 1.05rem;
+    border-radius: 0.875rem;
   }
 
   .homepage-product-card > div:last-child,
