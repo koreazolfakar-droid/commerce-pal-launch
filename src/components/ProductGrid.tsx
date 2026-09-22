@@ -60,7 +60,7 @@ export function ProductGrid({
 
   if (products.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed bg-card px-6 py-16 text-center">
+      <div className="rounded-lg border border-dashed bg-card px-6 py-16 text-center">
         <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-surface text-muted-foreground">
           <PackageSearch className="h-5 w-5" />
         </span>
