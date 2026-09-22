@@ -123,7 +123,6 @@ test("dashboard shared chrome stays compact without changing navigation structur
   assert.match(dashboard, /<MobileBottomNav onMore=/);
 });
 
-
 test("shared controls expose one compact sizing and focus language", async () => {
   const [button, input, textarea, select] = await Promise.all([
     source("src/components/ui/button.tsx"),
