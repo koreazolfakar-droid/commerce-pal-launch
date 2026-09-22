@@ -161,14 +161,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .store-layout :is(a, button, input, select, textarea) {
-    transition-duration: 0.01ms !important;
-    transition-delay: 0s !important;
-    scroll-behavior: auto;
-  }
-}
-
 /* Shared storefront scale. Keep this scoped away from the admin dashboard. */
 .store-layout {
   --sc-icon-action: 1.25rem;
@@ -184,6 +176,14 @@
 .store-layout :is(a, button, input, select, textarea) {
   transition-duration: 140ms !important;
   transition-delay: 0s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-layout :is(a, button, input, select, textarea) {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto;
+  }
 }
 
 
@@ -348,11 +348,13 @@
     min-height: 2.3rem;
   }
 }
-@media (min-width: 640px) {
+@media (min-width: 640px) and (max-width: 1023px) {
   .store-layout .home-page {
     gap: var(--sc-section-gap-tablet);
   }
+}
 
+@media (min-width: 640px) {
   .store-layout .market-product-card h3 {
     font-size: var(--sc-text-body);
   }
