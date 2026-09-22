@@ -91,6 +91,62 @@ jobs:
           command: bun run test:ssr
 
 
+  scoped-ui-home-no-hero:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.63.0-noble
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /root/.bun
+      UI_ENGINE: chromium
+      UI_SUITE: mode
+      UI_ROUTE_GROUP: overflow-mobile-en-no-hero
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Homepage scope without legacy hero overflow
+          command: |
+            bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/ui-scope-home.log 2>&1 &
+            SERVER_PID=$!
+            trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+            for _ in {1..60}; do
+              if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then break; fi
+              sleep 1
+            done
+            E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ui-polish-responsive-check.mjs
+
+  scoped-ui-shop:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.63.0-noble
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /root/.bun
+      UI_ENGINE: chromium
+      UI_SUITE: shop
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Product card viewport scope
+          command: |
+            bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/ui-scope-shop.log 2>&1 &
+            SERVER_PID=$!
+            trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+            for _ in {1..60}; do
+              if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then break; fi
+              sleep 1
+            done
+            E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ui-polish-responsive-check.mjs
+
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -212,6 +268,8 @@ workflows:
     jobs:
       - security-source
       - security-dependencies
+      - scoped-ui-home-no-hero
+      - scoped-ui-shop
       - ui-browser-deps:
           filters:
             branches:
