@@ -187,6 +187,37 @@ async function runResponsive(browser) {
   console.log(`PASS ${engineName}: responsive LTR/RTL light/dark checks`);
 }
 
+
+async function runProbe(browser) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await configure(page, "en", "light");
+
+  for (const route of ["/", "/cart"]) {
+    const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
+    assert.ok(response && response.status() < 400, `${engineName} ${route}: navigation failed`);
+
+    if (routeGroup === "navigation") continue;
+
+    const metrics = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+      bodyWidth: document.body.getBoundingClientRect().width,
+    }));
+
+    assert.ok(
+      metrics.scrollWidth <= metrics.innerWidth + 1,
+      `${engineName} ${route}: document overflow ${metrics.scrollWidth}px > ${metrics.innerWidth}px`,
+    );
+    assert.ok(
+      metrics.bodyWidth <= metrics.innerWidth + 1,
+      `${engineName} ${route}: body exceeds viewport`,
+    );
+  }
+
+  await page.close();
+  console.log(`PASS ${engineName}: ${routeGroup} probe`);
+}
+
 async function runRoutes(browser) {
   const routes = routeGroups[routeGroup] ?? routeGroups.all;
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -213,6 +244,7 @@ async function runRoutes(browser) {
 const browser = await launcher.launch({ headless: true });
 try {
   if (suite === "responsive" || suite === "all") await runResponsive(browser);
+  if (suite === "probe") await runProbe(browser);
   if (engineName === "chromium" && (suite === "routes" || suite === "all")) {
     await runRoutes(browser);
   }
