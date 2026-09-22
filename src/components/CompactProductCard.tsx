@@ -188,18 +188,18 @@ export const CompactProductCard = memo(function CompactProductCard({
           {brand ? (
             <div className="market-product-brand mb-1 flex min-w-0 items-center gap-1">
               <BrandLogo slug={brand.slug} label={brand.label} size={14} className="rounded" />
-              <span className="market-product-brand-label break-words text-[9px] font-bold uppercase leading-3 tracking-[0.045em] text-muted-foreground sm:text-[10px]">
+              <span className="market-product-brand-label break-words text-[9px] font-semibold leading-3 text-muted-foreground sm:text-[10px]">
                 {brand.label}
               </span>
             </div>
           ) : null}
 
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <bdi className="product-card-price whitespace-nowrap text-[0.95rem] font-extrabold tracking-tight text-foreground sm:text-base">
+            <bdi className="product-card-price whitespace-nowrap text-[0.95rem] font-bold tabular-nums tracking-tight text-foreground sm:text-base">
               {formatPrice(price.amount, price.currencyCode)}
             </bdi>
             {discount !== null && compareAt && (
-              <bdi className="whitespace-nowrap text-[10px] text-muted-foreground line-through sm:text-xs">
+              <bdi className="whitespace-nowrap text-[10px] tabular-nums text-muted-foreground line-through sm:text-xs">
                 {formatPrice(compareAt, price.currencyCode)}
               </bdi>
             )}
@@ -292,7 +292,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           {brand ? (
             <>
               <BrandLogo slug={brand.slug} label={brand.label} size={16} className="rounded" />
-              <p className="truncate text-[10px] font-bold uppercase tracking-[0.055em] text-foreground sm:text-[11px]">
+              <p className="truncate text-[10px] font-semibold text-muted-foreground sm:text-[11px]">
                 {brand.label}
               </p>
             </>
@@ -312,11 +312,11 @@ export const CompactProductCard = memo(function CompactProductCard({
         <div className="mt-auto flex min-h-9 min-w-0 items-center justify-between gap-2 pt-0.5">
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-              <bdi className="product-card-price text-[0.95rem] font-extrabold tracking-tight sm:text-base">
+              <bdi className="product-card-price text-[0.95rem] font-bold tabular-nums tracking-tight sm:text-base">
                 {formatPrice(price.amount, price.currencyCode)}
               </bdi>
               {discount !== null && compareAt && (
-                <bdi className="truncate text-[10px] text-muted-foreground line-through sm:text-xs">
+                <bdi className="truncate text-[10px] tabular-nums text-muted-foreground line-through sm:text-xs">
                   {formatPrice(compareAt, price.currencyCode)}
                 </bdi>
               )}
