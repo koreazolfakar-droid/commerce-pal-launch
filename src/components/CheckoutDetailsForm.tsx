@@ -364,18 +364,12 @@ export function CheckoutDetailsForm({
       setLocation({
         latitude: selectedAddress.latitude,
         longitude: selectedAddress.longitude,
-        accuracy: 10,
+        accuracy: 0,
       });
       setShareLocation(true);
       setLocationError(null);
     }
-  }, [
-    profile?.fullName,
-    profile?.phone,
-    selectedAddress?.id,
-    selectedAddress?.latitude,
-    selectedAddress?.longitude,
-  ]);
+  }, [profile?.fullName, profile?.phone, selectedAddress]);
 
   const update = <K extends keyof CustomerDetails>(field: K, value: CustomerDetails[K]) => {
     setDetails((current) => ({ ...current, [field]: value }));
