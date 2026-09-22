@@ -191,26 +191,66 @@ async function runResponsive(browser) {
 async function runProbe(browser) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await configure(page, "en", "light");
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
 
   for (const route of ["/", "/cart"]) {
     const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
     assert.ok(response && response.status() < 400, `${engineName} ${route}: navigation failed`);
 
-    if (routeGroup === "navigation") continue;
+    if (routeGroup === "navigation" || routeGroup === "pageerrors") continue;
 
-    const metrics = await page.evaluate(() => ({
-      scrollWidth: document.documentElement.scrollWidth,
-      innerWidth: window.innerWidth,
-      bodyWidth: document.body.getBoundingClientRect().width,
-    }));
+    if (routeGroup === "overflow") {
+      const metrics = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+        bodyWidth: document.body.getBoundingClientRect().width,
+      }));
+      assert.ok(
+        metrics.scrollWidth <= metrics.innerWidth + 1,
+        `${engineName} ${route}: document overflow ${metrics.scrollWidth}px > ${metrics.innerWidth}px`,
+      );
+      assert.ok(
+        metrics.bodyWidth <= metrics.innerWidth + 1,
+        `${engineName} ${route}: body exceeds viewport`,
+      );
+      continue;
+    }
 
-    assert.ok(
-      metrics.scrollWidth <= metrics.innerWidth + 1,
-      `${engineName} ${route}: document overflow ${metrics.scrollWidth}px > ${metrics.innerWidth}px`,
-    );
-    assert.ok(
-      metrics.bodyWidth <= metrics.innerWidth + 1,
-      `${engineName} ${route}: body exceeds viewport`,
+    if (routeGroup === "main") {
+      const main = page.locator("main").first();
+      if (await main.count()) {
+        const box = await main.boundingBox();
+        assert.ok(box, `${engineName} ${route}: main has no layout box`);
+        assert.ok((box?.x ?? -2) >= -1, `${engineName} ${route}: main starts outside viewport`);
+        assert.ok(
+          (box?.x ?? 0) + (box?.width ?? 0) <= 391,
+          `${engineName} ${route}: main extends outside viewport`,
+        );
+      }
+      continue;
+    }
+
+    if (routeGroup === "header") {
+      const controls = page.locator("header.sticky > div:first-child :is(button,a):visible");
+      const count = Math.min(await controls.count(), 14);
+      for (let index = 0; index < count; index += 1) {
+        const box = await controls.nth(index).boundingBox();
+        if (!box) continue;
+        assert.ok(box.x >= -1, `${engineName} ${route}: header control ${index} starts outside`);
+        assert.ok(
+          box.x + box.width <= 391,
+          `${engineName} ${route}: header control ${index} exceeds viewport`,
+        );
+      }
+    }
+  }
+
+  if (routeGroup === "pageerrors") {
+    assert.deepEqual(
+      pageErrors,
+      [],
+      `${engineName} page errors detected: ${pageErrors.join(" | ")}`,
     );
   }
 
