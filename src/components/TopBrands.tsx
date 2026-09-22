@@ -16,6 +16,7 @@ const AUTO_SCROLL_START_DELAY_MS = 5000;
 const ACTIVE_MEASURE_INTERVAL_MS = 160;
 const INFINITE_CYCLES = [0, 1, 2] as const;
 
+/** Reserves a compact, bounded rail slot while allowing longer wordmarks a little more room. */
 function brandSlotWidth(brand: ShopifyBrand) {
   const compactLength = brand.label.replace(/[^a-z0-9]/gi, "").length;
   return Math.min(106, Math.max(96, 90 + compactLength * 2));
