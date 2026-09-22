@@ -2,7 +2,7 @@ import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
@@ -40,6 +40,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const cartItems = useCartStore((state) => state.items);
   const [isAdding, setIsAdding] = useState(false);
+  const replacementAddButtonRef = useRef<HTMLButtonElement>(null);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
   const toggleWishlist = useWishlistToggle();
 
@@ -87,6 +88,17 @@ export const CompactProductCard = memo(function CompactProductCard({
       await updateQuantity(variant.id, nextQuantity);
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleDecrement = async (currentQuantity: number, trigger: HTMLButtonElement) => {
+    const restoreFocus =
+      currentQuantity === 1 && typeof document !== "undefined" && document.activeElement === trigger;
+
+    await handleQuantityChange(currentQuantity - 1);
+
+    if (restoreFocus && typeof window !== "undefined") {
+      window.requestAnimationFrame(() => replacementAddButtonRef.current?.focus());
     }
   };
 
@@ -232,7 +244,7 @@ export const CompactProductCard = memo(function CompactProductCard({
               >
                 <button
                   type="button"
-                  onClick={() => handleQuantityChange(cartQuantity - 1)}
+                  onClick={(event) => void handleDecrement(cartQuantity, event.currentTarget)}
                   disabled={isAdding}
                   aria-label={`Decrease ${node.title} quantity`}
                   className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40 sm:w-8"
@@ -258,6 +270,7 @@ export const CompactProductCard = memo(function CompactProductCard({
               </div>
             ) : (
               <button
+                ref={replacementAddButtonRef}
                 type="button"
                 onClick={handleAdd}
                 disabled={isAdding || !variant || !inStock}
@@ -340,11 +353,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             ) : null}
           </div>
 
-          <Link
-            to="/product/$handle"
-            params={{ handle: node.handle }}
-            className="mt-0.5 min-w-0"
-          >
+          <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-0.5 min-w-0">
             <h3 className="product-card-title line-clamp-2 min-h-[2.35rem] break-words text-[0.8rem] font-semibold leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
               {node.title}
             </h3>
@@ -393,7 +402,7 @@ export const CompactProductCard = memo(function CompactProductCard({
               >
                 <button
                   type="button"
-                  onClick={() => handleQuantityChange(cartQuantity - 1)}
+                  onClick={(event) => void handleDecrement(cartQuantity, event.currentTarget)}
                   disabled={isAdding}
                   aria-label={`Decrease ${node.title} quantity`}
                   className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40"
@@ -419,6 +428,7 @@ export const CompactProductCard = memo(function CompactProductCard({
               </div>
             ) : (
               <button
+                ref={replacementAddButtonRef}
                 type="button"
                 onClick={handleAdd}
                 disabled={isAdding || !variant || !inStock}
