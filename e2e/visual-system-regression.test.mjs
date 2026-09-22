@@ -32,7 +32,10 @@ test("storefront visual system keeps one canonical shell and radius language", a
   assert.match(styles, /--radius-3xl:\s*1\.5rem/);
   assert.match(styles, /--dashboard-card-radius:\s*1rem/);
   assert.match(styles, /--dashboard-control-radius:\s*0\.75rem/);
-  assert.match(styles, /\.dashboard-theme-scope :where\(\[class~="rounded-2xl"\], \[class~="rounded-3xl"\]\)/);
+  assert.match(
+    styles,
+    /\.dashboard-theme-scope :where\(\[class~="rounded-2xl"\], \[class~="rounded-3xl"\]\)/,
+  );
 });
 
 test("responsive spacing and reduced-motion rules keep correct cascade boundaries", async () => {
@@ -49,7 +52,10 @@ test("responsive spacing and reduced-motion rules keep correct cascade boundarie
 
   const restoreIndex = consistency.indexOf("transition-duration: 140ms !important");
   const reduceIndex = consistency.indexOf("@media (prefers-reduced-motion: reduce)");
-  assert.ok(restoreIndex >= 0 && reduceIndex > restoreIndex, "reduced-motion override must load after control transitions");
+  assert.ok(
+    restoreIndex >= 0 && reduceIndex > restoreIndex,
+    "reduced-motion override must load after control transitions",
+  );
 });
 
 test("storefront polish avoids restoring decorative page gradients", async () => {
