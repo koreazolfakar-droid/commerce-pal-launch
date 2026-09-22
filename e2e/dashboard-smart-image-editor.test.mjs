@@ -76,7 +76,8 @@ test("product and variant images can adjust both new and already-uploaded media"
 
 test("product editor mirrors the live storefront media geometry without double padding", () => {
   assert.match(storefrontProductImage, /object-contain/);
-  assert.match(storefrontProductCard, /!p-\[5%\]/);
+  assert.match(storefrontProductCard, /!p-\[3%\]/);
+  assert.match(storefrontProductCard, /sm:!p-\[4%\]/);
   assert.match(storefrontProductGallery, /aspect-\[1\/0\.92\]/);
   assert.match(storefrontProductGallery, /p-2\.5/);
   assert.match(storefrontProductGallery, /lg:p-8/);
