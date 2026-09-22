@@ -81,23 +81,23 @@
 
 :root {
   /* Space Call typography scale: retail-first hierarchy, shared across storefront UI. */
-  --type-hero-mobile: 2rem;
-  --type-hero-desktop: 3rem;
-  --type-page-title-mobile: 1.75rem;
-  --type-page-title-desktop: 2.125rem;
-  --type-section-title-mobile: 1.375rem;
-  --type-section-title-desktop: 1.625rem;
-  --type-product-title: 0.8125rem;
-  --type-product-title-dense: 0.71875rem;
-  --type-price: 1rem;
-  --type-price-dense: 0.875rem;
-  --type-body: 0.9375rem;
-  --type-body-mobile: 0.875rem;
-  --type-secondary: 0.75rem;
-  --type-label: 0.6875rem;
+  --type-hero-mobile: 1.875rem;
+  --type-hero-desktop: 2.75rem;
+  --type-page-title-mobile: 1.625rem;
+  --type-page-title-desktop: 2rem;
+  --type-section-title-mobile: 1.25rem;
+  --type-section-title-desktop: 1.5rem;
+  --type-product-title: 0.78125rem;
+  --type-product-title-dense: 0.6875rem;
+  --type-price: 0.9375rem;
+  --type-price-dense: 0.84375rem;
+  --type-body: 0.875rem;
+  --type-body-mobile: 0.8125rem;
+  --type-secondary: 0.71875rem;
+  --type-label: 0.65625rem;
   --type-label-dense: 0.5625rem;
-  --type-nav: 0.8125rem;
-  --type-mobile-nav: 0.6875rem;
+  --type-nav: 0.78125rem;
+  --type-mobile-nav: 0.65625rem;
 
   --weight-regular: 400;
   --weight-medium: 500;
@@ -845,12 +845,12 @@
 
     .hero-campaign-slide h2 {
       max-width: none;
-      font-size: clamp(1.85rem, 8vw, 2.25rem);
+      font-size: clamp(1.75rem, 7.5vw, 2.125rem);
       line-height: 1.12;
     }
 
     .hero-campaign-slide p {
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
     }
 
     .hero-campaign-slide img {
@@ -870,7 +870,7 @@
     }
 
     .facet-hero-copy h2 {
-      font-size: clamp(1.75rem, 8vw, 2.15rem);
+      font-size: clamp(1.625rem, 7.5vw, 2rem);
     }
 
     .hero-campaign-slide .flex-wrap {
@@ -904,12 +904,12 @@
 
     .homepage-product-card h3 {
       min-height: 2.65rem;
-      font-size: 0.8125rem;
+      font-size: 0.78125rem;
       line-height: 1.35;
     }
 
     .homepage-product-card .text-base {
-      font-size: 0.9375rem;
+      font-size: 0.875rem;
     }
 
     .homepage-product-card .rounded-xl {
@@ -1270,7 +1270,7 @@
 
     .market-product-card.homepage-product-card h3 {
       min-height: 2.35rem;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       line-height: 1.45;
     }
 
