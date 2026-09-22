@@ -59,7 +59,7 @@ export default function BrandAssignmentDialog({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="flex max-h-[94vh] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[28px]">
+      <div className="flex max-h-[94vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
           <div>
             <div className="text-[10px] font-bold uppercase tracking-[.15em] text-[#6a70e7]">
@@ -76,7 +76,7 @@ export default function BrandAssignmentDialog({
             type="button"
             onClick={onClose}
             aria-label="Close brand assignment dialog"
-            className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400"
+            className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400"
           >
             <X className="size-4" />
           </button>

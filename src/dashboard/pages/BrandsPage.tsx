@@ -115,7 +115,7 @@ function Modal({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-lg rounded-t-[28px] bg-white p-5 shadow-2xl sm:rounded-[28px] sm:p-6">
+      <div className="w-full max-w-lg rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-[18px] font-black tracking-[-.03em] text-[#14203a]">{title}</h2>
@@ -125,7 +125,7 @@ function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400"
+            className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400"
           >
             <X className="size-4" />
           </button>

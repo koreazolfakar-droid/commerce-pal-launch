@@ -81,7 +81,7 @@ function Auth0Gate({ children }: { children: ReactNode }) {
   if (!isAuthenticated) {
     return (
       <div className="grid min-h-screen place-items-center bg-[#101b32] p-5">
-        <div className="relative w-full max-w-[420px] overflow-hidden rounded-[28px] border border-white/10 bg-white/[.07] p-8 text-center shadow-2xl backdrop-blur-xl">
+        <div className="relative w-full max-w-[420px] overflow-hidden rounded-2xl border border-white/10 bg-white/[.07] p-8 text-center shadow-2xl backdrop-blur-xl">
           <div className="absolute -left-16 -top-16 size-52 rounded-full bg-[#5968ea]/20 blur-[70px]" />
           <div className="relative">
             <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#6874f5]/15 text-[#aeb5ff] ring-1 ring-white/10">

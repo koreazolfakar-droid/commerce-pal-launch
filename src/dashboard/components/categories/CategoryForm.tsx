@@ -230,7 +230,7 @@ export default function CategoryForm({
       }}
     >
       {imageEditor.dialog}
-      <div className="max-h-[94vh] w-full overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-w-2xl sm:rounded-[28px]">
+      <div className="max-h-[94vh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-100 bg-white text-indigo-600 shadow-sm">
@@ -257,7 +257,7 @@ export default function CategoryForm({
             onClick={onClose}
             disabled={saving}
             aria-label="Close category form"
-            className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 disabled:opacity-50"
+            className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 disabled:opacity-50"
           >
             <X className="size-4" />
           </button>

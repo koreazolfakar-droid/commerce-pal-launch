@@ -241,7 +241,7 @@ export const CompactProductCard = memo(function CompactProductCard({
     <article
       role={listItem ? "listitem" : undefined}
       className={cn(
-        "sc-product-card group relative flex h-full min-w-0 w-full flex-col overflow-hidden rounded-[1.15rem] border border-border/75 bg-card shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card-hover",
+        "sc-product-card group relative flex h-full min-w-0 w-full flex-col overflow-hidden rounded-2xl border border-border/75 bg-card shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card-hover",
         className,
       )}
     >
