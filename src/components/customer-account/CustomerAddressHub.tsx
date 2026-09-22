@@ -463,7 +463,7 @@ export function CustomerAddressHub() {
       mediaRecorderRef.current?.stop();
       return;
     }
-    if (!user || !draftAddress || !navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    if (!user || !draftAddress || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setError(copy.genericError);
       return;
     }
