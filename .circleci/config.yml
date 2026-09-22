@@ -101,3 +101,4 @@ workflows:
               only:
                 - /^important\/.*/
                 - /^design\/.*/
+                - /^ui\/.*/
