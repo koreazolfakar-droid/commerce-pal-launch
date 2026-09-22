@@ -231,10 +231,10 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-webkit-no-hero-content
+          name: ui-browser-webkit-no-hero-container
           engine: webkit
           suite: mode
-          route_group: overflow-mobile-en-no-hero-content
+          route_group: overflow-mobile-en-no-hero-container
           filters:
             branches:
               only:
@@ -242,10 +242,10 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-webkit-no-hero-dots
+          name: ui-browser-webkit-contain-hero
           engine: webkit
           suite: mode
-          route_group: overflow-mobile-en-no-hero-dots
+          route_group: overflow-mobile-en-contain-hero
           filters:
             branches:
               only:
@@ -253,21 +253,10 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-webkit-static-hero-parts
+          name: ui-browser-webkit-hide-hero-scene
           engine: webkit
           suite: mode
-          route_group: overflow-mobile-en-static-hero-parts
-          filters:
-            branches:
-              only:
-                - /^ui\/.*/
-      - ui-browser:
-          requires:
-            - ui-browser-deps
-          name: ui-browser-webkit-no-hero-buttons
-          engine: webkit
-          suite: mode
-          route_group: overflow-mobile-en-no-hero-buttons
+          route_group: overflow-mobile-en-hide-hero-scene
           filters:
             branches:
               only:
