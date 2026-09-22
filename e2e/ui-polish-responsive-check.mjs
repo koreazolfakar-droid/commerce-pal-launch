@@ -81,8 +81,7 @@ async function assertViewportHealth(page, label) {
   }
 
   const card = page
-    .locator(".sc-product-card, .market-product-card, .product-list-card")
-    .filter({ visible: true })
+    .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
     .first();
   if (await card.count()) {
     const cardBox = await card.boundingBox();
