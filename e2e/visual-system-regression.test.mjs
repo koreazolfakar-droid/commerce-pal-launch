@@ -91,6 +91,27 @@ test("shared RTL primitives use logical spacing and semantic dark-mode text", as
   assert.match(pagination, /rtl:rotate-180/);
 });
 
+test("product actions stay aligned without overlapping compact card content", async () => {
+  const [compact, list, consistency] = await Promise.all([
+    source("src/components/CompactProductCard.tsx"),
+    source("src/components/ProductListCard.tsx"),
+    source("src/design-consistency.css"),
+  ]);
+
+  assert.doesNotMatch(compact, /absolute -bottom-2 end-0\.5/);
+  assert.match(compact, /market-product-footer/);
+  assert.match(compact, /product-action-button/);
+  assert.doesNotMatch(compact, /line-clamp-2 min-h-\[2\.35rem\]/);
+
+  assert.match(list, /product-action-button/);
+  assert.doesNotMatch(list, /<h3 className="line-clamp-2/);
+
+  assert.match(consistency, /\.store-layout \.product-action-button \{/);
+  assert.match(consistency, /width: 2\.25rem;/);
+  assert.match(consistency, /height: 2\.25rem;/);
+  assert.match(consistency, /\.market-product-card \.market-product-action svg\.lucide/);
+});
+
 test("dashboard shared chrome stays compact without changing navigation structure", async () => {
   const dashboard = await source("src/dashboard/App.tsx");
 
