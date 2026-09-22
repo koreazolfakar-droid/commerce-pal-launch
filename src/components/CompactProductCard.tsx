@@ -296,7 +296,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         </div>
 
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-          <h3 className="line-clamp-2 min-h-[2.35rem] break-words text-[0.82rem] font-semibold leading-[1.35] transition-colors group-hover:text-primary sm:text-sm">
+          <h3 className="break-words text-[0.82rem] font-semibold leading-[1.35] transition-colors group-hover:text-primary sm:text-sm">
             {node.title}
           </h3>
         </Link>
