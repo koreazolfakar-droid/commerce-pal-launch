@@ -97,7 +97,8 @@ async function assertViewportHealth(page, label) {
         height: element.getBoundingClientRect().height,
       }));
       assert.ok(
-        titleMetrics.scrollWidth <= titleMetrics.clientWidth + 2 || titleMetrics.height > titleMetrics.lineHeight,
+        titleMetrics.scrollWidth <= titleMetrics.clientWidth + 2 ||
+          titleMetrics.height > titleMetrics.lineHeight,
         `${label}: product title clips instead of wrapping`,
       );
     }
@@ -119,7 +120,9 @@ async function assertViewportHealth(page, label) {
 
 try {
   for (const testCase of responsiveCases) {
-    const page = await browser.newPage({ viewport: { width: testCase.width, height: testCase.height } });
+    const page = await browser.newPage({
+      viewport: { width: testCase.width, height: testCase.height },
+    });
     await configure(page, testCase.lang, testCase.theme);
 
     for (const route of ["/", "/shop"]) {
