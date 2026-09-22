@@ -24,9 +24,9 @@ test("static product grids do not expose carousel arrows or scrolling navigation
   assert.doesNotMatch(rail, /Previous products|Next products/);
 });
 
-test("list view remains intact and purchase cards keep the market presentation", () => {
-  assert.match(rail, /viewMode === "list"/);
-  assert.match(rail, /ProductListCard/);
+test("horizontal list view is removed and purchase cards keep the market presentation", () => {
+  assert.doesNotMatch(rail, /viewMode === "list"/);
+  assert.doesNotMatch(rail, /ProductListCard/);
   assert.match(rail, /CompactProductCard/);
   assert.match(rail, /market/);
 });
