@@ -92,12 +92,17 @@ jobs:
 
 
   ui-browser:
+    parameters:
+      engine:
+        type: string
+        default: chromium
     docker:
       - image: mcr.microsoft.com/playwright:v1.63.0-noble
     resource_class: medium
     working_directory: ~/project
     environment:
       BUN_INSTALL: /root/.bun
+      UI_ENGINE: << parameters.engine >>
     steps:
       - checkout
       - install-bun
@@ -137,6 +142,22 @@ workflows:
                 - /^design\/.*/
                 - /^ui\/.*/
       - ui-browser:
+          name: ui-browser-chromium
+          engine: chromium
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          name: ui-browser-firefox
+          engine: firefox
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          name: ui-browser-webkit
+          engine: webkit
           filters:
             branches:
               only:
