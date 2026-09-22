@@ -482,7 +482,10 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
             const answer = typeof item["answer"] === "string" ? item["answer"] : "";
             if (!question && !answer) return null;
             return (
-              <details key={`${section.id}-faq-${index}`} className="rounded-lg border bg-background/85 p-4">
+              <details
+                key={`${section.id}-faq-${index}`}
+                className="rounded-lg border bg-background/85 p-4"
+              >
                 <summary className="cursor-pointer text-sm font-bold">{question}</summary>
                 {answer ? <p className="mt-2 text-sm text-muted-foreground">{answer}</p> : null}
               </details>
