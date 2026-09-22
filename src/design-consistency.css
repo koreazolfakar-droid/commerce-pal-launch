@@ -311,6 +311,27 @@
   letter-spacing: normal;
   text-wrap: wrap;
 }
+
+.store-layout .market-product-card .market-product-action {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  flex: 0 0 2.25rem;
+}
+.store-layout .market-product-card .market-product-action svg.lucide {
+  width: 1.0625rem;
+  height: 1.0625rem;
+  stroke-width: 1.9;
+}
+.store-layout .market-product-footer {
+  position: relative;
+  isolation: isolate;
+}
+.store-layout .market-product-stock {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
 .store-layout .market-product-copy bdi {
   max-inline-size: 100%;
   white-space: normal;
@@ -346,6 +367,13 @@
     font-size: var(--sc-text-product);
     line-height: 1.4;
     min-height: 2.3rem;
+  }
+  .store-layout .market-product-footer {
+    gap: 0.375rem;
+  }
+  .store-layout .market-product-stock {
+    font-size: 0.625rem;
+    line-height: 0.875rem;
   }
 }
 @media (min-width: 640px) and (max-width: 1023px) {
