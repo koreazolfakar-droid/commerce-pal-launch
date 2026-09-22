@@ -37,6 +37,7 @@ function normalizeBrandKey(slug: string, label: string) {
     .replace(/^-|-$/g, "");
 }
 
+/** Returns a restrained optical scale so mixed brand artwork reads at a consistent rail size. */
 function railOpticalScale(slug: string, label: string, aspectRatio: number) {
   const key = normalizeBrandKey(slug, label);
 
