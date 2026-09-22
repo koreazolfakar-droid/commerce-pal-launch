@@ -222,7 +222,8 @@ async function runSupplementalSuite(engineName, browser) {
 }
 
 if (engineMode === "all" || engineMode === "chromium") {
-  const browser = await chromium.launch({ headless: true });
+  const engineScope = process.env.UI_BROWSER_ENGINE ?? "all";
+const browser = engineScope === "cross" ? null : await chromium.launch({ headless: true });
   try {
     if (suiteMode === "all" || suiteMode === "responsive") {
       await runResponsiveSuite(browser);
@@ -240,6 +241,7 @@ const supplementalEngines = [
   { name: "webkit", launcher: webkit },
 ];
 
+if (engineScope !== "chromium") {
 for (const engine of supplementalEngines) {
   if (engineMode !== "all" && engineMode !== engine.name) continue;
 
@@ -249,4 +251,6 @@ for (const engine of supplementalEngines) {
   } finally {
     await browser.close();
   }
+}
+
 }
