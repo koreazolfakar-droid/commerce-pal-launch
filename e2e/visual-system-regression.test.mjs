@@ -82,7 +82,8 @@ test("shared RTL primitives use logical spacing and semantic dark-mode text", as
   assert.match(dashboard, /absolute start-3\.5 top-1\/2/);
   assert.match(dashboard, /bg-card ps-10 pe-14/);
 
-  assert.match(select, /min-h-9 w-full/);\n  assert.match(select, /py-1\.5 ps-2\.5 pe-8/);
+  assert.match(select, /min-h-9 w-full/);
+  assert.match(select, /py-1\.5 ps-2\.5 pe-8/);
   assert.match(select, /absolute end-2/);
   assert.match(table, /text-start/);
   assert.match(table, /\]:pe-0/);
