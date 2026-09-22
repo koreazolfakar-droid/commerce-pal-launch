@@ -806,7 +806,7 @@ export function CheckoutDetailsForm({
                   type="button"
                   onClick={locateCustomer}
                   disabled={locating}
-                  className="inline-flex items-center gap-2 rounded-full border bg-background px-3.5 py-2 text-xs font-bold transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
+                  className="inline-flex min-h-10 items-center gap-2 rounded-md border bg-background px-3.5 py-2 text-xs font-bold transition hover:bg-muted disabled:cursor-wait disabled:opacity-60"
                 >
                   {locating ? (
                     <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
@@ -837,7 +837,7 @@ export function CheckoutDetailsForm({
                       type="button"
                       onClick={locateCustomer}
                       disabled={locating}
-                      className="rounded-full border border-amber-500/30 bg-background px-3 py-1.5 text-[11px] font-bold text-foreground"
+                      className="min-h-9 rounded-md border border-amber-500/30 bg-background px-3 py-1.5 text-[11px] font-bold text-foreground"
                     >
                       {copy.retryLocation}
                     </button>
@@ -847,7 +847,7 @@ export function CheckoutDetailsForm({
                         setShareLocation(false);
                         setLocationError(null);
                       }}
-                      className="rounded-full px-3 py-1.5 text-[11px] font-bold text-foreground underline-offset-2 hover:underline"
+                      className="min-h-9 rounded-md px-3 py-1.5 text-[11px] font-bold text-foreground underline-offset-2 hover:underline"
                     >
                       {copy.continueWithoutLocation}
                     </button>
@@ -868,7 +868,7 @@ export function CheckoutDetailsForm({
                       href={googleMapsUrl(location)}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-bold transition hover:bg-muted"
+                      className="inline-flex min-h-9 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-bold transition hover:bg-muted"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                       {copy.openMap}
@@ -952,7 +952,7 @@ export function CheckoutDetailsForm({
                   <button
                     type="button"
                     onClick={copyWhishAccount}
-                    className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-2 text-xs font-bold"
+                    className="inline-flex min-h-10 items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs font-bold"
                   >
                     <Copy className="h-3.5 w-3.5" />
                     {copied ? copy.copied : copy.copyAccount}
@@ -1023,7 +1023,7 @@ export function CheckoutDetailsForm({
               <span className="min-w-0 flex-1 truncate text-start">
                 {submitting ? copy.creating : locating ? copy.locating : copy.send}
               </span>
-              <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-xs font-black tabular-nums">
+              <span className="hidden shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-xs font-black tabular-nums min-[390px]:inline-flex">
                 {formatPrice(checkoutTotal, currency)}
               </span>
             </Button>
