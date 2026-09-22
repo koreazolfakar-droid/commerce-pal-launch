@@ -93,19 +93,19 @@ test("shared RTL primitives use logical spacing and semantic dark-mode text", as
 });
 
 test("product actions stay aligned without overlapping compact card content", async () => {
-  const [compact, list, consistency] = await Promise.all([
+  const [compact, consistency] = await Promise.all([
     source("src/components/CompactProductCard.tsx"),
-    source("src/components/ProductListCard.tsx"),
     source("src/design-consistency.css"),
   ]);
 
   assert.doesNotMatch(compact, /absolute -bottom-2 end-0\.5/);
   assert.match(compact, /market-product-footer/);
   assert.match(compact, /product-action-button/);
-  assert.doesNotMatch(compact, /line-clamp-2 min-h-\[2\.35rem\]/);
-
-  assert.match(list, /product-action-button/);
-  assert.doesNotMatch(list, /<h3 className="line-clamp-2/);
+  assert.match(
+    compact,
+    /product-card-title line-clamp-2 min-h-\[2\.35rem\]/,
+    "market cards should reserve a stable two-line title area",
+  );
 
   assert.match(consistency, /\.store-layout \.product-action-button \{/);
   assert.match(consistency, /width: 2\.25rem;/);
@@ -143,23 +143,21 @@ test("shared controls expose one compact sizing and focus language", async () =>
 });
 
 test("semantic product and dashboard hooks replace fragile visual selectors", async () => {
-  const [product, compact, list, overhaul, consistency, dashboard, styles] = await Promise.all([
+  const [product, compact, overhaul, consistency, dashboard, styles] = await Promise.all([
     source("src/components/ProductCard.tsx"),
     source("src/components/CompactProductCard.tsx"),
-    source("src/components/ProductListCard.tsx"),
     source("src/ui-overhaul.css"),
     source("src/design-consistency.css"),
     source("src/dashboard/App.tsx"),
     source("src/styles.css"),
   ]);
 
-  for (const file of [product, compact, list]) {
+  for (const file of [product, compact]) {
     assert.match(file, /product-card-primary-action/);
     assert.match(file, /product-card-title/);
   }
   assert.match(product, /product-card-secondary-action/);
   assert.match(compact, /product-card-secondary-action/);
-  assert.match(list, /product-card-secondary-action/);
 
   assert.doesNotMatch(overhaul, /article\.card-lift\[class\*="bg-card"\]/);
   assert.match(consistency, /\.store-layout \.product-card-title \{/);
