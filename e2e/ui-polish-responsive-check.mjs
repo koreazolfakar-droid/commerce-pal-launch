@@ -34,16 +34,7 @@ const supplementalCases = [
 const routeGroups = {
   catalog: ["/", "/shop", "/search", "/categories", "/brands"],
   commerce: ["/cart", "/wishlist", "/compare"],
-  all: [
-    "/",
-    "/shop",
-    "/search",
-    "/cart",
-    "/wishlist",
-    "/compare",
-    "/categories",
-    "/brands",
-  ],
+  all: ["/", "/shop", "/search", "/cart", "/wishlist", "/compare", "/categories", "/brands"],
 };
 
 async function configure(page, lang, theme) {
@@ -164,7 +155,9 @@ async function runResponsive(browser) {
       await assertDocumentMode(page, testCase, route);
       if (route === "/shop") {
         await page
-          .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
+          .locator(
+            ".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible",
+          )
           .first()
           .waitFor({ state: "visible", timeout: engineName === "webkit" ? 10000 : 5000 });
       }
@@ -181,18 +174,24 @@ async function runResponsive(browser) {
   console.log(`PASS ${engineName}: responsive LTR/RTL light/dark checks`);
 }
 
-
 async function runProbe(browser) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await configure(page, "en", "light");
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  for (const route of ["/", "/cart"]) {
+  const routes =
+    routeGroup === "pageerrors-home"
+      ? ["/"]
+      : routeGroup === "pageerrors-cart"
+        ? ["/cart"]
+        : ["/", "/cart"];
+
+  for (const route of routes) {
     const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });
     assert.ok(response && response.status() < 400, `${engineName} ${route}: navigation failed`);
 
-    if (routeGroup === "navigation" || routeGroup === "pageerrors") continue;
+    if (routeGroup === "navigation" || routeGroup.startsWith("pageerrors-")) continue;
 
     if (routeGroup === "overflow") {
       const metrics = await page.evaluate(() => ({
@@ -240,7 +239,7 @@ async function runProbe(browser) {
     }
   }
 
-  if (routeGroup === "pageerrors") {
+  if (routeGroup.startsWith("pageerrors-")) {
     assert.deepEqual(
       pageErrors,
       [],
@@ -251,7 +250,6 @@ async function runProbe(browser) {
   await page.close();
   console.log(`PASS ${engineName}: ${routeGroup} probe`);
 }
-
 
 async function runShopProbe(browser) {
   for (const testCase of supplementalCases) {
@@ -339,7 +337,10 @@ async function runRoutes(browser) {
 
   if (routeGroup === "catalog" || routeGroup === "all") {
     const shopResponse = await page.goto(`${baseURL}/shop`, { waitUntil: "load" });
-    assert.ok(shopResponse && shopResponse.status() < 400, `${engineName} /shop: failed product discovery`);
+    assert.ok(
+      shopResponse && shopResponse.status() < 400,
+      `${engineName} /shop: failed product discovery`,
+    );
     const productLink = page.locator('a[href^="/product/"]:visible').first();
     await productLink.waitFor({ state: "visible", timeout: 10000 });
     const href = await productLink.getAttribute("href");
