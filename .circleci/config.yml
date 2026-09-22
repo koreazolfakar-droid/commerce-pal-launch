@@ -141,6 +141,85 @@ jobs:
           name: Unit and architecture tests
           command: bun run test:unit
 
+  visual-unit-dashboard:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Dashboard unit tests
+          command: node --test e2e/dashboard-*.test.mjs
+
+  visual-unit-cart:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Cart and order unit tests
+          command: |
+            shopt -s nullglob
+            files=(e2e/cart-*.test.mjs e2e/storefront-orders-secure.test.mjs)
+            node --test "${files[@]}"
+
+  visual-unit-storefront:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Storefront architecture unit tests
+          command: |
+            shopt -s nullglob
+            files=(
+              e2e/architecture.test.mjs
+              e2e/performance-architecture.test.mjs
+              e2e/storefront-*.test.mjs
+              e2e/customer-auth-ui.test.mjs
+              e2e/category-*.test.mjs
+              e2e/product-*.test.mjs
+              e2e/seo-regression.test.mjs
+              e2e/visual-system-regression.test.mjs
+            )
+            node --test "${files[@]}"
+
+  visual-unit-other:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Remaining unit tests
+          command: |
+            shopt -s nullglob
+            files=()
+            for file in e2e/*.test.mjs; do
+              case "$file" in
+                e2e/dashboard-*|e2e/cart-*|e2e/storefront-*|e2e/architecture.test.mjs|e2e/performance-architecture.test.mjs|e2e/customer-auth-ui.test.mjs|e2e/category-*|e2e/product-*|e2e/seo-regression.test.mjs|e2e/visual-system-regression.test.mjs)
+                  ;;
+                *)
+                  files+=("$file")
+                  ;;
+              esac
+            done
+            node --test "${files[@]}"
+
   visual-build:
     docker:
       - image: cimg/node:lts
@@ -192,6 +271,26 @@ workflows:
               only:
                 - /^design\/.*/
       - visual-unit:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-dashboard:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-cart:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-storefront:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-other:
           filters:
             branches:
               only:
