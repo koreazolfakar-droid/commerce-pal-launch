@@ -281,7 +281,7 @@ async function runShopProbe(browser) {
 
 async function runModeProbe(browser) {
   const cases =
-    routeGroup === "overflow-mobile-en"
+    routeGroup.startsWith("overflow-mobile-en")
       ? [supplementalCases[0]]
       : routeGroup === "overflow-mobile-ar"
         ? [supplementalCases[1]]
@@ -297,6 +297,12 @@ async function runModeProbe(browser) {
 
     const response = await page.goto(`${baseURL}/`, { waitUntil: "load" });
     assert.ok(response && response.status() < 400, `${engineName} /: failed to load`);
+
+    if (routeGroup.endsWith("no-ticker")) {
+      await page.addStyleTag({
+        content: '[data-testid="homepage-promo-ticker"] { display: none !important; }',
+      });
+    }
 
     const overflowOnly = routeGroup === "overflow" || routeGroup.startsWith("overflow-");
 
