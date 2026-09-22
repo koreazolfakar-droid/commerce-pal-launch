@@ -1,7 +1,9 @@
 import { useLanguage } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart } from "lucide-react";\n\nimport { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 import { ProductGrid } from "@/components/ProductGrid";
 import { StoreLayout } from "@/components/StoreLayout";
