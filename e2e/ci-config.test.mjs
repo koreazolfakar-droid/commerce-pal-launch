@@ -46,9 +46,13 @@ test("CircleCI runs separate source and dependency security gates on every pipel
   assert.match(circle, /bun run test:unit/);
   assert.match(circle, /bun run build/);
   assert.match(circle, /bun run test:ssr/);
+  assert.match(circle, /ui-browser-deps:/);
+  assert.match(circle, /persist_to_workspace:/);
+  assert.match(circle, /attach_workspace:/);
+  assert.match(circle, /requires:\s*\n\s*- ui-browser-deps/);
   assert.match(circle, /ui-browser:/);
   assert.match(circle, /playwright install --with-deps << parameters\.engine >>/);
-  assert.match(circle, /node e2e\/ui-polish-responsive-check\.mjs/);
+  assert.match(circle, /\.\/node_modules\/\.bin\/vite dev/);\n  assert.match(circle, /node e2e\/ui-polish-responsive-check\.mjs/);
   assert.match(circle, /ui-server-smoke:/);
 });
 
