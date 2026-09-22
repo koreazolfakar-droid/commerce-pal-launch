@@ -195,6 +195,61 @@ jobs:
             )
             node --test "${files[@]}"
 
+  visual-unit-architecture:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Architecture unit tests
+          command: node --test e2e/architecture.test.mjs e2e/performance-architecture.test.mjs
+
+  visual-unit-storefront-core:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Storefront core unit tests
+          command: node --test e2e/storefront-*.test.mjs
+
+  visual-unit-catalog:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Catalog and auth unit tests
+          command: |
+            shopt -s nullglob
+            files=(e2e/customer-auth-ui.test.mjs e2e/category-*.test.mjs e2e/product-*.test.mjs e2e/seo-regression.test.mjs)
+            node --test "${files[@]}"
+
+  visual-unit-system:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - install-project
+      - run:
+          name: Visual system regression test
+          command: node --test e2e/visual-system-regression.test.mjs
+
   visual-unit-other:
     docker:
       - image: cimg/node:lts
@@ -286,6 +341,26 @@ workflows:
               only:
                 - /^design\/.*/
       - visual-unit-storefront:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-architecture:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-storefront-core:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-catalog:
+          filters:
+            branches:
+              only:
+                - /^design\/.*/
+      - visual-unit-system:
           filters:
             branches:
               only:
