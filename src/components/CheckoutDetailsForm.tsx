@@ -15,6 +15,8 @@ import {
   WalletCards,
 } from "lucide-react";
 
+import { useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
+import { addressCheckoutText } from "@/lib/customerAccount";
 import { useLanguage } from "@/lib/i18n";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { downloadOrderInvoicePdf } from "@/lib/orderInvoice";
@@ -159,6 +161,7 @@ export function CheckoutDetailsForm({
   disabled = false,
 }: CheckoutDetailsFormProps) {
   const { language } = useLanguage();
+  const { profile, selectedAddress } = useCustomerAccount();
   const clearCart = useCartStore((state) => state.clearCart);
   const { data: cms, refetch: refetchCms } = useQuery(cmsQueryOptions());
   const cmsStoreName = cms?.settings["site_name"];
@@ -341,6 +344,38 @@ export function CheckoutDetailsForm({
       // Keep checkout usable if storage is blocked or malformed.
     }
   }, []);
+
+  useEffect(() => {
+    if (!selectedAddress) return;
+
+    setDetails((current) => ({
+      ...current,
+      name: profile?.fullName || current.name,
+      phone: selectedAddress.phone || profile?.phone || current.phone,
+      area:
+        selectedAddress.areaStreet ||
+        selectedAddress.formattedAddress ||
+        current.area,
+      address: addressCheckoutText(selectedAddress) || current.address,
+      landmark: "",
+    }));
+
+    if (selectedAddress.latitude !== null && selectedAddress.longitude !== null) {
+      setLocation({
+        latitude: selectedAddress.latitude,
+        longitude: selectedAddress.longitude,
+        accuracy: 10,
+      });
+      setShareLocation(true);
+      setLocationError(null);
+    }
+  }, [
+    profile?.fullName,
+    profile?.phone,
+    selectedAddress?.id,
+    selectedAddress?.latitude,
+    selectedAddress?.longitude,
+  ]);
 
   const update = <K extends keyof CustomerDetails>(field: K, value: CustomerDetails[K]) => {
     setDetails((current) => ({ ...current, [field]: value }));
