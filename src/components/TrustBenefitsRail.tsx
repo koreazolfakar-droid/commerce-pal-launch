@@ -7,29 +7,25 @@ const BENEFITS = [
     icon: Bike,
     title: "benefitFreeDelivery",
     detail: "benefitEligibleOrders",
-    iconTone:
-      "border-sky-500/20 bg-sky-500/10 text-blue-600 dark:text-sky-400",
+    iconTone: "border-sky-500/20 bg-sky-500/10 text-blue-600 dark:text-sky-400",
   },
   {
     icon: ShieldCheck,
     title: "benefitWarranty",
     detail: "benefitAuthentic",
-    iconTone:
-      "border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    iconTone: "border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-400",
   },
   {
     icon: RotateCcw,
     title: "benefitReturns",
     detail: "benefitReturnsPolicy",
-    iconTone:
-      "border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
+    iconTone: "border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
   },
   {
     icon: CreditCard,
     title: "benefitSecurePayment",
     detail: "benefitEncryptedCheckout",
-    iconTone:
-      "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+    iconTone: "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   },
 ] as const;
 
