@@ -135,7 +135,7 @@ export const CompactProductCard = memo(function CompactProductCard({
       <article
         role={listItem ? "listitem" : undefined}
         className={cn(
-          "market-product-card group relative flex h-full min-w-0 w-full flex-col",
+          "market-product-card group relative flex h-full min-w-0 w-full flex-col overflow-hidden border border-border/75 bg-card shadow-card transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card-hover",
           className,
         )}
       >
@@ -184,7 +184,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
         </div>
 
-        <div className="product-card-body market-product-copy flex min-w-0 flex-1 flex-col pt-3.5">
+        <div className="product-card-body market-product-copy flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
           {brand ? (
             <div className="mb-1 flex min-w-0 items-center gap-1">
               <BrandLogo slug={brand.slug} label={brand.label} size={14} className="rounded" />
@@ -210,7 +210,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             params={{ handle: node.handle }}
             className="mt-1 min-w-0"
           >
-            <h3 className="product-card-title break-words text-[0.8rem] font-medium leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
+            <h3 className="product-card-title line-clamp-2 min-h-[2.35rem] break-words text-[0.8rem] font-semibold leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
               {node.title}
             </h3>
           </Link>

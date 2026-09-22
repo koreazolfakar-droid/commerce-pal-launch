@@ -1,5 +1,3 @@
-import { List } from "lucide-react";
-
 import type { ProductViewMode } from "@/hooks/useProductViewMode";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
@@ -40,7 +38,7 @@ export function ProductViewToggle({
     <div
       className="inline-flex h-11 shrink-0 items-center gap-0.5 rounded-full bg-surface/95 p-1 shadow-inner ring-1 ring-border/45"
       role="group"
-      aria-label={`${t("viewGrid")} / ${t("viewList")}`}
+      aria-label={t("viewGrid")}
     >
       <button
         type="button"
@@ -62,17 +60,6 @@ export function ProductViewToggle({
         className={buttonClass(mode === "grid")}
       >
         <GridGlyph columns={2} />
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onChange("list")}
-        aria-label={t("viewList")}
-        aria-pressed={mode === "list"}
-        title={t("viewList")}
-        className={buttonClass(mode === "list")}
-      >
-        <List className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       </button>
     </div>
   );
