@@ -53,7 +53,7 @@ function BrandsPage() {
     <StoreLayout>
       <div className="mx-auto w-full max-w-7xl px-4 py-7 sm:px-5 sm:py-10 lg:px-6">
         <header className="mb-6 max-w-2xl sm:mb-8">
-          <h1 className="text-[2rem] font-black leading-none tracking-[-0.045em] sm:text-4xl">
+          <h1 className="text-[2rem] font-bold leading-[1.15] tracking-[-0.025em] sm:text-4xl">
             {language === "ar" ? "كل البراندات" : "All Brands"}
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
@@ -87,7 +87,7 @@ function BrandsPage() {
                 </span>
 
                 <span className="mt-auto flex min-h-12 w-full items-end justify-between gap-3 pt-3.5">
-                  <span className="min-w-0 truncate text-[0.98rem] font-extrabold leading-none tracking-[-0.02em] text-foreground">
+                  <span className="min-w-0 truncate text-[0.98rem] font-semibold leading-[1.2] tracking-[-0.012em] text-foreground">
                     {brand.label}
                   </span>
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
