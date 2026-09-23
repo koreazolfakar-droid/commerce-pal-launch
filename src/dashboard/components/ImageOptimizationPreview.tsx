@@ -22,6 +22,10 @@ type Props = {
   title?: string;
   compact?: boolean;
   backgroundRemoval?: ImageBackgroundRemovalOptions;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  confirmLabel?: string;
+  busy?: boolean;
 };
 
 export default function ImageOptimizationPreview({
@@ -31,6 +35,10 @@ export default function ImageOptimizationPreview({
   title = "Image optimization preview",
   compact = false,
   backgroundRemoval,
+  onConfirm,
+  onCancel,
+  confirmLabel = "Confirm & upload",
+  busy = false,
 }: Props) {
   const [compression, setCompression] = useState<ImageCompressionPreset>(() =>
     getImageCompressionPreset(),
@@ -268,6 +276,32 @@ export default function ImageOptimizationPreview({
               </span>
             </div>
           ) : null}
+        </div>
+      ) : null}
+
+      {onConfirm ? (
+        <div className="mt-3 border-t border-indigo-100 pt-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            {onCancel ? (
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={busy}
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-[10px] font-bold text-slate-600 disabled:opacity-50 sm:w-auto"
+              >
+                Cancel
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={busy || previewing || Boolean(error)}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-5 text-[11px] font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+              {busy ? "Uploading…" : confirmLabel}
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

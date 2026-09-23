@@ -265,6 +265,7 @@ export default function HeroBannersPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<HeroImageTarget | null>(null);
   const [pendingHeroImages, setPendingHeroImages] = useState<Partial<Record<HeroImageTarget, File>>>({});
+  const [pendingPreviewUrls, setPendingPreviewUrls] = useState<Partial<Record<HeroImageTarget, string>>>({});
   const [lastOptimizations, setLastOptimizations] = useState<
     Partial<Record<HeroImageTarget, DashboardHeroImageOptimization>>
   >({});
@@ -312,6 +313,18 @@ export default function HeroBannersPage() {
   useEffect(() => {
     setLastOptimizations({});
   }, [selectedId]);
+
+  useEffect(() => {
+    const next: Partial<Record<HeroImageTarget, string>> = {};
+    for (const target of ["desktop", "mobile"] as const) {
+      const file = pendingHeroImages[target];
+      if (file) next[target] = URL.createObjectURL(file);
+    }
+    setPendingPreviewUrls(next);
+    return () => {
+      for (const url of Object.values(next)) URL.revokeObjectURL(url);
+    };
+  }, [pendingHeroImages]);
 
   const dirty = useMemo(() => {
     if (!selected) return JSON.stringify(form) !== JSON.stringify(EMPTY_FORM);
@@ -731,6 +744,8 @@ export default function HeroBannersPage() {
             {(["desktop", "mobile"] as const).map((target) => {
               const isDesktop = target === "desktop";
               const url = isDesktop ? form.imageUrl : form.mobileImageUrl;
+              const pendingPreviewUrl = pendingPreviewUrls[target];
+              const displayUrl = pendingPreviewUrl || url;
               const alt = isDesktop
                 ? (language === "ar" ? form.imageAltAr : form.imageAltEn)
                 : (language === "ar" ? form.mobileImageAltAr : form.mobileImageAltEn);
@@ -746,8 +761,13 @@ export default function HeroBannersPage() {
                       </div>
                     </div>
                   </div>
-                  <div className={`mb-3 grid overflow-hidden rounded-xl bg-slate-100 ${isDesktop ? "aspect-[16/9]" : "aspect-[9/16] max-h-72"}`}>
-                    {url ? <img src={url} alt={alt} className="size-full object-cover" /> : <div className="grid place-items-center"><ImageIcon className="size-7 text-slate-300" /></div>}
+                  <div className={`relative mb-3 grid overflow-hidden rounded-xl bg-slate-100 ${isDesktop ? "aspect-[16/9]" : "aspect-[9/16] max-h-72"}`}>
+                    {displayUrl ? <img src={displayUrl} alt={alt} className="size-full object-cover" /> : <div className="grid place-items-center"><ImageIcon className="size-7 text-slate-300" /></div>}
+                    {pendingPreviewUrl ? (
+                      <div className="absolute bottom-2 left-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-[9px] font-bold text-white backdrop-blur">
+                        Ready to upload
+                      </div>
+                    ) : null}
                   </div>
                   <input
                     ref={isDesktop ? desktopFileRef : mobileFileRef}
@@ -824,31 +844,17 @@ export default function HeroBannersPage() {
                         resolution={isDesktop ? "1920" : "1080"}
                         title={isDesktop ? "Desktop hero compression preview" : "Mobile hero compression preview"}
                         compact
+                        busy={uploading === target}
+                        confirmLabel={isDesktop ? "Upload desktop hero" : "Upload mobile hero"}
+                        onConfirm={() => void upload(pendingHeroImages[target], target)}
+                        onCancel={() =>
+                          setPendingHeroImages((current) => {
+                            const next = { ...current };
+                            delete next[target];
+                            return next;
+                          })
+                        }
                       />
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPendingHeroImages((current) => {
-        const next = { ...current };
-        delete next[target];
-        return next;
-      })
-                          }
-                          disabled={uploading !== null}
-                          className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void upload(pendingHeroImages[target], target)}
-                          disabled={uploading !== null}
-                          className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
-                        >
-                          Confirm & upload
-                        </button>
-                      </div>
                     </div>
                   ) : null}
 
