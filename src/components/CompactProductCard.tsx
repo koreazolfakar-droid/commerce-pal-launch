@@ -116,14 +116,14 @@ export const CompactProductCard = memo(function CompactProductCard({
         "hover:border-primary/35 hover:bg-background hover:text-primary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         market
-          ? "market-product-action market-wishlist-button end-1.5 top-1.5 h-9 w-9"
+          ? "market-product-action market-wishlist-button end-2 top-2 h-[42px] w-[42px]"
           : "end-2.5 top-2.5 h-9 w-9",
       )}
     >
       <Heart
         aria-hidden
         className={cn(
-          market ? "h-[17px] w-[17px]" : "h-4 w-4",
+          market ? "h-[18px] w-[18px]" : "h-4 w-4",
           wishlisted && "fill-primary text-primary",
         )}
         strokeWidth={1.9}
@@ -281,7 +281,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                 {isAdding ? (
                   <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Plus aria-hidden className="h-4 w-4" strokeWidth={2.15} />
+                  <Plus aria-hidden className="h-[18px] w-[18px]" strokeWidth={2} />
                 )}
               </button>
             )}
@@ -348,19 +348,19 @@ export const CompactProductCard = memo(function CompactProductCard({
         <div className="product-card-body market-product-copy flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
           <div className="market-product-brand flex min-h-4 min-w-0 items-center">
             {brand ? (
-              <span className="market-product-brand-label truncate text-[9px] font-semibold leading-4 text-muted-foreground sm:text-[10px]">
+              <span className="market-product-brand-label truncate text-[10px] font-medium leading-4 text-muted-foreground sm:text-[11px]">
                 {brand.label}
               </span>
             ) : null}
           </div>
 
-          <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-0.5 min-w-0">
+          <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-1 min-w-0">
             <h3 className="product-card-title line-clamp-2 min-h-[2.35rem] break-words text-[0.8rem] font-semibold leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
               {node.title}
             </h3>
           </Link>
 
-          <div className="market-product-variant min-h-4">
+          <div className="market-product-variant mt-1 min-h-4">
             {summary ? (
               <p className="market-product-summary truncate text-[10px] leading-4 text-muted-foreground sm:text-xs">
                 {summary}
@@ -368,8 +368,8 @@ export const CompactProductCard = memo(function CompactProductCard({
             ) : null}
           </div>
 
-          <div className="mt-1 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <bdi className="product-card-price whitespace-nowrap text-[0.95rem] font-bold tabular-nums tracking-tight text-foreground sm:text-base">
+          <div className="mt-1.5 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+            <bdi className="product-card-price whitespace-nowrap text-[1.125rem] font-bold leading-tight tabular-nums tracking-tight text-foreground sm:text-xl">
               {formatPrice(price.amount, price.currencyCode)}
             </bdi>
             {discount !== null && compareAt && (
@@ -379,10 +379,10 @@ export const CompactProductCard = memo(function CompactProductCard({
             )}
           </div>
 
-          <div className="market-product-footer mt-auto flex min-w-0 items-center justify-between gap-1.5 pt-2">
+          <div className="market-product-footer mt-auto flex min-h-12 min-w-0 items-end justify-between gap-2 pt-2.5">
             <p
               className={cn(
-                "product-card-status market-product-stock inline-flex min-w-0 flex-1 items-center gap-1.5 text-[10px] font-semibold leading-4 sm:text-xs",
+                "product-card-status market-product-stock inline-flex min-w-0 flex-1 items-center gap-1.5 pb-1 text-[10px] font-medium leading-4 sm:text-xs",
                 inStock ? "text-success" : "text-destructive",
               )}
             >
@@ -434,7 +434,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                 onClick={handleAdd}
                 disabled={isAdding || !variant || !inStock}
                 aria-label={`Add ${node.title} to bag`}
-                className="market-product-action product-card-primary-action product-action-button press relative grid h-9 w-9 shrink-0 place-items-center rounded-full border border-primary/15 bg-primary/10 text-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-[background-color,color,transform,box-shadow] hover:bg-primary hover:text-primary-foreground hover:shadow-md active:scale-95 disabled:opacity-40"
+                className="market-product-action market-add-button product-card-primary-action product-action-button press relative grid h-11 w-11 shrink-0 place-items-center rounded-full border border-primary/15 bg-primary/10 text-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-[background-color,color,transform,box-shadow] hover:bg-primary hover:text-primary-foreground hover:shadow-md active:scale-95 disabled:opacity-40"
               >
                 {isAdding ? (
                   <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
