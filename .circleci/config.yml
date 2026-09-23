@@ -555,6 +555,110 @@ jobs:
           name: Lint lib
           command: ./node_modules/.bin/eslint src/lib --fix-dry-run
 
+  unit-dash-01-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Unit slice
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' -name 'dashboard-*.test.mjs' -print | sort | sed -n '1,10p')
+            node --test $FILES
+
+  unit-dash-02-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Unit slice
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' -name 'dashboard-*.test.mjs' -print | sort | sed -n '11,20p')
+            node --test $FILES
+
+  unit-dash-03-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Unit slice
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' -name 'dashboard-*.test.mjs' -print | sort | sed -n '21,30p')
+            node --test $FILES
+
+  unit-dash-04-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Unit slice
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' -name 'dashboard-*.test.mjs' -print | sort | sed -n '31,60p')
+            node --test $FILES
+
+  unit-other-01-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Unit slice
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*.test.mjs' -print | sort | sed -n '1,10p')
+            node --test $FILES
+
+  unit-other-02-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Unit slice
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*.test.mjs' -print | sort | sed -n '11,20p')
+            node --test $FILES
+
+  unit-other-03-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Unit slice
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*.test.mjs' -print | sort | sed -n '21,30p')
+            node --test $FILES
+
+  unit-other-04-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Unit slice
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*.test.mjs' -print | sort | sed -n '31,60p')
+            node --test $FILES
+
   unit-dashboard-all-debug:
     docker:
       - image: cimg/node:lts
@@ -825,6 +929,14 @@ workflows:
       - unit-dashboard-csp-debug
       - unit-dashboard-all-debug
       - unit-nondashboard-all-debug
+      - unit-dash-01-debug
+      - unit-dash-02-debug
+      - unit-dash-03-debug
+      - unit-dash-04-debug
+      - unit-other-01-debug
+      - unit-other-02-debug
+      - unit-other-03-debug
+      - unit-other-04-debug
       - dashboard-test-response-debug
       - dashboard-test-csp-debug
       - dashboard-test-storage-debug
