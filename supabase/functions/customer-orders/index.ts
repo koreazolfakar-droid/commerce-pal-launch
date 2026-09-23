@@ -215,6 +215,39 @@ Deno.serve(async (req: Request) => {
       return json(req, 503, { error: "temporarily_unavailable" });
     }
 
+    const productIds = [
+      ...new Set(
+        (items ?? [])
+          .map((item) => item.product_id)
+          .filter((value): value is string => typeof value === "string" && isUuid(value)),
+      ),
+    ];
+    const imageByProduct = new Map<string, string>();
+
+    if (productIds.length) {
+      const imageResult = await db
+        .from("store_product_images")
+        .select("product_id,url,is_primary,sort_order")
+        .in("product_id", productIds)
+        .order("is_primary", { ascending: false })
+        .order("sort_order", { ascending: true });
+
+      if (imageResult.error) {
+        console.error("customer-orders product image lookup failed", imageResult.error.message);
+      } else {
+        for (const image of imageResult.data ?? []) {
+          if (
+            typeof image.product_id === "string" &&
+            typeof image.url === "string" &&
+            image.url &&
+            !imageByProduct.has(image.product_id)
+          ) {
+            imageByProduct.set(image.product_id, image.url);
+          }
+        }
+      }
+    }
+
     return json(req, 200, {
       ok: true,
       items: (items ?? []).map((item) => ({
@@ -228,6 +261,8 @@ Deno.serve(async (req: Request) => {
         quantity: item.quantity,
         line_total: item.line_total,
         options: item.options,
+        image_url:
+          typeof item.product_id === "string" ? imageByProduct.get(item.product_id) ?? "" : "",
       })),
     });
   }

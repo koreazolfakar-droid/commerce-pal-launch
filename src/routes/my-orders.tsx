@@ -397,22 +397,38 @@ function OrderItems({ items }: { items: CustomerOrderItem[] }) {
 
   return (
     <ul className="divide-y divide-border/50">
-      {items.map((item) => (
-        <li key={item.itemId} className="flex items-start justify-between gap-3 py-2.5">
-          <div className="min-w-0">
-            <p className="text-sm font-medium leading-snug">{item.title}</p>
-            {item.variantTitle ? (
-              <p className="mt-0.5 text-xs text-muted-foreground">{item.variantTitle}</p>
-            ) : null}
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {t("orderItemQty")}: {item.quantity}
-            </p>
-          </div>
-          <p className="shrink-0 text-sm font-semibold">
-            {formatMoney(item.lineTotal, "USD")}
-          </p>
-        </li>
-      ))}
+      {items.map((item) => {
+        const showVariant =
+          Boolean(item.variantTitle) &&
+          item.variantTitle.trim().toLowerCase() !== "default title";
+
+        return (
+          <li key={item.itemId} className="flex items-center gap-3 py-3">
+            <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-border/60 bg-muted/30">
+              {item.imageUrl ? (
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  loading="lazy"
+                  className="h-full w-full object-contain p-1.5"
+                />
+              ) : (
+                <PackageOpen className="h-6 w-6 text-muted-foreground/40" aria-hidden />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-2 text-sm font-semibold leading-snug">{item.title}</p>
+              {showVariant ? (
+                <p className="mt-1 truncate text-xs text-muted-foreground">{item.variantTitle}</p>
+              ) : null}
+              <div className="mt-2 inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-foreground">
+                {t("orderItemQty")}: {item.quantity}
+              </div>
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }
