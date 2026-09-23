@@ -17,6 +17,7 @@ import {
   loadCustomerAddresses,
   saveAddressDraft,
   setDefaultAddress,
+  startAddressEdit,
   updateCustomerProfile,
   type AddressPatch,
   type CustomerAddress,
@@ -35,6 +36,7 @@ type CustomerAccountContextValue = {
   refresh: () => Promise<void>;
   selectAddress: (address: CustomerAddress) => void;
   beginAddressDraft: () => Promise<CustomerAddress | null>;
+  beginAddressEdit: (address: CustomerAddress) => Promise<CustomerAddress | null>;
   saveDraft: (patch: AddressPatch) => Promise<CustomerAddress | null>;
   completeDraft: () => Promise<CustomerAddress | null>;
   makeDefault: (address: CustomerAddress) => Promise<void>;
@@ -153,6 +155,20 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
     return draft;
   }, [openAuth, user]);
 
+  const beginAddressEdit = useCallback(
+    async (address: CustomerAddress) => {
+      if (!user) {
+        setResumeAfterAuth(true);
+        openAuth();
+        return null;
+      }
+      const draft = await startAddressEdit(address.id);
+      setDraftAddress(draft);
+      return draft;
+    },
+    [openAuth, user],
+  );
+
   const saveDraft = useCallback(
     async (patch: AddressPatch) => {
       if (!user) return null;
@@ -221,6 +237,7 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
       refresh,
       selectAddress,
       beginAddressDraft,
+      beginAddressEdit,
       saveDraft,
       completeDraft,
       makeDefault,
@@ -238,6 +255,7 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
       refresh,
       selectAddress,
       beginAddressDraft,
+      beginAddressEdit,
       saveDraft,
       completeDraft,
       makeDefault,
