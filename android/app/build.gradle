@@ -17,7 +17,7 @@ android {
 
     defaultConfig {
         applicationId "store.spacecallapp.app"
-        minSdk 23
+        minSdk 24
         targetSdk 36
         versionCode 1
         versionName "1.0.0"
@@ -63,6 +63,7 @@ android {
 
 dependencies {
     implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.7.3"
+    implementation "com.google.androidbrowserhelper:locationdelegation:1.1.2"
 }
 
 gradle.taskGraph.whenReady { graph ->
