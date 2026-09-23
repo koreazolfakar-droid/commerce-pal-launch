@@ -22,6 +22,14 @@ const routeTree = await readFile(
   new URL("../src/routeTree.gen.ts", import.meta.url),
   "utf8",
 );
+const storeLayout = await readFile(
+  new URL("../src/components/StoreLayout.tsx", import.meta.url),
+  "utf8",
+);
+const mobileTopBar = await readFile(
+  new URL("../src/components/MobileTopBar.tsx", import.meta.url),
+  "utf8",
+);
 
 test("customer order list payload contains compact item previews without per-order item calls", () => {
   assert.match(edge, /preview_items: previewItems/);
@@ -46,6 +54,19 @@ test("My Orders renders compact cards with two previews, quantity, other count, 
   assert.match(list, /MiniOrderProgress/);
   assert.match(list, /MINI_ORDER_STAGES/);
   assert.doesNotMatch(list, /loadMyOrderItems/);
+});
+
+test("My Orders replaces product discovery controls with order-status filters", () => {
+  assert.match(storeLayout, /const onOrdersPage = pathname === "\/my-orders"/);
+  assert.match(storeLayout, /showSearch=\{!onOrdersPage\}/);
+  assert.match(storeLayout, /showCategoryRail=\{!onHomePage && !onCartPage && !onShopPage && !onOrdersPage\}/);
+  assert.match(mobileTopBar, /showSearch = true/);
+  assert.match(list, /OrderStatusFilters/);
+  assert.match(list, /value: "all"/);
+  assert.match(list, /value: "active"/);
+  assert.match(list, /value: "delivered"/);
+  assert.match(list, /value: "cancelled"/);
+  assert.match(list, /Filter orders by status/);
 });
 
 test("customer order cards link to a registered non-nested details route", () => {
