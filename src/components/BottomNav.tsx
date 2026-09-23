@@ -45,13 +45,6 @@ const NAV_ITEMS: readonly NavItem[] = [
     matches: (pathname) => pathname === "/" || pathname.startsWith("/product/"),
   },
   {
-    id: "orders",
-    to: "/my-orders",
-    labelKey: "myOrders",
-    icon: ClipboardList,
-    matches: (pathname) => startsWithRoute(pathname, "/my-orders"),
-  },
-  {
     id: "search",
     to: "/search",
     labelKey: "searchLabel",
@@ -65,6 +58,13 @@ const NAV_ITEMS: readonly NavItem[] = [
     icon: ShoppingBag,
     matches: (pathname) => startsWithRoute(pathname, "/cart"),
     badge: "cart",
+  },
+  {
+    id: "orders",
+    to: "/my-orders",
+    labelKey: "myOrders",
+    icon: ClipboardList,
+    matches: (pathname) => startsWithRoute(pathname, "/my-orders"),
   },
 ] as const;
 
@@ -164,6 +164,15 @@ export function BottomNav() {
           }
         : item,
     )
+    .sort((a, b) => {
+      const navOrder: Record<string, number> = {
+        "/": 0,
+        "/search": 1,
+        "/cart": 2,
+        "/my-orders": 3,
+      };
+      return (navOrder[a.href ?? ""] ?? 99) - (navOrder[b.href ?? ""] ?? 99);
+    })
     .slice(0, 4);
 
   const itemClass = (active: boolean) =>
