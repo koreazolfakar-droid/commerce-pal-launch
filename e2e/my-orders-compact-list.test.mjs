@@ -15,7 +15,7 @@ const list = await readFile(
   "utf8",
 );
 const detail = await readFile(
-  new URL("../src/routes/my-orders.$orderId.tsx", import.meta.url),
+  new URL("../src/routes/my-orders_.$orderId.tsx", import.meta.url),
   "utf8",
 );
 
@@ -39,11 +39,12 @@ test("My Orders renders compact cards with two previews, quantity, other count, 
   assert.match(list, /otherCount/);
   assert.match(list, /formatMoney\(order\.total, order\.currency\)/);
   assert.match(list, /to="\/my-orders\/\$orderId"/);
-  assert.doesNotMatch(list, /OrderProgress/);
+  assert.match(list, /MiniOrderProgress/);
+  assert.match(list, /MINI_ORDER_STAGES/);
   assert.doesNotMatch(list, /loadMyOrderItems/);
 });
 
-test("customer order cards link to a working details route", () => {
+test("customer order cards link to a working non-nested details route", () => {
   assert.match(detail, /createFileRoute\("\/my-orders\/\$orderId"\)/);
   assert.match(detail, /Route\.useParams\(\)/);
   assert.match(detail, /loadMyOrderItems\(orderId\)/);
