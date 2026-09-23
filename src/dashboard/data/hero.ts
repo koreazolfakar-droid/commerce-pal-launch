@@ -1,7 +1,7 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
-import { getDashboardRole } from "@/dashboard/data/catalog";
+import { getDashboardMfaStatus, getDashboardRole } from "@/dashboard/data/catalog";
 import {
   convertProductImageToWebp,
   type ProductImageSourceInfo,
@@ -130,10 +130,22 @@ function throwIfError(error: { message: string } | null, label: string) {
   if (error) throw new Error(`${label}: ${error.message}`);
 }
 
+export class DashboardHeroVerificationRequiredError extends Error {
+  constructor() {
+    super("Dashboard verification expired. Complete MFA or passkey verification, then try the hero upload again.");
+    this.name = "DashboardHeroVerificationRequiredError";
+  }
+}
+
 async function requireDashboardStaff() {
   const role = await getDashboardRole();
   if (!role) throw new Error("Dashboard authentication is required.");
   return role;
+}
+
+async function requireFreshHeroUploadVerification() {
+  const status = await getDashboardMfaStatus();
+  if (!status?.ready) throw new DashboardHeroVerificationRequiredError();
 }
 
 function mapHero(row: HeroRow): DashboardHeroSlide {
@@ -366,6 +378,10 @@ export async function uploadDashboardHeroImage(
   target: HeroImageTarget = "desktop",
 ): Promise<DashboardHeroImageUploadResult> {
   await requireDashboardStaff();
+  // Storage and CMS write policies require a fresh AAL2 or passkey step-up.
+  // Re-check immediately before doing expensive image conversion so stale
+  // dashboard sessions fail with an actionable message instead of a raw RLS error.
+  await requireFreshHeroUploadVerification();
 
   if (!ALLOWED_HERO_MIME_TYPES.has(file.type)) {
     throw new Error("Unsupported image type. Use JPG, PNG, WebP, AVIF, GIF, SVG, HEIC or HEIF.");
