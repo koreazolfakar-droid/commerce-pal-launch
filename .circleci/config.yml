@@ -547,13 +547,18 @@ workflows:
   security-and-storefront-validation:
     jobs:
       - security-source
+      - security-dependencies
+      - storefront-ci
+
       - android-compile-check:
           requires:
-                filters:
+            - security-source
+          filters:
             branches:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
+
       - android-unit-test:
           requires:
             - security-source
@@ -562,6 +567,7 @@ workflows:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
+
       - android-lint-debug:
           requires:
             - security-source
@@ -570,6 +576,7 @@ workflows:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
+
       - android-lint-release:
           requires:
             - security-source
@@ -578,6 +585,7 @@ workflows:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
+
       - android-apk-badging:
           requires:
             - android-compile-check
@@ -586,6 +594,7 @@ workflows:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
+
       - android-apk-signature:
           requires:
             - android-compile-check
@@ -594,6 +603,7 @@ workflows:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
+
       - android-apk-alignment:
           requires:
             - android-compile-check
@@ -602,6 +612,7 @@ workflows:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
+
       - android-runtime-smoke:
           requires:
             - android-compile-check
@@ -610,14 +621,13 @@ workflows:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
-      - security-source
-      - security-dependencies
-      - storefront-ci
+
       - ui-browser-deps:
           filters:
             branches:
               only:
                 - /^ui\/.*/
+
       - ui-browser:
           requires:
             - ui-browser-deps
@@ -629,6 +639,7 @@ workflows:
             branches:
               only:
                 - /^ui\/.*/
+
       - ui-browser:
           requires:
             - ui-browser-deps
@@ -640,6 +651,7 @@ workflows:
             branches:
               only:
                 - /^ui\/.*/
+
       - ui-browser:
           requires:
             - ui-browser-deps
@@ -651,6 +663,7 @@ workflows:
             branches:
               only:
                 - /^ui\/.*/
+
       - ui-browser:
           requires:
             - ui-browser-deps
