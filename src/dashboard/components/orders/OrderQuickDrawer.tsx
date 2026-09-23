@@ -113,8 +113,8 @@ export default function OrderQuickDrawer({
   const copyOrderNumber = async () => {
     if (!order) return;
     try {
-      await navigator.clipboard.writeText(String(order.orderNumber));
-      toast.success(`Order #${order.orderNumber} copied.`);
+      await navigator.clipboard.writeText(String(order.publicOrderNumber));
+      toast.success(`Order #${order.publicOrderNumber} copied.`);
     } catch {
       toast.error("Unable to copy order number.");
     }
@@ -134,7 +134,7 @@ export default function OrderQuickDrawer({
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label={order ? `Quick view for order #${order.orderNumber}` : "Order quick view"}
+        aria-label={order ? `Quick view for order #${order.publicOrderNumber}` : "Order quick view"}
         className="absolute inset-y-0 end-0 flex w-full max-w-[560px] flex-col bg-white shadow-[-18px_0_48px_rgba(15,23,42,.16)]"
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-4 py-4 sm:px-5">
@@ -144,7 +144,7 @@ export default function OrderQuickDrawer({
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <h2 className="truncate text-[20px] font-black tracking-[-.04em] text-[#14203a]">
-                {order ? `Order #${order.orderNumber}` : "Loading order"}
+                {order ? `Order #${order.publicOrderNumber}` : "Loading order"}
               </h2>
               {order ? <Badge status={order.status} /> : null}
             </div>
