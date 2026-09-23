@@ -232,6 +232,99 @@ jobs:
           name: Cart unit tests
           command: node --test e2e/cart-ux-polish.test.mjs e2e/cart-responsive-precision.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-delivery-dashboard.test.mjs
 
+  unit-ci-config-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: CI config test
+          command: node --test e2e/ci-config.test.mjs
+
+  unit-dashboard-csp-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Dashboard CSP CI test
+          command: node --test e2e/dashboard-csp-session-ci.test.mjs
+
+  lint-src-all-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint src
+          command: ./node_modules/.bin/eslint src --fix-dry-run
+
+  lint-e2e-all-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint e2e
+          command: ./node_modules/.bin/eslint e2e --fix-dry-run
+
+  build-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Build
+          command: bun run build
+
+  ssr-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Build
+          command: bun run build
+      - run:
+          name: SSR
+          command: bun run test:ssr
+
   unit-ci-debug:
     docker:
       - image: cimg/node:lts
@@ -393,6 +486,12 @@ workflows:
       - lint-e2e-debug
       - unit-cart-debug
       - unit-ci-debug
+      - unit-ci-config-debug
+      - unit-dashboard-csp-debug
+      - lint-src-all-debug
+      - lint-e2e-all-debug
+      - build-debug
+      - ssr-debug
       - ui-browser-deps:
           filters:
             branches:
