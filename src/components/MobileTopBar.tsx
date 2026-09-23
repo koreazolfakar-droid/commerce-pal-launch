@@ -1,14 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, Menu, Search, ShoppingBag } from "lucide-react";
+import { Heart, MapPin, Menu, Search } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
-import { CustomerAddressSelector } from "@/components/customer-account/CustomerAddressSelector";
+import { useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
 import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
-import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { STORE_NAME } from "@/lib/storeConfig";
 
@@ -50,9 +49,7 @@ export function MobileTopBar({
   const { t } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
   const wishlistCount = useWishlistStore((state) => state.handles.length);
-  const cartCount = useCartStore((state) =>
-    state.items.reduce((total, item) => total + item.quantity, 0),
-  );
+  const { selectedAddress, openAddressBook } = useCustomerAccount();
   const cmsStoreName = cms?.settings["site_name"];
   const cmsLogoUrl = cms?.settings["logo_url"];
   const storeName =
@@ -112,30 +109,38 @@ export function MobileTopBar({
             <ThemeToggle className="h-10 w-10 rounded-xl border border-border/55 bg-card/70 shadow-sm hover:bg-surface" />
             <button
               type="button"
-              onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
-              aria-label={`Cart, ${cartCount} items`}
+              onClick={openAddressBook}
+              aria-label={
+                selectedAddress
+                  ? `Delivery location: ${selectedAddress.nickname || selectedAddress.areaStreet || selectedAddress.formattedAddress || "saved"}`
+                  : "Choose delivery location"
+              }
+              title={selectedAddress ? "Delivery location" : "Choose delivery location"}
+              data-testid="mobile-header-location"
               className="press relative grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/55 bg-card/70 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
             >
-              <ShoppingBag className="h-5 w-5" strokeWidth={1.9} />
-              <Badge value={cartCount} />
-              </button>
+              <MapPin className="h-5 w-5" strokeWidth={1.9} />
+              {selectedAddress ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute end-1 top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background"
+                />
+              ) : null}
+            </button>
           </div>
         </div>
       </header>
 
       <div className="border-b border-border/40 bg-background lg:hidden">
-        <div className="mx-auto max-w-md space-y-2 px-3 pb-3 pt-2.5">
-          <CustomerAddressSelector variant="mobile" className="w-full" />
-          <div className="flex min-w-0 items-center gap-2">
-            <button
+        <div className="mx-auto max-w-md px-3 pb-3 pt-2.5">
+          <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="press flex h-12 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border/65 bg-card px-4 text-start text-[13px] font-medium text-muted-foreground shadow-sm transition hover:border-primary/25 hover:bg-accent/50"
+            className="press flex h-12 min-w-0 w-full items-center gap-3 rounded-2xl border border-border/65 bg-card px-4 text-start text-[13px] font-medium text-muted-foreground shadow-sm transition hover:border-primary/25 hover:bg-accent/50"
           >
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="truncate">{t("search")}</span>
           </button>
-          </div>
         </div>
 
         {showCategoryRail ? (

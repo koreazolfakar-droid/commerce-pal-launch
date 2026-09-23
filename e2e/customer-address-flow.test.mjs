@@ -62,7 +62,7 @@ test("address flow implements map, type, details, autosave and optional media", 
   assert.match(map, /region:\s*"LB"/);
 });
 
-test("saved address selector is available in mobile and desktop chrome", async () => {
+test("saved address selector is available in desktop chrome and as a compact mobile header action", async () => {
   const [desktop, mobile] = await Promise.all([
     read("src/components/SiteHeader.tsx"),
     read("src/components/MobileTopBar.tsx"),
@@ -70,8 +70,12 @@ test("saved address selector is available in mobile and desktop chrome", async (
 
   assert.match(desktop, /CustomerAddressSelector/);
   assert.match(desktop, /variant="desktop"/);
-  assert.match(mobile, /CustomerAddressSelector/);
-  assert.match(mobile, /variant="mobile"/);
+  assert.match(mobile, /useCustomerAccount/);
+  assert.match(mobile, /openAddressBook/);
+  assert.match(mobile, /data-testid="mobile-header-location"/);
+  assert.match(mobile, /<MapPin/);
+  assert.doesNotMatch(mobile, /CustomerAddressSelector/);
+  assert.doesNotMatch(mobile, /space-cell:open-cart/);
 });
 
 test("checkout consumes the selected saved address and immutable map snapshot", async () => {
