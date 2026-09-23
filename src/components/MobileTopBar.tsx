@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Heart, MapPin, Menu, Search } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import { useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
 import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
@@ -56,6 +56,12 @@ export function MobileTopBar({
     typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
   const logoUrl =
     typeof cmsLogoUrl === "string" && cmsLogoUrl.trim() ? cmsLogoUrl.trim() : "/logo.svg";
+
+  useEffect(() => {
+    const openSearch = () => setSearchOpen(true);
+    window.addEventListener("space-call:open-search", openSearch);
+    return () => window.removeEventListener("space-call:open-search", openSearch);
+  }, []);
 
   return (
     <>

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useRouterState } from "@tanstack/react-router";
+import type { MouseEvent } from "react";
 import {
   ClipboardList,
   Grid2X2,
@@ -176,6 +177,22 @@ export function BottomNav() {
 
   if (hasCmsConfig && cmsItems.length === 0) return null;
 
+  const handlePrimaryNavClick = (
+    href: string | null,
+    event: MouseEvent<HTMLAnchorElement>,
+  ) => {
+    if (href === "/search") {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent("space-call:open-search"));
+      return;
+    }
+
+    if (href === "/" && pathname === "/") {
+      event.preventDefault();
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  };
+
   return (
     <nav
       data-testid="bottom-nav"
@@ -202,6 +219,8 @@ export function BottomNav() {
                   className={itemClass(active)}
                   aria-label={label}
                   aria-current={active ? "page" : undefined}
+                  resetScroll={item.href === "/"}
+                  onClick={(event) => handlePrimaryNavClick(item.href, event)}
                 >
                   <span
                     className={cn(
@@ -233,6 +252,8 @@ export function BottomNav() {
                   className={itemClass(active)}
                   aria-label={label}
                   aria-current={active ? "page" : undefined}
+                  resetScroll={item.to === "/"}
+                  onClick={(event) => handlePrimaryNavClick(item.to, event)}
                 >
                   <span
                     className={cn(
