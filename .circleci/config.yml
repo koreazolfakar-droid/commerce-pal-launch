@@ -659,6 +659,83 @@ jobs:
             FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*.test.mjs' -print | sort | sed -n '31,60p')
             node --test $FILES
 
+  customer-address-rls-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Customer address regression slice
+          command: node --test --test-name-pattern="customer address ownership" e2e/customer-address-flow.test.mjs
+
+  customer-address-root-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Customer address regression slice
+          command: node --test --test-name-pattern="root exposes one shared" e2e/customer-address-flow.test.mjs
+
+  customer-address-map-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Customer address regression slice
+          command: node --test --test-name-pattern="address flow implements" e2e/customer-address-flow.test.mjs
+
+  customer-address-selector-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Customer address regression slice
+          command: node --test --test-name-pattern="saved address selector" e2e/customer-address-flow.test.mjs
+
+  customer-address-checkout-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Customer address regression slice
+          command: node --test --test-name-pattern="checkout consumes" e2e/customer-address-flow.test.mjs
+
+  customer-address-history-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Customer address regression slice
+          command: node --test --test-name-pattern="customer order history" e2e/customer-address-flow.test.mjs
+
+  customer-address-auth-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Customer address regression slice
+          command: node --test --test-name-pattern="authenticated checkouts" e2e/customer-address-flow.test.mjs
+
   unit-customer-address-debug:
     docker:
       - image: cimg/node:lts
@@ -995,6 +1072,13 @@ workflows:
       - unit-dashboard-csp-debug
       - affected-regressions-debug
       - unit-customer-address-debug
+      - customer-address-rls-debug
+      - customer-address-root-debug
+      - customer-address-map-debug
+      - customer-address-selector-debug
+      - customer-address-checkout-debug
+      - customer-address-history-debug
+      - customer-address-auth-debug
       - unit-architecture-debug
       - unit-performance-debug
       - unit-security-pipeline-debug
