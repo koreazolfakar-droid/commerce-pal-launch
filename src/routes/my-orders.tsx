@@ -101,12 +101,44 @@ function customerStatusLabel(status: string, ar: boolean) {
   return label ? label[ar ? 1 : 0] : status.replaceAll("_", " ");
 }
 
-function OrderProgress({ status, ar }: { status: string; ar: boolean }) {
+function formatStageTime(value: string, ar: boolean) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(ar ? "ar-LB" : "en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function stageTime(order: CustomerOrderSummary, stage: (typeof CUSTOMER_STAGES)[number]) {
+  const statusByStage: Record<(typeof CUSTOMER_STAGES)[number], string[]> = {
+    received: ["new", "confirmed"],
+    preparing: ["processing"],
+    ready: ["ready"],
+    on_the_way: ["out_for_delivery"],
+    delivered: ["delivered", "done"],
+  };
+  const statuses = statusByStage[stage];
+  const event = order.statusHistory.find((entry) => statuses.includes(entry.status));
+  if (event?.createdAt) return event.createdAt;
+  if (stage === "received") return order.createdAt;
+  if (stage === "delivered") return order.completedAt;
+  return "";
+}
+
+function OrderProgress({ order, ar }: { order: CustomerOrderSummary; ar: boolean }) {
+  const { status } = order;
   if (status === "cancelled") {
     return (
       <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 px-3 py-2.5 text-sm font-semibold text-rose-700 dark:text-rose-300">
         <XCircle className="h-4 w-4" aria-hidden />
         <span>{ar ? "تم إلغاء الطلب" : "This order was cancelled"}</span>
+        {(() => {
+          const cancelledAt = order.statusHistory.find((entry) => entry.status === "cancelled")?.createdAt;
+          const time = cancelledAt ? formatStageTime(cancelledAt, ar) : "";
+          return time ? <span className="ms-auto text-xs font-medium opacity-80">{time}</span> : null;
+        })()}
       </div>
     );
   }
@@ -156,6 +188,12 @@ function OrderProgress({ status, ar }: { status: string; ar: boolean }) {
                   )}
                 >
                   {labels[index]}
+                </span>
+                <span className="mt-1 min-h-4 text-[9px] tabular-nums text-muted-foreground">
+                  {(() => {
+                    const time = stageTime(order, stage);
+                    return time ? formatStageTime(time, ar) : "—";
+                  })()}
                 </span>
               </div>
             );
@@ -304,7 +342,7 @@ function OrderCard({ order }: { order: CustomerOrderSummary }) {
       </div>
 
       <div className="px-4 pb-4">
-        <OrderProgress status={order.status} ar={ar} />
+        <OrderProgress order={order} ar={ar} />
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/60 px-4 py-2.5 text-xs text-muted-foreground">
