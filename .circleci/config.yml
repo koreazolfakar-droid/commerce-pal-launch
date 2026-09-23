@@ -449,7 +449,9 @@ jobs:
           command: bun install --frozen-lockfile
       - run:
           name: Lint without Prettier
-          command: ./node_modules/.bin/eslint src/components/customer-account/GoogleDeliveryMap.tsx --fix-dry-run --rule "prettier/prettier: off"
+          command: >-
+            ./node_modules/.bin/eslint src/components/customer-account/GoogleDeliveryMap.tsx
+            --fix-dry-run --rule "prettier/prettier: off"
 
   lint-customer-map-debug:
     docker:
