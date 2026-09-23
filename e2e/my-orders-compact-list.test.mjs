@@ -18,6 +18,10 @@ const detail = await readFile(
   new URL("../src/routes/my-orders_.$orderId.tsx", import.meta.url),
   "utf8",
 );
+const routeTree = await readFile(
+  new URL("../src/routeTree.gen.ts", import.meta.url),
+  "utf8",
+);
 
 test("customer order list payload contains compact item previews without per-order item calls", () => {
   assert.match(edge, /preview_items: previewItems/);
@@ -44,9 +48,12 @@ test("My Orders renders compact cards with two previews, quantity, other count, 
   assert.doesNotMatch(list, /loadMyOrderItems/);
 });
 
-test("customer order cards link to a working non-nested details route", () => {
+test("customer order cards link to a registered non-nested details route", () => {
   assert.match(detail, /createFileRoute\("\/my-orders\/\$orderId"\)/);
   assert.match(detail, /Route\.useParams\(\)/);
   assert.match(detail, /loadMyOrderItems\(orderId\)/);
   assert.match(detail, /Back to My orders/);
+  assert.match(routeTree, /routes\/my-orders_\.\$orderId/);
+  assert.match(routeTree, /'\/my-orders\/\$orderId': typeof MyOrdersOrderIdRoute/);
+  assert.match(routeTree, /MyOrdersOrderIdRoute: MyOrdersOrderIdRoute/);
 });
