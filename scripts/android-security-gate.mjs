@@ -171,7 +171,7 @@ requireText(
 requireText(gradle, "minifyEnabled true", "Release R8 minification must stay enabled.");
 requireText(gradle, "shrinkResources true", "Release resource shrinking must stay enabled.");
 requireText(gradle, "debuggable false", "Release build must remain non-debuggable.");
-requireText(gradle, "warningsAsErrors true", "Android lint warnings must fail the build.");
+requireText(gradle, "abortOnError true", "Android lint errors must fail the build.");\nrequireText(gradle, "checkReleaseBuilds true", "Release lint must remain enabled.");\nrequireText(gradle, "checkDependencies true", "Dependency lint checks must remain enabled.");
 requireText(
   gradle,
   "Release APK/AAB generation is blocked",
