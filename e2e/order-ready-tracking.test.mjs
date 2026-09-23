@@ -15,7 +15,7 @@ const storefront = await readFile(new URL("../src/routes/my-orders.tsx", import.
 
 test("ready is a real guarded order state between processing and delivery", () => {
   assert.match(migration, /'processing',[\s\S]+'ready',[\s\S]+'out_for_delivery'/);
-  assert.match(migration, /v_before\.status = 'processing' and p_status in \('ready', 'cancelled'\)/);
+  assert.match(migration, /v_before\.status = 'processing' and p_status in \('ready', 'out_for_delivery', 'cancelled'\)/);
   assert.match(migration, /v_before\.status = 'ready' and p_status in \('out_for_delivery', 'cancelled'\)/);
   assert.match(migration, /order_version_conflict/);
   assert.match(migration, /insert into public\.store_order_audit_log/);
