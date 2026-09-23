@@ -9,17 +9,18 @@ const checkout = await readFile(
 );
 
 test("cart uses compact responsive sizing from small phones through desktop", () => {
-  assert.match(cart, /max-w-\[74rem\]/);
-  assert.match(cart, /min-\[390px\]:h-\[5\.25rem\]/);
-  assert.match(cart, /sm:grid-cols-3/);
+  assert.match(cart, /max-w-\[72rem\]/);
+  assert.match(cart, /h-\[5\.25rem\] w-\[5\.25rem\]/);
   assert.match(cart, /xl:grid-cols-\[minmax\(0,1fr\)_22\.5rem\]/);
   assert.match(cart, /lg:top-\[5\.75rem\]/);
 });
 
-test("mobile benefits scroll instead of crushing three cards into narrow columns", () => {
-  assert.match(cart, /snap-x snap-mandatory/);
-  assert.match(cart, /min-w-\[9\.75rem\]/);
-  assert.match(cart, /\[scrollbar-width:none\]/);
+test("mobile cart uses one clean sticky checkout bar instead of benefit-card clutter", () => {
+  assert.match(cart, /bottom-\[calc\(4\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(cart, /lg:hidden/);
+  assert.match(cart, /Continue to checkout/);
+  assert.doesNotMatch(cart, /snap-x snap-mandatory/);
+  assert.doesNotMatch(cart, /min-w-\[9\.75rem\]/);
 });
 
 test("cart quantity controls are locked while a cart mutation is in progress", () => {
