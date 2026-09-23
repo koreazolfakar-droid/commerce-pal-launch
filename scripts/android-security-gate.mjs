@@ -7,6 +7,8 @@ const gradlePath = "android/app/build.gradle";
 const stringsPath = "android/app/src/main/res/values/strings.xml";
 const launcherPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCallLauncherActivity.java";
 const delegationPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCallDelegationService.java";
+const urlPolicyPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCallUrlPolicy.java";
+const urlPolicyTestPath = "android/app/src/test/java/store/spacecallapp/app/SpaceCallUrlPolicyTest.java";
 const assetlinksPath = "public/.well-known/assetlinks.json";
 const webManifestPath = "public/manifest.webmanifest";
 const gitignorePath = ".gitignore";
@@ -16,6 +18,8 @@ const gradle = read(gradlePath);
 const strings = read(stringsPath);
 const launcher = read(launcherPath);
 const delegation = read(delegationPath);
+const urlPolicy = read(urlPolicyPath);
+const urlPolicyTest = read(urlPolicyTestPath);
 const gitignore = read(gitignorePath);
 
 const failures = [];
@@ -145,10 +149,13 @@ requireText(
   "The app-side Digital Asset Link must point to the canonical site.",
 );
 
-requireText(launcher, 'CANONICAL_HOST = "www.spacecallapp.store"', "Launcher canonical host guard is missing.");
+requireText(launcher, "SpaceCallUrlPolicy.sanitize(rawUrl)", "Launcher must delegate URL validation to SpaceCallUrlPolicy.");
 requireText(launcher, "protected Uri getUrlForIntent(Intent intent)", "Raw VIEW intents must pass through the URL sanitizer.");
-requireText(launcher, '!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)', "Launcher must reject non-web URL schemes.");
-requireText(launcher, '.scheme("https")', "Launcher must force all accepted web links to HTTPS.");
+requireText(urlPolicy, 'CANONICAL_HOST = "www.spacecallapp.store"', "URL policy canonical host guard is missing.");
+requireText(urlPolicy, 'ALTERNATE_HOST = "spacecallapp.store"', "URL policy alternate host normalization is missing.");
+requireText(urlPolicy, '"https".equals(normalizedScheme) && !"http".equals(normalizedScheme)', "URL policy must reject non-web schemes.");
+requireText(urlPolicy, '"https",', "URL policy must force accepted links to HTTPS.");
+requireText(urlPolicy, "null,\n                    CANONICAL_HOST,\n                    -1,", "URL policy must strip user-info and explicit ports.");
 requireText(launcher, "openSafeBrowserFallback()", "Crash-safe browser fallback is missing.");
 requireText(
   launcher,
@@ -170,6 +177,17 @@ requireText(
   "LocationDelegationExtraCommandHandler",
   "Location delegation handler is required.",
 );
+for (const requiredTestCase of [
+  "httpIsUpgradedToHttps",
+  "foreignHostIsRejected",
+  "lookalikeSubdomainIsRejected",
+  "userInfoHostSpoofIsRejected",
+  "nonWebSchemeIsRejected",
+  "explicitPortIsRemoved",
+  "malformedUrlIsRejected",
+]) {
+  requireText(urlPolicyTest, requiredTestCase, `Missing Android URL policy regression test: ${requiredTestCase}`);
+}
 
 requireText(gradle, 'applicationId "store.spacecallapp.app"', "Production application ID changed unexpectedly.");
 requireText(gradle, 'applicationIdSuffix ".debug"', "Test and production package identities must remain separate.");
@@ -189,6 +207,7 @@ requireText(
   'com.google.androidbrowserhelper:locationdelegation:1.1.2',
   "Location delegation dependency must remain pinned.",
 );
+requireText(gradle, 'testImplementation "junit:junit:4.13.2"', "Android JVM security tests must remain enabled.");
 requireText(gradle, "minifyEnabled true", "Release R8 minification must stay enabled.");
 requireText(gradle, "shrinkResources true", "Release resource shrinking must stay enabled.");
 requireText(gradle, "debuggable false", "Release build must remain non-debuggable.");
