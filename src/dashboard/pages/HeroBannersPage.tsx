@@ -3,6 +3,7 @@ import {
   ArrowDown,
   ArrowUp,
   Copy,
+  ChevronDown,
   ExternalLink,
   Image as ImageIcon,
   Loader2,
@@ -747,79 +748,6 @@ export default function HeroBannersPage() {
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="mb-4 text-[13px] font-bold text-[#14203a]">Design & live preview</div>
-            <details className="mb-4 rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-xs font-semibold">Advanced appearance / إعدادات المظهر</summary>
-            <div className="mb-4 mt-3 grid gap-2 sm:grid-cols-3">
-              {HERO_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => setForm((current) => ({ ...current, ...preset.patch, visualConfig: { ...preset.patch.visualConfig } }))}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-start transition hover:border-indigo-300 hover:bg-indigo-50/50"
-                >
-                  <span className="block text-[11px] font-bold text-slate-700">{preset.label}</span>
-                  <span className="mt-0.5 block text-[9px] text-slate-400">{preset.description}</span>
-                </button>
-              ))}
-            </div>
-            <div className="mb-4 grid gap-4 lg:grid-cols-3">
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content alignment</span>
-                <select value={form.contentAlignment} onChange={(e) => setForm((current) => ({ ...current, contentAlignment: e.target.value as HeroAlignment }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="start">Start</option>
-                  <option value="center">Center</option>
-                  <option value="end">End</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content theme</span>
-                <select value={form.contentTheme} onChange={(e) => setForm((current) => ({ ...current, contentTheme: e.target.value as HeroContentTheme }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="light">Light text</option>
-                  <option value="dark">Dark text</option>
-                  <option value="glass">Glass panel</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 flex justify-between text-[11px] font-bold text-slate-600"><span>Overlay opacity</span><span>{form.overlayOpacity}%</span></span>
-                <input type="range" min="0" max="90" step="5" value={form.overlayOpacity} onChange={(e) => setForm((current) => ({ ...current, overlayOpacity: Number(e.target.value) }))} className="w-full" />
-              </label>
-            </div>
-
-            <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Vertical position</span>
-                <select value={form.visualConfig.vertical} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, vertical: e.target.value as HeroVisualConfig["vertical"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="top">Top</option>
-                  <option value="center">Center</option>
-                  <option value="bottom">Bottom</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Title size</span>
-                <select value={form.visualConfig.titleSize} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, titleSize: e.target.value as HeroVisualConfig["titleSize"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="compact">Compact</option>
-                  <option value="standard">Standard</option>
-                  <option value="large">Large</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content width</span>
-                <select value={form.visualConfig.contentWidth} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, contentWidth: e.target.value as HeroVisualConfig["contentWidth"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="narrow">Narrow</option>
-                  <option value="standard">Standard</option>
-                  <option value="wide">Wide</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button shape</span>
-                <select value={form.visualConfig.buttonRadius} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, buttonRadius: e.target.value as HeroVisualConfig["buttonRadius"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="soft">Soft</option>
-                  <option value="rounded">Rounded</option>
-                  <option value="pill">Pill</option>
-                </select>
-              </label>
-            </div>
-
-            </details>
             <div className="mb-3 flex justify-between gap-2">
               <div className="flex rounded-xl bg-slate-100 p-1">
                 <button onClick={() => setPreviewMode("desktop")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "desktop" ? "bg-white shadow-sm" : "text-slate-500"}`}><Monitor className="size-3.5" /> Desktop</button>
@@ -840,13 +768,16 @@ export default function HeroBannersPage() {
             />
 
           </section>
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-            <div className="mb-4">
-              <div className="text-[13px] font-bold text-[#14203a]">Content</div>
-              <div className="mt-0.5 text-[10px] text-slate-400">Edit the text shown inside this Hero slide.</div>
-            </div>
-
-            <div className="mb-5 flex gap-2 rounded-xl bg-slate-100 p-1">
+          <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+              <div>
+                <div className="text-[13px] font-bold text-[#14203a]">Content</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">Title, subtitle and bilingual button labels.</div>
+              </div>
+              <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-slate-100 p-4 sm:p-5">
+              <div className="mb-5 flex gap-2 rounded-xl bg-slate-100 p-1">
               <button onClick={() => setLanguage("en")} className={`flex-1 rounded-lg px-3 py-2 text-[10px] font-bold ${language === "en" ? "bg-white text-[#14203a] shadow-sm" : "text-slate-500"}`}>English</button>
               <button onClick={() => setLanguage("ar")} className={`flex-1 rounded-lg px-3 py-2 text-[10px] font-bold ${language === "ar" ? "bg-white text-[#14203a] shadow-sm" : "text-slate-500"}`}>العربية</button>
             </div>
@@ -900,9 +831,22 @@ export default function HeroBannersPage() {
                 />
               </label>
             </div>
-          </section>
+            </div>
+          </details>
 
-          <section className="grid gap-4 lg:grid-cols-2">
+          <details open={hasPendingHeroImages || undefined} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+              <div>
+                <div className="text-[13px] font-bold text-[#14203a]">Media</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">Desktop and mobile Hero images, upload and optimization.</div>
+              </div>
+              <div className="flex items-center gap-2">
+                {hasPendingHeroImages ? <span className="rounded-full bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700">Upload pending</span> : null}
+                <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+              </div>
+            </summary>
+            <div className="border-t border-slate-100 p-4 sm:p-5">
+              <div className="grid gap-4 lg:grid-cols-2">
             {(["desktop", "mobile"] as const).map((target) => {
               const isDesktop = target === "desktop";
               const url = isDesktop ? form.imageUrl : form.mobileImageUrl;
@@ -913,7 +857,7 @@ export default function HeroBannersPage() {
                 : (language === "ar" ? form.mobileImageAltAr : form.mobileImageAltEn);
               const optimization = lastOptimizations[target];
               return (
-                <div key={target} className="rounded-2xl border border-slate-200 bg-white p-5">
+                <div key={target} className="rounded-xl border border-slate-200 bg-slate-50/40 p-4 sm:p-5">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2 text-[12px] font-bold text-[#14203a]">{isDesktop ? <Monitor className="size-4" /> : <Smartphone className="size-4" />} {isDesktop ? "Desktop image" : "Mobile image"}</div>
@@ -1058,10 +1002,19 @@ export default function HeroBannersPage() {
                 </div>
               );
             })}
-          </section>
+              </div>
+            </div>
+          </details>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="mb-4 text-[13px] font-bold text-[#14203a]">Link & CTA</div>
+          <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+              <div>
+                <div className="text-[13px] font-bold text-[#14203a]">Link & CTA</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">Primary and optional secondary destinations.</div>
+              </div>
+              <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-slate-100 p-4 sm:p-5">
             <div className="grid gap-4 lg:grid-cols-3">
               <label>
                 <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Target type</span>
@@ -1137,10 +1090,18 @@ export default function HeroBannersPage() {
               </label>
               <div className="self-end rounded-xl bg-slate-50 px-3 py-3 text-[10px] text-slate-500">Resolved path: {secondaryTargetHref(form) || "No destination"}</div>
             </div>
-          </section>
+            </div>
+          </details>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="mb-4 text-[13px] font-bold text-[#14203a]">Publishing & schedule</div>
+          <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+              <div>
+                <div className="text-[13px] font-bold text-[#14203a]">Publishing & schedule</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">{form.isPublished ? "Published" : "Draft"} · optional start and end dates.</div>
+              </div>
+              <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-slate-100 p-4 sm:p-5">
             <div className="grid gap-4 lg:grid-cols-3">
               <label className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
                 <input type="checkbox" checked={form.isPublished} onChange={(e) => setForm((current) => ({ ...current, isPublished: e.target.checked }))} />
@@ -1155,7 +1116,92 @@ export default function HeroBannersPage() {
                 <input type="datetime-local" value={form.endsAt} onChange={(e) => setForm((current) => ({ ...current, endsAt: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px]" />
               </label>
             </div>
-          </section>
+            </div>
+          </details>
+
+          <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
+              <div>
+                <div className="text-[13px] font-bold text-[#14203a]">Advanced appearance</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">Theme, overlay, alignment, sizing and positioning controls.</div>
+              </div>
+              <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-slate-100 p-4 sm:p-5">
+            <div className="mb-4 mt-3 grid gap-2 sm:grid-cols-3">
+              {HERO_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => setForm((current) => ({ ...current, ...preset.patch, visualConfig: { ...preset.patch.visualConfig } }))}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-start transition hover:border-indigo-300 hover:bg-indigo-50/50"
+                >
+                  <span className="block text-[11px] font-bold text-slate-700">{preset.label}</span>
+                  <span className="mt-0.5 block text-[9px] text-slate-400">{preset.description}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mb-4 grid gap-4 lg:grid-cols-3">
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content alignment</span>
+                <select value={form.contentAlignment} onChange={(e) => setForm((current) => ({ ...current, contentAlignment: e.target.value as HeroAlignment }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="start">Start</option>
+                  <option value="center">Center</option>
+                  <option value="end">End</option>
+                </select>
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content theme</span>
+                <select value={form.contentTheme} onChange={(e) => setForm((current) => ({ ...current, contentTheme: e.target.value as HeroContentTheme }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="light">Light text</option>
+                  <option value="dark">Dark text</option>
+                  <option value="glass">Glass panel</option>
+                </select>
+              </label>
+              <label>
+                <span className="mb-1.5 flex justify-between text-[11px] font-bold text-slate-600"><span>Overlay opacity</span><span>{form.overlayOpacity}%</span></span>
+                <input type="range" min="0" max="90" step="5" value={form.overlayOpacity} onChange={(e) => setForm((current) => ({ ...current, overlayOpacity: Number(e.target.value) }))} className="w-full" />
+              </label>
+            </div>
+
+            <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Vertical position</span>
+                <select value={form.visualConfig.vertical} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, vertical: e.target.value as HeroVisualConfig["vertical"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="top">Top</option>
+                  <option value="center">Center</option>
+                  <option value="bottom">Bottom</option>
+                </select>
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Title size</span>
+                <select value={form.visualConfig.titleSize} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, titleSize: e.target.value as HeroVisualConfig["titleSize"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="compact">Compact</option>
+                  <option value="standard">Standard</option>
+                  <option value="large">Large</option>
+                </select>
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content width</span>
+                <select value={form.visualConfig.contentWidth} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, contentWidth: e.target.value as HeroVisualConfig["contentWidth"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="narrow">Narrow</option>
+                  <option value="standard">Standard</option>
+                  <option value="wide">Wide</option>
+                </select>
+              </label>
+              <label>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button shape</span>
+                <select value={form.visualConfig.buttonRadius} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, buttonRadius: e.target.value as HeroVisualConfig["buttonRadius"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
+                  <option value="soft">Soft</option>
+                  <option value="rounded">Rounded</option>
+                  <option value="pill">Pill</option>
+                </select>
+              </label>
+            </div>
+
+
+            </div>
+          </details>
 
 
         </div>

@@ -183,3 +183,31 @@ test("Hero slide selector is compact on mobile and remains a desktop sidebar", (
   assert.match(heroPage, /flex gap-2 overflow-x-auto p-3 xl:block/);
   assert.match(heroPage, /min-w-\[230px\][\s\S]*xl:min-w-0/);
 });
+
+
+test("Hero editor groups secondary controls into compact accordion sections", () => {
+  for (const label of [
+    "Content",
+    "Media",
+    "Link & CTA",
+    "Publishing & schedule",
+    "Advanced appearance",
+  ]) {
+    assert.match(heroPage, new RegExp(`>${label.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")}<\\/div>`));
+  }
+  assert.match(heroPage, /group-open:rotate-180/);
+  assert.match(heroPage, /\[&::-webkit-details-marker\]:hidden/);
+  assert.doesNotMatch(heroPage, /Advanced appearance \/ إعدادات المظهر/);
+});
+
+test("Hero live preview stays outside Advanced appearance controls", () => {
+  const preview = heroPage.indexOf("Design & live preview");
+  const visualEditor = heroPage.indexOf("<HeroVisualEditor");
+  const advanced = heroPage.indexOf(">Advanced appearance</div>");
+  assert.ok(preview >= 0 && visualEditor > preview && advanced > visualEditor);
+});
+
+test("pending Hero media keeps its accordion expanded until upload or cancel", () => {
+  assert.match(heroPage, /<details open=\{hasPendingHeroImages \|\| undefined\}[^>]*>/);
+  assert.match(heroPage, /Upload pending/);
+});
