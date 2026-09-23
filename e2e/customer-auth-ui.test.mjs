@@ -52,3 +52,22 @@ test("customer session is shared at the root and cleaned up safely", async () =>
   assert.match(provider, /supabase\.auth\.signOut\(\)/);
   assert.doesNotMatch(provider, /service_role/i);
 });
+
+
+test("mobile drawer exposes the real customer account and avoids duplicated discovery blocks", async () => {
+  const mobileMenu = await read("src/components/MobileMenu.tsx");
+
+  assert.match(mobileMenu, /useCustomerAuth/);
+  assert.match(mobileMenu, /useCustomerAccount/);
+  assert.match(mobileMenu, /My Profile/);
+  assert.match(mobileMenu, /to="\/my-orders"/);
+  assert.match(mobileMenu, /to="\/wishlist"/);
+  assert.match(mobileMenu, /openAddressBook/);
+  assert.match(mobileMenu, /to="\/brands"/);
+  assert.match(mobileMenu, /to="\/contact"/);
+  assert.match(mobileMenu, /to="\/shipping"/);
+  assert.match(mobileMenu, /to="\/returns"/);
+  assert.doesNotMatch(mobileMenu, /collectionsQueryOptions/);
+  assert.doesNotMatch(mobileMenu, /displayCollections/);
+  assert.doesNotMatch(mobileMenu, /SHOP_ACCOUNT_URL/);
+});
