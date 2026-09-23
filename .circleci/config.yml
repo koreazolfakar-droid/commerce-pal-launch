@@ -659,6 +659,50 @@ jobs:
             FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*.test.mjs' -print | sort | sed -n '31,60p')
             node --test $FILES
 
+  unit-customer-address-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Regression
+          command: node --test e2e/customer-address-flow.test.mjs
+
+  unit-architecture-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Regression
+          command: node --test e2e/architecture.test.mjs
+
+  unit-performance-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Regression
+          command: node --test e2e/performance-architecture.test.mjs
+
+  unit-security-pipeline-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Regression
+          command: node --test e2e/security-pipeline-config.test.mjs
+
   affected-regressions-debug:
     docker:
       - image: cimg/node:lts
@@ -950,6 +994,10 @@ workflows:
       - unit-ci-config-debug
       - unit-dashboard-csp-debug
       - affected-regressions-debug
+      - unit-customer-address-debug
+      - unit-architecture-debug
+      - unit-performance-debug
+      - unit-security-pipeline-debug
       - unit-dashboard-all-debug
       - unit-nondashboard-all-debug
       - unit-dash-01-debug
