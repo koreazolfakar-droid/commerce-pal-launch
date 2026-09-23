@@ -91,6 +91,57 @@ jobs:
           command: bun run test:ssr
 
 
+  storefront-typecheck-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript
+          command: bun run typecheck
+
+  storefront-lint-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: ESLint
+          command: bun run lint
+
+  storefront-unit-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit and architecture tests
+          command: bun run test:unit
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -213,6 +264,9 @@ workflows:
       - security-source
       - security-dependencies
       - storefront-ci
+      - storefront-typecheck-debug
+      - storefront-lint-debug
+      - storefront-unit-debug
       - ui-browser-deps:
           filters:
             branches:
