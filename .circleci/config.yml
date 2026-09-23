@@ -232,8 +232,8 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
-          name: ui-browser-webkit-product-detail
-          engine: webkit
+          name: ui-browser-chromium-product-detail
+          engine: chromium
           suite: routes
           route_group: product
           filters:
