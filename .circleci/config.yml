@@ -317,13 +317,13 @@ jobs:
             source "$BASH_ENV"
             mkdir -p dist/android
 
-            cp android/app/build/outputs/apk/debug/app-debug.apk               dist/android/Space-Call-1.0.0-debug.apk
+            cp android/app/build/outputs/apk/debug/app-debug.apk               dist/android/Space-Call-1.0.1-debug.apk
 
             if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
               cp android/app/build/outputs/apk/release/app-release.apk \
-                dist/android/Space-Call-1.0.0-release.apk
+                dist/android/Space-Call-1.0.1-release.apk
               cp android/app/build/outputs/bundle/release/app-release.aab \
-                dist/android/Space-Call-1.0.0-release.aab
+                dist/android/Space-Call-1.0.1-release.aab
               cp public/.well-known/assetlinks.json \
                 dist/android/assetlinks.json
             else
@@ -357,10 +357,10 @@ jobs:
             API_VERSION_HEADER="X-GitHub-Api-Version: 2022-11-28"
 
             if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
-              APK_PATH="dist/android/Space-Call-1.0.0-release.apk"
+              APK_PATH="dist/android/Space-Call-1.0.1-release.apk"
               APK_NAME="Space-Call-latest.apk"
             else
-              APK_PATH="dist/android/Space-Call-1.0.0-debug.apk"
+              APK_PATH="dist/android/Space-Call-1.0.1-debug.apk"
               APK_NAME="Space-Call-latest-debug.apk"
             fi
 
