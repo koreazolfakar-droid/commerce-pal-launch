@@ -62,20 +62,20 @@ export function MobileTopBar({
 
   return (
     <>
-      <header className="mobile-top-bar sticky top-0 z-40 border-b border-border/55 bg-background/95 shadow-[0_8px_24px_-22px_rgba(15,23,42,.55)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid h-16 w-full max-w-md grid-cols-[1fr_auto_1fr] items-center px-3">
+      <header className="mobile-top-bar sticky top-0 z-40 border-b border-border/45 bg-background/96 shadow-[0_8px_24px_-24px_rgba(15,23,42,.48)] backdrop-blur-xl lg:hidden">
+        <div className="mx-auto grid h-[3.75rem] w-full max-w-md grid-cols-[1fr_auto_1fr] items-center px-3">
           <div className="flex min-w-0 items-center justify-start gap-1.5">
             <button
               type="button"
               aria-label={t("openMenu")}
               onClick={() => setMenuOpen(true)}
-              className="press grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+              className="press grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/55 bg-card/70 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
             >
               <Menu aria-hidden className="h-5 w-5" strokeWidth={1.9} />
             </button>
             <CustomerAccountButton
               variant="icon"
-              className="h-10 w-10 rounded-md border border-border/55 bg-card/65 shadow-sm hover:bg-surface"
+              className="h-10 w-10 rounded-xl border border-border/55 bg-card/70 shadow-sm hover:bg-surface"
             />
           </div>
 
@@ -83,7 +83,7 @@ export function MobileTopBar({
             to="/"
             aria-label={`${storeName} home`}
             data-testid="mobile-brand"
-            className="mx-2 flex min-w-0 max-w-[11.5rem] items-center justify-center gap-1.5 sm:max-w-none"
+            className="mx-2 flex min-w-0 max-w-[11.25rem] items-center justify-center gap-1.5 sm:max-w-none"
           >
             <img
               src={logoUrl}
@@ -93,7 +93,7 @@ export function MobileTopBar({
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="h-8 w-auto shrink-0 object-contain drop-shadow-sm"
+              className="h-8 w-auto shrink-0 object-contain"
             />
             <span className="truncate text-[16px] font-bold leading-none tracking-[-0.02em] sm:text-[17px]">
               {storeName}
@@ -114,7 +114,7 @@ export function MobileTopBar({
               type="button"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
               aria-label={`Cart, ${cartCount} items`}
-              className="press relative grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+              className="press relative grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/55 bg-card/70 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
             >
               <ShoppingBag className="h-5 w-5" strokeWidth={1.9} />
               <Badge value={cartCount} />
@@ -123,19 +123,19 @@ export function MobileTopBar({
         </div>
       </header>
 
-      <div className="border-b border-border/50 bg-background lg:hidden">
-        <div className="mx-auto max-w-md px-3 pt-2.5">
+      <div className="border-b border-border/40 bg-background lg:hidden">
+        <div className="mx-auto max-w-md space-y-2 px-3 pb-3 pt-2.5">
           <CustomerAddressSelector variant="mobile" className="w-full" />
-        </div>
-        <div className="mx-auto flex max-w-md min-w-0 items-center gap-2 px-3 py-2.5">
+          <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="press flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-md border border-border/70 bg-card px-4 text-start text-[13px] font-normal text-muted-foreground shadow-sm transition hover:border-primary/20 hover:bg-accent/60"
+            className="press flex h-12 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border/65 bg-card px-4 text-start text-[13px] font-medium text-muted-foreground shadow-sm transition hover:border-primary/25 hover:bg-accent/50"
           >
             <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="truncate">{t("search")}</span>
           </button>
+          </div>
         </div>
 
         {showCategoryRail ? (
