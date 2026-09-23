@@ -6,6 +6,10 @@ def releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
 def releaseStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
 def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
 def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+def releaseSigningConfigured = releaseKeystorePath &&
+        releaseStorePassword &&
+        releaseKeyAlias &&
+        releaseKeyPassword
 
 android {
     namespace "store.spacecallapp.app"
@@ -20,7 +24,7 @@ android {
     }
 
     signingConfigs {
-        if (releaseKeystorePath && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+        if (releaseSigningConfigured) {
             release {
                 storeFile file(releaseKeystorePath)
                 storePassword releaseStorePassword
@@ -37,9 +41,13 @@ android {
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
         }
+
         release {
-            minifyEnabled false
-            shrinkResources false
+            debuggable false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+
             if (signingConfigs.findByName("release") != null) {
                 signingConfig signingConfigs.release
             }
@@ -49,9 +57,22 @@ android {
     lint {
         abortOnError true
         checkReleaseBuilds true
+        checkDependencies true
     }
 }
 
 dependencies {
     implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.7.3"
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def createsReleaseArtifact = graph.allTasks.any {
+        it.name == "assembleRelease" || it.name == "bundleRelease"
+    }
+
+    if (createsReleaseArtifact && !releaseSigningConfigured) {
+        throw new GradleException(
+            "Release APK/AAB generation is blocked until the persistent Space Call signing key is configured."
+        )
+    }
 }
