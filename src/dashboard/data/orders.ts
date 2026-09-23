@@ -208,7 +208,7 @@ export async function listDashboardOrders(input?: {
   if (search) {
     if (/^\d+$/.test(search)) {
       query = query.eq("order_number", Number(search));
-    } else if (/^\d{1,5}-\d{1,5}$/.test(search)) {
+    } else if (/^\d{5}-\d{5}$/.test(search)) {
       query = query.eq("public_order_number", search);
     } else {
       const safe = search.replace(/[%_,()]/g, " ").trim();
