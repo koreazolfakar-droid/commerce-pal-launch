@@ -24,11 +24,16 @@ test("cart is a dedicated shopping-bag view without checkout form clutter", () =
   assert.doesNotMatch(cart, /After order save/);
 });
 
-test("cart keeps a compact sticky summary and mobile checkout action", () => {
+test("cart keeps one total in the summary and a clean mobile checkout action", () => {
   assert.match(cart, /lg:sticky lg:top-\[5\.75rem\]/);
   assert.match(cart, /bottom-\[calc\(4\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
   assert.match(cart, /const grandTotal = subtotal \+ deliveryFee/);
+  assert.match(cart, /data-testid="mobile-cart-checkout-bar"/);
   assert.match(cart, /Continue to checkout/);
+  assert.doesNotMatch(
+    cart,
+    /data-testid="mobile-cart-checkout-bar"[\s\S]*?\{copy\.finalTotal\}[\s\S]*?\{formatPrice\(grandTotal, currency\)\}/,
+  );
 });
 
 test("checkout moved to a dedicated route without changing order creation form", () => {
