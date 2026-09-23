@@ -11,6 +11,7 @@ const ALLOWED_ORIGINS = new Set([
 const RATE_WINDOW_SECONDS = 10 * 60;
 const RATE_LIMIT_PER_USER = 120;
 const MAX_LIMIT = 100;
+const MAX_BODY_BYTES = 8 * 1024;
 
 function serviceKey() {
   const raw = Deno.env.get("SUPABASE_SECRET_KEYS");
@@ -113,6 +114,16 @@ Deno.serve(async (req: Request) => {
   }
   if (req.method !== "POST") return json(req, 405, { error: "method_not_allowed" });
 
+  const contentType = req.headers.get("content-type")?.toLowerCase() || "";
+  if (!contentType.includes("application/json")) {
+    return json(req, 415, { error: "content_type_required" });
+  }
+
+  const contentLength = Number(req.headers.get("content-length") || "0");
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    return json(req, 413, { error: "payload_too_large" });
+  }
+
   const url = Deno.env.get("SUPABASE_URL")?.trim() || "";
   const secret = serviceKey();
   if (!url || !secret) return json(req, 500, { error: "server_not_configured" });
@@ -154,7 +165,11 @@ Deno.serve(async (req: Request) => {
 
   let body: Record<string, unknown>;
   try {
-    const parsed = await req.json();
+    const raw = await req.text();
+    if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
+      return json(req, 413, { error: "payload_too_large" });
+    }
+    const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return json(req, 400, { error: "invalid_payload" });
     }
