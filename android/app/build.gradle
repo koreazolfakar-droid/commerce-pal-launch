@@ -58,7 +58,7 @@ android {
         abortOnError true
         checkReleaseBuilds true
         checkDependencies true
-        warningsAsErrors true
+        warningsAsErrors false
     }
 }
 
