@@ -271,3 +271,133 @@ using (
   bucket_id = 'customer-address-media'
   and (storage.foldername(name))[1] = auth.uid()::text
 );
+
+
+-- Customer-facing order history is derived only from identifiers that Supabase
+-- Auth has actually verified for the signed-in user. Profile fields are not
+-- trusted for authorization, so editing a profile phone/email cannot expose a
+-- different customer's orders.
+create or replace function public.get_my_store_orders(p_limit integer default 30)
+returns table (
+  order_id uuid,
+  order_number bigint,
+  status text,
+  payment_status text,
+  payment_method text,
+  currency text,
+  subtotal numeric,
+  shipping_total numeric,
+  discount_total numeric,
+  total numeric,
+  delivery_address text,
+  city text,
+  delivery_location jsonb,
+  created_at timestamptz,
+  completed_at timestamptz
+)
+language sql
+security definer
+set search_path = ''
+as $$
+  with verified_identity as (
+    select
+      lower(coalesce(email, '')) as email,
+      regexp_replace(coalesce(phone, ''), '[^0-9]+', '', 'g') as phone
+    from auth.users
+    where id = auth.uid()
+  )
+  select
+    orders.id,
+    orders.order_number,
+    orders.status,
+    orders.payment_status,
+    orders.payment_method,
+    orders.currency,
+    orders.subtotal,
+    orders.shipping_total,
+    orders.discount_total,
+    orders.total,
+    orders.delivery_address,
+    orders.city,
+    orders.delivery_location,
+    orders.created_at,
+    orders.completed_at
+  from public.store_orders as orders
+  cross join verified_identity as identity
+  where auth.uid() is not null
+    and (
+      (
+        identity.email <> ''
+        and lower(coalesce(orders.customer_email, '')) = identity.email
+      )
+      or (
+        identity.phone <> ''
+        and regexp_replace(coalesce(orders.customer_phone, ''), '[^0-9]+', '', 'g') = identity.phone
+      )
+    )
+  order by orders.created_at desc
+  limit greatest(1, least(coalesce(p_limit, 30), 100))
+$$;
+
+revoke all on function public.get_my_store_orders(integer) from public, anon;
+grant execute on function public.get_my_store_orders(integer) to authenticated;
+
+create or replace function public.get_my_store_order_items(p_order_id uuid)
+returns table (
+  item_id uuid,
+  product_id uuid,
+  variant_id uuid,
+  title text,
+  variant_title text,
+  sku text,
+  unit_price numeric,
+  quantity integer,
+  line_total numeric,
+  options jsonb
+)
+language sql
+security definer
+set search_path = ''
+as $$
+  with verified_identity as (
+    select
+      lower(coalesce(email, '')) as email,
+      regexp_replace(coalesce(phone, ''), '[^0-9]+', '', 'g') as phone
+    from auth.users
+    where id = auth.uid()
+  ),
+  owned_order as (
+    select orders.id
+    from public.store_orders as orders
+    cross join verified_identity as identity
+    where orders.id = p_order_id
+      and auth.uid() is not null
+      and (
+        (
+          identity.email <> ''
+          and lower(coalesce(orders.customer_email, '')) = identity.email
+        )
+        or (
+          identity.phone <> ''
+          and regexp_replace(coalesce(orders.customer_phone, ''), '[^0-9]+', '', 'g') = identity.phone
+        )
+      )
+  )
+  select
+    item.id,
+    item.product_id,
+    item.variant_id,
+    item.title,
+    item.variant_title,
+    item.sku,
+    item.unit_price,
+    item.quantity,
+    item.line_total,
+    item.options
+  from public.store_order_items as item
+  join owned_order on owned_order.id = item.order_id
+  order by item.id
+$$;
+
+revoke all on function public.get_my_store_order_items(uuid) from public, anon;
+grant execute on function public.get_my_store_order_items(uuid) to authenticated;
