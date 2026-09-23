@@ -44,8 +44,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { navigationCatalogQueryOptions } from "@/lib/queries";
+import { STORE_NAME } from "@/lib/storeConfig";
 
 function categoryIcon(slug: string, label: string): LucideIcon {
   const value = (slug + " " + label).toLowerCase();
@@ -146,6 +148,7 @@ export function MobileMenu({
   const router = useRouter();
   const { t, direction, language } = useLanguage();
   const { data: catalog } = useQuery(navigationCatalogQueryOptions());
+  const { data: cms } = useQuery(cmsQueryOptions());
   const { user, loading: authLoading, openAuth, signOut } = useCustomerAuth();
   const { profile, openAddressBook } = useCustomerAccount();
 
@@ -171,6 +174,13 @@ export function MobileMenu({
   const returnsLabel = ar ? "الإرجاع والاستبدال" : "Returns";
   const signOutLabel = ar ? "تسجيل الخروج" : "Sign out";
   const preferencesLabel = ar ? "التفضيلات" : "Preferences";
+
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsLogoUrl = cms?.settings["logo_url"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const logoUrl =
+    typeof cmsLogoUrl === "string" && cmsLogoUrl.trim() ? cmsLogoUrl.trim() : "/logo.svg";
 
   const avatar = customerAvatar(user);
   const name = customerName(user, profile?.fullName);
@@ -241,18 +251,34 @@ export function MobileMenu({
           <SheetDescription>{t("menuDescription")}</SheetDescription>
         </SheetHeader>
 
-        <div className="flex min-h-[60px] items-center gap-2.5 border-b border-border/45 px-4 pe-12">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/[0.08] text-primary">
-            <Sparkles aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={1.9} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-bold tracking-[-0.015em] text-foreground">
-              Space Call
-            </p>
-            <p className="truncate text-[10px] font-medium text-muted-foreground">
-              {ar ? "تقنية أقرب إليك" : "Tech for a brighter you"}
-            </p>
-          </div>
+        <div className="flex min-h-[64px] items-center gap-2.5 border-b border-border/45 px-4 pe-12">
+          <Link
+            to="/"
+            onClick={close}
+            aria-label={`${storeName} home`}
+            className="flex min-w-0 flex-1 items-center gap-2.5"
+            data-testid="mobile-menu-brand"
+          >
+            <span className="grid h-10 w-12 shrink-0 place-items-center overflow-hidden">
+              <img
+                src={logoUrl}
+                alt={storeName}
+                width={56}
+                height={40}
+                loading="eager"
+                decoding="async"
+                className="max-h-10 w-auto max-w-12 object-contain"
+              />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[13px] font-bold tracking-[-0.015em] text-foreground">
+                {storeName}
+              </span>
+              <span className="block truncate text-[10px] font-medium text-muted-foreground">
+                {ar ? "تقنية أقرب إليك" : "Tech for a brighter you"}
+              </span>
+            </span>
+          </Link>
           <button
             type="button"
             onClick={() => void refreshStorefront()}
