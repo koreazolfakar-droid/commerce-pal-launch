@@ -108,7 +108,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     try {
       const next = await updateDashboardOrderStatus(order.id, status, order.version);
       setOrder(next);
-      toast.success(`Order #${order.orderNumber} marked ${orderStatusLabel(status)}.`);
+      toast.success(`Order #${order.publicOrderNumber} marked ${orderStatusLabel(status)}.`);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Order status update failed.");
     } finally {
@@ -226,11 +226,11 @@ export default function OrderDetailPage({ id }: { id: string }) {
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
-            Order / #{order.orderNumber}
+            Order / #{order.publicOrderNumber}
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-              Order #{order.orderNumber}
+              Order #{order.publicOrderNumber}
             </h1>
             <Badge label={orderStatusLabel(order.status)} tone={statusTone(order.status)} />
           </div>
