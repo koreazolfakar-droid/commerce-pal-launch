@@ -197,6 +197,8 @@ requireText(gradle, 'manifestPlaceholders = [appLinksAutoVerify: true]', "Releas
 requireText(gradle, "compileSdk 36", "compileSdk must remain 36.");
 requireText(gradle, "targetSdk 36", "targetSdk must remain 36.");
 requireText(gradle, "minSdk 24", "minSdk must remain 24.");
+requireText(gradle, "sourceCompatibility JavaVersion.VERSION_1_8", "Android source compatibility must remain Java 8.");
+requireText(gradle, "targetCompatibility JavaVersion.VERSION_1_8", "Android bytecode compatibility must remain Java 8.");
 requireText(gradle, 'versionName "1.0.2"', "Expected Android versionName 1.0.2.");
 requireText(
   gradle,
