@@ -14,62 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      ci_debug_logs: {
-        Row: {
-          created_at: string
-          id: number
-          job_name: string
-          log_text: string
-          run_key: string
-        }
-        Insert: {
-          created_at?: string
-          id?: never
-          job_name: string
-          log_text: string
-          run_key: string
-        }
-        Update: {
-          created_at?: string
-          id?: never
-          job_name?: string
-          log_text?: string
-          run_key?: string
-        }
-        Relationships: []
-      }
       cms_audit_log: {
         Row: {
           action: string
           actor_email: string | null
+          actor_id: string | null
           created_at: string
+          detail: Json
           details: Json
           entity_id: string | null
-          entity_type: string
+          entity_type: string | null
           id: string
+          resource: string | null
         }
         Insert: {
           action: string
           actor_email?: string | null
+          actor_id?: string | null
           created_at?: string
+          detail?: Json
           details?: Json
           entity_id?: string | null
-          entity_type: string
+          entity_type?: string | null
           id?: string
+          resource?: string | null
         }
         Update: {
           action?: string
           actor_email?: string | null
+          actor_id?: string | null
           created_at?: string
+          detail?: Json
           details?: Json
           entity_id?: string | null
-          entity_type?: string
+          entity_type?: string | null
           id?: string
+          resource?: string | null
         }
         Relationships: []
       }
       cms_brands: {
         Row: {
+          collection_handle: string | null
           cover_image_url: string | null
           created_at: string
           description: string
@@ -86,6 +72,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          collection_handle?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string
@@ -102,6 +89,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          collection_handle?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string
@@ -134,8 +122,9 @@ export type Database = {
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
-          image_url: string | null
+          image_url: string
           is_published: boolean
+          is_visible: boolean
           mobile_image_alt_ar: string | null
           mobile_image_alt_en: string | null
           mobile_image_url: string | null
@@ -174,8 +163,9 @@ export type Database = {
           id?: string
           image_alt_ar?: string | null
           image_alt_en?: string | null
-          image_url?: string | null
+          image_url: string
           is_published?: boolean
+          is_visible?: boolean
           mobile_image_alt_ar?: string | null
           mobile_image_alt_en?: string | null
           mobile_image_url?: string | null
@@ -214,8 +204,9 @@ export type Database = {
           id?: string
           image_alt_ar?: string | null
           image_alt_en?: string | null
-          image_url?: string | null
+          image_url?: string
           is_published?: boolean
+          is_visible?: boolean
           mobile_image_alt_ar?: string | null
           mobile_image_alt_en?: string | null
           mobile_image_url?: string | null
@@ -294,7 +285,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          area: string
+          area?: string
           created_at?: string
           href?: string | null
           icon_type?: string
@@ -352,7 +343,7 @@ export type Database = {
           is_visible?: boolean
           page_slug?: string
           section_key: string
-          section_type: string
+          section_type?: string
           sort_order?: number
           subtitle?: string | null
           subtitle_ar?: string | null
@@ -390,10 +381,13 @@ export type Database = {
           description: string | null
           description_ar: string | null
           description_en: string | null
+          id: string
           is_public: boolean
           json_ld: Json
+          noindex: boolean
           og_image_url: string | null
           page_slug: string
+          path: string | null
           robots: string
           title: string | null
           title_ar: string | null
@@ -406,10 +400,13 @@ export type Database = {
           description?: string | null
           description_ar?: string | null
           description_en?: string | null
+          id?: string
           is_public?: boolean
           json_ld?: Json
+          noindex?: boolean
           og_image_url?: string | null
           page_slug: string
+          path?: string | null
           robots?: string
           title?: string | null
           title_ar?: string | null
@@ -422,10 +419,13 @@ export type Database = {
           description?: string | null
           description_ar?: string | null
           description_en?: string | null
+          id?: string
           is_public?: boolean
           json_ld?: Json
+          noindex?: boolean
           og_image_url?: string | null
           page_slug?: string
+          path?: string | null
           robots?: string
           title?: string | null
           title_ar?: string | null
@@ -434,9 +434,28 @@ export type Database = {
         }
         Relationships: []
       }
+      cms_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       cms_site_settings: {
         Row: {
-          group_name: string
+          created_at: string
+          group_name: string | null
           is_public: boolean
           key: string
           label: string | null
@@ -446,7 +465,8 @@ export type Database = {
           value_type: string
         }
         Insert: {
-          group_name?: string
+          created_at?: string
+          group_name?: string | null
           is_public?: boolean
           key: string
           label?: string | null
@@ -456,7 +476,8 @@ export type Database = {
           value_type?: string
         }
         Update: {
-          group_name?: string
+          created_at?: string
+          group_name?: string | null
           is_public?: boolean
           key?: string
           label?: string | null
@@ -488,60 +509,6 @@ export type Database = {
           key_hash?: string
           last_attempt_at?: string
           window_started_at?: string
-        }
-        Relationships: []
-      }
-      dashboard_passkey_session_assurance: {
-        Row: {
-          expires_at: string
-          passkey_last_used_at: string
-          session_id: string
-          user_id: string
-          verified_at: string
-        }
-        Insert: {
-          expires_at: string
-          passkey_last_used_at: string
-          session_id: string
-          user_id: string
-          verified_at?: string
-        }
-        Update: {
-          expires_at?: string
-          passkey_last_used_at?: string
-          session_id?: string
-          user_id?: string
-          verified_at?: string
-        }
-        Relationships: []
-      }
-      dashboard_passkey_stepup_tickets: {
-        Row: {
-          baseline_last_used_at: string | null
-          consumed_at: string | null
-          created_at: string
-          expires_at: string
-          id: string
-          password_session_id: string
-          user_id: string
-        }
-        Insert: {
-          baseline_last_used_at?: string | null
-          consumed_at?: string | null
-          created_at?: string
-          expires_at?: string
-          id?: string
-          password_session_id: string
-          user_id: string
-        }
-        Update: {
-          baseline_last_used_at?: string | null
-          consumed_at?: string | null
-          created_at?: string
-          expires_at?: string
-          id?: string
-          password_session_id?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -779,122 +746,6 @@ export type Database = {
         }
         Relationships: []
       }
-      store_customer_addresses: {
-        Row: {
-          address_type: string | null
-          area_street: string | null
-          building_name: string | null
-          building_number: string | null
-          created_at: string
-          delivery_instructions: string | null
-          door_details: string | null
-          draft_step: number
-          editing_address_id: string | null
-          floor: string | null
-          formatted_address: string | null
-          id: string
-          is_default: boolean
-          is_draft: boolean
-          latitude: number | null
-          longitude: number | null
-          nickname: string | null
-          phone: string | null
-          photo_paths: string[]
-          place_id: string | null
-          unit: string | null
-          updated_at: string
-          user_id: string
-          voice_note_path: string | null
-        }
-        Insert: {
-          address_type?: string | null
-          area_street?: string | null
-          building_name?: string | null
-          building_number?: string | null
-          created_at?: string
-          delivery_instructions?: string | null
-          door_details?: string | null
-          draft_step?: number
-          editing_address_id?: string | null
-          floor?: string | null
-          formatted_address?: string | null
-          id?: string
-          is_default?: boolean
-          is_draft?: boolean
-          latitude?: number | null
-          longitude?: number | null
-          nickname?: string | null
-          phone?: string | null
-          photo_paths?: string[]
-          place_id?: string | null
-          unit?: string | null
-          updated_at?: string
-          user_id: string
-          voice_note_path?: string | null
-        }
-        Update: {
-          address_type?: string | null
-          area_street?: string | null
-          building_name?: string | null
-          building_number?: string | null
-          created_at?: string
-          delivery_instructions?: string | null
-          door_details?: string | null
-          draft_step?: number
-          editing_address_id?: string | null
-          floor?: string | null
-          formatted_address?: string | null
-          id?: string
-          is_default?: boolean
-          is_draft?: boolean
-          latitude?: number | null
-          longitude?: number | null
-          nickname?: string | null
-          phone?: string | null
-          photo_paths?: string[]
-          place_id?: string | null
-          unit?: string | null
-          updated_at?: string
-          user_id?: string
-          voice_note_path?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "store_customer_addresses_editing_address_id_fkey"
-            columns: ["editing_address_id"]
-            isOneToOne: false
-            referencedRelation: "store_customer_addresses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      store_customer_profiles: {
-        Row: {
-          created_at: string
-          email: string | null
-          full_name: string | null
-          phone: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          email?: string | null
-          full_name?: string | null
-          phone?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          email?: string | null
-          full_name?: string | null
-          phone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       store_customers: {
         Row: {
           city: string | null
@@ -1009,50 +860,6 @@ export type Database = {
           },
         ]
       }
-      store_order_audit_log: {
-        Row: {
-          action: string
-          actor_kind: string
-          actor_user_id: string | null
-          created_at: string
-          from_state: Json
-          id: string
-          order_id: string
-          request_key: string | null
-          to_state: Json
-        }
-        Insert: {
-          action: string
-          actor_kind?: string
-          actor_user_id?: string | null
-          created_at?: string
-          from_state?: Json
-          id?: string
-          order_id: string
-          request_key?: string | null
-          to_state?: Json
-        }
-        Update: {
-          action?: string
-          actor_kind?: string
-          actor_user_id?: string | null
-          created_at?: string
-          from_state?: Json
-          id?: string
-          order_id?: string
-          request_key?: string | null
-          to_state?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "store_order_audit_log_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "store_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       store_order_items: {
         Row: {
           created_at: string
@@ -1123,21 +930,15 @@ export type Database = {
       store_orders: {
         Row: {
           city: string | null
-          completed_at: string | null
           created_at: string
           currency: string
           customer_email: string | null
           customer_name: string
           customer_phone: string
           customer_reference: string | null
-          customer_user_id: string | null
           delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
           discount_total: number
           id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
           notes: string | null
           order_number: number
           payment_method: string
@@ -1148,25 +949,18 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
-          version: number
         }
         Insert: {
           city?: string | null
-          completed_at?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
           customer_name: string
           customer_phone: string
           customer_reference?: string | null
-          customer_user_id?: string | null
           delivery_address?: string | null
-          delivery_location?: Json | null
-          delivery_type?: string
           discount_total?: number
           id?: string
-          idempotency_fingerprint?: string | null
-          idempotency_key?: string | null
           notes?: string | null
           order_number?: never
           payment_method?: string
@@ -1177,25 +971,18 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
-          version?: number
         }
         Update: {
           city?: string | null
-          completed_at?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
           customer_name?: string
           customer_phone?: string
           customer_reference?: string | null
-          customer_user_id?: string | null
           delivery_address?: string | null
-          delivery_location?: Json | null
-          delivery_type?: string
           discount_total?: number
           id?: string
-          idempotency_fingerprint?: string | null
-          idempotency_key?: string | null
           notes?: string | null
           order_number?: never
           payment_method?: string
@@ -1206,7 +993,6 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
-          version?: number
         }
         Relationships: []
       }
@@ -1898,65 +1684,6 @@ export type Database = {
           },
         ]
       }
-      store_sales: {
-        Row: {
-          completed_at: string
-          created_at: string
-          currency: string
-          customer_name: string
-          customer_phone: string
-          discount_total: number
-          id: string
-          order_id: string
-          order_number: number
-          payment_method: string
-          payment_status: string
-          shipping_total: number
-          subtotal: number
-          total: number
-        }
-        Insert: {
-          completed_at: string
-          created_at?: string
-          currency: string
-          customer_name: string
-          customer_phone: string
-          discount_total: number
-          id?: string
-          order_id: string
-          order_number: number
-          payment_method: string
-          payment_status: string
-          shipping_total: number
-          subtotal: number
-          total: number
-        }
-        Update: {
-          completed_at?: string
-          created_at?: string
-          currency?: string
-          customer_name?: string
-          customer_phone?: string
-          discount_total?: number
-          id?: string
-          order_id?: string
-          order_number?: number
-          payment_method?: string
-          payment_status?: string
-          shipping_total?: number
-          subtotal?: number
-          total?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "store_sales_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: true
-            referencedRelation: "store_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       store_suppliers: {
         Row: {
           code: string | null
@@ -1999,23 +1726,26 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string
+          id: string
           mfa_enrolled_at: string | null
           mfa_required: boolean
-          role: string
+          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
+          id?: string
           mfa_enrolled_at?: string | null
           mfa_required?: boolean
-          role: string
+          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
+          id?: string
           mfa_enrolled_at?: string | null
           mfa_required?: boolean
-          role?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -2063,6 +1793,7 @@ export type Database = {
         Args: { p_purchase_order_id: string; p_reason: string }
         Returns: string
       }
+      claim_admin: { Args: never; Returns: boolean }
       close_store_purchase_order: {
         Args: { p_purchase_order_id: string }
         Returns: string
@@ -2113,8 +1844,9 @@ export type Database = {
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
-          image_url: string | null
+          image_url: string
           is_published: boolean
+          is_visible: boolean
           mobile_image_alt_ar: string | null
           mobile_image_alt_en: string | null
           mobile_image_url: string | null
@@ -2193,8 +1925,9 @@ export type Database = {
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
-          image_url: string | null
+          image_url: string
           is_published: boolean
+          is_visible: boolean
           mobile_image_alt_ar: string | null
           mobile_image_alt_en: string | null
           mobile_image_url: string | null
@@ -2274,8 +2007,9 @@ export type Database = {
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
-          image_url: string | null
+          image_url: string
           is_published: boolean
+          is_visible: boolean
           mobile_image_alt_ar: string | null
           mobile_image_alt_en: string | null
           mobile_image_url: string | null
@@ -2458,45 +2192,6 @@ export type Database = {
         }
         Returns: string
       }
-      dashboard_inventory_page: {
-        Args: {
-          p_category_id?: string
-          p_only_low?: boolean
-          p_page?: number
-          p_page_size?: number
-          p_search?: string
-          p_threshold?: number
-          p_uncategorized?: boolean
-        }
-        Returns: {
-          barcode: string
-          brand: string
-          category: string
-          category_id: string
-          image: string
-          options: Json
-          product_id: string
-          product_name: string
-          product_status: string
-          product_stock: number
-          sku: string
-          stock: number
-          total_count: number
-          track_inventory: boolean
-          variant_active: boolean
-          variant_id: string
-          variant_title: string
-        }[]
-      }
-      dashboard_inventory_summary: {
-        Args: { p_threshold?: number }
-        Returns: {
-          low_count: number
-          out_count: number
-          total_units: number
-          variant_count: number
-        }[]
-      }
       delete_cms_hero_slide: {
         Args: { p_slide_id: string }
         Returns: undefined
@@ -2529,60 +2224,19 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: string
       }
-      finalize_customer_address: {
-        Args: { p_address_id: string }
-        Returns: {
-          address_type: string | null
-          area_street: string | null
-          building_name: string | null
-          building_number: string | null
-          created_at: string
-          delivery_instructions: string | null
-          door_details: string | null
-          draft_step: number
-          editing_address_id: string | null
-          floor: string | null
-          formatted_address: string | null
-          id: string
-          is_default: boolean
-          is_draft: boolean
-          latitude: number | null
-          longitude: number | null
-          nickname: string | null
-          phone: string | null
-          photo_paths: string[]
-          place_id: string | null
-          unit: string | null
-          updated_at: string
-          user_id: string
-          voice_note_path: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "store_customer_addresses"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       get_store_customer_orders: {
         Args: { p_customer_id: string; p_limit?: number }
         Returns: {
           city: string | null
-          completed_at: string | null
           created_at: string
           currency: string
           customer_email: string | null
           customer_name: string
           customer_phone: string
           customer_reference: string | null
-          customer_user_id: string | null
           delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
           discount_total: number
           id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
           notes: string | null
           order_number: number
           payment_method: string
@@ -2593,7 +2247,6 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
-          version: number
         }[]
         SetofOptions: {
           from: "*"
@@ -2602,6 +2255,14 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
       issue_store_purchase_order: {
         Args: { p_purchase_order_id: string }
         Returns: string
@@ -2672,8 +2333,9 @@ export type Database = {
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
-          image_url: string | null
+          image_url: string
           is_published: boolean
+          is_visible: boolean
           mobile_image_alt_ar: string | null
           mobile_image_alt_en: string | null
           mobile_image_url: string | null
@@ -2705,41 +2367,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      set_customer_default_address: {
-        Args: { p_address_id: string }
-        Returns: {
-          address_type: string | null
-          area_street: string | null
-          building_name: string | null
-          building_number: string | null
-          created_at: string
-          delivery_instructions: string | null
-          door_details: string | null
-          draft_step: number
-          editing_address_id: string | null
-          floor: string | null
-          formatted_address: string | null
-          id: string
-          is_default: boolean
-          is_draft: boolean
-          latitude: number | null
-          longitude: number | null
-          nickname: string | null
-          phone: string | null
-          photo_paths: string[]
-          place_id: string | null
-          unit: string | null
-          updated_at: string
-          user_id: string
-          voice_note_path: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "store_customer_addresses"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       set_store_collection_products: {
         Args: { p_collection_id: string; p_product_ids: string[] }
         Returns: undefined
@@ -2763,41 +2390,6 @@ export type Database = {
       set_store_products_status: {
         Args: { p_product_ids: string[]; p_status: string }
         Returns: number
-      }
-      start_customer_address_edit: {
-        Args: { p_address_id: string }
-        Returns: {
-          address_type: string | null
-          area_street: string | null
-          building_name: string | null
-          building_number: string | null
-          created_at: string
-          delivery_instructions: string | null
-          door_details: string | null
-          draft_step: number
-          editing_address_id: string | null
-          floor: string | null
-          formatted_address: string | null
-          id: string
-          is_default: boolean
-          is_draft: boolean
-          latitude: number | null
-          longitude: number | null
-          nickname: string | null
-          phone: string | null
-          photo_paths: string[]
-          place_id: string | null
-          unit: string | null
-          updated_at: string
-          user_id: string
-          voice_note_path: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "store_customer_addresses"
-          isOneToOne: true
-          isSetofReturn: false
-        }
       }
       submit_store_purchase_order: {
         Args: { p_purchase_order_id: string }
@@ -2842,8 +2434,9 @@ export type Database = {
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
-          image_url: string | null
+          image_url: string
           is_published: boolean
+          is_visible: boolean
           mobile_image_alt_ar: string | null
           mobile_image_alt_en: string | null
           mobile_image_url: string | null
@@ -2923,8 +2516,9 @@ export type Database = {
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
-          image_url: string | null
+          image_url: string
           is_published: boolean
+          is_visible: boolean
           mobile_image_alt_ar: string | null
           mobile_image_alt_en: string | null
           mobile_image_url: string | null
@@ -3005,8 +2599,9 @@ export type Database = {
           id: string
           image_alt_ar: string | null
           image_alt_en: string | null
-          image_url: string | null
+          image_url: string
           is_published: boolean
+          is_visible: boolean
           mobile_image_alt_ar: string | null
           mobile_image_alt_en: string | null
           mobile_image_url: string | null
@@ -3127,72 +2722,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      update_store_order_delivery: {
-        Args: {
-          p_delivery_type: string
-          p_expected_version?: number
-          p_order_id: string
-          p_shipping_total: number
-        }
-        Returns: {
-          city: string | null
-          completed_at: string | null
-          created_at: string
-          currency: string
-          customer_email: string | null
-          customer_name: string
-          customer_phone: string
-          customer_reference: string | null
-          customer_user_id: string | null
-          delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
-          discount_total: number
-          id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
-          notes: string | null
-          order_number: number
-          payment_method: string
-          payment_status: string
-          shipping_total: number
-          source: string
-          status: string
-          subtotal: number
-          total: number
-          updated_at: string
-          version: number
-        }
-        SetofOptions: {
-          from: "*"
-          to: "store_orders"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       update_store_order_payment_status: {
-        Args: {
-          p_expected_version?: number
-          p_order_id: string
-          p_payment_status: string
-        }
+        Args: { p_order_id: string; p_payment_status: string }
         Returns: {
           city: string | null
-          completed_at: string | null
           created_at: string
           currency: string
           customer_email: string | null
           customer_name: string
           customer_phone: string
           customer_reference: string | null
-          customer_user_id: string | null
           delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
           discount_total: number
           id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
           notes: string | null
           order_number: number
           payment_method: string
@@ -3203,7 +2745,6 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
-          version: number
         }
         SetofOptions: {
           from: "*"
@@ -3213,28 +2754,18 @@ export type Database = {
         }
       }
       update_store_order_status: {
-        Args: {
-          p_expected_version?: number
-          p_order_id: string
-          p_status: string
-        }
+        Args: { p_order_id: string; p_status: string }
         Returns: {
           city: string | null
-          completed_at: string | null
           created_at: string
           currency: string
           customer_email: string | null
           customer_name: string
           customer_phone: string
           customer_reference: string | null
-          customer_user_id: string | null
           delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
           discount_total: number
           id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
           notes: string | null
           order_number: number
           payment_method: string
@@ -3245,7 +2776,6 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
-          version: number
         }
         SetofOptions: {
           from: "*"
@@ -3329,7 +2859,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "editor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3456,6 +2986,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "editor"],
+    },
   },
 } as const
