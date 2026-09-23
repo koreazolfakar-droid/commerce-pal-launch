@@ -24,7 +24,6 @@ jobs:
           name: High-confidence source and secret scan
           command: |
             node scripts/security-gate.mjs
-            node scripts/android-security-gate.mjs
 
   security-dependencies:
     docker:
@@ -241,7 +240,6 @@ jobs:
           command: |
             set -euo pipefail
             source "$BASH_ENV"
-            node scripts/android-security-gate.mjs
             cd android
             gradle --no-daemon --stacktrace :app:assembleDebug
             cd ..
@@ -275,7 +273,6 @@ jobs:
           name: Run standalone Java 8 URL-security tests
           command: |
             set -euo pipefail
-            node scripts/android-security-gate.mjs
             rm -rf /tmp/space-call-url-policy
             mkdir -p /tmp/space-call-url-policy/classes
             javac --release 8 \
@@ -313,7 +310,6 @@ jobs:
           command: |
             set -euo pipefail
             source "$BASH_ENV"
-            node scripts/android-security-gate.mjs
             cd android
             gradle --no-daemon --stacktrace :app:lintDebug
       - store_artifacts:
@@ -348,7 +344,6 @@ jobs:
           command: |
             set -euo pipefail
             source "$BASH_ENV"
-            node scripts/android-security-gate.mjs
             cd android
             gradle --no-daemon --stacktrace :app:lintRelease
       - store_artifacts:
@@ -551,25 +546,33 @@ jobs:
 workflows:
   security-and-storefront-validation:
     jobs:
+      - security-source
       - android-compile-check:
-          filters:
+          requires:
+                filters:
             branches:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
       - android-unit-test:
+          requires:
+            - security-source
           filters:
             branches:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
       - android-lint-debug:
+          requires:
+            - security-source
           filters:
             branches:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
       - android-lint-release:
+          requires:
+            - security-source
           filters:
             branches:
               only:
