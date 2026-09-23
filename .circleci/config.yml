@@ -207,9 +207,123 @@ jobs:
             node --version
             test -d /ms-playwright
 
+  android-build:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      GRADLE_VERSION: "9.6.0"
+    steps:
+      - checkout
+
+      - run:
+          name: Verify Android build environment
+          command: |
+            set -euo pipefail
+            java -version
+            sdkmanager --version
+
+      - run:
+          name: Install Android API 36 and Build Tools 36.0.0
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - restore_cache:
+          keys:
+            - android-gradle-v1-{{ checksum "android/build.gradle" }}-{{ checksum "android/app/build.gradle" }}
+            - android-gradle-v1-
+
+      - run:
+          name: Install Gradle 9.6.0
+          command: |
+            set -euo pipefail
+            curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip
+            rm -rf "$HOME/gradle-${GRADLE_VERSION}"
+            unzip -q /tmp/gradle.zip -d "$HOME"
+            echo "export PATH=\"$HOME/gradle-${GRADLE_VERSION}/bin:$PATH\"" >> "$BASH_ENV"
+            source "$BASH_ENV"
+            gradle --version
+
+      - run:
+          name: Configure optional release signing
+          command: |
+            set -euo pipefail
+            if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ] &&                [ -n "${ANDROID_KEYSTORE_PASSWORD:-}" ] &&                [ -n "${ANDROID_KEY_ALIAS:-}" ] &&                [ -n "${ANDROID_KEY_PASSWORD:-}" ]; then
+              echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/space-call-upload.jks
+              chmod 600 /tmp/space-call-upload.jks
+              echo 'export ANDROID_KEYSTORE_PATH=/tmp/space-call-upload.jks' >> "$BASH_ENV"
+              echo 'export SPACE_CALL_SIGNED_BUILD=1' >> "$BASH_ENV"
+            else
+              echo 'export SPACE_CALL_SIGNED_BUILD=0' >> "$BASH_ENV"
+            fi
+
+      - run:
+          name: Validate manifest and build Android app
+          command: |
+            set -euo pipefail
+            source "$BASH_ENV"
+            jq empty public/manifest.webmanifest
+            grep -q 'rel: "manifest"' src/routes/__root.tsx
+            cd android
+            gradle --no-daemon :app:lintRelease
+            gradle --no-daemon :app:assembleDebug
+            gradle --no-daemon :app:bundleRelease
+            if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
+              gradle --no-daemon :app:assembleRelease
+            fi
+
+      - save_cache:
+          key: android-gradle-v1-{{ checksum "android/build.gradle" }}-{{ checksum "android/app/build.gradle" }}
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/notifications
+
+      - run:
+          name: Package APK and AAB artifacts
+          command: |
+            set -euo pipefail
+            source "$BASH_ENV"
+            mkdir -p dist/android
+
+            cp android/app/build/outputs/apk/debug/app-debug.apk               dist/android/Space-Call-1.0.0-debug.apk
+
+            if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
+              cp android/app/build/outputs/apk/release/app-release.apk                 dist/android/Space-Call-1.0.0-release.apk
+              cp android/app/build/outputs/bundle/release/app-release.aab                 dist/android/Space-Call-1.0.0-release.aab
+            else
+              cp android/app/build/outputs/bundle/release/app-release.aab                 dist/android/Space-Call-1.0.0-unsigned.aab
+              cat > dist/android/SIGNING-NOT-CONFIGURED.txt <<'EOF'
+            The debug APK is installable for testing.
+            The AAB is unsigned and is not ready for Google Play upload.
+
+            To enable signed release APK/AAB builds, add these CircleCI project environment variables:
+            ANDROID_KEYSTORE_BASE64
+            ANDROID_KEYSTORE_PASSWORD
+            ANDROID_KEY_ALIAS
+            ANDROID_KEY_PASSWORD
+            EOF
+            fi
+
+            (
+              cd dist/android
+              sha256sum Space-Call-* > SHA256SUMS.txt
+            )
+
+      - store_artifacts:
+          path: dist/android
+          destination: space-call-android
+
 workflows:
   security-and-storefront-validation:
     jobs:
+      - android-build:
+          filters:
+            branches:
+              only:
+                - feat/android-twa-app
       - security-source
       - security-dependencies
       - ui-browser-deps:
