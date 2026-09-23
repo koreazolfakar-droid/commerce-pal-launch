@@ -23,7 +23,9 @@ import {
   MapPinned,
   Mic,
   Plus,
+  ReceiptText,
   Search,
+  ShoppingBag,
   Trash2,
 } from "lucide-react";
 
@@ -46,14 +48,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   addressDisplayLine,
+  loadMyOrderItems,
+  loadMyOrders,
   uploadAddressMedia,
   type AddressPatch,
   type CustomerAddress,
   type CustomerAddressType,
+  type CustomerOrderItem,
+  type CustomerOrderSummary,
 } from "@/lib/customerAccount";
 import { useLanguage } from "@/lib/i18n";
 
-type View = "book" | "map" | "type" | "details" | "profile";
+type View = "book" | "map" | "type" | "details" | "profile" | "orders";
 
 type AddressForm = {
   nickname: string;
@@ -154,6 +160,10 @@ export function CustomerAddressHub() {
   const [error, setError] = useState("");
   const [autoLocateToken, setAutoLocateToken] = useState(0);
   const [profileForm, setProfileForm] = useState({ fullName: "", phone: "", email: "" });
+  const [orders, setOrders] = useState<CustomerOrderSummary[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState("");
+  const [orderItems, setOrderItems] = useState<Record<string, CustomerOrderItem[]>>({});
   const saveTimer = useRef<number | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -181,6 +191,12 @@ export function CustomerAddressHub() {
             setDefault: "تعيين كعنوان افتراضي",
             delete: "حذف العنوان",
             profile: "الملف الشخصي",
+            myOrders: "طلباتي",
+            ordersEmpty: "لا يوجد طلبات مرتبطة بحسابك بعد.",
+            orderNumber: "طلب",
+            items: "العناصر",
+            viewOnMap: "عرض موقع التوصيل",
+            loadingOrders: "جارٍ تحميل الطلبات...",
             mapTitle: "تأكيد موقع التوصيل",
             mapHelp: "حرّك العلامة إلى موقعك الدقيق لمساعدة المندوب على الوصول إليك أسرع.",
             confirmLocation: "تأكيد موقع التوصيل",
@@ -226,6 +242,12 @@ export function CustomerAddressHub() {
             setDefault: "Set as default",
             delete: "Delete address",
             profile: "Profile",
+            myOrders: "My orders",
+            ordersEmpty: "No orders are linked to your account yet.",
+            orderNumber: "Order",
+            items: "Items",
+            viewOnMap: "View delivery location",
+            loadingOrders: "Loading orders...",
             mapTitle: "Confirm delivery location",
             mapHelp: "Move the pin to your exact location to help drivers locate you faster.",
             confirmLocation: "Confirm delivery location",
@@ -293,6 +315,48 @@ export function CustomerAddressHub() {
       email: profile?.email || "",
     });
   }, [addressBookOpen, profile?.email, profile?.fullName, profile?.phone]);
+
+  useEffect(() => {
+    if (!addressBookOpen || view !== "orders" || !user) return;
+    let cancelled = false;
+    setOrdersLoading(true);
+    setError("");
+    void loadMyOrders()
+      .then((next) => {
+        if (!cancelled) setOrders(next);
+      })
+      .catch(() => {
+        if (!cancelled) setError(copy.genericError);
+      })
+      .finally(() => {
+        if (!cancelled) setOrdersLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [addressBookOpen, copy.genericError, user, view]);
+
+  const toggleOrder = async (order: CustomerOrderSummary) => {
+    if (expandedOrderId === order.orderId) {
+      setExpandedOrderId("");
+      return;
+    }
+
+    setExpandedOrderId(order.orderId);
+    if (orderItems[order.orderId]) return;
+
+    setPending("order:" + order.orderId);
+    setError("");
+    try {
+      const items = await loadMyOrderItems(order.orderId);
+      setOrderItems((current) => ({ ...current, [order.orderId]: items }));
+    } catch {
+      setError(copy.genericError);
+    } finally {
+      setPending("");
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -544,14 +608,26 @@ export function CustomerAddressHub() {
                   </DialogTitle>
                   <DialogDescription className="sr-only">{copy.title}</DialogDescription>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setView("profile")}
-                  className="grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-card hover:bg-surface"
-                  aria-label={copy.profile}
-                >
-                  <CircleUserRound className="h-5 w-5" aria-hidden="true" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setView("orders")}
+                    className="grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-card hover:bg-surface"
+                    aria-label={copy.myOrders}
+                    title={copy.myOrders}
+                  >
+                    <ReceiptText className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("profile")}
+                    className="grid h-10 w-10 place-items-center rounded-full border border-border/70 bg-card hover:bg-surface"
+                    aria-label={copy.profile}
+                    title={copy.profile}
+                  >
+                    <CircleUserRound className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                </div>
               </div>
             </DialogHeader>
 
@@ -1008,6 +1084,162 @@ export function CustomerAddressHub() {
                 {pending === "done" ? copy.saving : copy.done}
               </Button>
             </div>
+          </div>
+        ) : null}
+
+        {view === "orders" ? (
+          <div className="max-h-[92dvh] overflow-y-auto p-5 pt-3 sm:p-7">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setView("book")}
+                className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface"
+                aria-label={copy.previous}
+              >
+                <BackIcon className="h-5 w-5" aria-hidden="true" />
+              </button>
+              <div className="min-w-0">
+                <h2 className="text-xl font-extrabold">{copy.myOrders}</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {ar
+                    ? "الطلبات المرتبطة برقم الهاتف أو البريد الموثّق في حسابك."
+                    : "Orders linked to your verified account phone or email."}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {ordersLoading ? (
+                <div className="grid place-items-center py-12 text-muted-foreground">
+                  <Loader2 className="mb-3 h-6 w-6 animate-spin text-primary" aria-hidden="true" />
+                  <span className="text-sm">{copy.loadingOrders}</span>
+                </div>
+              ) : orders.length ? (
+                orders.map((order) => {
+                  const expanded = expandedOrderId === order.orderId;
+                  const items = orderItems[order.orderId] || [];
+                  const location = order.deliveryLocation;
+                  const latitude =
+                    typeof location?.latitude === "number" ? location.latitude : null;
+                  const longitude =
+                    typeof location?.longitude === "number" ? location.longitude : null;
+                  const mapHref =
+                    latitude !== null && longitude !== null
+                      ? "https://www.google.com/maps?q=" + latitude + "," + longitude
+                      : "";
+                  return (
+                    <div
+                      key={order.orderId}
+                      className="overflow-hidden rounded-2xl border border-border/65 bg-card shadow-sm"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => void toggleOrder(order)}
+                        className="flex w-full items-center gap-3 p-4 text-start transition hover:bg-surface"
+                      >
+                        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                          <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center justify-between gap-3">
+                            <span className="truncate text-sm font-extrabold">
+                              {copy.orderNumber} #{order.orderNumber}
+                            </span>
+                            <span className="shrink-0 text-sm font-extrabold">
+                              {new Intl.NumberFormat(ar ? "ar-LB" : "en-US", {
+                                style: "currency",
+                                currency: order.currency || "USD",
+                              }).format(order.total)}
+                            </span>
+                          </span>
+                          <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                            <span>
+                              {order.createdAt
+                                ? new Intl.DateTimeFormat(ar ? "ar-LB" : "en-GB", {
+                                    dateStyle: "medium",
+                                  }).format(new Date(order.createdAt))
+                                : ""}
+                            </span>
+                            <span aria-hidden="true">•</span>
+                            <span className="font-semibold capitalize text-foreground">
+                              {order.status.replaceAll("_", " ")}
+                            </span>
+                          </span>
+                        </span>
+                        {pending === "order:" + order.orderId ? (
+                          <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <NextIcon
+                            className={
+                              "h-5 w-5 text-muted-foreground transition-transform " +
+                              (expanded ? "rotate-90" : "")
+                            }
+                            aria-hidden="true"
+                          />
+                        )}
+                      </button>
+
+                      {expanded ? (
+                        <div className="border-t border-border/60 px-4 pb-4 pt-3">
+                          {items.length ? (
+                            <div className="space-y-2">
+                              {items.map((item) => (
+                                <div
+                                  key={item.itemId}
+                                  className="flex items-start justify-between gap-3 text-sm"
+                                >
+                                  <span className="min-w-0">
+                                    <span className="block truncate font-semibold">{item.title}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {item.variantTitle ? item.variantTitle + " · " : ""}
+                                      ×{item.quantity}
+                                    </span>
+                                  </span>
+                                  <span className="shrink-0 font-bold">
+                                    {new Intl.NumberFormat(ar ? "ar-LB" : "en-US", {
+                                      style: "currency",
+                                      currency: order.currency || "USD",
+                                    }).format(item.lineTotal)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : pending !== "order:" + order.orderId ? (
+                            <p className="text-xs text-muted-foreground">{copy.items}</p>
+                          ) : null}
+
+                          <div className="mt-3 rounded-xl bg-surface px-3 py-2.5 text-xs leading-5 text-muted-foreground">
+                            {[order.city, order.deliveryAddress].filter(Boolean).join(" — ")}
+                          </div>
+
+                          {mapHref ? (
+                            <a
+                              href={mapHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline"
+                            >
+                              <MapPinned className="h-4 w-4" aria-hidden="true" />
+                              {copy.viewOnMap}
+                            </a>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                  {copy.ordersEmpty}
+                </div>
+              )}
+            </div>
+
+            {error ? (
+              <p role="status" className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
           </div>
         ) : null}
 
