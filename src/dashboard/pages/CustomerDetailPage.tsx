@@ -247,7 +247,7 @@ export default function CustomerDetailPage({ id }: { id: string }) {
                     className="grid w-full grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 text-left hover:bg-slate-50"
                   >
                     <div>
-                      <div className="text-[12px] font-bold text-slate-700">Order #{order.orderNumber}</div>
+                      <div className="text-[12px] font-bold text-slate-700">Order #{order.publicOrderNumber}</div>
                       <div className="mt-1 text-[10px] text-slate-400">
                         {new Date(order.createdAt).toLocaleString()} · {order.status} · {order.paymentStatus}
                       </div>
