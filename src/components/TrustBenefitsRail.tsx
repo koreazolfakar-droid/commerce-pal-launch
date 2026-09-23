@@ -38,11 +38,11 @@ export function TrustBenefitsRail() {
       data-testid="trust-benefits-rail"
       className="min-w-0"
     >
-      <div className="-mx-2.5 flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-2.5 py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2.5">
         {BENEFITS.map((benefit) => (
           <article
             key={benefit.title}
-            className="group flex min-h-[3.9rem] w-[58%] min-w-[12.25rem] max-w-[13rem] shrink-0 snap-start items-center gap-2 rounded-lg border border-border/70 bg-card px-2.5 py-2 shadow-card transition-colors duration-150 hover:border-primary/20 sm:w-[12.75rem] sm:min-w-[12.75rem]"
+            className="group flex min-h-[4.15rem] w-[calc(50%-0.25rem)] min-w-[calc(50%-0.25rem)] shrink-0 snap-start items-center gap-2.5 overflow-hidden rounded-2xl border border-border/65 bg-card px-3 py-2.5 shadow-sm transition-colors duration-150 hover:border-primary/20 sm:w-[12.75rem] sm:min-w-[12.75rem]"
           >
             <span
               className={`relative grid h-8.5 w-8.5 shrink-0 place-items-center overflow-hidden rounded-[0.7rem] border shadow-sm transition-colors duration-150 ${benefit.iconTone}`}
@@ -58,7 +58,7 @@ export function TrustBenefitsRail() {
               />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-extrabold leading-tight tracking-[-0.01em]">
+              <p className="line-clamp-1 text-[12px] font-extrabold leading-tight tracking-[-0.01em]">
                 {t(benefit.title)}
               </p>
               <p className="mt-0.5 line-clamp-1 text-[10px] leading-tight text-muted-foreground">
