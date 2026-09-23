@@ -89,7 +89,8 @@ function CartPage() {
         title: "Shopping bag",
         item: totalItems === 1 ? "1 product" : `${totalItems} products`,
         emptyTitle: "Your bag is empty",
-        emptyDescription: "Explore the latest phones and accessories, then add your favourites here.",
+        emptyDescription:
+          "Explore the latest phones and accessories, then add your favourites here.",
         yourItems: "Your items",
         summary: "Order summary",
         subtotal: "Items subtotal",
@@ -159,7 +160,7 @@ function CartPage() {
               type="button"
               onClick={openAddressBook}
               className="mb-4 flex w-full items-center gap-3 rounded-xl border bg-card px-3.5 py-3 text-start shadow-card transition hover:border-primary/25 hover:bg-accent/25 sm:mb-5 sm:px-4"
-              aria-label={isArabic ? "تغيير موقع التوصيل" : "Change delivery location"}
+              aria-label={`${copy.deliveringTo}: ${locationLabel}. ${copy.changeLocation}`}
             >
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
                 <MapPin className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -168,7 +169,9 @@ function CartPage() {
                 <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   {copy.deliveringTo}
                 </span>
-                <span className="mt-0.5 block truncate text-sm font-extrabold">{locationLabel}</span>
+                <span className="mt-0.5 block truncate text-sm font-extrabold">
+                  {locationLabel}
+                </span>
                 <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
                   {locationDetail}
                 </span>
@@ -181,10 +184,15 @@ function CartPage() {
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_21.5rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_22.5rem] xl:gap-6">
               <section className="min-w-0" aria-labelledby="cart-items-title">
                 <div className="mb-2.5 flex items-center justify-between gap-3 px-0.5">
-                  <h2 id="cart-items-title" className="text-sm font-bold tracking-[-0.01em] sm:text-base">
+                  <h2
+                    id="cart-items-title"
+                    className="text-sm font-bold tracking-[-0.01em] sm:text-base"
+                  >
                     {copy.yourItems}
                   </h2>
-                  <span className="text-[11px] font-semibold text-muted-foreground">{copy.item}</span>
+                  <span className="text-[11px] font-semibold text-muted-foreground">
+                    {copy.item}
+                  </span>
                 </div>
 
                 <ul
@@ -320,7 +328,9 @@ function CartPage() {
                   <div className="mt-4 space-y-3 text-sm">
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-muted-foreground">{copy.subtotal}</span>
-                      <span className="font-bold tabular-nums">{formatPrice(subtotal, currency)}</span>
+                      <span className="font-bold tabular-nums">
+                        {formatPrice(subtotal, currency)}
+                      </span>
                     </div>
 
                     <div className="flex items-start justify-between gap-4">
@@ -375,12 +385,17 @@ function CartPage() {
             <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 border-t bg-background/95 px-3 py-2.5 shadow-float backdrop-blur supports-[backdrop-filter]:bg-background/88 lg:hidden">
               <div className="mx-auto flex w-full max-w-[72rem] items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-semibold text-muted-foreground">{copy.finalTotal}</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground">
+                    {copy.finalTotal}
+                  </p>
                   <p className="truncate text-lg font-black tracking-[-0.02em] tabular-nums text-primary">
                     {formatPrice(grandTotal, currency)}
                   </p>
                 </div>
-                <Button asChild className="min-h-12 shrink-0 rounded-xl px-5 text-sm font-extrabold">
+                <Button
+                  asChild
+                  className="min-h-12 shrink-0 rounded-xl px-5 text-sm font-extrabold"
+                >
                   <Link to="/checkout">
                     {copy.continueCheckout}
                     <ArrowRight className="rtl:rotate-180" />
