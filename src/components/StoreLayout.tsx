@@ -49,7 +49,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       </main>
       <CmsTrustStrip />
       <CmsNavigationStrip area="footer" />
-      <SiteFooter compactTopSpacing={onCartPage} />
+      {onHomePage ? <SiteFooter /> : null}
       <BottomNav />
       <DeferredCartDrawer />
     </div>
