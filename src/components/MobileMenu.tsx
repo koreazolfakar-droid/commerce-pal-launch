@@ -150,7 +150,7 @@ export function MobileMenu({
   const { data: catalog } = useQuery(navigationCatalogQueryOptions());
   const { data: cms } = useQuery(cmsQueryOptions());
   const { user, loading: authLoading, openAuth, signOut } = useCustomerAuth();
-  const { profile, openAddressBook } = useCustomerAccount();
+  const { profile, openAccountHub } = useCustomerAccount();
 
   const close = () => setOpen(false);
   const ar = language === "ar";
@@ -203,7 +203,7 @@ export function MobileMenu({
 
   const openProfile = () => {
     close();
-    openAddressBook();
+    openAccountHub();
   };
 
   const openSignIn = () => {
