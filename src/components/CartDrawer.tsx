@@ -177,11 +177,7 @@ export const CartDrawer = ({
                   className="min-h-12 w-full bg-[#25D366] font-semibold text-white hover:bg-[#20bd5a]"
                   size="lg"
                 >
-                  <Link
-                    to="/cart"
-                    hash="whatsapp-checkout"
-                    onClick={() => setIsOpen(false)}
-                  >
+                  <Link to="/checkout" onClick={() => setIsOpen(false)}>
                     <MessageCircle className="mr-2 h-4 w-4" />
                     {whatsappLabel}
                   </Link>
