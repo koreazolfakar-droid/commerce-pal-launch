@@ -157,3 +157,12 @@ test("compression preview cannot confirm before a valid result and explains the 
     /disabled=\{busy \|\| previewing \|\| Boolean\(error\) \|\| results\.length === 0\}/,
   );
 });
+
+
+test("discarding edits resets even when the user reselects the same slide", () => {
+  assert.match(heroPage, /setSelectedId\(slide\.id\);\s*setForm\(fromSlide\(slide\)\)/);
+});
+
+test("Hero editor does not create a completely empty slide", () => {
+  assert.match(heroPage, /disabled=\{busy \|\| hasPendingHeroImages \|\| !formDirty\}/);
+});
