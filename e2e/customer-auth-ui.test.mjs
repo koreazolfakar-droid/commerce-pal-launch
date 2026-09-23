@@ -74,4 +74,8 @@ test("mobile drawer exposes the real customer account and avoids duplicated disc
   assert.doesNotMatch(mobileMenu, /collectionsQueryOptions/);
   assert.doesNotMatch(mobileMenu, /displayCollections/);
   assert.doesNotMatch(mobileMenu, /SHOP_ACCOUNT_URL/);
+  assert.match(mobileMenu, /overflow-x-hidden overflow-y-auto overscroll-x-none/);
+  assert.match(mobileMenu, /data-testid="mobile-menu-brand-rail"/);
+  assert.match(mobileMenu, /overscroll-x-contain/);
+  assert.match(mobileMenu, /touch-pan-x/);
 });
