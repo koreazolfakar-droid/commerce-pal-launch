@@ -534,6 +534,7 @@ export function CheckoutDetailsForm({
         customer: {
           name: details.name.trim(),
           phone: details.phone.trim(),
+          email: profile?.email?.trim() || undefined,
           city: details.area.trim(),
           address: [
             details.address.trim(),
