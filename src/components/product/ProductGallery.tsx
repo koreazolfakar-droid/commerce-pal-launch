@@ -160,7 +160,8 @@ export function ProductGallery({
       {images.length > 1 && (
         <div
           className={cn(
-            "scroll-rail mt-3 hidden gap-2 overflow-x-auto sm:flex",
+            "scroll-rail mt-3 gap-2 overflow-x-auto",
+            compact ? "flex" : "hidden sm:flex",
             !compact && "lg:order-1 lg:mt-0 lg:flex-col lg:overflow-visible",
           )}
           role="group"
