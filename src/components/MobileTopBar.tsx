@@ -104,12 +104,12 @@ export function MobileTopBar({
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
-              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-md border border-border/55 bg-card/65 shadow-sm transition-colors hover:bg-surface sm:grid"
+              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/55 bg-card/70 shadow-sm transition-colors hover:bg-surface sm:grid"
             >
               <Heart className="h-5 w-5" strokeWidth={1.9} />
               <Badge value={wishlistCount} />
             </Link>
-            <ThemeToggle className="h-10 w-10 rounded-md border border-border/55 bg-card/65 shadow-sm hover:bg-surface" />
+            <ThemeToggle className="h-10 w-10 rounded-xl border border-border/55 bg-card/70 shadow-sm hover:bg-surface" />
             <button
               type="button"
               onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
@@ -118,7 +118,7 @@ export function MobileTopBar({
             >
               <ShoppingBag className="h-5 w-5" strokeWidth={1.9} />
               <Badge value={cartCount} />
-            </button>
+              </button>
           </div>
         </div>
       </header>
@@ -127,7 +127,7 @@ export function MobileTopBar({
         <div className="mx-auto max-w-md space-y-2 px-3 pb-3 pt-2.5">
           <CustomerAddressSelector variant="mobile" className="w-full" />
           <div className="flex min-w-0 items-center gap-2">
-          <button
+            <button
             type="button"
             onClick={() => setSearchOpen(true)}
             className="press flex h-12 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border/65 bg-card px-4 text-start text-[13px] font-medium text-muted-foreground shadow-sm transition hover:border-primary/25 hover:bg-accent/50"
