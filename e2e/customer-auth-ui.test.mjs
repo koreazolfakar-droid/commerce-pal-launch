@@ -16,11 +16,21 @@ test("customer login is visible in desktop and mobile store chrome", async () =>
   assert.match(mobile, /variant="icon"/);
 });
 
-test("customer auth supports Google and passwordless phone OTP", async () => {
-  const dialog = await read("src/components/customer-auth/CustomerAuthDialog.tsx");
+test("customer auth supports Google PKCE and passwordless phone OTP", async () => {
+  const [dialog, client, provider] = await Promise.all([
+    read("src/components/customer-auth/CustomerAuthDialog.tsx"),
+    read("src/integrations/supabase/client.ts"),
+    read("src/components/customer-auth/CustomerAuthProvider.tsx"),
+  ]);
 
   assert.match(dialog, /signInWithOAuth/);
   assert.match(dialog, /provider:\s*"google"/);
+  assert.match(dialog, /redirectTo:\s*window\.location\.origin/);
+  assert.match(client, /flowType:\s*"pkce"/);
+  assert.match(client, /detectSessionInUrl:\s*false/);
+  assert.match(provider, /exchangeCodeForSession/);
+  assert.match(provider, /clearOAuthQueryParams/);
+  assert.match(provider, /access_denied/);
   assert.match(dialog, /signInWithOtp/);
   assert.match(dialog, /verifyOtp/);
   assert.match(dialog, /type:\s*"sms"/);
