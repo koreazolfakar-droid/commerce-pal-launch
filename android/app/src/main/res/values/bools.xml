@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Debug/default builds must never claim production-domain App Links. -->
-    <bool name="app_links_auto_verify">false</bool>
-</resources>
