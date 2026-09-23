@@ -329,28 +329,13 @@ jobs:
             fi
 
       - run:
-          name: Inspect APK identity and integrity
+          name: Package debug APK
           command: |
             set -euo pipefail
             source "$BASH_ENV"
             APK="android/app/build/outputs/apk/debug/app-debug.apk"
-            BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
             test -s "$APK"
-
-            "$BUILD_TOOLS/aapt" dump badging "$APK" | tee /tmp/aapt-badging.txt
-            grep -q "package: name='store.spacecallapp.app.debug'" /tmp/aapt-badging.txt
-            grep -q "versionCode='3'" /tmp/aapt-badging.txt
-            grep -q "versionName='1.0.2-debug'" /tmp/aapt-badging.txt
-
-            "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
-            "$BUILD_TOOLS/zipalign" -c -P 16 -v 4 "$APK"
-
-            RAW_CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr '[:lower:]' '[:upper:]')"
-            test -n "$RAW_CERT"
-            FORMATTED_CERT="$(printf '%s' "$RAW_CERT" | sed 's/../&:/g;s/:$//')"
-
             mkdir -p dist/android
-            printf '%s\n' "$FORMATTED_CERT" > dist/android/debug-cert-sha256.txt
             cp "$APK" dist/android/Space-Call-1.0.2-debug.apk
 
             if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
@@ -375,7 +360,8 @@ jobs:
           destination: space-call-android
 
 
-  android-lint:
+
+  android-lint-debug:
     docker:
       - image: cimg/android:2026.08
     resource_class: medium
@@ -385,7 +371,6 @@ jobs:
       GRADLE_BIN_SHA256: "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
     steps:
       - checkout
-
       - run:
           name: Install Android lint toolchain
           command: |
@@ -399,19 +384,130 @@ jobs:
             rm -rf "$HOME/gradle-$GRADLE_VERSION"
             unzip -q /tmp/gradle.zip -d "$HOME"
             echo "export PATH=\"$HOME/gradle-$GRADLE_VERSION/bin:$PATH\"" >> "$BASH_ENV"
-
       - run:
-          name: Android security gate and strict lint
+          name: Android debug lint
           command: |
             set -euo pipefail
             source "$BASH_ENV"
             node scripts/android-security-gate.mjs
             cd android
-            gradle --no-daemon --stacktrace :app:lintDebug :app:lintRelease
-
+            gradle --no-daemon --stacktrace :app:lintDebug
       - store_artifacts:
           path: android/app/build/reports
-          destination: android-lint-reports
+          destination: android-lint-debug
+
+  android-lint-release:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      GRADLE_VERSION: "9.6.0"
+      GRADLE_BIN_SHA256: "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+    steps:
+      - checkout
+      - run:
+          name: Install Android release lint toolchain
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+            curl --proto '=https' --tlsv1.2 -fsSL \
+              "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" \
+              -o /tmp/gradle.zip
+            echo "$GRADLE_BIN_SHA256  /tmp/gradle.zip" | sha256sum -c -
+            rm -rf "$HOME/gradle-$GRADLE_VERSION"
+            unzip -q /tmp/gradle.zip -d "$HOME"
+            echo "export PATH=\"$HOME/gradle-$GRADLE_VERSION/bin:$PATH\"" >> "$BASH_ENV"
+      - run:
+          name: Android release lint
+          command: |
+            set -euo pipefail
+            source "$BASH_ENV"
+            node scripts/android-security-gate.mjs
+            cd android
+            gradle --no-daemon --stacktrace :app:lintRelease
+      - store_artifacts:
+          path: android/app/build/reports
+          destination: android-lint-release
+
+  android-apk-badging:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Verify package identity and version
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "build-tools;36.0.0"
+            APK="dist/android/Space-Call-1.0.2-debug.apk"
+            BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+            test -s "$APK"
+            "$BUILD_TOOLS/aapt" dump badging "$APK" | tee /tmp/aapt-badging.txt
+            grep -q "package: name='store.spacecallapp.app.debug'" /tmp/aapt-badging.txt
+            grep -q "versionCode='3'" /tmp/aapt-badging.txt
+            grep -q "versionName='1.0.2-debug'" /tmp/aapt-badging.txt
+      - store_artifacts:
+          path: /tmp/aapt-badging.txt
+          destination: android-apk/aapt-badging.txt
+
+  android-apk-signature:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Verify APK signature
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "build-tools;36.0.0"
+            APK="dist/android/Space-Call-1.0.2-debug.apk"
+            BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+            test -s "$APK"
+            "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+            RAW_CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr '[:lower:]' '[:upper:]')"
+            test -n "$RAW_CERT"
+            printf '%s\n' "$RAW_CERT" > /tmp/debug-cert-sha256.txt
+      - store_artifacts:
+          path: /tmp/apksigner.txt
+          destination: android-apk/apksigner.txt
+      - store_artifacts:
+          path: /tmp/debug-cert-sha256.txt
+          destination: android-apk/debug-cert-sha256.txt
+
+  android-apk-alignment:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Verify APK ZIP and 16 KB alignment
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "build-tools;36.0.0"
+            APK="dist/android/Space-Call-1.0.2-debug.apk"
+            BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+            test -s "$APK"
+            "$BUILD_TOOLS/zipalign" -c -P 16 -v 4 "$APK" | tee /tmp/zipalign.txt
+      - store_artifacts:
+          path: /tmp/zipalign.txt
+          destination: android-apk/zipalign.txt
 
   android-runtime-smoke:
     machine:
@@ -537,7 +633,37 @@ workflows:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
-      - android-lint:
+      - android-lint-debug:
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+      - android-lint-release:
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+      - android-apk-badging:
+          requires:
+            - android-build
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+      - android-apk-signature:
+          requires:
+            - android-build
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+      - android-apk-alignment:
+          requires:
+            - android-build
           filters:
             branches:
               only:
