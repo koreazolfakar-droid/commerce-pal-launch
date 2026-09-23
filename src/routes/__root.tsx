@@ -80,6 +80,13 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
+              if (
+                typeof window !== "undefined" &&
+                window.location.pathname.startsWith("/dashboard")
+              ) {
+                window.location.reload();
+                return;
+              }
               router.invalidate();
               reset();
             }}
