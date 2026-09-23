@@ -59,6 +59,10 @@ create unique index if not exists store_customer_addresses_one_draft_uidx
   on public.store_customer_addresses(user_id)
   where is_draft = true;
 
+create index if not exists store_customer_addresses_edit_target_idx
+  on public.store_customer_addresses(editing_address_id)
+  where editing_address_id is not null;
+
 alter table public.store_orders
   add column if not exists customer_user_id uuid references auth.users(id) on delete set null;
 
@@ -99,39 +103,39 @@ grant select, insert, update, delete on public.store_customer_addresses to authe
 drop policy if exists customer_profiles_owner_select on public.store_customer_profiles;
 create policy customer_profiles_owner_select
 on public.store_customer_profiles for select to authenticated
-using (auth.uid() = user_id);
+using ((select auth.uid()) = user_id);
 
 drop policy if exists customer_profiles_owner_insert on public.store_customer_profiles;
 create policy customer_profiles_owner_insert
 on public.store_customer_profiles for insert to authenticated
-with check (auth.uid() = user_id);
+with check ((select auth.uid()) = user_id);
 
 drop policy if exists customer_profiles_owner_update on public.store_customer_profiles;
 create policy customer_profiles_owner_update
 on public.store_customer_profiles for update to authenticated
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
 
 drop policy if exists customer_addresses_owner_select on public.store_customer_addresses;
 create policy customer_addresses_owner_select
 on public.store_customer_addresses for select to authenticated
-using (auth.uid() = user_id);
+using ((select auth.uid()) = user_id);
 
 drop policy if exists customer_addresses_owner_insert on public.store_customer_addresses;
 create policy customer_addresses_owner_insert
 on public.store_customer_addresses for insert to authenticated
-with check (auth.uid() = user_id);
+with check ((select auth.uid()) = user_id);
 
 drop policy if exists customer_addresses_owner_update on public.store_customer_addresses;
 create policy customer_addresses_owner_update
 on public.store_customer_addresses for update to authenticated
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
 
 drop policy if exists customer_addresses_owner_delete on public.store_customer_addresses;
 create policy customer_addresses_owner_delete
 on public.store_customer_addresses for delete to authenticated
-using (auth.uid() = user_id);
+using ((select auth.uid()) = user_id);
 
 create or replace function public.set_customer_default_address(p_address_id uuid)
 returns public.store_customer_addresses
@@ -358,16 +362,31 @@ revoke all on function public.finalize_customer_address(uuid) from public, anon;
 grant execute on function public.finalize_customer_address(uuid) to authenticated;
 
 -- Private bucket. A user can only access objects stored below their own auth UID.
-insert into storage.buckets (id, name, public)
-values ('customer-address-media', 'customer-address-media', false)
-on conflict (id) do update set public = excluded.public;
+insert into storage.buckets (
+  id,
+  name,
+  public,
+  file_size_limit,
+  allowed_mime_types
+)
+values (
+  'customer-address-media',
+  'customer-address-media',
+  false,
+  8388608,
+  array['image/*', 'audio/*']::text[]
+)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists customer_address_media_select on storage.objects;
 create policy customer_address_media_select
 on storage.objects for select to authenticated
 using (
   bucket_id = 'customer-address-media'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
 drop policy if exists customer_address_media_insert on storage.objects;
@@ -375,7 +394,7 @@ create policy customer_address_media_insert
 on storage.objects for insert to authenticated
 with check (
   bucket_id = 'customer-address-media'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
 drop policy if exists customer_address_media_update on storage.objects;
@@ -383,11 +402,11 @@ create policy customer_address_media_update
 on storage.objects for update to authenticated
 using (
   bucket_id = 'customer-address-media'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[1] = (select auth.uid())::text
 )
 with check (
   bucket_id = 'customer-address-media'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
 drop policy if exists customer_address_media_delete on storage.objects;
@@ -395,7 +414,7 @@ create policy customer_address_media_delete
 on storage.objects for delete to authenticated
 using (
   bucket_id = 'customer-address-media'
-  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
 
@@ -427,10 +446,11 @@ set search_path = ''
 as $$
   with verified_identity as (
     select
+      id as user_id,
       lower(coalesce(email, '')) as email,
       regexp_replace(coalesce(phone, ''), '[^0-9]+', '', 'g') as phone
     from auth.users
-    where id = auth.uid()
+    where id = (select auth.uid())
   )
   select
     orders.id,
@@ -450,9 +470,8 @@ as $$
     orders.completed_at
   from public.store_orders as orders
   cross join verified_identity as identity
-  where auth.uid() is not null
-    and (
-      orders.customer_user_id = auth.uid()
+  where (
+      orders.customer_user_id = identity.user_id
       or (
         identity.email <> ''
         and lower(coalesce(orders.customer_email, '')) = identity.email
@@ -488,19 +507,19 @@ set search_path = ''
 as $$
   with verified_identity as (
     select
+      id as user_id,
       lower(coalesce(email, '')) as email,
       regexp_replace(coalesce(phone, ''), '[^0-9]+', '', 'g') as phone
     from auth.users
-    where id = auth.uid()
+    where id = (select auth.uid())
   ),
   owned_order as (
     select orders.id
     from public.store_orders as orders
     cross join verified_identity as identity
     where orders.id = p_order_id
-      and auth.uid() is not null
       and (
-        orders.customer_user_id = auth.uid()
+        orders.customer_user_id = identity.user_id
         or (
           identity.email <> ''
           and lower(coalesce(orders.customer_email, '')) = identity.email
