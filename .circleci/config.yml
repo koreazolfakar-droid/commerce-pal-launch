@@ -153,6 +153,96 @@ jobs:
           name: ESLint
           command: bun run lint
 
+  lint-cart-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint cart
+          command: ./node_modules/.bin/eslint src/routes/cart.tsx --fix-dry-run
+
+  lint-checkout-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint checkout
+          command: ./node_modules/.bin/eslint src/routes/checkout.tsx --fix-dry-run
+
+  lint-cart-drawer-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint cart drawer
+          command: ./node_modules/.bin/eslint src/components/CartDrawer.tsx --fix-dry-run
+
+  lint-e2e-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint changed e2e tests
+          command: ./node_modules/.bin/eslint e2e/cart-ux-polish.test.mjs e2e/cart-responsive-precision.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-delivery-dashboard.test.mjs e2e/ci-config.test.mjs e2e/dashboard-csp-session-ci.test.mjs --fix-dry-run
+
+  unit-cart-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Cart unit tests
+          command: node --test e2e/cart-ux-polish.test.mjs e2e/cart-responsive-precision.test.mjs e2e/cart-delivery-security.test.mjs e2e/cart-delivery-dashboard.test.mjs
+
+  unit-ci-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: CI unit tests
+          command: node --test e2e/ci-config.test.mjs e2e/dashboard-csp-session-ci.test.mjs
+
   storefront-unit-debug:
     docker:
       - image: cimg/node:lts
@@ -297,6 +387,12 @@ workflows:
       - storefront-typecheck-debug
       - storefront-lint-debug
       - storefront-unit-debug
+      - lint-cart-debug
+      - lint-checkout-debug
+      - lint-cart-drawer-debug
+      - lint-e2e-debug
+      - unit-cart-debug
+      - unit-ci-debug
       - ui-browser-deps:
           filters:
             branches:
