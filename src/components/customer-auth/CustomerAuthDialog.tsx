@@ -84,7 +84,15 @@ function GoogleMark() {
 }
 
 export function CustomerAuthDialog() {
-  const { authOpen, setAuthOpen, user, loading: sessionLoading, signOut } = useCustomerAuth();
+  const {
+    authOpen,
+    setAuthOpen,
+    user,
+    loading: sessionLoading,
+    oauthError,
+    clearOAuthError,
+    signOut,
+  } = useCustomerAuth();
   const { openAddressBook } = useCustomerAccount();
   const { language, direction } = useLanguage();
   const [step, setStep] = useState<Step>("sign-in");
@@ -121,6 +129,8 @@ export function CustomerAuthDialog() {
             signedIn: "تم تسجيل الدخول",
             manageAccount: "الملف الشخصي وعناوين التوصيل",
             signOut: "تسجيل الخروج",
+            googleCancelled: "تم إلغاء تسجيل الدخول عبر Google.",
+            googleError: "تعذر تسجيل الدخول عبر Google. تحقق من إعدادات الحساب وحاول مجددًا.",
             genericError: "تعذر إكمال العملية الآن. حاول مجددًا.",
             invalidPhone: "أدخل رقم هاتف صحيحًا مع رمز الدولة.",
             invalidCode: "أدخل رمز التحقق المكوّن من 6 أرقام.",
@@ -148,6 +158,8 @@ export function CustomerAuthDialog() {
             signedIn: "Signed in",
             manageAccount: "Profile & delivery addresses",
             signOut: "Sign out",
+            googleCancelled: "Google sign-in was cancelled.",
+            googleError: "Google sign-in could not be completed. Check the account setup and try again.",
             genericError: "We could not complete that action. Please try again.",
             invalidPhone: "Enter a valid phone number with country code.",
             invalidCode: "Enter the 6-digit verification code.",
@@ -172,6 +184,15 @@ export function CustomerAuthDialog() {
     }
   }, [authOpen, user]);
 
+  useEffect(() => {
+    if (!authOpen || !oauthError) return;
+    setStep("sign-in");
+    setPending(null);
+    setMessage(oauthError === "cancelled" ? copy.googleCancelled : copy.googleError);
+    clearOAuthError();
+  }, [authOpen, clearOAuthError, copy.googleCancelled, copy.googleError, oauthError]);
+
+
   async function continueWithGoogle() {
     if (typeof window === "undefined") return;
     setPending("google");
@@ -188,7 +209,7 @@ export function CustomerAuthDialog() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: window.location.origin,
         },
       });
       if (error) throw error;
