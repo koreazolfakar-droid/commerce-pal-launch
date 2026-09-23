@@ -68,6 +68,7 @@ const NAV_ITEMS: readonly NavItem[] = [
 ] as const;
 
 const CMS_ICONS: Record<string, LucideIcon> = {
+  ClipboardList,
   Grid2X2,
   Heart,
   House,
@@ -139,10 +140,29 @@ export function BottomNav() {
       .filter((item) => item.area === "bottom" && item.href && item.href !== "/compare")
       .sort((a, b) => a.sort_order - b.sort_order) ?? [];
   const hasCmsConfig = cmsAreaItems.length > 0;
-  const cmsItems = cmsAreaItems
+  const localizedCmsItems = cmsAreaItems
     .filter((item) => item.is_visible)
     .map((item) => localizeNavigationItem(item, language))
-    .filter((item): item is CmsNavigationItem => Boolean(item))
+    .filter((item): item is CmsNavigationItem => Boolean(item));
+
+  // The bottom nav is CMS-driven in production. Keep CMS customization, but
+  // migrate the legacy Categories slot to My orders so stale CMS data cannot
+  // override the newer primary navigation choice.
+  const hasMyOrdersCmsItem = localizedCmsItems.some((item) => item.href === "/my-orders");
+  const cmsItems = localizedCmsItems
+    .filter((item) => !(hasMyOrdersCmsItem && item.href === "/categories"))
+    .map((item) =>
+      item.href === "/categories"
+        ? {
+            ...item,
+            id: "orders",
+            href: "/my-orders",
+            label: t("myOrders"),
+            icon_type: "lucide" as const,
+            icon_value: "ClipboardList",
+          }
+        : item,
+    )
     .slice(0, 4);
 
   const itemClass = (active: boolean) =>
