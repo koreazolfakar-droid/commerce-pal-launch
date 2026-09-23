@@ -42,10 +42,15 @@ The production site must return HTTP 200 with `Content-Type: application/json` a
 
 No 301/302 redirect is allowed for that path.
 
-The checked-in file currently authorizes the known test APK identity only. Before
-Play Store release, add the Play App Signing certificate fingerprint for
-`store.spacecallapp.app` without removing the test entry until test distribution
-is retired.
+The checked-in production file intentionally contains no debug certificate.
+Debug builds use `store.spacecallapp.app.debug` and do not request production App
+Link verification. This prevents a disposable test signing key from ever becoming
+trusted by the production domain.
+
+Before Play Store release, add the persistent Play App Signing certificate
+fingerprint for `store.spacecallapp.app`. The release build requests App Link
+verification and the security gate rejects a signed production build unless the
+active release certificate is present in `assetlinks.json`.
 
 ## Signing
 
