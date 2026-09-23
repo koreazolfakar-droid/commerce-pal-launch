@@ -69,7 +69,9 @@ function orderIdentityMatches(
   row: Record<string, unknown>,
   user: { id: string; email?: string | null; phone?: string | null },
 ) {
-  if (row.customer_user_id === user.id) return true;
+  if (typeof row.customer_user_id === "string" && row.customer_user_id) {
+    return row.customer_user_id === user.id;
+  }
 
   const userEmail = user.email?.trim().toLowerCase() || "";
   const orderEmail =
