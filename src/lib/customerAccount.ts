@@ -20,6 +20,37 @@ export type CustomerProfile = {
   email: string;
 };
 
+export type CustomerOrderSummary = {
+  orderId: string;
+  orderNumber: number;
+  status: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  currency: string;
+  subtotal: number;
+  shippingTotal: number;
+  discountTotal: number;
+  total: number;
+  deliveryAddress: string;
+  city: string;
+  deliveryLocation: { latitude?: number; longitude?: number } | null;
+  createdAt: string;
+  completedAt: string;
+};
+
+export type CustomerOrderItem = {
+  itemId: string;
+  productId: string;
+  variantId: string;
+  title: string;
+  variantTitle: string;
+  sku: string;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+  options: Record<string, unknown>;
+};
+
 export type CustomerAddress = {
   id: string;
   userId: string;
@@ -127,6 +158,54 @@ function toProfile(row: Record<string, unknown>, userId: string): CustomerProfil
   };
 }
 
+function number(value: unknown) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function toOrder(row: Record<string, unknown>): CustomerOrderSummary {
+  const deliveryLocation =
+    row.delivery_location && typeof row.delivery_location === "object"
+      ? (row.delivery_location as { latitude?: number; longitude?: number })
+      : null;
+
+  return {
+    orderId: text(row.order_id),
+    orderNumber: number(row.order_number),
+    status: text(row.status),
+    paymentStatus: text(row.payment_status),
+    paymentMethod: text(row.payment_method),
+    currency: text(row.currency) || "USD",
+    subtotal: number(row.subtotal),
+    shippingTotal: number(row.shipping_total),
+    discountTotal: number(row.discount_total),
+    total: number(row.total),
+    deliveryAddress: text(row.delivery_address),
+    city: text(row.city),
+    deliveryLocation,
+    createdAt: text(row.created_at),
+    completedAt: text(row.completed_at),
+  };
+}
+
+function toOrderItem(row: Record<string, unknown>): CustomerOrderItem {
+  return {
+    itemId: text(row.item_id),
+    productId: text(row.product_id),
+    variantId: text(row.variant_id),
+    title: text(row.title),
+    variantTitle: text(row.variant_title),
+    sku: text(row.sku),
+    unitPrice: number(row.unit_price),
+    quantity: number(row.quantity),
+    lineTotal: number(row.line_total),
+    options:
+      row.options && typeof row.options === "object" && !Array.isArray(row.options)
+        ? (row.options as Record<string, unknown>)
+        : {},
+  };
+}
+
 function metadataName(user: User) {
   const metadata = user.user_metadata as Record<string, unknown> | undefined;
   const candidate =
@@ -222,6 +301,26 @@ export async function updateCustomerProfile(
     .single();
   throwError(error, "Saving customer profile failed");
   return toProfile(data as Record<string, unknown>, userId);
+}
+
+export async function loadMyOrders(limit = 30): Promise<CustomerOrderSummary[]> {
+  const { data, error } = await customerDb.rpc("get_my_store_orders", {
+    p_limit: Math.max(1, Math.min(limit, 100)),
+  });
+  throwError(error, "Loading customer orders failed");
+  return Array.isArray(data)
+    ? data.map((row) => toOrder(row as Record<string, unknown>))
+    : [];
+}
+
+export async function loadMyOrderItems(orderId: string): Promise<CustomerOrderItem[]> {
+  const { data, error } = await customerDb.rpc("get_my_store_order_items", {
+    p_order_id: orderId,
+  });
+  throwError(error, "Loading order items failed");
+  return Array.isArray(data)
+    ? data.map((row) => toOrderItem(row as Record<string, unknown>))
+    : [];
 }
 
 export async function loadCustomerAddresses(userId: string): Promise<CustomerAddress[]> {
