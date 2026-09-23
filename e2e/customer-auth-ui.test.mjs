@@ -48,7 +48,7 @@ test("customer session is shared at the root and cleaned up safely", async () =>
   assert.match(root, /CustomerAuthProvider/);
   assert.match(root, /CustomerAuthDialog/);
   assert.match(provider, /onAuthStateChange/);
-  assert.match(provider, /subscription\.unsubscribe\(\)/);
+  assert.match(provider, /subscription\?\.unsubscribe\(\)/);
   assert.match(provider, /supabase\.auth\.signOut\(\)/);
   assert.doesNotMatch(provider, /service_role/i);
 });
@@ -66,7 +66,6 @@ test("mobile drawer exposes the real customer account and avoids duplicated disc
   assert.match(mobileMenu, /My Profile/);
   assert.match(mobileMenu, /to="\/my-orders"/);
   assert.match(mobileMenu, /to="\/wishlist"/);
-  assert.match(mobileMenu, /openAccountHub/);
   assert.match(mobileMenu, /openAccountHub/);
   assert.match(mobileMenu, /to="\/brands"/);
   assert.match(mobileMenu, /to="\/contact"/);
