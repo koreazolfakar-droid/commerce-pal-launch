@@ -11,6 +11,8 @@ const urlPolicyPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCal
 const urlPolicyTestPath = "android/app/src/test/java/store/spacecallapp/app/SpaceCallUrlPolicyTest.java";
 const assetlinksPath = "public/.well-known/assetlinks.json";
 const webManifestPath = "public/manifest.webmanifest";
+const mainBoolsPath = "android/app/src/main/res/values/bools.xml";
+const releaseBoolsPath = "android/app/src/release/res/values/bools.xml";
 const gitignorePath = ".gitignore";
 
 const manifest = read(manifestPath);
@@ -20,6 +22,8 @@ const launcher = read(launcherPath);
 const delegation = read(delegationPath);
 const urlPolicy = read(urlPolicyPath);
 const urlPolicyTest = read(urlPolicyTestPath);
+const mainBools = read(mainBoolsPath);
+const releaseBools = read(releaseBoolsPath);
 const gitignore = read(gitignorePath);
 
 const failures = [];
@@ -95,8 +99,8 @@ requireText(
 );
 requireText(
   manifest,
-  'android:autoVerify="${appLinksAutoVerify}"',
-  "App Link verification must be controlled by build variant.",
+  'android:autoVerify="@bool/app_links_auto_verify"',
+  "App Link verification must be controlled by a build-variant resource.",
 );
 requireText(
   manifest,
@@ -192,8 +196,9 @@ for (const requiredTestCase of [
 
 requireText(gradle, 'applicationId "store.spacecallapp.app"', "Production application ID changed unexpectedly.");
 requireText(gradle, 'applicationIdSuffix ".debug"', "Test and production package identities must remain separate.");
-requireText(gradle, 'manifestPlaceholders = [appLinksAutoVerify: false]', "Debug builds must not request production App Link verification.");
-requireText(gradle, 'manifestPlaceholders = [appLinksAutoVerify: true]', "Release builds must request App Link verification.");
+requireText(mainBools, '<bool name="app_links_auto_verify">false</bool>', "Debug/default builds must not request production App Link verification.");
+requireText(releaseBools, '<bool name="app_links_auto_verify">true</bool>', "Release builds must request production App Link verification.");
+forbidText(gradle, "manifestPlaceholders", "App Link verification must not rely on Gradle manifest placeholders.");
 requireText(gradle, "compileSdk 36", "compileSdk must remain 36.");
 requireText(gradle, "targetSdk 36", "targetSdk must remain 36.");
 requireText(gradle, "minSdk 24", "minSdk must remain 24.");
