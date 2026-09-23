@@ -115,9 +115,7 @@ function CartPage() {
     copy.chooseLocation;
 
   const locationDetail = selectedAddress
-    ? selectedAddress.areaStreet ||
-      selectedAddress.formattedAddress ||
-      copy.deliveryNote
+    ? selectedAddress.areaStreet || selectedAddress.formattedAddress || copy.deliveryNote
     : copy.locationHint;
 
   return (
@@ -344,9 +342,7 @@ function CartPage() {
                         </span>
                       </span>
                       <span className="shrink-0 font-bold tabular-nums">
-                        {deliveryFee === 0
-                          ? copy.freeDelivery
-                          : formatPrice(deliveryFee, currency)}
+                        {deliveryFee === 0 ? copy.freeDelivery : formatPrice(deliveryFee, currency)}
                       </span>
                     </div>
 
