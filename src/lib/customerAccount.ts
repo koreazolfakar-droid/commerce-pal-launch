@@ -55,6 +55,7 @@ export type CustomerOrderItem = {
   unitPrice: number;
   quantity: number;
   lineTotal: number;
+  imageUrl: string;
   options: Record<string, unknown>;
 };
 
@@ -221,6 +222,7 @@ function toOrderItem(row: Record<string, unknown>): CustomerOrderItem {
     unitPrice: number(row.unit_price),
     quantity: number(row.quantity),
     lineTotal: number(row.line_total),
+    imageUrl: text(row.image_url),
     options:
       row.options && typeof row.options === "object" && !Array.isArray(row.options)
         ? (row.options as Record<string, unknown>)
