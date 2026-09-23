@@ -10,8 +10,8 @@ const account = await readFile(
   new URL("../src/lib/customerAccount.ts", import.meta.url),
   "utf8",
 );
-const orders = await readFile(
-  new URL("../src/routes/my-orders.tsx", import.meta.url),
+const orderDetails = await readFile(
+  new URL("../src/routes/my-orders_.$orderId.tsx", import.meta.url),
   "utf8",
 );
 
@@ -29,11 +29,11 @@ test("customer account parses status history defensively", () => {
   assert.match(account, /createdAt: text\(entry\.created_at\)/);
 });
 
-test("My Orders displays real per-stage timestamps with legacy fallbacks", () => {
-  assert.match(orders, /function stageTime/);
-  assert.match(orders, /order\.statusHistory\.find/);
-  assert.match(orders, /stage === "received"\) return order\.createdAt/);
-  assert.match(orders, /stage === "delivered"\) return order\.completedAt/);
-  assert.match(orders, /formatStageTime/);
-  assert.match(orders, /tabular-nums/);
+test("Order details displays real per-stage timestamps with legacy fallbacks", () => {
+  assert.match(orderDetails, /function stageTime/);
+  assert.match(orderDetails, /order\.statusHistory\.find/);
+  assert.match(orderDetails, /stage === "received"\) return order\.createdAt/);
+  assert.match(orderDetails, /stage === "delivered"\) return order\.completedAt/);
+  assert.match(orderDetails, /formatStageTime/);
+  assert.match(orderDetails, /tabular-nums/);
 });
