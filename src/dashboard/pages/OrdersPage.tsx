@@ -370,7 +370,7 @@ export default function OrdersPage() {
                   setSearch(event.target.value);
                   setPage(1);
                 }}
-                placeholder="Order #, customer, phone or email"
+                placeholder="Public order #, customer, phone or email"
                 className="h-10 w-full rounded-xl border border-slate-200 bg-white ps-9 pe-3 text-[11px] outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
               />
             </div>
