@@ -40,6 +40,7 @@ create table if not exists public.store_customer_addresses (
   place_id text,
   photo_paths text[] not null default '{}',
   voice_note_path text,
+  editing_address_id uuid references public.store_customer_addresses(id) on delete set null,
   is_default boolean not null default false,
   is_draft boolean not null default true,
   draft_step integer not null default 1 check (draft_step between 1 and 3),
@@ -57,6 +58,13 @@ create unique index if not exists store_customer_addresses_one_default_uidx
 create unique index if not exists store_customer_addresses_one_draft_uidx
   on public.store_customer_addresses(user_id)
   where is_draft = true;
+
+alter table public.store_orders
+  add column if not exists customer_user_id uuid references auth.users(id) on delete set null;
+
+create index if not exists store_orders_customer_user_created_idx
+  on public.store_orders(customer_user_id, created_at desc)
+  where customer_user_id is not null;
 
 create or replace function private.touch_customer_storefront_row()
 returns trigger
@@ -168,6 +176,89 @@ $$;
 revoke all on function public.set_customer_default_address(uuid) from public, anon;
 grant execute on function public.set_customer_default_address(uuid) to authenticated;
 
+create or replace function public.start_customer_address_edit(p_address_id uuid)
+returns public.store_customer_addresses
+language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
+declare
+  v_user_id uuid := auth.uid();
+  v_source public.store_customer_addresses%rowtype;
+  v_draft public.store_customer_addresses%rowtype;
+begin
+  if v_user_id is null then
+    raise exception 'authentication required';
+  end if;
+
+  select * into v_source
+  from public.store_customer_addresses
+  where id = p_address_id
+    and user_id = v_user_id
+    and is_draft = false;
+
+  if not found then
+    raise exception 'address not found';
+  end if;
+
+  delete from public.store_customer_addresses
+  where user_id = v_user_id
+    and is_draft = true;
+
+  insert into public.store_customer_addresses (
+    user_id,
+    nickname,
+    address_type,
+    formatted_address,
+    area_street,
+    building_name,
+    building_number,
+    floor,
+    unit,
+    door_details,
+    phone,
+    delivery_instructions,
+    latitude,
+    longitude,
+    place_id,
+    photo_paths,
+    voice_note_path,
+    editing_address_id,
+    is_default,
+    is_draft,
+    draft_step
+  ) values (
+    v_user_id,
+    v_source.nickname,
+    v_source.address_type,
+    v_source.formatted_address,
+    v_source.area_street,
+    v_source.building_name,
+    v_source.building_number,
+    v_source.floor,
+    v_source.unit,
+    v_source.door_details,
+    v_source.phone,
+    v_source.delivery_instructions,
+    v_source.latitude,
+    v_source.longitude,
+    v_source.place_id,
+    v_source.photo_paths,
+    v_source.voice_note_path,
+    v_source.id,
+    false,
+    true,
+    1
+  )
+  returning * into v_draft;
+
+  return v_draft;
+end;
+$$;
+
+revoke all on function public.start_customer_address_edit(uuid) from public, anon;
+grant execute on function public.start_customer_address_edit(uuid) to authenticated;
+
 create or replace function public.finalize_customer_address(p_address_id uuid)
 returns public.store_customer_addresses
 language plpgsql
@@ -178,6 +269,7 @@ declare
   v_user_id uuid := auth.uid();
   v_address public.store_customer_addresses%rowtype;
   v_has_default boolean;
+  v_result public.store_customer_addresses%rowtype;
 begin
   if v_user_id is null then
     raise exception 'authentication required';
@@ -207,6 +299,40 @@ begin
     raise exception 'address phone required';
   end if;
 
+  if v_address.editing_address_id is not null then
+    update public.store_customer_addresses
+    set
+      nickname = v_address.nickname,
+      address_type = v_address.address_type,
+      formatted_address = v_address.formatted_address,
+      area_street = v_address.area_street,
+      building_name = v_address.building_name,
+      building_number = v_address.building_number,
+      floor = v_address.floor,
+      unit = v_address.unit,
+      door_details = v_address.door_details,
+      phone = v_address.phone,
+      delivery_instructions = v_address.delivery_instructions,
+      latitude = v_address.latitude,
+      longitude = v_address.longitude,
+      place_id = v_address.place_id,
+      photo_paths = v_address.photo_paths,
+      voice_note_path = v_address.voice_note_path
+    where id = v_address.editing_address_id
+      and user_id = v_user_id
+      and is_draft = false
+    returning * into v_result;
+
+    if v_result.id is null then
+      raise exception 'address edit target not found';
+    end if;
+
+    delete from public.store_customer_addresses
+    where id = p_address_id and user_id = v_user_id;
+
+    return v_result;
+  end if;
+
   select exists(
     select 1
     from public.store_customer_addresses
@@ -222,9 +348,9 @@ begin
     draft_step = 3,
     is_default = case when v_has_default then is_default else true end
   where id = p_address_id
-  returning * into v_address;
+  returning * into v_result;
 
-  return v_address;
+  return v_result;
 end;
 $$;
 
@@ -326,7 +452,8 @@ as $$
   cross join verified_identity as identity
   where auth.uid() is not null
     and (
-      (
+      orders.customer_user_id = auth.uid()
+      or (
         identity.email <> ''
         and lower(coalesce(orders.customer_email, '')) = identity.email
       )
@@ -373,7 +500,8 @@ as $$
     where orders.id = p_order_id
       and auth.uid() is not null
       and (
-        (
+        orders.customer_user_id = auth.uid()
+        or (
           identity.email <> ''
           and lower(coalesce(orders.customer_email, '')) = identity.email
         )
