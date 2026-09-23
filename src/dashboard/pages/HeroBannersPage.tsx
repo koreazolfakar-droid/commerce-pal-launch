@@ -678,6 +678,7 @@ export default function HeroBannersPage() {
                     clearPendingHeroImages();
                     setLastOptimizations({});
                     setSelectedId(slide.id);
+                    setForm(fromSlide(slide));
                   }}
                   className={`grid w-full grid-cols-[64px_1fr] gap-3 p-3 text-left transition ${selectedId === slide.id ? "bg-indigo-50/70" : "hover:bg-slate-50"}`}
                 >
