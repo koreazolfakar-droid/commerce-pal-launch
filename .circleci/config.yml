@@ -269,38 +269,6 @@ jobs:
             yes | sdkmanager --licenses >/dev/null || true
             sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-      - restore_cache:
-          keys:
-            - space-call-debug-keystore-v1
-
-      - run:
-          name: Establish stable test signing identity
-          command: |
-            set -euo pipefail
-            mkdir -p "$HOME/.android"
-            if [ ! -f "$HOME/.android/debug.keystore" ]; then
-              keytool -genkeypair \
-                -keystore "$HOME/.android/debug.keystore" \
-                -storepass android \
-                -alias androiddebugkey \
-                -keypass android \
-                -dname "CN=Space Call Test,O=Space Call,C=LB" \
-                -keyalg RSA \
-                -keysize 2048 \
-                -validity 10000
-            fi
-            chmod 600 "$HOME/.android/debug.keystore"
-            {
-              echo 'export ANDROID_TEST_KEYSTORE_PATH="$HOME/.android/debug.keystore"'
-              echo 'export ANDROID_TEST_KEYSTORE_PASSWORD=android'
-              echo 'export ANDROID_TEST_KEY_ALIAS=androiddebugkey'
-              echo 'export ANDROID_TEST_KEY_PASSWORD=android'
-            } >> "$BASH_ENV"
-
-      - save_cache:
-          key: space-call-debug-keystore-v1
-          paths:
-            - ~/.android/debug.keystore
 
       - run:
           name: Install pinned Gradle
@@ -366,15 +334,16 @@ jobs:
             set -euo pipefail
             source "$BASH_ENV"
             APK="android/app/build/outputs/apk/debug/app-debug.apk"
+            BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
             test -s "$APK"
 
-            aapt dump badging "$APK" | tee /tmp/aapt-badging.txt
+            "$BUILD_TOOLS/aapt" dump badging "$APK" | tee /tmp/aapt-badging.txt
             grep -q "package: name='store.spacecallapp.app.debug'" /tmp/aapt-badging.txt
             grep -q "versionCode='3'" /tmp/aapt-badging.txt
             grep -q "versionName='1.0.2-debug'" /tmp/aapt-badging.txt
 
-            apksigner verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
-            zipalign -c -P 16 -v 4 "$APK"
+            "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+            "$BUILD_TOOLS/zipalign" -c -P 16 -v 4 "$APK"
 
             RAW_CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr '[:lower:]' '[:upper:]')"
             test -n "$RAW_CERT"
