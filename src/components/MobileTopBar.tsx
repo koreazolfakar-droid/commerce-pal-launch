@@ -101,7 +101,7 @@ export function MobileTopBar({
       {showSearch || showCategoryRail ? (
         <div className="border-b border-border/40 bg-background lg:hidden">
           {showSearch ? (
-            <div className="mx-auto max-w-md px-4 pb-3 pt-2.5">
+            <div className="mx-auto max-w-md px-4 pb-3 pt-1.5">
               <button
                 type="button"
                 onClick={openAddressBook}
@@ -111,10 +111,10 @@ export function MobileTopBar({
                     : "Choose delivery location"
                 }
                 data-testid="mobile-header-location"
-                className="press mb-2.5 flex min-h-10 w-full items-center gap-2 bg-transparent px-1 text-start transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+                className="mobile-location-row press mb-1.5 flex h-9 w-full items-center gap-1.5 bg-transparent px-1 text-start transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
               >
-                <MapPin className="h-[19px] w-[19px] shrink-0 text-primary" strokeWidth={2} />
-                <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
+                <MapPin className="h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
+                <span className="min-w-0 flex-1 truncate text-[12px] text-muted-foreground">
                   {selectedAddress ? (
                     <>
                       <span>{language === "ar" ? "التوصيل إلى" : "Deliver to"} </span>
@@ -130,7 +130,7 @@ export function MobileTopBar({
                     </span>
                   )}
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.9} aria-hidden />
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.9} aria-hidden />
               </button>
 
               <button
