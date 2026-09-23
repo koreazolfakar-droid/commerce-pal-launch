@@ -1,21 +1,9 @@
 name: Storefront CI
 
 on:
+  # GitHub-hosted runners are kept as an explicit manual fallback.
+  # Pull-request validation runs in CircleCI's storefront-ci job.
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "src/styles.css"
-      - "src/ui-overhaul.css"
-      - "src/design-consistency.css"
-      - "src/dark-black.css"
-      - "src/components/**"
-      - "src/routes/**"
-      - "src/dashboard/**"
-      - "e2e/**/*.test.mjs"
-      - "e2e/ui-polish-responsive-check.mjs"
-      - ".github/workflows/storefront-ci.yml"
 
 permissions:
   contents: read
