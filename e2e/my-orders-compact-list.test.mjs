@@ -70,7 +70,7 @@ test("My Orders replaces product discovery controls with order-status filters", 
 });
 
 test("customer order cards link to a registered non-nested details route", () => {
-  assert.match(detail, /createFileRoute\("\/my-orders\/\$orderId"\)/);
+  assert.match(detail, /createFileRoute\("\/my-orders_\/\$orderId"\)/);
   assert.match(detail, /Route\.useParams\(\)/);
   assert.match(detail, /loadMyOrderItems\(orderId\)/);
   assert.match(detail, /Back to My orders/);
