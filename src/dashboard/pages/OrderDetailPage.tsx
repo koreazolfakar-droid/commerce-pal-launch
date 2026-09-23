@@ -277,9 +277,9 @@ export default function OrderDetailPage({ id }: { id: string }) {
                     ? "Mark ready"
                     : nextStatus === "out_for_delivery"
                       ? "Out for delivery"
-                    : nextStatus === "delivered"
-                      ? "Mark delivered"
-                      : "Mark DONE"}
+                      : nextStatus === "delivered"
+                        ? "Mark delivered"
+                        : "Mark DONE"}
             </button>
           ) : null}
         </div>
