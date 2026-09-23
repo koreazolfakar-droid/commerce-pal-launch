@@ -616,6 +616,13 @@ export default function HeroBannersPage() {
 
   const liveCount = slides.filter((slide) => getHeroScheduleState(slide) === "live").length;
   const scheduledCount = slides.filter((slide) => getHeroScheduleState(slide) === "scheduled").length;
+  const editorMode = selected ? "edit" : "create";
+  const editorTitle = selected
+    ? selected.titleEn || selected.titleAr || "Untitled hero"
+    : "Create hero slide";
+  const editorSubtitle = selected
+    ? `Last updated ${new Date(selected.updatedAt).toLocaleString()}`
+    : "New draft · changes stay local until you create the slide.";
 
   if (loading && !slides.length) {
     return <div className="grid min-h-[480px] place-items-center rounded-2xl border border-slate-200 bg-white"><Loader2 className="size-6 animate-spin text-[#5968ea]" /></div>;
@@ -643,7 +650,7 @@ export default function HeroBannersPage() {
         </div>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           ["Total slides", slides.length],
           ["Live", liveCount],
@@ -663,7 +670,7 @@ export default function HeroBannersPage() {
             <div className="text-[12px] font-bold text-[#14203a]">Slides</div>
             <button onClick={newSlide} className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><Plus className="size-4" /></button>
           </div>
-          <div className="max-h-[760px] divide-y divide-slate-100 overflow-y-auto">
+          <div className="flex gap-2 overflow-x-auto p-3 xl:block xl:max-h-[760px] xl:divide-y xl:divide-slate-100 xl:overflow-y-auto xl:p-0">
             {slides.map((slide, index) => {
               const badge = statusBadge(slide);
               return (
@@ -680,7 +687,7 @@ export default function HeroBannersPage() {
                     setSelectedId(slide.id);
                     setForm(fromSlide(slide));
                   }}
-                  className={`grid w-full grid-cols-[64px_1fr] gap-3 p-3 text-left transition ${selectedId === slide.id ? "bg-indigo-50/70" : "hover:bg-slate-50"}`}
+                  className={`grid min-w-[230px] grid-cols-[64px_1fr] gap-3 rounded-xl border p-3 text-left transition xl:min-w-0 xl:rounded-none xl:border-x-0 xl:border-b-0 xl:first:border-t-0 ${selectedId === slide.id ? "border-indigo-200 bg-indigo-50/70" : "border-slate-100 bg-white hover:bg-slate-50"}`}
                 >
                   <div className="grid h-14 w-16 place-items-center overflow-hidden rounded-xl bg-slate-100">
                     {slide.imageUrl ? <img src={slide.imageUrl} alt="" className="size-full object-cover" /> : <ImageIcon className="size-5 text-slate-300" />}
@@ -695,11 +702,49 @@ export default function HeroBannersPage() {
                 </button>
               );
             })}
-            {!slides.length ? <div className="px-5 py-12 text-center text-[11px] text-slate-400">No hero slides yet.</div> : null}
+            {!slides.length ? <div className="min-w-full px-5 py-10 text-center text-[11px] text-slate-400">No hero slides yet.</div> : null}
           </div>
         </aside>
 
         <div className="space-y-4">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[.12em] ${
+                    editorMode === "edit"
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "bg-amber-50 text-amber-700"
+                  }`}>
+                    {editorMode === "edit" ? "Editing slide" : "New slide"}
+                  </span>
+                  {selected ? (
+                    <span className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${statusBadge(selected).className}`}>
+                      {statusBadge(selected).label}
+                    </span>
+                  ) : null}
+                </div>
+                <h2 className="truncate text-[18px] font-bold tracking-[-.03em] text-[#14203a]">{editorTitle}</h2>
+                <p className="mt-1 text-[10px] text-slate-400">{editorSubtitle}</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {selected ? (
+                  <>
+                    <button aria-label="Move slide up" onClick={() => void move(-1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowUp className="size-4" /></button>
+                    <button aria-label="Move slide down" onClick={() => void move(1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowDown className="size-4" /></button>
+                    <button onClick={() => void duplicate()} disabled={busy || dirty} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:opacity-40"><Copy className="size-3.5" /> Duplicate</button>
+                    <button onClick={() => void remove()} disabled={busy} className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600 disabled:opacity-40"><Trash2 className="size-3.5" /> Delete</button>
+                  </>
+                ) : null}
+                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || !formDirty} className="flex h-9 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40">
+                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+                  {editorMode === "edit" ? "Save changes" : "Create slide"}
+                </button>
+              </div>
+            </div>
+          </section>
+
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="mb-4 text-[13px] font-bold text-[#14203a]">Design & live preview</div>
             <details className="mb-4 rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-xs font-semibold">Advanced appearance / إعدادات المظهر</summary>
@@ -796,25 +841,9 @@ export default function HeroBannersPage() {
 
           </section>
           <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-[13px] font-bold text-[#14203a]">{selected ? "Edit slide" : "Create slide"}</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">{selected ? `Last updated ${new Date(selected.updatedAt).toLocaleString()}` : "New draft hero slide"}</div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {selected ? (
-                  <>
-                    <button aria-label="Move slide up" onClick={() => void move(-1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowUp className="size-4" /></button>
-                    <button aria-label="Move slide down" onClick={() => void move(1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowDown className="size-4" /></button>
-                    <button onClick={() => void duplicate()} disabled={busy || dirty} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:opacity-40"><Copy className="size-3.5" /> Duplicate</button>
-                    <button onClick={() => void remove()} disabled={busy} className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600 disabled:opacity-40"><Trash2 className="size-3.5" /> Delete</button>
-                  </>
-                ) : null}
-                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || !formDirty} className="flex h-9 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40">
-                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-                  {selected ? "Save changes" : "Create slide"}
-                </button>
-              </div>
+            <div className="mb-4">
+              <div className="text-[13px] font-bold text-[#14203a]">Content</div>
+              <div className="mt-0.5 text-[10px] text-slate-400">Edit the text shown inside this Hero slide.</div>
             </div>
 
             <div className="mb-5 flex gap-2 rounded-xl bg-slate-100 p-1">
