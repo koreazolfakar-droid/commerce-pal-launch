@@ -27,6 +27,7 @@ const RETURN_PATH_KEY = "space-call:customer-auth-return-path";
 
 function restorePostAuthPath() {
   if (typeof window === "undefined") return;
+  if (window.location.pathname === "/auth/callback") return;
   const target = window.sessionStorage.getItem(RETURN_PATH_KEY);
   if (!target) return;
   window.sessionStorage.removeItem(RETURN_PATH_KEY);
