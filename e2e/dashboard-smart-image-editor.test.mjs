@@ -78,13 +78,14 @@ test("product editor mirrors the live storefront media geometry without double p
   assert.match(storefrontProductImage, /object-contain/);
   assert.match(storefrontProductCard, /!p-\[3%\]/);
   assert.match(storefrontProductCard, /sm:!p-\[4%\]/);
-  assert.match(storefrontProductGallery, /aspect-\[1\/0\.92\]/);
-  assert.match(storefrontProductGallery, /p-2\.5/);
+  assert.match(storefrontProductGallery, /aspect-square/);
+  assert.match(storefrontProductGallery, /p-1\.5/);
+  assert.match(storefrontProductGallery, /sm:p-4/);
   assert.match(storefrontProductGallery, /lg:p-8/);
 
   assert.match(editor, /previewContext\?: "product"/);
   assert.match(editor, /id: "card"[\s\S]*padding: "5%"/);
-  assert.match(editor, /id: "mobile"[\s\S]*aspectRatio: "1 \/ 0\.92"[\s\S]*padding: "10px"/);
+  assert.match(editor, /id: "mobile"[\s\S]*aspectRatio: "1 \/ 1"[\s\S]*padding: "6px"/);
   assert.match(editor, /id: "desktop"[\s\S]*padding: "32px"/);
   assert.match(editor, /request\.options\.previewContext === "product" \? 0/);
   assert.match(editor, /Website preview/);
