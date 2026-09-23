@@ -108,4 +108,5 @@ public final class SpaceCallLauncherActivity extends LauncherActivity {
         } finally {
             finish();
         }
-    }}
+    }
+}
