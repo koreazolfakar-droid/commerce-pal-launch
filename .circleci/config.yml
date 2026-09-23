@@ -634,6 +634,380 @@ jobs:
             FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*' -print | sort | sed -n '39,39p')
             node --test $FILES
 
+  diag-chunk-recovery:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-chunk-recovery
+          command: node --test e2e/dashboard-chunk-recovery.test.mjs
+
+  diag-dashboard-collections:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-dashboard-collections
+          command: node --test e2e/dashboard-collections-supabase.test.mjs
+
+  diag-dashboard-content-cms:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-dashboard-content-cms
+          command: node --test e2e/dashboard-content-cms-step4.test.mjs
+
+  diag-dashboard-csp:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-dashboard-csp
+          command: node --test e2e/dashboard-csp-session-ci.test.mjs
+
+  diag-cms-refresh:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-cms-refresh
+          command: node --test e2e/cms-refresh.test.mjs
+
+  diag-create-order-rate:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-create-order-rate
+          command: node --test e2e/create-order-rate-limit-security.test.mjs
+
+  diag-customer-address:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-customer-address
+          command: node --test e2e/customer-address-flow.test.mjs
+
+  diag-customer-auth:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-customer-auth
+          command: node --test e2e/customer-auth-ui.test.mjs
+
+  diag-orders-compact:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-orders-compact
+          command: node --test e2e/my-orders-compact-list.test.mjs
+
+  diag-orders-images:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-orders-images
+          command: node --test e2e/my-orders-item-images.test.mjs
+
+  diag-order-details:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-order-details
+          command: node --test e2e/order-details-commerce-layout.test.mjs
+
+  diag-order-ready:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-order-ready
+          command: node --test e2e/order-ready-tracking.test.mjs
+
+  diag-order-sales:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-order-sales
+          command: node --test e2e/order-sales-customer-consistency.test.mjs
+
+  diag-order-timestamps:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-order-timestamps
+          command: node --test e2e/order-tracking-timestamps.test.mjs
+
+  diag-performance:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-performance
+          command: node --test e2e/performance-architecture.test.mjs
+
+  diag-product-add-edit:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-product-add-edit
+          command: node --test e2e/product-add-edit-supabase.test.mjs
+
+  diag-product-density:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-product-density
+          command: node --test e2e/product-density-view.test.mjs
+
+  diag-product-rail:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-product-rail
+          command: node --test e2e/product-rail-carousel.test.mjs
+
+  diag-public-order:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-public-order
+          command: node --test e2e/public-order-number.test.mjs
+
+  diag-security-pipeline:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-security-pipeline
+          command: node --test e2e/security-pipeline-config.test.mjs
+
+  diag-storefront-orders:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-storefront-orders
+          command: node --test e2e/storefront-orders-secure.test.mjs
+
+  diag-storefront-failover:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: diag-storefront-failover
+          command: node --test e2e/storefront-supabase-failover.test.mjs
+
   diagnose-build:
     docker:
       - image: cimg/node:lts
@@ -819,6 +1193,28 @@ workflows:
       - diagnose-storefront-b2b
       - diagnose-storefront-c2a
       - diagnose-storefront-c2b
+      - diag-chunk-recovery
+      - diag-dashboard-collections
+      - diag-dashboard-content-cms
+      - diag-dashboard-csp
+      - diag-cms-refresh
+      - diag-create-order-rate
+      - diag-customer-address
+      - diag-customer-auth
+      - diag-orders-compact
+      - diag-orders-images
+      - diag-order-details
+      - diag-order-ready
+      - diag-order-sales
+      - diag-order-timestamps
+      - diag-performance
+      - diag-product-add-edit
+      - diag-product-density
+      - diag-product-rail
+      - diag-public-order
+      - diag-security-pipeline
+      - diag-storefront-orders
+      - diag-storefront-failover
       - diagnose-build
       - diagnose-ssr
       - ui-browser-deps:
