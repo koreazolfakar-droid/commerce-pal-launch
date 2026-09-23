@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Space Call</string>
+    <string name="launch_url">https://www.spacecallapp.store/?source=android-app</string>
+    <string name="web_manifest_url">https://www.spacecallapp.store/manifest.webmanifest</string>
+    <string name="fallback_strategy">customtabs</string>
+    <string name="screen_orientation">portrait-primary</string>
+    <string name="asset_statements">[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"https://www.spacecallapp.store"}},{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"https://spacecallapp.store"}}]</string>
+</resources>
