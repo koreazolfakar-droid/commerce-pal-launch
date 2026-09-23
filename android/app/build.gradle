@@ -1,0 +1,57 @@
+plugins {
+    id "com.android.application"
+}
+
+def releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+def releaseStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+
+android {
+    namespace "store.spacecallapp.app"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "store.spacecallapp.app"
+        minSdk 23
+        targetSdk 36
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        if (releaseKeystorePath && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+            release {
+                storeFile file(releaseKeystorePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+                enableV1Signing true
+                enableV2Signing true
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+        release {
+            minifyEnabled false
+            shrinkResources false
+            if (signingConfigs.findByName("release") != null) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    lint {
+        abortOnError true
+        checkReleaseBuilds true
+    }
+}
+
+dependencies {
+    implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.7.3"
+}
