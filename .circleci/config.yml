@@ -265,6 +265,44 @@ jobs:
           path: dist/android
           destination: space-call-android
 
+
+  android-unit-test:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      GRADLE_VERSION: "9.6.0"
+      GRADLE_BIN_SHA256: "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+    steps:
+      - checkout
+      - run:
+          name: Install Android unit-test toolchain
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+            curl --proto '=https' --tlsv1.2 -fsSL \
+              "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" \
+              -o /tmp/gradle.zip
+            echo "$GRADLE_BIN_SHA256  /tmp/gradle.zip" | sha256sum -c -
+            rm -rf "$HOME/gradle-$GRADLE_VERSION"
+            unzip -q /tmp/gradle.zip -d "$HOME"
+            echo "export PATH=\"$HOME/gradle-$GRADLE_VERSION/bin:$PATH\"" >> "$BASH_ENV"
+      - run:
+          name: Run Android JVM security tests
+          command: |
+            set -euo pipefail
+            source "$BASH_ENV"
+            node scripts/android-security-gate.mjs
+            cd android
+            gradle --no-daemon --stacktrace :app:testDebugUnitTest
+      - store_test_results:
+          path: android/app/build/test-results/testDebugUnitTest
+      - store_artifacts:
+          path: android/app/build/reports/tests/testDebugUnitTest
+          destination: android-unit-tests
+
   android-lint-debug:
     docker:
       - image: cimg/android:2026.08
@@ -532,6 +570,12 @@ workflows:
   security-and-storefront-validation:
     jobs:
       - android-compile-check:
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+      - android-unit-test:
           filters:
             branches:
               only:
