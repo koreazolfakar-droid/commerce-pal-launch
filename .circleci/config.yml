@@ -242,8 +242,6 @@ jobs:
             set -euo pipefail
             source "$BASH_ENV"
             node scripts/android-security-gate.mjs
-            jq empty public/manifest.webmanifest
-            jq empty public/.well-known/assetlinks.json
             cd android
             gradle --no-daemon --stacktrace :app:assembleDebug
             cd ..
