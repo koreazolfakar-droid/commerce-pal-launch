@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 
 const MEDIA_BUCKET = "customer-address-media";
 
@@ -216,8 +217,8 @@ function metadataName(user: User) {
   return candidate.trim();
 }
 
-function mapAddressPatch(patch: AddressPatch) {
-  const payload: Record<string, unknown> = {};
+function mapAddressPatch(patch: AddressPatch): TablesUpdate<"store_customer_addresses"> {
+  const payload: TablesUpdate<"store_customer_addresses"> = {};
   if ("nickname" in patch) payload.nickname = patch.nickname || null;
   if ("addressType" in patch) payload.address_type = patch.addressType;
   if ("formattedAddress" in patch) payload.formatted_address = patch.formattedAddress || null;
@@ -289,7 +290,7 @@ export async function updateCustomerProfile(
   userId: string,
   patch: Partial<Pick<CustomerProfile, "fullName" | "phone" | "email">>,
 ) {
-  const payload: Record<string, unknown> = {};
+  const payload: TablesUpdate<"store_customer_profiles"> = {};
   if ("fullName" in patch) payload.full_name = patch.fullName?.trim() || null;
   if ("phone" in patch) payload.phone = patch.phone?.trim() || null;
   if ("email" in patch) payload.email = patch.email?.trim() || null;
@@ -452,7 +453,8 @@ export async function setDefaultAddress(addressId: string): Promise<CustomerAddr
 
 export async function deleteAddress(userId: string, address: CustomerAddress) {
   for (const path of [...address.photoPaths, address.voiceNotePath].filter(Boolean)) {
-    await supabase.storage.from(MEDIA_BUCKET).remove([path]);
+    const { error: mediaError } = await supabase.storage.from(MEDIA_BUCKET).remove([path]);
+    throwError(mediaError, "Deleting address media failed");
   }
   const { error } = await supabase
     .from("store_customer_addresses")
