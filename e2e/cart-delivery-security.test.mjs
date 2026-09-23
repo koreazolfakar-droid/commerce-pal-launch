@@ -3,6 +3,10 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const cart = await readFile(new URL("../src/routes/cart.tsx", import.meta.url), "utf8");
+const checkoutRoute = await readFile(
+  new URL("../src/routes/checkout.tsx", import.meta.url),
+  "utf8",
+);
 const checkout = await readFile(
   new URL("../src/components/CheckoutDetailsForm.tsx", import.meta.url),
   "utf8",
@@ -29,7 +33,8 @@ const migration = await readFile(
 );
 
 test("shopper-visible subtotal and delivery fee are sent only as pricing expectations", () => {
-  assert.match(cart, /deliveryFee=\{deliveryFee\}/);
+  assert.match(cart, /const deliveryFee =/);
+  assert.match(checkoutRoute, /deliveryFee=\{deliveryFee\}/);
   assert.match(checkout, /expectedSubtotal: total/);
   assert.match(checkout, /expectedDeliveryFee: deliveryFee/);
 
