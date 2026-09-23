@@ -15,12 +15,12 @@ import { Route as ArRouteImport } from './routes/ar'
 import { Route as BrandsRouteImport } from './routes/brands'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as MyOrdersRouteImport } from './routes/my-orders'
-import { Route as MyOrdersOrderIdRouteImport } from './routes/my-orders_.$orderId'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ReturnsRouteImport } from './routes/returns'
 import { Route as SearchRouteImport } from './routes/search'
@@ -37,6 +37,7 @@ import { Route as CollectionsIndexRouteImport } from './routes/collections.index
 import { Route as CollectionsHandleRouteImport } from './routes/collections.$handle'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardSplatRouteImport } from './routes/dashboard.$'
+import { Route as MyOrdersOrderIdRouteImport } from './routes/my-orders_.$orderId'
 import { Route as ProductHandleRouteImport } from './routes/product.$handle'
 
 const IndexRoute = IndexRouteImport.update({
@@ -69,6 +70,11 @@ const CategoriesRoute = CategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompareRoute = CompareRouteImport.update({
   id: '/compare',
   path: '/compare',
@@ -92,11 +98,6 @@ const HelpRoute = HelpRouteImport.update({
 const MyOrdersRoute = MyOrdersRouteImport.update({
   id: '/my-orders',
   path: '/my-orders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MyOrdersOrderIdRoute = MyOrdersOrderIdRouteImport.update({
-  id: '/my-orders/$orderId',
-  path: '/my-orders/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -179,6 +180,11 @@ const DashboardSplatRoute = DashboardSplatRouteImport.update({
   path: '/dashboard/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyOrdersOrderIdRoute = MyOrdersOrderIdRouteImport.update({
+  id: '/my-orders_/$orderId',
+  path: '/my-orders/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductHandleRoute = ProductHandleRouteImport.update({
   id: '/product/$handle',
   path: '/product/$handle',
@@ -192,12 +198,12 @@ export interface FileRoutesByFullPath {
   '/brands': typeof BrandsRoute
   '/cart': typeof CartRoute
   '/categories': typeof CategoriesRoute
+  '/checkout': typeof CheckoutRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
   '/my-orders': typeof MyOrdersRoute
-  '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
   '/privacy': typeof PrivacyRoute
   '/returns': typeof ReturnsRoute
   '/search': typeof SearchRoute
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/category/$slug': typeof CategorySlugRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/dashboard/$': typeof DashboardSplatRoute
+  '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
   '/product/$handle': typeof ProductHandleRoute
   '/collections/': typeof CollectionsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -223,12 +230,12 @@ export interface FileRoutesByTo {
   '/brands': typeof BrandsRoute
   '/cart': typeof CartRoute
   '/categories': typeof CategoriesRoute
+  '/checkout': typeof CheckoutRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
   '/my-orders': typeof MyOrdersRoute
-  '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
   '/privacy': typeof PrivacyRoute
   '/returns': typeof ReturnsRoute
   '/search': typeof SearchRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/category/$slug': typeof CategorySlugRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/dashboard/$': typeof DashboardSplatRoute
+  '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
   '/product/$handle': typeof ProductHandleRoute
   '/collections': typeof CollectionsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
@@ -255,12 +263,12 @@ export interface FileRoutesById {
   '/brands': typeof BrandsRoute
   '/cart': typeof CartRoute
   '/categories': typeof CategoriesRoute
+  '/checkout': typeof CheckoutRoute
   '/compare': typeof CompareRoute
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
   '/my-orders': typeof MyOrdersRoute
-  '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
   '/privacy': typeof PrivacyRoute
   '/returns': typeof ReturnsRoute
   '/search': typeof SearchRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/category/$slug': typeof CategorySlugRoute
   '/collections/$handle': typeof CollectionsHandleRoute
   '/dashboard/$': typeof DashboardSplatRoute
+  '/my-orders_/$orderId': typeof MyOrdersOrderIdRoute
   '/product/$handle': typeof ProductHandleRoute
   '/collections/': typeof CollectionsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
@@ -288,12 +297,12 @@ export interface FileRouteTypes {
     | '/brands'
     | '/cart'
     | '/categories'
+    | '/checkout'
     | '/compare'
     | '/contact'
     | '/faq'
     | '/help'
     | '/my-orders'
-    | '/my-orders/$orderId'
     | '/privacy'
     | '/returns'
     | '/search'
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/collections/$handle'
     | '/dashboard/$'
+    | '/my-orders/$orderId'
     | '/product/$handle'
     | '/collections/'
     | '/dashboard/'
@@ -319,12 +329,12 @@ export interface FileRouteTypes {
     | '/brands'
     | '/cart'
     | '/categories'
+    | '/checkout'
     | '/compare'
     | '/contact'
     | '/faq'
     | '/help'
     | '/my-orders'
-    | '/my-orders/$orderId'
     | '/privacy'
     | '/returns'
     | '/search'
@@ -339,6 +349,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/collections/$handle'
     | '/dashboard/$'
+    | '/my-orders/$orderId'
     | '/product/$handle'
     | '/collections'
     | '/dashboard'
@@ -350,12 +361,12 @@ export interface FileRouteTypes {
     | '/brands'
     | '/cart'
     | '/categories'
+    | '/checkout'
     | '/compare'
     | '/contact'
     | '/faq'
     | '/help'
     | '/my-orders'
-    | '/my-orders/$orderId'
     | '/privacy'
     | '/returns'
     | '/search'
@@ -370,6 +381,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/collections/$handle'
     | '/dashboard/$'
+    | '/my-orders_/$orderId'
     | '/product/$handle'
     | '/collections/'
     | '/dashboard/'
@@ -382,12 +394,12 @@ export interface RootRouteChildren {
   BrandsRoute: typeof BrandsRoute
   CartRoute: typeof CartRoute
   CategoriesRoute: typeof CategoriesRoute
+  CheckoutRoute: typeof CheckoutRoute
   CompareRoute: typeof CompareRoute
   ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   HelpRoute: typeof HelpRoute
   MyOrdersRoute: typeof MyOrdersRoute
-  MyOrdersOrderIdRoute: typeof MyOrdersOrderIdRoute
   PrivacyRoute: typeof PrivacyRoute
   ReturnsRoute: typeof ReturnsRoute
   SearchRoute: typeof SearchRoute
@@ -402,6 +414,7 @@ export interface RootRouteChildren {
   CategorySlugRoute: typeof CategorySlugRoute
   CollectionsHandleRoute: typeof CollectionsHandleRoute
   DashboardSplatRoute: typeof DashboardSplatRoute
+  MyOrdersOrderIdRoute: typeof MyOrdersOrderIdRoute
   ProductHandleRoute: typeof ProductHandleRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -451,6 +464,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/compare': {
       id: '/compare'
       path: '/compare'
@@ -484,13 +504,6 @@ declare module '@tanstack/react-router' {
       path: '/my-orders'
       fullPath: '/my-orders'
       preLoaderRoute: typeof MyOrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/my-orders/$orderId': {
-      id: '/my-orders/$orderId'
-      path: '/my-orders/$orderId'
-      fullPath: '/my-orders/$orderId'
-      preLoaderRoute: typeof MyOrdersOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -605,6 +618,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-orders_/$orderId': {
+      id: '/my-orders_/$orderId'
+      path: '/my-orders/$orderId'
+      fullPath: '/my-orders/$orderId'
+      preLoaderRoute: typeof MyOrdersOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$handle': {
       id: '/product/$handle'
       path: '/product/$handle'
@@ -622,12 +642,12 @@ const rootRouteChildren: RootRouteChildren = {
   BrandsRoute: BrandsRoute,
   CartRoute: CartRoute,
   CategoriesRoute: CategoriesRoute,
+  CheckoutRoute: CheckoutRoute,
   CompareRoute: CompareRoute,
   ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   HelpRoute: HelpRoute,
   MyOrdersRoute: MyOrdersRoute,
-  MyOrdersOrderIdRoute: MyOrdersOrderIdRoute,
   PrivacyRoute: PrivacyRoute,
   ReturnsRoute: ReturnsRoute,
   SearchRoute: SearchRoute,
@@ -642,6 +662,7 @@ const rootRouteChildren: RootRouteChildren = {
   CategorySlugRoute: CategorySlugRoute,
   CollectionsHandleRoute: CollectionsHandleRoute,
   DashboardSplatRoute: DashboardSplatRoute,
+  MyOrdersOrderIdRoute: MyOrdersOrderIdRoute,
   ProductHandleRoute: ProductHandleRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
