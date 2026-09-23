@@ -162,7 +162,7 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
         openAuth();
         return null;
       }
-      const draft = await startAddressEdit(address.id);
+      const draft = await startAddressEdit(user.id, address.id);
       setDraftAddress(draft);
       return draft;
     },
