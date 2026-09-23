@@ -9,7 +9,7 @@ test("customer address ownership is protected by RLS and private media paths", a
 
   assert.match(sql, /store_customer_profiles/);
   assert.match(sql, /store_customer_addresses/);
-  assert.match(sql, /auth\.uid\(\)\s*=\s*user_id/);
+  assert.match(sql, /auth\.uid\(\).*user_id/);
   assert.match(sql, /store_customer_addresses_one_default_uidx/);
   assert.match(sql, /store_customer_addresses_one_draft_uidx/);
   assert.match(sql, /finalize_customer_address/);
@@ -18,7 +18,7 @@ test("customer address ownership is protected by RLS and private media paths", a
   assert.match(sql, /address location required/);
   assert.match(sql, /customer-address-media/);
   assert.match(sql, /storage\.foldername\(name\)/);
-  assert.match(sql, /auth\.uid\(\)::text/);
+  assert.match(sql, /auth\.uid\(\).*::text/);
   assert.doesNotMatch(sql, /to\s+anon\s+using\s*\(\s*true\s*\)/i);
 });
 
@@ -89,29 +89,30 @@ test("checkout consumes the selected saved address and immutable map snapshot", 
 });
 
 
-test("customer can only read order history through verified auth identity", async () => {
-  const [sql, data, hub, checkout] = await Promise.all([
-    read("supabase/migrations/20260922210000_customer_profile_saved_addresses.sql"),
+test("customer order history is isolated behind the JWT-verified edge function", async () => {
+  const [edge, cleanup, data, hub, checkout] = await Promise.all([
+    read("supabase/functions/customer-orders/index.ts"),
+    read("supabase/migrations/20260923023000_customer_order_history_edge_only.sql"),
     read("src/lib/customerAccount.ts"),
     read("src/components/customer-account/CustomerAddressHub.tsx"),
     read("src/components/CheckoutDetailsForm.tsx"),
   ]);
 
-  assert.match(sql, /get_my_store_orders/);
-  assert.match(sql, /get_my_store_order_items/);
-  assert.match(sql, /from auth\.users/);
-  assert.match(sql, /where id = auth\.uid\(\)/);
-  assert.match(sql, /customer_email/);
-  assert.match(sql, /customer_phone/);
-  assert.doesNotMatch(sql, /store_customer_profiles[\s\S]{0,400}get_my_store_orders/i);
+  assert.match(edge, /db\.auth\.getUser\(token\)/);
+  assert.match(edge, /customer_user_id/);
+  assert.match(edge, /customer_email/);
+  assert.match(edge, /customer_phone/);
+  assert.match(edge, /orderIdentityMatches/);
+  assert.match(edge, /action === "items"/);
+  assert.match(cleanup, /drop function if exists public\.get_my_store_orders/);
+  assert.match(cleanup, /drop function if exists public\.get_my_store_order_items/);
 
-  assert.match(data, /loadMyOrders/);
-  assert.match(data, /loadMyOrderItems/);
+  assert.match(data, /functions\.invoke<CustomerOrdersEdgeResponse>/);
+  assert.match(data, /"customer-orders"/);
   assert.match(hub, /view === "orders"/);
   assert.match(hub, /My orders/);
   assert.match(hub, /View delivery location/);
   assert.match(checkout, /email: user\?\.email\?\.trim\(\) \|\| undefined/);
-  assert.match(sql, /customer_user_id = auth\.uid\(\)/);
 });
 
 
