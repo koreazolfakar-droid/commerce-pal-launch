@@ -244,7 +244,7 @@ export function MobileMenu({
       <SheetContent
         side={direction === "rtl" ? "right" : "left"}
         dir={direction}
-        className="flex w-[min(88vw,23rem)] transform-gpu flex-col gap-0 overflow-y-auto border-border/60 bg-background p-0 shadow-none will-change-transform data-[state=closed]:duration-150 data-[state=open]:duration-200"
+        className="flex w-[min(88vw,23rem)] min-w-0 transform-gpu flex-col gap-0 overflow-x-hidden overflow-y-auto overscroll-x-none border-border/60 bg-background p-0 shadow-none will-change-transform data-[state=closed]:duration-150 data-[state=open]:duration-200"
       >
         <SheetHeader className="sr-only">
           <SheetTitle>{t("menuTitle")}</SheetTitle>
@@ -355,7 +355,7 @@ export function MobileMenu({
           )}
         </div>
 
-        <nav aria-label={t("menuTitle")} className="grid gap-3.5 px-3 py-3">
+        <nav aria-label={t("menuTitle")} className="grid min-w-0 max-w-full gap-3.5 overflow-x-hidden px-3 py-3">
           <section>
             <SectionHeading title={accountTitle} onClick={close} />
             <div className="grid gap-0.5">
@@ -499,10 +499,13 @@ export function MobileMenu({
             </div>
           </section>
 
-          <section className="border-t border-border/45 pt-3">
+          <section className="min-w-0 max-w-full overflow-hidden border-t border-border/45 pt-3">
             <SectionHeading title={brandsLabel} action={seeAll} to="/brands" onClick={close} />
             {visibleBrands.length ? (
-              <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div
+                data-testid="mobile-menu-brand-rail"
+                className="flex w-full min-w-0 max-w-full gap-1.5 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 touch-pan-x [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
                 {visibleBrands.map((brand) => (
                   <Link
                     key={brand.slug}
