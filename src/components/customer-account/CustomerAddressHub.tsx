@@ -135,6 +135,20 @@ function formFromAddress(address: CustomerAddress | null, profilePhone = ""): Ad
   };
 }
 
+function orderStatusLabel(status: string, ar: boolean) {
+  if (!ar) return status.replaceAll("_", " ");
+  const labels: Record<string, string> = {
+    new: "جديد",
+    confirmed: "تم التأكيد",
+    processing: "قيد التجهيز",
+    out_for_delivery: "خرج للتوصيل",
+    delivered: "تم التوصيل",
+    done: "مكتمل",
+    cancelled: "ملغي",
+  };
+  return labels[status] || status.replaceAll("_", " ");
+}
+
 function addressTypeIcon(type: CustomerAddressType | null) {
   if (type === "apartment") return Building2;
   if (type === "house_villa") return Home;
@@ -1380,7 +1394,7 @@ export function CustomerAddressHub() {
                             </span>
                             <span aria-hidden="true">•</span>
                             <span className="font-semibold capitalize text-foreground">
-                              {order.status.replaceAll("_", " ")}
+                              {orderStatusLabel(order.status, ar)}
                             </span>
                           </span>
                         </span>
