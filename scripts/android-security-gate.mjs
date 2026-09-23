@@ -14,10 +14,28 @@ const requireText = (source, needle, message) => {
 };
 
 const permissions = [...manifest.matchAll(/<uses-permission\s+android:name="([^"]+)"/g)].map((m) => m[1]);
-const allowedPermissions = new Set(["android.permission.INTERNET"]);
+const allowedPermissions = new Set([
+  "android.permission.INTERNET",
+  "android.permission.ACCESS_COARSE_LOCATION",
+  "android.permission.ACCESS_FINE_LOCATION",
+  "android.permission.CAMERA",
+  "android.permission.POST_NOTIFICATIONS",
+]);
 for (const permission of permissions) {
   if (!allowedPermissions.has(permission)) {
     failures.push(`Unexpected Android permission: ${permission}`);
+  }
+}
+
+for (const forbiddenPermission of [
+  "android.permission.READ_MEDIA_IMAGES",
+  "android.permission.READ_MEDIA_VIDEO",
+  "android.permission.READ_EXTERNAL_STORAGE",
+  "android.permission.WRITE_EXTERNAL_STORAGE",
+  "android.permission.ACCESS_MEDIA_LOCATION",
+]) {
+  if (permissions.includes(forbiddenPermission)) {
+    failures.push(`Broad media/storage permission must not be added: ${forbiddenPermission}`);
   }
 }
 
@@ -33,6 +51,13 @@ if (manifest.includes("WebViewFallbackActivity") || manifest.includes('android:v
 
 requireText(strings, "<string name=\"launch_url\">https://www.spacecallapp.store/</string>", "Launch URL must stay HTTPS on the canonical host.");
 requireText(gradle, "targetSdk 36", "targetSdk must remain 36.");
+requireText(gradle, 'minSdk 24', "Location delegation requires minSdk 24.");
+requireText(gradle, 'com.google.androidbrowserhelper:locationdelegation:1.1.2', "Location delegation dependency is required.");
+requireText(manifest, 'android:name=".SpaceCallDelegationService"', "Custom TWA delegation service is required.");
+requireText(manifest, 'android.permission.POST_NOTIFICATIONS', "Notification permission declaration is required.");
+requireText(manifest, 'android.permission.CAMERA', "Camera permission declaration is required.");
+requireText(manifest, 'android.permission.ACCESS_FINE_LOCATION', "Fine location permission declaration is required.");
+requireText(manifest, 'android.permission.ACCESS_COARSE_LOCATION', "Coarse location permission declaration is required.");
 requireText(gradle, "minifyEnabled true", "Release R8 minification must stay enabled.");
 requireText(gradle, "shrinkResources true", "Release resource shrinking must stay enabled.");
 requireText(gradle, "debuggable false", "Release build must stay non-debuggable.");
