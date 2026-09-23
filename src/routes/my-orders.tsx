@@ -1,7 +1,7 @@
 import { useLanguage } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, PackageOpen, Receipt } from "lucide-react";
+import { Check, ChevronRight, PackageOpen, Receipt, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { StoreLayout } from "@/components/StoreLayout";
@@ -89,6 +89,95 @@ function statusTone(status: string) {
     return "bg-violet-500/10 text-violet-700 dark:text-violet-300";
   }
   return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
+}
+
+const MINI_ORDER_STAGES = ["received", "preparing", "ready", "on_the_way", "delivered"] as const;
+
+function miniStageIndex(status: string) {
+  if (status === "processing") return 1;
+  if (status === "ready") return 2;
+  if (status === "out_for_delivery") return 3;
+  if (status === "delivered" || status === "done") return 4;
+  return 0;
+}
+
+function MiniOrderProgress({
+  order,
+  ar,
+}: {
+  order: CustomerOrderSummary;
+  ar: boolean;
+}) {
+  if (order.status === "cancelled") {
+    return (
+      <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/8 px-3 py-2 text-xs font-semibold text-rose-700 dark:text-rose-300">
+        <XCircle className="h-3.5 w-3.5" aria-hidden />
+        <span>{ar ? "تم إلغاء الطلب" : "Order cancelled"}</span>
+      </div>
+    );
+  }
+
+  const current = miniStageIndex(order.status);
+  const labels = ar
+    ? ["استلمنا", "تحضير", "جاهز", "بالطريق", "تم التوصيل"]
+    : ["Received", "Preparing", "Ready", "On the way", "Delivered"];
+
+  return (
+    <div className="mt-4">
+      <div className="relative px-0.5">
+        <div
+          className="absolute left-[10%] right-[10%] top-[5px] h-px bg-border"
+          aria-hidden
+        />
+        <div
+          className="absolute left-[10%] top-[5px] h-px bg-emerald-500 transition-[width] duration-300"
+          style={{ width: `${current * 20}%` }}
+          aria-hidden
+        />
+
+        <div className="relative grid grid-cols-5">
+          {MINI_ORDER_STAGES.map((stage, index) => {
+            const complete = index < current || (current === 4 && index === 4);
+            const active = index === current && current !== 4;
+            return (
+              <div key={stage} className="flex min-w-0 flex-col items-center text-center">
+                <span
+                  className={cn(
+                    "grid h-2.5 w-2.5 place-items-center rounded-full border bg-card",
+                    complete && "border-emerald-500 bg-emerald-500",
+                    active &&
+                      (index === 1
+                        ? "border-amber-500 bg-amber-500 ring-4 ring-amber-500/10"
+                        : index === 3
+                          ? "border-violet-500 bg-violet-500 ring-4 ring-violet-500/10"
+                          : "border-primary bg-primary ring-4 ring-primary/10"),
+                    !complete && !active && "border-border bg-muted",
+                  )}
+                >
+                  {complete ? <Check className="h-2 w-2 text-white" aria-hidden /> : null}
+                </span>
+                <span
+                  className={cn(
+                    "mt-1.5 max-w-[62px] text-[8px] font-medium leading-tight sm:text-[9px]",
+                    complete && "text-emerald-700 dark:text-emerald-300",
+                    active &&
+                      (index === 1
+                        ? "text-amber-600 dark:text-amber-300"
+                        : index === 3
+                          ? "text-violet-600 dark:text-violet-300"
+                          : "text-primary"),
+                    !complete && !active && "text-muted-foreground",
+                  )}
+                >
+                  {labels[index]}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function isPastOrder(status: string) {
@@ -264,6 +353,8 @@ function OrderCard({ order, ar }: { order: CustomerOrderSummary; ar: boolean }) 
             )}
           />
         </div>
+
+        <MiniOrderProgress order={order} ar={ar} />
 
         <div className="mt-4 space-y-2.5">
           {order.previewItems.length ? (
