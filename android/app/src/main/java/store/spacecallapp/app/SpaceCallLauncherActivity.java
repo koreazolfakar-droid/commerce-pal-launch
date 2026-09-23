@@ -14,7 +14,6 @@ import androidx.browser.customtabs.CustomTabsIntent;
 
 import com.google.androidbrowserhelper.trusted.LauncherActivity;
 
-import java.util.Locale;
 
 /**
  * Hardened Space Call entry point.
@@ -25,10 +24,6 @@ import java.util.Locale;
  */
 public final class SpaceCallLauncherActivity extends LauncherActivity {
     private static final String TAG = "SpaceCallLauncher";
-    private static final String CANONICAL_HOST = "www.spacecallapp.store";
-    private static final String ALTERNATE_HOST = "spacecallapp.store";
-    private static final Uri CANONICAL_URL =
-            Uri.parse("https://www.spacecallapp.store/?source=android-app");
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,33 +54,14 @@ public final class SpaceCallLauncherActivity extends LauncherActivity {
     }
 
     private Uri sanitizeSpaceCallUrl(@Nullable Uri requested) {
-        if (requested == null) {
-            return CANONICAL_URL;
+        String rawUrl = requested == null ? null : requested.toString();
+        String safeUrl = SpaceCallUrlPolicy.sanitize(rawUrl);
+        if (rawUrl != null && !safeUrl.equals(rawUrl)) {
+            Log.d(TAG, "Normalized Android launch URL to the canonical Space Call origin.");
         }
-
-        String scheme = requested.getScheme();
-        if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
-            return CANONICAL_URL;
-        }
-
-        String host = requested.getHost();
-        if (host == null) {
-            return CANONICAL_URL;
-        }
-
-        String normalizedHost = host.toLowerCase(Locale.ROOT);
-        if (!CANONICAL_HOST.equals(normalizedHost) && !ALTERNATE_HOST.equals(normalizedHost)) {
-            Log.w(TAG, "Blocked non-Space-Call launch URL.");
-            return CANONICAL_URL;
-        }
-
-        // Upgrade HTTP to HTTPS and force the canonical authority. This preserves
-        // only a validated Space Call path/query while stripping user-info and ports.
-        return requested.buildUpon()
-                .scheme("https")
-                .encodedAuthority(CANONICAL_HOST)
-                .build();
+        return Uri.parse(safeUrl);
     }
+
 
     private void openSafeBrowserFallback() {
         Uri url = sanitizeSpaceCallUrl(getIntent() == null ? null : getIntent().getData());
