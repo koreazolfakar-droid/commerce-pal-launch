@@ -2,8 +2,6 @@ package store.spacecallapp.app;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,12 +9,12 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import androidx.browser.customtabs.CustomTabsClient;
+import androidx.browser.customtabs.CustomTabsIntent;
+
 import com.google.androidbrowserhelper.trusted.LauncherActivity;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 /**
  * Hardened Space Call entry point.
@@ -91,43 +89,23 @@ public final class SpaceCallLauncherActivity extends LauncherActivity {
 
     private void openSafeBrowserFallback() {
         Uri url = sanitizeSpaceCallUrl(getIntent() == null ? null : getIntent().getData());
+        String providerPackage = CustomTabsClient.getPackageName(this, null);
 
-        Intent genericWebIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com/"));
-        genericWebIntent.addCategory(Intent.CATEGORY_BROWSABLE);
-
-        PackageManager packageManager = getPackageManager();
-        List<ResolveInfo> browserHandlers =
-                packageManager.queryIntentActivities(genericWebIntent, PackageManager.MATCH_DEFAULT_ONLY);
-        Set<String> browserPackages = new HashSet<>();
-        for (ResolveInfo handler : browserHandlers) {
-            if (handler.activityInfo != null) {
-                browserPackages.add(handler.activityInfo.packageName);
-            }
+        if (providerPackage == null || getPackageName().equals(providerPackage)) {
+            Log.e(TAG, "No external Custom Tabs provider is available for the fallback.");
+            Toast.makeText(this, "A supported web browser is required to open Space Call.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
         }
 
-        Intent spaceCallIntent = new Intent(Intent.ACTION_VIEW, url);
-        spaceCallIntent.addCategory(Intent.CATEGORY_BROWSABLE);
-        List<ResolveInfo> handlers =
-                packageManager.queryIntentActivities(spaceCallIntent, PackageManager.MATCH_DEFAULT_ONLY);
-
-        for (ResolveInfo handler : handlers) {
-            if (handler.activityInfo == null) continue;
-            String packageName = handler.activityInfo.packageName;
-            if (getPackageName().equals(packageName) || !browserPackages.contains(packageName)) continue;
-
-            try {
-                Intent explicitBrowserIntent = new Intent(spaceCallIntent);
-                explicitBrowserIntent.setPackage(packageName);
-                startActivity(explicitBrowserIntent);
-                finish();
-                return;
-            } catch (ActivityNotFoundException | SecurityException ignored) {
-                // Try the next verified browser handler.
-            }
+        try {
+            CustomTabsIntent customTab = new CustomTabsIntent.Builder().build();
+            customTab.intent.setPackage(providerPackage);
+            customTab.launchUrl(this, url);
+        } catch (ActivityNotFoundException | SecurityException fallbackFailure) {
+            Log.e(TAG, "Safe browser fallback failed.", fallbackFailure);
+            Toast.makeText(this, "Unable to open Space Call in the browser.", Toast.LENGTH_LONG).show();
+        } finally {
+            finish();
         }
-
-        Log.e(TAG, "No external HTTPS browser is available for the fallback.");
-        Toast.makeText(this, "A web browser is required to open Space Call.", Toast.LENGTH_LONG).show();
-        finish();
-    }
-}
+    }}
