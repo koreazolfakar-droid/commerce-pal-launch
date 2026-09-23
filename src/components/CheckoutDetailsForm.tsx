@@ -605,7 +605,7 @@ export function CheckoutDetailsForm({
 
     const message = [
       `🛍️ ${isArabic ? "طلب جديد" : "New order"} — ${storeName}`,
-      `${isArabic ? "رقم الطلب" : "Order"}: #${order.order_number}`,
+      `${isArabic ? "رقم الطلب" : "Order"}: #${order.public_order_number}`,
       `${isArabic ? "المرجع" : "Reference"}: ${referenceValue}`,
       `${copy.invoiceLabel}: ${invoiceValue}`,
       "",
