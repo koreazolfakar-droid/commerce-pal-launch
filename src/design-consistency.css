@@ -357,6 +357,34 @@
   position: relative;
   isolation: isolate;
 }
+
+/* Homepage rails use a fixed internal rhythm so every card has the same
+ * height and every piece of product information lands on the same baseline. */
+.store-layout .market-product-card.homepage-product-card .market-product-copy-grid {
+  display: grid;
+  grid-template-rows: 1rem 2.45rem 1.25rem 1.15rem 2.75rem;
+  row-gap: 0.25rem;
+  align-content: start;
+  flex: 0 0 auto;
+  padding: 0.625rem;
+}
+
+.store-layout .market-product-card.homepage-product-card .market-product-brand,
+.store-layout .market-product-card.homepage-product-card .market-product-variant,
+.store-layout .market-product-card.homepage-product-card .market-product-price-row,
+.store-layout .market-product-card.homepage-product-card .market-product-footer {
+  min-height: 0;
+  margin: 0;
+}
+
+.store-layout .market-product-card.homepage-product-card .market-product-price-row {
+  align-self: center;
+}
+
+.store-layout .market-product-card.homepage-product-card .market-product-footer {
+  align-self: stretch;
+  align-items: center;
+}
 .store-layout .market-product-stock {
   overflow-wrap: anywhere;
   word-break: normal;
@@ -404,9 +432,10 @@
     line-height: 1.4;
   }
   .store-layout .market-product-card.homepage-product-card .product-card-price {
-    font-size: 1.125rem;
+    font-size: 0.875rem;
     line-height: 1.15;
-    font-weight: 700;
+    font-weight: 500;
+    letter-spacing: 0;
   }
   .store-layout .market-product-card.homepage-product-card .market-product-brand-label {
     font-size: 0.625rem;
@@ -416,10 +445,10 @@
   .store-layout .market-product-card.homepage-product-card .market-product-variant {
     min-height: 1.25rem;
   }
-  .store-layout .market-product-footer {
+  .store-layout .market-product-card.homepage-product-card .market-product-footer {
     gap: 0.5rem;
-    min-height: 3rem;
-    align-items: flex-end;
+    min-height: 0;
+    align-items: center;
   }
   .store-layout .market-product-stock {
     font-size: 0.625rem;
@@ -506,6 +535,10 @@
 
 .store-layout .market-product-card .product-card-body {
   padding-inline: 0.125rem;
+}
+
+.store-layout .market-product-card.homepage-product-card .product-card-body {
+  padding: 0.625rem;
 }
 
 .store-layout .product-list-card .product-card-title {
