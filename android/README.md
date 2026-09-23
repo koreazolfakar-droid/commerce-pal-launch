@@ -66,3 +66,31 @@ For signed release APK/AAB builds, configure these CircleCI project environment 
 The keystore must be persistent and backed up securely. Do not generate a different release key for every build.
 
 After a successful job, download the Android files from the CircleCI job's **Artifacts** tab.
+
+
+## Stable GitHub Release download
+
+CircleCI can publish the installable APK to a rolling GitHub prerelease with the fixed tag `android-latest`.
+
+Configure one CircleCI project environment variable:
+
+- `GITHUB_RELEASE_TOKEN`
+
+Use a fine-grained GitHub personal access token restricted to the `koreazolfakar-droid/commerce-pal-launch` repository with **Contents: Read and write** permission.
+
+After every successful Android build, CircleCI:
+
+1. moves the `android-latest` tag to the current build commit,
+2. creates or updates the rolling prerelease,
+3. replaces the previous APK asset,
+4. uploads `SHA256SUMS.txt`.
+
+Before release signing is configured, the uploaded APK is named:
+
+`Space-Call-latest-debug.apk`
+
+After release signing is configured, the uploaded APK is named:
+
+`Space-Call-latest.apk`
+
+The repository is private, so GitHub authentication is still required to download release assets.
