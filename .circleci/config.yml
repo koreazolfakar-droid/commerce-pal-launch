@@ -91,6 +91,91 @@ jobs:
           command: bun run test:ssr
 
 
+  diagnose-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript diagnostic
+          command: bun run typecheck
+
+  diagnose-lint:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: ESLint diagnostic
+          command: bun run lint
+
+  diagnose-unit:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Unit diagnostic
+          command: bun run test:unit
+
+  diagnose-build:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Build diagnostic
+          command: bun run build
+
+  diagnose-ssr:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: SSR diagnostic
+          command: bun run test:ssr
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -213,6 +298,11 @@ workflows:
       - security-source
       - security-dependencies
       - storefront-ci
+      - diagnose-typecheck
+      - diagnose-lint
+      - diagnose-unit
+      - diagnose-build
+      - diagnose-ssr
       - ui-browser-deps:
           filters:
             branches:
