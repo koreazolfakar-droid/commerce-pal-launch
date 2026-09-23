@@ -74,6 +74,8 @@ test("saved address selector is available in desktop chrome and as a compact mob
   assert.match(mobile, /openAddressBook/);
   assert.match(mobile, /data-testid="mobile-header-location"/);
   assert.match(mobile, /<MapPin/);
+  assert.match(mobile, /rounded-none bg-transparent shadow-none/);
+  assert.match(mobile, /ThemeToggle className="h-10 w-10 rounded-none border-0 bg-transparent shadow-none/);
   assert.doesNotMatch(mobile, /CustomerAddressSelector/);
   assert.doesNotMatch(mobile, /space-cell:open-cart/);
 });
