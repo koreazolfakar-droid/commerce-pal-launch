@@ -163,7 +163,7 @@ export function CheckoutDetailsForm({
 }: CheckoutDetailsFormProps) {
   const { language } = useLanguage();
   const { user } = useCustomerAuth();
-  const { profile, selectedAddress } = useCustomerAccount();
+  const { profile, selectedAddress, openAddressBook } = useCustomerAccount();
   const clearCart = useCartStore((state) => state.clearCart);
   const { data: cms, refetch: refetchCms } = useQuery(cmsQueryOptions());
   const cmsStoreName = cms?.settings["site_name"];
@@ -199,6 +199,9 @@ export function CheckoutDetailsForm({
         deliveryIncluded: "يشمل رسوم التوصيل",
         savedBeforeWhatsapp: "يتم حفظ الطلب والتحقق من السعر والمخزون قبل فتح واتساب.",
         delivery: "بيانات التوصيل",
+        savedAddress: "عنوان محفوظ",
+        changeAddress: "تغيير",
+        usingSavedAddress: "يتم استخدام هذا العنوان المحفوظ للطلب الحالي.",
         name: "الاسم الكامل",
         namePlaceholder: "مثال: حسين علي",
         phone: "رقم الهاتف",
@@ -270,6 +273,9 @@ export function CheckoutDetailsForm({
         savedBeforeWhatsapp:
           "Price and stock are verified and the order is saved before WhatsApp opens.",
         delivery: "Delivery details",
+        savedAddress: "Saved address",
+        changeAddress: "Change",
+        usingSavedAddress: "This saved address is being used for the current order.",
         name: "Full name",
         namePlaceholder: "e.g. Hussein Ali",
         phone: "Phone number",
@@ -715,6 +721,43 @@ export function CheckoutDetailsForm({
               {formatPrice(checkoutTotal, currency)}
             </span>
           </div>
+
+          {selectedAddress ? (
+            <div className="rounded-2xl border border-primary/20 bg-primary/[0.035] p-3.5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                  <MapPin className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                        {copy.savedAddress}
+                      </p>
+                      <p className="mt-0.5 truncate text-sm font-extrabold">
+                        {selectedAddress.nickname ||
+                          selectedAddress.areaStreet ||
+                          selectedAddress.formattedAddress}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openAddressBook}
+                      className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-extrabold text-primary transition hover:bg-primary/10"
+                    >
+                      {copy.changeAddress}
+                    </button>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                    {selectedAddress.areaStreet || selectedAddress.formattedAddress}
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    {copy.usingSavedAddress}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
             <label className="text-sm font-semibold">
