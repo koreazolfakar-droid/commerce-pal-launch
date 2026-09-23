@@ -941,6 +941,7 @@ export type Database = {
           id: string
           notes: string | null
           order_number: number
+          public_order_number: string
           payment_method: string
           payment_status: string
           shipping_total: number
@@ -963,6 +964,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: never
+          public_order_number?: string
           payment_method?: string
           payment_status?: string
           shipping_total?: number
@@ -985,6 +987,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: never
+          public_order_number?: string
           payment_method?: string
           payment_status?: string
           shipping_total?: number
