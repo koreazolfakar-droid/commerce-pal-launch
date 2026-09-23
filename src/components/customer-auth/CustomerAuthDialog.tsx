@@ -43,6 +43,16 @@ function normalizePhone(value: string) {
   return `+961${local}`;
 }
 
+function customerAvatar(user: ReturnType<typeof useCustomerAuth>["user"]) {
+  if (!user) return "";
+  const metadata = user.user_metadata as Record<string, unknown> | undefined;
+  return (
+    (typeof metadata?.["avatar_url"] === "string" && metadata["avatar_url"]) ||
+    (typeof metadata?.["picture"] === "string" && metadata["picture"]) ||
+    ""
+  );
+}
+
 function customerLabel(user: ReturnType<typeof useCustomerAuth>["user"]) {
   if (!user) return "";
   const metadata = user.user_metadata as Record<string, unknown> | undefined;
@@ -285,6 +295,7 @@ export function CustomerAuthDialog() {
   }
 
   const BackIcon = direction === "rtl" ? ArrowRight : ArrowLeft;
+  const avatar = customerAvatar(user);
 
   return (
     <Dialog open={authOpen} onOpenChange={setAuthOpen}>
@@ -308,8 +319,17 @@ export function CustomerAuthDialog() {
 
               <div className="rounded-2xl border border-border/70 bg-surface/60 p-4">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                  <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                    {avatar ? (
+                      <img
+                        src={avatar}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                    )}
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-foreground">{customerLabel(user)}</p>
