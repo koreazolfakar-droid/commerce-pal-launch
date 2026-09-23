@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "store.spacecallapp.app.debug",
+      "sha256_cert_fingerprints": [
+        "7C:A9:6F:44:7B:F6:79:D8:F1:14:0B:9F:89:D3:81:6E:4B:10:88:AE:96:69:EF:42:DA:20:47:19:92:17:E9:BD"
+      ]
+    }
+  }
+]
