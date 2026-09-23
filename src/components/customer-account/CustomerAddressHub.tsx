@@ -653,10 +653,15 @@ export function CustomerAddressHub() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       recordingStreamRef.current = stream;
-      const preferred = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : "audio/webm";
-      const recorder = new MediaRecorder(stream, { mimeType: preferred });
+      const preferredMimeType = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/aac",
+      ].find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = preferredMimeType
+        ? new MediaRecorder(stream, { mimeType: preferredMimeType })
+        : new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
 
@@ -667,10 +672,18 @@ export function CustomerAddressHub() {
         "stop",
         () => {
           const chunks = audioChunksRef.current;
+          const recordedMimeType = recorder.mimeType || preferredMimeType || "audio/webm";
           cleanupRecording();
           if (!chunks.length) return;
-          const blob = new Blob(chunks, { type: preferred });
-          const file = new File([blob], "voice-directions.webm", { type: preferred });
+          const blob = new Blob(chunks, { type: recordedMimeType });
+          const extension = recordedMimeType.includes("mp4")
+            ? "m4a"
+            : recordedMimeType.includes("aac")
+              ? "aac"
+              : "webm";
+          const file = new File([blob], "voice-directions." + extension, {
+            type: recordedMimeType,
+          });
           setPending("voice");
           void uploadAddressMedia({
             userId: user.id,
