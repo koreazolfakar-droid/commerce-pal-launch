@@ -126,7 +126,8 @@ requireText(
 );
 forbidText(manifest, "WebViewFallbackActivity", "Embedded WebView fallback is forbidden.");
 forbidText(manifest, 'android:host="spacecallapp.store"', "Only the canonical www origin may request App Link verification.");
-forbidText(manifest, 'android:scheme="http"', "HTTP deep links are forbidden.");
+requireText(manifest, 'android:scheme="http"', "Verified App Links must accept HTTP so the launcher can upgrade it safely.");
+requireText(manifest, 'android:scheme="https"', "Verified App Links must accept HTTPS.");
 
 requireText(
   strings,
@@ -141,7 +142,8 @@ requireText(
 
 requireText(launcher, 'CANONICAL_HOST = "www.spacecallapp.store"', "Launcher canonical host guard is missing.");
 requireText(launcher, "protected Uri getUrlForIntent(Intent intent)", "Raw VIEW intents must pass through the URL sanitizer.");
-requireText(launcher, '!"https".equalsIgnoreCase(requested.getScheme())', "Launcher must reject non-HTTPS URLs.");
+requireText(launcher, '!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)', "Launcher must reject non-web URL schemes.");
+requireText(launcher, '.scheme("https")', "Launcher must force all accepted web links to HTTPS.");
 requireText(launcher, "openSafeBrowserFallback()", "Crash-safe browser fallback is missing.");
 requireText(
   launcher,
