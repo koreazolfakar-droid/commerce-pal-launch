@@ -39,9 +39,11 @@ function Badge({ value }: { value: number }) {
 /** Mobile app style top bar: brand, quick actions, search field and category strip. */
 export function MobileTopBar({
   activeSlug,
+  showSearch = true,
   showCategoryRail = true,
 }: {
   activeSlug?: string;
+  showSearch?: boolean;
   showCategoryRail?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -137,19 +139,22 @@ export function MobileTopBar({
         </div>
       </header>
 
-      <div className="border-b border-border/40 bg-background lg:hidden">
-        <div className="mx-auto max-w-md px-3 pb-3 pt-2.5">
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            className="press flex h-12 min-w-0 w-full items-center gap-3 rounded-2xl border border-border/65 bg-card px-4 text-start text-[13px] font-medium text-muted-foreground shadow-sm transition hover:border-primary/25 hover:bg-accent/50"
-          >
-            <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span className="truncate">{t("search")}</span>
-          </button>
-        </div>
+      {showSearch || showCategoryRail ? (
+        <div className="border-b border-border/40 bg-background lg:hidden">
+          {showSearch ? (
+            <div className="mx-auto max-w-md px-3 pb-3 pt-2.5">
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className="press flex h-12 min-w-0 w-full items-center gap-3 rounded-2xl border border-border/65 bg-card px-4 text-start text-[13px] font-medium text-muted-foreground shadow-sm transition hover:border-primary/25 hover:bg-accent/50"
+              >
+                <Search className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span className="truncate">{t("search")}</span>
+              </button>
+            </div>
+          ) : null}
 
-        {showCategoryRail ? (
+          {showCategoryRail ? (
           <Suspense
             fallback={
               <div className="scroll-rail flex gap-2 px-4 pb-2" aria-hidden="true">
@@ -164,8 +169,9 @@ export function MobileTopBar({
           >
             <LazyMobileCategoryRail activeSlug={activeSlug} />
           </Suspense>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {menuOpen ? (
         <Suspense fallback={null}>
