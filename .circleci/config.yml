@@ -366,6 +366,74 @@ jobs:
           name: Lint customer account components
           command: ./node_modules/.bin/eslint src/components/customer-account --fix-dry-run
 
+  lint-customer-provider-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint
+          command: ./node_modules/.bin/eslint src/components/customer-account/CustomerAccountProvider.tsx --fix-dry-run
+
+  lint-customer-hub-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint
+          command: ./node_modules/.bin/eslint src/components/customer-account/CustomerAddressHub.tsx --fix-dry-run
+
+  lint-customer-selector-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint
+          command: ./node_modules/.bin/eslint src/components/customer-account/CustomerAddressSelector.tsx --fix-dry-run
+
+  lint-customer-map-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint
+          command: ./node_modules/.bin/eslint src/components/customer-account/GoogleDeliveryMap.tsx --fix-dry-run
+
   lint-components-customer-auth-debug:
     docker:
       - image: cimg/node:lts
@@ -706,6 +774,10 @@ workflows:
       - lint-src-dashboard-debug
       - lint-components-root-debug
       - lint-components-customer-account-debug
+      - lint-customer-provider-debug
+      - lint-customer-hub-debug
+      - lint-customer-selector-debug
+      - lint-customer-map-debug
       - lint-components-customer-auth-debug
       - lint-components-product-debug
       - lint-components-ui-debug
