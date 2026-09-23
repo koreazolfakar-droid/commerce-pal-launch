@@ -24,6 +24,7 @@ import {
   DashboardHeroVerificationRequiredError,
   DEFAULT_HERO_VISUAL_CONFIG,
   deleteDashboardHeroSlide,
+  ensureDashboardHeroSessionReady,
   getHeroScheduleState,
   listDashboardHeroLinkOptions,
   listDashboardHeroMedia,
@@ -305,6 +306,7 @@ export default function HeroBannersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      await ensureDashboardHeroSessionReady();
       const [nextSlides, links, nextMedia] = await Promise.all([
         listDashboardHeroSlides(),
         listDashboardHeroLinkOptions(),
@@ -320,7 +322,7 @@ export default function HeroBannersPage() {
       });
       if (!nextSlides.length) setForm(EMPTY_FORM);
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Unable to load hero CMS.");
+      handleHeroActionError(cause, "Unable to load Hero CMS.");
     } finally {
       setLoading(false);
     }
