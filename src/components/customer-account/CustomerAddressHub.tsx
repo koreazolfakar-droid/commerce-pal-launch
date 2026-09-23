@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import {
   type ChangeEvent,
   type FormEvent,
@@ -18,6 +19,7 @@ import {
   CircleUserRound,
   Crosshair,
   Ellipsis,
+  Heart,
   Home,
   Hotel,
   Loader2,
@@ -73,7 +75,7 @@ import {
 } from "@/lib/customerAccount";
 import { useLanguage } from "@/lib/i18n";
 
-type View = "book" | "map" | "type" | "details" | "profile" | "orders";
+type View = "account" | "book" | "map" | "type" | "details" | "profile" | "orders";
 
 type AddressForm = {
   nickname: string;
@@ -169,6 +171,7 @@ export function CustomerAddressHub() {
     draftAddress,
     loading,
     addressBookOpen,
+    hubInitialView,
     setAddressBookOpen,
     selectAddress,
     beginAddressDraft,
@@ -229,6 +232,15 @@ export function CustomerAddressHub() {
             deleteDescription: "سيتم حذف العنوان المحفوظ نهائيًا من حسابك. لا يمكن التراجع عن هذه الخطوة.",
             cancel: "إلغاء",
             profile: "الملف الشخصي",
+            accountTitle: "حسابي",
+            accountSubtitle: "إدارة معلوماتك وعناوينك وطلباتك",
+            personalInformation: "المعلومات الشخصية",
+            personalInformationHelp: "الاسم ورقم الهاتف والبريد الإلكتروني",
+            addressesLabel: "العناوين",
+            manageAddresses: "إدارة العناوين",
+            deliveryAddress: "عنوان التوصيل",
+            wishlist: "المفضلة",
+            editProfile: "تعديل الملف الشخصي",
             myOrders: "طلباتي",
             ordersEmpty: "لا يوجد طلبات مرتبطة بحسابك بعد.",
             orderNumber: "طلب",
@@ -287,6 +299,15 @@ export function CustomerAddressHub() {
               "This saved address will be permanently removed from your account. This cannot be undone.",
             cancel: "Cancel",
             profile: "Profile",
+            accountTitle: "My Profile",
+            accountSubtitle: "Manage your personal information, addresses and orders",
+            personalInformation: "Personal information",
+            personalInformationHelp: "Name, phone number and email",
+            addressesLabel: "Addresses",
+            manageAddresses: "Manage addresses",
+            deliveryAddress: "Delivery address",
+            wishlist: "Wishlist",
+            editProfile: "Edit profile",
             myOrders: "My orders",
             ordersEmpty: "No orders are linked to your account yet.",
             orderNumber: "Order",
@@ -353,7 +374,7 @@ export function CustomerAddressHub() {
 
   useEffect(() => {
     if (!addressBookOpen) return;
-    setView("book");
+    setView(hubInitialView);
     setSearch("");
     setError("");
     setProfileForm({
@@ -361,7 +382,7 @@ export function CustomerAddressHub() {
       phone: profile?.phone || "",
       email: profile?.email || "",
     });
-  }, [addressBookOpen, profile?.email, profile?.fullName, profile?.phone]);
+  }, [addressBookOpen, hubInitialView, profile?.email, profile?.fullName, profile?.phone]);
 
   useEffect(() => {
     if (!addressBookOpen || view !== "orders" || !user) return;
@@ -752,6 +773,20 @@ export function CustomerAddressHub() {
 
   const typeMeta = ADDRESS_TYPES.find((item) => item.type === form.addressType);
   const TypeIcon = addressTypeIcon(form.addressType);
+  const userMetadata = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  const accountAvatar =
+    (typeof userMetadata["avatar_url"] === "string" && userMetadata["avatar_url"]) ||
+    (typeof userMetadata["picture"] === "string" && userMetadata["picture"]) ||
+    "";
+  const accountName =
+    profile?.fullName?.trim() ||
+    (typeof userMetadata["full_name"] === "string" && userMetadata["full_name"]) ||
+    (typeof userMetadata["name"] === "string" && userMetadata["name"]) ||
+    user?.email ||
+    user?.phone ||
+    copy.accountTitle;
+  const accountSecondary = profile?.email || profile?.phone || user?.email || user?.phone || "";
+  const closeHub = () => setAddressBookOpen(false);
 
   return (
     <Dialog open={addressBookOpen} onOpenChange={setAddressBookOpen}>
@@ -761,6 +796,150 @@ export function CustomerAddressHub() {
         className="bottom-0 top-auto max-h-[96dvh] w-full max-w-none translate-x-[-50%] translate-y-0 overflow-hidden rounded-t-[28px] border-x-0 border-b-0 border-border/70 bg-background p-0 shadow-2xl sm:bottom-auto sm:top-[50%] sm:w-[calc(100%-2rem)] sm:max-w-[34rem] sm:translate-y-[-50%] sm:rounded-[28px] sm:border"
       >
         <div className="mx-auto mt-2.5 h-1.5 w-12 rounded-full bg-muted sm:hidden" aria-hidden="true" />
+
+        {view === "account" ? (
+          <div className="max-h-[92dvh] overflow-y-auto p-5 pt-4 sm:p-7" data-testid="customer-account-home">
+            <div className="flex items-start gap-4">
+              <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                {accountAvatar ? (
+                  <img
+                    src={accountAvatar}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <CircleUserRound className="h-7 w-7" aria-hidden="true" strokeWidth={1.8} />
+                )}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate text-[20px] font-extrabold tracking-[-0.025em]">
+                  {accountName}
+                </h2>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {accountSecondary || copy.accountSubtitle}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setView("profile")}
+                  className="mt-2 text-xs font-bold text-primary hover:underline"
+                >
+                  {copy.editProfile}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-3 overflow-hidden rounded-2xl border border-border/60 bg-card">
+              <Link
+                to="/my-orders"
+                onClick={closeHub}
+                className="flex min-h-[86px] flex-col items-center justify-center gap-2 px-2 text-center transition-colors hover:bg-surface"
+              >
+                <ShoppingBag className="h-5 w-5 text-primary" aria-hidden="true" strokeWidth={1.8} />
+                <span className="text-[11px] font-bold">{copy.myOrders}</span>
+              </Link>
+              <Link
+                to="/wishlist"
+                onClick={closeHub}
+                className="flex min-h-[86px] flex-col items-center justify-center gap-2 border-x border-border/60 px-2 text-center transition-colors hover:bg-surface"
+              >
+                <Heart className="h-5 w-5 text-primary" aria-hidden="true" strokeWidth={1.8} />
+                <span className="text-[11px] font-bold">{copy.wishlist}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setView("book")}
+                className="flex min-h-[86px] flex-col items-center justify-center gap-2 px-2 text-center transition-colors hover:bg-surface"
+              >
+                <MapPinned className="h-5 w-5 text-primary" aria-hidden="true" strokeWidth={1.8} />
+                <span className="text-[11px] font-bold">{copy.addressesLabel}</span>
+              </button>
+            </div>
+
+            <section className="mt-7">
+              <div className="mb-2 px-1">
+                <h3 className="text-[13px] font-extrabold">{copy.personalInformation}</h3>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  {copy.personalInformationHelp}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setView("profile")}
+                className="w-full overflow-hidden rounded-2xl border border-border/60 bg-card text-start transition-colors hover:bg-surface"
+              >
+                <span className="flex min-h-[58px] items-center gap-3 px-4">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[10px] font-semibold text-muted-foreground">{copy.name}</span>
+                    <span className="mt-0.5 block truncate text-sm font-bold">{profile?.fullName || "—"}</span>
+                  </span>
+                  <NextIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </span>
+                <span className="mx-4 block h-px bg-border/55" />
+                <span className="flex min-h-[58px] items-center gap-3 px-4">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[10px] font-semibold text-muted-foreground">{copy.phone}</span>
+                    <span className="mt-0.5 block truncate text-sm font-bold">{profile?.phone || user?.phone || "—"}</span>
+                  </span>
+                </span>
+                <span className="mx-4 block h-px bg-border/55" />
+                <span className="flex min-h-[58px] items-center gap-3 px-4">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[10px] font-semibold text-muted-foreground">{copy.email}</span>
+                    <span className="mt-0.5 block truncate text-sm font-bold">{profile?.email || user?.email || "—"}</span>
+                  </span>
+                </span>
+              </button>
+            </section>
+
+            <section className="mt-7">
+              <div className="mb-2 flex items-center justify-between gap-3 px-1">
+                <h3 className="text-[13px] font-extrabold">{copy.deliveryAddress}</h3>
+                <button
+                  type="button"
+                  onClick={() => setView("book")}
+                  className="text-[11px] font-bold text-primary hover:underline"
+                >
+                  {copy.manageAddresses}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setView("book")}
+                className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-card p-4 text-start transition-colors hover:bg-surface"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                  <MapPinned className="h-5 w-5" aria-hidden="true" strokeWidth={1.8} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  {selectedAddress ? (
+                    <>
+                      <span className="flex items-center gap-2">
+                        <span className="truncate text-sm font-extrabold">
+                          {selectedAddress.nickname || copy.deliveryAddress}
+                        </span>
+                        {selectedAddress.isDefault ? (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary">
+                            {copy.default}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="mt-1 line-clamp-2 block text-xs leading-5 text-muted-foreground">
+                        {addressDisplayLine(selectedAddress)}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="block text-sm font-extrabold">{copy.add}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">{copy.elsewhereHelp}</span>
+                    </>
+                  )}
+                </span>
+                <NextIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+              </button>
+            </section>
+          </div>
+        ) : null}
 
         {view === "book" ? (
           <div className="max-h-[92dvh] overflow-y-auto p-5 pt-4 sm:p-7">
@@ -1509,13 +1688,16 @@ export function CustomerAddressHub() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setView("book")}
+                onClick={() => setView(hubInitialView === "account" ? "account" : "book")}
                 className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface"
                 aria-label={copy.previous}
               >
                 <BackIcon className="h-5 w-5" aria-hidden="true" />
               </button>
-              <h2 className="text-xl font-extrabold">{copy.profile}</h2>
+              <div className="min-w-0">
+                <h2 className="text-xl font-extrabold">{copy.profile}</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">{copy.personalInformationHelp}</p>
+              </div>
             </div>
 
             <form onSubmit={saveProfileForm} className="mt-6 space-y-3">
