@@ -43,6 +43,12 @@ test("homepage catalog preserves the last successful Supabase snapshot during tr
   assert.doesNotMatch(queries, /Shopify catalog refresh|SHOPIFY_QUERY_RETRY_COUNT/);
 });
 
+test("full storefront footer renders only on the home page", async () => {
+  const layout = await source("src/components/StoreLayout.tsx");
+  assert.match(layout, /onHomePage \? <SiteFooter \/> : null/);
+  assert.doesNotMatch(layout, /<SiteFooter compactTopSpacing=\{onCartPage\} \/>/);
+});
+
 test("shared footer stays lightweight and hides technical build data", async () => {
   const footer = await source("src/components/SiteFooter.tsx");
   const runtimeFooter = withoutComments(footer);
