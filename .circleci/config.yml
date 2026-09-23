@@ -431,7 +431,7 @@ jobs:
   android-runtime-smoke:
     machine:
       image: android:2026.05.1
-    resource_class: large.gen2
+    resource_class: large
     working_directory: ~/project
     steps:
       - checkout
