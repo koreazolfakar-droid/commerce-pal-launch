@@ -76,11 +76,14 @@ test("saved address selector is available in desktop chrome and as a compact mob
   assert.match(mobile, /data-testid="mobile-header-location"/);
   assert.match(mobile, /<MapPin/);
   assert.match(mobile, /mobile-header-action/);
+  assert.match(mobile, /grid-cols-\[2\.75rem_minmax\(0,1fr\)_5\.75rem\]/);
+  assert.match(mobile, /CustomerAccountButton[\s\S]*variant="icon"/);
+  assert.match(mobile, /ThemeToggle className="mobile-header-action h-11 w-11/);
+  assert.match(mobile, /data-testid="mobile-header-location"[\s\S]*Deliver to/);
   assert.match(uiOverhaul, /\.mobile-header-action/);
   assert.match(uiOverhaul, /background:\s*transparent/);
   assert.match(uiOverhaul, /box-shadow:\s*none/);
   assert.match(mobile, /rounded-none bg-transparent shadow-none/);
-  assert.match(mobile, /ThemeToggle className="mobile-header-action h-10 w-10 rounded-none border-0 bg-transparent shadow-none/);
   assert.doesNotMatch(mobile, /CustomerAddressSelector/);
   assert.doesNotMatch(mobile, /space-cell:open-cart/);
 });
