@@ -192,8 +192,8 @@ for (const requiredTestCase of [
 
 requireText(gradle, 'applicationId "store.spacecallapp.app"', "Production application ID changed unexpectedly.");
 requireText(gradle, 'applicationIdSuffix ".debug"', "Test and production package identities must remain separate.");
-requireText(gradle, 'manifestPlaceholders = [appLinksAutoVerify: "false"]', "Debug builds must not request production App Link verification.");
-requireText(gradle, 'manifestPlaceholders = [appLinksAutoVerify: "true"]', "Release builds must request App Link verification.");
+requireText(gradle, 'manifestPlaceholders = [appLinksAutoVerify: false]', "Debug builds must not request production App Link verification.");
+requireText(gradle, 'manifestPlaceholders = [appLinksAutoVerify: true]', "Release builds must request App Link verification.");
 requireText(gradle, "compileSdk 36", "compileSdk must remain 36.");
 requireText(gradle, "targetSdk 36", "targetSdk must remain 36.");
 requireText(gradle, "minSdk 24", "minSdk must remain 24.");
