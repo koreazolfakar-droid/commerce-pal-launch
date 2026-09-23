@@ -15,6 +15,7 @@ let volatileAttempt: CheckoutAttempt | null = null;
 export type CreatedStoreOrder = {
   order_id: string;
   order_number: number;
+  public_order_number: string;
   currency: string;
   subtotal: number;
   shipping_total: number;
@@ -175,6 +176,8 @@ export async function createStorefrontOrder(input: {
   if (
     typeof order.order_id !== "string" ||
     !Number.isFinite(Number(order.order_number)) ||
+    typeof order.public_order_number !== "string" ||
+    !/^\d{5}-\d{5}$/.test(order.public_order_number) ||
     !Number.isFinite(Number(order.subtotal)) ||
     !Number.isFinite(Number(order.shipping_total)) ||
     !Number.isFinite(Number(order.total))
