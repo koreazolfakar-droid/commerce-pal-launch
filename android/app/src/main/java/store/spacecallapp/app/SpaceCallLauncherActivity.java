@@ -61,7 +61,12 @@ public final class SpaceCallLauncherActivity extends LauncherActivity {
     }
 
     private Uri sanitizeSpaceCallUrl(@Nullable Uri requested) {
-        if (requested == null || !"https".equalsIgnoreCase(requested.getScheme())) {
+        if (requested == null) {
+            return CANONICAL_URL;
+        }
+
+        String scheme = requested.getScheme();
+        if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
             return CANONICAL_URL;
         }
 
@@ -76,11 +81,11 @@ public final class SpaceCallLauncherActivity extends LauncherActivity {
             return CANONICAL_URL;
         }
 
-        // Force the canonical authority so user-info, alternate ports, and the bare
-        // domain cannot change the origin while preserving a valid path/query.
+        // Upgrade HTTP to HTTPS and force the canonical authority. This preserves
+        // only a validated Space Call path/query while stripping user-info and ports.
         return requested.buildUpon()
                 .scheme("https")
-                .authority(CANONICAL_HOST)
+                .encodedAuthority(CANONICAL_HOST)
                 .build();
     }
 
