@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const details = await readFile(
-  new URL("../src/routes/my-orders.$orderId.tsx", import.meta.url),
+  new URL("../src/routes/my-orders_.$orderId.tsx", import.meta.url),
   "utf8",
 );
 
