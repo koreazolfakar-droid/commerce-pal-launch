@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
+import { useCustomerAuth } from "@/components/customer-auth/CustomerAuthProvider";
 import { addressCheckoutText } from "@/lib/customerAccount";
 import { useLanguage } from "@/lib/i18n";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
@@ -161,6 +162,7 @@ export function CheckoutDetailsForm({
   disabled = false,
 }: CheckoutDetailsFormProps) {
   const { language } = useLanguage();
+  const { user } = useCustomerAuth();
   const { profile, selectedAddress } = useCustomerAccount();
   const clearCart = useCartStore((state) => state.clearCart);
   const { data: cms, refetch: refetchCms } = useQuery(cmsQueryOptions());
@@ -534,7 +536,7 @@ export function CheckoutDetailsForm({
         customer: {
           name: details.name.trim(),
           phone: details.phone.trim(),
-          email: profile?.email?.trim() || undefined,
+          email: user?.email?.trim() || undefined,
           city: details.area.trim(),
           address: [
             details.address.trim(),
