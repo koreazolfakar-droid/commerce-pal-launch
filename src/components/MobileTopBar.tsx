@@ -38,7 +38,7 @@ export function MobileTopBar({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
   const { selectedAddress, openAddressBook } = useCustomerAccount();
   const cmsStoreName = cms?.settings["site_name"];
@@ -117,7 +117,7 @@ export function MobileTopBar({
                 <span className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
                   {selectedAddress ? (
                     <>
-                      <span>{t("deliverTo") || "Deliver to"} </span>
+                      <span>{language === "ar" ? "التوصيل إلى" : "Deliver to"} </span>
                       <span className="font-extrabold text-foreground">
                         {selectedAddress.nickname ||
                           selectedAddress.areaStreet ||
@@ -126,7 +126,7 @@ export function MobileTopBar({
                     </>
                   ) : (
                     <span className="font-semibold text-foreground">
-                      {t("chooseDeliveryLocation") || "Choose delivery location"}
+                      {language === "ar" ? "اختر موقع التوصيل" : "Choose delivery location"}
                     </span>
                   )}
                 </span>
