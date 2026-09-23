@@ -326,7 +326,7 @@ export default function HeroBannersPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [handleHeroActionError]);
 
   useEffect(() => {
     void load();
