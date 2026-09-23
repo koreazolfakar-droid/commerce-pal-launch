@@ -339,17 +339,42 @@ export async function loadCustomerAddresses(userId: string): Promise<CustomerAdd
     : [];
 }
 
-export async function getOrCreateAddressDraft(userId: string): Promise<CustomerAddress> {
-  const { data: existing, error: existingError } = await supabase
+async function loadAddressDraft(userId: string): Promise<CustomerAddress | null> {
+  const { data, error } = await supabase
     .from("store_customer_addresses")
     .select("*")
     .eq("user_id", userId)
     .eq("is_draft", true)
     .maybeSingle();
-  throwError(existingError, "Loading address draft failed");
-  if (existing && typeof existing === "object") {
-    return toAddress(existing as Record<string, unknown>);
+  throwError(error, "Loading address draft failed");
+  return data && typeof data === "object"
+    ? toAddress(data as Record<string, unknown>)
+    : null;
+}
+
+async function discardAddressDraft(userId: string, draft: CustomerAddress) {
+  const draftPrefix = userId + "/" + draft.id + "/";
+  const ownedPaths = [...draft.photoPaths, draft.voiceNotePath].filter(
+    (path) => path && path.startsWith(draftPrefix),
+  );
+  if (ownedPaths.length) {
+    const { error: mediaError } = await supabase.storage.from(MEDIA_BUCKET).remove(ownedPaths);
+    throwError(mediaError, "Removing abandoned address media failed");
   }
+
+  const { error } = await supabase
+    .from("store_customer_addresses")
+    .delete()
+    .eq("id", draft.id)
+    .eq("user_id", userId)
+    .eq("is_draft", true);
+  throwError(error, "Discarding address draft failed");
+}
+
+export async function getOrCreateAddressDraft(userId: string): Promise<CustomerAddress> {
+  const existing = await loadAddressDraft(userId);
+  if (existing && !existing.editingAddressId) return existing;
+  if (existing) await discardAddressDraft(userId, existing);
 
   const { data, error } = await supabase
     .from("store_customer_addresses")
@@ -360,7 +385,14 @@ export async function getOrCreateAddressDraft(userId: string): Promise<CustomerA
   return toAddress(data as Record<string, unknown>);
 }
 
-export async function startAddressEdit(addressId: string): Promise<CustomerAddress> {
+export async function startAddressEdit(
+  userId: string,
+  addressId: string,
+): Promise<CustomerAddress> {
+  const existing = await loadAddressDraft(userId);
+  if (existing?.editingAddressId === addressId) return existing;
+  if (existing) await discardAddressDraft(userId, existing);
+
   const { data, error } = await supabase.rpc("start_customer_address_edit", {
     p_address_id: addressId,
   });
