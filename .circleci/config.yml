@@ -93,7 +93,6 @@ jobs:
           command: bun run test:ssr
 
 
-  permission-ui-types-clean:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -126,7 +125,6 @@ jobs:
             fi
             exit 0
 
-  storefront-permission-typecheck:
     docker:
       - image: cimg/node:lts
     resource_class: small
@@ -529,24 +527,6 @@ workflows:
   security-and-storefront-validation:
     jobs:
       - android-build:
-          filters:
-            branches:
-              only:
-                - feat/android-twa-app
-      - storefront-ci:
-          name: storefront-android-branch
-          filters:
-            branches:
-              only:
-                - feat/android-twa-app
-      - storefront-permission-typecheck:
-          name: storefront-permission-typecheck-android
-          filters:
-            branches:
-              only:
-                - feat/android-twa-app
-      - permission-ui-types-clean:
-          name: permission-ui-types-clean-android
           filters:
             branches:
               only:
