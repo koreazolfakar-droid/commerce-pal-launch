@@ -136,9 +136,9 @@ export function MobileTopBar({
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className="press flex h-[3.25rem] min-w-0 w-full items-center gap-3 rounded-2xl border border-border/65 bg-card px-4 text-start text-[13px] font-medium text-muted-foreground shadow-sm transition hover:border-primary/25 hover:bg-accent/50"
+                className="press flex h-11 min-w-0 w-full items-center gap-2.5 rounded-xl border border-border/65 bg-card px-3.5 text-start text-[12.5px] font-medium text-muted-foreground shadow-sm transition hover:border-primary/25 hover:bg-accent/50"
               >
-                <Search className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
+                <Search className="h-[17px] w-[17px] shrink-0" strokeWidth={1.9} />
                 <span className="truncate">{t("search")}</span>
               </button>
             </div>
