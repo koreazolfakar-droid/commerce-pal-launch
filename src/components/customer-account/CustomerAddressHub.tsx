@@ -22,6 +22,7 @@ import {
   Loader2,
   MapPinned,
   Mic,
+  Pencil,
   Plus,
   ReceiptText,
   Search,
@@ -32,6 +33,16 @@ import {
 import { GoogleDeliveryMap } from "@/components/customer-account/GoogleDeliveryMap";
 import { useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
 import { useCustomerAuth } from "@/components/customer-auth/CustomerAuthProvider";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -143,6 +154,7 @@ export function CustomerAddressHub() {
     setAddressBookOpen,
     selectAddress,
     beginAddressDraft,
+    beginAddressEdit,
     saveDraft,
     completeDraft,
     makeDefault,
@@ -164,6 +176,7 @@ export function CustomerAddressHub() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState("");
   const [orderItems, setOrderItems] = useState<Record<string, CustomerOrderItem[]>>({});
+  const [addressPendingDelete, setAddressPendingDelete] = useState<CustomerAddress | null>(null);
   const saveTimer = useRef<number | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -189,7 +202,11 @@ export function CustomerAddressHub() {
             noSaved: "لا يوجد عناوين محفوظة بعد.",
             default: "افتراضي",
             setDefault: "تعيين كعنوان افتراضي",
+            edit: "تعديل العنوان",
             delete: "حذف العنوان",
+            deleteTitle: "حذف هذا العنوان؟",
+            deleteDescription: "سيتم حذف العنوان المحفوظ نهائيًا من حسابك. لا يمكن التراجع عن هذه الخطوة.",
+            cancel: "إلغاء",
             profile: "الملف الشخصي",
             myOrders: "طلباتي",
             ordersEmpty: "لا يوجد طلبات مرتبطة بحسابك بعد.",
@@ -240,7 +257,12 @@ export function CustomerAddressHub() {
             noSaved: "No saved addresses yet.",
             default: "Default",
             setDefault: "Set as default",
+            edit: "Edit address",
             delete: "Delete address",
+            deleteTitle: "Delete this address?",
+            deleteDescription:
+              "This saved address will be permanently removed from your account. This cannot be undone.",
+            cancel: "Cancel",
             profile: "Profile",
             myOrders: "My orders",
             ordersEmpty: "No orders are linked to your account yet.",
@@ -391,6 +413,21 @@ export function CustomerAddressHub() {
       setForm(next);
       setView("map");
       if (useCurrentLocation) setAutoLocateToken(Date.now());
+    } catch {
+      setError(copy.genericError);
+    } finally {
+      setPending("");
+    }
+  };
+
+  const editAddress = async (address: CustomerAddress) => {
+    setPending("edit:" + address.id);
+    setError("");
+    try {
+      const draft = await beginAddressEdit(address);
+      if (!draft) return;
+      setForm(formFromAddress(draft, profile?.phone || user?.phone || ""));
+      setView("map");
     } catch {
       setError(copy.genericError);
     } finally {
@@ -744,6 +781,17 @@ export function CustomerAddressHub() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52 rounded-xl p-1.5">
+                          <DropdownMenuItem
+                            onSelect={() => void editAddress(address)}
+                            className="rounded-lg"
+                          >
+                            {pending === "edit:" + address.id ? (
+                              <Loader2 className="me-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                            ) : (
+                              <Pencil className="me-2 h-4 w-4" aria-hidden="true" />
+                            )}
+                            {copy.edit}
+                          </DropdownMenuItem>
                           {!address.isDefault ? (
                             <DropdownMenuItem
                               onSelect={() => void makeDefault(address)}
@@ -754,7 +802,7 @@ export function CustomerAddressHub() {
                             </DropdownMenuItem>
                           ) : null}
                           <DropdownMenuItem
-                            onSelect={() => void removeAddress(address)}
+                            onSelect={() => setAddressPendingDelete(address)}
                             className="rounded-lg text-destructive focus:text-destructive"
                           >
                             <Trash2 className="me-2 h-4 w-4" aria-hidden="true" />
@@ -1300,6 +1348,46 @@ export function CustomerAddressHub() {
           </div>
         ) : null}
       </DialogContent>
+
+      <AlertDialog
+        open={Boolean(addressPendingDelete)}
+        onOpenChange={(open) => {
+          if (!open && pending !== "delete") setAddressPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent dir={direction} className="w-[calc(100%-2rem)] max-w-md rounded-2xl">
+          <AlertDialogHeader className="text-start">
+            <AlertDialogTitle>{copy.deleteTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{copy.deleteDescription}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:space-x-0">
+            <AlertDialogCancel disabled={pending === "delete"}>{copy.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={pending === "delete"}
+              onClick={(event) => {
+                event.preventDefault();
+                if (!addressPendingDelete || pending === "delete") return;
+                setPending("delete");
+                setError("");
+                void removeAddress(addressPendingDelete)
+                  .then(() => {
+                    setAddressPendingDelete(null);
+                  })
+                  .catch(() => setError(copy.genericError))
+                  .finally(() => setPending(""));
+              }}
+            >
+              {pending === "delete" ? (
+                <Loader2 className="me-2 h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Trash2 className="me-2 h-4 w-4" aria-hidden="true" />
+              )}
+              {copy.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
