@@ -495,10 +495,11 @@ export async function uploadAddressMedia(args: {
     crypto.randomUUID() +
     "." +
     extension;
+  const contentType = args.file.type?.split(";")[0] || undefined;
   const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(path, args.file, {
     cacheControl: "3600",
     upsert: false,
-    contentType: args.file.type || undefined,
+    contentType,
   });
   throwError(error, "Uploading address media failed");
   return path;
