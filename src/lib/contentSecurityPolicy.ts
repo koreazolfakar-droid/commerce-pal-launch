@@ -33,7 +33,7 @@ export function buildContentSecurityPolicy(nonce?: string) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "style-src-attr 'unsafe-inline'",
     "font-src 'self' data: https://fonts.gstatic.com",
-    `img-src 'self' data: blob: ${[...backendHttpOrigins].join(" ")} https://images.unsplash.com https://maps.gstatic.com https://maps.googleapis.com https://*.googleapis.com https://*.ggpht.com`,
+    `img-src 'self' data: blob: ${[...backendHttpOrigins].join(" ")} https://images.unsplash.com https://maps.gstatic.com https://maps.googleapis.com https://*.googleapis.com https://*.ggpht.com https://*.googleusercontent.com`,
     `media-src 'self' ${[...backendHttpOrigins].join(" ")}`,
     `connect-src 'self' ${[...backendHttpOrigins].join(" ")} ${[...backendWebSocketOrigins].join(" ")} https://challenges.cloudflare.com https://api.pwnedpasswords.com https://maps.googleapis.com https://*.googleapis.com`,
     "frame-src 'self' https://maps.google.com https://www.google.com https://challenges.cloudflare.com",

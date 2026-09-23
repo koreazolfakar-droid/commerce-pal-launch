@@ -9,6 +9,16 @@ type CustomerAccountButtonProps = {
   className?: string;
 };
 
+function avatarUrl(user: ReturnType<typeof useCustomerAuth>["user"]) {
+  if (!user) return "";
+  const metadata = user.user_metadata as Record<string, unknown> | undefined;
+  return (
+    (typeof metadata?.["avatar_url"] === "string" && metadata["avatar_url"]) ||
+    (typeof metadata?.["picture"] === "string" && metadata["picture"]) ||
+    ""
+  );
+}
+
 function displayName(user: ReturnType<typeof useCustomerAuth>["user"]) {
   if (!user) return "";
   const metadata = user.user_metadata as Record<string, unknown> | undefined;
@@ -29,6 +39,7 @@ export function CustomerAccountButton({
   const { language } = useLanguage();
   const signedIn = Boolean(user);
   const name = displayName(user);
+  const avatar = avatarUrl(user);
   const label = signedIn
     ? name || (language === "ar" ? "حسابي" : "My account")
     : language === "ar"
@@ -48,7 +59,16 @@ export function CustomerAccountButton({
         )}
       >
         <span className="relative">
-          <UserRound className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden="true" />
+          {avatar ? (
+            <img
+              src={avatar}
+              alt=""
+              referrerPolicy="no-referrer"
+              className="h-4 w-4 rounded-full object-cover"
+            />
+          ) : (
+            <UserRound className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden="true" />
+          )}
           {signedIn ? (
             <span
               className="absolute -end-1 -top-1 h-1.5 w-1.5 rounded-full bg-emerald-500 ring-1 ring-background"
@@ -73,7 +93,16 @@ export function CustomerAccountButton({
         className,
       )}
     >
-      <UserRound className="h-[21px] w-[21px]" strokeWidth={1.9} aria-hidden="true" />
+      {avatar ? (
+        <img
+          src={avatar}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="h-7 w-7 rounded-full object-cover"
+        />
+      ) : (
+        <UserRound className="h-[21px] w-[21px]" strokeWidth={1.9} aria-hidden="true" />
+      )}
       {signedIn ? (
         <span
           className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background"

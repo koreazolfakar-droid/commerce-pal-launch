@@ -43,6 +43,16 @@ function normalizePhone(value: string) {
   return `+961${local}`;
 }
 
+function customerAvatar(user: ReturnType<typeof useCustomerAuth>["user"]) {
+  if (!user) return "";
+  const metadata = user.user_metadata as Record<string, unknown> | undefined;
+  return (
+    (typeof metadata?.["avatar_url"] === "string" && metadata["avatar_url"]) ||
+    (typeof metadata?.["picture"] === "string" && metadata["picture"]) ||
+    ""
+  );
+}
+
 function customerLabel(user: ReturnType<typeof useCustomerAuth>["user"]) {
   if (!user) return "";
   const metadata = user.user_metadata as Record<string, unknown> | undefined;
@@ -55,8 +65,44 @@ function customerLabel(user: ReturnType<typeof useCustomerAuth>["user"]) {
   );
 }
 
+function GoogleMark() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="me-2 h-5 w-5 shrink-0"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="#4285F4"
+        d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-1.99 3.02v2.54h3.23c1.89-1.74 2.98-4.3 2.98-7.41Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 22c2.7 0 4.96-.9 6.62-2.36l-3.23-2.54c-.9.6-2.04.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.05v2.62A10 10 0 0 0 12 22Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M6.39 13.93A6.02 6.02 0 0 1 6.08 12c0-.67.11-1.32.31-1.93V7.45H3.05A10 10 0 0 0 2 12c0 1.61.38 3.14 1.05 4.55l3.34-2.62Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.94c1.47 0 2.79.5 3.83 1.5l2.87-2.87A9.61 9.61 0 0 0 12 2a10 10 0 0 0-8.95 5.45l3.34 2.62C7.18 7.7 9.39 5.94 12 5.94Z"
+      />
+    </svg>
+  );
+}
+
 export function CustomerAuthDialog() {
-  const { authOpen, setAuthOpen, user, loading: sessionLoading, signOut } = useCustomerAuth();
+  const {
+    authOpen,
+    setAuthOpen,
+    user,
+    loading: sessionLoading,
+    oauthError,
+    clearOAuthError,
+    signOut,
+  } = useCustomerAuth();
   const { openAddressBook } = useCustomerAccount();
   const { language, direction } = useLanguage();
   const [step, setStep] = useState<Step>("sign-in");
@@ -93,6 +139,8 @@ export function CustomerAuthDialog() {
             signedIn: "تم تسجيل الدخول",
             manageAccount: "الملف الشخصي وعناوين التوصيل",
             signOut: "تسجيل الخروج",
+            googleCancelled: "تم إلغاء تسجيل الدخول عبر Google.",
+            googleError: "تعذر تسجيل الدخول عبر Google. تحقق من إعدادات الحساب وحاول مجددًا.",
             genericError: "تعذر إكمال العملية الآن. حاول مجددًا.",
             invalidPhone: "أدخل رقم هاتف صحيحًا مع رمز الدولة.",
             invalidCode: "أدخل رمز التحقق المكوّن من 6 أرقام.",
@@ -120,6 +168,8 @@ export function CustomerAuthDialog() {
             signedIn: "Signed in",
             manageAccount: "Profile & delivery addresses",
             signOut: "Sign out",
+            googleCancelled: "Google sign-in was cancelled.",
+            googleError: "Google sign-in could not be completed. Check the account setup and try again.",
             genericError: "We could not complete that action. Please try again.",
             invalidPhone: "Enter a valid phone number with country code.",
             invalidCode: "Enter the 6-digit verification code.",
@@ -143,6 +193,15 @@ export function CustomerAuthDialog() {
       if (!user) setStep("sign-in");
     }
   }, [authOpen, user]);
+
+  useEffect(() => {
+    if (!authOpen || !oauthError) return;
+    setStep("sign-in");
+    setPending(null);
+    setMessage(oauthError === "cancelled" ? copy.googleCancelled : copy.googleError);
+    clearOAuthError();
+  }, [authOpen, clearOAuthError, copy.googleCancelled, copy.googleError, oauthError]);
+
 
   async function continueWithGoogle() {
     if (typeof window === "undefined") return;
@@ -236,6 +295,7 @@ export function CustomerAuthDialog() {
   }
 
   const BackIcon = direction === "rtl" ? ArrowRight : ArrowLeft;
+  const avatar = customerAvatar(user);
 
   return (
     <Dialog open={authOpen} onOpenChange={setAuthOpen}>
@@ -259,8 +319,17 @@ export function CustomerAuthDialog() {
 
               <div className="rounded-2xl border border-border/70 bg-surface/60 p-4">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                  <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                    {avatar ? (
+                      <img
+                        src={avatar}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                    )}
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-foreground">{customerLabel(user)}</p>
@@ -328,12 +397,7 @@ export function CustomerAuthDialog() {
                     {pending === "google" ? (
                       <Loader2 className="me-2 h-4 w-4 animate-spin" aria-hidden="true" />
                     ) : (
-                      <span
-                        className="me-2 grid h-5 w-5 place-items-center rounded-full bg-white text-[13px] font-bold text-[#4285F4] shadow-sm ring-1 ring-border/60"
-                        aria-hidden="true"
-                      >
-                        G
-                      </span>
+                      <GoogleMark />
                     )}
                     {copy.google}
                   </Button>
