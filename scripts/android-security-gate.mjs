@@ -142,7 +142,7 @@ requireText(
 requireText(launcher, 'CANONICAL_HOST = "www.spacecallapp.store"', "Launcher canonical host guard is missing.");
 requireText(launcher, "protected Uri getUrlForIntent(Intent intent)", "Raw VIEW intents must pass through the URL sanitizer.");
 requireText(launcher, '!"https".equalsIgnoreCase(requested.getScheme())', "Launcher must reject non-HTTPS URLs.");
-requireText(launcher, "openSafeBrowserFallback()", "Crash-safe browser fallback is missing.");
+requireText(launcher, "openSafeBrowserFallback()", "Crash-safe browser fallback is missing.");\nrequireText(launcher, "protected boolean shouldLaunchImmediately()", "TWA launch must be explicitly guarded.");\nrequireText(launcher, "return false;", "Automatic unguarded TWA launch must remain disabled.");
 requireText(launcher, "!browserPackages.contains(packageName)", "Fallback must restrict candidates to browser packages.");
 forbidText(launcher, "android.webkit.WebView", "Launcher must not introduce an embedded WebView.");
 forbidText(launcher, "new WebView(", "Launcher must not instantiate an embedded WebView.");
