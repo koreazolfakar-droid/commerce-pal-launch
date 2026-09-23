@@ -1,9 +1,15 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 
-type OrderRow = Tables<"store_orders">;
+type OrderRow = Tables<"store_orders"> & {
+  delivery_type: string | null;
+  delivery_location: string | null;
+  version: number;
+  completed_at: string | null;
+};
 type OrderItemRow = Tables<"store_order_items">;
 type ProductImageRow = Tables<"store_product_images">;
 
@@ -409,7 +415,7 @@ export async function updateDashboardOrderDelivery(
   expectedVersion: number,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_order_delivery", rpcArgs({
+  const { error } = await looseSupabase.rpc("update_store_order_delivery", rpcArgs({
     p_order_id: id,
     p_delivery_type: deliveryType,
     p_shipping_total: deliveryType === "free" ? 0 : shippingTotal,

@@ -1,7 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
-import type { TablesUpdate } from "@/integrations/supabase/types";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 
 const MEDIA_BUCKET = "customer-address-media";
 
@@ -217,8 +217,8 @@ function metadataName(user: User) {
   return candidate.trim();
 }
 
-function mapAddressPatch(patch: AddressPatch): TablesUpdate<"store_customer_addresses"> {
-  const payload: TablesUpdate<"store_customer_addresses"> = {};
+function mapAddressPatch(patch: AddressPatch): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
   if ("nickname" in patch) payload.nickname = patch.nickname || null;
   if ("addressType" in patch) payload.address_type = patch.addressType;
   if ("formattedAddress" in patch) payload.formatted_address = patch.formattedAddress || null;
@@ -246,7 +246,7 @@ function throwError(error: { message?: string } | null, fallback: string) {
 }
 
 export async function ensureCustomerProfile(user: User): Promise<CustomerProfile> {
-  const { data: current, error: readError } = await supabase
+  const { data: current, error: readError } = await looseSupabase
     .from("store_customer_profiles")
     .select("*")
     .eq("user_id", user.id)
@@ -260,7 +260,7 @@ export async function ensureCustomerProfile(user: User): Promise<CustomerProfile
     if (!text(row.phone) && user.phone) patch.phone = user.phone;
     if (!text(row.email) && user.email) patch.email = user.email;
     if (Object.keys(patch).length > 0) {
-      const { data: updated, error } = await supabase
+      const { data: updated, error } = await looseSupabase
         .from("store_customer_profiles")
         .update(patch)
         .eq("user_id", user.id)
@@ -272,7 +272,7 @@ export async function ensureCustomerProfile(user: User): Promise<CustomerProfile
     return toProfile(row, user.id);
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await looseSupabase
     .from("store_customer_profiles")
     .insert({
       user_id: user.id,
@@ -290,12 +290,12 @@ export async function updateCustomerProfile(
   userId: string,
   patch: Partial<Pick<CustomerProfile, "fullName" | "phone" | "email">>,
 ) {
-  const payload: TablesUpdate<"store_customer_profiles"> = {};
+  const payload: Record<string, unknown> = {};
   if ("fullName" in patch) payload.full_name = patch.fullName?.trim() || null;
   if ("phone" in patch) payload.phone = patch.phone?.trim() || null;
   if ("email" in patch) payload.email = patch.email?.trim() || null;
 
-  const { data, error } = await supabase
+  const { data, error } = await looseSupabase
     .from("store_customer_profiles")
     .update(payload)
     .eq("user_id", userId)
@@ -343,7 +343,7 @@ export async function loadMyOrderItems(orderId: string): Promise<CustomerOrderIt
 }
 
 export async function loadCustomerAddresses(userId: string): Promise<CustomerAddress[]> {
-  const { data, error } = await supabase
+  const { data, error } = await looseSupabase
     .from("store_customer_addresses")
     .select("*")
     .eq("user_id", userId)
@@ -358,7 +358,7 @@ export async function loadCustomerAddresses(userId: string): Promise<CustomerAdd
 }
 
 async function loadAddressDraft(userId: string): Promise<CustomerAddress | null> {
-  const { data, error } = await supabase
+  const { data, error } = await looseSupabase
     .from("store_customer_addresses")
     .select("*")
     .eq("user_id", userId)
@@ -380,7 +380,7 @@ async function discardAddressDraft(userId: string, draft: CustomerAddress) {
     throwError(mediaError, "Removing abandoned address media failed");
   }
 
-  const { error } = await supabase
+  const { error } = await looseSupabase
     .from("store_customer_addresses")
     .delete()
     .eq("id", draft.id)
@@ -394,7 +394,7 @@ export async function getOrCreateAddressDraft(userId: string): Promise<CustomerA
   if (existing && !existing.editingAddressId) return existing;
   if (existing) await discardAddressDraft(userId, existing);
 
-  const { data, error } = await supabase
+  const { data, error } = await looseSupabase
     .from("store_customer_addresses")
     .insert({ user_id: userId, is_draft: true, draft_step: 1 })
     .select("*")
@@ -423,7 +423,7 @@ export async function saveAddressDraft(
   addressId: string,
   patch: AddressPatch,
 ): Promise<CustomerAddress> {
-  const { data, error } = await supabase
+  const { data, error } = await looseSupabase
     .from("store_customer_addresses")
     .update(mapAddressPatch(patch))
     .eq("id", addressId)
@@ -456,7 +456,7 @@ export async function deleteAddress(userId: string, address: CustomerAddress) {
     const { error: mediaError } = await supabase.storage.from(MEDIA_BUCKET).remove([path]);
     throwError(mediaError, "Deleting address media failed");
   }
-  const { error } = await supabase
+  const { error } = await looseSupabase
     .from("store_customer_addresses")
     .delete()
     .eq("id", address.id)
