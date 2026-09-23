@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
+  ClipboardList,
   Grid2X2,
   Heart,
   House,
@@ -23,9 +24,9 @@ import "../mobile-bottom-nav.css";
 export const MOBILE_NAV_HEIGHT = "calc(4rem + env(safe-area-inset-bottom, 0px))";
 
 type NavItem = {
-  id: "home" | "categories" | "search" | "cart";
-  to: "/" | "/categories" | "/search" | "/cart";
-  labelKey: "home" | "categoriesTitle" | "searchLabel" | "bag";
+  id: "home" | "orders" | "search" | "cart";
+  to: "/" | "/my-orders" | "/search" | "/cart";
+  labelKey: "home" | "myOrders" | "searchLabel" | "bag";
   icon: LucideIcon;
   matches: (pathname: string) => boolean;
   badge?: "cart";
@@ -43,18 +44,11 @@ const NAV_ITEMS: readonly NavItem[] = [
     matches: (pathname) => pathname === "/" || pathname.startsWith("/product/"),
   },
   {
-    id: "categories",
-    to: "/categories",
-    labelKey: "categoriesTitle",
-    icon: LayoutGrid,
-    matches: (pathname) =>
-      startsWithRoute(pathname, "/categories") ||
-      pathname.startsWith("/category/") ||
-      startsWithRoute(pathname, "/collections") ||
-      startsWithRoute(pathname, "/shop") ||
-      startsWithRoute(pathname, "/brands") ||
-      pathname.startsWith("/brand/") ||
-      startsWithRoute(pathname, "/used-phones"),
+    id: "orders",
+    to: "/my-orders",
+    labelKey: "myOrders",
+    icon: ClipboardList,
+    matches: (pathname) => startsWithRoute(pathname, "/my-orders"),
   },
   {
     id: "search",

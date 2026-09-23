@@ -19,6 +19,7 @@ import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as HelpRouteImport } from './routes/help'
+import { Route as MyOrdersRouteImport } from './routes/my-orders'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ReturnsRouteImport } from './routes/returns'
 import { Route as SearchRouteImport } from './routes/search'
@@ -85,6 +86,11 @@ const FaqRoute = FaqRouteImport.update({
 const HelpRoute = HelpRouteImport.update({
   id: '/help',
   path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyOrdersRoute = MyOrdersRouteImport.update({
+  id: '/my-orders',
+  path: '/my-orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
+  '/my-orders': typeof MyOrdersRoute
   '/privacy': typeof PrivacyRoute
   '/returns': typeof ReturnsRoute
   '/search': typeof SearchRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
+  '/my-orders': typeof MyOrdersRoute
   '/privacy': typeof PrivacyRoute
   '/returns': typeof ReturnsRoute
   '/search': typeof SearchRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
+  '/my-orders': typeof MyOrdersRoute
   '/privacy': typeof PrivacyRoute
   '/returns': typeof ReturnsRoute
   '/search': typeof SearchRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/help'
+    | '/my-orders'
     | '/privacy'
     | '/returns'
     | '/search'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/help'
+    | '/my-orders'
     | '/privacy'
     | '/returns'
     | '/search'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/help'
+    | '/my-orders'
     | '/privacy'
     | '/returns'
     | '/search'
@@ -362,6 +374,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   HelpRoute: typeof HelpRoute
+  MyOrdersRoute: typeof MyOrdersRoute
   PrivacyRoute: typeof PrivacyRoute
   ReturnsRoute: typeof ReturnsRoute
   SearchRoute: typeof SearchRoute
@@ -451,6 +464,13 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-orders': {
+      id: '/my-orders'
+      path: '/my-orders'
+      fullPath: '/my-orders'
+      preLoaderRoute: typeof MyOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -586,6 +606,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   HelpRoute: HelpRoute,
+  MyOrdersRoute: MyOrdersRoute,
   PrivacyRoute: PrivacyRoute,
   ReturnsRoute: ReturnsRoute,
   SearchRoute: SearchRoute,
