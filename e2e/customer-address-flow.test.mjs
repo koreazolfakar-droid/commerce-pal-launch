@@ -85,3 +85,28 @@ test("checkout consumes the selected saved address and immutable map snapshot", 
   assert.match(checkout, /selectedAddress\.longitude/);
   assert.match(orderCheckout, /delivery_location/);
 });
+
+
+test("customer can only read order history through verified auth identity", async () => {
+  const [sql, data, hub, checkout] = await Promise.all([
+    read("supabase/migrations/20260922210000_customer_profile_saved_addresses.sql"),
+    read("src/lib/customerAccount.ts"),
+    read("src/components/customer-account/CustomerAddressHub.tsx"),
+    read("src/components/CheckoutDetailsForm.tsx"),
+  ]);
+
+  assert.match(sql, /get_my_store_orders/);
+  assert.match(sql, /get_my_store_order_items/);
+  assert.match(sql, /from auth\.users/);
+  assert.match(sql, /where id = auth\.uid\(\)/);
+  assert.match(sql, /customer_email/);
+  assert.match(sql, /customer_phone/);
+  assert.doesNotMatch(sql, /store_customer_profiles[\s\S]{0,400}get_my_store_orders/i);
+
+  assert.match(data, /loadMyOrders/);
+  assert.match(data, /loadMyOrderItems/);
+  assert.match(hub, /view === "orders"/);
+  assert.match(hub, /My orders/);
+  assert.match(hub, /View delivery location/);
+  assert.match(checkout, /email: profile\?\.email\?\.trim\(\) \|\| undefined/);
+});
