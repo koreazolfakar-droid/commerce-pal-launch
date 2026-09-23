@@ -683,7 +683,7 @@ function ProductPage() {
         <div className="mx-auto flex min-h-16 max-w-[560px] items-center gap-4 px-4 py-2.5">
           <div className="min-w-0 shrink-0">
             <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-              Price
+              {language === "ar" ? "السعر" : "Price"}
             </span>
             <span className="block truncate text-base font-semibold tabular-nums text-foreground">
               {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
