@@ -4,7 +4,7 @@ import { getDashboardRole } from "@/dashboard/data/catalog";
 
 type OrderRow = Pick<
   Tables<"store_orders">,
-  "id" | "order_number" | "status" | "payment_status" | "customer_name" | "total" | "currency" | "created_at"
+  "id" | "order_number" | "public_order_number" | "status" | "payment_status" | "customer_name" | "total" | "currency" | "created_at"
 >;
 type OrderItemRow = Pick<
   Tables<"store_order_items">,
@@ -143,13 +143,13 @@ export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot
       .select("id", { count: "exact", head: true }),
     supabase
       .from("store_orders")
-      .select("id,order_number,status,payment_status,customer_name,total,currency,created_at")
+      .select("id,order_number,public_order_number,status,payment_status,customer_name,total,currency,created_at")
       .gte("created_at", start.toISOString())
       .lte("created_at", end.toISOString())
       .order("created_at", { ascending: true }),
     supabase
       .from("store_orders")
-      .select("id,order_number,status,payment_status,customer_name,total,currency,created_at")
+      .select("id,order_number,public_order_number,status,payment_status,customer_name,total,currency,created_at")
       .order("created_at", { ascending: false })
       .limit(6),
   ]);
@@ -246,7 +246,7 @@ export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot
     visibleBrandCount: brands.filter((brand) => brand.is_visible).length,
     recentOrders: recentOrders.map((order) => ({
       id: order.id,
-      orderNumber: String(order.order_number),
+      orderNumber: order.public_order_number,
       customer: order.customer_name,
       total: Number(order.total) || 0,
       currency: order.currency,
