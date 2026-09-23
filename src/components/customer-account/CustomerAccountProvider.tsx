@@ -208,7 +208,13 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
     async (address: CustomerAddress) => {
       if (!user) return;
       await deleteAddress(user.id, address);
-      const next = await loadCustomerAddresses(user.id);
+
+      let next = await loadCustomerAddresses(user.id);
+      if (address.isDefault && next.length > 0 && !next.some((item) => item.isDefault)) {
+        await setDefaultAddress(next[0].id);
+        next = await loadCustomerAddresses(user.id);
+      }
+
       setAddresses(next);
       chooseSelected(next, user.id);
     },
