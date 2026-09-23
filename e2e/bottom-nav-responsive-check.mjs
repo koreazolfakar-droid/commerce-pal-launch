@@ -11,7 +11,7 @@ const cases = [
   { width: 430, height: 932 },
   { width: 768, height: 1024 },
 ];
-const expectedIds = ["home", "categories", "search", "cart"];
+const expectedIds = ["home", "orders", "search", "cart"];
 
 const browser = await chromium.launch({ headless: true });
 
@@ -123,16 +123,16 @@ try {
   }
 
   const routingPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await routingPage.goto(`${baseURL}/categories`, { waitUntil: "load" });
+  await routingPage.goto(`${baseURL}/my-orders`, { waitUntil: "load" });
   await waitForNav(routingPage);
-  await assertActive(routingPage, "categories");
+  await assertActive(routingPage, "orders");
   await routingPage.reload({ waitUntil: "load" });
-  await assertActive(routingPage, "categories");
+  await assertActive(routingPage, "orders");
 
   await routingPage.goto(`${baseURL}/search`, { waitUntil: "load" });
   await assertActive(routingPage, "search");
   await routingPage.goBack({ waitUntil: "load" });
-  await assertActive(routingPage, "categories");
+  await assertActive(routingPage, "orders");
 
   await routingPage.goto(`${baseURL}/cart`, { waitUntil: "load" });
   await assertActive(routingPage, "cart");
