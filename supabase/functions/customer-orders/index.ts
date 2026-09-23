@@ -88,6 +88,7 @@ function publicOrder(row: Record<string, unknown>) {
   return {
     order_id: row.id,
     order_number: row.order_number,
+    public_order_number: row.public_order_number,
     status: row.status,
     payment_status: row.payment_status,
     payment_method: row.payment_method,
@@ -234,7 +235,7 @@ Deno.serve(async (req: Request) => {
   );
 
   const columns =
-    "id,order_number,status,payment_status,payment_method,currency,subtotal,shipping_total,discount_total,total,delivery_address,city,delivery_location,created_at,completed_at,customer_user_id,customer_email,customer_phone";
+    "id,order_number,public_order_number,status,payment_status,payment_method,currency,subtotal,shipping_total,discount_total,total,delivery_address,city,delivery_location,created_at,completed_at,customer_user_id,customer_email,customer_phone";
 
   const results = new Map<string, Record<string, unknown>>();
   const collect = (rows: unknown[] | null) => {
