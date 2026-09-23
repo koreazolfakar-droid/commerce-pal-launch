@@ -183,6 +183,7 @@ export function CustomerAddressHub() {
   const saveTimer = useRef<number | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const discardRecordingRef = useRef(false);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const recordingStopTimerRef = useRef<number | null>(null);
@@ -630,9 +631,22 @@ export function CustomerAddressHub() {
     recordingStopTimerRef.current = null;
     recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
     recordingStreamRef.current = null;
+    mediaRecorderRef.current = null;
     setRecording(false);
     setRecordingSeconds(0);
   };
+
+  useEffect(() => {
+    if (addressBookOpen && view === "details") return;
+
+    if (mediaRecorderRef.current?.state === "recording") {
+      discardRecordingRef.current = true;
+      mediaRecorderRef.current.stop();
+      return;
+    }
+
+    cleanupRecording();
+  }, [addressBookOpen, view]);
 
   const startVoiceRecording = async () => {
     if (recording) {
@@ -672,9 +686,11 @@ export function CustomerAddressHub() {
         "stop",
         () => {
           const chunks = audioChunksRef.current;
+          const shouldDiscard = discardRecordingRef.current;
           const recordedMimeType = recorder.mimeType || preferredMimeType || "audio/webm";
+          discardRecordingRef.current = false;
           cleanupRecording();
-          if (!chunks.length) return;
+          if (shouldDiscard || !chunks.length) return;
           const blob = new Blob(chunks, { type: recordedMimeType });
           const extension = recordedMimeType.includes("mp4")
             ? "m4a"
@@ -702,6 +718,7 @@ export function CustomerAddressHub() {
         { once: true },
       );
 
+      discardRecordingRef.current = false;
       recorder.start(250);
       setRecording(true);
       setRecordingSeconds(0);
