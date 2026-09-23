@@ -1163,6 +1163,7 @@ export type Database = {
           order_number: number
           payment_method: string
           payment_status: string
+          public_order_number: string
           shipping_total: number
           source: string
           status: string
@@ -1192,6 +1193,7 @@ export type Database = {
           order_number?: never
           payment_method?: string
           payment_status?: string
+          public_order_number?: string
           shipping_total?: number
           source?: string
           status?: string
@@ -1221,6 +1223,7 @@ export type Database = {
           order_number?: never
           payment_method?: string
           payment_status?: string
+          public_order_number?: string
           shipping_total?: number
           source?: string
           status?: string
@@ -2592,6 +2595,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      generate_store_order_public_number: { Args: never; Returns: string }
       get_store_customer_orders: {
         Args: { p_customer_id: string; p_limit?: number }
         Returns: {
@@ -2615,6 +2619,7 @@ export type Database = {
           order_number: number
           payment_method: string
           payment_status: string
+          public_order_number: string
           shipping_total: number
           source: string
           status: string
@@ -3195,6 +3200,7 @@ export type Database = {
           order_number: number
           payment_method: string
           payment_status: string
+          public_order_number: string
           shipping_total: number
           source: string
           status: string
@@ -3237,6 +3243,7 @@ export type Database = {
           order_number: number
           payment_method: string
           payment_status: string
+          public_order_number: string
           shipping_total: number
           source: string
           status: string
@@ -3279,6 +3286,7 @@ export type Database = {
           order_number: number
           payment_method: string
           payment_status: string
+          public_order_number: string
           shipping_total: number
           source: string
           status: string
