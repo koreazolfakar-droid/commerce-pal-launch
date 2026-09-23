@@ -33,6 +33,7 @@ const STATUS_TABS: Array<"all" | DashboardOrderStatus> = [
   "new",
   "confirmed",
   "processing",
+  "ready",
   "out_for_delivery",
   "delivered",
   "done",
@@ -44,7 +45,7 @@ function StatusBadge({ status }: { status: string }) {
   const tone =
     normalized === "delivered" || normalized === "done" || normalized === "paid"
       ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
-      : normalized === "processing" || normalized === "confirmed"
+      : normalized === "processing" || normalized === "confirmed" || normalized === "ready"
         ? "bg-blue-50 text-blue-700 ring-blue-100"
         : normalized === "out for delivery"
           ? "bg-violet-50 text-violet-700 ring-violet-100"
@@ -223,7 +224,7 @@ export default function OrdersPage() {
 
   const stats = result?.stats;
   const inProgress = useMemo(
-    () => (stats ? stats.confirmed + stats.processing : 0),
+    () => (stats ? stats.confirmed + stats.processing + stats.ready : 0),
     [stats],
   );
 
@@ -307,7 +308,7 @@ export default function OrdersPage() {
 
       <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
         <StatCard label="New" value={stats?.new ?? 0} detail="Needs review" icon={Clock3} />
-        <StatCard label="In progress" value={inProgress} detail="Confirmed + processing" icon={PackageCheck} />
+        <StatCard label="In progress" value={inProgress} detail="Confirmed + preparing + ready" icon={PackageCheck} />
         <StatCard
           label="Out for delivery"
           value={stats?.outForDelivery ?? 0}

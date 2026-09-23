@@ -202,7 +202,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     );
   }
 
-  const canCancel = ["new", "confirmed", "processing", "out_for_delivery"].includes(order.status);
+  const canCancel = ["new", "confirmed", "processing", "ready", "out_for_delivery"].includes(order.status);
   const canEditDelivery =
     order.paymentStatus === "unpaid" &&
     !["delivered", "done", "cancelled"].includes(order.status);
@@ -273,11 +273,13 @@ export default function OrderDetailPage({ id }: { id: string }) {
                 ? "Confirm order"
                 : nextStatus === "processing"
                   ? "Start processing"
-                  : nextStatus === "out_for_delivery"
-                    ? "Out for delivery"
-                    : nextStatus === "delivered"
-                      ? "Mark delivered"
-                      : "Mark DONE"}
+                  : nextStatus === "ready"
+                    ? "Mark ready"
+                    : nextStatus === "out_for_delivery"
+                      ? "Out for delivery"
+                      : nextStatus === "delivered"
+                        ? "Mark delivered"
+                        : "Mark DONE"}
             </button>
           ) : null}
         </div>
@@ -340,8 +342,8 @@ export default function OrderDetailPage({ id }: { id: string }) {
 
           <Panel title="Order status" subtitle="Validated status progression">
             <div className="grid gap-3 px-5 py-5 sm:grid-cols-3">
-              {(["new", "confirmed", "processing", "out_for_delivery", "delivered", "done"] as const).map((step) => {
-                const flow = ["new", "confirmed", "processing", "out_for_delivery", "delivered", "done"] as const;
+              {(["new", "confirmed", "processing", "ready", "out_for_delivery", "delivered", "done"] as const).map((step) => {
+                const flow = ["new", "confirmed", "processing", "ready", "out_for_delivery", "delivered", "done"] as const;
                 const orderIndex = flow.indexOf(order.status as (typeof flow)[number]);
                 const stepIndex = flow.indexOf(step);
                 const reached = order.status !== "cancelled" && stepIndex <= orderIndex;

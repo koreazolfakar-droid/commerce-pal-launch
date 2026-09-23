@@ -18,6 +18,7 @@ export type DashboardOrderStatus =
   | "new"
   | "confirmed"
   | "processing"
+  | "ready"
   | "out_for_delivery"
   | "delivered"
   | "done"
@@ -102,6 +103,7 @@ export type DashboardOrderStats = {
   new: number;
   confirmed: number;
   processing: number;
+  ready: number;
   outForDelivery: number;
   delivered: number;
   done: number;
@@ -131,6 +133,7 @@ function statusFromRow(value: string): DashboardOrderStatus {
     value === "new" ||
     value === "confirmed" ||
     value === "processing" ||
+    value === "ready" ||
     value === "out_for_delivery" ||
     value === "delivered" ||
     value === "done" ||
@@ -162,18 +165,19 @@ async function countOrders(status?: DashboardOrderStatus) {
 }
 
 async function loadOrderStats(): Promise<DashboardOrderStats> {
-  const [all, fresh, confirmed, processing, outForDelivery, delivered, done, cancelled] =
+  const [all, fresh, confirmed, processing, ready, outForDelivery, delivered, done, cancelled] =
     await Promise.all([
       countOrders(),
       countOrders("new"),
       countOrders("confirmed"),
       countOrders("processing"),
+      countOrders("ready"),
       countOrders("out_for_delivery"),
       countOrders("delivered"),
       countOrders("done"),
       countOrders("cancelled"),
     ]);
-  return { all, new: fresh, confirmed, processing, outForDelivery, delivered, done, cancelled };
+  return { all, new: fresh, confirmed, processing, ready, outForDelivery, delivered, done, cancelled };
 }
 
 export async function listDashboardOrders(input?: {
@@ -436,7 +440,8 @@ export async function updateDashboardOrderDelivery(
 export function nextOrderStatus(status: DashboardOrderStatus): DashboardOrderStatus | null {
   if (status === "new") return "confirmed";
   if (status === "confirmed") return "processing";
-  if (status === "processing") return "out_for_delivery";
+  if (status === "processing") return "ready";
+  if (status === "ready") return "out_for_delivery";
   if (status === "out_for_delivery") return "delivered";
   if (status === "delivered") return "done";
   return null;

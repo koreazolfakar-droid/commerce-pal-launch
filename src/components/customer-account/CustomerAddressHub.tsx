@@ -141,6 +141,7 @@ function orderStatusLabel(status: string, ar: boolean) {
     new: "جديد",
     confirmed: "تم التأكيد",
     processing: "قيد التجهيز",
+    ready: "جاهز",
     out_for_delivery: "خرج للتوصيل",
     delivered: "تم التوصيل",
     done: "مكتمل",

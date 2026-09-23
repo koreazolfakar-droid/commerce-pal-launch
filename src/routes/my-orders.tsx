@@ -2,7 +2,7 @@ import { useLanguage } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ChevronDown, PackageOpen, Receipt } from "lucide-react";
+import { Check, ChevronDown, Circle, Flag, PackageCheck, PackageOpen, Receipt, Truck, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { StoreLayout } from "@/components/StoreLayout";
@@ -69,11 +69,101 @@ function statusTone(status: string) {
   if (value.includes("done") || value.includes("complete") || value.includes("deliver"))
     return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
   if (value.includes("cancel")) return "bg-rose-500/10 text-rose-700 dark:text-rose-300";
-  if (value.includes("ship") || value.includes("transit"))
+  if (value.includes("ready") || value.includes("ship") || value.includes("transit"))
     return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
   if (value.includes("pending") || value.includes("process") || value.includes("paid"))
     return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
   return "bg-muted text-muted-foreground";
+}
+
+const CUSTOMER_STAGES = ["received", "preparing", "ready", "on_the_way", "delivered"] as const;
+
+function customerStageIndex(status: string) {
+  if (status === "processing") return 1;
+  if (status === "ready") return 2;
+  if (status === "out_for_delivery") return 3;
+  if (status === "delivered" || status === "done") return 4;
+  return 0;
+}
+
+function customerStatusLabel(status: string, ar: boolean) {
+  const labels: Record<string, [string, string]> = {
+    new: ["Received", "تم استلام الطلب"],
+    confirmed: ["Received", "تم استلام الطلب"],
+    processing: ["Preparing", "قيد التحضير"],
+    ready: ["Ready", "جاهز"],
+    out_for_delivery: ["On the way", "في الطريق"],
+    delivered: ["Delivered", "تم التوصيل"],
+    done: ["Delivered", "تم التوصيل"],
+    cancelled: ["Cancelled", "ملغي"],
+  };
+  const label = labels[status];
+  return label ? label[ar ? 1 : 0] : status.replaceAll("_", " ");
+}
+
+function OrderProgress({ status, ar }: { status: string; ar: boolean }) {
+  if (status === "cancelled") {
+    return (
+      <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 px-3 py-2.5 text-sm font-semibold text-rose-700 dark:text-rose-300">
+        <XCircle className="h-4 w-4" aria-hidden />
+        <span>{ar ? "تم إلغاء الطلب" : "This order was cancelled"}</span>
+      </div>
+    );
+  }
+
+  const current = customerStageIndex(status);
+  const labels = ar
+    ? ["تم الاستلام", "قيد التحضير", "جاهز", "في الطريق", "تم التوصيل"]
+    : ["Received", "Preparing", "Ready", "On the way", "Delivered"];
+  const icons = [Check, PackageCheck, PackageCheck, Truck, Flag];
+
+  return (
+    <div className="mt-5 pb-1">
+      <div className="relative px-0.5">
+        <div className="absolute left-[10%] right-[10%] top-4 h-0.5 rounded-full bg-border" aria-hidden />
+        <div
+          className="absolute left-[10%] top-4 h-0.5 rounded-full bg-emerald-500 transition-[width] duration-300"
+          style={{ width: `${current * 20}%` }}
+          aria-hidden
+        />
+        <div className="relative grid grid-cols-5">
+          {CUSTOMER_STAGES.map((stage, index) => {
+            const complete = index < current || (current === 4 && index === 4);
+            const active = index === current && current !== 4;
+            const Icon = complete ? Check : icons[index] ?? Circle;
+            return (
+              <div key={stage} className="flex min-w-0 flex-col items-center text-center">
+                <span
+                  className={cn(
+                    "grid h-8 w-8 place-items-center rounded-full border-2 bg-card transition-colors",
+                    complete && "border-emerald-500 bg-emerald-500 text-white",
+                    active &&
+                      (index === 1
+                        ? "border-amber-500 bg-amber-500 text-white ring-4 ring-amber-500/10"
+                        : "border-primary bg-primary text-primary-foreground ring-4 ring-primary/10"),
+                    !complete && !active && "border-border bg-muted text-muted-foreground",
+                  )}
+                >
+                  <Icon className="h-4 w-4" aria-hidden />
+                </span>
+                <span
+                  className={cn(
+                    "mt-2 max-w-[70px] text-[9px] font-semibold leading-tight sm:max-w-[84px] sm:text-[10px]",
+                    complete && "text-emerald-700 dark:text-emerald-300",
+                    active &&
+                      (index === 1 ? "text-amber-600 dark:text-amber-300" : "text-primary"),
+                    !complete && !active && "text-muted-foreground",
+                  )}
+                >
+                  {labels[index]}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function MyOrdersPage() {
@@ -128,6 +218,9 @@ function OrdersList() {
     queryKey: ["my-orders"],
     queryFn: () => loadMyOrders(50),
     retry: 1,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   if (isLoading) {
@@ -170,7 +263,8 @@ function OrdersList() {
 }
 
 function OrderCard({ order }: { order: CustomerOrderSummary }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const ar = language === "ar";
   const [expanded, setExpanded] = useState(false);
 
   const itemsQuery = useQuery({
@@ -181,7 +275,7 @@ function OrderCard({ order }: { order: CustomerOrderSummary }) {
   });
 
   return (
-    <li className="overflow-hidden rounded-xl border bg-card shadow-card">
+    <li className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card">
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -194,7 +288,7 @@ function OrderCard({ order }: { order: CustomerOrderSummary }) {
                 statusTone(order.status),
               )}
             >
-              {order.status || "—"}
+              {customerStatusLabel(order.status, ar)}
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -207,6 +301,10 @@ function OrderCard({ order }: { order: CustomerOrderSummary }) {
           </p>
           <p className="text-base font-bold">{formatMoney(order.total, order.currency)}</p>
         </div>
+      </div>
+
+      <div className="px-4 pb-4">
+        <OrderProgress status={order.status} ar={ar} />
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/60 px-4 py-2.5 text-xs text-muted-foreground">
