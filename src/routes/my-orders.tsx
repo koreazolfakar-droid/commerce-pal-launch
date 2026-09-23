@@ -2,6 +2,7 @@ import { useLanguage } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronRight, PackageOpen, Receipt, XCircle } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { StoreLayout } from "@/components/StoreLayout";
@@ -184,6 +185,12 @@ function isPastOrder(status: string) {
   return status === "delivered" || status === "done" || status === "cancelled";
 }
 
+function isDeliveredOrder(status: string) {
+  return status === "delivered" || status === "done";
+}
+
+type OrderFilter = "all" | "active" | "delivered" | "cancelled";
+
 function MyOrdersPage() {
   const { t } = useLanguage();
   const { user, loading: authLoading, openAuth } = useCustomerAuth();
@@ -233,6 +240,7 @@ function MyOrdersPage() {
 function OrdersList() {
   const { t, language } = useLanguage();
   const ar = language === "ar";
+  const [filter, setFilter] = useState<OrderFilter>("all");
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["my-orders"],
     queryFn: () => loadMyOrders(50),
@@ -274,23 +282,115 @@ function OrdersList() {
 
   const activeOrders = orders.filter((order) => !isPastOrder(order.status));
   const pastOrders = orders.filter((order) => isPastOrder(order.status));
+  const deliveredOrders = orders.filter((order) => isDeliveredOrder(order.status));
+  const cancelledOrders = orders.filter((order) => order.status === "cancelled");
+
+  const visibleOrders =
+    filter === "active"
+      ? activeOrders
+      : filter === "delivered"
+        ? deliveredOrders
+        : filter === "cancelled"
+          ? cancelledOrders
+          : orders;
 
   return (
-    <div className="space-y-7">
-      {activeOrders.length ? (
-        <OrderSection
-          title={ar ? "الطلبات الحالية" : "Active orders"}
-          orders={activeOrders}
-          ar={ar}
-        />
-      ) : null}
-      {pastOrders.length ? (
-        <OrderSection
-          title={ar ? "الطلبات السابقة" : "Past orders"}
-          orders={pastOrders}
-          ar={ar}
-        />
-      ) : null}
+    <div>
+      <OrderStatusFilters filter={filter} onChange={setFilter} ar={ar} />
+
+      {visibleOrders.length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-dashed border-border/70 bg-surface/50 px-5 py-10 text-center">
+          <PackageOpen aria-hidden className="mx-auto h-10 w-10 text-muted-foreground/30" />
+          <p className="mt-3 text-sm font-medium text-foreground">
+            {ar ? "لا توجد طلبات بهذه الحالة" : "No orders with this status"}
+          </p>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-7">
+          {filter === "all" ? (
+            <>
+              {activeOrders.length ? (
+                <OrderSection
+                  title={ar ? "الطلبات الحالية" : "Active orders"}
+                  orders={activeOrders}
+                  ar={ar}
+                />
+              ) : null}
+              {pastOrders.length ? (
+                <OrderSection
+                  title={ar ? "الطلبات السابقة" : "Past orders"}
+                  orders={pastOrders}
+                  ar={ar}
+                />
+              ) : null}
+            </>
+          ) : filter === "active" ? (
+            <OrderSection
+              title={ar ? "الطلبات الحالية" : "Active orders"}
+              orders={activeOrders}
+              ar={ar}
+            />
+          ) : filter === "delivered" ? (
+            <OrderSection
+              title={ar ? "الطلبات المستلمة" : "Delivered orders"}
+              orders={deliveredOrders}
+              ar={ar}
+            />
+          ) : (
+            <OrderSection
+              title={ar ? "الطلبات الملغاة" : "Cancelled orders"}
+              orders={cancelledOrders}
+              ar={ar}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrderStatusFilters({
+  filter,
+  onChange,
+  ar,
+}: {
+  filter: OrderFilter;
+  onChange: (filter: OrderFilter) => void;
+  ar: boolean;
+}) {
+  const items: Array<{ value: OrderFilter; label: string }> = [
+    { value: "all", label: ar ? "الكل" : "All" },
+    { value: "active", label: ar ? "الحالية" : "Active" },
+    { value: "delivered", label: ar ? "تم التوصيل" : "Delivered" },
+    { value: "cancelled", label: ar ? "الملغاة" : "Cancelled" },
+  ];
+
+  return (
+    <div
+      role="tablist"
+      aria-label={ar ? "تصفية الطلبات حسب الحالة" : "Filter orders by status"}
+      className="scroll-rail -mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
+    >
+      {items.map((item) => {
+        const active = filter === item.value;
+        return (
+          <button
+            key={item.value}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(item.value)}
+            className={cn(
+              "press flex h-8 shrink-0 items-center rounded-full border px-3 text-[12px] font-semibold transition-colors",
+              active
+                ? "border-primary bg-primary text-primary-foreground"
+                : "bg-surface text-muted-foreground hover:bg-accent",
+            )}
+          >
+            {item.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
