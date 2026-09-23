@@ -20,6 +20,11 @@ export type CustomerProfile = {
   email: string;
 };
 
+export type CustomerOrderStatusEvent = {
+  status: string;
+  createdAt: string;
+};
+
 export type CustomerOrderSummary = {
   orderId: string;
   orderNumber: number;
@@ -37,6 +42,7 @@ export type CustomerOrderSummary = {
   deliveryLocation: { latitude?: number; longitude?: number } | null;
   createdAt: string;
   completedAt: string;
+  statusHistory: CustomerOrderStatusEvent[];
 };
 
 export type CustomerOrderItem = {
@@ -189,6 +195,18 @@ function toOrder(row: Record<string, unknown>): CustomerOrderSummary {
     deliveryLocation,
     createdAt: text(row.created_at),
     completedAt: text(row.completed_at),
+    statusHistory: Array.isArray(row.status_history)
+      ? row.status_history
+          .filter(
+            (entry): entry is Record<string, unknown> =>
+              Boolean(entry) && typeof entry === "object" && !Array.isArray(entry),
+          )
+          .map((entry) => ({
+            status: text(entry.status),
+            createdAt: text(entry.created_at),
+          }))
+          .filter((entry) => Boolean(entry.status && entry.createdAt))
+      : [],
   };
 }
 
