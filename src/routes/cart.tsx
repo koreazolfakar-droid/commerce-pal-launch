@@ -378,19 +378,14 @@ function CartPage() {
               </aside>
             </div>
 
-            <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 border-t bg-background/95 px-3 py-2.5 shadow-float backdrop-blur supports-[backdrop-filter]:bg-background/88 lg:hidden">
-              <div className="mx-auto flex w-full max-w-[72rem] items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-semibold text-muted-foreground">
-                    {copy.finalTotal}
-                  </p>
-                  <p className="truncate text-lg font-black tracking-[-0.02em] tabular-nums text-primary">
-                    {formatPrice(grandTotal, currency)}
-                  </p>
-                </div>
+            <div
+              data-testid="mobile-cart-checkout-bar"
+              className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 border-t bg-background/95 px-3 py-2.5 shadow-float backdrop-blur supports-[backdrop-filter]:bg-background/88 lg:hidden"
+            >
+              <div className="mx-auto w-full max-w-md">
                 <Button
                   asChild
-                  className="min-h-12 shrink-0 rounded-xl px-5 text-sm font-extrabold"
+                  className="min-h-12 w-full rounded-xl px-5 text-sm font-extrabold"
                 >
                   <Link to="/checkout">
                     {copy.continueCheckout}
