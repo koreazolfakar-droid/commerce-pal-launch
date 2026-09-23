@@ -425,6 +425,28 @@ function extensionFromFile(file: File) {
   return "bin";
 }
 
+export async function createAddressMediaUrls(paths: string[]) {
+  const uniquePaths = [...new Set(paths.filter(Boolean))];
+  if (!uniquePaths.length) return {} as Record<string, string>;
+
+  const { data, error } = await supabase.storage
+    .from(MEDIA_BUCKET)
+    .createSignedUrls(uniquePaths, 60 * 60);
+  throwError(error, "Loading address media failed");
+
+  const urls: Record<string, string> = {};
+  for (const item of data ?? []) {
+    if (item.path && item.signedUrl) urls[item.path] = item.signedUrl;
+  }
+  return urls;
+}
+
+export async function removeAddressMedia(path: string) {
+  if (!path) return;
+  const { error } = await supabase.storage.from(MEDIA_BUCKET).remove([path]);
+  throwError(error, "Removing address media failed");
+}
+
 export async function uploadAddressMedia(args: {
   userId: string;
   addressId: string;
