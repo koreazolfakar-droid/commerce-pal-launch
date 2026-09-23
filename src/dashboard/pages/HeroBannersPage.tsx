@@ -810,7 +810,7 @@ export default function HeroBannersPage() {
                     <button onClick={() => void remove()} disabled={busy} className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600 disabled:opacity-40"><Trash2 className="size-3.5" /> Delete</button>
                   </>
                 ) : null}
-                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || (!formDirty && Boolean(selected))} className="flex h-9 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40">
+                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || !formDirty} className="flex h-9 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40">
                   {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
                   {selected ? "Save changes" : "Create slide"}
                 </button>
