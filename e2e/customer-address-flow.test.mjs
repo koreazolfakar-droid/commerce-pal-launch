@@ -13,6 +13,8 @@ test("customer address ownership is protected by RLS and private media paths", a
   assert.match(sql, /store_customer_addresses_one_default_uidx/);
   assert.match(sql, /store_customer_addresses_one_draft_uidx/);
   assert.match(sql, /finalize_customer_address/);
+  assert.match(sql, /start_customer_address_edit/);
+  assert.match(sql, /editing_address_id/);
   assert.match(sql, /address location required/);
   assert.match(sql, /customer-address-media/);
   assert.match(sql, /storage\.foldername\(name\)/);
@@ -108,5 +110,6 @@ test("customer can only read order history through verified auth identity", asyn
   assert.match(hub, /view === "orders"/);
   assert.match(hub, /My orders/);
   assert.match(hub, /View delivery location/);
-  assert.match(checkout, /email: profile\?\.email\?\.trim\(\) \|\| undefined/);
+  assert.match(checkout, /email: user\?\.email\?\.trim\(\) \|\| undefined/);
+  assert.match(sql, /customer_user_id = auth\.uid\(\)/);
 });
