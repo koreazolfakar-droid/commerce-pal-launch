@@ -140,6 +140,7 @@ requireText(
 );
 
 requireText(launcher, 'CANONICAL_HOST = "www.spacecallapp.store"', "Launcher canonical host guard is missing.");
+requireText(launcher, "protected Uri getUrlForIntent(Intent intent)", "Raw VIEW intents must pass through the URL sanitizer.");
 requireText(launcher, '!"https".equalsIgnoreCase(requested.getScheme())', "Launcher must reject non-HTTPS URLs.");
 requireText(launcher, "openSafeBrowserFallback()", "Crash-safe browser fallback is missing.");
 requireText(launcher, "!browserPackages.contains(packageName)", "Fallback must restrict candidates to browser packages.");
