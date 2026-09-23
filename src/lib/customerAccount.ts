@@ -70,6 +70,7 @@ export type CustomerAddress = {
   placeId: string;
   photoPaths: string[];
   voiceNotePath: string;
+  editingAddressId: string;
   isDefault: boolean;
   isDraft: boolean;
   draftStep: number;
@@ -138,6 +139,7 @@ function toAddress(row: Record<string, unknown>): CustomerAddress {
       ? row.photo_paths.filter((value): value is string => typeof value === "string")
       : [],
     voiceNotePath: text(row.voice_note_path),
+    editingAddressId: text(row.editing_address_id),
     isDefault: row.is_default === true,
     isDraft: row.is_draft !== false,
     draftStep:
@@ -356,6 +358,14 @@ export async function getOrCreateAddressDraft(userId: string): Promise<CustomerA
     .select("*")
     .single();
   throwError(error, "Creating address draft failed");
+  return toAddress(data as Record<string, unknown>);
+}
+
+export async function startAddressEdit(addressId: string): Promise<CustomerAddress> {
+  const { data, error } = await customerDb.rpc("start_customer_address_edit", {
+    p_address_id: addressId,
+  });
+  throwError(error, "Starting address edit failed");
   return toAddress(data as Record<string, unknown>);
 }
 
