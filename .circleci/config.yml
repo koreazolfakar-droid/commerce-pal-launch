@@ -127,7 +127,8 @@ jobs:
           at: .
       - run:
           name: Google map ESLint rules probe
-          command: ./node_modules/.bin/eslint src/components/customer-account/GoogleDeliveryMap.tsx --fix-dry-run --rule 'prettier/prettier: off'
+          command: |
+            ./node_modules/.bin/eslint src/components/customer-account/GoogleDeliveryMap.tsx --fix-dry-run --rule 'prettier/prettier: off'
 
   ui-browser:
     parameters:
