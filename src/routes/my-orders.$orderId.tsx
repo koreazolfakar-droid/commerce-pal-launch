@@ -9,7 +9,6 @@ import { useCustomerAuth } from "@/components/customer-auth/CustomerAuthProvider
 import {
   loadMyOrderItems,
   loadMyOrders,
-  type CustomerOrderSummary,
 } from "@/lib/customerAccount";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { cn } from "@/lib/utils";
