@@ -1403,7 +1403,7 @@ export function CustomerAddressHub() {
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center justify-between gap-3">
                             <span className="truncate text-sm font-extrabold">
-                              {copy.orderNumber} #{order.orderNumber}
+                              {copy.orderNumber} #{order.publicOrderNumber}
                             </span>
                             <span className="shrink-0 text-sm font-extrabold">
                               {new Intl.NumberFormat(ar ? "ar-LB" : "en-US", {
