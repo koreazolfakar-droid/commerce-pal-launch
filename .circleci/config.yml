@@ -292,6 +292,158 @@ jobs:
             FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*' -print | sort | sed -n '33,80p')
             node --test $FILES
 
+  diagnose-dashboard-a1:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Dashboard tests A1
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name 'dashboard-*.test.mjs' -print | sort | sed -n '1,8p')
+            node --test $FILES
+
+  diagnose-dashboard-a2:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Dashboard tests A2
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name 'dashboard-*.test.mjs' -print | sort | sed -n '9,16p')
+            node --test $FILES
+
+  diagnose-storefront-a1:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Storefront tests A1
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*' -print | sort | sed -n '1,8p')
+            node --test $FILES
+
+  diagnose-storefront-a2:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Storefront tests A2
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*' -print | sort | sed -n '9,16p')
+            node --test $FILES
+
+  diagnose-storefront-b1:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Storefront tests B1
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*' -print | sort | sed -n '17,24p')
+            node --test $FILES
+
+  diagnose-storefront-b2:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Storefront tests B2
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*' -print | sort | sed -n '25,32p')
+            node --test $FILES
+
+  diagnose-storefront-c1:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Storefront tests C1
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*' -print | sort | sed -n '33,36p')
+            node --test $FILES
+
+  diagnose-storefront-c2:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Storefront tests C2
+          command: |
+            FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*' -print | sort | sed -n '37,80p')
+            node --test $FILES
+
   diagnose-build:
     docker:
       - image: cimg/node:lts
@@ -459,6 +611,14 @@ workflows:
       - diagnose-storefront-a
       - diagnose-storefront-b
       - diagnose-storefront-c
+      - diagnose-dashboard-a1
+      - diagnose-dashboard-a2
+      - diagnose-storefront-a1
+      - diagnose-storefront-a2
+      - diagnose-storefront-b1
+      - diagnose-storefront-b2
+      - diagnose-storefront-c1
+      - diagnose-storefront-c2
       - diagnose-build
       - diagnose-ssr
       - ui-browser-deps:
