@@ -411,7 +411,7 @@ export async function startAddressEdit(
   if (existing?.editingAddressId === addressId) return existing;
   if (existing) await discardAddressDraft(userId, existing);
 
-  const { data, error } = await supabase.rpc("start_customer_address_edit", {
+  const { data, error } = await looseSupabase.rpc("start_customer_address_edit", {
     p_address_id: addressId,
   });
   throwError(error, "Starting address edit failed");
@@ -436,7 +436,7 @@ export async function saveAddressDraft(
 }
 
 export async function finalizeAddress(addressId: string): Promise<CustomerAddress> {
-  const { data, error } = await supabase.rpc("finalize_customer_address", {
+  const { data, error } = await looseSupabase.rpc("finalize_customer_address", {
     p_address_id: addressId,
   });
   throwError(error, "Finalizing address failed");
@@ -444,7 +444,7 @@ export async function finalizeAddress(addressId: string): Promise<CustomerAddres
 }
 
 export async function setDefaultAddress(addressId: string): Promise<CustomerAddress> {
-  const { data, error } = await supabase.rpc("set_customer_default_address", {
+  const { data, error } = await looseSupabase.rpc("set_customer_default_address", {
     p_address_id: addressId,
   });
   throwError(error, "Updating default address failed");
