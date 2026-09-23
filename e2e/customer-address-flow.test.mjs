@@ -113,3 +113,15 @@ test("customer can only read order history through verified auth identity", asyn
   assert.match(checkout, /email: user\?\.email\?\.trim\(\) \|\| undefined/);
   assert.match(sql, /customer_user_id = auth\.uid\(\)/);
 });
+
+
+test("authenticated checkouts are linked server-side and guest checkout remains supported", async () => {
+  const edge = await read("supabase/functions/create-order/index.ts");
+
+  assert.match(edge, /authenticatedBearerToken/);
+  assert.match(edge, /db\.auth\.getUser\(userToken\)/);
+  assert.match(edge, /customer_user_id: accountUserId/);
+  assert.match(edge, /\.is\("customer_user_id", null\)/);
+  assert.match(edge, /if \(userToken\)/);
+  assert.match(edge, /const userToken = authenticatedBearerToken\(req\)/);
+});
