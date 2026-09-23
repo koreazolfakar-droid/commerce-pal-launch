@@ -84,7 +84,10 @@ function orderIdentityMatches(
   return Boolean(userPhone && orderPhone === userPhone);
 }
 
-function publicOrder(row: Record<string, unknown>) {
+function publicOrder(
+  row: Record<string, unknown>,
+  statusHistory: Array<{ status: string; created_at: string }> = [],
+) {
   return {
     order_id: row.id,
     order_number: row.order_number,
@@ -102,6 +105,7 @@ function publicOrder(row: Record<string, unknown>) {
     delivery_location: row.delivery_location,
     created_at: row.created_at,
     completed_at: row.completed_at,
+    status_history: statusHistory,
   };
 }
 
@@ -287,10 +291,47 @@ Deno.serve(async (req: Request) => {
     collect(byPhone.data as unknown[] | null);
   }
 
-  const orders = [...results.values()]
+  const orderRows = [...results.values()]
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
-    .slice(0, limit)
-    .map(publicOrder);
+    .slice(0, limit);
+
+  const historyByOrder = new Map<string, Array<{ status: string; created_at: string }>>();
+  const orderIds = orderRows
+    .map((row) => row.id)
+    .filter((value): value is string => typeof value === "string" && isUuid(value));
+
+  if (orderIds.length) {
+    const historyResult = await db
+      .from("store_order_audit_log")
+      .select("order_id,action,to_state,created_at")
+      .in("order_id", orderIds)
+      .in("action", ["created", "status_changed"])
+      .order("created_at", { ascending: true });
+
+    if (historyResult.error) {
+      console.error("customer-orders status history lookup failed", historyResult.error.message);
+    } else {
+      for (const entry of historyResult.data ?? []) {
+        if (typeof entry.order_id !== "string" || typeof entry.created_at !== "string") continue;
+        const toState =
+          entry.to_state && typeof entry.to_state === "object" && !Array.isArray(entry.to_state)
+            ? (entry.to_state as Record<string, unknown>)
+            : null;
+        const status = typeof toState?.status === "string" ? toState.status : "";
+        if (!status) continue;
+        const current = historyByOrder.get(entry.order_id) ?? [];
+        current.push({ status, created_at: entry.created_at });
+        historyByOrder.set(entry.order_id, current);
+      }
+    }
+  }
+
+  const orders = orderRows.map((row) =>
+    publicOrder(
+      row,
+      typeof row.id === "string" ? (historyByOrder.get(row.id) ?? []) : [],
+    ),
+  );
 
   return json(req, 200, { ok: true, orders });
 });
