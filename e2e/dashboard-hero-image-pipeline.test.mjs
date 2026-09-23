@@ -10,6 +10,10 @@ const heroPage = await readFile(
   new URL("../src/dashboard/pages/HeroBannersPage.tsx", import.meta.url),
   "utf8",
 );
+const imageOptimizationPreview = await readFile(
+  new URL("../src/dashboard/components/ImageOptimizationPreview.tsx", import.meta.url),
+  "utf8",
+);
 
 test("hero raster images use the shared real WebP conversion pipeline", () => {
   assert.match(heroData, /WEBP_CONVERTIBLE_HERO_MIME_TYPES/);
@@ -58,4 +62,17 @@ test("hero upload revalidates dashboard MFA or passkey before Storage and redire
   assert.ok(verification < upload, "verification must happen before Storage upload");
   assert.match(heroPage, /cause instanceof DashboardHeroVerificationRequiredError/);
   assert.match(heroPage, /window\.location\.assign\("\/dashboard\/login\?mode=mfa"\)/);
+});
+
+
+test("pending hero image stays visible and upload actions live inside the compression preview", () => {
+  assert.match(heroPage, /pendingPreviewUrls/);
+  assert.match(heroPage, /URL\.createObjectURL\(file\)/);
+  assert.match(heroPage, /const displayUrl = pendingPreviewUrl \|\| url/);
+  assert.match(heroPage, /Ready to upload/);
+  assert.match(heroPage, /confirmLabel=\{isDesktop \? "Upload desktop hero" : "Upload mobile hero"\}/);
+  assert.match(heroPage, /onConfirm=\{\(\) => void upload\(pendingHeroImages\[target\], target\)\}/);
+  assert.match(imageOptimizationPreview, /onConfirm\?: \(\) => void/);
+  assert.match(imageOptimizationPreview, /busy \? "Uploading…" : confirmLabel/);
+  assert.match(imageOptimizationPreview, /w-full.*sm:w-auto/);
 });
