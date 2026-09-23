@@ -1097,11 +1097,13 @@ export function CustomerAddressHub() {
               <Field
                 value={form.nickname}
                 placeholder={copy.nickname}
+                maxLength={80}
                 onChange={(value) => updateField("nickname", value)}
               />
               <Field
                 value={form.areaStreet}
                 placeholder={copy.areaStreet}
+                maxLength={240}
                 onChange={(value) => updateField("areaStreet", value)}
               />
 
@@ -1109,6 +1111,7 @@ export function CustomerAddressHub() {
                 <Field
                   value={form.buildingName}
                   placeholder={copy.building}
+                  maxLength={160}
                   onChange={(value) => updateField("buildingName", value)}
                 />
               ) : null}
@@ -1120,6 +1123,7 @@ export function CustomerAddressHub() {
                 <Field
                   value={form.buildingNumber}
                   placeholder={copy.buildingNo}
+                  maxLength={80}
                   onChange={(value) => updateField("buildingNumber", value)}
                 />
               ) : null}
@@ -1131,11 +1135,13 @@ export function CustomerAddressHub() {
                   <Field
                     value={form.floor}
                     placeholder={copy.floor}
+                    maxLength={60}
                     onChange={(value) => updateField("floor", value)}
                   />
                   <Field
                     value={form.unit}
                     placeholder={copy.unit}
+                    maxLength={80}
                     onChange={(value) => updateField("unit", value)}
                   />
                 </div>
@@ -1144,6 +1150,7 @@ export function CustomerAddressHub() {
               <Field
                 value={form.doorDetails}
                 placeholder={copy.door}
+                maxLength={240}
                 onChange={(value) => updateField("doorDetails", value)}
               />
 
@@ -1155,6 +1162,7 @@ export function CustomerAddressHub() {
                   inputMode="tel"
                   autoComplete="tel"
                   value={form.phone}
+                  maxLength={32}
                   onChange={(event) => updateField("phone", event.target.value)}
                   placeholder={copy.phone}
                   className="min-w-0 flex-1 bg-transparent px-4 text-sm outline-none placeholder:text-muted-foreground"
@@ -1228,6 +1236,7 @@ export function CustomerAddressHub() {
                 onChange={(event) => updateField("deliveryInstructions", event.target.value)}
                 placeholder={copy.instructions}
                 rows={3}
+                maxLength={1000}
                 className="mt-3 w-full resize-none rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
               />
 
@@ -1493,17 +1502,20 @@ export function CustomerAddressHub() {
               <Field
                 value={profileForm.fullName}
                 placeholder={copy.name}
+                maxLength={120}
                 onChange={(fullName) => setProfileForm((current) => ({ ...current, fullName }))}
               />
               <Field
                 value={profileForm.phone}
                 placeholder={copy.phone}
+                maxLength={32}
                 onChange={(phone) => setProfileForm((current) => ({ ...current, phone }))}
                 inputMode="tel"
               />
               <Field
                 value={profileForm.email}
                 placeholder={copy.email}
+                maxLength={200}
                 onChange={(email) => setProfileForm((current) => ({ ...current, email }))}
                 inputMode="email"
               />
@@ -1595,11 +1607,13 @@ function Field({
   placeholder,
   onChange,
   inputMode,
+  maxLength,
 }: {
   value: string;
   placeholder: string;
   onChange: (value: string) => void;
   inputMode?: "text" | "tel" | "email";
+  maxLength?: number;
 }) {
   return (
     <input
@@ -1607,6 +1621,7 @@ function Field({
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       inputMode={inputMode}
+      maxLength={maxLength}
       className="h-14 w-full rounded-2xl border border-border/70 bg-card px-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 placeholder:text-muted-foreground"
     />
   );
