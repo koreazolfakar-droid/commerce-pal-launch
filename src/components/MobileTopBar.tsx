@@ -66,13 +66,13 @@ export function MobileTopBar({
               type="button"
               aria-label={t("openMenu")}
               onClick={() => setMenuOpen(true)}
-              className="press grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/55 bg-card/70 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+              className="press grid h-10 w-10 shrink-0 place-items-center rounded-none bg-transparent shadow-none transition-colors hover:bg-transparent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
             >
               <Menu aria-hidden className="h-5 w-5" strokeWidth={1.9} />
             </button>
             <CustomerAccountButton
               variant="icon"
-              className="h-10 w-10 rounded-xl border border-border/55 bg-card/70 shadow-sm hover:bg-surface"
+              className="h-10 w-10 rounded-none border-0 bg-transparent shadow-none hover:bg-transparent hover:text-primary"
             />
           </div>
 
@@ -101,12 +101,12 @@ export function MobileTopBar({
             <Link
               to="/wishlist"
               aria-label={`Wishlist, ${wishlistCount} saved`}
-              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/55 bg-card/70 shadow-sm transition-colors hover:bg-surface sm:grid"
+              className="press relative hidden h-10 w-10 shrink-0 place-items-center rounded-none bg-transparent shadow-none transition-colors hover:bg-transparent hover:text-primary sm:grid"
             >
               <Heart className="h-5 w-5" strokeWidth={1.9} />
               <Badge value={wishlistCount} />
             </Link>
-            <ThemeToggle className="h-10 w-10 rounded-xl border border-border/55 bg-card/70 shadow-sm hover:bg-surface" />
+            <ThemeToggle className="h-10 w-10 rounded-none border-0 bg-transparent shadow-none hover:bg-transparent hover:text-primary" />
             <button
               type="button"
               onClick={openAddressBook}
@@ -117,7 +117,7 @@ export function MobileTopBar({
               }
               title={selectedAddress ? "Delivery location" : "Choose delivery location"}
               data-testid="mobile-header-location"
-              className="press relative grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/55 bg-card/70 shadow-sm transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+              className="press relative grid h-10 w-10 shrink-0 place-items-center rounded-none bg-transparent shadow-none transition-colors hover:bg-transparent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
             >
               <MapPin className="h-5 w-5" strokeWidth={1.9} />
               {selectedAddress ? (
