@@ -479,6 +479,12 @@ workflows:
             branches:
               only:
                 - feat/android-twa-app
+      - storefront-ci:
+          name: storefront-android-branch
+          filters:
+            branches:
+              only:
+                - feat/android-twa-app
       - security-source
       - security-dependencies
       - ui-browser-deps:
