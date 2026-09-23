@@ -27,6 +27,24 @@ function responseHeaders(req: Request) {
   };
 }
 
+function authenticatedBearerToken(req: Request) {
+  const authorization = req.headers.get("authorization")?.trim() || "";
+  if (!authorization.toLowerCase().startsWith("bearer ")) return "";
+
+  const token = authorization.slice(7).trim();
+  const parts = token.split(".");
+  if (parts.length !== 3) return "";
+
+  try {
+    const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const claims = JSON.parse(atob(padded)) as Record<string, unknown>;
+    return claims.role === "authenticated" && typeof claims.sub === "string" ? token : "";
+  } catch {
+    return "";
+  }
+}
+
 function serviceKey() {
   const raw = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (raw) {
@@ -253,6 +271,18 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  let accountUserId = "";
+  let accountEmail = "";
+  const userToken = authenticatedBearerToken(req);
+  if (userToken) {
+    const { data: authData, error: authError } = await db.auth.getUser(userToken);
+    if (authError || !authData.user) {
+      return json(req, 401, { error: "invalid_session" });
+    }
+    accountUserId = authData.user.id;
+    accountEmail = authData.user.email?.trim() || "";
+  }
+
   const enforceRateLimit = async (key: string, limit: number) => {
     const { data: rateRows, error: rateError } = await db.rpc("consume_edge_rate_limit", {
       _key: key,
@@ -309,6 +339,21 @@ Deno.serve(async (req: Request) => {
   const validationError = validatePayload(body);
   if (validationError) return json(req, 400, { error: validationError });
 
+  if (accountEmail && body && typeof body === "object" && !Array.isArray(body)) {
+    const payload = body as Record<string, unknown>;
+    const customer =
+      payload.customer && typeof payload.customer === "object" && !Array.isArray(payload.customer)
+        ? (payload.customer as Record<string, unknown>)
+        : {};
+    body = {
+      ...payload,
+      customer: {
+        ...customer,
+        email: accountEmail,
+      },
+    };
+  }
+
   const customerPhone = (
     ((body as Record<string, unknown>).customer as Record<string, unknown>).phone as string
   )
@@ -337,6 +382,29 @@ Deno.serve(async (req: Request) => {
           ? 503
           : 400;
     return json(req, status, { error: code });
+  }
+
+  if (
+    accountUserId &&
+    data &&
+    typeof data === "object" &&
+    isUuid((data as Record<string, unknown>).order_id)
+  ) {
+    const orderId = (data as Record<string, unknown>).order_id as string;
+    const accountPatch: Record<string, unknown> = {
+      customer_user_id: accountUserId,
+    };
+    if (accountEmail) accountPatch.customer_email = accountEmail;
+
+    const { error: accountLinkError } = await db
+      .from("store_orders")
+      .update(accountPatch)
+      .eq("id", orderId)
+      .is("customer_user_id", null);
+
+    if (accountLinkError) {
+      console.error("create-order account link failed", accountLinkError.message);
+    }
   }
 
   return json(req, 201, { ok: true, order: data });
