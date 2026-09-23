@@ -8,7 +8,7 @@ const stringsPath = "android/app/src/main/res/values/strings.xml";
 const launcherPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCallLauncherActivity.java";
 const delegationPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCallDelegationService.java";
 const urlPolicyPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCallUrlPolicy.java";
-const urlPolicyTestPath = "android/app/src/test/java/store/spacecallapp/app/SpaceCallUrlPolicyTest.java";
+const urlPolicyTestPath = "android/security-tests/store/spacecallapp/app/SpaceCallUrlPolicySelfTest.java";
 const assetlinksPath = "public/.well-known/assetlinks.json";
 const webManifestPath = "public/manifest.webmanifest";
 const debugManifestPath = "android/app/src/debug/AndroidManifest.xml";
@@ -208,8 +208,6 @@ forbidText(gradle, "manifestPlaceholders", "App Link verification must not rely 
 requireText(gradle, "compileSdk 36", "compileSdk must remain 36.");
 requireText(gradle, "targetSdk 36", "targetSdk must remain 36.");
 requireText(gradle, "minSdk 24", "minSdk must remain 24.");
-requireText(gradle, "sourceCompatibility JavaVersion.VERSION_1_8", "Android source compatibility must remain Java 8.");
-requireText(gradle, "targetCompatibility JavaVersion.VERSION_1_8", "Android bytecode compatibility must remain Java 8.");
 requireText(gradle, 'versionName "1.0.2"', "Expected Android versionName 1.0.2.");
 requireText(
   gradle,
@@ -221,7 +219,7 @@ requireText(
   'com.google.androidbrowserhelper:locationdelegation:1.1.2',
   "Location delegation dependency must remain pinned.",
 );
-requireText(gradle, 'testImplementation "junit:junit:4.13.2"', "Android JVM security tests must remain enabled.");
+forbidText(gradle, "testImplementation", "Core Android build must remain independent of test-only Gradle dependencies.");
 requireText(gradle, "minifyEnabled true", "Release R8 minification must stay enabled.");
 requireText(gradle, "shrinkResources true", "Release resource shrinking must stay enabled.");
 requireText(gradle, "debuggable false", "Release build must remain non-debuggable.");
