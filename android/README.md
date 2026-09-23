@@ -40,3 +40,29 @@ Release builds require these environment variables:
 - `ANDROID_KEY_PASSWORD`
 
 Keep the upload keystore private and backed up. Losing it complicates future Play Store updates.
+
+
+## CircleCI cloud build
+
+The Android app is built in CircleCI from `.circleci/config.yml` on the `feat/android-twa-app` branch.
+
+The job uses:
+
+- CircleCI Android image `cimg/android:2026.08`
+- JDK 17-compatible Android toolchain
+- Android SDK 36
+- Android Build Tools 36.0.0
+- Gradle 9.6.0
+
+Without release-signing variables, CircleCI still produces an installable debug APK plus an unsigned release AAB for validation.
+
+For signed release APK/AAB builds, configure these CircleCI project environment variables:
+
+- `ANDROID_KEYSTORE_BASE64`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+
+The keystore must be persistent and backed up securely. Do not generate a different release key for every build.
+
+After a successful job, download the Android files from the CircleCI job's **Artifacts** tab.
