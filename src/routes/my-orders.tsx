@@ -118,8 +118,8 @@ function OrderProgress({ status, ar }: { status: string; ar: boolean }) {
   const icons = [Check, PackageCheck, PackageCheck, Truck, Flag];
 
   return (
-    <div className="mt-5 overflow-x-auto pb-1">
-      <div className="relative min-w-[470px] px-1">
+    <div className="mt-5 pb-1">
+      <div className="relative px-0.5">
         <div className="absolute left-[10%] right-[10%] top-4 h-0.5 rounded-full bg-border" aria-hidden />
         <div
           className="absolute left-[10%] top-4 h-0.5 rounded-full bg-emerald-500 transition-[width] duration-300"
@@ -148,7 +148,7 @@ function OrderProgress({ status, ar }: { status: string; ar: boolean }) {
                 </span>
                 <span
                   className={cn(
-                    "mt-2 max-w-[84px] text-[10px] font-semibold leading-tight",
+                    "mt-2 max-w-[70px] text-[9px] font-semibold leading-tight sm:max-w-[84px] sm:text-[10px]",
                     complete && "text-emerald-700 dark:text-emerald-300",
                     active &&
                       (index === 1 ? "text-amber-600 dark:text-amber-300" : "text-primary"),
