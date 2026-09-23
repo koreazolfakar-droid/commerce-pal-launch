@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Crosshair, Loader2, MapPin, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -174,7 +174,7 @@ export function GoogleDeliveryMap({
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  const reverseGeocode = (latitude: number, longitude: number) => {
+  const reverseGeocode = useCallback((latitude: number, longitude: number) => {
     const geocoder = geocoderRef.current;
     if (!geocoder) {
       onChangeRef.current({ latitude, longitude });
@@ -191,7 +191,7 @@ export function GoogleDeliveryMap({
         areaStreet: areaStreetFromResult(first),
       });
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (!apiKey || !containerRef.current || mapRef.current) {
@@ -205,7 +205,10 @@ export function GoogleDeliveryMap({
         if (cancelled || !containerRef.current) return;
         const center = value
           ? { lat: value.latitude, lng: value.longitude }
-          : { lat: DEFAULT_LEBANON_CENTER.latitude, lng: DEFAULT_LEBANON_CENTER.longitude };
+          : {
+              lat: DEFAULT_LEBANON_CENTER.latitude,
+              lng: DEFAULT_LEBANON_CENTER.longitude,
+            };
 
         const map = new maps.Map(containerRef.current, {
           center,
@@ -246,7 +249,7 @@ export function GoogleDeliveryMap({
     return () => {
       cancelled = true;
     };
-  }, [apiKey, ar]);
+  }, [apiKey, ar, reverseGeocode, value?.latitude, value?.longitude]);
 
   useEffect(() => {
     if (!value || !mapRef.current || !markerRef.current) return;
@@ -256,7 +259,7 @@ export function GoogleDeliveryMap({
     mapRef.current.setZoom(17);
   }, [value?.latitude, value?.longitude]);
 
-  const useCurrentLocation = () => {
+  const useCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setMapError(ar ? "المتصفح لا يدعم تحديد الموقع." : "Location is not supported.");
       return;
@@ -284,13 +287,13 @@ export function GoogleDeliveryMap({
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
     );
-  };
+  }, [ar, reverseGeocode]);
 
   useEffect(() => {
     if (!autoLocateToken || lastAutoLocate.current === autoLocateToken) return;
     lastAutoLocate.current = autoLocateToken;
     useCurrentLocation();
-  }, [autoLocateToken]);
+  }, [autoLocateToken, useCurrentLocation]);
 
   const search = (event: FormEvent) => {
     event.preventDefault();
@@ -304,7 +307,9 @@ export function GoogleDeliveryMap({
       const point = positionFromResult(first);
       if (!first || !point) {
         setMapError(
-          ar ? "لم نجد هذا المكان. جرّب اسم شارع أو منطقة أخرى." : "Place not found. Try another area or street.",
+          ar
+            ? "لم نجد هذا المكان. جرّب اسم شارع أو منطقة أخرى."
+            : "Place not found. Try another area or street.",
         );
         return;
       }
@@ -347,7 +352,11 @@ export function GoogleDeliveryMap({
       </form>
 
       {apiKey ? (
-        <div ref={containerRef} className="absolute inset-0" data-testid="customer-delivery-map" />
+        <div
+          ref={containerRef}
+          className="absolute inset-0"
+          data-testid="customer-delivery-map"
+        />
       ) : (
         <iframe
           title={ar ? "خريطة موقع التوصيل" : "Delivery location map"}
