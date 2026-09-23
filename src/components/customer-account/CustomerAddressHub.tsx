@@ -1,6 +1,7 @@
 import {
   type ChangeEvent,
   type FormEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -624,7 +625,7 @@ export function CustomerAddressHub() {
     }
   };
 
-  const cleanupRecording = () => {
+  const cleanupRecording = useCallback(() => {
     if (recordingTickerRef.current) window.clearInterval(recordingTickerRef.current);
     if (recordingStopTimerRef.current) window.clearTimeout(recordingStopTimerRef.current);
     recordingTickerRef.current = null;
@@ -634,7 +635,7 @@ export function CustomerAddressHub() {
     mediaRecorderRef.current = null;
     setRecording(false);
     setRecordingSeconds(0);
-  };
+  }, []);
 
   useEffect(() => {
     if (addressBookOpen && view === "details") return;
@@ -646,7 +647,7 @@ export function CustomerAddressHub() {
     }
 
     cleanupRecording();
-  }, [addressBookOpen, view]);
+  }, [addressBookOpen, cleanupRecording, view]);
 
   const startVoiceRecording = async () => {
     if (recording) {
