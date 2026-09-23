@@ -43,10 +43,14 @@ public final class SpaceCallLauncherActivity extends LauncherActivity {
     }
 
     @Override
-    protected Uri getLaunchingUrl() {
-        Intent intent = getIntent();
+    protected Uri getUrlForIntent(Intent intent) {
         Uri requested = intent == null ? null : intent.getData();
         return sanitizeSpaceCallUrl(requested);
+    }
+
+    @Override
+    protected Uri getLaunchingUrl() {
+        return getUrlForIntent(getIntent());
     }
 
     private Uri sanitizeSpaceCallUrl(@Nullable Uri requested) {
