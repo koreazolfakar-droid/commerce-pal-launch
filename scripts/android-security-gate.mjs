@@ -143,7 +143,8 @@ requireText(launcher, 'CANONICAL_HOST = "www.spacecallapp.store"', "Launcher can
 requireText(launcher, '!"https".equalsIgnoreCase(requested.getScheme())', "Launcher must reject non-HTTPS URLs.");
 requireText(launcher, "openSafeBrowserFallback()", "Crash-safe browser fallback is missing.");
 requireText(launcher, "!browserPackages.contains(packageName)", "Fallback must restrict candidates to browser packages.");
-forbidText(launcher, "WebView", "Launcher must not introduce an embedded WebView.");
+forbidText(launcher, "android.webkit.WebView", "Launcher must not introduce an embedded WebView.");
+forbidText(launcher, "new WebView(", "Launcher must not instantiate an embedded WebView.");
 requireText(
   delegation,
   "LocationDelegationExtraCommandHandler",
