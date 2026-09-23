@@ -78,7 +78,7 @@ begin
   if not (
     (v_before.status = 'new' and p_status in ('confirmed', 'cancelled'))
     or (v_before.status = 'confirmed' and p_status in ('processing', 'cancelled'))
-    or (v_before.status = 'processing' and p_status in ('ready', 'cancelled'))
+    or (v_before.status = 'processing' and p_status in ('ready', 'out_for_delivery', 'cancelled'))
     or (v_before.status = 'ready' and p_status in ('out_for_delivery', 'cancelled'))
     or (v_before.status = 'out_for_delivery' and p_status in ('delivered', 'cancelled'))
     or (v_before.status = 'delivered' and p_status = 'done')
