@@ -22,7 +22,9 @@ jobs:
       - checkout
       - run:
           name: High-confidence source and secret scan
-          command: node scripts/security-gate.mjs
+          command: |
+            node scripts/security-gate.mjs
+            node scripts/android-security-gate.mjs
 
   security-dependencies:
     docker:
@@ -214,6 +216,7 @@ jobs:
     working_directory: ~/project
     environment:
       GRADLE_VERSION: "9.6.0"
+      GRADLE_BIN_SHA256: "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
     steps:
       - checkout
 
@@ -240,7 +243,8 @@ jobs:
           name: Install Gradle 9.6.0
           command: |
             set -euo pipefail
-            curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip
+            curl --proto '=https' --tlsv1.2 -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip
+            echo "${GRADLE_BIN_SHA256}  /tmp/gradle.zip" | sha256sum -c -
             rm -rf "$HOME/gradle-${GRADLE_VERSION}"
             unzip -q /tmp/gradle.zip -d "$HOME"
             echo "export PATH=\"$HOME/gradle-${GRADLE_VERSION}/bin:$PATH\"" >> "$BASH_ENV"
@@ -251,28 +255,54 @@ jobs:
           name: Configure optional release signing
           command: |
             set -euo pipefail
-            if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ] &&                [ -n "${ANDROID_KEYSTORE_PASSWORD:-}" ] &&                [ -n "${ANDROID_KEY_ALIAS:-}" ] &&                [ -n "${ANDROID_KEY_PASSWORD:-}" ]; then
-              echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/space-call-upload.jks
+            if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ] && \
+               [ -n "${ANDROID_KEYSTORE_PASSWORD:-}" ] && \
+               [ -n "${ANDROID_KEY_ALIAS:-}" ] && \
+               [ -n "${ANDROID_KEY_PASSWORD:-}" ]; then
+              printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/space-call-upload.jks
               chmod 600 /tmp/space-call-upload.jks
+
+              CERT_SHA256="$(keytool -list -v \
+                -keystore /tmp/space-call-upload.jks \
+                -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+                -alias "$ANDROID_KEY_ALIAS" | awk '/SHA256:/{print $2; exit}')"
+
+              test -n "$CERT_SHA256"
               echo 'export ANDROID_KEYSTORE_PATH=/tmp/space-call-upload.jks' >> "$BASH_ENV"
               echo 'export SPACE_CALL_SIGNED_BUILD=1' >> "$BASH_ENV"
+              echo "export ANDROID_CERT_SHA256=$CERT_SHA256" >> "$BASH_ENV"
             else
               echo 'export SPACE_CALL_SIGNED_BUILD=0' >> "$BASH_ENV"
             fi
 
       - run:
-          name: Validate manifest and build Android app
+          name: Validate security and build Android app
           command: |
             set -euo pipefail
             source "$BASH_ENV"
+
             jq empty public/manifest.webmanifest
             grep -q 'rel: "manifest"' src/routes/__root.tsx
+
             cd android
             gradle --no-daemon :app:lintRelease
             gradle --no-daemon :app:assembleDebug
-            gradle --no-daemon :app:bundleRelease
+            cd ..
+
             if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
+              test -f public/.well-known/assetlinks.json
+              jq -e --arg fp "$ANDROID_CERT_SHA256" '
+                any(.[];
+                  .target.namespace == "android_app" and
+                  .target.package_name == "store.spacecallapp.app" and
+                  (.target.sha256_cert_fingerprints | index($fp))
+                )
+              ' public/.well-known/assetlinks.json >/dev/null
+
+              cd android
               gradle --no-daemon :app:assembleRelease
+              gradle --no-daemon :app:bundleRelease
+              cd ..
             fi
 
       - save_cache:
@@ -291,20 +321,17 @@ jobs:
             cp android/app/build/outputs/apk/debug/app-debug.apk               dist/android/Space-Call-1.0.0-debug.apk
 
             if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
-              cp android/app/build/outputs/apk/release/app-release.apk                 dist/android/Space-Call-1.0.0-release.apk
-              cp android/app/build/outputs/bundle/release/app-release.aab                 dist/android/Space-Call-1.0.0-release.aab
+              cp android/app/build/outputs/apk/release/app-release.apk \
+                dist/android/Space-Call-1.0.0-release.apk
+              cp android/app/build/outputs/bundle/release/app-release.aab \
+                dist/android/Space-Call-1.0.0-release.aab
+              cp public/.well-known/assetlinks.json \
+                dist/android/assetlinks.json
             else
-              cp android/app/build/outputs/bundle/release/app-release.aab                 dist/android/Space-Call-1.0.0-unsigned.aab
               printf '%s\n' \
-                'The debug APK is installable for testing.' \
-                'The AAB is unsigned and is not ready for Google Play upload.' \
-                '' \
-                'To enable signed release APK/AAB builds, add these CircleCI project environment variables:' \
-                'ANDROID_KEYSTORE_BASE64' \
-                'ANDROID_KEYSTORE_PASSWORD' \
-                'ANDROID_KEY_ALIAS' \
-                'ANDROID_KEY_PASSWORD' \
-                > dist/android/SIGNING-NOT-CONFIGURED.txt
+                'Debug APK only: release APK/AAB generation is intentionally blocked.' \
+                'Configure the persistent signing key and verified Digital Asset Links before Play Store release.' \
+                > dist/android/RELEASE-BLOCKED-UNTIL-SIGNED.txt
             fi
 
             (
