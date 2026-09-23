@@ -188,6 +188,7 @@ export function CustomerAddressHub() {
   const [pending, setPending] = useState("");
   const [error, setError] = useState("");
   const [autoLocateToken, setAutoLocateToken] = useState(0);
+  const [mapInitialQuery, setMapInitialQuery] = useState("");
   const [profileForm, setProfileForm] = useState({ fullName: "", phone: "", email: "" });
   const [orders, setOrders] = useState<CustomerOrderSummary[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -211,7 +212,7 @@ export function CustomerAddressHub() {
       ar
         ? {
             title: "أين تريد أن نوصّل طلبك؟",
-            search: "ابحث في العناوين المحفوظة...",
+            search: "ابحث عن منطقة أو شارع...",
             current: "استخدام موقعي الحالي",
             currentHelp: "سنضع العلامة على موقعك لتأكيده",
             elsewhere: "التوصيل إلى مكان آخر",
@@ -268,7 +269,7 @@ export function CustomerAddressHub() {
           }
         : {
             title: "Where should we deliver to?",
-            search: "Search saved addresses...",
+            search: "Search for area, street name...",
             current: "Use current location",
             currentHelp: "We will pin your location for confirmation",
             elsewhere: "Deliver somewhere else",
@@ -449,7 +450,7 @@ export function CustomerAddressHub() {
     scheduleSave(next);
   };
 
-  const startDraft = async (useCurrentLocation: boolean) => {
+  const startDraft = async (useCurrentLocation: boolean, initialQuery = "") => {
     setPending("draft");
     setError("");
     try {
@@ -457,6 +458,7 @@ export function CustomerAddressHub() {
       if (!draft) return;
       const next = formFromAddress(draft, profile?.phone || user?.phone || "");
       setForm(next);
+      setMapInitialQuery(initialQuery.trim());
       setView("map");
       if (useCurrentLocation) setAutoLocateToken(Date.now());
     } catch {
@@ -473,6 +475,7 @@ export function CustomerAddressHub() {
       const draft = await beginAddressEdit(address);
       if (!draft) return;
       setForm(formFromAddress(draft, profile?.phone || user?.phone || ""));
+      setMapInitialQuery("");
       setView("map");
     } catch {
       setError(copy.genericError);
@@ -791,7 +794,13 @@ export function CustomerAddressHub() {
               </div>
             </DialogHeader>
 
-            <div className="mt-5 flex h-14 items-center gap-3 rounded-2xl border border-border/75 bg-card px-4 shadow-sm">
+            <form
+              className="mt-5 flex h-14 items-center gap-3 rounded-2xl border border-border/75 bg-card px-4 shadow-sm"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (search.trim()) void startDraft(false, search);
+              }}
+            >
               <Search className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <input
                 value={search}
@@ -799,7 +808,16 @@ export function CustomerAddressHub() {
                 placeholder={copy.search}
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
-            </div>
+              {search.trim() ? (
+                <button
+                  type="submit"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary transition hover:bg-primary/15"
+                  aria-label={ar ? "البحث على الخريطة" : "Search on map"}
+                >
+                  <NextIcon className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
+            </form>
 
             <div className="mt-4 overflow-hidden rounded-2xl border border-border/65 bg-card shadow-sm">
               <button
@@ -971,6 +989,7 @@ export function CustomerAddressHub() {
             <div className="min-h-0 flex-1">
               <GoogleDeliveryMap
                 autoLocateToken={autoLocateToken}
+                initialQuery={mapInitialQuery}
                 value={
                   form.latitude !== null && form.longitude !== null
                     ? {
