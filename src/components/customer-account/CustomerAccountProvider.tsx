@@ -31,8 +31,10 @@ type CustomerAccountContextValue = {
   draftAddress: CustomerAddress | null;
   loading: boolean;
   addressBookOpen: boolean;
+  hubInitialView: "account" | "book";
   setAddressBookOpen: (open: boolean) => void;
   openAddressBook: () => void;
+  openAccountHub: () => void;
   refresh: () => Promise<void>;
   selectAddress: (address: CustomerAddress) => void;
   beginAddressDraft: () => Promise<CustomerAddress | null>;
@@ -62,6 +64,7 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
   const [draftAddress, setDraftAddress] = useState<CustomerAddress | null>(null);
   const [loading, setLoading] = useState(true);
   const [addressBookOpen, setAddressBookOpen] = useState(false);
+  const [hubInitialView, setHubInitialView] = useState<"account" | "book">("book");
   const [resumeAfterAuth, setResumeAfterAuth] = useState(false);
 
   const chooseSelected = useCallback((list: CustomerAddress[], userId: string) => {
@@ -129,6 +132,7 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
 
     if (!resumeAfterAuth && !storedResume) return;
     setResumeAfterAuth(false);
+    setHubInitialView("book");
     setAddressBookOpen(true);
   }, [resumeAfterAuth, user]);
 
@@ -143,6 +147,16 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
       openAuth();
       return;
     }
+    setHubInitialView("book");
+    setAddressBookOpen(true);
+  }, [openAuth, user]);
+
+  const openAccountHub = useCallback(() => {
+    if (!user) {
+      openAuth();
+      return;
+    }
+    setHubInitialView("account");
     setAddressBookOpen(true);
   }, [openAuth, user]);
 
@@ -254,8 +268,10 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
       draftAddress,
       loading,
       addressBookOpen,
+      hubInitialView,
       setAddressBookOpen,
       openAddressBook,
+      openAccountHub,
       refresh,
       selectAddress,
       beginAddressDraft,
@@ -273,7 +289,9 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
       draftAddress,
       loading,
       addressBookOpen,
+      hubInitialView,
       openAddressBook,
+      openAccountHub,
       refresh,
       selectAddress,
       beginAddressDraft,
