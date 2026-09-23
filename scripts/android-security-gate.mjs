@@ -155,6 +155,7 @@ requireText(urlPolicy, 'CANONICAL_HOST = "www.spacecallapp.store"', "URL policy 
 requireText(urlPolicy, 'ALTERNATE_HOST = "spacecallapp.store"', "URL policy alternate host normalization is missing.");
 requireText(urlPolicy, '"https".equals(normalizedScheme) && !"http".equals(normalizedScheme)', "URL policy must reject non-web schemes.");
 requireText(urlPolicy, '"https",', "URL policy must force accepted links to HTTPS.");
+forbidText(urlPolicy, ".isBlank()", "URL policy must not use APIs unavailable on minSdk 24.");
 requireText(urlPolicy, "null,\n                    CANONICAL_HOST,\n                    -1,", "URL policy must strip user-info and explicit ports.");
 requireText(launcher, "openSafeBrowserFallback()", "Crash-safe browser fallback is missing.");
 requireText(
