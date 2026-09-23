@@ -93,6 +93,27 @@ jobs:
           command: bun run test:ssr
 
 
+  storefront-permission-typecheck:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - bun-deps-v1-{{ checksum "bun.lock" }}
+            - bun-deps-v1-
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: TypeScript permission UX check
+          command: bun run typecheck
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -481,6 +502,12 @@ workflows:
                 - feat/android-twa-app
       - storefront-ci:
           name: storefront-android-branch
+          filters:
+            branches:
+              only:
+                - feat/android-twa-app
+      - storefront-permission-typecheck:
+          name: storefront-permission-typecheck-android
           filters:
             branches:
               only:
