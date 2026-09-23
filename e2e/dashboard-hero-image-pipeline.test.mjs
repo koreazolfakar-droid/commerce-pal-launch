@@ -44,3 +44,18 @@ test("hero dashboard exposes real before and after optimization metadata", () =>
   assert.match(heroPage, /formatBytes\(optimization\.output\.bytes\)/);
   assert.match(heroPage, /max \{isDesktop \? "1920" : "1080"\}px/);
 });
+
+
+test("hero upload revalidates dashboard MFA or passkey before Storage and redirects stale sessions", () => {
+  assert.match(heroData, /getDashboardMfaStatus/);
+  assert.match(heroData, /requireFreshHeroUploadVerification/);
+  assert.match(heroData, /DashboardHeroVerificationRequiredError/);
+  const verification = heroData.indexOf("await requireFreshHeroUploadVerification()");
+  const conversion = heroData.indexOf("const conversion = await convertProductImageToWebp(file, targetResolution)");
+  const upload = heroData.indexOf("supabase.storage.from(HERO_BUCKET).upload");
+  assert.ok(verification >= 0, "fresh dashboard verification check is missing");
+  assert.ok(verification < conversion, "verification must happen before local hero conversion");
+  assert.ok(verification < upload, "verification must happen before Storage upload");
+  assert.match(heroPage, /cause instanceof DashboardHeroVerificationRequiredError/);
+  assert.match(heroPage, /window\.location\.assign\("\/dashboard\/login\?mode=mfa"\)/);
+});
