@@ -48,6 +48,7 @@ type CustomerAccountContextValue = {
 
 const CustomerAccountContext = createContext<CustomerAccountContextValue | null>(null);
 const SELECTED_ADDRESS_PREFIX = "space-call:selected-address:";
+const RESUME_ADDRESS_AFTER_AUTH_KEY = "space-call:resume-address-after-auth";
 
 function selectedStorageKey(userId: string) {
   return SELECTED_ADDRESS_PREFIX + userId;
@@ -116,7 +117,17 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
   }, [authLoading, refresh]);
 
   useEffect(() => {
-    if (!user || !resumeAfterAuth) return;
+    if (!user) return;
+
+    let storedResume = false;
+    try {
+      storedResume = window.sessionStorage.getItem(RESUME_ADDRESS_AFTER_AUTH_KEY) === "1";
+      if (storedResume) window.sessionStorage.removeItem(RESUME_ADDRESS_AFTER_AUTH_KEY);
+    } catch {
+      // Session storage is optional.
+    }
+
+    if (!resumeAfterAuth && !storedResume) return;
     setResumeAfterAuth(false);
     setAddressBookOpen(true);
   }, [resumeAfterAuth, user]);
@@ -124,6 +135,11 @@ export function CustomerAccountProvider({ children }: { children: ReactNode }) {
   const openAddressBook = useCallback(() => {
     if (!user) {
       setResumeAfterAuth(true);
+      try {
+        window.sessionStorage.setItem(RESUME_ADDRESS_AFTER_AUTH_KEY, "1");
+      } catch {
+        // The in-memory fallback still covers OTP sign-in without a redirect.
+      }
       openAuth();
       return;
     }
