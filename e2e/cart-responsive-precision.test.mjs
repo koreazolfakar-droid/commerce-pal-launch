@@ -15,10 +15,16 @@ test("cart uses compact responsive sizing from small phones through desktop", ()
   assert.match(cart, /lg:top-\[5\.75rem\]/);
 });
 
-test("mobile cart uses one clean sticky checkout bar instead of benefit-card clutter", () => {
+test("mobile cart uses a clean full-width sticky checkout action without a repeated total", () => {
   assert.match(cart, /bottom-\[calc\(4\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
-  assert.match(cart, /lg:hidden/);
+  assert.match(cart, /data-testid="mobile-cart-checkout-bar"/);
+  assert.match(cart, /max-w-md/);
+  assert.match(cart, /min-h-12 w-full rounded-xl/);
   assert.match(cart, /Continue to checkout/);
+  assert.doesNotMatch(
+    cart,
+    /data-testid="mobile-cart-checkout-bar"[\s\S]*?\{copy\.finalTotal\}[\s\S]*?\{formatPrice\(grandTotal, currency\)\}/,
+  );
   assert.doesNotMatch(cart, /snap-x snap-mandatory/);
   assert.doesNotMatch(cart, /min-w-\[9\.75rem\]/);
 });
