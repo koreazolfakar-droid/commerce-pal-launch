@@ -71,9 +71,6 @@
             <meta-data
                 android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION"
                 android:value="@string/screen_orientation" />
-            <meta-data
-                android:name="android.support.customtabs.trusted.ADDITIONAL_TRUSTED_ORIGINS"
-                android:resource="@array/additional_trusted_origins" />
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -87,15 +84,6 @@
                 <data
                     android:scheme="https"
                     android:host="www.spacecallapp.store" />
-            </intent-filter>
-
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="spacecallapp.store" />
             </intent-filter>
         </activity>
 
