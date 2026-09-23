@@ -237,75 +237,20 @@ jobs:
             echo "export PATH=\"$HOME/gradle-$GRADLE_VERSION/bin:$PATH\"" >> "$BASH_ENV"
 
       - run:
-          name: Minimal debug compile
-          command: |
-            set -euo pipefail
-            source "$BASH_ENV"
-            cd android
-            gradle --no-daemon --stacktrace :app:assembleDebug
-
-  android-build:
-    docker:
-      - image: cimg/android:2026.08
-    resource_class: medium
-    working_directory: ~/project
-    environment:
-      GRADLE_VERSION: "9.6.0"
-      GRADLE_BIN_SHA256: "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
-    steps:
-      - checkout
-
-      - run:
-          name: Verify Android build environment
-          command: |
-            set -euo pipefail
-            java -version
-            sdkmanager --version
-
-      - run:
-          name: Install Android API 36 and Build Tools
-          command: |
-            set -euo pipefail
-            yes | sdkmanager --licenses >/dev/null || true
-            sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-
-
-      - run:
-          name: Install pinned Gradle
-          command: |
-            set -euo pipefail
-            curl --proto '=https' --tlsv1.2 -fsSL \
-              "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" \
-              -o /tmp/gradle.zip
-            echo "$GRADLE_BIN_SHA256  /tmp/gradle.zip" | sha256sum -c -
-            rm -rf "$HOME/gradle-$GRADLE_VERSION"
-            unzip -q /tmp/gradle.zip -d "$HOME"
-            echo "export PATH=\"$HOME/gradle-$GRADLE_VERSION/bin:$PATH\"" >> "$BASH_ENV"
-            source "$BASH_ENV"
-            gradle --version
-
-      - run:
-          name: Security gate and debug build
+          name: Security gate and debug APK build
           command: |
             set -euo pipefail
             source "$BASH_ENV"
             node scripts/android-security-gate.mjs
             jq empty public/manifest.webmanifest
             jq empty public/.well-known/assetlinks.json
-
             cd android
-            gradle --no-daemon :app:assembleDebug
+            gradle --no-daemon --stacktrace :app:assembleDebug
             cd ..
-
-      - run:
-          name: Package debug APK
-          command: |
-            set -euo pipefail
             APK="android/app/build/outputs/apk/debug/app-debug.apk"
             test -s "$APK"
             mkdir -p dist/android
             cp "$APK" dist/android/Space-Call-1.0.2-debug.apk
-
             (
               cd dist/android
               sha256sum Space-Call-* > SHA256SUMS.txt
@@ -319,8 +264,6 @@ jobs:
       - store_artifacts:
           path: dist/android
           destination: space-call-android
-
-
 
   android-lint-debug:
     docker:
@@ -588,12 +531,6 @@ workflows:
               only:
                 - fix/android-production-foundation-20260924
                 - /^feat\/android-.*/
-      - android-build:
-          filters:
-            branches:
-              only:
-                - fix/android-production-foundation-20260924
-                - /^feat\/android-.*/
       - android-lint-debug:
           filters:
             branches:
@@ -608,7 +545,7 @@ workflows:
                 - /^feat\/android-.*/
       - android-apk-badging:
           requires:
-            - android-build
+            - android-compile-check
           filters:
             branches:
               only:
@@ -616,7 +553,7 @@ workflows:
                 - /^feat\/android-.*/
       - android-apk-signature:
           requires:
-            - android-build
+            - android-compile-check
           filters:
             branches:
               only:
@@ -624,7 +561,7 @@ workflows:
                 - /^feat\/android-.*/
       - android-apk-alignment:
           requires:
-            - android-build
+            - android-compile-check
           filters:
             branches:
               only:
@@ -632,7 +569,7 @@ workflows:
                 - /^feat\/android-.*/
       - android-runtime-smoke:
           requires:
-            - android-build
+            - android-compile-check
           filters:
             branches:
               only:
