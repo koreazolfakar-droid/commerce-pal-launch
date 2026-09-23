@@ -3,6 +3,10 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const cart = await readFile(new URL("../src/routes/cart.tsx", import.meta.url), "utf8");
+const checkoutRoute = await readFile(
+  new URL("../src/routes/checkout.tsx", import.meta.url),
+  "utf8",
+);
 const checkout = await readFile(
   new URL("../src/components/CheckoutDetailsForm.tsx", import.meta.url),
   "utf8",
@@ -23,8 +27,9 @@ test("cart reads the public dashboard delivery fee and shows it in the total", (
   assert.match(cart, /Fast delivery across Lebanon/);
 });
 
-test("checkout receives the cart delivery fee and prefers the server-confirmed fee after creation", () => {
-  assert.match(cart, /deliveryFee=\{deliveryFee\}/);
+test("checkout route passes the same delivery fee into the existing secure order form", () => {
+  assert.match(checkoutRoute, /settings\["delivery_fee"\]/);
+  assert.match(checkoutRoute, /deliveryFee=\{deliveryFee\}/);
   assert.match(checkout, /deliveryFee: number/);
   assert.match(checkout, /createdOrder\?\.shipping_total \?\? deliveryFee/);
   assert.match(checkout, /deliveryFee: invoiceDeliveryFee/);

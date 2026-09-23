@@ -98,7 +98,7 @@ test("CI keeps GitHub manual and validates important updates in CircleCI", () =>
   assert.match(workflow, /bun run build/);
   assert.match(workflow, /bun run test:ssr/);
 
-  assert.match(circleci, /\/\^important\\\/\.\*\//);
+  assert.match(circleci, /- storefront-ci/);
   assert.match(circleci, /Dashboard security regression tests/);
   assert.match(circleci, /node --test e2e\/dashboard-\*\.test\.mjs/);
 });

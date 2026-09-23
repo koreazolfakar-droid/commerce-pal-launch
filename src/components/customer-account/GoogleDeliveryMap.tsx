@@ -267,7 +267,7 @@ export function GoogleDeliveryMap({
     mapRef.current.setZoom(17);
   }, [value?.latitude, value?.longitude]);
 
-  const useCurrentLocation = useCallback(() => {
+  const locateCurrentPosition = useCallback(() => {
     if (!navigator.geolocation) {
       setMapError(ar ? "المتصفح لا يدعم تحديد الموقع." : "Location is not supported.");
       return;
@@ -300,8 +300,8 @@ export function GoogleDeliveryMap({
   useEffect(() => {
     if (!autoLocateToken || lastAutoLocate.current === autoLocateToken) return;
     lastAutoLocate.current = autoLocateToken;
-    useCurrentLocation();
-  }, [autoLocateToken, useCurrentLocation]);
+    locateCurrentPosition();
+  }, [autoLocateToken, locateCurrentPosition]);
 
   const geocodeQuery = useCallback(
     (rawQuery: string) => {
@@ -417,7 +417,7 @@ export function GoogleDeliveryMap({
           type="button"
           variant="secondary"
           className="h-12 w-full rounded-2xl bg-background/95 font-bold shadow-lg hover:bg-background"
-          onClick={useCurrentLocation}
+          onClick={locateCurrentPosition}
           disabled={locating}
         >
           {locating ? (
