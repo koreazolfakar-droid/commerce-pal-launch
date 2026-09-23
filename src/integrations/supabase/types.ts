@@ -2564,41 +2564,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      get_my_store_order_items: {
-        Args: { p_order_id: string }
-        Returns: {
-          item_id: string
-          line_total: number
-          options: Json
-          product_id: string
-          quantity: number
-          sku: string
-          title: string
-          unit_price: number
-          variant_id: string
-          variant_title: string
-        }[]
-      }
-      get_my_store_orders: {
-        Args: { p_limit?: number }
-        Returns: {
-          city: string
-          completed_at: string
-          created_at: string
-          currency: string
-          delivery_address: string
-          delivery_location: Json
-          discount_total: number
-          order_id: string
-          order_number: number
-          payment_method: string
-          payment_status: string
-          shipping_total: number
-          status: string
-          subtotal: number
-          total: number
-        }[]
-      }
       get_store_customer_orders: {
         Args: { p_customer_id: string; p_limit?: number }
         Returns: {
