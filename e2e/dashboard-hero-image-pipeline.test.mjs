@@ -166,3 +166,20 @@ test("discarding edits resets even when the user reselects the same slide", () =
 test("Hero editor does not create a completely empty slide", () => {
   assert.match(heroPage, /disabled=\{busy \|\| hasPendingHeroImages \|\| !formDirty\}/);
 });
+
+
+test("Hero page exposes one clear create-or-edit workspace mode", () => {
+  assert.match(heroPage, /const editorMode = selected \? "edit" : "create"/);
+  assert.match(heroPage, /editorMode === "edit" \? "Editing slide" : "New slide"/);
+  assert.match(heroPage, /editorMode === "edit" \? "Save changes" : "Create slide"/);
+  assert.match(heroPage, />Content</);
+  assert.doesNotMatch(
+    heroPage,
+    /<div className="text-\[13px\] font-bold text-\[#14203a\]">\{selected \? "Edit slide" : "Create slide"\}<\/div>/,
+  );
+});
+
+test("Hero slide selector is compact on mobile and remains a desktop sidebar", () => {
+  assert.match(heroPage, /flex gap-2 overflow-x-auto p-3 xl:block/);
+  assert.match(heroPage, /min-w-\[230px\][\s\S]*xl:min-w-0/);
+});
