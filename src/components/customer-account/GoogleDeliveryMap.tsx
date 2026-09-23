@@ -150,10 +150,12 @@ export function GoogleDeliveryMap({
   value,
   onChange,
   autoLocateToken,
+  initialQuery,
 }: {
   value: Coordinates | null;
   onChange: (next: Coordinates) => void;
   autoLocateToken?: number;
+  initialQuery?: string;
 }) {
   const { language } = useLanguage();
   const ar = language === "ar";
@@ -164,7 +166,9 @@ export function GoogleDeliveryMap({
   const geocoderRef = useRef<GoogleGeocoderInstance | null>(null);
   const onChangeRef = useRef(onChange);
   const lastAutoLocate = useRef<number | undefined>(undefined);
-  const [query, setQuery] = useState("");
+  const lastInitialSearch = useRef("");
+  const [query, setQuery] = useState(initialQuery?.trim() || "");
+  const [mapReady, setMapReady] = useState(false);
   const [loadingMap, setLoadingMap] = useState(Boolean(apiKey));
   const [mapError, setMapError] = useState("");
   const [locating, setLocating] = useState(false);
@@ -234,6 +238,7 @@ export function GoogleDeliveryMap({
           if (!position) return;
           reverseGeocode(position.lat(), position.lng());
         });
+        setMapReady(true);
         setLoadingMap(false);
       })
       .catch(() => {
@@ -295,35 +300,61 @@ export function GoogleDeliveryMap({
     useCurrentLocation();
   }, [autoLocateToken, useCurrentLocation]);
 
-  const search = (event: FormEvent) => {
-    event.preventDefault();
-    const geocoder = geocoderRef.current;
-    if (!geocoder || !query.trim()) return;
-    setSearching(true);
-    setMapError("");
-    geocoder.geocode({ address: query.trim(), region: "LB" }, (results, status) => {
-      setSearching(false);
-      const first = status === "OK" && results?.length ? results[0] : undefined;
-      const point = positionFromResult(first);
-      if (!first || !point) {
+  const geocodeQuery = useCallback(
+    (rawQuery: string) => {
+      const nextQuery = rawQuery.trim();
+      if (!nextQuery) return;
+
+      const geocoder = geocoderRef.current;
+      if (!geocoder) {
         setMapError(
           ar
-            ? "لم نجد هذا المكان. جرّب اسم شارع أو منطقة أخرى."
-            : "Place not found. Try another area or street.",
+            ? "البحث عن الشوارع غير متاح الآن. استخدم موقعك الحالي أو أدخل العنوان يدويًا."
+            : "Street search is not available right now. Use your current location or enter the address manually.",
         );
         return;
       }
-      const position = { lat: point.latitude, lng: point.longitude };
-      markerRef.current?.setPosition(position);
-      mapRef.current?.setCenter(position);
-      mapRef.current?.setZoom(17);
-      onChangeRef.current({
-        ...point,
-        formattedAddress: first.formatted_address || query.trim(),
-        placeId: first.place_id || "",
-        areaStreet: areaStreetFromResult(first),
+
+      setSearching(true);
+      setMapError("");
+      geocoder.geocode({ address: nextQuery, region: "LB" }, (results, status) => {
+        setSearching(false);
+        const first = status === "OK" && results?.length ? results[0] : undefined;
+        const point = positionFromResult(first);
+        if (!first || !point) {
+          setMapError(
+            ar
+              ? "لم نجد هذا المكان. جرّب اسم شارع أو منطقة أخرى."
+              : "Place not found. Try another area or street.",
+          );
+          return;
+        }
+        const position = { lat: point.latitude, lng: point.longitude };
+        markerRef.current?.setPosition(position);
+        mapRef.current?.setCenter(position);
+        mapRef.current?.setZoom(17);
+        onChangeRef.current({
+          ...point,
+          formattedAddress: first.formatted_address || nextQuery,
+          placeId: first.place_id || "",
+          areaStreet: areaStreetFromResult(first),
+        });
       });
-    });
+    },
+    [ar],
+  );
+
+  useEffect(() => {
+    const nextInitialQuery = initialQuery?.trim() || "";
+    if (!nextInitialQuery || !mapReady || lastInitialSearch.current === nextInitialQuery) return;
+    lastInitialSearch.current = nextInitialQuery;
+    setQuery(nextInitialQuery);
+    geocodeQuery(nextInitialQuery);
+  }, [geocodeQuery, initialQuery, mapReady]);
+
+  const search = (event: FormEvent) => {
+    event.preventDefault();
+    geocodeQuery(query);
   };
 
   const fallback = value || DEFAULT_LEBANON_CENTER;
