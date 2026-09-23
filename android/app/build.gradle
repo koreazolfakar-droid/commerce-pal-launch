@@ -40,11 +40,9 @@ android {
         debug {
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
-            manifestPlaceholders = [appLinksAutoVerify: false]
         }
 
         release {
-            manifestPlaceholders = [appLinksAutoVerify: true]
             debuggable false
             minifyEnabled true
             shrinkResources true
