@@ -21,6 +21,7 @@ import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPr
 import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import {
   createDashboardHeroSlide,
+  DashboardHeroVerificationRequiredError,
   DEFAULT_HERO_VISUAL_CONFIG,
   deleteDashboardHeroSlide,
   getHeroScheduleState,
@@ -450,6 +451,11 @@ export default function HeroBannersPage() {
         );
       }
     } catch (cause) {
+      if (cause instanceof DashboardHeroVerificationRequiredError) {
+        toast.error(cause.message);
+        window.location.assign("/dashboard/login?mode=mfa");
+        return;
+      }
       toast.error(cause instanceof Error ? cause.message : "Image upload failed.");
     } finally {
       setUploading(null);
