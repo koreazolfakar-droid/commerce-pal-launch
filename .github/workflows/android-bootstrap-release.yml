@@ -1,10 +1,13 @@
 name: Build Space Call Android release
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/android-twa-app
+      - main
     paths:
+      - android/**
+      - public/manifest.webmanifest
+      - src/routes/__root.tsx
       - .github/workflows/android-bootstrap-release.yml
 
 permissions:
