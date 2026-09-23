@@ -304,24 +304,41 @@ export async function updateCustomerProfile(
   return toProfile(data as Record<string, unknown>, userId);
 }
 
+type CustomerOrdersEdgeResponse = {
+  ok?: boolean;
+  orders?: Record<string, unknown>[];
+  items?: Record<string, unknown>[];
+  error?: string;
+};
+
 export async function loadMyOrders(limit = 30): Promise<CustomerOrderSummary[]> {
-  const { data, error } = await supabase.rpc("get_my_store_orders", {
-    p_limit: Math.max(1, Math.min(limit, 100)),
-  });
+  const { data, error } = await supabase.functions.invoke<CustomerOrdersEdgeResponse>(
+    "customer-orders",
+    {
+      body: {
+        action: "list",
+        limit: Math.max(1, Math.min(limit, 100)),
+      },
+    },
+  );
   throwError(error, "Loading customer orders failed");
-  return Array.isArray(data)
-    ? data.map((row) => toOrder(row as Record<string, unknown>))
-    : [];
+  if (!data?.ok) throw new Error(data?.error || "Loading customer orders failed");
+  return Array.isArray(data.orders) ? data.orders.map((row) => toOrder(row)) : [];
 }
 
 export async function loadMyOrderItems(orderId: string): Promise<CustomerOrderItem[]> {
-  const { data, error } = await supabase.rpc("get_my_store_order_items", {
-    p_order_id: orderId,
-  });
+  const { data, error } = await supabase.functions.invoke<CustomerOrdersEdgeResponse>(
+    "customer-orders",
+    {
+      body: {
+        action: "items",
+        order_id: orderId,
+      },
+    },
+  );
   throwError(error, "Loading order items failed");
-  return Array.isArray(data)
-    ? data.map((row) => toOrderItem(row as Record<string, unknown>))
-    : [];
+  if (!data?.ok) throw new Error(data?.error || "Loading order items failed");
+  return Array.isArray(data.items) ? data.items.map((row) => toOrderItem(row)) : [];
 }
 
 export async function loadCustomerAddresses(userId: string): Promise<CustomerAddress[]> {
