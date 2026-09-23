@@ -91,6 +91,34 @@ jobs:
           command: bun run test:ssr
 
 
+  storefront-install-frozen-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Frozen install
+          command: bun install --frozen-lockfile
+
+  storefront-install-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install
+          command: bun install
+
   storefront-typecheck-debug:
     docker:
       - image: cimg/node:lts
@@ -264,6 +292,8 @@ workflows:
       - security-source
       - security-dependencies
       - storefront-ci
+      - storefront-install-frozen-debug
+      - storefront-install-debug
       - storefront-typecheck-debug
       - storefront-lint-debug
       - storefront-unit-debug
