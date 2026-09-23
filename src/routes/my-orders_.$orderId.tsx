@@ -27,7 +27,7 @@ import {
 import { STORE_NAME } from "@/lib/storeConfig";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/my-orders/$orderId")({
+export const Route = createFileRoute("/my-orders_/$orderId")({
   head: () => ({
     meta: [
       { title: `Order details — ${STORE_NAME}` },
