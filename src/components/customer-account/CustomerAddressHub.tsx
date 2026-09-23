@@ -59,8 +59,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   addressDisplayLine,
+  createAddressMediaUrls,
   loadMyOrderItems,
   loadMyOrders,
+  removeAddressMedia,
   uploadAddressMedia,
   type AddressPatch,
   type CustomerAddress,
@@ -177,6 +179,7 @@ export function CustomerAddressHub() {
   const [expandedOrderId, setExpandedOrderId] = useState("");
   const [orderItems, setOrderItems] = useState<Record<string, CustomerOrderItem[]>>({});
   const [addressPendingDelete, setAddressPendingDelete] = useState<CustomerAddress | null>(null);
+  const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
   const saveTimer = useRef<number | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -238,6 +241,8 @@ export function CustomerAddressHub() {
             record: "اضغط لتسجيل تعليمات صوتية",
             recording: "جارٍ التسجيل",
             voiceAdded: "تمت إضافة التعليمات الصوتية",
+            removePhoto: "حذف الصورة",
+            removeVoice: "حذف التسجيل",
             required: "أكمل الحقول المطلوبة قبل حفظ العنوان.",
             genericError: "تعذر إكمال العملية. حاول مرة أخرى.",
             name: "الاسم الكامل",
@@ -294,6 +299,8 @@ export function CustomerAddressHub() {
             record: "Tap to record voice directions",
             recording: "Recording",
             voiceAdded: "Voice directions added",
+            removePhoto: "Remove photo",
+            removeVoice: "Remove recording",
             required: "Complete the required address fields before saving.",
             genericError: "We could not complete that action. Please try again.",
             name: "Full name",
@@ -388,6 +395,29 @@ export function CustomerAddressHub() {
       recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
+
+  useEffect(() => {
+    if (view !== "details") return;
+    const paths = [...form.photoPaths, form.voiceNotePath].filter(Boolean);
+    if (!paths.length) {
+      setMediaUrls({});
+      return;
+    }
+
+    let cancelled = false;
+    void createAddressMediaUrls(paths)
+      .then((urls) => {
+        if (!cancelled) setMediaUrls(urls);
+      })
+      .catch(() => {
+        if (!cancelled) setMediaUrls({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form.photoPaths, form.voiceNotePath, view]);
+
 
   const scheduleSave = (next: AddressForm) => {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
@@ -548,6 +578,51 @@ export function CustomerAddressHub() {
     }
   };
 
+  const removePhoto = async (path: string) => {
+    setPending("remove-photo");
+    setError("");
+    try {
+      const photoPaths = form.photoPaths.filter((item) => item !== path);
+      setForm((current) => ({ ...current, photoPaths }));
+      await saveDraft({ photoPaths });
+      if (draftAddress && path.includes("/" + draftAddress.id + "/")) {
+        await removeAddressMedia(path);
+      }
+      setMediaUrls((current) => {
+        const next = { ...current };
+        delete next[path];
+        return next;
+      });
+    } catch {
+      setError(copy.genericError);
+    } finally {
+      setPending("");
+    }
+  };
+
+  const removeVoice = async () => {
+    if (!form.voiceNotePath) return;
+    const path = form.voiceNotePath;
+    setPending("remove-voice");
+    setError("");
+    try {
+      setForm((current) => ({ ...current, voiceNotePath: "" }));
+      await saveDraft({ voiceNotePath: "" });
+      if (draftAddress && path.includes("/" + draftAddress.id + "/")) {
+        await removeAddressMedia(path);
+      }
+      setMediaUrls((current) => {
+        const next = { ...current };
+        delete next[path];
+        return next;
+      });
+    } catch {
+      setError(copy.genericError);
+    } finally {
+      setPending("");
+    }
+  };
+
   const cleanupRecording = () => {
     if (recordingTickerRef.current) window.clearInterval(recordingTickerRef.current);
     if (recordingStopTimerRef.current) window.clearTimeout(recordingStopTimerRef.current);
@@ -564,7 +639,12 @@ export function CustomerAddressHub() {
       mediaRecorderRef.current?.stop();
       return;
     }
-    if (!user || !draftAddress || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+    if (
+      !user ||
+      !draftAddress ||
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === "undefined"
+    ) {
       setError(copy.genericError);
       return;
     }
@@ -1050,28 +1130,55 @@ export function CustomerAddressHub() {
                 </span>
               </div>
 
-              <button
-                type="button"
-                onClick={() => void startVoiceRecording()}
-                className={
-                  "mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-start transition " +
-                  (recording ? "bg-destructive/10 text-destructive" : "bg-surface hover:bg-accent")
-                }
-                disabled={pending === "voice"}
-              >
-                {pending === "voice" ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Mic className="h-5 w-5" aria-hidden="true" />
-                )}
-                <span className="flex-1 text-sm font-bold">
-                  {recording
-                    ? copy.recording + " " + recordingSeconds + "s / 30s"
-                    : form.voiceNotePath
-                      ? copy.voiceAdded
-                      : copy.record}
-                </span>
-              </button>
+              <div className="mt-4 rounded-2xl bg-surface p-3">
+                <button
+                  type="button"
+                  onClick={() => void startVoiceRecording()}
+                  className={
+                    "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-start transition " +
+                    (recording ? "text-destructive" : "hover:bg-accent")
+                  }
+                  disabled={pending === "voice" || pending === "remove-voice"}
+                >
+                  {pending === "voice" ? (
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Mic className="h-5 w-5" aria-hidden="true" />
+                  )}
+                  <span className="flex-1 text-sm font-bold">
+                    {recording
+                      ? copy.recording + " " + recordingSeconds + "s / 30s"
+                      : form.voiceNotePath
+                        ? copy.voiceAdded
+                        : copy.record}
+                  </span>
+                </button>
+
+                {form.voiceNotePath && mediaUrls[form.voiceNotePath] ? (
+                  <div className="mt-2 flex items-center gap-2">
+                    <audio
+                      controls
+                      preload="metadata"
+                      src={mediaUrls[form.voiceNotePath]}
+                      className="h-9 min-w-0 flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void removeVoice()}
+                      disabled={pending === "remove-voice"}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-destructive hover:bg-destructive/10"
+                      aria-label={copy.removeVoice}
+                      title={copy.removeVoice}
+                    >
+                      {pending === "remove-voice" ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
 
               <textarea
                 value={form.deliveryInstructions}
@@ -1090,6 +1197,40 @@ export function CustomerAddressHub() {
                 className="hidden"
                 onChange={(event) => void addPhotos(event)}
               />
+              {form.photoPaths.length ? (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {form.photoPaths.map((path) => (
+                    <div
+                      key={path}
+                      className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted"
+                    >
+                      {mediaUrls[path] ? (
+                        <img
+                          src={mediaUrls[path]}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="grid h-full w-full place-items-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void removePhoto(path)}
+                        disabled={pending === "remove-photo"}
+                        className="absolute end-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-background/90 text-destructive shadow-sm backdrop-blur hover:bg-background"
+                        aria-label={copy.removePhoto}
+                        title={copy.removePhoto}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
@@ -1097,7 +1238,7 @@ export function CustomerAddressHub() {
                 className="mt-3 inline-flex h-11 items-center gap-2 rounded-xl bg-surface px-4 text-sm font-bold hover:bg-accent disabled:opacity-50"
               >
                 {pending === "photos" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
                   <Camera className="h-4 w-4" aria-hidden="true" />
                 )}
