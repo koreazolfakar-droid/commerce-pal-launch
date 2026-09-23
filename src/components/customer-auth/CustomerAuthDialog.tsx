@@ -11,6 +11,7 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
 import { useCustomerAuth } from "@/components/customer-auth/CustomerAuthProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +57,7 @@ function customerLabel(user: ReturnType<typeof useCustomerAuth>["user"]) {
 
 export function CustomerAuthDialog() {
   const { authOpen, setAuthOpen, user, loading: sessionLoading, signOut } = useCustomerAuth();
+  const { openAddressBook } = useCustomerAccount();
   const { language, direction } = useLanguage();
   const [step, setStep] = useState<Step>("sign-in");
   const [phoneInput, setPhoneInput] = useState("");
@@ -89,6 +91,7 @@ export function CustomerAuthDialog() {
             secure: "تسجيل دخول آمن بدون كلمة مرور",
             account: "حسابك",
             signedIn: "تم تسجيل الدخول",
+            manageAccount: "الملف الشخصي وعناوين التوصيل",
             signOut: "تسجيل الخروج",
             genericError: "تعذر إكمال العملية الآن. حاول مجددًا.",
             invalidPhone: "أدخل رقم هاتف صحيحًا مع رمز الدولة.",
@@ -115,6 +118,7 @@ export function CustomerAuthDialog() {
             secure: "Secure passwordless sign-in",
             account: "Your account",
             signedIn: "Signed in",
+            manageAccount: "Profile & delivery addresses",
             signOut: "Sign out",
             genericError: "We could not complete that action. Please try again.",
             invalidPhone: "Enter a valid phone number with country code.",
@@ -272,6 +276,19 @@ export function CustomerAuthDialog() {
                   {message}
                 </p>
               ) : null}
+
+              <Button
+                type="button"
+                className="h-12 w-full rounded-2xl font-bold"
+                disabled={pending !== null}
+                onClick={() => {
+                  setAuthOpen(false);
+                  openAddressBook();
+                }}
+              >
+                <UserRound className="me-2 h-4 w-4" aria-hidden="true" />
+                {copy.manageAccount}
+              </Button>
 
               <Button
                 type="button"

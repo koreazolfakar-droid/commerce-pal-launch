@@ -14,6 +14,8 @@ import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n"
 import { absoluteUrl } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
+import { CustomerAddressHub } from "@/components/customer-account/CustomerAddressHub";
+import { CustomerAccountProvider } from "@/components/customer-account/CustomerAccountProvider";
 import { CustomerAuthDialog } from "@/components/customer-auth/CustomerAuthDialog";
 import { CustomerAuthProvider } from "@/components/customer-auth/CustomerAuthProvider";
 import { DeferredToaster } from "@/components/DeferredToaster";
@@ -190,9 +192,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <CustomerAuthProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <CustomerAuthDialog />
+        <CustomerAccountProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <CustomerAuthDialog />
+          <CustomerAddressHub />
+        </CustomerAccountProvider>
       </CustomerAuthProvider>
       <DeferredToaster />
     </QueryClientProvider>
