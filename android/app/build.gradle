@@ -1,0 +1,103 @@
+plugins {
+    id "com.android.application"
+}
+
+def releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+def releaseStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+def releaseSigningConfigured = releaseKeystorePath &&
+        releaseStorePassword &&
+        releaseKeyAlias &&
+        releaseKeyPassword
+
+def testKeystorePath = System.getenv("ANDROID_TEST_KEYSTORE_PATH")
+def testStorePassword = System.getenv("ANDROID_TEST_KEYSTORE_PASSWORD")
+def testKeyAlias = System.getenv("ANDROID_TEST_KEY_ALIAS")
+def testKeyPassword = System.getenv("ANDROID_TEST_KEY_PASSWORD")
+def testSigningConfigured = testKeystorePath &&
+        testStorePassword &&
+        testKeyAlias &&
+        testKeyPassword
+
+android {
+    namespace "store.spacecallapp.app"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "store.spacecallapp.app"
+        minSdk 24
+        targetSdk 36
+        versionCode 3
+        versionName "1.0.2"
+    }
+
+    signingConfigs {
+        if (testSigningConfigured) {
+            test {
+                storeFile file(testKeystorePath)
+                storePassword testStorePassword
+                keyAlias testKeyAlias
+                keyPassword testKeyPassword
+                enableV1Signing true
+                enableV2Signing true
+            }
+        }
+
+        if (releaseSigningConfigured) {
+            release {
+                storeFile file(releaseKeystorePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+                enableV1Signing true
+                enableV2Signing true
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            if (signingConfigs.findByName("test") != null) {
+                signingConfig signingConfigs.test
+            }
+        }
+
+        release {
+            debuggable false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+
+            if (signingConfigs.findByName("release") != null) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    lint {
+        abortOnError true
+        checkReleaseBuilds true
+        checkDependencies true
+        warningsAsErrors true
+    }
+}
+
+dependencies {
+    implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.7.3"
+    implementation "com.google.androidbrowserhelper:locationdelegation:1.1.2"
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def createsReleaseArtifact = graph.allTasks.any {
+        it.name == "assembleRelease" || it.name == "bundleRelease"
+    }
+
+    if (createsReleaseArtifact && !releaseSigningConfigured) {
+        throw new GradleException(
+            "Release APK/AAB generation is blocked until the persistent Space Call signing key is configured."
+        )
+    }
+}
