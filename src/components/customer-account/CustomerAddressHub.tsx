@@ -569,8 +569,7 @@ export function CustomerAddressHub() {
         );
       }
       const photoPaths = [...form.photoPaths, ...uploaded].slice(0, 5);
-      const next = { ...form, photoPaths };
-      setForm(next);
+      setForm((current) => ({ ...current, photoPaths }));
       await saveDraft({ photoPaths });
     } catch {
       setError(copy.genericError);
@@ -709,8 +708,7 @@ export function CustomerAddressHub() {
             kind: "voice",
           })
             .then(async (voiceNotePath) => {
-              const next = { ...form, voiceNotePath };
-              setForm(next);
+              setForm((current) => ({ ...current, voiceNotePath }));
               await saveDraft({ voiceNotePath });
             })
             .catch(() => setError(copy.genericError))
