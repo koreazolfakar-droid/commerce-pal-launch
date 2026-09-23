@@ -28,6 +28,9 @@ export interface ShopifyProductNode {
         price: { amount: string; currencyCode: string };
         compareAtPrice?: { amount: string; currencyCode: string } | null;
         availableForSale: boolean;
+        trackInventory?: boolean;
+        allowBackorder?: boolean;
+        stockQuantity?: number;
         sku?: string | null;
         barcode?: string | null;
         weight?: number | null;
