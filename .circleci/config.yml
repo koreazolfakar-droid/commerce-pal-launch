@@ -295,16 +295,16 @@ jobs:
               cp android/app/build/outputs/bundle/release/app-release.aab                 dist/android/Space-Call-1.0.0-release.aab
             else
               cp android/app/build/outputs/bundle/release/app-release.aab                 dist/android/Space-Call-1.0.0-unsigned.aab
-              cat > dist/android/SIGNING-NOT-CONFIGURED.txt <<'EOF'
-            The debug APK is installable for testing.
-            The AAB is unsigned and is not ready for Google Play upload.
-
-            To enable signed release APK/AAB builds, add these CircleCI project environment variables:
-            ANDROID_KEYSTORE_BASE64
-            ANDROID_KEYSTORE_PASSWORD
-            ANDROID_KEY_ALIAS
-            ANDROID_KEY_PASSWORD
-            EOF
+              printf '%s\n' \
+                'The debug APK is installable for testing.' \
+                'The AAB is unsigned and is not ready for Google Play upload.' \
+                '' \
+                'To enable signed release APK/AAB builds, add these CircleCI project environment variables:' \
+                'ANDROID_KEYSTORE_BASE64' \
+                'ANDROID_KEYSTORE_PASSWORD' \
+                'ANDROID_KEY_ALIAS' \
+                'ANDROID_KEY_PASSWORD' \
+                > dist/android/SIGNING-NOT-CONFIGURED.txt
             fi
 
             (
