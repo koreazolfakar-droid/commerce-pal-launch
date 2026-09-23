@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,26 +9,33 @@ import {
   Camera,
   ChevronRight,
   CircleUserRound,
-  Compass,
   Flame,
   Gamepad2,
-  Grid2X2,
   Headphones,
   Heart,
   Laptop,
   LifeBuoy,
+  LogOut,
+  Mail,
   Menu,
   Monitor,
   Package,
   PlugZap,
   RefreshCw,
+  RotateCcw,
   ShoppingBag,
   Smartphone,
   Sparkles,
   Tags,
+  Truck,
   Watch,
   type LucideIcon,
 } from "lucide-react";
+
+import { useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
+import { useCustomerAuth } from "@/components/customer-auth/CustomerAuthProvider";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   Sheet,
   SheetContent,
@@ -37,15 +44,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { LanguageToggle } from "@/components/LanguageToggle";
-import { collectionsQueryOptions, navigationCatalogQueryOptions } from "@/lib/queries";
-import { displayCollections } from "@/lib/taxonomy";
-import { SHOP_ACCOUNT_URL } from "@/lib/infoPages";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
+import { navigationCatalogQueryOptions } from "@/lib/queries";
 
 function categoryIcon(slug: string, label: string): LucideIcon {
-  const value = `${slug} ${label}`.toLowerCase();
+  const value = (slug + " " + label).toLowerCase();
   if (value.includes("smartphone") || value.includes("phone") || value.includes("mobile"))
     return Smartphone;
   if (value.includes("laptop") || value.includes("computer")) return Laptop;
@@ -62,30 +65,53 @@ function categoryIcon(slug: string, label: string): LucideIcon {
   return Package;
 }
 
+function customerAvatar(user: ReturnType<typeof useCustomerAuth>["user"]) {
+  if (!user) return "";
+  const metadata = user.user_metadata as Record<string, unknown> | undefined;
+  return (
+    (typeof metadata?.["avatar_url"] === "string" && metadata["avatar_url"]) ||
+    (typeof metadata?.["picture"] === "string" && metadata["picture"]) ||
+    ""
+  );
+}
+
+function customerName(
+  user: ReturnType<typeof useCustomerAuth>["user"],
+  profileName?: string | null,
+) {
+  if (profileName?.trim()) return profileName.trim();
+  if (!user) return "";
+  const metadata = user.user_metadata as Record<string, unknown> | undefined;
+  return (
+    (typeof metadata?.["full_name"] === "string" && metadata["full_name"]) ||
+    (typeof metadata?.["name"] === "string" && metadata["name"]) ||
+    user.phone ||
+    user.email ||
+    ""
+  );
+}
+
 function SectionHeading({
-  icon: Icon,
   title,
   action,
   to,
   onClick,
 }: {
-  icon: LucideIcon;
   title: string;
   action?: string;
   to?: "/categories" | "/brands" | "/shop";
   onClick: () => void;
 }) {
   return (
-    <div className="mb-2 flex items-center justify-between gap-3 px-1">
-      <div className="flex min-w-0 items-center gap-2">
-        <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.15} />
-        <h2 className="truncate text-[13px] font-semibold tracking-tight text-foreground">{title}</h2>
-      </div>
+    <div className="mb-1.5 flex min-h-7 items-center justify-between gap-3 px-1">
+      <h2 className="truncate text-[11px] font-semibold tracking-[0.01em] text-muted-foreground">
+        {title}
+      </h2>
       {action && to ? (
         <Link
           to={to}
           onClick={onClick}
-          className="inline-flex min-h-7 shrink-0 items-center gap-0.5 rounded-lg px-2 text-[10px] font-semibold text-primary transition-colors hover:bg-primary/8 active:bg-primary/10"
+          className="inline-flex min-h-7 shrink-0 items-center gap-0.5 px-1.5 text-[10px] font-semibold text-primary transition-opacity hover:opacity-75"
         >
           {action}
           <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 rtl:rotate-180" />
@@ -107,27 +133,49 @@ export function MobileMenu({
   hideTrigger = false,
 }: MobileMenuProps = {}) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const open = controlledOpen ?? internalOpen;
+
   const setOpen = (nextOpen: boolean) => {
     if (controlledOpen === undefined) setInternalOpen(nextOpen);
     onOpenChange?.(nextOpen);
   };
-  const [refreshing, setRefreshing] = useState(false);
+
   const queryClient = useQueryClient();
   const router = useRouter();
   const { t, direction, language } = useLanguage();
   const { data: catalog } = useQuery(navigationCatalogQueryOptions());
-  const { data: collections = [] } = useQuery(collectionsQueryOptions());
+  const { user, loading: authLoading, openAuth, signOut } = useCustomerAuth();
+  const { profile, openAddressBook } = useCustomerAccount();
+
   const close = () => setOpen(false);
-  const visibleCollections = displayCollections(collections).slice(0, 4);
-  const seeAll = language === "ar" ? "عرض الكل" : "See all";
-  const refreshLabel = language === "ar" ? "تحديث الصفحة" : "Refresh page";
-  const discoverLabel = language === "ar" ? "اكتشف" : "Discover";
-  const newArrivalsLabel = language === "ar" ? "وصل حديثًا" : "New arrivals";
-  const bestSellersLabel = language === "ar" ? "الأكثر مبيعًا" : "Best sellers";
-  const offersLabel = language === "ar" ? "العروض" : "Offers";
-  const allProductsLabel = language === "ar" ? "كل المنتجات" : "All products";
-  const exploreBrandsLabel = language === "ar" ? "كل العلامات التجارية" : "All brands";
+  const ar = language === "ar";
+  const seeAll = ar ? "عرض الكل" : "See all";
+  const refreshLabel = ar ? "تحديث الصفحة" : "Refresh page";
+  const accountTitle = ar ? "حسابي" : "My Account";
+  const profileLabel = ar ? "ملفي الشخصي" : "My Profile";
+  const ordersLabel = ar ? "طلباتي" : "My Orders";
+  const wishlistLabel = ar ? "المفضلة" : "Wishlist";
+  const signInLabel = ar ? "تسجيل الدخول أو إنشاء حساب" : "Sign in or create account";
+  const viewProfileLabel = ar ? "عرض الملف الشخصي" : "View profile";
+  const shopLabel = ar ? "التسوق" : "Shop";
+  const newArrivalsLabel = ar ? "وصل حديثًا" : "New Arrivals";
+  const bestSellersLabel = ar ? "الأكثر مبيعًا" : "Best Sellers";
+  const offersLabel = ar ? "العروض" : "Offers";
+  const allProductsLabel = ar ? "كل المنتجات" : "All Products";
+  const brandsLabel = ar ? "العلامات التجارية" : "Brands";
+  const supportLabel = ar ? "الدعم" : "Support";
+  const contactLabel = ar ? "تواصل معنا" : "Contact Us";
+  const deliveryLabel = ar ? "التوصيل" : "Delivery";
+  const returnsLabel = ar ? "الإرجاع والاستبدال" : "Returns";
+  const signOutLabel = ar ? "تسجيل الخروج" : "Sign out";
+  const preferencesLabel = ar ? "التفضيلات" : "Preferences";
+
+  const avatar = customerAvatar(user);
+  const name = customerName(user, profile?.fullName);
+  const secondaryIdentity = profile?.email || profile?.phone || user?.email || user?.phone || "";
+  const visibleBrands = useMemo(() => (catalog?.brands ?? []).slice(0, 5), [catalog?.brands]);
 
   const refreshStorefront = async () => {
     if (refreshing) return;
@@ -143,10 +191,31 @@ export function MobileMenu({
     }
   };
 
-  const compactRowClass =
-    "group flex min-h-[46px] w-full items-center gap-2.5 px-3 text-start transition-colors hover:bg-accent/45 active:bg-accent/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30";
-  const quickLinkClass =
-    "group flex min-h-[44px] items-center gap-2 rounded-xl bg-surface/55 px-2.5 text-start transition-colors hover:bg-accent/55 active:bg-accent/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
+  const openProfile = () => {
+    close();
+    openAddressBook();
+  };
+
+  const openSignIn = () => {
+    close();
+    openAuth();
+  };
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      close();
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
+  const rowClass =
+    "group flex min-h-[44px] w-full items-center gap-3 rounded-xl px-2.5 text-start transition-colors hover:bg-accent/45 active:bg-accent/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25";
+  const rowIconClass =
+    "h-[18px] w-[18px] shrink-0 text-muted-foreground transition-colors group-hover:text-primary";
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -165,23 +234,23 @@ export function MobileMenu({
       <SheetContent
         side={direction === "rtl" ? "right" : "left"}
         dir={direction}
-        className="flex w-[min(86vw,22rem)] transform-gpu flex-col gap-0 overflow-y-auto border-border/60 bg-background p-0 shadow-none will-change-transform data-[state=closed]:duration-150 data-[state=open]:duration-200"
+        className="flex w-[min(88vw,23rem)] transform-gpu flex-col gap-0 overflow-y-auto border-border/60 bg-background p-0 shadow-none will-change-transform data-[state=closed]:duration-150 data-[state=open]:duration-200"
       >
         <SheetHeader className="sr-only">
           <SheetTitle>{t("menuTitle")}</SheetTitle>
           <SheetDescription>{t("menuDescription")}</SheetDescription>
         </SheetHeader>
 
-        <div className="flex min-h-[58px] items-center gap-2.5 border-b border-border/55 px-3 pe-12">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-            <Sparkles aria-hidden="true" className="h-[18px] w-[18px]" />
+        <div className="flex min-h-[60px] items-center gap-2.5 border-b border-border/45 px-4 pe-12">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/[0.08] text-primary">
+            <Sparkles aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={1.9} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-bold tracking-[-0.01em] text-primary">
+            <p className="truncate text-[13px] font-bold tracking-[-0.015em] text-foreground">
               Space Call
             </p>
             <p className="truncate text-[10px] font-medium text-muted-foreground">
-              {language === "ar" ? "تصفح بسرعة" : "Quick browse"}
+              {ar ? "تقنية أقرب إليك" : "Tech for a brighter you"}
             </p>
           </div>
           <button
@@ -195,22 +264,177 @@ export function MobileMenu({
           >
             <RefreshCw
               aria-hidden="true"
-              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-              strokeWidth={2.2}
+              className={refreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"}
+              strokeWidth={1.9}
             />
           </button>
         </div>
 
-        <nav aria-label={t("menuTitle")} className="grid gap-4 px-3 py-3">
+        <div className="px-3 pt-3">
+          {user ? (
+            <button
+              type="button"
+              onClick={openProfile}
+              className="group flex w-full items-center gap-3 rounded-2xl bg-surface/60 px-3 py-3 text-start transition-colors hover:bg-accent/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                {avatar ? (
+                  <img
+                    src={avatar}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <CircleUserRound aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px] font-bold tracking-[-0.01em]">
+                  {name || accountTitle}
+                </span>
+                <span className="mt-0.5 block truncate text-[10px] font-medium text-muted-foreground">
+                  {secondaryIdentity || viewProfileLabel}
+                </span>
+                <span className="mt-1 block text-[10px] font-semibold text-primary">
+                  {viewProfileLabel}
+                </span>
+              </span>
+              <ChevronRight
+                aria-hidden="true"
+                className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180"
+              />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={openSignIn}
+              disabled={authLoading}
+              className="group flex w-full items-center gap-3 rounded-2xl bg-surface/60 px-3 py-3 text-start transition-colors hover:bg-accent/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 disabled:opacity-60"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                <CircleUserRound aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-bold">{signInLabel}</span>
+                <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                  {ar ? "احفظ عناوينك وتابع طلباتك بسهولة" : "Save addresses and follow your orders"}
+                </span>
+              </span>
+              <ChevronRight
+                aria-hidden="true"
+                className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180"
+              />
+            </button>
+          )}
+        </div>
+
+        <nav aria-label={t("menuTitle")} className="grid gap-3.5 px-3 py-3">
           <section>
+            <SectionHeading title={accountTitle} onClick={close} />
+            <div className="grid gap-0.5">
+              <button type="button" onClick={user ? openProfile : openSignIn} className={rowClass}>
+                <CircleUserRound aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {profileLabel}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </button>
+              <Link to="/my-orders" onClick={close} className={rowClass}>
+                <Package aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {ordersLabel}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </Link>
+              <Link to="/wishlist" onClick={close} className={rowClass}>
+                <Heart aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {wishlistLabel}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </Link>
+            </div>
+          </section>
+
+          <section className="border-t border-border/45 pt-3">
+            <SectionHeading title={shopLabel} onClick={close} />
+            <div className="grid gap-0.5">
+              <Link to="/shop" onClick={close} className={rowClass}>
+                <ShoppingBag aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {allProductsLabel}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </Link>
+              <Link
+                to="/shop"
+                search={{ sort: "newest" } as never}
+                onClick={close}
+                className={rowClass}
+              >
+                <Sparkles aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {newArrivalsLabel}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </Link>
+              <Link
+                to="/shop"
+                search={{ sort: "featured" } as never}
+                onClick={close}
+                className={rowClass}
+              >
+                <Flame aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {bestSellersLabel}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </Link>
+              <Link
+                to="/shop"
+                search={{ availability: "on-sale", sort: "discount" } as never}
+                onClick={close}
+                className={rowClass}
+              >
+                <BadgePercent aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {offersLabel}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </Link>
+            </div>
+          </section>
+
+          <section className="border-t border-border/45 pt-3">
             <SectionHeading
-              icon={Grid2X2}
               title={t("categoriesTitle")}
               action={seeAll}
               to="/categories"
               onClick={close}
             />
-            <div className="overflow-hidden rounded-2xl border border-border/55 bg-card/35 divide-y divide-border/50">
+            <div className="grid gap-0.5">
               {(catalog?.categories ?? []).slice(0, 5).map((item) => {
                 const label = categoryLabel(item, language);
                 const Icon = categoryIcon(item.slug, label);
@@ -219,164 +443,138 @@ export function MobileMenu({
                     key={item.slug}
                     to="/category/$slug"
                     params={{ slug: item.slug }}
-                    className={compactRowClass}
+                    className={rowClass}
                     onClick={close}
                   >
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/[0.07] text-primary">
-                      <Icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-foreground">
+                    <Icon aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                    <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
                       {label}
                     </span>
                     <ChevronRight
                       aria-hidden="true"
-                      className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180"
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
                     />
                   </Link>
                 );
               })}
 
-              {!catalog?.categories.length && (
-                <Link to="/shop" onClick={close} className={compactRowClass}>
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/[0.07] text-primary">
-                    <Boxes aria-hidden="true" className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold">
+              {!catalog?.categories.length ? (
+                <Link to="/shop" onClick={close} className={rowClass}>
+                  <Boxes aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                  <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
                     {t("browseProducts")}
                   </span>
                   <ChevronRight
                     aria-hidden="true"
-                    className="h-4 w-4 text-muted-foreground rtl:rotate-180"
+                    className="h-3.5 w-3.5 text-muted-foreground/80 rtl:rotate-180"
                   />
                 </Link>
-              )}
+              ) : null}
             </div>
           </section>
 
-          <section>
-            <SectionHeading icon={Compass} title={discoverLabel} onClick={close} />
-            <div className="grid grid-cols-2 gap-1.5">
-              <Link
-                to="/shop"
-                search={{ sort: "newest" } as never}
-                onClick={close}
-                className={quickLinkClass}
-              >
-                <Sparkles aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-[11px] font-semibold">{newArrivalsLabel}</span>
-              </Link>
-              <Link
-                to="/shop"
-                search={{ sort: "featured" } as never}
-                onClick={close}
-                className={quickLinkClass}
-              >
-                <Flame aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-[11px] font-semibold">{bestSellersLabel}</span>
-              </Link>
-              <Link
-                to="/shop"
-                search={{ availability: "on-sale", sort: "discount" } as never}
-                onClick={close}
-                className={quickLinkClass}
-              >
-                <BadgePercent aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-[11px] font-semibold">{offersLabel}</span>
-              </Link>
-              <Link to="/shop" onClick={close} className={quickLinkClass}>
-                <ShoppingBag aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-[11px] font-semibold">{allProductsLabel}</span>
-              </Link>
-            </div>
-
-            <Link
-              to="/brands"
-              onClick={close}
-              className="mt-1.5 flex min-h-[38px] items-center gap-2 rounded-xl px-2 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/[0.06] active:bg-primary/10"
-            >
-              <Tags aria-hidden="true" className="h-4 w-4" />
-              <span className="flex-1">{exploreBrandsLabel}</span>
-              <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 rtl:rotate-180" />
-            </Link>
-          </section>
-
-          {visibleCollections.length > 0 && (
-            <section>
-              <SectionHeading
-                icon={Boxes}
-                title={t("collections")}
-                action={seeAll}
-                to="/shop"
-                onClick={close}
-              />
-              <div className="grid grid-cols-2 gap-1.5">
-                {visibleCollections.map((item) => (
+          <section className="border-t border-border/45 pt-3">
+            <SectionHeading title={brandsLabel} action={seeAll} to="/brands" onClick={close} />
+            {visibleBrands.length ? (
+              <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {visibleBrands.map((brand) => (
                   <Link
-                    key={item.handle}
-                    to="/collections/$handle"
-                    params={{ handle: item.handle }}
+                    key={brand.slug}
+                    to="/brand/$slug"
+                    params={{ slug: brand.slug }}
                     onClick={close}
-                    className="flex min-h-[40px] items-center rounded-xl border border-border/50 bg-card/35 px-2.5 text-[11px] font-bold leading-tight transition-colors hover:bg-accent/45 active:bg-accent/65"
+                    className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border/45 bg-card/25 px-3 text-[11px] font-semibold transition-colors hover:bg-accent/45"
                   >
-                    <span className="line-clamp-2">{item.title}</span>
+                    <Tags aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.8} />
+                    <span>{brand.label}</span>
                   </Link>
                 ))}
               </div>
-            </section>
-          )}
+            ) : (
+              <Link to="/brands" onClick={close} className={rowClass}>
+                <Tags aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {brandsLabel}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </Link>
+            )}
+          </section>
 
-          <section>
-            <SectionHeading icon={LifeBuoy} title={t("help")} onClick={close} />
-            <div className="overflow-hidden rounded-2xl border border-border/55 bg-card/35 divide-y divide-border/50">
-              <Link to="/help" onClick={close} className={compactRowClass}>
-                <LifeBuoy aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate text-[12px] font-bold">
+          <section className="border-t border-border/45 pt-3">
+            <SectionHeading title={supportLabel} onClick={close} />
+            <div className="grid gap-0.5">
+              <Link to="/help" onClick={close} className={rowClass}>
+                <LifeBuoy aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
                   {t("helpTitle")}
                 </span>
                 <ChevronRight
                   aria-hidden="true"
-                  className="h-3.5 w-3.5 text-muted-foreground rtl:rotate-180"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
                 />
               </Link>
-              <Link to="/wishlist" onClick={close} className={compactRowClass}>
-                <Heart aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate text-[12px] font-bold">
-                  {t("wishlistTitle")}
+              <Link to="/contact" onClick={close} className={rowClass}>
+                <Mail aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {contactLabel}
                 </span>
                 <ChevronRight
                   aria-hidden="true"
-                  className="h-3.5 w-3.5 text-muted-foreground rtl:rotate-180"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
                 />
               </Link>
-              <a
-                href={SHOP_ACCOUNT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={compactRowClass}
-              >
-                <CircleUserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate text-[12px] font-bold">
-                  {t("openAccount")}
+              <Link to="/shipping" onClick={close} className={rowClass}>
+                <Truck aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {deliveryLabel}
                 </span>
                 <ChevronRight
                   aria-hidden="true"
-                  className="h-3.5 w-3.5 text-muted-foreground rtl:rotate-180"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
                 />
-              </a>
+              </Link>
+              <Link to="/returns" onClick={close} className={rowClass}>
+                <RotateCcw aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {returnsLabel}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </Link>
             </div>
           </section>
         </nav>
 
-        <div className="mt-auto border-t border-border/55 px-3 pb-[max(.65rem,env(safe-area-inset-bottom))] pt-2.5">
-          <div className="flex min-h-9 items-center justify-between gap-2">
-            <p className="truncate text-[10px] font-bold text-muted-foreground">
-              {t("preferences")}
+        <div className="mt-auto border-t border-border/45 px-3 pb-[max(.65rem,env(safe-area-inset-bottom))] pt-2.5">
+          <div className="mb-1 flex min-h-8 items-center justify-between gap-2 px-1">
+            <p className="truncate text-[10px] font-semibold text-muted-foreground">
+              {preferencesLabel}
             </p>
             <div className="flex shrink-0 items-center gap-1.5">
               <ThemeToggle />
               <LanguageToggle />
             </div>
           </div>
+
+          {user ? (
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              disabled={signingOut}
+              className="group flex min-h-[42px] w-full items-center gap-3 rounded-xl px-2.5 text-start text-destructive transition-colors hover:bg-destructive/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/20 disabled:opacity-60"
+            >
+              <LogOut aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                {signOutLabel}
+              </span>
+            </button>
+          ) : null}
         </div>
       </SheetContent>
     </Sheet>
