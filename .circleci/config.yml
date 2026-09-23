@@ -555,6 +555,29 @@ jobs:
           name: Lint lib
           command: ./node_modules/.bin/eslint src/lib --fix-dry-run
 
+  unit-dashboard-all-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: All dashboard regression tests
+          command: node --test e2e/dashboard-*.test.mjs
+
+  unit-nondashboard-all-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: All non-dashboard regression tests
+          command: >-
+            node --test $(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*.test.mjs' -print)
+
   unit-dashboard-csp-debug:
     docker:
       - image: cimg/node:lts
@@ -800,6 +823,8 @@ workflows:
       - unit-ci-debug
       - unit-ci-config-debug
       - unit-dashboard-csp-debug
+      - unit-dashboard-all-debug
+      - unit-nondashboard-all-debug
       - dashboard-test-response-debug
       - dashboard-test-csp-debug
       - dashboard-test-storage-debug
