@@ -22,7 +22,9 @@ jobs:
       - checkout
       - run:
           name: High-confidence source and secret scan
-          command: node scripts/security-gate.mjs
+          command: |
+            node scripts/security-gate.mjs
+            node scripts/android-security-gate.mjs
 
   security-dependencies:
     docker:
@@ -207,9 +209,286 @@ jobs:
             node --version
             test -d /ms-playwright
 
+
+  android-build:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      GRADLE_VERSION: "9.6.0"
+      GRADLE_BIN_SHA256: "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+    steps:
+      - checkout
+
+      - run:
+          name: Verify Android build environment
+          command: |
+            set -euo pipefail
+            java -version
+            sdkmanager --version
+
+      - run:
+          name: Install Android API 36 and Build Tools
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - restore_cache:
+          keys:
+            - space-call-debug-keystore-v1
+
+      - run:
+          name: Establish stable test signing identity
+          command: |
+            set -euo pipefail
+            mkdir -p "$HOME/.android"
+            if [ ! -f "$HOME/.android/debug.keystore" ]; then
+              keytool -genkeypair \
+                -keystore "$HOME/.android/debug.keystore" \
+                -storepass android \
+                -alias androiddebugkey \
+                -keypass android \
+                -dname "CN=Space Call Test,O=Space Call,C=LB" \
+                -keyalg RSA \
+                -keysize 2048 \
+                -validity 10000
+            fi
+            chmod 600 "$HOME/.android/debug.keystore"
+            {
+              echo 'export ANDROID_TEST_KEYSTORE_PATH="$HOME/.android/debug.keystore"'
+              echo 'export ANDROID_TEST_KEYSTORE_PASSWORD=android'
+              echo 'export ANDROID_TEST_KEY_ALIAS=androiddebugkey'
+              echo 'export ANDROID_TEST_KEY_PASSWORD=android'
+            } >> "$BASH_ENV"
+
+      - save_cache:
+          key: space-call-debug-keystore-v1
+          paths:
+            - ~/.android/debug.keystore
+
+      - run:
+          name: Install pinned Gradle
+          command: |
+            set -euo pipefail
+            curl --proto '=https' --tlsv1.2 -fsSL \
+              "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" \
+              -o /tmp/gradle.zip
+            echo "$GRADLE_BIN_SHA256  /tmp/gradle.zip" | sha256sum -c -
+            rm -rf "$HOME/gradle-$GRADLE_VERSION"
+            unzip -q /tmp/gradle.zip -d "$HOME"
+            echo "export PATH=\"$HOME/gradle-$GRADLE_VERSION/bin:$PATH\"" >> "$BASH_ENV"
+            source "$BASH_ENV"
+            gradle --version
+
+      - run:
+          name: Configure optional production signing
+          command: |
+            set -eo pipefail
+            if [ -n "$ANDROID_KEYSTORE_BASE64" ] && \
+               [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && \
+               [ -n "$ANDROID_KEY_ALIAS" ] && \
+               [ -n "$ANDROID_KEY_PASSWORD" ]; then
+              printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/space-call-upload.jks
+              chmod 600 /tmp/space-call-upload.jks
+              CERT_SHA256="$(keytool -list -v \
+                -keystore /tmp/space-call-upload.jks \
+                -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+                -alias "$ANDROID_KEY_ALIAS" | awk '/SHA256:/{print $2; exit}')"
+              test -n "$CERT_SHA256"
+              {
+                echo 'export ANDROID_KEYSTORE_PATH=/tmp/space-call-upload.jks'
+                echo 'export SPACE_CALL_SIGNED_BUILD=1'
+                echo "export ANDROID_CERT_SHA256=$CERT_SHA256"
+              } >> "$BASH_ENV"
+            else
+              echo 'export SPACE_CALL_SIGNED_BUILD=0' >> "$BASH_ENV"
+            fi
+
+      - run:
+          name: Security gate, lint, and build
+          command: |
+            set -euo pipefail
+            source "$BASH_ENV"
+            node scripts/android-security-gate.mjs
+            jq empty public/manifest.webmanifest
+            jq empty public/.well-known/assetlinks.json
+
+            cd android
+            gradle --no-daemon :app:lintDebug :app:lintRelease :app:assembleDebug
+            cd ..
+
+            if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
+              node scripts/android-security-gate.mjs
+              cd android
+              gradle --no-daemon :app:assembleRelease :app:bundleRelease
+              cd ..
+            fi
+
+      - run:
+          name: Inspect APK identity and integrity
+          command: |
+            set -euo pipefail
+            source "$BASH_ENV"
+            APK="android/app/build/outputs/apk/debug/app-debug.apk"
+            test -s "$APK"
+
+            aapt dump badging "$APK" | tee /tmp/aapt-badging.txt
+            grep -q "package: name='store.spacecallapp.app.debug'" /tmp/aapt-badging.txt
+            grep -q "versionCode='3'" /tmp/aapt-badging.txt
+            grep -q "versionName='1.0.2-debug'" /tmp/aapt-badging.txt
+
+            apksigner verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+            zipalign -c -P 16 -v 4 "$APK"
+
+            RAW_CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr '[:lower:]' '[:upper:]')"
+            test -n "$RAW_CERT"
+            FORMATTED_CERT="$(printf '%s' "$RAW_CERT" | sed 's/../&:/g;s/:$//')"
+
+            mkdir -p dist/android
+            printf '%s\n' "$FORMATTED_CERT" > dist/android/debug-cert-sha256.txt
+            cp "$APK" dist/android/Space-Call-1.0.2-debug.apk
+
+            if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
+              cp android/app/build/outputs/apk/release/app-release.apk \
+                dist/android/Space-Call-1.0.2-release.apk
+              cp android/app/build/outputs/bundle/release/app-release.aab \
+                dist/android/Space-Call-1.0.2-release.aab
+            fi
+
+            (
+              cd dist/android
+              sha256sum Space-Call-* > SHA256SUMS.txt
+            )
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/android
+
+      - store_artifacts:
+          path: dist/android
+          destination: space-call-android
+
+  android-runtime-smoke:
+    machine:
+      image: android:current
+    resource_class: large.gen2
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Install Android 16 emulator image
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "emulator" \
+              "system-images;android-36;google_apis_playstore;x86_64"
+            echo "no" | avdmanager create avd \
+              -n spacecall-api36 \
+              -k "system-images;android-36;google_apis_playstore;x86_64" \
+              --force
+
+      - run:
+          name: Start Android 16 emulator
+          background: true
+          command: |
+            emulator -avd spacecall-api36 \
+              -no-window \
+              -noaudio \
+              -no-boot-anim \
+              -no-snapshot \
+              -gpu swiftshader_indirect
+
+      - run:
+          name: Wait for emulator and prepare device
+          command: |
+            set -euo pipefail
+            circle-android wait-for-boot
+            adb wait-for-device
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+            adb shell input keyevent 82 || true
+            adb shell pm list packages | tee /tmp/packages.txt
+
+      - run:
+          name: Install and cold-launch Space Call
+          command: |
+            set -euo pipefail
+            APK="dist/android/Space-Call-1.0.2-debug.apk"
+            test -s "$APK"
+
+            adb install -r -t "$APK"
+            adb shell pm clear store.spacecallapp.app.debug || true
+            adb logcat -c
+
+            adb shell am start -W \
+              -n store.spacecallapp.app.debug/store.spacecallapp.app.SpaceCallLauncherActivity \
+              | tee /tmp/am-start.txt
+            grep -q "Status: ok" /tmp/am-start.txt
+
+            sleep 12
+            adb logcat -b crash -d > /tmp/crash.txt || true
+            adb logcat -d > /tmp/logcat.txt
+            adb shell dumpsys activity activities > /tmp/activities.txt
+            adb shell dumpsys window windows > /tmp/windows.txt
+            adb exec-out screencap -p > /tmp/space-call-startup.png
+
+            if grep -Eqi "FATAL EXCEPTION|Process: store\.spacecallapp\.app\.debug|SpaceCallLauncher.*Exception" /tmp/crash.txt; then
+              echo "Space Call crashed during cold launch."
+              cat /tmp/crash.txt
+              exit 1
+            fi
+
+            if grep -Eqi "FATAL EXCEPTION.*store\.spacecallapp\.app\.debug|AndroidRuntime.*store\.spacecallapp\.app\.debug" /tmp/logcat.txt; then
+              echo "Space Call emitted a fatal runtime exception."
+              grep -Ei -C 20 "FATAL EXCEPTION|AndroidRuntime" /tmp/logcat.txt
+              exit 1
+            fi
+
+            echo "Cold launch completed without an Android crash."
+
+      - store_artifacts:
+          path: /tmp/am-start.txt
+          destination: android-runtime/am-start.txt
+      - store_artifacts:
+          path: /tmp/crash.txt
+          destination: android-runtime/crash.txt
+      - store_artifacts:
+          path: /tmp/logcat.txt
+          destination: android-runtime/logcat.txt
+      - store_artifacts:
+          path: /tmp/activities.txt
+          destination: android-runtime/activities.txt
+      - store_artifacts:
+          path: /tmp/windows.txt
+          destination: android-runtime/windows.txt
+      - store_artifacts:
+          path: /tmp/space-call-startup.png
+          destination: android-runtime/startup.png
+
 workflows:
   security-and-storefront-validation:
     jobs:
+      - android-build:
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+      - android-runtime-smoke:
+          requires:
+            - android-build
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
       - security-source
       - security-dependencies
       - storefront-ci
