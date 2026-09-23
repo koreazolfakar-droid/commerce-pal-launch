@@ -33,6 +33,7 @@ const STATUS_TABS: Array<"all" | DashboardOrderStatus> = [
   "new",
   "confirmed",
   "processing",
+  "ready",
   "out_for_delivery",
   "delivered",
   "done",
@@ -223,7 +224,7 @@ export default function OrdersPage() {
 
   const stats = result?.stats;
   const inProgress = useMemo(
-    () => (stats ? stats.confirmed + stats.processing : 0),
+    () => (stats ? stats.confirmed + stats.processing + stats.ready : 0),
     [stats],
   );
 
@@ -307,7 +308,7 @@ export default function OrdersPage() {
 
       <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
         <StatCard label="New" value={stats?.new ?? 0} detail="Needs review" icon={Clock3} />
-        <StatCard label="In progress" value={inProgress} detail="Confirmed + processing" icon={PackageCheck} />
+        <StatCard label="In progress" value={inProgress} detail="Confirmed + preparing + ready" icon={PackageCheck} />
         <StatCard
           label="Out for delivery"
           value={stats?.outForDelivery ?? 0}
