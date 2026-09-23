@@ -28,7 +28,6 @@ import {
   socialMeta,
   websiteJsonLd,
 } from "@/lib/seo";
-import "../home-ticker.css";
 
 const LazyDealSpotlight = lazy(() =>
   import("@/components/DealSpotlight").then((module) => ({ default: module.DealSpotlight })),
@@ -252,33 +251,6 @@ function DealsCountdown() {
           </span>
         ))}
       </span>
-    </div>
-  );
-}
-
-function HomePromoTicker({ heading, details }: { heading: string; details: string }) {
-  const accessibleLabel = `${heading} • ${details}`;
-
-  return (
-    <div
-      className="home-promo-ticker"
-      data-testid="homepage-promo-ticker"
-      aria-label={accessibleLabel}
-    >
-      <div className="home-promo-ticker-track">
-        <span className="home-promo-ticker-copy">
-          <h1 className="m-0 inline text-[inherit] font-[inherit] tracking-[inherit]">{heading}</h1>
-          <span className="home-promo-ticker-dot" aria-hidden="true">
-            •
-          </span>
-          <span>{details}</span>
-        </span>
-        <span className="home-promo-ticker-copy" aria-hidden="true">
-          <span>{heading}</span>
-          <span className="home-promo-ticker-dot">•</span>
-          <span>{details}</span>
-        </span>
-      </div>
     </div>
   );
 }
@@ -555,16 +527,7 @@ function Index() {
   const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
   const best = (bestSellers ?? []).filter(isHomepageMerchandise);
   const latest = newItems.filter(isHomepageMerchandise);
-  const tickerHeading =
-    cmsText(cms, language === "ar" ? "home_ticker_heading_ar" : "home_ticker_heading_en") ??
-    (language === "ar"
-      ? "Space Call لبنان - متجر الهواتف والإلكترونيات"
-      : "Space Call Lebanon - Phones & Electronics Store");
-  const tickerDetails =
-    cmsText(cms, language === "ar" ? "home_ticker_details_ar" : "home_ticker_details_en") ??
-    (language === "ar"
-      ? "متجرك الموثوق للهواتف والإلكترونيات • توفر مباشر • أسعار واضحة • دفع آمن"
-      : "Your trusted phones & electronics store • Live availability • Clear pricing • Secure checkout");
+
 
   const homeSections = cms.sections.filter((section) => section.page_slug === "home");
   const sectionByKey = new Map(homeSections.map((section) => [section.section_key, section]));
@@ -596,10 +559,7 @@ function Index() {
       section: coreSection("hero"),
       visible: isLive(coreSection("hero")),
       node: (
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4">
-          <HomePromoTicker heading={tickerHeading} details={tickerDetails} />
-          <HomeHero heroCollection={heroCollection} cmsHeroSlides={cms.heroSlides} />
-        </div>
+        <HomeHero heroCollection={heroCollection} cmsHeroSlides={cms.heroSlides} />
       ),
     },
     {
