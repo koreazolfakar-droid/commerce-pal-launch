@@ -259,7 +259,7 @@ export async function ensureCustomerProfile(user: User): Promise<CustomerProfile
     if (!text(row.phone) && user.phone) patch.phone = user.phone;
     if (!text(row.email) && user.email) patch.email = user.email;
     if (Object.keys(patch).length > 0) {
-      const { data: updated, error } = await customerDb
+      const { data: updated, error } = await supabase
         .from("store_customer_profiles")
         .update(patch)
         .eq("user_id", user.id)
