@@ -137,3 +137,23 @@ test("Hero RPC payload normalizes text, visual config and overlay bounds", () =>
   assert.match(heroData, /p_overlay_opacity: Math\.max\(0, Math\.min\(90, input\.overlayOpacity\)\)/);
   assert.match(heroData, /p_visual_config: normalizeHeroVisualConfig\(input\.visualConfig\)/);
 });
+
+
+test("Hero page preflights dashboard verification before loading protected CMS data", () => {
+  assert.match(heroData, /export async function ensureDashboardHeroSessionReady/);
+  assert.match(heroPage, /await ensureDashboardHeroSessionReady\(\)/);
+  const preflight = heroPage.indexOf("await ensureDashboardHeroSessionReady()");
+  const loadSlides = heroPage.indexOf("listDashboardHeroSlides()");
+  assert.ok(preflight >= 0 && loadSlides >= 0 && preflight < loadSlides);
+});
+
+test("compression preview cannot confirm before a valid result and explains the real upload boundary", () => {
+  assert.match(
+    imageOptimizationPreview,
+    /Nothing is sent to Storage until you confirm the upload/,
+  );
+  assert.match(
+    imageOptimizationPreview,
+    /disabled=\{busy \|\| previewing \|\| Boolean\(error\) \|\| results\.length === 0\}/,
+  );
+});
