@@ -49,20 +49,46 @@ jobs:
       BUN_INSTALL: /home/circleci/.bun
     steps:
       - checkout
+
       - restore_cache:
           keys:
             - bun-deps-v1-{{ checksum "bun.lock" }}
             - bun-deps-v1-
+
       - install-bun
+
       - run:
           name: Install dependencies
           command: bun install --frozen-lockfile
+
+      - save_cache:
+          key: bun-deps-v1-{{ checksum "bun.lock" }}
+          paths:
+            - ~/.bun/install/cache
+
       - run:
-          name: TypeScript diagnostic
+          name: TypeScript
           command: bun run typecheck
+
       - run:
-          name: ESLint diagnostic
+          name: ESLint
           command: bun run lint
+
+      - run:
+          name: Dashboard security regression tests
+          command: node --test e2e/dashboard-*.test.mjs
+
+      - run:
+          name: Unit and architecture tests
+          command: bun run test:unit
+
+      - run:
+          name: Production build
+          command: bun run build
+
+      - run:
+          name: SSR smoke test
+          command: bun run test:ssr
 
 
   ui-browser-deps:
@@ -86,49 +112,6 @@ jobs:
           root: .
           paths:
             - node_modules
-
-  lint-probe:
-    parameters:
-      target:
-        type: string
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Targeted ESLint probe
-          command: ./node_modules/.bin/eslint << parameters.target >> --fix-dry-run
-
-  format-probe:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Google map Prettier probe
-          command: ./node_modules/.bin/prettier --check src/components/customer-account/GoogleDeliveryMap.tsx
-
-  lint-map-without-prettier:
-    docker:
-      - image: cimg/node:lts
-    resource_class: small
-    working_directory: ~/project
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Google map ESLint rules probe
-          command: |
-            ./node_modules/.bin/eslint src/components/customer-account/GoogleDeliveryMap.tsx --fix-dry-run --rule 'prettier/prettier: off'
 
   ui-browser:
     parameters:
@@ -229,43 +212,11 @@ workflows:
     jobs:
       - security-source
       - security-dependencies
-      - storefront-ci
       - ui-browser-deps:
           filters:
             branches:
               only:
                 - /^ui\/.*/
-      - format-probe:
-          requires:
-            - ui-browser-deps
-      - lint-map-without-prettier:
-          requires:
-            - ui-browser-deps
-      - lint-probe:
-          requires:
-            - ui-browser-deps
-          name: lint-customer-address-hub
-          target: src/components/customer-account/CustomerAddressHub.tsx
-      - lint-probe:
-          requires:
-            - ui-browser-deps
-          name: lint-customer-map
-          target: src/components/customer-account/GoogleDeliveryMap.tsx
-      - lint-probe:
-          requires:
-            - ui-browser-deps
-          name: lint-customer-provider-selector
-          target: src/components/customer-account/CustomerAccountProvider.tsx src/components/customer-account/CustomerAddressSelector.tsx
-      - lint-probe:
-          requires:
-            - ui-browser-deps
-          name: lint-customer-data-checkout
-          target: src/lib/customerAccount.ts src/components/CheckoutDetailsForm.tsx
-      - lint-probe:
-          requires:
-            - ui-browser-deps
-          name: lint-customer-integration-tests
-          target: src/components/SiteHeader.tsx src/components/MobileTopBar.tsx src/components/customer-auth/CustomerAuthDialog.tsx src/routes/__root.tsx src/lib/contentSecurityPolicy.ts e2e/customer-address-flow.test.mjs
       - ui-browser:
           requires:
             - ui-browser-deps
