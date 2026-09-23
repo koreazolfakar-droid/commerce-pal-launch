@@ -779,6 +779,122 @@ export type Database = {
         }
         Relationships: []
       }
+      store_customer_addresses: {
+        Row: {
+          address_type: string | null
+          area_street: string | null
+          building_name: string | null
+          building_number: string | null
+          created_at: string
+          delivery_instructions: string | null
+          door_details: string | null
+          draft_step: number
+          editing_address_id: string | null
+          floor: string | null
+          formatted_address: string | null
+          id: string
+          is_default: boolean
+          is_draft: boolean
+          latitude: number | null
+          longitude: number | null
+          nickname: string | null
+          phone: string | null
+          photo_paths: string[]
+          place_id: string | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+          voice_note_path: string | null
+        }
+        Insert: {
+          address_type?: string | null
+          area_street?: string | null
+          building_name?: string | null
+          building_number?: string | null
+          created_at?: string
+          delivery_instructions?: string | null
+          door_details?: string | null
+          draft_step?: number
+          editing_address_id?: string | null
+          floor?: string | null
+          formatted_address?: string | null
+          id?: string
+          is_default?: boolean
+          is_draft?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          nickname?: string | null
+          phone?: string | null
+          photo_paths?: string[]
+          place_id?: string | null
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+          voice_note_path?: string | null
+        }
+        Update: {
+          address_type?: string | null
+          area_street?: string | null
+          building_name?: string | null
+          building_number?: string | null
+          created_at?: string
+          delivery_instructions?: string | null
+          door_details?: string | null
+          draft_step?: number
+          editing_address_id?: string | null
+          floor?: string | null
+          formatted_address?: string | null
+          id?: string
+          is_default?: boolean
+          is_draft?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          nickname?: string | null
+          phone?: string | null
+          photo_paths?: string[]
+          place_id?: string | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+          voice_note_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_customer_addresses_editing_address_id_fkey"
+            columns: ["editing_address_id"]
+            isOneToOne: false
+            referencedRelation: "store_customer_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_customer_profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       store_customers: {
         Row: {
           city: string | null
@@ -1014,6 +1130,7 @@ export type Database = {
           customer_name: string
           customer_phone: string
           customer_reference: string | null
+          customer_user_id: string | null
           delivery_address: string | null
           delivery_location: Json | null
           delivery_type: string
@@ -1042,6 +1159,7 @@ export type Database = {
           customer_name: string
           customer_phone: string
           customer_reference?: string | null
+          customer_user_id?: string | null
           delivery_address?: string | null
           delivery_location?: Json | null
           delivery_type?: string
@@ -1070,6 +1188,7 @@ export type Database = {
           customer_name?: string
           customer_phone?: string
           customer_reference?: string | null
+          customer_user_id?: string | null
           delivery_address?: string | null
           delivery_location?: Json | null
           delivery_type?: string
@@ -2410,6 +2529,76 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: string
       }
+      finalize_customer_address: {
+        Args: { p_address_id: string }
+        Returns: {
+          address_type: string | null
+          area_street: string | null
+          building_name: string | null
+          building_number: string | null
+          created_at: string
+          delivery_instructions: string | null
+          door_details: string | null
+          draft_step: number
+          editing_address_id: string | null
+          floor: string | null
+          formatted_address: string | null
+          id: string
+          is_default: boolean
+          is_draft: boolean
+          latitude: number | null
+          longitude: number | null
+          nickname: string | null
+          phone: string | null
+          photo_paths: string[]
+          place_id: string | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+          voice_note_path: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_customer_addresses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      get_my_store_order_items: {
+        Args: { p_order_id: string }
+        Returns: {
+          item_id: string
+          line_total: number
+          options: Json
+          product_id: string
+          quantity: number
+          sku: string
+          title: string
+          unit_price: number
+          variant_id: string
+          variant_title: string
+        }[]
+      }
+      get_my_store_orders: {
+        Args: { p_limit?: number }
+        Returns: {
+          city: string
+          completed_at: string
+          created_at: string
+          currency: string
+          delivery_address: string
+          delivery_location: Json
+          discount_total: number
+          order_id: string
+          order_number: number
+          payment_method: string
+          payment_status: string
+          shipping_total: number
+          status: string
+          subtotal: number
+          total: number
+        }[]
+      }
       get_store_customer_orders: {
         Args: { p_customer_id: string; p_limit?: number }
         Returns: {
@@ -2421,6 +2610,7 @@ export type Database = {
           customer_name: string
           customer_phone: string
           customer_reference: string | null
+          customer_user_id: string | null
           delivery_address: string | null
           delivery_location: Json | null
           delivery_type: string
@@ -2550,6 +2740,41 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_customer_default_address: {
+        Args: { p_address_id: string }
+        Returns: {
+          address_type: string | null
+          area_street: string | null
+          building_name: string | null
+          building_number: string | null
+          created_at: string
+          delivery_instructions: string | null
+          door_details: string | null
+          draft_step: number
+          editing_address_id: string | null
+          floor: string | null
+          formatted_address: string | null
+          id: string
+          is_default: boolean
+          is_draft: boolean
+          latitude: number | null
+          longitude: number | null
+          nickname: string | null
+          phone: string | null
+          photo_paths: string[]
+          place_id: string | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+          voice_note_path: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_customer_addresses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_store_collection_products: {
         Args: { p_collection_id: string; p_product_ids: string[] }
         Returns: undefined
@@ -2573,6 +2798,41 @@ export type Database = {
       set_store_products_status: {
         Args: { p_product_ids: string[]; p_status: string }
         Returns: number
+      }
+      start_customer_address_edit: {
+        Args: { p_address_id: string }
+        Returns: {
+          address_type: string | null
+          area_street: string | null
+          building_name: string | null
+          building_number: string | null
+          created_at: string
+          delivery_instructions: string | null
+          door_details: string | null
+          draft_step: number
+          editing_address_id: string | null
+          floor: string | null
+          formatted_address: string | null
+          id: string
+          is_default: boolean
+          is_draft: boolean
+          latitude: number | null
+          longitude: number | null
+          nickname: string | null
+          phone: string | null
+          photo_paths: string[]
+          place_id: string | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+          voice_note_path: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "store_customer_addresses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       submit_store_purchase_order: {
         Args: { p_purchase_order_id: string }
@@ -2918,6 +3178,7 @@ export type Database = {
           customer_name: string
           customer_phone: string
           customer_reference: string | null
+          customer_user_id: string | null
           delivery_address: string | null
           delivery_location: Json | null
           delivery_type: string
@@ -2959,6 +3220,7 @@ export type Database = {
           customer_name: string
           customer_phone: string
           customer_reference: string | null
+          customer_user_id: string | null
           delivery_address: string | null
           delivery_location: Json | null
           delivery_type: string
@@ -3000,6 +3262,7 @@ export type Database = {
           customer_name: string
           customer_phone: string
           customer_reference: string | null
+          customer_user_id: string | null
           delivery_address: string | null
           delivery_location: Json | null
           delivery_type: string
