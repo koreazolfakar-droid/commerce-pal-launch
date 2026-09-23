@@ -198,8 +198,6 @@ export interface FileRoutesByFullPath {
   '/help': typeof HelpRoute
   '/my-orders': typeof MyOrdersRoute
   '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
-  '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
-  '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
   '/privacy': typeof PrivacyRoute
   '/returns': typeof ReturnsRoute
   '/search': typeof SearchRoute
@@ -230,6 +228,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
   '/my-orders': typeof MyOrdersRoute
+  '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
   '/privacy': typeof PrivacyRoute
   '/returns': typeof ReturnsRoute
   '/search': typeof SearchRoute
@@ -261,6 +260,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
   '/my-orders': typeof MyOrdersRoute
+  '/my-orders/$orderId': typeof MyOrdersOrderIdRoute
   '/privacy': typeof PrivacyRoute
   '/returns': typeof ReturnsRoute
   '/search': typeof SearchRoute
