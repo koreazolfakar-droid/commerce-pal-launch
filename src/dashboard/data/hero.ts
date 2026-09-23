@@ -132,7 +132,7 @@ function throwIfError(error: { message: string } | null, label: string) {
 
 export class DashboardHeroVerificationRequiredError extends Error {
   constructor() {
-    super("Dashboard verification expired. Complete MFA or passkey verification, then try the hero upload again.");
+    super("Dashboard verification expired. Complete MFA or passkey verification, then try this Hero action again.");
     this.name = "DashboardHeroVerificationRequiredError";
   }
 }
@@ -143,9 +143,14 @@ async function requireDashboardStaff() {
   return role;
 }
 
-async function requireFreshHeroUploadVerification() {
+async function requireFreshHeroWriteVerification() {
   const status = await getDashboardMfaStatus();
   if (!status?.ready) throw new DashboardHeroVerificationRequiredError();
+}
+
+function cleanText(value: string) {
+  const trimmed = value.trim();
+  return trimmed || null;
 }
 
 function mapHero(row: HeroRow): DashboardHeroSlide {
@@ -198,37 +203,38 @@ function normalizeOptionalTimestamp(value: string) {
 
 function heroRpcPayload(input: DashboardHeroInput) {
   return {
-    p_title_en: input.titleEn || null,
-    p_title_ar: input.titleAr || null,
-    p_subtitle_en: input.subtitleEn || null,
-    p_subtitle_ar: input.subtitleAr || null,
-    p_eyebrow_en: input.eyebrowEn || null,
-    p_eyebrow_ar: input.eyebrowAr || null,
-    p_image_url: input.imageUrl || null,
-    p_mobile_image_url: input.mobileImageUrl || null,
-    p_image_alt_en: input.imageAltEn || null,
-    p_image_alt_ar: input.imageAltAr || null,
-    p_mobile_image_alt_en: input.mobileImageAltEn || null,
-    p_mobile_image_alt_ar: input.mobileImageAltAr || null,
-    p_button_label_en: input.buttonLabelEn || null,
-    p_button_label_ar: input.buttonLabelAr || null,
+    p_title_en: cleanText(input.titleEn),
+    p_title_ar: cleanText(input.titleAr),
+    p_subtitle_en: cleanText(input.subtitleEn),
+    p_subtitle_ar: cleanText(input.subtitleAr),
+    p_eyebrow_en: cleanText(input.eyebrowEn),
+    p_eyebrow_ar: cleanText(input.eyebrowAr),
+    p_image_url: cleanText(input.imageUrl),
+    p_mobile_image_url: cleanText(input.mobileImageUrl),
+    p_image_alt_en: cleanText(input.imageAltEn),
+    p_image_alt_ar: cleanText(input.imageAltAr),
+    p_mobile_image_alt_en: cleanText(input.mobileImageAltEn),
+    p_mobile_image_alt_ar: cleanText(input.mobileImageAltAr),
+    p_button_label_en: cleanText(input.buttonLabelEn),
+    p_button_label_ar: cleanText(input.buttonLabelAr),
     p_target_type: input.targetType,
-    p_target_value: input.targetType === "none" ? null : input.targetValue || null,
-    p_secondary_button_label_en: input.secondaryButtonLabelEn || null,
-    p_secondary_button_label_ar: input.secondaryButtonLabelAr || null,
+    p_target_value: input.targetType === "none" ? null : cleanText(input.targetValue),
+    p_secondary_button_label_en: cleanText(input.secondaryButtonLabelEn),
+    p_secondary_button_label_ar: cleanText(input.secondaryButtonLabelAr),
     p_secondary_target_type: input.secondaryTargetType,
-    p_secondary_target_value: input.secondaryTargetType === "none" ? null : input.secondaryTargetValue || null,
+    p_secondary_target_value:
+      input.secondaryTargetType === "none" ? null : cleanText(input.secondaryTargetValue),
     p_is_published: input.isPublished,
     p_starts_at: normalizeOptionalTimestamp(input.startsAt),
     p_ends_at: normalizeOptionalTimestamp(input.endsAt),
     p_content_alignment: input.contentAlignment,
-    p_overlay_opacity: input.overlayOpacity,
+    p_overlay_opacity: Math.max(0, Math.min(90, input.overlayOpacity)),
     p_button_style: input.buttonStyle,
     p_secondary_button_style: input.secondaryButtonStyle,
     p_content_theme: input.contentTheme,
     p_open_in_new_tab: input.openInNewTab,
     p_secondary_open_in_new_tab: input.secondaryOpenInNewTab,
-    p_visual_config: input.visualConfig as unknown as Json,
+    p_visual_config: normalizeHeroVisualConfig(input.visualConfig) as unknown as Json,
   };
 }
 
@@ -248,6 +254,7 @@ export async function createDashboardHeroSlide(
   input: DashboardHeroInput,
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
+  await requireFreshHeroWriteVerification();
   const { data, error } = await supabase.rpc("create_cms_hero_slide_v3", rpcArgs(heroRpcPayload(input)));
   throwIfError(error, "Creating hero slide failed");
   return data ? mapHero(data as HeroRow) : null;
@@ -258,6 +265,7 @@ export async function updateDashboardHeroSlide(
   input: DashboardHeroInput,
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
+  await requireFreshHeroWriteVerification();
   const { data, error } = await supabase.rpc("update_cms_hero_slide_v3", rpcArgs({
     p_slide_id: id,
     ...heroRpcPayload(input),
@@ -268,6 +276,7 @@ export async function updateDashboardHeroSlide(
 
 export async function deleteDashboardHeroSlide(id: string): Promise<void> {
   await requireDashboardStaff();
+  await requireFreshHeroWriteVerification();
   const { error } = await supabase.rpc("delete_cms_hero_slide", rpcArgs({ p_slide_id: id }));
   throwIfError(error, "Deleting hero slide failed");
 }
@@ -276,6 +285,7 @@ export async function reorderDashboardHeroSlides(
   slides: Array<{ id: string; sortOrder: number }>,
 ): Promise<void> {
   await requireDashboardStaff();
+  await requireFreshHeroWriteVerification();
   const { error } = await supabase.rpc("reorder_cms_hero_slides", rpcArgs({
     p_items: slides.map((slide) => ({ id: slide.id, sort_order: slide.sortOrder })),
   }));
@@ -381,7 +391,7 @@ export async function uploadDashboardHeroImage(
   // Storage and CMS write policies require a fresh AAL2 or passkey step-up.
   // Re-check immediately before doing expensive image conversion so stale
   // dashboard sessions fail with an actionable message instead of a raw RLS error.
-  await requireFreshHeroUploadVerification();
+  await requireFreshHeroWriteVerification();
 
   if (!ALLOWED_HERO_MIME_TYPES.has(file.type)) {
     throw new Error("Unsupported image type. Use JPG, PNG, WebP, AVIF, GIF, SVG, HEIC or HEIF.");
