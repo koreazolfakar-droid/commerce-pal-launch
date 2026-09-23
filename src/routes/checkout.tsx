@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { CheckoutDetailsForm } from "@/components/CheckoutDetailsForm";
 import { StoreLayout } from "@/components/StoreLayout";
@@ -33,6 +34,16 @@ function CheckoutPage() {
   const { language, t } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
   const { items, total: cartTotal, isLoading } = useCartStore();
+  const [cartHydrated, setCartHydrated] = useState(() => useCartStore.persist.hasHydrated());
+
+  useEffect(() => {
+    if (useCartStore.persist.hasHydrated()) {
+      setCartHydrated(true);
+      return;
+    }
+
+    return useCartStore.persist.onFinishHydration(() => setCartHydrated(true));
+  }, []);
 
   const currency = cartTotal?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
   const subtotal = cartTotal
@@ -59,7 +70,8 @@ function CheckoutPage() {
         subtitle: "Add delivery and payment details to confirm your order.",
         back: "Back to bag",
         emptyTitle: "There is nothing to check out",
-        emptyDescription: "Add products to your bag first, then continue to checkout.",
+        emptyDescription:
+          "Add products to your bag first, then continue to checkout.",
       };
 
   return (
@@ -91,7 +103,13 @@ function CheckoutPage() {
           <p className="mt-1 text-sm text-muted-foreground">{copy.subtitle}</p>
         </div>
 
-        {items.length === 0 ? (
+        {!cartHydrated ? (
+          <section
+            className="min-h-[22rem] rounded-2xl border bg-card shadow-card"
+            aria-busy="true"
+            aria-label={isArabic ? "جار تحميل السلة" : "Loading cart"}
+          />
+        ) : items.length === 0 ? (
           <section className="flex min-h-[22rem] flex-col items-center justify-center rounded-2xl border bg-card px-6 py-14 text-center shadow-card">
             <div className="grid h-16 w-16 place-items-center rounded-full border bg-surface text-muted-foreground">
               <ShoppingBag className="h-7 w-7" strokeWidth={1.7} />
