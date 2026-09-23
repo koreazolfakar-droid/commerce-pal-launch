@@ -78,27 +78,15 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"
-            android:enabled="true"
-            android:excludeFromRecents="true"
-            android:exported="false">
+        <activity android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity">
             <meta-data
                 android:name="android.support.customtabs.trusted.MANAGE_SPACE_URL"
                 android:value="@string/launch_url" />
-            <intent-filter>
-                <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.google.androidbrowserhelper.trusted.FocusActivity"
-            android:exported="false" />
+        <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity" />
 
-        <activity
-            android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity"
-            android:exported="false" />
+        <activity android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
