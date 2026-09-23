@@ -1,8 +1,22 @@
 import { getDashboardRole } from "@/dashboard/data/catalog";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 
-type SaleRow = Tables<"store_sales">;
+type SaleRow = {
+  id: string;
+  order_id: string;
+  order_number: number;
+  customer_name: string;
+  customer_phone: string;
+  payment_method: string;
+  payment_status: string;
+  currency: string;
+  subtotal: number | string;
+  shipping_total: number | string;
+  discount_total: number | string;
+  total: number | string;
+  completed_at: string;
+};
 
 export type DashboardSale = {
   id: string;
@@ -49,7 +63,7 @@ export async function listDashboardSales(input?: {
   const end = start + pageSize - 1;
   const search = input?.search?.trim() ?? "";
 
-  let query = supabase
+  let query = looseSupabase
     .from("store_sales")
     .select(
       "id,order_id,order_number,customer_name,customer_phone,payment_method,payment_status,currency,subtotal,shipping_total,discount_total,total,completed_at",
