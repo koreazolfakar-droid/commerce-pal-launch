@@ -49,11 +49,11 @@ const PRODUCT_STOREFRONT_PREVIEWS: Array<{
   {
     id: "mobile",
     label: "Product Page · Mobile",
-    aspectRatio: "1 / 0.92",
-    padding: "10px",
-    note: "Exact mobile gallery: 1/0.92 · object-contain · 10px padding",
-    borderRadius: "1.6rem",
-    bordered: true,
+    aspectRatio: "1 / 1",
+    padding: "6px",
+    note: "Exact mobile gallery: 1:1 · object-contain · 6px padding",
+    borderRadius: "1rem",
+    bordered: false,
   },
   {
     id: "desktop",
@@ -61,8 +61,8 @@ const PRODUCT_STOREFRONT_PREVIEWS: Array<{
     aspectRatio: "1 / 1",
     padding: "32px",
     note: "Exact desktop gallery: 1:1 · object-contain · 32px padding",
-    borderRadius: "1.6rem",
-    bordered: true,
+    borderRadius: "1.25rem",
+    bordered: false,
   },
 ];
 
