@@ -91,6 +91,11 @@ requireText(
 );
 requireText(
   manifest,
+  'android:autoVerify="${appLinksAutoVerify}"',
+  "App Link verification must be controlled by build variant.",
+);
+requireText(
+  manifest,
   'android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"',
   "Explicit TWA fallback metadata is required.",
 );
@@ -168,6 +173,8 @@ requireText(
 
 requireText(gradle, 'applicationId "store.spacecallapp.app"', "Production application ID changed unexpectedly.");
 requireText(gradle, 'applicationIdSuffix ".debug"', "Test and production package identities must remain separate.");
+requireText(gradle, 'manifestPlaceholders = [appLinksAutoVerify: "false"]', "Debug builds must not request production App Link verification.");
+requireText(gradle, 'manifestPlaceholders = [appLinksAutoVerify: "true"]', "Release builds must request App Link verification.");
 requireText(gradle, "compileSdk 36", "compileSdk must remain 36.");
 requireText(gradle, "targetSdk 36", "targetSdk must remain 36.");
 requireText(gradle, "minSdk 24", "minSdk must remain 24.");
@@ -215,19 +222,14 @@ try {
   failures.push("public/.well-known/assetlinks.json must be valid JSON.");
 }
 
-const knownDebugFingerprint =
-  "7C:A9:6F:44:7B:F6:79:D8:F1:14:0B:9F:89:D3:81:6E:4B:10:88:AE:96:69:EF:42:DA:20:47:19:92:17:E9:BD";
-
 if (Array.isArray(assetlinks)) {
   const debugEntry = assetlinks.find(
     (entry) =>
       entry?.target?.namespace === "android_app" &&
-      entry?.target?.package_name === "store.spacecallapp.app.debug" &&
-      Array.isArray(entry?.target?.sha256_cert_fingerprints) &&
-      entry.target.sha256_cert_fingerprints.includes(knownDebugFingerprint),
+      entry?.target?.package_name === "store.spacecallapp.app.debug",
   );
-  if (!debugEntry) {
-    failures.push("Digital Asset Links must authorize the known 1.0.1 test APK certificate.");
+  if (debugEntry) {
+    failures.push("Production Digital Asset Links must never trust the debug application ID.");
   }
 
   const releaseCert = process.env.ANDROID_CERT_SHA256;
