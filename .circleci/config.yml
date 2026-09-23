@@ -91,6 +91,28 @@ jobs:
           command: bun run test:ssr
 
 
+  storefront-step:
+    parameters:
+      check_name:
+        type: string
+      check_command:
+        type: string
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - install-bun
+      - run:
+          name: << parameters.check_name >>
+          command: << parameters.check_command >>
+
+
   ui-browser-deps:
     docker:
       - image: cimg/node:lts
@@ -214,6 +236,46 @@ workflows:
       - security-dependencies
       - storefront-ci
       - ui-browser-deps:
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - storefront-step:
+          requires:
+            - ui-browser-deps
+          name: diagnostic-typecheck
+          check_name: TypeScript diagnostic
+          check_command: bun run typecheck
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - storefront-step:
+          requires:
+            - ui-browser-deps
+          name: diagnostic-lint
+          check_name: ESLint diagnostic
+          check_command: bun run lint
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - storefront-step:
+          requires:
+            - ui-browser-deps
+          name: diagnostic-tests
+          check_name: Unit diagnostic
+          check_command: bun run test:unit
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - storefront-step:
+          requires:
+            - ui-browser-deps
+          name: diagnostic-build
+          check_name: Build diagnostic
+          check_command: bun run build
           filters:
             branches:
               only:
