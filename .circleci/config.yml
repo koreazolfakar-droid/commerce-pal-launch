@@ -659,6 +659,28 @@ jobs:
             FILES=$(find e2e -maxdepth 1 -name '*.test.mjs' ! -name 'dashboard-*.test.mjs' -print | sort | sed -n '31,60p')
             node --test $FILES
 
+  affected-regressions-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Affected architecture and commerce regressions
+          command: >-
+            node --test
+            e2e/cart-delivery-dashboard.test.mjs
+            e2e/cart-delivery-security.test.mjs
+            e2e/cart-responsive-precision.test.mjs
+            e2e/cart-ux-polish.test.mjs
+            e2e/customer-address-flow.test.mjs
+            e2e/architecture.test.mjs
+            e2e/performance-architecture.test.mjs
+            e2e/ci-config.test.mjs
+            e2e/dashboard-csp-session-ci.test.mjs
+            e2e/security-pipeline-config.test.mjs
+
   unit-dashboard-all-debug:
     docker:
       - image: cimg/node:lts
@@ -927,6 +949,7 @@ workflows:
       - unit-ci-debug
       - unit-ci-config-debug
       - unit-dashboard-csp-debug
+      - affected-regressions-debug
       - unit-dashboard-all-debug
       - unit-nondashboard-all-debug
       - unit-dash-01-debug
