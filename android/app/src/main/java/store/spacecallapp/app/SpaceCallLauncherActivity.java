@@ -34,12 +34,19 @@ public final class SpaceCallLauncherActivity extends LauncherActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
         try {
-            super.onCreate(savedInstanceState);
+            launchTwa();
         } catch (RuntimeException launchFailure) {
             Log.e(TAG, "Trusted Web Activity launch failed; using safe browser fallback.", launchFailure);
             openSafeBrowserFallback();
         }
+    }
+
+    @Override
+    protected boolean shouldLaunchImmediately() {
+        return false;
     }
 
     @Override
