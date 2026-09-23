@@ -110,7 +110,7 @@ function MiniOrderProgress({
 }) {
   if (order.status === "cancelled") {
     return (
-      <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/8 px-3 py-2 text-xs font-semibold text-rose-700 dark:text-rose-300">
+      <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700 dark:text-rose-300">
         <XCircle className="h-3.5 w-3.5" aria-hidden />
         <span>{ar ? "تم إلغاء الطلب" : "Order cancelled"}</span>
       </div>
