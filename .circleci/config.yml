@@ -285,34 +285,9 @@ jobs:
             gradle --version
 
       - run:
-          name: Configure optional production signing
-          command: |
-            set -eo pipefail
-            if [ -n "$ANDROID_KEYSTORE_BASE64" ] && \
-               [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && \
-               [ -n "$ANDROID_KEY_ALIAS" ] && \
-               [ -n "$ANDROID_KEY_PASSWORD" ]; then
-              printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/space-call-upload.jks
-              chmod 600 /tmp/space-call-upload.jks
-              CERT_SHA256="$(keytool -list -v \
-                -keystore /tmp/space-call-upload.jks \
-                -storepass "$ANDROID_KEYSTORE_PASSWORD" \
-                -alias "$ANDROID_KEY_ALIAS" | awk '/SHA256:/{print $2; exit}')"
-              test -n "$CERT_SHA256"
-              {
-                echo 'export ANDROID_KEYSTORE_PATH=/tmp/space-call-upload.jks'
-                echo 'export SPACE_CALL_SIGNED_BUILD=1'
-                echo "export ANDROID_CERT_SHA256=$CERT_SHA256"
-              } >> "$BASH_ENV"
-            else
-              echo 'export SPACE_CALL_SIGNED_BUILD=0' >> "$BASH_ENV"
-            fi
-
-      - run:
-          name: Security gate, lint, and build
+          name: Security gate and debug build
           command: |
             set -euo pipefail
-            source "$BASH_ENV"
             node scripts/android-security-gate.mjs
             jq empty public/manifest.webmanifest
             jq empty public/.well-known/assetlinks.json
@@ -321,29 +296,14 @@ jobs:
             gradle --no-daemon :app:assembleDebug
             cd ..
 
-            if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
-              node scripts/android-security-gate.mjs
-              cd android
-              gradle --no-daemon :app:assembleRelease :app:bundleRelease
-              cd ..
-            fi
-
       - run:
           name: Package debug APK
           command: |
             set -euo pipefail
-            source "$BASH_ENV"
             APK="android/app/build/outputs/apk/debug/app-debug.apk"
             test -s "$APK"
             mkdir -p dist/android
             cp "$APK" dist/android/Space-Call-1.0.2-debug.apk
-
-            if [ "$SPACE_CALL_SIGNED_BUILD" = "1" ]; then
-              cp android/app/build/outputs/apk/release/app-release.apk \
-                dist/android/Space-Call-1.0.2-release.apk
-              cp android/app/build/outputs/bundle/release/app-release.aab \
-                dist/android/Space-Call-1.0.2-release.aab
-            fi
 
             (
               cd dist/android
