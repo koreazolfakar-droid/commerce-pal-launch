@@ -23,6 +23,7 @@ export type CustomerProfile = {
 export type CustomerOrderSummary = {
   orderId: string;
   orderNumber: number;
+  publicOrderNumber: string;
   status: string;
   paymentStatus: string;
   paymentMethod: string;
@@ -174,6 +175,7 @@ function toOrder(row: Record<string, unknown>): CustomerOrderSummary {
   return {
     orderId: text(row.order_id),
     orderNumber: number(row.order_number),
+    publicOrderNumber: text(row.public_order_number) || String(number(row.order_number)),
     status: text(row.status),
     paymentStatus: text(row.payment_status),
     paymentMethod: text(row.payment_method),
