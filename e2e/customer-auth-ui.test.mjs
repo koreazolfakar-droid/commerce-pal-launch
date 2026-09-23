@@ -59,6 +59,10 @@ test("mobile drawer exposes the real customer account and avoids duplicated disc
 
   assert.match(mobileMenu, /useCustomerAuth/);
   assert.match(mobileMenu, /useCustomerAccount/);
+  assert.match(mobileMenu, /cmsQueryOptions/);
+  assert.match(mobileMenu, /cms\?\.settings\["logo_url"\]/);
+  assert.match(mobileMenu, /data-testid="mobile-menu-brand"/);
+  assert.match(mobileMenu, /src=\{logoUrl\}/);
   assert.match(mobileMenu, /My Profile/);
   assert.match(mobileMenu, /to="\/my-orders"/);
   assert.match(mobileMenu, /to="\/wishlist"/);
