@@ -154,6 +154,16 @@
     color: var(--color-primary);
   }
 
+  /* Header icon actions intentionally share the header surface itself.
+   * Keep the 44px touch target, but never paint a separate card behind the icon. */
+  .store-layout header[class*="lg:hidden"] .mobile-header-action,
+  .store-layout header[class*="lg:hidden"] .mobile-header-action:hover {
+    border-color: transparent;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
   .store-layout header[class*="lg:hidden"] + div[class*="lg:hidden"] {
     border-bottom-color: color-mix(in oklab, var(--color-border) 68%, transparent);
     background: color-mix(in oklab, var(--color-background) 96%, transparent);
