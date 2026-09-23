@@ -87,6 +87,14 @@ function orderIdentityMatches(
 function publicOrder(
   row: Record<string, unknown>,
   statusHistory: Array<{ status: string; created_at: string }> = [],
+  previewItems: Array<{
+    item_id: string;
+    product_id: string | null;
+    title: string;
+    quantity: number;
+    image_url: string;
+  }> = [],
+  itemCount = 0,
 ) {
   return {
     order_id: row.id,
@@ -106,6 +114,8 @@ function publicOrder(
     created_at: row.created_at,
     completed_at: row.completed_at,
     status_history: statusHistory,
+    preview_items: previewItems,
+    item_count: itemCount,
   };
 }
 
@@ -335,13 +345,32 @@ Deno.serve(async (req: Request) => {
     .map((row) => row.id)
     .filter((value): value is string => typeof value === "string" && isUuid(value));
 
+  const previewItemsByOrder = new Map<
+    string,
+    Array<{
+      item_id: string;
+      product_id: string | null;
+      title: string;
+      quantity: number;
+      image_url: string;
+    }>
+  >();
+  const itemCountByOrder = new Map<string, number>();
+
   if (orderIds.length) {
-    const historyResult = await db
-      .from("store_order_audit_log")
-      .select("order_id,action,to_state,created_at")
-      .in("order_id", orderIds)
-      .in("action", ["created", "status_changed"])
-      .order("created_at", { ascending: true });
+    const [historyResult, itemsResult] = await Promise.all([
+      db
+        .from("store_order_audit_log")
+        .select("order_id,action,to_state,created_at")
+        .in("order_id", orderIds)
+        .in("action", ["created", "status_changed"])
+        .order("created_at", { ascending: true }),
+      db
+        .from("store_order_items")
+        .select("id,order_id,product_id,title,quantity")
+        .in("order_id", orderIds)
+        .order("id", { ascending: true }),
+    ]);
 
     if (historyResult.error) {
       console.error("customer-orders status history lookup failed", historyResult.error.message);
@@ -359,14 +388,79 @@ Deno.serve(async (req: Request) => {
         historyByOrder.set(entry.order_id, current);
       }
     }
+
+    if (itemsResult.error) {
+      console.error("customer-orders preview items lookup failed", itemsResult.error.message);
+    } else {
+      for (const item of itemsResult.data ?? []) {
+        if (typeof item.order_id !== "string") continue;
+        itemCountByOrder.set(item.order_id, (itemCountByOrder.get(item.order_id) ?? 0) + 1);
+        const current = previewItemsByOrder.get(item.order_id) ?? [];
+        if (current.length >= 2) continue;
+        current.push({
+          item_id: String(item.id ?? ""),
+          product_id: typeof item.product_id === "string" ? item.product_id : null,
+          title: typeof item.title === "string" ? item.title : "",
+          quantity:
+            typeof item.quantity === "number" && Number.isFinite(item.quantity)
+              ? item.quantity
+              : Number(item.quantity) || 0,
+          image_url: "",
+        });
+        previewItemsByOrder.set(item.order_id, current);
+      }
+
+      const previewProductIds = [
+        ...new Set(
+          [...previewItemsByOrder.values()]
+            .flat()
+            .map((item) => item.product_id)
+            .filter((value): value is string => typeof value === "string" && isUuid(value)),
+        ),
+      ];
+
+      if (previewProductIds.length) {
+        const imageResult = await db
+          .from("store_product_images")
+          .select("product_id,url,is_primary,sort_order")
+          .in("product_id", previewProductIds)
+          .order("is_primary", { ascending: false })
+          .order("sort_order", { ascending: true });
+
+        if (imageResult.error) {
+          console.error("customer-orders preview image lookup failed", imageResult.error.message);
+        } else {
+          const imageByProduct = new Map<string, string>();
+          for (const image of imageResult.data ?? []) {
+            if (
+              typeof image.product_id === "string" &&
+              typeof image.url === "string" &&
+              image.url &&
+              !imageByProduct.has(image.product_id)
+            ) {
+              imageByProduct.set(image.product_id, image.url);
+            }
+          }
+
+          for (const items of previewItemsByOrder.values()) {
+            for (const item of items) {
+              item.image_url = item.product_id ? imageByProduct.get(item.product_id) ?? "" : "";
+            }
+          }
+        }
+      }
+    }
   }
 
-  const orders = orderRows.map((row) =>
-    publicOrder(
+  const orders = orderRows.map((row) => {
+    const orderId = typeof row.id === "string" ? row.id : "";
+    return publicOrder(
       row,
-      typeof row.id === "string" ? (historyByOrder.get(row.id) ?? []) : [],
-    ),
-  );
+      orderId ? (historyByOrder.get(orderId) ?? []) : [],
+      orderId ? (previewItemsByOrder.get(orderId) ?? []) : [],
+      orderId ? (itemCountByOrder.get(orderId) ?? 0) : 0,
+    );
+  });
 
   return json(req, 200, { ok: true, orders });
 });

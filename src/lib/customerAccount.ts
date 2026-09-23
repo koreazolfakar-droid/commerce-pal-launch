@@ -25,6 +25,14 @@ export type CustomerOrderStatusEvent = {
   createdAt: string;
 };
 
+export type CustomerOrderPreviewItem = {
+  itemId: string;
+  productId: string;
+  title: string;
+  quantity: number;
+  imageUrl: string;
+};
+
 export type CustomerOrderSummary = {
   orderId: string;
   orderNumber: number;
@@ -43,6 +51,8 @@ export type CustomerOrderSummary = {
   createdAt: string;
   completedAt: string;
   statusHistory: CustomerOrderStatusEvent[];
+  previewItems: CustomerOrderPreviewItem[];
+  itemCount: number;
 };
 
 export type CustomerOrderItem = {
@@ -208,6 +218,22 @@ function toOrder(row: Record<string, unknown>): CustomerOrderSummary {
           }))
           .filter((entry) => Boolean(entry.status && entry.createdAt))
       : [],
+    previewItems: Array.isArray(row.preview_items)
+      ? row.preview_items
+          .filter(
+            (entry): entry is Record<string, unknown> =>
+              Boolean(entry) && typeof entry === "object" && !Array.isArray(entry),
+          )
+          .map((entry) => ({
+            itemId: text(entry.item_id),
+            productId: text(entry.product_id),
+            title: text(entry.title),
+            quantity: number(entry.quantity),
+            imageUrl: text(entry.image_url),
+          }))
+          .filter((entry) => Boolean(entry.itemId && entry.title))
+      : [],
+    itemCount: number(row.item_count),
   };
 }
 
