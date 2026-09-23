@@ -12,9 +12,9 @@ export interface GalleryImage {
 
 /**
  * Product image stage + thumbnail rail + lightbox.
- * Images are always the real Shopify media, rendered with object-contain so
- * nothing is cropped or stretched. Mobile uses a slightly shorter stage to
- * surface purchasing controls earlier while keeping the product visually large.
+ * Images are always the real catalog media, rendered with object-contain so
+ * nothing is cropped or stretched. Product pages use swipe + pagination dots
+ * on mobile while compact quick views retain their thumbnail rail.
  */
 export function ProductGallery({
   images,
