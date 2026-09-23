@@ -243,6 +243,129 @@ jobs:
           name: CI config test
           command: node --test e2e/ci-config.test.mjs
 
+  dashboard-test-response-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Dashboard response test
+          command: node --test --test-name-pattern="dashboard responses" e2e/dashboard-csp-session-ci.test.mjs
+
+  dashboard-test-csp-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: CSP test
+          command: node --test --test-name-pattern="CSP uses" e2e/dashboard-csp-session-ci.test.mjs
+
+  dashboard-test-storage-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Storage test
+          command: node --test --test-name-pattern="production Supabase" e2e/dashboard-csp-session-ci.test.mjs
+
+  dashboard-test-auth0-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Auth0 test
+          command: node --test --test-name-pattern="Auth0" e2e/dashboard-csp-session-ci.test.mjs
+
+  dashboard-test-ci-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: CI architecture test
+          command: node --test --test-name-pattern="CI keeps" e2e/dashboard-csp-session-ci.test.mjs
+
+  lint-src-routes-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint routes
+          command: ./node_modules/.bin/eslint src/routes --fix-dry-run
+
+  lint-src-components-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint components
+          command: ./node_modules/.bin/eslint src/components --fix-dry-run
+
+  lint-src-dashboard-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint dashboard
+          command: ./node_modules/.bin/eslint src/dashboard --fix-dry-run
+
+  lint-src-lib-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint lib
+          command: ./node_modules/.bin/eslint src/lib --fix-dry-run
+
   unit-dashboard-csp-debug:
     docker:
       - image: cimg/node:lts
@@ -488,6 +611,15 @@ workflows:
       - unit-ci-debug
       - unit-ci-config-debug
       - unit-dashboard-csp-debug
+      - dashboard-test-response-debug
+      - dashboard-test-csp-debug
+      - dashboard-test-storage-debug
+      - dashboard-test-auth0-debug
+      - dashboard-test-ci-debug
+      - lint-src-routes-debug
+      - lint-src-components-debug
+      - lint-src-dashboard-debug
+      - lint-src-lib-debug
       - lint-src-all-debug
       - lint-e2e-all-debug
       - build-debug
