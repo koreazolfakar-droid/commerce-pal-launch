@@ -332,6 +332,91 @@ jobs:
           name: Lint components
           command: ./node_modules/.bin/eslint src/components --fix-dry-run
 
+  lint-components-root-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint component root files
+          command: ./node_modules/.bin/eslint "src/components/*.tsx" --fix-dry-run
+
+  lint-components-customer-account-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint customer account components
+          command: ./node_modules/.bin/eslint src/components/customer-account --fix-dry-run
+
+  lint-components-customer-auth-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint customer auth components
+          command: ./node_modules/.bin/eslint src/components/customer-auth --fix-dry-run
+
+  lint-components-product-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint product components
+          command: ./node_modules/.bin/eslint src/components/product --fix-dry-run
+
+  lint-components-ui-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint UI components
+          command: ./node_modules/.bin/eslint src/components/ui --fix-dry-run
+
   lint-src-dashboard-debug:
     docker:
       - image: cimg/node:lts
@@ -619,6 +704,11 @@ workflows:
       - lint-src-routes-debug
       - lint-src-components-debug
       - lint-src-dashboard-debug
+      - lint-components-root-debug
+      - lint-components-customer-account-debug
+      - lint-components-customer-auth-debug
+      - lint-components-product-debug
+      - lint-components-ui-debug
       - lint-src-lib-debug
       - lint-src-all-debug
       - lint-e2e-all-debug
