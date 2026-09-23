@@ -134,7 +134,7 @@ function OrderMobileCard({
       <button type="button" onClick={onOpen} className="w-full text-start">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[12px] font-black text-[#5968ea]">#{order.orderNumber}</div>
+            <div className="text-[12px] font-black text-[#5968ea]">#{order.publicOrderNumber}</div>
             <div className="mt-1 truncate text-[13px] font-black text-slate-700">
               {order.customerName || "Unnamed customer"}
             </div>
@@ -370,7 +370,7 @@ export default function OrdersPage() {
                   setSearch(event.target.value);
                   setPage(1);
                 }}
-                placeholder="Order #, customer, phone or email"
+                placeholder="Public order #, customer, phone or email"
                 className="h-10 w-full rounded-xl border border-slate-200 bg-white ps-9 pe-3 text-[11px] outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
               />
             </div>
@@ -462,7 +462,7 @@ export default function OrdersPage() {
                   className="cursor-pointer border-b border-slate-50 transition hover:bg-[#fafbff]"
                 >
                   <td className="px-5 py-4">
-                    <div className="text-[11px] font-black text-[#5968ea]">#{order.orderNumber}</div>
+                    <div className="text-[11px] font-black text-[#5968ea]">#{order.publicOrderNumber}</div>
                     <div className="mt-0.5 text-[8px] font-medium uppercase tracking-wide text-slate-300">
                       {order.paymentMethod}
                     </div>

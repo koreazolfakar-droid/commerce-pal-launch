@@ -384,28 +384,49 @@ Deno.serve(async (req: Request) => {
     return json(req, status, { error: code });
   }
 
+  let responseOrder = data;
+
   if (
-    accountUserId &&
     data &&
     typeof data === "object" &&
     isUuid((data as Record<string, unknown>).order_id)
   ) {
     const orderId = (data as Record<string, unknown>).order_id as string;
-    const accountPatch: Record<string, unknown> = {
-      customer_user_id: accountUserId,
-    };
-    if (accountEmail) accountPatch.customer_email = accountEmail;
 
-    const { error: accountLinkError } = await db
-      .from("store_orders")
-      .update(accountPatch)
-      .eq("id", orderId)
-      .is("customer_user_id", null);
+    if (accountUserId) {
+      const accountPatch: Record<string, unknown> = {
+        customer_user_id: accountUserId,
+      };
+      if (accountEmail) accountPatch.customer_email = accountEmail;
 
-    if (accountLinkError) {
-      console.error("create-order account link failed", accountLinkError.message);
+      const { error: accountLinkError } = await db
+        .from("store_orders")
+        .update(accountPatch)
+        .eq("id", orderId)
+        .is("customer_user_id", null);
+
+      if (accountLinkError) {
+        console.error("create-order account link failed", accountLinkError.message);
+      }
     }
+
+    const { data: publicNumberRow, error: publicNumberError } = await db
+      .from("store_orders")
+      .select("public_order_number")
+      .eq("id", orderId)
+      .maybeSingle();
+
+    if (publicNumberError) {
+      console.error("create-order public number lookup failed", publicNumberError.message);
+    }
+
+    responseOrder = {
+      ...(data as Record<string, unknown>),
+      public_order_number:
+        publicNumberRow?.public_order_number ||
+        String((data as Record<string, unknown>).order_number ?? ""),
+    };
   }
 
-  return json(req, 201, { ok: true, order: data });
+  return json(req, 201, { ok: true, order: responseOrder });
 });

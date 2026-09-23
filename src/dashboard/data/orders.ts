@@ -5,6 +5,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 
 type OrderRow = Tables<"store_orders"> & {
+  public_order_number: string;
   delivery_type: string | null;
   delivery_location: string | null;
   version: number;
@@ -39,6 +40,7 @@ export type DashboardOrdersSort =
 export type DashboardOrderListItem = {
   id: string;
   orderNumber: number;
+  publicOrderNumber: string;
   customerName: string;
   customerPhone: string;
   customerEmail: string | null;
@@ -69,6 +71,7 @@ export type DashboardOrderItem = {
 export type DashboardOrderDetail = {
   id: string;
   orderNumber: number;
+  publicOrderNumber: string;
   status: DashboardOrderStatus;
   paymentStatus: DashboardPaymentStatus;
   paymentMethod: string;
@@ -195,7 +198,7 @@ export async function listDashboardOrders(input?: {
   let query = supabase
     .from("store_orders")
     .select(
-      "id,order_number,status,payment_status,payment_method,customer_name,customer_phone,customer_email,total,currency,created_at",
+      "id,order_number,public_order_number,status,payment_status,payment_method,customer_name,customer_phone,customer_email,total,currency,created_at",
       { count: "exact" },
     );
 
@@ -205,11 +208,13 @@ export async function listDashboardOrders(input?: {
   if (search) {
     if (/^\d+$/.test(search)) {
       query = query.eq("order_number", Number(search));
+    } else if (/^\d{5}-\d{5}$/.test(search)) {
+      query = query.eq("public_order_number", search);
     } else {
       const safe = search.replace(/[%_,()]/g, " ").trim();
       if (safe) {
         query = query.or(
-          `customer_name.ilike.%${safe}%,customer_phone.ilike.%${safe}%,customer_email.ilike.%${safe}%`,
+          `public_order_number.ilike.%${safe}%,customer_name.ilike.%${safe}%,customer_phone.ilike.%${safe}%,customer_email.ilike.%${safe}%`,
         );
       }
     }
@@ -238,6 +243,7 @@ export async function listDashboardOrders(input?: {
     OrderRow,
     | "id"
     | "order_number"
+    | "public_order_number"
     | "status"
     | "payment_status"
     | "payment_method"
@@ -283,6 +289,7 @@ export async function listDashboardOrders(input?: {
       return {
         id: row.id,
         orderNumber: row.order_number,
+        publicOrderNumber: row.public_order_number,
         customerName: row.customer_name,
         customerPhone: row.customer_phone,
         customerEmail: row.customer_email,
@@ -339,6 +346,7 @@ export async function getDashboardOrder(id: string): Promise<DashboardOrderDetai
   return {
     id: order.id,
     orderNumber: order.order_number,
+    publicOrderNumber: order.public_order_number,
     status: statusFromRow(order.status),
     paymentStatus: paymentFromRow(order.payment_status),
     paymentMethod: order.payment_method,
