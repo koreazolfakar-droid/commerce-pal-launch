@@ -199,7 +199,10 @@ export function GoogleDeliveryMap({
 
   useEffect(() => {
     if (!apiKey || !containerRef.current || mapRef.current) {
-      if (!apiKey) setLoadingMap(false);
+      if (!apiKey) {
+        setLoadingMap(false);
+        setMapReady(true);
+      }
       return;
     }
 
