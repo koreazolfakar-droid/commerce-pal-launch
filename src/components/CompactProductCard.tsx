@@ -345,7 +345,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
         </div>
 
-        <div className="product-card-body market-product-copy flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
+        <div className="product-card-body market-product-copy market-product-copy-grid min-w-0 p-2.5 sm:p-3">
           <div className="market-product-brand flex min-h-4 min-w-0 items-center">
             {brand ? (
               <span className="market-product-brand-label truncate text-[10px] font-medium leading-4 text-muted-foreground sm:text-[11px]">
@@ -368,8 +368,8 @@ export const CompactProductCard = memo(function CompactProductCard({
             ) : null}
           </div>
 
-          <div className="mt-1.5 flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <bdi className="product-card-price whitespace-nowrap text-[1.125rem] font-bold leading-tight tabular-nums tracking-tight text-foreground sm:text-xl">
+          <div className="market-product-price-row flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <bdi className="product-card-price whitespace-nowrap text-sm font-medium leading-tight tabular-nums tracking-normal text-foreground sm:text-[0.9375rem]">
               {formatPrice(price.amount, price.currencyCode)}
             </bdi>
             {discount !== null && compareAt && (
@@ -379,10 +379,10 @@ export const CompactProductCard = memo(function CompactProductCard({
             )}
           </div>
 
-          <div className="market-product-footer mt-auto flex min-h-12 min-w-0 items-end justify-between gap-2 pt-2.5">
+          <div className="market-product-footer flex min-w-0 items-center justify-between gap-2">
             <p
               className={cn(
-                "product-card-status market-product-stock inline-flex min-w-0 flex-1 items-center gap-1.5 pb-1 text-[10px] font-medium leading-4 sm:text-xs",
+                "product-card-status market-product-stock inline-flex min-w-0 flex-1 items-center gap-1.5 text-[10px] font-medium leading-4 sm:text-xs",
                 inStock ? "text-success" : "text-destructive",
               )}
             >
