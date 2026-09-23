@@ -415,7 +415,7 @@ jobs:
 
   android-runtime-smoke:
     machine:
-      image: android:current
+      image: android:2026.05.1
     resource_class: large.gen2
     working_directory: ~/project
     steps:
@@ -465,6 +465,9 @@ jobs:
             adb shell settings put global animator_duration_scale 0
             adb shell input keyevent 82 || true
             adb shell pm list packages | tee /tmp/packages.txt
+            BROWSER_PACKAGE="$(adb shell cmd package resolve-activity --brief               -a android.intent.action.VIEW               -c android.intent.category.BROWSABLE               -d https://example.com 2>/dev/null | tail -n1 | tr -d '\r')"
+            test -n "$BROWSER_PACKAGE"
+            printf '%s\n' "$BROWSER_PACKAGE" > /tmp/browser-provider.txt
 
       - run:
           name: Install and cold-launch Space Call
@@ -503,6 +506,9 @@ jobs:
 
             echo "Cold launch completed without an Android crash."
 
+      - store_artifacts:
+          path: /tmp/browser-provider.txt
+          destination: android-runtime/browser-provider.txt
       - store_artifacts:
           path: /tmp/am-start.txt
           destination: android-runtime/am-start.txt
