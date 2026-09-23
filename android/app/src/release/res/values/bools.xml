@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Release builds verify the production domain against Digital Asset Links. -->
-    <bool name="app_links_auto_verify">true</bool>
-</resources>
