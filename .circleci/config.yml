@@ -417,6 +417,40 @@ jobs:
           name: Lint
           command: ./node_modules/.bin/eslint src/components/customer-account/CustomerAddressSelector.tsx --fix-dry-run
 
+  prettier-customer-map-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Prettier check
+          command: ./node_modules/.bin/prettier --check src/components/customer-account/GoogleDeliveryMap.tsx
+
+  lint-customer-map-no-prettier-debug:
+    docker:
+      - image: cimg/node:lts
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      BUN_INSTALL: /home/circleci/.bun
+    steps:
+      - checkout
+      - install-bun
+      - run:
+          name: Install dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Lint without Prettier
+          command: ./node_modules/.bin/eslint src/components/customer-account/GoogleDeliveryMap.tsx --fix-dry-run --rule "prettier/prettier: off"
+
   lint-customer-map-debug:
     docker:
       - image: cimg/node:lts
@@ -778,6 +812,8 @@ workflows:
       - lint-customer-hub-debug
       - lint-customer-selector-debug
       - lint-customer-map-debug
+      - prettier-customer-map-debug
+      - lint-customer-map-no-prettier-debug
       - lint-components-customer-auth-debug
       - lint-components-product-debug
       - lint-components-ui-debug
