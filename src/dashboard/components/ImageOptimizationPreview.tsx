@@ -134,7 +134,7 @@ export default function ImageOptimizationPreview({
             {title}
           </div>
           <div className="mt-1 text-[9px] leading-4 text-slate-500">
-            Preview is generated locally before upload. Nothing is sent to Storage until you save or confirm.
+            Preview is generated locally before upload. Nothing is sent to Storage until you confirm the upload.
           </div>
         </div>
         {previewing ? (
@@ -151,12 +151,13 @@ export default function ImageOptimizationPreview({
           </span>
           <select
             value={compression}
+            disabled={busy}
             onChange={(event) => {
               const value = event.target.value as ImageCompressionPreset;
               setCompression(value);
               setImageCompressionPreset(value);
             }}
-            className="mt-1 w-full bg-transparent text-[10px] font-bold text-slate-700 outline-none"
+            className="mt-1 w-full bg-transparent text-[10px] font-bold text-slate-700 outline-none disabled:opacity-50"
           >
             {IMAGE_COMPRESSION_PRESETS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -176,10 +177,11 @@ export default function ImageOptimizationPreview({
             </span>
             <select
               value={resolution}
+              disabled={busy}
               onChange={(event) =>
                 onResolutionChange(event.target.value as ProductImageResolution)
               }
-              className="mt-1 w-full bg-transparent text-[10px] font-bold text-slate-700 outline-none"
+              className="mt-1 w-full bg-transparent text-[10px] font-bold text-slate-700 outline-none disabled:opacity-50"
             >
               {PRODUCT_IMAGE_RESOLUTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -295,7 +297,7 @@ export default function ImageOptimizationPreview({
             <button
               type="button"
               onClick={onConfirm}
-              disabled={busy || previewing || Boolean(error)}
+              disabled={busy || previewing || Boolean(error) || results.length === 0}
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-5 text-[11px] font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}

@@ -24,6 +24,7 @@ import {
   DashboardHeroVerificationRequiredError,
   DEFAULT_HERO_VISUAL_CONFIG,
   deleteDashboardHeroSlide,
+  ensureDashboardHeroSessionReady,
   getHeroScheduleState,
   listDashboardHeroLinkOptions,
   listDashboardHeroMedia,
@@ -142,6 +143,11 @@ function secondaryTargetHref(form: DashboardHeroInput) {
   if (form.secondaryTargetType === "collection" && form.secondaryTargetValue) return `/collections/${form.secondaryTargetValue}`;
   if (form.secondaryTargetType === "url" && form.secondaryTargetValue) return form.secondaryTargetValue;
   return "";
+}
+
+function isSafeHeroCustomUrl(value: string) {
+  const trimmed = value.trim();
+  return /^\/(?!\/)/.test(trimmed) || /^https?:\/\//i.test(trimmed);
 }
 
 const HERO_PRESETS: Array<{
@@ -273,6 +279,25 @@ export default function HeroBannersPage() {
   const mobileFileRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
 
+  const clearPendingHeroImages = useCallback((target?: HeroImageTarget) => {
+    setPendingHeroImages((current) => {
+      if (!target) return {};
+      if (!current[target]) return current;
+      const next = { ...current };
+      delete next[target];
+      return next;
+    });
+  }, []);
+
+  const handleHeroActionError = useCallback((cause: unknown, fallback: string) => {
+    if (cause instanceof DashboardHeroVerificationRequiredError) {
+      toast.error(cause.message);
+      window.location.assign("/dashboard/login?mode=mfa");
+      return;
+    }
+    toast.error(cause instanceof Error ? cause.message : fallback);
+  }, []);
+
   const selected = useMemo(
     () => slides.find((slide) => slide.id === selectedId) ?? null,
     [selectedId, slides],
@@ -281,6 +306,7 @@ export default function HeroBannersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      await ensureDashboardHeroSessionReady();
       const [nextSlides, links, nextMedia] = await Promise.all([
         listDashboardHeroSlides(),
         listDashboardHeroLinkOptions(),
@@ -296,11 +322,11 @@ export default function HeroBannersPage() {
       });
       if (!nextSlides.length) setForm(EMPTY_FORM);
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Unable to load hero CMS.");
+      handleHeroActionError(cause, "Unable to load Hero CMS.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [handleHeroActionError]);
 
   useEffect(() => {
     void load();
@@ -326,10 +352,27 @@ export default function HeroBannersPage() {
     };
   }, [pendingHeroImages]);
 
-  const dirty = useMemo(() => {
+  const formDirty = useMemo(() => {
     if (!selected) return JSON.stringify(form) !== JSON.stringify(EMPTY_FORM);
     return JSON.stringify(form) !== JSON.stringify(fromSlide(selected));
   }, [form, selected]);
+  const hasPendingHeroImages = Boolean(pendingHeroImages.desktop || pendingHeroImages.mobile);
+  const dirty = formDirty || hasPendingHeroImages;
+  const busy = saving || uploading !== null || imageEditor.isEditing;
+
+  const previewForm = useMemo<DashboardHeroInput>(() => ({
+    ...form,
+    imageUrl: pendingPreviewUrls.desktop || form.imageUrl,
+    mobileImageUrl: pendingPreviewUrls.mobile || form.mobileImageUrl,
+  }), [form, pendingPreviewUrls.desktop, pendingPreviewUrls.mobile]);
+
+  const handleVisualEditorChange = useCallback((next: DashboardHeroInput) => {
+    setForm((current) => ({
+      ...next,
+      imageUrl: current.imageUrl,
+      mobileImageUrl: current.mobileImageUrl,
+    }));
+  }, []);
 
   useEffect(() => {
     if (!dirty) return;
@@ -339,14 +382,38 @@ export default function HeroBannersPage() {
   }, [dirty]);
 
   const newSlide = () => {
-    if (dirty && !window.confirm("Discard unsaved hero changes?")) return;
+    if (busy) {
+      toast.info("Wait for the current Hero action to finish first.");
+      return;
+    }
+    if (dirty && !window.confirm("Discard unsaved Hero changes?")) return;
+    clearPendingHeroImages();
     setSelectedId(null);
     setForm(EMPTY_FORM);
     setLastOptimizations({});
     setLanguage("en");
   };
 
+  const refresh = async () => {
+    if (busy) {
+      toast.info("Wait for the current Hero action to finish first.");
+      return;
+    }
+    if (dirty && !window.confirm("Refresh and discard unsaved Hero changes?")) return;
+    clearPendingHeroImages();
+    setLastOptimizations({});
+    await load();
+  };
+
   const save = async () => {
+    if (uploading !== null) {
+      toast.info("Wait for the image upload to finish before saving.");
+      return;
+    }
+    if (hasPendingHeroImages) {
+      toast.error("Upload or cancel the pending Hero image before saving the slide.");
+      return;
+    }
     if (form.isPublished && !form.imageUrl.trim()) {
       toast.error("Upload a desktop image before publishing.");
       return;
@@ -356,9 +423,35 @@ export default function HeroBannersPage() {
       return;
     }
 
+    const primaryLabel = form.buttonLabelEn.trim() || form.buttonLabelAr.trim();
+    if (form.targetType !== "none" && !form.targetValue.trim()) {
+      toast.error("Choose a destination for the primary button.");
+      return;
+    }
+    if (form.targetType === "url" && form.targetValue.trim() && !isSafeHeroCustomUrl(form.targetValue)) {
+      toast.error("Primary custom URL must be an internal /path or an HTTP(S) URL.");
+      return;
+    }
+    if (form.isPublished && primaryLabel && form.targetType === "none") {
+      toast.error("Choose a destination before publishing the primary button.");
+      return;
+    }
+    if (form.isPublished && form.targetType !== "none" && !primaryLabel) {
+      toast.error("Add a primary button label before publishing.");
+      return;
+    }
+
     const secondaryLabel = form.secondaryButtonLabelEn.trim() || form.secondaryButtonLabelAr.trim();
     if (form.secondaryTargetType !== "none" && !form.secondaryTargetValue.trim()) {
       toast.error("Choose a destination for the secondary button.");
+      return;
+    }
+    if (
+      form.secondaryTargetType === "url" &&
+      form.secondaryTargetValue.trim() &&
+      !isSafeHeroCustomUrl(form.secondaryTargetValue)
+    ) {
+      toast.error("Secondary custom URL must be an internal /path or an HTTP(S) URL.");
       return;
     }
     if (form.isPublished && secondaryLabel && form.secondaryTargetType === "none") {
@@ -379,8 +472,9 @@ export default function HeroBannersPage() {
       toast.success(selectedId ? "Hero slide saved." : "Hero slide created.");
       await load();
       setSelectedId(saved.id);
+      setForm(fromSlide(saved));
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Hero save failed.");
+      handleHeroActionError(cause, "Hero save failed.");
     } finally {
       setSaving(false);
     }
@@ -388,6 +482,14 @@ export default function HeroBannersPage() {
 
   const duplicate = async () => {
     if (!selected) return;
+    if (busy) {
+      toast.info("Wait for the current Hero action to finish first.");
+      return;
+    }
+    if (dirty) {
+      toast.info("Save or discard unsaved Hero changes before duplicating.");
+      return;
+    }
     setSaving(true);
     try {
       const copy = await createDashboardHeroSlide({
@@ -399,28 +501,48 @@ export default function HeroBannersPage() {
       });
       if (!copy) throw new Error("Hero duplicate returned no record.");
       await load();
+      clearPendingHeroImages();
       setSelectedId(copy.id);
+      setForm(fromSlide(copy));
       toast.success("Hero duplicated as draft.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Duplicate failed.");
+      handleHeroActionError(cause, "Duplicate failed.");
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async () => {
-    if (!selected || !window.confirm("Delete this hero slide? Uploaded media stays in Media Library.")) return;
+    if (!selected) return;
+    if (busy) {
+      toast.info("Wait for the current Hero action to finish first.");
+      return;
+    }
+    const message = dirty
+      ? "Delete this Hero slide? Unsaved changes will be discarded. Uploaded media stays in Media Library."
+      : "Delete this Hero slide? Uploaded media stays in Media Library.";
+    if (!window.confirm(message)) return;
     try {
       await deleteDashboardHeroSlide(selected.id);
+      clearPendingHeroImages();
+      setLastOptimizations({});
       toast.success("Hero slide deleted.");
       await load();
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Delete failed.");
+      handleHeroActionError(cause, "Delete failed.");
     }
   };
 
   const move = async (direction: -1 | 1) => {
     if (!selected) return;
+    if (busy) {
+      toast.info("Wait for the current Hero action to finish first.");
+      return;
+    }
+    if (dirty) {
+      toast.info("Save or discard unsaved Hero changes before reordering slides.");
+      return;
+    }
     const ordered = [...slides].sort((a, b) => a.sortOrder - b.sortOrder);
     const index = ordered.findIndex((slide) => slide.id === selected.id);
     const target = index + direction;
@@ -432,13 +554,14 @@ export default function HeroBannersPage() {
       await reorderDashboardHeroSlides(next.map((slide) => ({ id: slide.id, sortOrder: slide.sortOrder })));
       toast.success("Hero order saved.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Reorder failed.");
+      handleHeroActionError(cause, "Reorder failed.");
       void load();
     }
   };
 
   const upload = async (file: File | undefined, target: HeroImageTarget) => {
-    if (!file) return;
+    if (!file || uploading !== null) return;
+    let completed = false;
     setUploading(target);
     try {
       const alt = target === "desktop"
@@ -454,6 +577,7 @@ export default function HeroBannersPage() {
           : { ...current, mobileImageUrl: asset.url },
       );
 
+      completed = true;
       if (optimization.mode === "webp") {
         toast.success(
           `${target === "desktop" ? "Desktop" : "Mobile"} hero optimized to WebP · ${formatBytes(optimization.source.bytes)} → ${formatBytes(optimization.output.bytes)}.`,
@@ -464,32 +588,25 @@ export default function HeroBannersPage() {
         );
       }
     } catch (cause) {
-      if (cause instanceof DashboardHeroVerificationRequiredError) {
-        toast.error(cause.message);
-        window.location.assign("/dashboard/login?mode=mfa");
-        return;
-      }
-      toast.error(cause instanceof Error ? cause.message : "Image upload failed.");
+      handleHeroActionError(cause, "Image upload failed.");
     } finally {
       setUploading(null);
       if (desktopFileRef.current) desktopFileRef.current.value = "";
       if (mobileFileRef.current) mobileFileRef.current.value = "";
-      setPendingHeroImages((current) => {
-        const next = { ...current };
-        delete next[target];
-        return next;
-      });
+      if (completed) clearPendingHeroImages(target);
     }
   };
 
   const chooseMedia = (asset: DashboardHeroMediaAsset) => {
-    if (!mediaTarget) return;
+    if (!mediaTarget || uploading !== null) return;
+    const target = mediaTarget;
+    clearPendingHeroImages(target);
     setForm((current) =>
-      mediaTarget === "desktop"
+      target === "desktop"
         ? { ...current, imageUrl: asset.url }
         : { ...current, mobileImageUrl: asset.url },
     );
-    setLastOptimizations({});
+    setLastOptimizations((current) => ({ ...current, [target]: undefined }));
     setMediaTarget(null);
   };
 
@@ -517,10 +634,10 @@ export default function HeroBannersPage() {
           <button onClick={() => window.open("/", "_blank", "noopener,noreferrer")} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">
             <ExternalLink className="size-3.5" /> View storefront
           </button>
-          <button onClick={() => void load()} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">
-            <RefreshCw className="size-3.5" /> Refresh
+          <button onClick={() => void refresh()} disabled={busy} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50">
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
           </button>
-          <button onClick={newSlide} className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white">
+          <button onClick={newSlide} disabled={busy} className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-50">
             <Plus className="size-4" /> New slide
           </button>
         </div>
@@ -552,7 +669,17 @@ export default function HeroBannersPage() {
               return (
                 <button
                   key={slide.id}
-                  onClick={() => { if (!dirty || window.confirm("Discard unsaved hero changes?")) setSelectedId(slide.id); }}
+                  onClick={() => {
+                    if (busy) {
+                      toast.info("Wait for the current Hero action to finish first.");
+                      return;
+                    }
+                    if (dirty && !window.confirm("Discard unsaved Hero changes?")) return;
+                    clearPendingHeroImages();
+                    setLastOptimizations({});
+                    setSelectedId(slide.id);
+                    setForm(fromSlide(slide));
+                  }}
                   className={`grid w-full grid-cols-[64px_1fr] gap-3 p-3 text-left transition ${selectedId === slide.id ? "bg-indigo-50/70" : "hover:bg-slate-50"}`}
                 >
                   <div className="grid h-14 w-16 place-items-center overflow-hidden rounded-xl bg-slate-100">
@@ -659,7 +786,13 @@ export default function HeroBannersPage() {
               </div>
             </div>
 
-            <HeroVisualEditor key={selectedId ?? "new"} form={form} onChange={setForm} mode={previewMode} language={language} />
+            <HeroVisualEditor
+              key={selectedId ?? "new"}
+              form={previewForm}
+              onChange={handleVisualEditorChange}
+              mode={previewMode}
+              language={language}
+            />
 
           </section>
           <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
@@ -671,13 +804,13 @@ export default function HeroBannersPage() {
               <div className="flex flex-wrap gap-2">
                 {selected ? (
                   <>
-                    <button aria-label="Move slide up" onClick={() => void move(-1)} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500"><ArrowUp className="size-4" /></button>
-                    <button aria-label="Move slide down" onClick={() => void move(1)} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500"><ArrowDown className="size-4" /></button>
-                    <button onClick={() => void duplicate()} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600"><Copy className="size-3.5" /> Duplicate</button>
-                    <button onClick={() => void remove()} className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600"><Trash2 className="size-3.5" /> Delete</button>
+                    <button aria-label="Move slide up" onClick={() => void move(-1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowUp className="size-4" /></button>
+                    <button aria-label="Move slide down" onClick={() => void move(1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowDown className="size-4" /></button>
+                    <button onClick={() => void duplicate()} disabled={busy || dirty} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:opacity-40"><Copy className="size-3.5" /> Duplicate</button>
+                    <button onClick={() => void remove()} disabled={busy} className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600 disabled:opacity-40"><Trash2 className="size-3.5" /> Delete</button>
                   </>
                 ) : null}
-                <button onClick={() => void save()} disabled={saving || (!dirty && Boolean(selected))} className="flex h-9 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40">
+                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || !formDirty} className="flex h-9 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40">
                   {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
                   {selected ? "Save changes" : "Create slide"}
                 </button>
@@ -797,7 +930,7 @@ export default function HeroBannersPage() {
                     <button onClick={() => (isDesktop ? desktopFileRef.current : mobileFileRef.current)?.click()} disabled={uploading !== null} className="flex h-9 items-center gap-2 rounded-xl bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 disabled:opacity-50">
                       {uploading === target ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />} Upload
                     </button>
-                    <button onClick={() => setMediaTarget(target)} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600">
+                    <button onClick={() => setMediaTarget(target)} disabled={uploading !== null} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:opacity-50">
                       <ImageIcon className="size-3.5" /> Library
                     </button>
                     {url ? (
@@ -822,6 +955,8 @@ export default function HeroBannersPage() {
                     ) : null}
                     {url ? (
                       <button
+                        type="button"
+                        disabled={uploading !== null}
                         onClick={() => {
                           setForm((current) => isDesktop ? { ...current, imageUrl: "" } : { ...current, mobileImageUrl: "" });
                           setLastOptimizations((current) => ({ ...current, [target]: undefined }));
@@ -831,7 +966,7 @@ export default function HeroBannersPage() {
                             return next;
                           });
                         }}
-                        className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-500"
+                        className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-500 disabled:opacity-50"
                       >
                         Remove
                       </button>
@@ -847,13 +982,7 @@ export default function HeroBannersPage() {
                         busy={uploading === target}
                         confirmLabel={isDesktop ? "Upload desktop hero" : "Upload mobile hero"}
                         onConfirm={() => void upload(pendingHeroImages[target], target)}
-                        onCancel={() =>
-                          setPendingHeroImages((current) => {
-                            const next = { ...current };
-                            delete next[target];
-                            return next;
-                          })
-                        }
+                        onCancel={() => clearPendingHeroImages(target)}
                       />
                     </div>
                   ) : null}
@@ -889,11 +1018,12 @@ export default function HeroBannersPage() {
                     <span className="mb-1.5 block text-[10px] font-bold text-slate-500">Alt text ({language.toUpperCase()})</span>
                     <input
                       value={alt}
+                      disabled={uploading === target}
                       onChange={(e) => setForm((current) => {
                         if (isDesktop) return language === "ar" ? { ...current, imageAltAr: e.target.value } : { ...current, imageAltEn: e.target.value };
                         return language === "ar" ? { ...current, mobileImageAltAr: e.target.value } : { ...current, mobileImageAltEn: e.target.value };
                       })}
-                      className="h-9 w-full rounded-xl border border-slate-200 px-3 text-[11px]"
+                      className="h-9 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50 disabled:opacity-60"
                     />
                   </label>
                 </div>
@@ -918,7 +1048,7 @@ export default function HeroBannersPage() {
                 {form.targetType === "product" || form.targetType === "collection" ? (
                   <select value={form.targetValue} onChange={(e) => setForm((current) => ({ ...current, targetValue: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
                     <option value="">Choose {form.targetType}</option>
-                    {linkOptions.map((option) => <option key={option.id} value={option.value}>{option.label} · {option.status}</option>)}
+                    {linkOptions.map((option) => <option key={option.id} value={option.value} disabled={option.status !== "active"}>{option.label} · {option.status}</option>)}
                   </select>
                 ) : (
                   <input value={form.targetValue} onChange={(e) => setForm((current) => ({ ...current, targetValue: e.target.value }))} disabled={form.targetType === "none"} placeholder="/shop or https://..." className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50" />
@@ -957,7 +1087,7 @@ export default function HeroBannersPage() {
                 {form.secondaryTargetType === "product" || form.secondaryTargetType === "collection" ? (
                   <select value={form.secondaryTargetValue} onChange={(e) => setForm((current) => ({ ...current, secondaryTargetValue: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
                     <option value="">Choose {form.secondaryTargetType}</option>
-                    {secondaryLinkOptions.map((option) => <option key={option.id} value={option.value}>{option.label} · {option.status}</option>)}
+                    {secondaryLinkOptions.map((option) => <option key={option.id} value={option.value} disabled={option.status !== "active"}>{option.label} · {option.status}</option>)}
                   </select>
                 ) : (
                   <input value={form.secondaryTargetValue} onChange={(e) => setForm((current) => ({ ...current, secondaryTargetValue: e.target.value }))} disabled={form.secondaryTargetType === "none"} placeholder="/shop or https://..." className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50" />
@@ -1003,9 +1133,11 @@ export default function HeroBannersPage() {
       </div>
 
       {dirty ? (
-        <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl">
-          <span className="text-[11px] font-semibold text-slate-600">Unsaved hero changes</span>
-          <button onClick={() => void save()} disabled={saving} className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white disabled:opacity-50">Save</button>
+        <div className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] left-1/2 z-50 flex w-[calc(100%-24px)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl lg:bottom-5 lg:w-auto lg:max-w-none">
+          <span className="text-[11px] font-semibold text-slate-600">
+            {hasPendingHeroImages ? "Hero image ready to upload" : "Unsaved Hero changes"}
+          </span>
+          <button onClick={() => void save()} disabled={busy || hasPendingHeroImages} className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white disabled:opacity-50">Save</button>
         </div>
       ) : null}
 

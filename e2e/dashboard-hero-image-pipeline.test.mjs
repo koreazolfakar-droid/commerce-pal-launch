@@ -52,9 +52,9 @@ test("hero dashboard exposes real before and after optimization metadata", () =>
 
 test("hero upload revalidates dashboard MFA or passkey before Storage and redirects stale sessions", () => {
   assert.match(heroData, /getDashboardMfaStatus/);
-  assert.match(heroData, /requireFreshHeroUploadVerification/);
+  assert.match(heroData, /requireFreshHeroWriteVerification/);
   assert.match(heroData, /DashboardHeroVerificationRequiredError/);
-  const verification = heroData.indexOf("await requireFreshHeroUploadVerification()");
+  const verification = heroData.indexOf("await requireFreshHeroWriteVerification()");
   const conversion = heroData.indexOf("const conversion = await convertProductImageToWebp(file, targetResolution)");
   const upload = heroData.indexOf("supabase.storage.from(HERO_BUCKET).upload");
   assert.ok(verification >= 0, "fresh dashboard verification check is missing");
@@ -75,4 +75,94 @@ test("pending hero image stays visible and upload actions live inside the compre
   assert.match(imageOptimizationPreview, /onConfirm\?: \(\) => void/);
   assert.match(imageOptimizationPreview, /busy \? "Uploading…" : confirmLabel/);
   assert.match(imageOptimizationPreview, /w-full.*sm:w-auto/);
+});
+
+
+test("hero pending image state is protected across save, navigation and upload failures", () => {
+  assert.match(heroPage, /const hasPendingHeroImages = Boolean\(pendingHeroImages\.desktop \|\| pendingHeroImages\.mobile\)/);
+  assert.match(heroPage, /const dirty = formDirty \|\| hasPendingHeroImages/);
+  assert.match(heroPage, /Upload or cancel the pending Hero image before saving the slide/);
+  assert.match(heroPage, /let completed = false/);
+  assert.match(heroPage, /if \(completed\) clearPendingHeroImages\(target\)/);
+  assert.doesNotMatch(
+    heroPage,
+    /finally \{[\s\S]{0,500}setPendingHeroImages\(\(current\) => \{[\s\S]{0,200}delete next\[target\]/,
+  );
+});
+
+test("pending Hero media is shown in the live editor without persisting blob URLs", () => {
+  assert.match(heroPage, /const previewForm = useMemo<DashboardHeroInput>/);
+  assert.match(heroPage, /imageUrl: pendingPreviewUrls\.desktop \|\| form\.imageUrl/);
+  assert.match(heroPage, /mobileImageUrl: pendingPreviewUrls\.mobile \|\| form\.mobileImageUrl/);
+  assert.match(heroPage, /form=\{previewForm\}/);
+  assert.match(heroPage, /imageUrl: current\.imageUrl/);
+  assert.match(heroPage, /mobileImageUrl: current\.mobileImageUrl/);
+});
+
+test("hero page protects mobile actions and destructive navigation while work is pending", () => {
+  assert.match(heroPage, /Refresh and discard unsaved Hero changes/);
+  assert.match(heroPage, /Save or discard unsaved Hero changes before reordering slides/);
+  assert.match(heroPage, /disabled=\{busy \|\| dirty\}/);
+  assert.match(heroPage, /bottom-\[calc\(76px\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(heroPage, /Hero image ready to upload/);
+});
+
+test("hero CTA validation mirrors storefront safe-link behavior", () => {
+  assert.match(heroPage, /function isSafeHeroCustomUrl/);
+  assert.match(heroPage, /Primary custom URL must be an internal \/path or an HTTP\(S\) URL/);
+  assert.match(heroPage, /Secondary custom URL must be an internal \/path or an HTTP\(S\) URL/);
+  assert.match(heroPage, /disabled=\{option\.status !== "active"\}/);
+});
+
+test("all Hero mutations revalidate dashboard write assurance", () => {
+  assert.match(heroData, /async function requireFreshHeroWriteVerification/);
+  for (const fn of [
+    "createDashboardHeroSlide",
+    "updateDashboardHeroSlide",
+    "deleteDashboardHeroSlide",
+    "reorderDashboardHeroSlides",
+    "uploadDashboardHeroImage",
+  ]) {
+    const start = heroData.indexOf(`export async function ${fn}`);
+    assert.ok(start >= 0, `${fn} is missing`);
+    const body = heroData.slice(start, start + 1400);
+    assert.match(body, /await requireFreshHeroWriteVerification\(\)/);
+  }
+});
+
+test("Hero RPC payload normalizes text, visual config and overlay bounds", () => {
+  assert.match(heroData, /function cleanText\(value: string\)/);
+  assert.match(heroData, /p_title_en: cleanText\(input\.titleEn\)/);
+  assert.match(heroData, /p_target_value: input\.targetType === "none" \? null : cleanText\(input\.targetValue\)/);
+  assert.match(heroData, /p_overlay_opacity: Math\.max\(0, Math\.min\(90, input\.overlayOpacity\)\)/);
+  assert.match(heroData, /p_visual_config: normalizeHeroVisualConfig\(input\.visualConfig\)/);
+});
+
+
+test("Hero page preflights dashboard verification before loading protected CMS data", () => {
+  assert.match(heroData, /export async function ensureDashboardHeroSessionReady/);
+  assert.match(heroPage, /await ensureDashboardHeroSessionReady\(\)/);
+  const preflight = heroPage.indexOf("await ensureDashboardHeroSessionReady()");
+  const loadSlides = heroPage.indexOf("listDashboardHeroSlides()");
+  assert.ok(preflight >= 0 && loadSlides >= 0 && preflight < loadSlides);
+});
+
+test("compression preview cannot confirm before a valid result and explains the real upload boundary", () => {
+  assert.match(
+    imageOptimizationPreview,
+    /Nothing is sent to Storage until you confirm the upload/,
+  );
+  assert.match(
+    imageOptimizationPreview,
+    /disabled=\{busy \|\| previewing \|\| Boolean\(error\) \|\| results\.length === 0\}/,
+  );
+});
+
+
+test("discarding edits resets even when the user reselects the same slide", () => {
+  assert.match(heroPage, /setSelectedId\(slide\.id\);\s*setForm\(fromSlide\(slide\)\)/);
+});
+
+test("Hero editor does not create a completely empty slide", () => {
+  assert.match(heroPage, /disabled=\{busy \|\| hasPendingHeroImages \|\| !formDirty\}/);
 });
