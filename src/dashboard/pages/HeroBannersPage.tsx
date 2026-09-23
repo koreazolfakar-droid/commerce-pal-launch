@@ -358,7 +358,7 @@ export default function HeroBannersPage() {
   }, [form, selected]);
   const hasPendingHeroImages = Boolean(pendingHeroImages.desktop || pendingHeroImages.mobile);
   const dirty = formDirty || hasPendingHeroImages;
-  const busy = loading || saving || uploading !== null || imageEditor.isEditing;
+  const busy = saving || uploading !== null || imageEditor.isEditing;
 
   const previewForm = useMemo<DashboardHeroInput>(() => ({
     ...form,
@@ -661,7 +661,7 @@ export default function HeroBannersPage() {
         <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div className="text-[12px] font-bold text-[#14203a]">Slides</div>
-            <button onClick={newSlide} disabled={busy} className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600 disabled:opacity-40"><Plus className="size-4" /></button>
+            <button onClick={newSlide} className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><Plus className="size-4" /></button>
           </div>
           <div className="max-h-[760px] divide-y divide-slate-100 overflow-y-auto">
             {slides.map((slide, index) => {
