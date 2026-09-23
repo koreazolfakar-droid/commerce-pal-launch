@@ -19,7 +19,7 @@ final class SpaceCallUrlPolicy {
     private SpaceCallUrlPolicy() {}
 
     static String sanitize(String rawUrl) {
-        if (rawUrl == null || rawUrl.isBlank()) {
+        if (rawUrl == null || rawUrl.trim().isEmpty()) {
             return CANONICAL_URL;
         }
 
