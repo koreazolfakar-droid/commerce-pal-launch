@@ -41,6 +41,7 @@ export type DashboardCustomerListResult = {
 export type DashboardCustomerOrder = {
   id: string;
   orderNumber: number;
+  publicOrderNumber: string;
   status: string;
   paymentStatus: string;
   total: number;
@@ -193,6 +194,7 @@ export async function getDashboardCustomer(id: string): Promise<DashboardCustome
     orders: ((orders ?? []) as OrderRow[]).map((order) => ({
       id: order.id,
       orderNumber: order.order_number,
+      publicOrderNumber: order.public_order_number,
       status: order.status,
       paymentStatus: order.payment_status,
       total: Number(order.total) || 0,
