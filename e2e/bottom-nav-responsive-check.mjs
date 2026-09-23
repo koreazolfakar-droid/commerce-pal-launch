@@ -140,14 +140,22 @@ try {
   await routingPage.locator('[data-testid="bottom-nav"] [data-nav-id="search"]').click();
   const searchInput = routingPage.getByRole("textbox", { name: "Search products" });
   await searchInput.waitFor({ state: "visible" });
-  assert.equal(await searchInput.evaluate((element) => element === document.activeElement), true, "bottom Search should focus the search input immediately");
+  assert.equal(
+    await searchInput.evaluate((element) => element === document.activeElement),
+    true,
+    "bottom Search should focus the search input immediately",
+  );
   await routingPage.getByRole("button", { name: "Close search" }).click();
 
   await routingPage.locator('[data-testid="bottom-nav"] [data-nav-id="home"]').click();
   await routingPage.waitForURL(`${baseURL}/`);
   await routingPage.evaluate(() => window.scrollTo(0, 500));
   await routingPage.locator('[data-testid="bottom-nav"] [data-nav-id="home"]').click();
-  assert.equal(await routingPage.evaluate(() => window.scrollY), 0, "tapping Home while already home should return to the top");
+  assert.equal(
+    await routingPage.evaluate(() => window.scrollY),
+    0,
+    "tapping Home while already home should return to the top",
+  );
 
   await routingPage.evaluate(() => document.documentElement.classList.add("dark"));
   const darkBackground = await routingPage
