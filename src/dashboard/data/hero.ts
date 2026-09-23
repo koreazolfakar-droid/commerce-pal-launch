@@ -148,6 +148,11 @@ async function requireFreshHeroWriteVerification() {
   if (!status?.ready) throw new DashboardHeroVerificationRequiredError();
 }
 
+export async function ensureDashboardHeroSessionReady() {
+  await requireDashboardStaff();
+  await requireFreshHeroWriteVerification();
+}
+
 function cleanText(value: string) {
   const trimmed = value.trim();
   return trimmed || null;
