@@ -211,7 +211,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           <bdi className="mt-0.5 whitespace-nowrap text-[0.9rem] font-bold leading-[1.15] tabular-nums tracking-tight text-foreground sm:text-base">
             {formatPrice(price.amount, price.currencyCode)}
           </bdi>
-          <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-1 min-w-0">
+          <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
             <h3 className="line-clamp-2 min-h-[2.15rem] break-words text-[0.72rem] font-medium leading-[1.45] text-foreground sm:min-h-[2.5rem] sm:text-sm">
               {node.title}
             </h3>
@@ -360,7 +360,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             </h3>
           </Link>
 
-          <div className="market-product-variant mt-1 min-h-4">
+          <div className="market-product-variant min-h-4">
             {summary ? (
               <p className="market-product-summary truncate text-[10px] leading-4 text-muted-foreground sm:text-xs">
                 {summary}
