@@ -1,8 +1,7 @@
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 
-const customerDb = supabase as unknown as SupabaseClient;
 const MEDIA_BUCKET = "customer-address-media";
 
 export type CustomerAddressType =
@@ -246,7 +245,7 @@ function throwError(error: { message?: string } | null, fallback: string) {
 }
 
 export async function ensureCustomerProfile(user: User): Promise<CustomerProfile> {
-  const { data: current, error: readError } = await customerDb
+  const { data: current, error: readError } = await supabase
     .from("store_customer_profiles")
     .select("*")
     .eq("user_id", user.id)
@@ -272,7 +271,7 @@ export async function ensureCustomerProfile(user: User): Promise<CustomerProfile
     return toProfile(row, user.id);
   }
 
-  const { data, error } = await customerDb
+  const { data, error } = await supabase
     .from("store_customer_profiles")
     .insert({
       user_id: user.id,
@@ -295,7 +294,7 @@ export async function updateCustomerProfile(
   if ("phone" in patch) payload.phone = patch.phone?.trim() || null;
   if ("email" in patch) payload.email = patch.email?.trim() || null;
 
-  const { data, error } = await customerDb
+  const { data, error } = await supabase
     .from("store_customer_profiles")
     .update(payload)
     .eq("user_id", userId)
@@ -306,7 +305,7 @@ export async function updateCustomerProfile(
 }
 
 export async function loadMyOrders(limit = 30): Promise<CustomerOrderSummary[]> {
-  const { data, error } = await customerDb.rpc("get_my_store_orders", {
+  const { data, error } = await supabase.rpc("get_my_store_orders", {
     p_limit: Math.max(1, Math.min(limit, 100)),
   });
   throwError(error, "Loading customer orders failed");
@@ -316,7 +315,7 @@ export async function loadMyOrders(limit = 30): Promise<CustomerOrderSummary[]> 
 }
 
 export async function loadMyOrderItems(orderId: string): Promise<CustomerOrderItem[]> {
-  const { data, error } = await customerDb.rpc("get_my_store_order_items", {
+  const { data, error } = await supabase.rpc("get_my_store_order_items", {
     p_order_id: orderId,
   });
   throwError(error, "Loading order items failed");
@@ -326,7 +325,7 @@ export async function loadMyOrderItems(orderId: string): Promise<CustomerOrderIt
 }
 
 export async function loadCustomerAddresses(userId: string): Promise<CustomerAddress[]> {
-  const { data, error } = await customerDb
+  const { data, error } = await supabase
     .from("store_customer_addresses")
     .select("*")
     .eq("user_id", userId)
@@ -341,7 +340,7 @@ export async function loadCustomerAddresses(userId: string): Promise<CustomerAdd
 }
 
 export async function getOrCreateAddressDraft(userId: string): Promise<CustomerAddress> {
-  const { data: existing, error: existingError } = await customerDb
+  const { data: existing, error: existingError } = await supabase
     .from("store_customer_addresses")
     .select("*")
     .eq("user_id", userId)
@@ -352,7 +351,7 @@ export async function getOrCreateAddressDraft(userId: string): Promise<CustomerA
     return toAddress(existing as Record<string, unknown>);
   }
 
-  const { data, error } = await customerDb
+  const { data, error } = await supabase
     .from("store_customer_addresses")
     .insert({ user_id: userId, is_draft: true, draft_step: 1 })
     .select("*")
@@ -362,7 +361,7 @@ export async function getOrCreateAddressDraft(userId: string): Promise<CustomerA
 }
 
 export async function startAddressEdit(addressId: string): Promise<CustomerAddress> {
-  const { data, error } = await customerDb.rpc("start_customer_address_edit", {
+  const { data, error } = await supabase.rpc("start_customer_address_edit", {
     p_address_id: addressId,
   });
   throwError(error, "Starting address edit failed");
@@ -374,7 +373,7 @@ export async function saveAddressDraft(
   addressId: string,
   patch: AddressPatch,
 ): Promise<CustomerAddress> {
-  const { data, error } = await customerDb
+  const { data, error } = await supabase
     .from("store_customer_addresses")
     .update(mapAddressPatch(patch))
     .eq("id", addressId)
@@ -387,7 +386,7 @@ export async function saveAddressDraft(
 }
 
 export async function finalizeAddress(addressId: string): Promise<CustomerAddress> {
-  const { data, error } = await customerDb.rpc("finalize_customer_address", {
+  const { data, error } = await supabase.rpc("finalize_customer_address", {
     p_address_id: addressId,
   });
   throwError(error, "Finalizing address failed");
@@ -395,7 +394,7 @@ export async function finalizeAddress(addressId: string): Promise<CustomerAddres
 }
 
 export async function setDefaultAddress(addressId: string): Promise<CustomerAddress> {
-  const { data, error } = await customerDb.rpc("set_customer_default_address", {
+  const { data, error } = await supabase.rpc("set_customer_default_address", {
     p_address_id: addressId,
   });
   throwError(error, "Updating default address failed");
@@ -406,7 +405,7 @@ export async function deleteAddress(userId: string, address: CustomerAddress) {
   for (const path of [...address.photoPaths, address.voiceNotePath].filter(Boolean)) {
     await supabase.storage.from(MEDIA_BUCKET).remove([path]);
   }
-  const { error } = await customerDb
+  const { error } = await supabase
     .from("store_customer_addresses")
     .delete()
     .eq("id", address.id)
