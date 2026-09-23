@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useRouterState } from "@tanstack/react-router";
+import type { MouseEvent } from "react";
 import {
   ClipboardList,
   Grid2X2,
@@ -178,7 +179,7 @@ export function BottomNav() {
 
   const handlePrimaryNavClick = (
     href: string | null,
-    event: React.MouseEvent<HTMLAnchorElement>,
+    event: MouseEvent<HTMLAnchorElement>,
   ) => {
     if (href === "/search") {
       event.preventDefault();
