@@ -11,8 +11,8 @@ const urlPolicyPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCal
 const urlPolicyTestPath = "android/app/src/test/java/store/spacecallapp/app/SpaceCallUrlPolicyTest.java";
 const assetlinksPath = "public/.well-known/assetlinks.json";
 const webManifestPath = "public/manifest.webmanifest";
-const mainBoolsPath = "android/app/src/main/res/values/bools.xml";
-const releaseBoolsPath = "android/app/src/release/res/values/bools.xml";
+const debugManifestPath = "android/app/src/debug/AndroidManifest.xml";
+const releaseManifestPath = "android/app/src/release/AndroidManifest.xml";
 const gitignorePath = ".gitignore";
 
 const manifest = read(manifestPath);
@@ -22,8 +22,8 @@ const launcher = read(launcherPath);
 const delegation = read(delegationPath);
 const urlPolicy = read(urlPolicyPath);
 const urlPolicyTest = read(urlPolicyTestPath);
-const mainBools = read(mainBoolsPath);
-const releaseBools = read(releaseBoolsPath);
+const debugManifest = read(debugManifestPath);
+const releaseManifest = read(releaseManifestPath);
 const gitignore = read(gitignorePath);
 
 const failures = [];
@@ -97,10 +97,10 @@ requireText(
   'android:name=".SpaceCallLauncherActivity"',
   "The hardened SpaceCallLauncherActivity must remain the launcher.",
 );
-requireText(
+forbidText(
   manifest,
-  'android:autoVerify="@bool/app_links_auto_verify"',
-  "App Link verification must be controlled by a build-variant resource.",
+  "android:autoVerify=",
+  "Shared manifest must not define App Link verification; variants own that policy.",
 );
 requireText(
   manifest,
@@ -138,9 +138,17 @@ requireText(
   "FileProvider must remain non-exported.",
 );
 forbidText(manifest, "WebViewFallbackActivity", "Embedded WebView fallback is forbidden.");
-forbidText(manifest, 'android:host="spacecallapp.store"', "Only the canonical www origin may request App Link verification.");
-requireText(manifest, 'android:scheme="http"', "Verified App Links must accept HTTP so the launcher can upgrade it safely.");
-requireText(manifest, 'android:scheme="https"', "Verified App Links must accept HTTPS.");
+for (const [variantName, variantManifest] of [
+  ["debug", debugManifest],
+  ["release", releaseManifest],
+]) {
+  requireText(variantManifest, 'android:host="www.spacecallapp.store"', `${variantName} App Links must use the canonical www host.`);
+  forbidText(variantManifest, 'android:host="spacecallapp.store"', `${variantName} App Links must not verify the redirecting bare host.`);
+  requireText(variantManifest, 'android:scheme="http"', `${variantName} App Links must accept HTTP for safe HTTPS upgrade.`);
+  requireText(variantManifest, 'android:scheme="https"', `${variantName} App Links must accept HTTPS.`);
+}
+requireText(debugManifest, 'android:autoVerify="false"', "Debug builds must not claim production App Links.");
+requireText(releaseManifest, 'android:autoVerify="true"', "Release builds must verify production App Links.");
 
 requireText(
   strings,
@@ -196,8 +204,6 @@ for (const requiredTestCase of [
 
 requireText(gradle, 'applicationId "store.spacecallapp.app"', "Production application ID changed unexpectedly.");
 requireText(gradle, 'applicationIdSuffix ".debug"', "Test and production package identities must remain separate.");
-requireText(mainBools, '<bool name="app_links_auto_verify">false</bool>', "Debug/default builds must not request production App Link verification.");
-requireText(releaseBools, '<bool name="app_links_auto_verify">true</bool>', "Release builds must request production App Link verification.");
 forbidText(gradle, "manifestPlaceholders", "App Link verification must not rely on Gradle manifest placeholders.");
 requireText(gradle, "compileSdk 36", "compileSdk must remain 36.");
 requireText(gradle, "targetSdk 36", "targetSdk must remain 36.");
