@@ -139,6 +139,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image", content: absoluteUrl("/logo.svg") },
       { name: "twitter:image", content: absoluteUrl("/logo.svg") },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "theme-color", content: "#0b1020" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
     ],
 
     links: [
@@ -160,6 +164,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         as: "style",
       },
       { rel: "icon", href: "/logo.svg", type: "image/svg+xml" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,

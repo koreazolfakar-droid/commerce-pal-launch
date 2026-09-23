@@ -10,6 +10,7 @@ import {
 import {
   ArrowLeft,
   ArrowRight,
+  Bell,
   BriefcaseBusiness,
   Building2,
   Camera,
@@ -199,6 +200,7 @@ export function CustomerAddressHub() {
   const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
   const saveTimer = useRef<number | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const discardRecordingRef = useRef(false);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -206,6 +208,12 @@ export function CustomerAddressHub() {
   const recordingStopTimerRef = useRef<number | null>(null);
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return "unsupported";
+    return Notification.permission;
+  });
   const recordingTickerRef = useRef<number | null>(null);
 
   const copy = useMemo(
@@ -750,6 +758,24 @@ export function CustomerAddressHub() {
     }
   };
 
+  const requestNotificationPermission = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+
+    setPending("notifications");
+    setError("");
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+    } catch {
+      setError(copy.genericError);
+    } finally {
+      setPending("");
+    }
+  };
+
   const typeMeta = ADDRESS_TYPES.find((item) => item.type === form.addressType);
   const TypeIcon = addressTypeIcon(form.addressType);
 
@@ -1264,8 +1290,15 @@ export function CustomerAddressHub() {
                 ref={photoInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 multiple
+                className="hidden"
+                onChange={(event) => void addPhotos(event)}
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
                 className="hidden"
                 onChange={(event) => void addPhotos(event)}
               />
@@ -1303,21 +1336,35 @@ export function CustomerAddressHub() {
                 </div>
               ) : null}
 
-              <button
-                type="button"
-                onClick={() => photoInputRef.current?.click()}
-                disabled={pending === "photos" || form.photoPaths.length >= 5}
-                className="mt-3 inline-flex h-11 items-center gap-2 rounded-xl bg-surface px-4 text-sm font-bold hover:bg-accent disabled:opacity-50"
-              >
-                {pending === "photos" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                ) : (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={pending === "photos" || form.photoPaths.length >= 5}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-surface px-3 text-sm font-bold hover:bg-accent disabled:opacity-50"
+                >
+                  {pending === "photos" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {copy.addPhotos}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={pending === "photos" || form.photoPaths.length >= 5}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-surface px-3 text-sm font-bold hover:bg-accent disabled:opacity-50"
+                >
                   <Camera className="h-4 w-4" aria-hidden="true" />
-                )}
-                {form.photoPaths.length
-                  ? form.photoPaths.length + " " + copy.photosAdded
-                  : copy.addPhotos}
-              </button>
+                  {ar ? "التقاط صورة" : "Take photo"}
+                </button>
+              </div>
+              {form.photoPaths.length ? (
+                <p className="mt-2 text-xs font-medium text-muted-foreground">
+                  {form.photoPaths.length + " " + copy.photosAdded}
+                </p>
+              ) : null}
             </div>
 
             {error ? (
@@ -1366,6 +1413,54 @@ export function CustomerAddressHub() {
                     ? "الطلبات المرتبطة برقم الهاتف أو البريد الموثّق في حسابك."
                     : "Orders linked to your verified account phone or email."}
                 </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-border/65 bg-card p-4">
+              <div className="flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                  <Bell className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-extrabold">
+                    {ar ? "إذن الإشعارات" : "Notification permission"}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {ar
+                      ? "لن نطلب الإذن عند فتح التطبيق. يظهر طلب Android فقط عندما تختار تفعيل الإشعارات."
+                      : "We do not ask on app launch. Android permission is requested only when you choose to enable notifications."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void requestNotificationPermission()}
+                    disabled={
+                      pending === "notifications" ||
+                      notificationPermission === "granted" ||
+                      notificationPermission === "unsupported"
+                    }
+                    className="mt-3 inline-flex h-9 items-center rounded-full border border-border/70 bg-background px-3.5 text-xs font-bold transition hover:bg-surface disabled:cursor-default disabled:opacity-60"
+                  >
+                    {pending === "notifications"
+                      ? ar
+                        ? "جارٍ الطلب..."
+                        : "Requesting..."
+                      : notificationPermission === "granted"
+                        ? ar
+                          ? "مفعّلة"
+                          : "Enabled"
+                        : notificationPermission === "denied"
+                          ? ar
+                            ? "مرفوضة — عدّلها من إعدادات الهاتف"
+                            : "Blocked — change it in phone settings"
+                          : notificationPermission === "unsupported"
+                            ? ar
+                              ? "غير مدعومة على هذا المتصفح"
+                              : "Not supported by this browser"
+                            : ar
+                              ? "تفعيل الإشعارات"
+                              : "Enable notifications"}
+                  </button>
+                </div>
               </div>
             </div>
 
