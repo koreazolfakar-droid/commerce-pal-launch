@@ -186,7 +186,7 @@ function OrderCard({ order }: { order: CustomerOrderSummary }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-bold">
-              {t("orderNumber")} #{order.orderNumber}
+              {t("orderNumber")} #{order.publicOrderNumber}
             </span>
             <span
               className={cn(
