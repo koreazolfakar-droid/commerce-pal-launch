@@ -110,8 +110,8 @@ as $$
   with verified_identity as (
     select
       id as user_id,
-      pg_catalog.lower(pg_catalog.coalesce(email, '')) as email,
-      pg_catalog.regexp_replace(pg_catalog.coalesce(phone, ''), '[^0-9]+', '', 'g') as phone
+      pg_catalog.lower(coalesce(email, '')) as email,
+      pg_catalog.regexp_replace(coalesce(phone, ''), '[^0-9]+', '', 'g') as phone
     from auth.users
     where id = (select auth.uid())
   )
@@ -137,19 +137,19 @@ as $$
     orders.customer_user_id = identity.user_id
     or (
       identity.email <> ''
-      and pg_catalog.lower(pg_catalog.coalesce(orders.customer_email, '')) = identity.email
+      and pg_catalog.lower(coalesce(orders.customer_email, '')) = identity.email
     )
     or (
       identity.phone <> ''
       and pg_catalog.regexp_replace(
-        pg_catalog.coalesce(orders.customer_phone, ''),
+        coalesce(orders.customer_phone, ''),
         '[^0-9]+',
         '',
         'g'
       ) = identity.phone
     )
   order by orders.created_at desc
-  limit pg_catalog.greatest(1, pg_catalog.least(pg_catalog.coalesce(p_limit, 30), 100))
+  limit greatest(1, least(coalesce(p_limit, 30), 100))
 $$;
 
 revoke all on function public.get_my_store_orders(integer) from public, anon;
@@ -175,8 +175,8 @@ as $$
   with verified_identity as (
     select
       id as user_id,
-      pg_catalog.lower(pg_catalog.coalesce(email, '')) as email,
-      pg_catalog.regexp_replace(pg_catalog.coalesce(phone, ''), '[^0-9]+', '', 'g') as phone
+      pg_catalog.lower(coalesce(email, '')) as email,
+      pg_catalog.regexp_replace(coalesce(phone, ''), '[^0-9]+', '', 'g') as phone
     from auth.users
     where id = (select auth.uid())
   ),
@@ -189,12 +189,12 @@ as $$
         orders.customer_user_id = identity.user_id
         or (
           identity.email <> ''
-          and pg_catalog.lower(pg_catalog.coalesce(orders.customer_email, '')) = identity.email
+          and pg_catalog.lower(coalesce(orders.customer_email, '')) = identity.email
         )
         or (
           identity.phone <> ''
           and pg_catalog.regexp_replace(
-            pg_catalog.coalesce(orders.customer_phone, ''),
+            coalesce(orders.customer_phone, ''),
             '[^0-9]+',
             '',
             'g'
