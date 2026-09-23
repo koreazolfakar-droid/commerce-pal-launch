@@ -834,7 +834,7 @@ export default function HeroBannersPage() {
             </div>
           </details>
 
-          <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <details open={hasPendingHeroImages || undefined} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
                 <div className="text-[13px] font-bold text-[#14203a]">Media</div>
