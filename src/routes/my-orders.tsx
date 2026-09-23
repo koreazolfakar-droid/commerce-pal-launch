@@ -69,7 +69,7 @@ function statusTone(status: string) {
   if (value.includes("done") || value.includes("complete") || value.includes("deliver"))
     return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
   if (value.includes("cancel")) return "bg-rose-500/10 text-rose-700 dark:text-rose-300";
-  if (value.includes("ship") || value.includes("transit"))
+  if (value.includes("ready") || value.includes("ship") || value.includes("transit"))
     return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
   if (value.includes("pending") || value.includes("process") || value.includes("paid"))
     return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
@@ -104,7 +104,7 @@ function customerStatusLabel(status: string, ar: boolean) {
 function OrderProgress({ status, ar }: { status: string; ar: boolean }) {
   if (status === "cancelled") {
     return (
-      <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/8 px-3 py-2.5 text-sm font-semibold text-rose-700 dark:text-rose-300">
+      <div className="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 px-3 py-2.5 text-sm font-semibold text-rose-700 dark:text-rose-300">
         <XCircle className="h-4 w-4" aria-hidden />
         <span>{ar ? "تم إلغاء الطلب" : "This order was cancelled"}</span>
       </div>
@@ -137,7 +137,10 @@ function OrderProgress({ status, ar }: { status: string; ar: boolean }) {
                   className={cn(
                     "grid h-8 w-8 place-items-center rounded-full border-2 bg-card transition-colors",
                     complete && "border-emerald-500 bg-emerald-500 text-white",
-                    active && "border-primary bg-primary text-primary-foreground ring-4 ring-primary/10",
+                    active &&
+                      (index === 1
+                        ? "border-amber-500 bg-amber-500 text-white ring-4 ring-amber-500/10"
+                        : "border-primary bg-primary text-primary-foreground ring-4 ring-primary/10"),
                     !complete && !active && "border-border bg-muted text-muted-foreground",
                   )}
                 >
@@ -147,7 +150,8 @@ function OrderProgress({ status, ar }: { status: string; ar: boolean }) {
                   className={cn(
                     "mt-2 max-w-[84px] text-[10px] font-semibold leading-tight",
                     complete && "text-emerald-700 dark:text-emerald-300",
-                    active && "text-primary",
+                    active &&
+                      (index === 1 ? "text-amber-600 dark:text-amber-300" : "text-primary"),
                     !complete && !active && "text-muted-foreground",
                   )}
                 >
