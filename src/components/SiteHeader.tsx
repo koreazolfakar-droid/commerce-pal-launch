@@ -36,7 +36,7 @@ import { CustomerAddressSelector } from "@/components/customer-account/CustomerA
 import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccountButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
+import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -111,7 +111,7 @@ export function SiteHeader() {
 
   const categories = hydrated ? (catalog?.categories ?? []) : [];
   const brands = hydrated
-    ? applyCmsBrands(buildShopifyBrands(catalog?.brands ?? [], collections), cms?.brands ?? [])
+    ? applyCmsBrands(buildStoreBrands(catalog?.brands ?? [], collections), cms?.brands ?? [])
     : [];
   const collectionList = hydrated ? displayCollections(collections ?? []) : [];
   const nav = orderedNav(categories);
