@@ -877,7 +877,7 @@ export default function HeroBannersPage() {
                       </div>
                     </div>
                   </div>
-                  <div className={`relative mb-3 grid overflow-hidden rounded-xl bg-slate-100 ${isDesktop ? "aspect-[16/9] w-full max-w-[220px]" : "aspect-[16/9] w-full max-w-[220px]"}`}>
+                  <div className="relative mb-3 grid aspect-[16/9] w-full max-w-[220px] overflow-hidden rounded-xl bg-slate-100">
                     {displayUrl ? <img src={displayUrl} alt={alt} className="size-full object-cover" /> : <div className="grid place-items-center"><ImageIcon className="size-7 text-slate-300" /></div>}
                     {pendingPreviewUrl ? (
                       <div className="absolute bottom-2 left-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-[9px] font-bold text-white backdrop-blur">
