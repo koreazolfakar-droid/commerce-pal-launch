@@ -245,7 +245,8 @@ test("mobile-first hero uploads always produce a storefront-readable primary ima
     heroPage,
     /imageUrl: form\.imageUrl\.trim\(\) \? form\.imageUrl : asset\.url/,
   );
-  assert.match(heroPage, /selectedId && !formDirty/);
+  assert.match(heroPage, /const currentForm = formRef\.current/);
+  assert.match(heroPage, /JSON\.stringify\(currentForm\) === JSON\.stringify\(fromSlide\(selected!\)\)/);
   assert.match(heroPage, /updateDashboardHeroSlide\(selectedId, nextForm\)/);
   assert.match(
     heroPage,
