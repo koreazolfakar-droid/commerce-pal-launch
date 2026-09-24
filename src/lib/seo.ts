@@ -1,5 +1,5 @@
 import { cdnImage } from "@/lib/image";
-import { productInStock } from "@/lib/productPricing";
+import { productInStock, productPrimaryVariant } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { SITE_URL as CONFIG_SITE_URL, STORE_CONFIG, STORE_NAME, storeUrl } from "@/lib/storeConfig";
 
@@ -12,8 +12,28 @@ export function absoluteUrl(path = "/") {
   return storeUrl(path);
 }
 
-export function canonicalLink(path: string) {
-  return { rel: "canonical", href: absoluteUrl(path) };
+export function canonicalUrl(path: string, override?: string | null) {
+  const fallback = absoluteUrl(path);
+  const candidate = override?.trim();
+  if (!candidate) return fallback;
+
+  try {
+    const site = new URL(SITE_URL);
+    const resolved = new URL(candidate, `${SITE_URL}/`);
+    if (resolved.origin !== site.origin) return fallback;
+
+    resolved.search = "";
+    resolved.hash = "";
+    resolved.pathname =
+      resolved.pathname === "/" ? "/" : resolved.pathname.replace(/\/+$/, "");
+    return resolved.toString();
+  } catch {
+    return fallback;
+  }
+}
+
+export function canonicalLink(path: string, override?: string | null) {
+  return { rel: "canonical", href: canonicalUrl(path, override) };
 }
 
 export function languageAlternateLinks({
@@ -222,7 +242,7 @@ function gtinJsonLd(barcode?: string | null): Record<string, string> {
 
 export function productJsonLd(product: StoreProduct) {
   const node = product.node;
-  const variant = node.variants.edges[0]?.node;
+  const variant = productPrimaryVariant(product) ?? node.variants.edges[0]?.node;
   const price = variant?.price ?? node.priceRange.minVariantPrice;
   const images = node.images.edges.slice(0, 10).map((entry) => cdnImage(entry.node.url, 1200));
   const sku = variant?.sku || undefined;
@@ -236,10 +256,18 @@ export function productJsonLd(product: StoreProduct) {
     description: productMetaDescription(product),
     image: images.length ? images : undefined,
     sku,
-    mpn: sku,
     ...gtinJsonLd(variant?.barcode),
     brand: brand ? { "@type": "Brand", name: brand } : undefined,
     category: node.productType?.trim() || undefined,
+    ...(variant?.selectedOptions?.length
+      ? {
+          additionalProperty: variant.selectedOptions.map((option) => ({
+            "@type": "PropertyValue",
+            name: option.name,
+            value: option.value,
+          })),
+        }
+      : {}),
     url: absoluteUrl(`/product/${node.handle}`),
     mainEntityOfPage: absoluteUrl(`/product/${node.handle}`),
     offers: {
