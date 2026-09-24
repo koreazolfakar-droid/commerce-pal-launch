@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 
 import { BrandLogo } from "@/components/BrandLogo";
-import type { ShopifyBrand } from "@/lib/brandDirectory";
+import type { StoreBrand } from "@/lib/brandDirectory";
 import { orderedBrands } from "@/lib/homeMerchandising";
 import { localizeSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
@@ -17,7 +17,7 @@ const ACTIVE_MEASURE_INTERVAL_MS = 160;
 const INFINITE_CYCLES = [0, 1, 2] as const;
 
 /** Reserves a compact, bounded rail slot while allowing longer wordmarks a little more room. */
-function brandSlotWidth(brand: ShopifyBrand) {
+function brandSlotWidth(brand: StoreBrand) {
   const compactLength = brand.label.replace(/[^a-z0-9]/gi, "").length;
   return Math.min(106, Math.max(96, 90 + compactLength * 2));
 }
@@ -34,7 +34,7 @@ function brandSlotWidth(brand: ShopifyBrand) {
  * - animation pauses while the rail is outside the viewport or while the user
  *   interacts with it.
  */
-export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
+export function TopBrands({ brands }: { brands: StoreBrand[] }) {
   const { t, language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
   const cmsSection = cms?.sections.find(
@@ -61,8 +61,8 @@ export function TopBrands({ brands }: { brands: ShopifyBrand[] }) {
     if (rankedBrands.length <= 2) return rankedBrands;
 
     const strongest = rankedBrands[0]!;
-    const left: ShopifyBrand[] = [];
-    const right: ShopifyBrand[] = [];
+    const left: StoreBrand[] = [];
+    const right: StoreBrand[] = [];
 
     rankedBrands.slice(1).forEach((brand, index) => {
       const storefrontRank = index + 2;
