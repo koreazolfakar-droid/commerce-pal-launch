@@ -15,7 +15,7 @@ export function findFacetMerchandising(
 /**
  * Storefront merchandising priority. Keep the most recognizable global
  * electronics companies first, followed by strong accessory/mobile brands.
- * Unknown Shopify vendors remain supported and fall back to alphabetical order.
+ * Unknown catalog vendors remain supported and fall back to alphabetical order.
  */
 const BRAND_PRIORITY_GROUPS = [
   ["apple"],
