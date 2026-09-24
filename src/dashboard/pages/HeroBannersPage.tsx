@@ -279,6 +279,11 @@ export default function HeroBannersPage() {
   const desktopFileRef = useRef<HTMLInputElement>(null);
   const mobileFileRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
+  const formRef = useRef(form);
+
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
 
   const clearPendingHeroImages = useCallback((target?: HeroImageTarget) => {
     setPendingHeroImages((current) => {
@@ -572,28 +577,32 @@ export default function HeroBannersPage() {
       const { asset, optimization } = result;
       setMedia((current) => [asset, ...current.filter((item) => item.id !== asset.id)]);
       setLastOptimizations((current) => ({ ...current, [target]: optimization }));
+      const currentForm = formRef.current;
       const nextForm: DashboardHeroInput =
         target === "desktop"
           ? {
-              ...form,
+              ...currentForm,
               imageUrl: asset.url,
               // A brand-new image-only hero should not silently remain a Draft.
               // Preserve an existing slide's explicit publish state when replacing artwork.
-              isPublished: form.imageUrl.trim() ? form.isPublished : true,
+              isPublished: currentForm.imageUrl.trim() ? currentForm.isPublished : true,
             }
           : {
-              ...form,
+              ...currentForm,
               mobileImageUrl: asset.url,
               // The storefront requires image_url. If this is the first Hero artwork,
               // promote the mobile upload as the desktop fallback too.
-              imageUrl: form.imageUrl.trim() ? form.imageUrl : asset.url,
-              isPublished: form.imageUrl.trim() ? form.isPublished : true,
+              imageUrl: currentForm.imageUrl.trim() ? currentForm.imageUrl : asset.url,
+              isPublished: currentForm.imageUrl.trim() ? currentForm.isPublished : true,
             };
       setForm(nextForm);
 
+      const canAutoPersist =
+        Boolean(selectedId && selected) &&
+        JSON.stringify(currentForm) === JSON.stringify(fromSlide(selected!));
       let persisted = false;
       let persistenceFailed = false;
-      if (selectedId && !formDirty) {
+      if (selectedId && canAutoPersist) {
         try {
           const saved = await updateDashboardHeroSlide(selectedId, nextForm);
           if (!saved) throw new Error("Hero image save returned no record.");
