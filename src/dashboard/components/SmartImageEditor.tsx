@@ -93,7 +93,7 @@ const PRESET_SIZE: Record<Exclude<SmartImagePreset, "free">, [number, number]> =
   square: [1400, 1400],
   cover: [1920, 1080],
   "hero-desktop": [1920, 1080],
-  "hero-mobile": [1080, 1920],
+  "hero-mobile": [1080, 608],
 };
 
 function clamp(value: number, min: number, max: number) {
