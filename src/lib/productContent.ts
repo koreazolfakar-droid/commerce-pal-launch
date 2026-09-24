@@ -1,10 +1,10 @@
 /**
- * Parses the merchant-authored Shopify product description into readable
+ * Parses the merchant-authored product description into readable
  * sections and a grouped specification sheet.
  *
  * Nothing here invents content: every heading, bullet, paragraph and spec row
  * comes from the product's own `descriptionHtml` / `description` field or from
- * its real Shopify variant data. When the description holds no structure the
+ * its real variant data. When the description holds no structure the
  * result is simply a single untitled section of paragraphs.
  */
 
@@ -184,7 +184,7 @@ const GROUP_RULES: Array<{ title: string; test: RegExp }> = [
 
 /**
  * Groups spec rows into logical blocks. Rows that match no rule land in a final
- * "More details" group so nothing found in Shopify gets silently dropped.
+ * "More details" group so nothing found in the catalog gets silently dropped.
  */
 export function groupSpecs(rows: SpecRow[]): SpecGroup[] {
   const seen = new Set<string>();
