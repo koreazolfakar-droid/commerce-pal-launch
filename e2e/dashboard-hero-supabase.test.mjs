@@ -63,14 +63,11 @@ test("hero dashboard supports real Supabase CRUD, storage upload and media libra
   assert.match(page, /Design & live preview/);
   assert.match(page, /Eyebrow text/);
   assert.match(page, /Secondary CTA \(optional\)/);
-  assert.match(page, /Content theme/);
+  assert.doesNotMatch(page, /Content theme|Minimal|Centered|Glass/);
   assert.match(page, /Vertical position/);
   assert.match(page, /Title size/);
   assert.match(page, /Content width/);
   assert.match(page, /Button shape/);
-  assert.match(page, /Minimal/);
-  assert.match(page, /Centered/);
-  assert.match(page, /Glass/);
   assert.match(data, /secondaryButtonStyle/);
   assert.match(data, /contentTheme/);
 });
