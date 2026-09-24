@@ -572,26 +572,53 @@ export default function HeroBannersPage() {
       const { asset, optimization } = result;
       setMedia((current) => [asset, ...current.filter((item) => item.id !== asset.id)]);
       setLastOptimizations((current) => ({ ...current, [target]: optimization }));
-      setForm((current) =>
+      const nextForm: DashboardHeroInput =
         target === "desktop"
           ? {
-              ...current,
+              ...form,
               imageUrl: asset.url,
               // A brand-new image-only hero should not silently remain a Draft.
               // Preserve an existing slide's explicit publish state when replacing artwork.
-              isPublished: current.imageUrl.trim() ? current.isPublished : true,
+              isPublished: form.imageUrl.trim() ? form.isPublished : true,
             }
-          : { ...current, mobileImageUrl: asset.url },
-      );
+          : {
+              ...form,
+              mobileImageUrl: asset.url,
+              // The storefront requires image_url. If this is the first Hero artwork,
+              // promote the mobile upload as the desktop fallback too.
+              imageUrl: form.imageUrl.trim() ? form.imageUrl : asset.url,
+              isPublished: form.imageUrl.trim() ? form.isPublished : true,
+            };
+      setForm(nextForm);
+
+      let persisted = false;
+      let persistenceFailed = false;
+      if (selectedId && !formDirty) {
+        try {
+          const saved = await updateDashboardHeroSlide(selectedId, nextForm);
+          if (!saved) throw new Error("Hero image save returned no record.");
+          setSlides((current) =>
+            current.map((slide) => (slide.id === saved.id ? saved : slide)),
+          );
+          setForm(fromSlide(saved));
+          persisted = true;
+        } catch (cause) {
+          persistenceFailed = true;
+          handleHeroActionError(cause, "Image uploaded, but saving the Hero slide failed.");
+        }
+      }
 
       completed = true;
-      if (optimization.mode === "webp") {
+      if (!persistenceFailed) {
+        const summary =
+          optimization.mode === "webp"
+            ? `${target === "desktop" ? "Desktop" : "Mobile"} hero optimized to WebP · ${formatBytes(optimization.source.bytes)} → ${formatBytes(optimization.output.bytes)}.`
+            : `${target === "desktop" ? "Desktop" : "Mobile"} hero uploaded in its original format. ${optimization.note}`;
+
         toast.success(
-          `${target === "desktop" ? "Desktop" : "Mobile"} hero optimized to WebP · ${formatBytes(optimization.source.bytes)} → ${formatBytes(optimization.output.bytes)}.`,
-        );
-      } else {
-        toast.success(
-          `${target === "desktop" ? "Desktop" : "Mobile"} hero uploaded in its original format. ${optimization.note}`,
+          persisted
+            ? `${summary} Hero slide saved.`
+            : `${summary} ${selectedId ? "Save the slide to publish this image." : "Create the slide to publish this image."}`,
         );
       }
     } catch (cause) {
@@ -616,7 +643,12 @@ export default function HeroBannersPage() {
             // Match direct uploads: first-time desktop artwork is ready to publish on Save.
             isPublished: current.imageUrl.trim() ? current.isPublished : true,
           }
-        : { ...current, mobileImageUrl: asset.url },
+        : {
+            ...current,
+            mobileImageUrl: asset.url,
+            imageUrl: current.imageUrl.trim() ? current.imageUrl : asset.url,
+            isPublished: current.imageUrl.trim() ? current.isPublished : true,
+          },
     );
     setLastOptimizations((current) => ({ ...current, [target]: undefined }));
     setMediaTarget(null);
@@ -643,13 +675,13 @@ export default function HeroBannersPage() {
   return (
     <div>
       {imageEditor.dialog}
-      <div className="mb-7 flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
+      <div className="mb-4 flex flex-col justify-between gap-3 sm:mb-7 sm:gap-4 xl:flex-row xl:items-end">
         <div>
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">Store content / CMS</div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Hero banners</h1>
-          <p className="mt-1.5 text-sm text-slate-500">Control the storefront hero, scheduling, links, responsive images and bilingual content from Supabase.</p>
+          <h1 className="text-[24px] font-bold tracking-[-.04em] text-[#14203a] sm:text-[30px] sm:tracking-[-.05em]">Hero banners</h1>
+          <p className="mt-1 text-[11px] leading-5 text-slate-500 sm:mt-1.5 sm:text-sm">Control the storefront hero, scheduling, links, responsive images and bilingual content from Supabase.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
           <button onClick={() => window.open("/", "_blank", "noopener,noreferrer")} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">
             <ExternalLink className="size-3.5" /> View storefront
           </button>
@@ -662,27 +694,27 @@ export default function HeroBannersPage() {
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:pb-0 lg:grid-cols-4">
         {[
           ["Total slides", slides.length],
           ["Live", liveCount],
           ["Scheduled", scheduledCount],
           ["Media assets", media.length],
         ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div key={String(label)} className="min-w-[108px] flex-1 rounded-xl border border-slate-200 bg-white p-3 sm:min-w-0 sm:rounded-2xl sm:p-4">
             <div className="text-[10px] text-slate-400">{label}</div>
             <div className="mt-1 text-xl font-bold text-[#14203a]">{value}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="grid gap-3 sm:gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div className="text-[12px] font-bold text-[#14203a]">Slides</div>
             <button onClick={newSlide} className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><Plus className="size-4" /></button>
           </div>
-          <div className="flex gap-2 overflow-x-auto p-3 xl:block xl:max-h-[760px] xl:divide-y xl:divide-slate-100 xl:overflow-y-auto xl:p-0">
+          <div className="flex gap-2 overflow-x-auto p-2.5 sm:p-3 xl:block xl:max-h-[760px] xl:divide-y xl:divide-slate-100 xl:overflow-y-auto xl:p-0">
             {slides.map((slide, index) => {
               const badge = statusBadge(slide);
               return (
@@ -699,9 +731,9 @@ export default function HeroBannersPage() {
                     setSelectedId(slide.id);
                     setForm(fromSlide(slide));
                   }}
-                  className={`grid min-w-[230px] grid-cols-[64px_1fr] gap-3 rounded-xl border p-3 text-left transition xl:min-w-0 xl:rounded-none xl:border-x-0 xl:border-b-0 xl:first:border-t-0 ${selectedId === slide.id ? "border-indigo-200 bg-indigo-50/70" : "border-slate-100 bg-white hover:bg-slate-50"}`}
+                  className={`grid min-w-[196px] grid-cols-[52px_1fr] gap-2.5 rounded-xl border p-2.5 text-left transition sm:min-w-[230px] sm:grid-cols-[64px_1fr] sm:gap-3 sm:p-3 xl:min-w-0 xl:rounded-none xl:border-x-0 xl:border-b-0 xl:first:border-t-0 ${selectedId === slide.id ? "border-indigo-200 bg-indigo-50/70" : "border-slate-100 bg-white hover:bg-slate-50"}`}
                 >
-                  <div className="grid h-14 w-16 place-items-center overflow-hidden rounded-xl bg-slate-100">
+                  <div className="grid h-12 w-[52px] place-items-center overflow-hidden rounded-lg bg-slate-100 sm:h-14 sm:w-16 sm:rounded-xl">
                     {slide.imageUrl ? <img src={slide.imageUrl} alt="" className="size-full object-cover" /> : <ImageIcon className="size-5 text-slate-300" />}
                   </div>
                   <div className="min-w-0">
@@ -719,7 +751,7 @@ export default function HeroBannersPage() {
         </aside>
 
         <div className="space-y-4">
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+          <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:rounded-2xl sm:p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -740,7 +772,7 @@ export default function HeroBannersPage() {
                 <p className="mt-1 text-[10px] text-slate-400">{editorSubtitle}</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                 {selected ? (
                   <>
                     <button aria-label="Move slide up" onClick={() => void move(-1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowUp className="size-4" /></button>
@@ -749,7 +781,7 @@ export default function HeroBannersPage() {
                     <button onClick={() => void remove()} disabled={busy} className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600 disabled:opacity-40"><Trash2 className="size-3.5" /> Delete</button>
                   </>
                 ) : null}
-                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || !formDirty} className="flex h-9 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40">
+                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || !formDirty} className="order-first col-span-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40 sm:order-none sm:col-auto sm:h-9 sm:w-auto">
                   {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
                   {editorMode === "edit" ? "Save changes" : "Create slide"}
                 </button>
@@ -757,9 +789,9 @@ export default function HeroBannersPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="mb-4 text-[13px] font-bold text-[#14203a]">Design & live preview</div>
-            <div className="mb-3 flex justify-between gap-2">
+          <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:rounded-2xl sm:p-5">
+            <div className="mb-3 text-[13px] font-bold text-[#14203a] sm:mb-4">Design & live preview</div>
+            <div className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:justify-between">
               <div className="flex rounded-xl bg-slate-100 p-1">
                 <button onClick={() => setPreviewMode("desktop")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "desktop" ? "bg-white shadow-sm" : "text-slate-500"}`}><Monitor className="size-3.5" /> Desktop</button>
                 <button onClick={() => setPreviewMode("mobile")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "mobile" ? "bg-white shadow-sm" : "text-slate-500"}`}><Smartphone className="size-3.5" /> Mobile</button>
