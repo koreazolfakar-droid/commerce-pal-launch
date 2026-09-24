@@ -148,11 +148,16 @@ export function ProductGallery({
               onClick={() => onSelect(dotIndex)}
               aria-label={`${t("galleryImage")} ${dotIndex + 1} ${t("ofLabel")} ${images.length}`}
               aria-current={dotIndex === index ? "true" : undefined}
-              className={cn(
-                "h-2 rounded-full transition-[width,background-color]",
-                dotIndex === index ? "w-5 bg-primary" : "w-2 bg-border",
-              )}
-            />
+              className="grid h-8 w-8 place-items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "h-2 rounded-full transition-[width,background-color]",
+                  dotIndex === index ? "w-5 bg-primary" : "w-2 bg-border",
+                )}
+              />
+            </button>
           ))}
         </div>
       )}
