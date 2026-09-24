@@ -213,6 +213,9 @@ function buildProduct(
             ? null
             : money(Number(variant.compare_at_price), row.currency),
         availableForSale,
+        trackInventory: variant.track_inventory,
+        allowBackorder: variant.allow_backorder,
+        stockQuantity: variant.stock_quantity,
         sku: variant.sku,
         barcode: variant.barcode,
         image: variant.image_url ? { url: variant.image_url, altText: null } : null,
