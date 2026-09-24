@@ -2528,6 +2528,10 @@ export type Database = {
           variant_count: number
         }[]
       }
+      dashboard_staff_email_exists: {
+        Args: { p_email: string }
+        Returns: boolean
+      }
       delete_cms_hero_slide: {
         Args: { p_slide_id: string }
         Returns: undefined
