@@ -27,7 +27,7 @@ import {
   productInStock,
   productDiscountPercent,
 } from "@/lib/productPricing";
-import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
+import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export interface CategoryDefinition {
@@ -398,7 +398,7 @@ function inferredCategory(text: string): CategoryDefinition | undefined {
  * Explicit category tags > product type > exact category collection > title.
  * Brand campaigns, compatibility tags and variant option names are not categories.
  */
-export function resolveCategories(product: ShopifyProduct): CategoryDefinition[] {
+export function resolveCategories(product: StoreProduct): CategoryDefinition[] {
   const node = product.node;
   const explicit = new Map<string, CategoryDefinition>();
   for (const tag of node.tags ?? []) {
@@ -438,7 +438,7 @@ export function resolveCategories(product: ShopifyProduct): CategoryDefinition[]
 }
 
 /** Primary (most specific) category, used for related products and breadcrumbs. */
-export function primaryCategory(product: ShopifyProduct): CategoryDefinition | null {
+export function primaryCategory(product: StoreProduct): CategoryDefinition | null {
   const categories = resolveCategories(product);
   if (categories.length === 0) return null;
   const generic = new Set(["accessories"]);
@@ -460,7 +460,7 @@ const GENERIC_VENDORS = new Set([
 
 /** Merchant brand tags and exact vendor identities win; compatibility mentions never override them. */
 export function resolveBrand(
-  product: ShopifyProduct,
+  product: StoreProduct,
   genericVendors: Set<string> = new Set(),
 ): BrandRef | null {
   const identity = (value: string): BrandRef | null => {
@@ -512,7 +512,7 @@ export interface CatalogFacet {
 }
 
 export interface CatalogIndex {
-  products: ShopifyProduct[];
+  products: StoreProduct[];
   /** Categories present in the catalog, most populated first. */
   categories: CatalogFacet[];
   /** Brands present in the catalog, most populated first. */
@@ -531,7 +531,7 @@ export interface CatalogIndex {
  * Nothing here is hardcoded per product: sections exist only when products
  * resolve into them, so new Shopify products appear without code changes.
  */
-export function buildCatalogIndex(products: ShopifyProduct[]): CatalogIndex {
+export function buildCatalogIndex(products: StoreProduct[]): CatalogIndex {
   const categoryCounts = new Map<string, { definition: CategoryDefinition; count: number }>();
   const brandCounts = new Map<string, { brand: BrandRef; count: number }>();
   const categoryOf = new Map<string, string[]>();
@@ -624,7 +624,7 @@ export function productsOfBrand(index: CatalogIndex, slug: string) {
 }
 
 /** Collections worth surfacing: real collections that currently hold products. */
-export function displayCollections(collections: ShopifyCollection[]) {
+export function displayCollections(collections: StoreCollection[]) {
   return collections.filter(
     (collection) =>
       !/^(frontpage|all)$/i.test(collection.handle) &&
