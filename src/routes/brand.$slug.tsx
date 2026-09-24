@@ -106,8 +106,8 @@ function BrandPage() {
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
           {language === "ar"
-            ? `تصفح منتجات ${brandLabel} المتوفرة لدى Space Call، بما في ذلك الهواتف والأجهزة والإكسسوارات، مع مخزون مباشر وأسعار واضحة وإتمام شراء آمن عبر Shopify.`
-            : `Browse ${brandLabel} products available at Space Call, including phones, devices and accessories, with live availability, clear pricing and secure Shopify checkout.`}
+            ? `تصفح منتجات ${brandLabel} المتوفرة لدى Space Call، بما في ذلك الهواتف والأجهزة والإكسسوارات، مع مخزون مباشر وأسعار واضحة وإتمام طلب آمن.`
+            : `Browse ${brandLabel} products available at Space Call, including phones, devices and accessories, with live availability, clear pricing and secure checkout.`}
         </p>
       </div>
       {categories.length ? (
