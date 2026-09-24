@@ -2,6 +2,8 @@ package store.spacecallapp.app;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -67,22 +69,40 @@ public final class SpaceCallLauncherActivity extends LauncherActivity {
         Uri url = sanitizeSpaceCallUrl(getIntent() == null ? null : getIntent().getData());
         String providerPackage = CustomTabsClient.getPackageName(this, null);
 
-        if (providerPackage == null || getPackageName().equals(providerPackage)) {
-            Log.e(TAG, "No external Custom Tabs provider is available for the fallback.");
-            Toast.makeText(this, "A supported web browser is required to open Space Call.", Toast.LENGTH_LONG).show();
-            finish();
-            return;
+        if (providerPackage != null && !getPackageName().equals(providerPackage)) {
+            try {
+                CustomTabsIntent customTab = new CustomTabsIntent.Builder().build();
+                customTab.intent.setPackage(providerPackage);
+                customTab.launchUrl(this, url);
+                finish();
+                return;
+            } catch (ActivityNotFoundException | SecurityException fallbackFailure) {
+                Log.w(TAG, "Custom Tabs fallback failed; trying the default HTTPS browser.", fallbackFailure);
+            }
         }
 
-        try {
-            CustomTabsIntent customTab = new CustomTabsIntent.Builder().build();
-            customTab.intent.setPackage(providerPackage);
-            customTab.launchUrl(this, url);
-        } catch (ActivityNotFoundException | SecurityException fallbackFailure) {
-            Log.e(TAG, "Safe browser fallback failed.", fallbackFailure);
-            Toast.makeText(this, "Unable to open Space Call in the browser.", Toast.LENGTH_LONG).show();
-        } finally {
-            finish();
+        Intent browserProbe = new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com/"));
+        browserProbe.addCategory(Intent.CATEGORY_BROWSABLE);
+        ResolveInfo resolvedBrowser =
+                getPackageManager().resolveActivity(browserProbe, PackageManager.MATCH_DEFAULT_ONLY);
+
+        if (resolvedBrowser != null
+                && resolvedBrowser.activityInfo != null
+                && !getPackageName().equals(resolvedBrowser.activityInfo.packageName)) {
+            try {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, url);
+                browserIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+                browserIntent.setPackage(resolvedBrowser.activityInfo.packageName);
+                startActivity(browserIntent);
+                finish();
+                return;
+            } catch (ActivityNotFoundException | SecurityException fallbackFailure) {
+                Log.e(TAG, "Default HTTPS browser fallback failed.", fallbackFailure);
+            }
         }
+
+        Log.e(TAG, "No external HTTPS browser is available for the fallback.");
+        Toast.makeText(this, "A web browser is required to open Space Call.", Toast.LENGTH_LONG).show();
+        finish();
     }
 }
