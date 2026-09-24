@@ -45,6 +45,7 @@ const allowedPermissions = new Set([
   "android.permission.ACCESS_COARSE_LOCATION",
   "android.permission.ACCESS_FINE_LOCATION",
   "android.permission.POST_NOTIFICATIONS",
+  "android.permission.REORDER_TASKS",
 ]);
 
 for (const permission of permissions) {
@@ -58,6 +59,11 @@ for (const requiredPermission of allowedPermissions) {
     failures.push(`Required Android permission is missing: ${requiredPermission}`);
   }
 }
+requireText(
+  manifest,
+  '<uses-permission android:name="android.permission.REORDER_TASKS" />',
+  "REORDER_TASKS must remain declared because Browser Helper FocusActivity requires it.",
+);
 
 for (const forbiddenPermission of [
   "android.permission.READ_MEDIA_IMAGES",
