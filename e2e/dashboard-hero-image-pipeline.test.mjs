@@ -238,7 +238,9 @@ test("Hero crop controls are device-specific, touch friendly and reflected by st
   assert.match(heroVisualEditor, /Image crop horizontal/);
   assert.match(heroVisualEditor, /Image crop vertical/);
   assert.match(heroVisualEditor, /Reset image crop/);
-  assert.match(heroVisualEditor, /Touch crop focus/);
+  assert.match(heroVisualEditor, /Adjust image by touch/);
+  assert.match(heroVisualEditor, /absolute inset-0 z-20 touch-none cursor-crosshair/);
+  assert.doesNotMatch(heroVisualEditor, /Touch crop focus/);
   assert.match(heroVisualEditor, /setPointerCapture\(event\.pointerId\)/);
   assert.match(heroVisualEditor, /max-w-\[360px\]/);
   assert.match(heroScene, /config\.mobileFocalPoint \?\? desktopFocus/);
