@@ -42,7 +42,6 @@ const allowedPermissions = new Set([
   "android.permission.INTERNET",
   "android.permission.ACCESS_COARSE_LOCATION",
   "android.permission.ACCESS_FINE_LOCATION",
-  "android.permission.CAMERA",
   "android.permission.POST_NOTIFICATIONS",
 ]);
 
@@ -65,6 +64,7 @@ for (const forbiddenPermission of [
   "android.permission.READ_EXTERNAL_STORAGE",
   "android.permission.WRITE_EXTERNAL_STORAGE",
   "android.permission.ACCESS_MEDIA_LOCATION",
+  "android.permission.CAMERA",
   "android.permission.RECORD_AUDIO",
   "android.permission.READ_CONTACTS",
   "android.permission.WRITE_CONTACTS",
