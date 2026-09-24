@@ -161,8 +161,23 @@ requireText(
 );
 requireText(
   manifest,
-  'android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"\n            android:exported="false"',
-  "ManageDataLauncherActivity must remain non-exported.",
+  'android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"',
+  "ManageDataLauncherActivity must remain declared.",
+);
+requireText(
+  manifest,
+  'android:excludeFromRecents="true"',
+  "ManageDataLauncherActivity must stay out of recents.",
+);
+requireText(
+  manifest,
+  'android:exported="false"',
+  "Internal helper activities must remain non-exported.",
+);
+requireText(
+  manifest,
+  'android.intent.action.APPLICATION_PREFERENCES',
+  "APPLICATION_PREFERENCES intent must remain registered for TWA site settings.",
 );
 requireText(
   manifest,
