@@ -246,7 +246,9 @@ test("mobile-first hero uploads always produce a storefront-readable primary ima
     /imageUrl: form\.imageUrl\.trim\(\) \? form\.imageUrl : asset\.url/,
   );
   assert.match(heroPage, /const currentForm = formRef\.current/);
-  assert.match(heroPage, /JSON\.stringify\(currentForm\) === JSON\.stringify\(fromSlide\(selected!\)\)/);
+  assert.match(heroPage, /selectedId !== null/);
+  assert.match(heroPage, /selected !== null/);
+  assert.match(heroPage, /JSON\.stringify\(currentForm\) === JSON\.stringify\(fromSlide\(selected\)\)/);
   assert.match(heroPage, /updateDashboardHeroSlide\(selectedId, nextForm\)/);
   assert.match(
     heroPage,
@@ -258,4 +260,6 @@ test("hero dashboard keeps phone controls compact while preserving all actions",
   assert.match(heroPage, /overflow-x-auto pb-1/);
   assert.match(heroPage, /order-first col-span-2/);
   assert.match(heroPage, /grid grid-cols-2 gap-2 sm:flex sm:justify-between/);
+  assert.match(heroPage, /group order-2 overflow-hidden[^"]*xl:order-4/);
+  assert.match(heroPage, /order-3 rounded-xl[^"]*xl:order-2/);
 });
