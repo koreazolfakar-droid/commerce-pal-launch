@@ -1,5 +1,5 @@
 import { productDiscountPercent, productInStock, productPrice } from "@/lib/productPricing";
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 import type { CatalogIndex } from "@/lib/taxonomy";
 import { matchesProductSearch, productSearchScore } from "@/lib/searchRanking";
 
@@ -81,10 +81,10 @@ export function parseProductSearch(search: Record<string, unknown>): ProductFilt
 
 /** Applies the active facets and sort order to a product list. */
 export function applyFilters(
-  products: ShopifyProduct[],
+  products: StoreProduct[],
   index: CatalogIndex,
   filters: ProductFilters,
-): ShopifyProduct[] {
+): StoreProduct[] {
   let result = products;
 
   if (filters.q) {
@@ -162,7 +162,7 @@ export function applyFilters(
   return sorted;
 }
 
-function savingRatio(product: ShopifyProduct) {
+function savingRatio(product: StoreProduct) {
   const discount = productDiscountPercent(product);
   return discount === null ? 0 : discount / 100;
 }
