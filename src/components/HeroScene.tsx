@@ -260,7 +260,6 @@ export function HeroScene({
       data-width={config.contentWidth}
       data-radius={config.buttonRadius}
       data-theme={slide.content_theme ?? "light"}
-      data-mobile-source={slide.mobile_image_url ? "dedicated" : "fallback"}
       data-align={slide.content_alignment ?? "start"}
       data-vertical={config.vertical}
       data-free={free || undefined}
@@ -282,7 +281,7 @@ export function HeroScene({
             onError={onImageError}
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
-            decoding={priority ? "sync" : "async"}
+            decoding="async"
             style={{
               "--hero-focus-x": `${desktopFocus.x}%`,
               "--hero-focus-y": `${desktopFocus.y}%`,
