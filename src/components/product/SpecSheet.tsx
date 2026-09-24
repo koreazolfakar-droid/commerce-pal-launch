@@ -1,7 +1,7 @@
 import type { SpecGroup } from "@/lib/productContent";
 
 /**
- * Grouped specification sheet. Rows come only from real Shopify data; the
+ * Grouped specification sheet. Rows come only from real catalog data; the
  * layout stacks on mobile and becomes a two-column label/value grid on wider
  * screens, so long values never break the page width.
  */
