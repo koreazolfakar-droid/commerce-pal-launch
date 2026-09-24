@@ -22,7 +22,9 @@ jobs:
       - checkout
       - run:
           name: High-confidence source and secret scan
-          command: node scripts/security-gate.mjs
+          command: |
+            node scripts/security-gate.mjs
+            node scripts/android-security-gate.mjs
 
   security-dependencies:
     docker:
@@ -207,17 +209,435 @@ jobs:
             node --version
             test -d /ms-playwright
 
+
+
+  android-compile-check:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      GRADLE_VERSION: "9.6.0"
+      GRADLE_BIN_SHA256: "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - space-call-android-debug-keystore-v1
+
+      - run:
+          name: Install minimal Android build toolchain
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+            curl --proto '=https' --tlsv1.2 -fsSL \
+              "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" \
+              -o /tmp/gradle.zip
+            echo "$GRADLE_BIN_SHA256  /tmp/gradle.zip" | sha256sum -c -
+            rm -rf "$HOME/gradle-$GRADLE_VERSION"
+            unzip -q /tmp/gradle.zip -d "$HOME"
+            echo "export PATH=\"$HOME/gradle-$GRADLE_VERSION/bin:$PATH\"" >> "$BASH_ENV"
+
+      - run:
+          name: Security gate and debug APK build
+          command: |
+            set -euo pipefail
+            source "$BASH_ENV"
+            cd android
+            gradle --no-daemon --stacktrace :app:assembleDebug
+            cd ..
+            APK="android/app/build/outputs/apk/debug/app-debug.apk"
+            test -s "$APK"
+            mkdir -p dist/android
+            cp "$APK" dist/android/Space-Call-1.0.2-debug.apk
+            (
+              cd dist/android
+              sha256sum Space-Call-* > SHA256SUMS.txt
+            )
+
+      - save_cache:
+          key: space-call-android-debug-keystore-v1
+          paths:
+            - ~/.android/debug.keystore
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/android
+
+      - store_artifacts:
+          path: dist/android
+          destination: space-call-android
+
+
+  android-unit-test:
+    docker:
+      - image: cimg/openjdk:21.0
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Run standalone Java 8 URL-security tests
+          command: |
+            set -euo pipefail
+            rm -rf /tmp/space-call-url-policy
+            mkdir -p /tmp/space-call-url-policy/classes
+            javac --release 8 \
+              -d /tmp/space-call-url-policy/classes \
+              android/app/src/main/java/store/spacecallapp/app/SpaceCallUrlPolicy.java \
+              android/security-tests/store/spacecallapp/app/SpaceCallUrlPolicySelfTest.java
+            java -cp /tmp/space-call-url-policy/classes \
+              store.spacecallapp.app.SpaceCallUrlPolicySelfTest
+
+  android-lint-debug:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      GRADLE_VERSION: "9.6.0"
+      GRADLE_BIN_SHA256: "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+    steps:
+      - checkout
+      - run:
+          name: Install Android lint toolchain
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+            curl --proto '=https' --tlsv1.2 -fsSL \
+              "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" \
+              -o /tmp/gradle.zip
+            echo "$GRADLE_BIN_SHA256  /tmp/gradle.zip" | sha256sum -c -
+            rm -rf "$HOME/gradle-$GRADLE_VERSION"
+            unzip -q /tmp/gradle.zip -d "$HOME"
+            echo "export PATH=\"$HOME/gradle-$GRADLE_VERSION/bin:$PATH\"" >> "$BASH_ENV"
+      - run:
+          name: Android debug lint
+          command: |
+            set -euo pipefail
+            source "$BASH_ENV"
+            cd android
+            gradle --no-daemon --stacktrace :app:lintDebug
+      - store_artifacts:
+          path: android/app/build/reports
+          destination: android-lint-debug
+
+  android-lint-release:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      GRADLE_VERSION: "9.6.0"
+      GRADLE_BIN_SHA256: "bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+    steps:
+      - checkout
+      - run:
+          name: Install Android release lint toolchain
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+            curl --proto '=https' --tlsv1.2 -fsSL \
+              "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" \
+              -o /tmp/gradle.zip
+            echo "$GRADLE_BIN_SHA256  /tmp/gradle.zip" | sha256sum -c -
+            rm -rf "$HOME/gradle-$GRADLE_VERSION"
+            unzip -q /tmp/gradle.zip -d "$HOME"
+            echo "export PATH=\"$HOME/gradle-$GRADLE_VERSION/bin:$PATH\"" >> "$BASH_ENV"
+      - run:
+          name: Android release lint
+          command: |
+            set -euo pipefail
+            source "$BASH_ENV"
+            cd android
+            gradle --no-daemon --stacktrace :app:lintRelease
+      - store_artifacts:
+          path: android/app/build/reports
+          destination: android-lint-release
+
+  android-apk-badging:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Verify package identity and version
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "build-tools;36.0.0"
+            APK="dist/android/Space-Call-1.0.2-debug.apk"
+            BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+            test -s "$APK"
+            "$BUILD_TOOLS/aapt" dump badging "$APK" | tee /tmp/aapt-badging.txt
+            grep -q "package: name='store.spacecallapp.app.debug'" /tmp/aapt-badging.txt
+            grep -q "versionCode='3'" /tmp/aapt-badging.txt
+            grep -q "versionName='1.0.2-debug'" /tmp/aapt-badging.txt
+      - store_artifacts:
+          path: /tmp/aapt-badging.txt
+          destination: android-apk/aapt-badging.txt
+
+  android-apk-signature:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Verify APK signature
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "build-tools;36.0.0"
+            APK="dist/android/Space-Call-1.0.2-debug.apk"
+            BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+            test -s "$APK"
+            "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+            RAW_CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr '[:lower:]' '[:upper:]')"
+            test -n "$RAW_CERT"
+            printf '%s\n' "$RAW_CERT" > /tmp/debug-cert-sha256.txt
+      - store_artifacts:
+          path: /tmp/apksigner.txt
+          destination: android-apk/apksigner.txt
+      - store_artifacts:
+          path: /tmp/debug-cert-sha256.txt
+          destination: android-apk/debug-cert-sha256.txt
+
+  android-apk-alignment:
+    docker:
+      - image: cimg/android:2026.08
+    resource_class: small
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Verify APK ZIP and 16 KB alignment
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "build-tools;36.0.0"
+            APK="dist/android/Space-Call-1.0.2-debug.apk"
+            BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+            test -s "$APK"
+            "$BUILD_TOOLS/zipalign" -c -P 16 -v 4 "$APK" | tee /tmp/zipalign.txt
+      - store_artifacts:
+          path: /tmp/zipalign.txt
+          destination: android-apk/zipalign.txt
+
+  android-runtime-smoke:
+    machine:
+      image: android:current
+    resource_class: large.gen2
+    working_directory: ~/project
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - run:
+          name: Install Android 16 emulator image
+          command: |
+            set -euo pipefail
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platform-tools" "emulator" \
+              "system-images;android-36;google_apis;x86_64"
+            echo "no" | avdmanager create avd \
+              -n spacecall-api36 \
+              -k "system-images;android-36;google_apis;x86_64" \
+              --force
+
+      - run:
+          name: Start Android 16 emulator
+          background: true
+          command: |
+            emulator -avd spacecall-api36 \
+              -no-window \
+              -noaudio \
+              -no-boot-anim \
+              -no-snapshot \
+              -gpu swiftshader_indirect
+
+      - run:
+          name: Wait for emulator and prepare device
+          command: |
+            set -euo pipefail
+            adb wait-for-device
+            BOOTED=""
+            for attempt in $(seq 1 120); do
+              BOOTED="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
+              if [ "$BOOTED" = "1" ]; then
+                break
+              fi
+              sleep 2
+            done
+            test "$BOOTED" = "1"
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+            adb shell input keyevent 82 || true
+            adb shell pm list packages | tee /tmp/packages.txt
+            BROWSER_PACKAGE="$(adb shell cmd package resolve-activity --brief               -a android.intent.action.VIEW               -c android.intent.category.BROWSABLE               -d https://example.com 2>/dev/null | tail -n1 | tr -d '\r')"
+            test -n "$BROWSER_PACKAGE"
+            printf '%s\n' "$BROWSER_PACKAGE" > /tmp/browser-provider.txt
+
+      - run:
+          name: Install and cold-launch Space Call
+          command: |
+            set -euo pipefail
+            APK="dist/android/Space-Call-1.0.2-debug.apk"
+            test -s "$APK"
+
+            adb install -r -t "$APK"
+            adb shell pm clear store.spacecallapp.app.debug || true
+            adb logcat -c
+
+            adb shell am start -W \
+              -n store.spacecallapp.app.debug/store.spacecallapp.app.SpaceCallLauncherActivity \
+              | tee /tmp/am-start.txt
+            grep -q "Status: ok" /tmp/am-start.txt
+
+            sleep 12
+            adb logcat -b crash -d > /tmp/crash.txt || true
+            adb logcat -d > /tmp/logcat.txt
+            adb shell dumpsys activity activities > /tmp/activities.txt
+            adb shell dumpsys window windows > /tmp/windows.txt
+            adb exec-out screencap -p > /tmp/space-call-startup.png
+
+            if grep -Eqi "FATAL EXCEPTION|Process: store\.spacecallapp\.app\.debug|SpaceCallLauncher.*Exception" /tmp/crash.txt; then
+              echo "Space Call crashed during cold launch."
+              cat /tmp/crash.txt
+              exit 1
+            fi
+
+            if grep -Eqi "FATAL EXCEPTION.*store\.spacecallapp\.app\.debug|AndroidRuntime.*store\.spacecallapp\.app\.debug" /tmp/logcat.txt; then
+              echo "Space Call emitted a fatal runtime exception."
+              grep -Ei -C 20 "FATAL EXCEPTION|AndroidRuntime" /tmp/logcat.txt
+              exit 1
+            fi
+
+            echo "Cold launch completed without an Android crash."
+
+      - store_artifacts:
+          path: /tmp/browser-provider.txt
+          destination: android-runtime/browser-provider.txt
+      - store_artifacts:
+          path: /tmp/am-start.txt
+          destination: android-runtime/am-start.txt
+      - store_artifacts:
+          path: /tmp/crash.txt
+          destination: android-runtime/crash.txt
+      - store_artifacts:
+          path: /tmp/logcat.txt
+          destination: android-runtime/logcat.txt
+      - store_artifacts:
+          path: /tmp/activities.txt
+          destination: android-runtime/activities.txt
+      - store_artifacts:
+          path: /tmp/windows.txt
+          destination: android-runtime/windows.txt
+      - store_artifacts:
+          path: /tmp/space-call-startup.png
+          destination: android-runtime/startup.png
+
 workflows:
   security-and-storefront-validation:
     jobs:
       - security-source
       - security-dependencies
       - storefront-ci
+
+      - android-compile-check:
+          requires:
+            - security-source
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+
+      - android-unit-test:
+          requires:
+            - security-source
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+
+      - android-lint-debug:
+          requires:
+            - security-source
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+
+      - android-lint-release:
+          requires:
+            - security-source
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+
+      - android-apk-badging:
+          requires:
+            - android-compile-check
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+
+      - android-apk-signature:
+          requires:
+            - android-compile-check
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+
+      - android-apk-alignment:
+          requires:
+            - android-compile-check
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+
+      - android-runtime-smoke:
+          requires:
+            - android-compile-check
+          filters:
+            branches:
+              only:
+                - fix/android-production-foundation-20260924
+                - /^feat\/android-.*/
+
       - ui-browser-deps:
           filters:
             branches:
               only:
                 - /^ui\/.*/
+
       - ui-browser:
           requires:
             - ui-browser-deps
@@ -229,6 +649,7 @@ workflows:
             branches:
               only:
                 - /^ui\/.*/
+
       - ui-browser:
           requires:
             - ui-browser-deps
@@ -251,6 +672,7 @@ workflows:
             branches:
               only:
                 - /^ui\/.*/
+
       - ui-browser:
           requires:
             - ui-browser-deps
@@ -262,6 +684,7 @@ workflows:
             branches:
               only:
                 - /^ui\/.*/
+
       - ui-browser:
           requires:
             - ui-browser-deps

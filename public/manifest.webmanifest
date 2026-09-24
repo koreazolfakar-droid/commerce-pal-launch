@@ -1,0 +1,22 @@
+{
+  "name": "Space Call",
+  "short_name": "Space Call",
+  "description": "Space Call electronics storefront for Lebanon.",
+  "id": "/",
+  "start_url": "/?source=android-app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0b1020",
+  "lang": "en-LB",
+  "dir": "auto",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -160,6 +160,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         as: "style",
       },
       { rel: "icon", href: "/logo.svg", type: "image/svg+xml" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
