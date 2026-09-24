@@ -22,6 +22,7 @@ export function HeroVisualEditor({
 }) {
   const ar = language === "ar";
   const [selected, setSelected] = useState<keyof HeroLayout>("content");
+  const [cropMode, setCropMode] = useState(false);
   const [history, setHistory] = useState<DashboardHeroInput[]>([]);
   const [future, setFuture] = useState<DashboardHeroInput[]>([]);
   const latest = useRef(form);
@@ -203,10 +204,18 @@ export function HeroVisualEditor({
         >
           {ar ? "إعادة قص الصورة" : "Reset image crop"}
         </button>
+        <button
+          type="button"
+          aria-pressed={cropMode}
+          className={`min-h-11 rounded-lg border px-3 text-xs font-semibold ${cropMode ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "bg-white"}`}
+          onClick={() => setCropMode((value) => !value)}
+        >
+          {ar ? (cropMode ? "إنهاء ضبط الصورة" : "ضبط الصورة باللمس") : (cropMode ? "Done adjusting image" : "Adjust image by touch")}
+        </button>
       </div>
       <div
         ref={host}
-        className={`mx-auto w-full overflow-hidden rounded-2xl bg-slate-100 p-0 ${mode === "desktop" ? "max-w-[360px]" : "max-w-[390px]"}`}
+        className={`relative mx-auto w-full overflow-hidden rounded-2xl bg-slate-100 p-0 ${mode === "desktop" ? "max-w-[360px]" : "max-w-[390px]"}`}
         style={{ height: dimensions.height * scale }}
       >
         <div
@@ -240,6 +249,54 @@ export function HeroVisualEditor({
             </div>
           )}
         </div>
+        {cropMode && form.imageUrl ? (
+          <div
+            className="absolute inset-0 z-20 touch-none cursor-crosshair bg-slate-950/5 outline-none ring-inset focus-visible:ring-2 focus-visible:ring-indigo-500"
+            tabIndex={0}
+            role="application"
+            aria-label={ar ? "حرّك نقطة تركيز صورة الهيرو" : "Move the hero image focal point"}
+            onPointerDown={(event) => {
+              checkpoint();
+              event.currentTarget.setPointerCapture(event.pointerId);
+              updateFocusFromPointer(event);
+            }}
+            onPointerMove={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) updateFocusFromPointer(event);
+            }}
+            onPointerUp={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+            }}
+            onPointerCancel={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+              event.preventDefault();
+              const step = event.shiftKey ? 5 : 1;
+              const next = {
+                x: Math.max(0, Math.min(100, focus.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0))),
+                y: Math.max(0, Math.min(100, focus.y + (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0))),
+              };
+              updateConfig({ [focusKey]: next });
+            }}
+          >
+            <span className="absolute left-3 top-3 rounded-full bg-slate-950/65 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm backdrop-blur">
+              {ar ? "اسحب لتحديد الجزء المهم" : "Drag to set image focus"}
+            </span>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-indigo-500/25 shadow-lg"
+              style={{ left: `${focus.x}%`, top: `${focus.y}%` }}
+            >
+              <span className="absolute left-1/2 top-1/2 h-px w-9 -translate-x-1/2 -translate-y-1/2 bg-white" />
+              <span className="absolute left-1/2 top-1/2 h-9 w-px -translate-x-1/2 -translate-y-1/2 bg-white" />
+            </span>
+          </div>
+        ) : null}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {(selected === "content"
@@ -285,70 +342,6 @@ export function HeroVisualEditor({
             </label>
           );
         })}
-      </div>
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-        <div className="flex items-center justify-between gap-3 text-xs">
-          <span className="font-semibold text-slate-700">
-            {ar ? "تحديد موضع القص باللمس" : "Touch crop focus"}
-          </span>
-          <span className="font-mono text-[10px] text-slate-500">{focus.x}% · {focus.y}%</span>
-        </div>
-        <div
-          className="relative mt-2 aspect-[16/9] touch-none overflow-hidden rounded-lg bg-slate-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-          tabIndex={0}
-          aria-label={ar ? "حرّك نقطة تركيز صورة الهيرو" : "Move the hero image focal point"}
-          onPointerDown={(event) => {
-            checkpoint();
-            event.currentTarget.setPointerCapture(event.pointerId);
-            updateFocusFromPointer(event);
-          }}
-          onPointerMove={(event) => {
-            if (event.currentTarget.hasPointerCapture(event.pointerId)) updateFocusFromPointer(event);
-          }}
-          onPointerUp={(event) => {
-            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-              event.currentTarget.releasePointerCapture(event.pointerId);
-            }
-          }}
-          onPointerCancel={(event) => {
-            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-              event.currentTarget.releasePointerCapture(event.pointerId);
-            }
-          }}
-          onKeyDown={(event) => {
-            if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
-            event.preventDefault();
-            const step = event.shiftKey ? 5 : 1;
-            const next = {
-              x: Math.max(0, Math.min(100, focus.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0))),
-              y: Math.max(0, Math.min(100, focus.y + (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0))),
-            };
-            updateConfig({ [focusKey]: next });
-          }}
-        >
-          {(mode === "mobile" ? form.mobileImageUrl || form.imageUrl : form.imageUrl) ? (
-            <img
-              src={mode === "mobile" ? form.mobileImageUrl || form.imageUrl : form.imageUrl}
-              alt=""
-              draggable={false}
-              className="pointer-events-none absolute inset-0 size-full select-none object-cover"
-              style={{ objectPosition: `${focus.x}% ${focus.y}%` }}
-            />
-          ) : null}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-slate-950/25 shadow-lg"
-            style={{ left: `${focus.x}%`, top: `${focus.y}%` }}
-          >
-            <span className="absolute left-1/2 top-1/2 h-px w-8 -translate-x-1/2 -translate-y-1/2 bg-white/90" />
-            <span className="absolute left-1/2 top-1/2 h-8 w-px -translate-x-1/2 -translate-y-1/2 bg-white/90" />
-          </span>
-        </div>
-        <p className="mt-2 text-[10px] leading-4 text-slate-500">
-          {ar
-            ? "اسحب النقطة إلى الجزء المهم من الصورة. يتم حفظ موضع مستقل للهاتف والكمبيوتر."
-            : "Drag to the important part of the image. Mobile and desktop focal points are saved independently."}
-        </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <label className="text-xs">
