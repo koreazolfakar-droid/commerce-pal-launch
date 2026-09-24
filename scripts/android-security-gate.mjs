@@ -186,7 +186,9 @@ requireText(
   "Automatic unguarded TWA launch must remain disabled.",
 );
 requireText(launcher, "CustomTabsClient.getPackageName(this, null)", "Fallback must use the browser library provider resolver.");
-requireText(launcher, "customTab.intent.setPackage(providerPackage)", "Fallback must launch an explicit browser provider.");
+requireText(launcher, "customTab.intent.setPackage(providerPackage)", "Fallback must launch an explicit Custom Tabs provider when available.");
+requireText(launcher, "resolveActivity(browserProbe, PackageManager.MATCH_DEFAULT_ONLY)", "Fallback must resolve only the default HTTPS browser when Custom Tabs is unavailable.");
+requireText(launcher, "browserIntent.setPackage(resolvedBrowser.activityInfo.packageName)", "Plain browser fallback must be explicitly scoped to the resolved browser package.");
 forbidText(launcher, "android.webkit.WebView", "Launcher must not introduce an embedded WebView.");
 forbidText(launcher, "new WebView(", "Launcher must not instantiate an embedded WebView.");
 forbidText(launcher, "queryIntentActivities(", "Launcher must not enumerate installed apps for browser fallback.");
