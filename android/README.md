@@ -83,3 +83,16 @@ A green Android pipeline must include all of the following:
 6. crash-buffer and fatal-log scan
 7. Digital Asset Links validation
 8. signed release APK/AAB only when persistent release signing is configured
+
+
+## Camera and photos
+
+The TWA shell intentionally does not declare Android CAMERA or media-library
+permissions. Camera access used by the web storefront is mediated by the selected
+TWA/browser provider and its site-permission flow. Photo/file selection should use
+the browser/system picker, which grants access only to user-selected files and does
+not require broad READ_MEDIA_* or storage permissions in this shell.
+
+Native location is the exception: it uses Browser Helper's location delegation and
+the Android coarse/fine location permissions so the OS permission prompt can occur
+only when the web experience actually requests geolocation.
