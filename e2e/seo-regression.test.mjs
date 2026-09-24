@@ -32,6 +32,9 @@ test("product structured data exposes Google product and offer fields", async ()
   assert.match(seo, /priceCurrency:/);
   assert.match(seo, /availability:/);
   assert.match(seo, /seller:/);
+  assert.match(seo, /productPrimaryVariant/);
+  assert.match(seo, /additionalProperty/);
+  assert.doesNotMatch(seo, /mpn:\s*sku/);
   assert.match(seo, /gtin8/);
   assert.match(seo, /gtin12/);
   assert.match(seo, /gtin13/);
@@ -63,4 +66,24 @@ test("commercial landing pages carry Lebanon search intent", async () => {
     assert.match(page, /Lebanon/);
     assert.match(page, /canonicalLink/);
   }
+});
+
+
+test("production canonical signals resolve to the www origin", async () => {
+  const [config, robots] = await Promise.all([
+    source("src/lib/storeConfig.ts"),
+    source("public/robots.txt"),
+  ]);
+  assert.match(config, /https:\/\/www\.spacecallapp\.store/);
+  assert.match(config, /normalized === "https:\/\/spacecallapp\.store"/);
+  assert.match(robots, /Sitemap: https:\/\/www\.spacecallapp\.store\/sitemap\.xml/);
+});
+
+test("CMS canonical overrides stay on the Space Call origin", async () => {
+  const seo = await source("src/lib/seo.ts");
+  const home = await source("src/routes/index.tsx");
+  const brands = await source("src/routes/brands.tsx");
+  assert.match(seo, /resolved\.origin !== site\.origin/);
+  assert.match(home, /canonicalLink\("\/", canonicalUrl\)/);
+  assert.match(brands, /canonicalUrl\("\/brands", seo\?\.canonical_url\)/);
 });
