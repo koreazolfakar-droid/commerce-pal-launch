@@ -36,21 +36,14 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
   await expect(showcase.first()).toContainText("Zeta showcase");
 });
 
-test("hero uses independent Shopify artwork without unsafe navigation", async ({ page }) => {
+test("hero never falls back to Shopify artwork", async ({ page }) => {
   await page.goto("/");
   const hero = page.getByTestId("home-hero");
-  await expect(hero).toHaveAttribute("data-hero-source", "shopify-collection");
-  await expect(hero).toHaveAttribute("data-hero-collection-handle", "homepage-hero");
-  await expect(hero).toHaveAttribute("data-hero-handle", "homepage-hero");
-  await expect(hero.locator("img")).toHaveAttribute("alt", "Merchant artwork homepage-hero");
-  await expect(hero.locator("a")).toHaveCount(0);
-  await expect(hero.locator('[data-testid="home-hero-content"]')).toHaveCount(0);
-  await expect(hero.locator('[data-testid="home-hero-mobile-controls"]')).toHaveCount(0);
-
-  const before = page.url();
-  await page.getByTestId("home-hero-media").click({ position: { x: 8, y: 8 } });
-  await page.waitForTimeout(100);
-  expect(page.url()).toBe(before);
+  await expect(hero).not.toHaveAttribute("data-hero-source", "shopify-collection");
+  await expect(hero).not.toHaveAttribute("data-hero-source", "hero-product-fallback");
+  await expect(hero).not.toHaveAttribute("data-hero-collection-handle", /.+/);
+  await expect(hero).toHaveAttribute("data-hero-handle", /^(cms:.+|none)$/);
+  await expect(hero.locator("img")).toBeVisible();
 });
 
 test("each brand keeps its compact showcase, products and exact destination without duplicate hero artwork", async ({
