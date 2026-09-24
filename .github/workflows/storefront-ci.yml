@@ -38,6 +38,14 @@ jobs:
       - name: ESLint
         run: bun run lint
 
+      - name: Source security gate
+        run: |
+          node scripts/security-gate.mjs
+          node scripts/android-security-gate.mjs
+
+      - name: Dependency security gate
+        run: bun audit --audit-level=high
+
       - name: Dashboard security regression tests
         run: node --test e2e/dashboard-*.test.mjs
 
