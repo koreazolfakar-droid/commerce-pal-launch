@@ -1,4 +1,4 @@
-import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
+import { discountPercent, formatPrice, productCompareAt, productPrimaryVariant, variantSummary } from "@/lib/productPricing";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
@@ -7,12 +7,7 @@ import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
 import { BrandLogo } from "@/components/BrandLogo";
-import {
-  discountPercent,
-  formatPrice,
-  variantSummary,
-  type ShopifyProduct,
-} from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -28,7 +23,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   market = false,
   borderless = false,
 }: {
-  product: ShopifyProduct;
+  product: StoreProduct;
   className?: string;
   listItem?: boolean;
   eager?: boolean;
