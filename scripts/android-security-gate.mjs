@@ -4,7 +4,7 @@ const read = (path) => fs.readFileSync(path, "utf8");
 
 const manifestPath = "android/app/src/main/AndroidManifest.xml";
 const gradlePath = "android/app/build.gradle";
-const stringsPath = "android/app/src/main/res/values/strings.xml";
+const stringsPath = "android/app/src/main/res/values/strings.xml";\nconst stylesPath = "android/app/src/main/res/values/styles.xml";
 const launcherPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCallLauncherActivity.java";
 const delegationPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCallDelegationService.java";
 const urlPolicyPath = "android/app/src/main/java/store/spacecallapp/app/SpaceCallUrlPolicy.java";
@@ -17,7 +17,7 @@ const gitignorePath = ".gitignore";
 
 const manifest = read(manifestPath);
 const gradle = read(gradlePath);
-const strings = read(stringsPath);
+const strings = read(stringsPath);\nconst styles = read(stylesPath);
 const launcher = read(launcherPath);
 const delegation = read(delegationPath);
 const urlPolicy = read(urlPolicyPath);
