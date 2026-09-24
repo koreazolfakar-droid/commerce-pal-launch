@@ -211,3 +211,11 @@ test("pending Hero media keeps its accordion expanded until upload or cancel", (
   assert.match(heroPage, /<details open=\{hasPendingHeroImages \|\| undefined\}[^>]*>/);
   assert.match(heroPage, /Upload pending/);
 });
+
+
+test("first desktop Hero artwork enables publishing without overriding later draft choices", () => {
+  assert.match(
+    heroPage,
+    /imageUrl: asset\.url,[\s\S]{0,260}isPublished: current\.imageUrl\.trim\(\) \? current\.isPublished : true/,
+  );
+});
