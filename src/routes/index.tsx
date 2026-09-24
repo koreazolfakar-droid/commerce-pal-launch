@@ -7,7 +7,7 @@ import { ArrowRight, Timer } from "lucide-react";
 import { HomeCategorySection } from "@/components/HomeCategorySection";
 import { HomeHero } from "@/components/HomeHero";
 import { StoreLayout } from "@/components/StoreLayout";
-import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
+import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, cmsText, EMPTY_CMS, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import {
@@ -523,7 +523,7 @@ function Index() {
   const navigationCategories = navigationCatalog?.categories ?? catalog?.categories ?? [];
   const navigationBrands = navigationCatalog?.brands ?? catalog?.brands ?? [];
   const navigationReady = Boolean(navigationCatalog || catalog);
-  const brands = applyCmsBrands(buildShopifyBrands(navigationBrands, collections), cms.brands);
+  const brands = applyCmsBrands(buildStoreBrands(navigationBrands, collections), cms.brands);
   const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
   const best = (bestSellers ?? []).filter(isHomepageMerchandise);
   const latest = newItems.filter(isHomepageMerchandise);
