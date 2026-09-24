@@ -15,52 +15,21 @@ test("repository exposes one comprehensive validation command", async () => {
   }
 });
 
-test("GitHub Storefront CI remains an explicit manual fallback", async () => {
+test("GitHub Storefront CI is the automatic validation gate", async () => {
   const workflow = await read(".github/workflows/storefront-ci.yml");
   assert.match(workflow, /^\s+workflow_dispatch:/m);
-  assert.doesNotMatch(workflow, /^\s*push:/m);
-  assert.doesNotMatch(workflow, /^\s+pull_request:/m);
+  assert.match(workflow, /^\s*push:/m);
+  assert.match(workflow, /^\s+pull_request:/m);
   assert.match(workflow, /bun install --frozen-lockfile/);
+  assert.match(workflow, /node scripts\/security-gate\.mjs/);
+  assert.match(workflow, /node scripts\/android-security-gate\.mjs/);
+  assert.match(workflow, /bun audit --audit-level=high/);
   assert.match(workflow, /bun run typecheck/);
   assert.match(workflow, /bun run lint/);
+  assert.match(workflow, /node --test e2e\/dashboard-\*\.test\.mjs/);
   assert.match(workflow, /bun run test:unit/);
   assert.match(workflow, /bun run test:ssr/);
   assert.match(workflow, /bun run build/);
-});
-
-test("CircleCI runs separate source and dependency security gates on every pipeline", async () => {
-  const circle = await read(".circleci/config.yml");
-
-  assert.match(circle, /security-source:/);
-  assert.match(circle, /security-dependencies:/);
-  assert.match(circle, /node scripts\/security-gate\.mjs/);
-  assert.match(circle, /bun audit --audit-level=high/);
-  assert.match(circle, /- security-source/);
-  assert.match(circle, /- security-dependencies/);
-  assert.match(circle, /- storefront-ci/);
-
-  assert.match(circle, /\/\^ui\\\/\.\*\//);
-  assert.match(circle, /bun install --frozen-lockfile/);
-  assert.match(circle, /bun run typecheck/);
-  assert.match(circle, /bun run lint/);
-  assert.match(circle, /bun run test:unit/);
-  assert.match(circle, /bun run build/);
-  assert.match(circle, /bun run test:ssr/);
-  assert.match(circle, /ui-browser-deps:/);
-  assert.match(circle, /persist_to_workspace:/);
-  assert.match(circle, /requires:\s*\n\s*- ui-browser-deps/);
-
-  const uiBrowserJob =
-    circle.match(/\n  ui-browser:\n[\s\S]*?\n\n  ui-server-smoke:/)?.[0] ?? "";
-  assert.match(uiBrowserJob, /attach_workspace:/);
-  assert.doesNotMatch(uiBrowserJob, /bun install --frozen-lockfile/);
-  assert.match(uiBrowserJob, /playwright install --with-deps << parameters\.engine >>/);
-  assert.match(uiBrowserJob, /\.\/node_modules\/\.bin\/vite dev/);
-  assert.match(uiBrowserJob, /node e2e\/ui-polish-responsive-check\.mjs/);
-  assert.match(circle, /name: ui-browser-webkit-overflow-mobile-en/);
-  assert.match(circle, /name: ui-browser-webkit-no-hero-container/);
-  assert.match(circle, /name: ui-browser-webkit-contain-hero/);
-  assert.match(circle, /name: ui-browser-webkit-hide-hero-scene/);
 });
 
 test("native security scanner protects secrets and dangerous production primitives", async () => {

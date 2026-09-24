@@ -19,7 +19,6 @@ const workflow = await readFile(
   new URL("../.github/workflows/storefront-ci.yml", import.meta.url),
   "utf8",
 );
-const circleci = await readFile(new URL("../.circleci/config.yml", import.meta.url), "utf8");
 const router = await readFile(new URL("../src/router.tsx", import.meta.url), "utf8");
 const root = await readFile(new URL("../src/routes/__root.tsx", import.meta.url), "utf8");
 const csp = await readFile(
@@ -88,17 +87,16 @@ test("Auth0 dashboard tokens remain memory-only", () => {
   assert.doesNotMatch(auth0, /clientSecret|CLIENT_SECRET/);
 });
 
-test("CI keeps GitHub manual and validates important updates in CircleCI", () => {
+test("GitHub CI automatically validates important dashboard and storefront updates", () => {
   assert.match(workflow, /workflow_dispatch/);
-  assert.doesNotMatch(workflow, /\npush:|\npull_request:/);
+  assert.match(workflow, /\npush:/);
+  assert.match(workflow, /\n  pull_request:/);
+  assert.match(workflow, /Source security gate/);
+  assert.match(workflow, /Dependency security gate/);
   assert.match(workflow, /Dashboard security regression tests/);
   assert.match(workflow, /node --test e2e\/dashboard-\*\.test\.mjs/);
   assert.match(workflow, /bun run typecheck/);
   assert.match(workflow, /bun run lint/);
   assert.match(workflow, /bun run build/);
   assert.match(workflow, /bun run test:ssr/);
-
-  assert.match(circleci, /- storefront-ci/);
-  assert.match(circleci, /Dashboard security regression tests/);
-  assert.match(circleci, /node --test e2e\/dashboard-\*\.test\.mjs/);
 });
