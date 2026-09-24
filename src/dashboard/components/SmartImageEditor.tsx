@@ -536,7 +536,7 @@ function SmartImageEditorDialog({
         <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="space-y-3">
             <div
-              className={`relative mx-auto max-w-[620px] touch-none cursor-grab overflow-hidden rounded-2xl border border-slate-200 bg-[linear-gradient(45deg,#eef2f7_25%,transparent_25%),linear-gradient(-45deg,#eef2f7_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#eef2f7_75%),linear-gradient(-45deg,transparent_75%,#eef2f7_75%)] bg-[length:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0px] shadow-inner active:cursor-grabbing ${preset === "hero-mobile" ? "h-[46dvh] w-auto max-w-full sm:h-auto sm:w-full" : "w-full"}`}
+              className={`relative mx-auto max-w-[620px] touch-none cursor-grab overflow-hidden rounded-2xl border border-slate-200 bg-[linear-gradient(45deg,#eef2f7_25%,transparent_25%),linear-gradient(-45deg,#eef2f7_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#eef2f7_75%),linear-gradient(-45deg,transparent_75%,#eef2f7_75%)] bg-[length:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0px] shadow-inner active:cursor-grabbing w-full`}
               style={{ aspectRatio: `${dimensions[0]} / ${dimensions[1]}` }}
               onPointerDown={beginDrag}
               onPointerMove={moveDrag}
