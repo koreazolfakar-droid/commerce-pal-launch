@@ -1,0 +1,95 @@
+name: Strix PR Security Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: strix-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  strix-pr-scan:
+    name: Strix / PR diff pentest
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout pull request with full history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Strix
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip pipx
+          pipx install 'strix-agent==1.6.2'
+          strix --version
+
+      - name: Validate Strix configuration
+        env:
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -z "$STRIX_LLM" ]; then
+            echo "::error::Missing repository secret STRIX_LLM (example: openai/gpt-5.4)."
+            exit 1
+          fi
+          if [ -z "$LLM_API_KEY" ]; then
+            echo "::error::Missing repository secret LLM_API_KEY for the configured Strix model provider."
+            exit 1
+          fi
+
+      - name: Verify pull request diff base
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          DIFF_BASE="origin/${BASE_REF}"
+          if ! git rev-parse --verify --quiet "$DIFF_BASE" >/dev/null; then
+            echo "::error::Cannot resolve Strix diff base '$DIFF_BASE'."
+            exit 1
+          fi
+          echo "STRIX_DIFF_BASE=$DIFF_BASE" >> "$GITHUB_ENV"
+
+      - name: Run Strix quick diff-scoped pentest
+        env:
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          strix -n -t ./ \
+            --scan-mode quick \
+            --scope-mode diff \
+            --diff-base "$STRIX_DIFF_BASE" \
+            --max-budget 10
+
+      - name: Fail unless Strix completed
+        if: success()
+        run: |
+          run_json=$(find strix_runs -type f -name run.json -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)
+          if [ -z "$run_json" ] || [ ! -f "$run_json" ]; then
+            echo "::error::Strix did not produce a run.json result."
+            exit 1
+          fi
+          status=$(jq -r '.status // empty' "$run_json")
+          if [ "$status" != "completed" ]; then
+            echo "::error::Strix run status is '$status'; refusing to fail open."
+            exit 1
+          fi
+
+      - name: Upload Strix scan artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: strix-pr-${{ github.event.pull_request.number }}-${{ github.run_attempt }}
+          path: strix_runs/
+          if-no-files-found: ignore
+          retention-days: 7
