@@ -94,10 +94,7 @@ type NativeSnapshot = {
 
 const CACHE_TTL_MS = 30_000;
 const HYDRATED_PRODUCT_CACHE_TTL_MS = 60_000;
-const hydratedProductCache = new Map<
-  string,
-  { expiresAt: number; product: StoreProduct }
->();
+const hydratedProductCache = new Map<string, { expiresAt: number; product: StoreProduct }>();
 // After the fresh window ends, keep serving the last snapshot for up to five
 // minutes while a single background refresh runs. Repeat storefront visitors
 // never wait on the database round-trip.
@@ -299,7 +296,6 @@ function buildProduct(
     },
   };
 }
-
 
 async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<StoreProduct[]> {
   if (!productRows.length) return [];
