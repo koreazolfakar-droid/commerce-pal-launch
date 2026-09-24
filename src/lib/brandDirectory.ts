@@ -5,7 +5,7 @@ import { slugify } from "@/lib/taxonomy";
 import { orderedBrands } from "@/lib/homeMerchandising";
 import { STORE_NAME } from "@/lib/storeConfig";
 
-export interface ShopifyBrand extends CatalogFacet {
+export interface StoreBrand extends CatalogFacet {
   image?: string;
   imageAlt?: string;
   collectionHandle?: string;
@@ -53,10 +53,10 @@ function dedicatedCollectionBrandIdentity(handle: string) {
   return compactBrandIdentity(withoutPrefix);
 }
 
-export function buildShopifyBrands(
+export function buildStoreBrands(
   brands: CatalogFacet[],
   collections: StoreCollection[] | undefined,
-): ShopifyBrand[] {
+): StoreBrand[] {
   return orderedBrands(brands).map((brand) => {
     const brandIdentity = compactBrandIdentity(brand.slug || brand.label);
     const availableCollections = collections ?? [];
@@ -80,7 +80,7 @@ export function buildShopifyBrands(
     // that artwork into the logo rail: if no explicit/logo-like image exists,
     // BrandLogo falls back to the curated local wordmark instead.
     const collection = dedicated ?? exact;
-    const entry: ShopifyBrand = { ...brand };
+    const entry: StoreBrand = { ...brand };
     if (collection?.image) {
       entry.image = collection.image.url;
       if (collection.image.altText) entry.imageAlt = collection.image.altText;
@@ -91,21 +91,21 @@ export function buildShopifyBrands(
 }
 
 /**
- * Dashboard brand rows are an override layer on top of Shopify vendors.
+ * Dashboard brand rows are an override layer on top of storefront vendors.
  * Matching slugs can rename, hide, reorder, relink or replace the logo of a
- * Shopify brand. CMS-only rows are also allowed for campaign/landing links.
+ * storefront brand. CMS-only rows are also allowed for campaign/landing links.
  */
 export function applyCmsBrands(
-  shopifyBrands: ShopifyBrand[],
+  storeBrands: StoreBrand[],
   cmsBrands: CmsBrand[],
-): ShopifyBrand[] {
-  if (!cmsBrands.length) return shopifyBrands;
+): StoreBrand[] {
+  if (!cmsBrands.length) return storeBrands;
 
   const managed = new Map(cmsBrands.map((brand) => [brand.slug, brand]));
-  const result: Array<ShopifyBrand & { __cmsOrder?: number }> = [];
+  const result: Array<StoreBrand & { __cmsOrder?: number }> = [];
   const seen = new Set<string>();
 
-  for (const brand of shopifyBrands) {
+  for (const brand of storeBrands) {
     const override = managed.get(brand.slug);
     seen.add(brand.slug);
     if (override && !override.is_visible) continue;
