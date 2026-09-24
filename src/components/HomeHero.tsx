@@ -13,6 +13,7 @@ export function HomeHero({
   cmsHeroSlides?: CmsHeroSlide[];
 }) {
   const { t, language } = useLanguage();
+  const [failedCmsSlideIds, setFailedCmsSlideIds] = useState<string[]>([]);
   const localizedCmsSlides = useMemo(
     () =>
       cmsHeroSlides
