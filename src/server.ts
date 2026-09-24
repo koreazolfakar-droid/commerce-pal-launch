@@ -12,6 +12,8 @@ type ServerEntry = {
 type RateBucket = { count: number; resetAt: number };
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const CANONICAL_HOST = "www.spacecallapp.store";
+const ALTERNATE_HOST = "spacecallapp.store";
 const MAX_REQUEST_BYTES = 128 * 1024;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_MUTATIONS = 24;
@@ -175,6 +177,28 @@ function consumeMutationRateLimit(request: Request) {
   return { allowed: true, retryAfter: 0 };
 }
 
+export function canonicalHostRedirect(request: Request): Response | null {
+  const method = request.method.toUpperCase();
+  if (method !== "GET" && method !== "HEAD") return null;
+
+  const url = new URL(request.url);
+  if (url.hostname !== ALTERNATE_HOST) return null;
+
+  url.protocol = "https:";
+  url.hostname = CANONICAL_HOST;
+  url.port = "";
+
+  return withSecurityHeaders(
+    new Response(null, {
+      status: 308,
+      headers: {
+        Location: url.toString(),
+        "Cache-Control": "public, max-age=3600",
+      },
+    }),
+  );
+}
+
 export function guardIncomingRequest(request: Request): Response | null {
   const length = requestContentLength(request);
   if (length !== null && length > MAX_REQUEST_BYTES) {
@@ -195,6 +219,9 @@ export function guardIncomingRequest(request: Request): Response | null {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const canonicalRedirect = canonicalHostRedirect(request);
+    if (canonicalRedirect) return canonicalRedirect;
+
     const blocked = guardIncomingRequest(request);
     if (blocked) return blocked;
 
