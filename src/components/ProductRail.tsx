@@ -1,6 +1,6 @@
 import { CompactProductCard } from "@/components/CompactProductCard";
 import type { ProductViewMode } from "@/hooks/useProductViewMode";
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 
 /**
  * Shared storefront product rail.
@@ -13,7 +13,7 @@ export function ProductRail({
   products,
   compactGrid = false,
 }: {
-  products: ShopifyProduct[];
+  products: StoreProduct[];
   storageKey: string;
   viewMode?: ProductViewMode;
   onViewModeChange?: (mode: ProductViewMode) => void;
