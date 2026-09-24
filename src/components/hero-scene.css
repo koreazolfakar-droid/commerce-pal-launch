@@ -13,7 +13,7 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  min-height: clamp(240px, 62cqw, 320px);
+  min-height: 0;
   height: auto;
   overflow: hidden;
   border-radius: 20px;
