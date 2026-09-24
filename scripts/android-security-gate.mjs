@@ -154,6 +154,21 @@ requireText(
 );
 requireText(
   manifest,
+  'android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"\n            android:exported="false"',
+  "ManageDataLauncherActivity must remain non-exported.",
+);
+requireText(
+  manifest,
+  'android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity"\n            android:exported="false"',
+  "Notification permission bridge must remain non-exported.",
+);
+requireText(
+  manifest,
+  'android:name="com.google.androidbrowserhelper.locationdelegation.PermissionRequestActivity"\n            android:exported="false"',
+  "Location permission request activity must remain non-exported.",
+);
+requireText(
+  manifest,
   'android:authorities="${applicationId}.fileprovider"',
   "FileProvider authority must remain application scoped.",
 );
