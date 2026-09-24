@@ -174,7 +174,7 @@ export const Route = createFileRoute("/")({
       ],
       links: [
         ...heroPreloadLinks,
-        canonicalUrl ? { rel: "canonical", href: canonicalUrl } : canonicalLink("/"),
+        canonicalLink("/", canonicalUrl),
         ...languageAlternateLinks({ path: "/", arabicPath: "/ar" }),
       ],
       scripts: [
