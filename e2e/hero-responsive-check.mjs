@@ -73,12 +73,18 @@ try {
       `${testCase.name}: media height mismatch`,
     );
 
-    if (testCase.mobile) {
-      assert.ok(metrics.height >= 239, `${testCase.name}: mobile hero became too short`);
-      assert.ok(metrics.height <= 321, `${testCase.name}: mobile hero became too tall`);
+    if (source === "supabase-cms" && testCase.mobile) {
+      const ratio = mediaBox.width / mediaBox.height;
+      assert.ok(ratio >= 1.7 && ratio <= 1.85, `${testCase.name}: mobile CMS hero is not close to 16:9`);
+    } else if (source === "supabase-cms") {
+      assert.ok(metrics.height >= 318, `${testCase.name}: desktop CMS hero became too short`);
+      assert.ok(metrics.height <= 442, `${testCase.name}: desktop CMS hero became too tall`);
+    } else if (testCase.mobile) {
+      assert.ok(metrics.height >= 239, `${testCase.name}: mobile placeholder became too short`);
+      assert.ok(metrics.height <= 321, `${testCase.name}: mobile placeholder became too tall`);
     } else {
-      assert.ok(metrics.height >= 400, `${testCase.name}: desktop hero became too short`);
-      assert.ok(metrics.height <= 500, `${testCase.name}: desktop hero became too tall`);
+      assert.ok(metrics.height >= 400, `${testCase.name}: desktop placeholder became too short`);
+      assert.ok(metrics.height <= 500, `${testCase.name}: desktop placeholder became too tall`);
     }
 
     const before = page.url();
