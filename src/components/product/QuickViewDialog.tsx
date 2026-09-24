@@ -12,15 +12,15 @@ import { Button } from "@/components/ui/button";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { VariantPicker } from "@/components/product/VariantPicker";
 import { useLanguage } from "@/lib/i18n";
-import { discountPercent, formatPrice, type ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 import { useCartStore } from "@/stores/cartStore";
-import { productPrimaryVariant } from "@/lib/productPricing";
+import { discountPercent, formatPrice, productPrimaryVariant } from "@/lib/productPricing";
 
 export default function QuickViewDialog({
   product,
   onClose,
 }: {
-  product: ShopifyProduct;
+  product: StoreProduct;
   onClose: () => void;
 }) {
   const { t, direction } = useLanguage();
