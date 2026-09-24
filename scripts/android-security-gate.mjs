@@ -42,8 +42,6 @@ const permissions = [
 
 const allowedPermissions = new Set([
   "android.permission.INTERNET",
-  "android.permission.ACCESS_COARSE_LOCATION",
-  "android.permission.ACCESS_FINE_LOCATION",
   "android.permission.POST_NOTIFICATIONS",
   "android.permission.REORDER_TASKS",
 ]);
@@ -73,6 +71,9 @@ for (const forbiddenPermission of [
   "android.permission.WRITE_EXTERNAL_STORAGE",
   "android.permission.ACCESS_MEDIA_LOCATION",
   "android.permission.CAMERA",
+  "android.permission.ACCESS_COARSE_LOCATION",
+  "android.permission.ACCESS_FINE_LOCATION",
+  "android.permission.ACCESS_BACKGROUND_LOCATION",
   "android.permission.RECORD_AUDIO",
   "android.permission.READ_CONTACTS",
   "android.permission.WRITE_CONTACTS",
@@ -170,11 +171,6 @@ requireText(
 );
 requireText(
   manifest,
-  'android:name="com.google.androidbrowserhelper.locationdelegation.PermissionRequestActivity"\n            android:exported="false"',
-  "Location permission request activity must remain non-exported.",
-);
-requireText(
-  manifest,
   'android:authorities="${applicationId}.fileprovider"',
   "FileProvider authority must remain application scoped.",
 );
@@ -235,8 +231,13 @@ forbidText(launcher, "new WebView(", "Launcher must not instantiate an embedded 
 forbidText(launcher, "queryIntentActivities(", "Launcher must not enumerate installed apps for browser fallback.");
 requireText(
   delegation,
+  "extends DelegationService",
+  "Notification delegation service is required.",
+);
+forbidText(
+  delegation,
   "LocationDelegationExtraCommandHandler",
-  "Location delegation handler is required.",
+  "Native location delegation must stay disabled; geolocation is browser-managed.",
 );
 for (const requiredTestCase of [
   "httpIsUpgradedToHttps",
@@ -262,10 +263,10 @@ requireText(
   'com.google.androidbrowserhelper:androidbrowserhelper:2.7.3',
   "Android Browser Helper must remain pinned to 2.7.3.",
 );
-requireText(
+forbidText(
   gradle,
-  'com.google.androidbrowserhelper:locationdelegation:1.1.2',
-  "Location delegation dependency must remain pinned.",
+  "locationdelegation",
+  "Native location delegation dependency must stay removed.",
 );
 forbidText(gradle, "testImplementation", "Core Android build must remain independent of test-only Gradle dependencies.");
 requireText(gradle, "minifyEnabled true", "Release R8 minification must stay enabled.");
