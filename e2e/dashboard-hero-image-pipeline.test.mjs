@@ -260,7 +260,7 @@ test("Hero crop controls are device-specific, touch friendly and reflected by st
 test("mobile-first hero uploads always produce a storefront-readable primary image", () => {
   assert.match(
     heroPage,
-    /imageUrl: form\.imageUrl\.trim\(\) \? form\.imageUrl : asset\.url/,
+    /imageUrl: currentForm\.imageUrl\.trim\(\) \? currentForm\.imageUrl : asset\.url/,
   );
   assert.match(heroPage, /const currentForm = formRef\.current/);
   assert.match(heroPage, /selectedId !== null/);
