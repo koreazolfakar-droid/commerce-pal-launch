@@ -328,7 +328,7 @@ function ProductPage() {
             }
           />
 
-          <div className="flex min-w-0 flex-col gap-5 lg:py-2">
+          <div className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:py-2">
             <div className="min-w-0">
               {brand && (
                 <Link
