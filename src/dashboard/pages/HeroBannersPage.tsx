@@ -574,7 +574,13 @@ export default function HeroBannersPage() {
       setLastOptimizations((current) => ({ ...current, [target]: optimization }));
       setForm((current) =>
         target === "desktop"
-          ? { ...current, imageUrl: asset.url }
+          ? {
+              ...current,
+              imageUrl: asset.url,
+              // A brand-new image-only hero should not silently remain a Draft.
+              // Preserve an existing slide's explicit publish state when replacing artwork.
+              isPublished: current.imageUrl.trim() ? current.isPublished : true,
+            }
           : { ...current, mobileImageUrl: asset.url },
       );
 
@@ -604,7 +610,12 @@ export default function HeroBannersPage() {
     clearPendingHeroImages(target);
     setForm((current) =>
       target === "desktop"
-        ? { ...current, imageUrl: asset.url }
+        ? {
+            ...current,
+            imageUrl: asset.url,
+            // Match direct uploads: first-time desktop artwork is ready to publish on Save.
+            isPublished: current.imageUrl.trim() ? current.isPublished : true,
+          }
         : { ...current, mobileImageUrl: asset.url },
     );
     setLastOptimizations((current) => ({ ...current, [target]: undefined }));
