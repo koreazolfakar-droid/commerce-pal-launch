@@ -9,7 +9,7 @@ export interface VariantLike {
   selectedOptions: Array<{ name: string; value: string }>;
 }
 
-/** CSS colours for common Shopify colour option words (presentation only). */
+/** CSS colours for common product colour option words (presentation only). */
 const COLOR_WORDS: Record<string, string> = {
   black: "#111214",
   graphite: "#3a3a3c",
@@ -99,7 +99,7 @@ function isColorOption(name: string) {
 }
 
 /**
- * Option-level selectors built from real Shopify options + variants.
+ * Option-level selectors built from real product options + variants.
  * A value is disabled when no available variant matches it alongside the rest
  * of the current selection.
  */
