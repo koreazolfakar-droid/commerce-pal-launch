@@ -3,14 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
 
-    <uses-feature
-        android:name="android.hardware.location"
-        android:required="false" />
 
     <queries>
         <intent>
@@ -99,10 +94,6 @@
             android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity"
             android:exported="false" />
 
-        <activity
-            android:name="com.google.androidbrowserhelper.locationdelegation.PermissionRequestActivity"
-            android:exported="false"
-            tools:node="merge" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
