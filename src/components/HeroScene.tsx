@@ -260,30 +260,13 @@ export function HeroScene({
       data-width={config.contentWidth}
       data-radius={config.buttonRadius}
       data-theme={slide.content_theme ?? "light"}
+      data-mobile-source={slide.mobile_image_url ? "dedicated" : "fallback"}
       data-align={slide.content_alignment ?? "start"}
       data-vertical={config.vertical}
       data-free={free || undefined}
       dir={ar ? "rtl" : "ltr"}
     >
       <div className="hero-scene-canvas" data-testid="home-hero-media">
-        <picture className="hero-scene-backdrop" aria-hidden="true">
-          {!editor ? (
-            <source media="(max-width: 639px)" srcSet={mobileImage} />
-          ) : null}
-          <img
-            src={editor?.mode === "mobile" ? mobileImage : slide.image_url}
-            alt=""
-            draggable={false}
-            loading="lazy"
-            decoding="async"
-            style={{
-              "--hero-focus-x": `${desktopFocus.x}%`,
-              "--hero-focus-y": `${desktopFocus.y}%`,
-              "--hero-mobile-focus-x": `${mobileFocus.x}%`,
-              "--hero-mobile-focus-y": `${mobileFocus.y}%`,
-            } as CSSProperties}
-          />
-        </picture>
         <picture className="hero-scene-artwork">
           {!editor ? (
             <source media="(max-width: 639px)" srcSet={mobileImage} />
@@ -299,7 +282,7 @@ export function HeroScene({
             onError={onImageError}
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
-            decoding="async"
+            decoding={priority ? "sync" : "async"}
             style={{
               "--hero-focus-x": `${desktopFocus.x}%`,
               "--hero-focus-y": `${desktopFocus.y}%`,
