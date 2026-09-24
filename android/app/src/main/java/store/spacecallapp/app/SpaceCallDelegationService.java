@@ -1,17 +1,13 @@
 package store.spacecallapp.app;
 
-import com.google.androidbrowserhelper.locationdelegation.LocationDelegationExtraCommandHandler;
 import com.google.androidbrowserhelper.trusted.DelegationService;
 
 /**
  * Trusted Web Activity delegation service.
  *
- * Location is delegated to Android so the runtime permission is requested only
- * when the web experience actually calls the Geolocation API. Notification
- * delegation remains provided by the parent DelegationService.
+ * Notification delegation is provided by Browser Helper's DelegationService.
+ * Geolocation intentionally stays browser-managed so it follows the website's
+ * just-in-time site-permission flow and avoids native delegation edge cases.
  */
 public final class SpaceCallDelegationService extends DelegationService {
-    public SpaceCallDelegationService() {
-        registerExtraCommandHandler(new LocationDelegationExtraCommandHandler());
-    }
 }
