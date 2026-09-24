@@ -122,7 +122,10 @@ test("homepage hydrates CMS once and keeps the hero Supabase-native", async () =
   assert.match(hero, /localizeHeroSlide/);
   assert.match(hero, /"supabase-cms"/);
   assert.match(hero, /"placeholder"/);
-  assert.doesNotMatch(hero, /shopify-collection|hero-product-fallback|homepageHeroCollections|SHOPIFY_CDN/i);
+  assert.doesNotMatch(
+    hero,
+    /shopify-collection|hero-product-fallback|homepageHeroCollections|SHOPIFY_CDN/i,
+  );
   assert.match(hero, /<HeroScene/);
   const scene = await readFile(new URL("../src/components/HeroScene.tsx", import.meta.url), "utf8");
   assert.match(scene, /slide.mobile_image_url/);
