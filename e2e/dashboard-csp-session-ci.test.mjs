@@ -71,8 +71,11 @@ test("CSP uses a per-request nonce and removes script unsafe-inline", () => {
 });
 
 test("production Supabase sessions do not persist in localStorage", () => {
-  assert.match(storage, /if \(!projectId \|\| !framed\) return sessionStorage/);
+  assert.match(storage, /if \(!projectId \|\| !framed\) return useTabScopedProductionStorage\(\)/);
   assert.doesNotMatch(storage, /if \(!projectId \|\| !framed\) return localStorage/);
+  assert.match(storage, /SPACE_CALL_SUPABASE_AUTH_KEY = 'sb-rtwyankpxtffqqrasyzw-auth-token'/);
+  assert.match(storage, /sessionStorage\.setItem\(SPACE_CALL_SUPABASE_AUTH_KEY, legacySession\)/);
+  assert.match(storage, /localStorage\.removeItem\(SPACE_CALL_SUPABASE_AUTH_KEY\)/);
   assert.match(client, /storage: brokeredPreviewStorage\(\)/);
   assert.match(client, /persistSession: true/);
   assert.match(client, /autoRefreshToken: true/);
