@@ -87,3 +87,12 @@ test("CMS canonical overrides stay on the Space Call origin", async () => {
   assert.match(home, /canonicalLink\("\/", canonicalUrl\)/);
   assert.match(brands, /canonicalUrl\("\/brands", seo\?\.canonical_url\)/);
 });
+
+test("bare production host redirects permanently to canonical www without changing path or query", async () => {
+  const server = await source("src/server.ts");
+  assert.match(server, /CANONICAL_HOST = "www\.spacecallapp\.store"/);
+  assert.match(server, /ALTERNATE_HOST = "spacecallapp\.store"/);
+  assert.match(server, /status:\s*308/);
+  assert.match(server, /Location:\s*url\.toString\(\)/);
+  assert.match(server, /method !== "GET" && method !== "HEAD"/);
+});
