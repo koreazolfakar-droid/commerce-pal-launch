@@ -124,6 +124,11 @@ requireText(
 );
 requireText(
   manifest,
+  'android:name="com.google.androidbrowserhelper.trusted.FocusActivity"\n            android:exported="true"',
+  "Browser Helper FocusActivity must be exported so the trusted browser can return focus to the app.",
+);
+requireText(
+  manifest,
   'android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"',
   "TWA site-settings activity is required.",
 );
