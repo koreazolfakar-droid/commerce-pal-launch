@@ -2,11 +2,11 @@ import { lazy, Suspense, useState } from "react";
 import { Eye } from "lucide-react";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { useLanguage } from "@/lib/i18n";
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 
 const QuickViewDialog = lazy(() => import("./QuickViewDialog"));
 
-export function QuickViewButton({ product }: { product: ShopifyProduct }) {
+export function QuickViewButton({ product }: { product: StoreProduct }) {
   const [open, setOpen] = useState(false);
   const { t } = useLanguage();
   return (
