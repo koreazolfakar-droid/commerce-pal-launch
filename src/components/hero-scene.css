@@ -13,29 +13,26 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  min-height: 0;
+  aspect-ratio: 3 / 2;
   height: auto;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 28px;
   background: #101b32;
 }
-.hero-scene picture {
-  position: relative;
-  display: block;
-  width: 100%;
-}
-.hero-scene img {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-}
+.hero-scene picture,
+.hero-scene img,
 .hero-scene-shade {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+}
+.hero-scene picture {
+  display: block;
+}
+.hero-scene img {
+  display: block;
+  object-fit: cover;
 }
 .hero-scene-shade {
   background: black;
@@ -194,18 +191,9 @@
 }
 @container (min-width: 640px) {
   .hero-scene-canvas {
-    min-height: 0;
+    aspect-ratio: auto;
     height: clamp(352px, 38cqw, 480px);
-  }
-  .hero-scene picture,
-  .hero-scene img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-  .hero-scene img {
-    object-fit: cover;
+    border-radius: 20px;
   }
   .hero-scene-safe {
     inset: 32px 32px 48px;
