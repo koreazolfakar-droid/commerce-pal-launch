@@ -17,7 +17,7 @@ export function useCartSync() {
       if (!cancelled) void syncCart();
     };
 
-    // Preserve the persisted cart immediately, but keep the Shopify revalidation
+    // Preserve the persisted cart immediately, but keep the cart synchronization
     // request out of the critical loading path. This reduces competition with LCP
     // images, fonts, and storefront data on returning visits that already have a cart.
     if ("requestIdleCallback" in window) {
