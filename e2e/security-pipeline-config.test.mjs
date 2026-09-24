@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const workflowPath = new URL("../.github/workflows/security-gate.yml", import.meta.url);
 
-test("Deep GitHub security scan stays manual while CircleCI is the automatic gate", async () => {
+test("Deep GitHub security scan stays manual while Storefront CI is the automatic gate", async () => {
   const workflow = await readFile(workflowPath, "utf8");
 
   assert.match(workflow, /workflow_dispatch:/);
