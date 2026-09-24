@@ -13,27 +13,6 @@ export function findFacetMerchandising(
 }
 
 /**
- * Dedicated homepage hero collections are artwork configuration only.
- * Their collection image is used directly; catalogue product images are never a fallback.
- */
-export function homepageHeroCollections(collections: ShopifyCollection[]): ShopifyCollection[] {
-  return collections
-    .filter(
-      (collection) =>
-        Boolean(collection.image?.url) &&
-        /^(homepage-hero$|home-hero-|hero-home-|hero-slide-|hero-(?!brand-|category-))/.test(
-          collection.handle,
-        ),
-    )
-    .sort((a, b) => {
-      const primaryRank =
-        Number(a.handle !== "homepage-hero") - Number(b.handle !== "homepage-hero");
-      return primaryRank || a.handle.localeCompare(b.handle);
-    })
-    .slice(0, 10);
-}
-
-/**
  * Storefront merchandising priority. Keep the most recognizable global
  * electronics companies first, followed by strong accessory/mobile brands.
  * Unknown Shopify vendors remain supported and fall back to alphabetical order.
