@@ -65,7 +65,7 @@ export function HomeCategorySection({
 }) {
   const { t, language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
-  const { data: managedCategories, isError: managedCategoriesFailed } = useQuery({
+  const { data: managedCategories } = useQuery({
     queryKey: ["storefront", "home-categories"],
     queryFn: fetchManagedHomeCategories,
     staleTime: 30_000,
@@ -99,12 +99,7 @@ export function HomeCategorySection({
     count: category.count,
   }));
 
-  const categories =
-    managedCategories !== undefined
-      ? managedItems
-      : managedCategoriesFailed
-        ? fallbackItems
-        : fallbackItems;
+  const categories = managedCategories !== undefined ? managedItems : fallbackItems;
 
   if (!categories.length) return null;
 
