@@ -133,8 +133,8 @@ export function HeroVisualEditor({
     <div className="space-y-4" dir={ar ? "rtl" : "ltr"}>
       <p className="text-xs leading-5 text-slate-500">
         {ar
-          ? "اسحب النص أو الأزرار داخل المعاينة. استخدم أدوات القص بالأسفل لضبط الصورة لكل جهاز بشكل مستقل."
-          : "Drag text or buttons inside the preview. Use the crop controls below to adjust the image independently for each device."}
+          ? "اسحب النص أو الأزرار داخل المعاينة. فعّل ضبط الصورة باللمس لتحريك نقطة التركيز، مع حفظ إعداد مستقل لكل جهاز."
+          : "Drag text or buttons inside the preview. Enable touch image adjustment to move the focal point, saved independently for each device."}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <label className="text-xs font-semibold">
@@ -253,7 +253,7 @@ export function HeroVisualEditor({
           <div
             className="absolute inset-0 z-20 touch-none cursor-crosshair bg-slate-950/5 outline-none ring-inset focus-visible:ring-2 focus-visible:ring-indigo-500"
             tabIndex={0}
-            role="application"
+            role="group"
             aria-label={ar ? "حرّك نقطة تركيز صورة الهيرو" : "Move the hero image focal point"}
             onPointerDown={(event) => {
               checkpoint();
