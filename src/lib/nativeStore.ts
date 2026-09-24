@@ -1,6 +1,6 @@
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
-import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
+import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 import { productSearchScore, textSearchScore } from "@/lib/searchRanking";
 
@@ -81,7 +81,7 @@ const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
   "id,title,handle,brand_id,product_type,tags" as const;
 
 type NativeProduct = {
-  product: ShopifyProduct;
+  product: StoreProduct;
   row: StorefrontProductRow;
 };
 
@@ -96,7 +96,7 @@ const CACHE_TTL_MS = 30_000;
 const HYDRATED_PRODUCT_CACHE_TTL_MS = 60_000;
 const hydratedProductCache = new Map<
   string,
-  { expiresAt: number; product: ShopifyProduct }
+  { expiresAt: number; product: StoreProduct }
 >();
 // After the fresh window ends, keep serving the last snapshot for up to five
 // minutes while a single background refresh runs. Repeat storefront visitors
@@ -214,7 +214,7 @@ function buildProduct(
   images: StorefrontImageRow[],
   collections: StorefrontCollectionRow[],
   brand?: StorefrontBrandRow,
-): ShopifyProduct {
+): StoreProduct {
   const sortedVariants = [...variants].sort((a, b) => a.sort_order - b.sort_order);
   const sortedImages = [...images].sort(
     (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
@@ -301,11 +301,11 @@ function buildProduct(
 }
 
 
-async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<ShopifyProduct[]> {
+async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<StoreProduct[]> {
   if (!productRows.length) return [];
 
   const now = Date.now();
-  const cachedProducts = new Map<string, ShopifyProduct>();
+  const cachedProducts = new Map<string, StoreProduct>();
   const missingRows: StorefrontProductRow[] = [];
 
   for (const row of productRows) {
@@ -392,7 +392,7 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
 
   return productRows
     .map((row) => cachedProducts.get(row.id))
-    .filter((product): product is ShopifyProduct => Boolean(product));
+    .filter((product): product is StoreProduct => Boolean(product));
 }
 
 async function fetchSnapshot(): Promise<NativeSnapshot> {
@@ -517,12 +517,12 @@ function publicProducts(snapshot: NativeSnapshot) {
   return snapshot.products.map((entry) => entry.product);
 }
 
-export async function fetchCatalogProducts(first = 500): Promise<ShopifyProduct[]> {
+export async function fetchCatalogProducts(first = 500): Promise<StoreProduct[]> {
   const products = publicProducts(await loadSnapshot());
   return products.slice(0, Math.max(0, first));
 }
 
-export async function fetchHomepageProducts(first = 48): Promise<ShopifyProduct[]> {
+export async function fetchHomepageProducts(first = 48): Promise<StoreProduct[]> {
   if (first <= 0) return [];
   const productResult = await publicSupabase
     .from("store_products")
@@ -583,7 +583,7 @@ export async function fetchNavigationCatalogFacets() {
   const linksByProduct = groupByProduct(links);
   const brandsById = new Map(brands.map((row) => [row.id, row]));
 
-  const products: ShopifyProduct[] = productRows.map((row) => {
+  const products: StoreProduct[] = productRows.map((row) => {
     const productCollections = (linksByProduct.get(row.id) ?? [])
       .map((link) => collectionsById.get(link.collection_id))
       .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
@@ -615,7 +615,7 @@ export async function fetchNavigationCatalogFacets() {
   return { categories: catalog.categories, brands: catalog.brands };
 }
 
-export async function fetchProductByHandle(handle: string): Promise<ShopifyProduct | null> {
+export async function fetchProductByHandle(handle: string): Promise<StoreProduct | null> {
   const normalized = handle.trim().toLowerCase();
   if (!normalized) return null;
 
@@ -685,7 +685,7 @@ export async function fetchProductByHandle(handle: string): Promise<ShopifyProdu
   );
 }
 
-export async function fetchCollections(first = 100): Promise<ShopifyCollection[]> {
+export async function fetchCollections(first = 100): Promise<StoreCollection[]> {
   const collectionResult = await publicSupabase
     .from("store_collections")
     .select(STOREFRONT_COLLECTION_SELECT)
@@ -700,7 +700,7 @@ export async function fetchCollections(first = 100): Promise<ShopifyCollection[]
 
 const SMALL_COLLECTION_FAST_PATH_MAX = 12;
 
-function mapCollection(row: StorefrontCollectionRow): ShopifyCollection {
+function mapCollection(row: StorefrontCollectionRow): StoreCollection {
   return {
     id: row.id,
     handle: row.handle,
@@ -713,7 +713,7 @@ function mapCollection(row: StorefrontCollectionRow): ShopifyCollection {
 async function fetchSmallCollectionByHandle(
   handle: string,
   pageSize: number,
-): Promise<{ collection: ShopifyCollection; products: ShopifyProduct[] } | null> {
+): Promise<{ collection: StoreCollection; products: StoreProduct[] } | null> {
   const normalizedHandle = handle.trim().toLowerCase();
   if (!normalizedHandle) return null;
 
@@ -837,7 +837,7 @@ async function fetchSmallCollectionByHandle(
 export async function fetchCollectionByHandle(
   handle: string,
   pageSize = 48,
-): Promise<{ collection: ShopifyCollection; products: ShopifyProduct[] } | null> {
+): Promise<{ collection: StoreCollection; products: StoreProduct[] } | null> {
   if (pageSize <= SMALL_COLLECTION_FAST_PATH_MAX) {
     return fetchSmallCollectionByHandle(handle, pageSize);
   }
@@ -855,7 +855,7 @@ export async function fetchCollectionByHandle(
   const byId = new Map(snapshot.products.map((entry) => [entry.row.id, entry.product]));
   const products = productIds
     .map((id) => byId.get(id))
-    .filter((product): product is ShopifyProduct => Boolean(product))
+    .filter((product): product is StoreProduct => Boolean(product))
     .slice(0, Math.max(0, pageSize));
 
   return { collection: mapCollection(row), products };
@@ -966,7 +966,7 @@ export async function fetchProductRecommendations(handle: string, first = 8) {
 export async function searchStorefront(term: string) {
   const normalized = term.trim();
   if (!normalized) {
-    return { products: [] as ShopifyProduct[], collections: [] as ShopifyCollection[] };
+    return { products: [] as StoreProduct[], collections: [] as StoreCollection[] };
   }
 
   const snapshot = await loadSnapshot();
