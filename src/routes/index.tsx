@@ -559,7 +559,7 @@ function Index() {
       section: coreSection("hero"),
       visible: isLive(coreSection("hero")),
       node: (
-        <HomeHero heroCollection={heroCollection} cmsHeroSlides={cms.heroSlides} />
+        <HomeHero cmsHeroSlides={cms.heroSlides} />
       ),
     },
     {
