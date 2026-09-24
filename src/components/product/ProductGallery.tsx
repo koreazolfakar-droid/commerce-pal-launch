@@ -13,8 +13,8 @@ export interface GalleryImage {
 /**
  * Product image stage + thumbnail rail + lightbox.
  * Images are always the real catalog media, rendered with object-contain so
- * nothing is cropped or stretched. Product pages use swipe + pagination dots
- * on mobile while compact quick views retain their thumbnail rail.
+ * nothing is cropped or stretched. Product pages use swipe plus a compact
+ * thumbnail filmstrip on mobile, while desktop keeps a vertical thumbnail rail.
  */
 export function ProductGallery({
   images,
@@ -73,11 +73,11 @@ export function ProductGallery({
       className={cn(
         "min-w-0",
         !compact && "lg:sticky lg:top-24 lg:self-start",
-        !compact && images.length > 1 && "lg:grid lg:grid-cols-[5.25rem_minmax(0,1fr)] lg:gap-3",
+        !compact && images.length > 1 && "lg:grid lg:grid-cols-[4.75rem_minmax(0,1fr)] lg:gap-4",
       )}
     >
       <div
-        className="group relative aspect-square touch-pan-y overflow-hidden rounded-2xl bg-image-stage/60 sm:rounded-[1.25rem] sm:bg-image-stage lg:order-2"
+        className="group relative aspect-[1/0.92] touch-pan-y overflow-hidden rounded-xl bg-image-stage/60 sm:aspect-square sm:rounded-2xl sm:bg-image-stage lg:order-2"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -92,7 +92,7 @@ export function ProductGallery({
             width={900}
             height={900}
             draggable={false}
-            className="h-full w-full select-none object-contain p-1.5 transition-transform duration-300 sm:p-4 lg:p-8"
+            className="h-full w-full select-none object-contain p-2 transition-transform duration-300 sm:p-4 lg:p-7"
           />
         ) : (
           <div className="grid h-full place-items-center px-4 text-center text-sm text-muted-foreground">
@@ -101,6 +101,16 @@ export function ProductGallery({
         )}
 
         {badge}
+
+        {images.length > 1 && !compact && (
+          <div
+            data-testid="product-gallery-counter"
+            className="pointer-events-none absolute right-3 top-3 rounded-lg border border-border/50 bg-background/88 px-2 py-1 text-[11px] font-semibold tabular-nums text-foreground shadow-sm backdrop-blur sm:right-4 sm:top-4"
+            dir="ltr"
+          >
+            {index + 1} / {images.length}
+          </div>
+        )}
 
         {image && !compact && (
           <button
@@ -135,39 +145,14 @@ export function ProductGallery({
         )}
       </div>
 
-      {images.length > 1 && !compact && (
-        <div
-          className="mt-3 flex items-center justify-center gap-1.5 sm:hidden"
-          role="group"
-          aria-label={t("galleryImages")}
-        >
-          {images.map((dot, dotIndex) => (
-            <button
-              key={`${dot.url}-mobile-dot-${dotIndex}`}
-              type="button"
-              onClick={() => onSelect(dotIndex)}
-              aria-label={`${t("galleryImage")} ${dotIndex + 1} ${t("ofLabel")} ${images.length}`}
-              aria-current={dotIndex === index ? "true" : undefined}
-              className="grid h-8 w-8 place-items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "h-2 rounded-full transition-[width,background-color]",
-                  dotIndex === index ? "w-5 bg-primary" : "w-2 bg-border",
-                )}
-              />
-            </button>
-          ))}
-        </div>
-      )}
-
       {images.length > 1 && (
         <div
+          data-testid={compact ? undefined : "product-gallery-thumbnails"}
           className={cn(
-            "scroll-rail mt-3 gap-2 overflow-x-auto",
-            compact ? "flex" : "hidden sm:flex",
-            !compact && "lg:order-1 lg:mt-0 lg:flex-col lg:overflow-visible",
+            "scroll-rail mt-3 flex snap-x gap-2 overflow-x-auto pb-1",
+            compact ? "" : "px-0.5 sm:mt-3",
+            !compact &&
+              "lg:order-1 lg:mt-0 lg:max-h-[34rem] lg:snap-none lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:px-0 lg:pb-0",
           )}
           role="group"
           aria-label={t("galleryImages")}
@@ -179,11 +164,12 @@ export function ProductGallery({
               aria-pressed={thumbIndex === index}
               aria-label={`${t("galleryImage")} ${thumbIndex + 1} ${t("ofLabel")} ${images.length}`}
               onClick={() => onSelect(thumbIndex)}
+              data-gallery-index={thumbIndex}
               className={cn(
-                "press h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 bg-image-stage transition-[border-color,box-shadow] sm:h-20 sm:w-20",
+                "press h-12 w-12 shrink-0 snap-center overflow-hidden rounded-lg border bg-image-stage transition-[border-color,box-shadow,opacity] sm:h-16 sm:w-16 lg:h-[4.75rem] lg:w-[4.75rem]",
                 thumbIndex === index
-                  ? "border-primary shadow-sm"
-                  : "border-border hover:border-primary/50",
+                  ? "border-primary ring-1 ring-primary/20 opacity-100"
+                  : "border-border/60 opacity-70 hover:border-primary/40 hover:opacity-100",
               )}
             >
               <img
@@ -194,7 +180,7 @@ export function ProductGallery({
                 width={80}
                 height={80}
                 draggable={false}
-                className="h-full w-full select-none object-contain p-1.5"
+                className="h-full w-full select-none object-contain p-1"
               />
             </button>
           ))}
