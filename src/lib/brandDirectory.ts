@@ -95,10 +95,7 @@ export function buildStoreBrands(
  * Matching slugs can rename, hide, reorder, relink or replace the logo of a
  * storefront brand. CMS-only rows are also allowed for campaign/landing links.
  */
-export function applyCmsBrands(
-  storeBrands: StoreBrand[],
-  cmsBrands: CmsBrand[],
-): StoreBrand[] {
+export function applyCmsBrands(storeBrands: StoreBrand[], cmsBrands: CmsBrand[]): StoreBrand[] {
   if (!cmsBrands.length) return storeBrands;
 
   const managed = new Map(cmsBrands.map((brand) => [brand.slug, brand]));
