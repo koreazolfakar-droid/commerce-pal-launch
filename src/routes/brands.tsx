@@ -8,7 +8,7 @@ import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, fetchCmsSnapshot } from "@/lib/cms";
 import { useLanguage } from "@/lib/i18n";
 import { catalogQueryOptions } from "@/lib/queries";
-import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, socialMeta } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, canonicalUrl, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/brands")({
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/brands")({
     const seo = loaderData ? cmsSeoPage(loaderData.cms, "brands") : undefined;
     const title = seo?.title?.trim() || `Brands — ${STORE_NAME}`;
     const description = seo?.description?.trim() || `Browse all brands available at ${STORE_NAME}.`;
-    const canonical = seo?.canonical_url?.trim();
+    const canonical = canonicalUrl("/brands", seo?.canonical_url);
     const image = seo?.og_image_url?.trim();
 
     const brands = loaderData?.catalog.brands ?? [];
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/brands")({
           ...(image ? { image } : {}),
         }),
       ],
-      links: [canonical ? { rel: "canonical", href: canonical } : canonicalLink("/brands")],
+      links: [canonicalLink("/brands", canonical)],
       scripts: [
         jsonLd(
           breadcrumbJsonLd([
