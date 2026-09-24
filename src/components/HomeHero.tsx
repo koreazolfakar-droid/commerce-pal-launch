@@ -5,8 +5,6 @@ import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
 import { localizeHeroSlide, type CmsHeroSlide } from "@/lib/cms";
 import { useLanguage } from "@/lib/i18n";
 
-const HERO_ROTATION_MS = 8000;
-const HERO_AUTO_ROTATION_ENABLED = false;
 export function HomeHero({
   cmsHeroSlides = [],
 }: {
@@ -24,24 +22,12 @@ export function HomeHero({
 
   const slideCount = localizedCmsSlides.length;
   const [activeIndex, setActiveIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [interacting, setInteracting] = useState(false);
   const swipe = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     setActiveIndex((current) => (slideCount ? Math.min(current, slideCount - 1) : 0));
   }, [slideCount]);
 
-  useEffect(() => {
-    if (!HERO_AUTO_ROTATION_ENABLED || slideCount <= 1 || paused || interacting) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slideCount);
-    }, HERO_ROTATION_MS);
-
-    return () => window.clearInterval(timer);
-  }, [slideCount, paused, interacting]);
 
   const cmsSlide = localizedCmsSlides[activeIndex] ?? localizedCmsSlides[0];
   const heroSource = cmsSlide ? "supabase-cms" : "placeholder";
@@ -50,17 +36,12 @@ export function HomeHero({
     <>
       <section
         aria-label={t("featuredTechnology")}
-        onMouseEnter={() => setInteracting(true)}
-        onMouseLeave={() => setInteracting(false)}
-        onFocusCapture={() => setInteracting(true)}
-        onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setInteracting(false); }}
         onTouchStart={event => { const touch = event.touches[0]; if (touch) swipe.current = { x: touch.clientX, y: touch.clientY }; }}
         onTouchEnd={event => {
           const start = swipe.current, touch = event.changedTouches[0]; swipe.current = null;
           if (!start || !touch || slideCount < 2) return;
           const dx = touch.clientX - start.x, dy = touch.clientY - start.y;
           if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-            setPaused(true);
             setActiveIndex(index => (index + (dx < 0 ? 1 : -1) + slideCount) % slideCount);
           }
         }}
@@ -96,30 +77,48 @@ export function HomeHero({
         {slideCount > 1 && (
           <div
             data-testid="home-hero-dots"
-            className="relative mt-2 flex flex-wrap items-center justify-center gap-1 rounded-2xl bg-muted p-1 text-foreground"
+            className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center sm:bottom-3"
             aria-label={language === "ar" ? "شرائح الهيرو" : "Hero slides"}
           >
-            <button type="button" className="min-h-11 min-w-11 rounded-lg px-3" aria-label={language === "ar" ? "الشريحة السابقة" : "Previous slide"} onClick={() => { setPaused(true); setActiveIndex(index => (index - 1 + slideCount) % slideCount); }}>‹</button>
-            <button type="button" className="min-h-11 rounded-lg px-3 text-xs" aria-label={language === "ar" ? (paused ? "تشغيل الشرائح" : "إيقاف الشرائح") : (paused ? "Play slides" : "Pause slides")} onClick={() => setPaused(value => !value)}>{language === "ar" ? (paused ? "تشغيل" : "إيقاف") : (paused ? "Play" : "Pause")}</button>
-            {Array.from({ length: slideCount }, (_, index) => (
+            <div className="pointer-events-auto flex items-center gap-1 rounded-full bg-slate-950/45 px-1.5 py-1 shadow-sm backdrop-blur-md">
               <button
-                key={index}
                 type="button"
-                onClick={() => { setPaused(true); setActiveIndex(index); }}
-                aria-label={
-                  language === "ar"
-                    ? `عرض صورة الهيرو ${index + 1}`
-                    : `Show hero image ${index + 1}`
-                }
-                aria-current={index === activeIndex ? "true" : undefined}
-                className={
-                  index === activeIndex
-                    ? "min-h-11 min-w-11 rounded-xl bg-primary text-primary-foreground"
-                    : "min-h-11 min-w-11 rounded-xl bg-muted hover:bg-muted/80"
-                }
-              >{index + 1}</button>
-            ))}
-            <button type="button" className="min-h-11 min-w-11 rounded-lg px-3" aria-label={language === "ar" ? "الشريحة التالية" : "Next slide"} onClick={() => { setPaused(true); setActiveIndex(index => (index + 1) % slideCount); }}>›</button>
+                className="grid size-9 place-items-center rounded-full text-lg text-white/90 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label={language === "ar" ? "الشريحة السابقة" : "Previous slide"}
+                onClick={() => setActiveIndex(index => (index - 1 + slideCount) % slideCount)}
+              >
+                ‹
+              </button>
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: slideCount }, (_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setActiveIndex(index)}
+                    aria-label={
+                      language === "ar"
+                        ? `عرض صورة الهيرو ${index + 1}`
+                        : `Show hero image ${index + 1}`
+                    }
+                    aria-current={index === activeIndex ? "true" : undefined}
+                    className="grid size-8 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={index === activeIndex ? "h-1.5 w-4 rounded-full bg-white" : "size-1.5 rounded-full bg-white/55"}
+                    />
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="grid size-9 place-items-center rounded-full text-lg text-white/90 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label={language === "ar" ? "الشريحة التالية" : "Next slide"}
+                onClick={() => setActiveIndex(index => (index + 1) % slideCount)}
+              >
+                ›
+              </button>
+            </div>
           </div>
         )}
       </section>
