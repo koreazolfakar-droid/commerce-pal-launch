@@ -2,7 +2,7 @@
  * Canonical Space Call storefront data shapes.
  *
  * These types describe the Supabase-native commerce model consumed by the UI.
- * They intentionally carry no Shopify runtime dependency.
+ * They intentionally carry no external commerce runtime dependency.
  */
 export interface StoreProductNode {
   id: string;
