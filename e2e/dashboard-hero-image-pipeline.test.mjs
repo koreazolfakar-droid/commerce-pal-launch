@@ -61,6 +61,11 @@ test("hero dashboard exposes real before and after optimization metadata", () =>
   assert.match(heroPage, /max \{isDesktop \? "1920" : "1080"\}px/);
 });
 
+test("hero dashboard media preview matches the 16:9 storefront shape on both devices", () => {
+  assert.match(heroPage, /16:9 landscape/);
+  assert.doesNotMatch(heroPage, /aspect-\[9\/16\]/);
+});
+
 
 test("hero upload revalidates dashboard MFA or passkey before Storage and redirects stale sessions", () => {
   assert.match(heroData, /getDashboardMfaStatus/);
