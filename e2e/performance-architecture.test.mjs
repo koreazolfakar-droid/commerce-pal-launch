@@ -85,7 +85,7 @@ test("homepage LCP uses CMS data without legacy hero work on the critical path",
     home,
     /\.\.\.collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\),\s*enabled:\s*deferredWorkReady/s,
   );
-  assert.match(heroScene, /loading=\{priority \? "eager" : "lazy"\}/);
+  assert.match(heroScene, /loading="eager"/);
   assert.match(heroScene, /fetchPriority=\{priority \? "high" : "auto"\}/);
 });
 
@@ -124,7 +124,7 @@ test("storefront disables decorative motion and continuous auto-play", async () 
 
   assert.match(styles, /\.store-layout \*[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /transition-duration:\s*0s !important/);
-  assert.match(hero, /HERO_AUTO_ROTATION_ENABLED\s*=\s*false/);
+  assert.doesNotMatch(hero, /HERO_AUTO_ROTATION_ENABLED|setInterval\(/);
   assert.match(brands, /AUTO_SCROLL_ENABLED\s*=\s*false/);
   assert.doesNotMatch(ticker, /animation:\s*home-promo-ticker/);
   assert.doesNotMatch(home, /animate-pulse/);
