@@ -39,6 +39,32 @@ jobs:
           unzip -q /tmp/gradle.zip -d "$HOME"
           echo "$HOME/gradle-$GRADLE_VERSION/bin" >> "$GITHUB_PATH"
 
-      - name: Lint debug with full diagnostics
+      - name: Run lint and capture report
+        id: lint
         working-directory: android
-        run: gradle --no-daemon --stacktrace --info :app:lintDebug
+        shell: bash
+        run: |
+          set +e
+          gradle --no-daemon --stacktrace :app:lintDebug
+          STATUS=$?
+          set -e
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+
+          REPORT="app/build/reports/lint-results-debug.txt"
+          {
+            echo "## Android Lint Debug"
+            echo
+            echo "Exit code: $STATUS"
+            echo
+            if [ -f "$REPORT" ]; then
+              echo '~~~text'
+              sed -n '1,220p' "$REPORT"
+              echo '~~~'
+            else
+              echo "No text lint report was generated."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail when lint failed
+        if: steps.lint.outputs.status != '0'
+        run: exit 1
