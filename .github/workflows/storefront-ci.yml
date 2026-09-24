@@ -1,15 +1,19 @@
 name: Storefront CI
 
 on:
-  # GitHub-hosted runners are kept as an explicit manual fallback.
-  # Pull-request validation runs in CircleCI's storefront-ci job.
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: storefront-ci-manual-${{ github.ref }}
+  group: storefront-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
