@@ -1,4 +1,10 @@
-import { discountPercent, formatPrice, productCompareAt, productPrimaryVariant, variantSummary } from "@/lib/productPricing";
+import {
+  discountPercent,
+  formatPrice,
+  productCompareAt,
+  productPrimaryVariant,
+  variantSummary,
+} from "@/lib/productPricing";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
 import { Heart, Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
