@@ -32,7 +32,8 @@ import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
-import { discountPercent, formatPrice, type ShopifyProduct } from "@/lib/shopify";
+import { discountPercent, formatPrice } from "@/lib/productPricing";
+import type { StoreProduct } from "@/lib/storeTypes";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
@@ -113,7 +114,7 @@ function ProductPage() {
     typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
   const whatsappNumber =
     typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
-  const { product } = Route.useLoaderData() as { product: ShopifyProduct };
+  const { product } = Route.useLoaderData() as { product: StoreProduct };
   const node = product.node;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
   const images = useMemo(() => node.images.edges.map((edge) => edge.node), [node]);
