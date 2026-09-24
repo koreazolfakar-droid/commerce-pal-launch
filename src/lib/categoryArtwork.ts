@@ -21,7 +21,7 @@ function normalize(value: string) {
 }
 
 /**
- * Resolves the Shopify Collection that owns artwork for a storefront category.
+ * Resolves the store collection that owns artwork for a storefront category.
  *
  * Priority:
  * 1. `hero-category-{slug}` for an explicit artwork-only override.
