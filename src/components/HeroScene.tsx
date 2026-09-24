@@ -71,6 +71,8 @@ export function HeroScene({
     placement === "free" ||
     Boolean(config.desktopLayout || config.mobileLayout);
   const mobileImage = slide.mobile_image_url || slide.image_url;
+  const desktopFocus = config.focalPoint ?? { x: 50, y: 50 };
+  const mobileFocus = config.mobileFocalPoint ?? desktopFocus;
   const ar = language === "ar";
   const patch = (
     part: Part,
@@ -281,8 +283,11 @@ export function HeroScene({
             fetchPriority={priority ? "high" : "auto"}
             decoding="async"
             style={{
-              objectPosition: `${config.focalPoint?.x ?? 50}% ${config.focalPoint?.y ?? 50}%`,
-            }}
+              "--hero-focus-x": `${desktopFocus.x}%`,
+              "--hero-focus-y": `${desktopFocus.y}%`,
+              "--hero-mobile-focus-x": `${mobileFocus.x}%`,
+              "--hero-mobile-focus-y": `${mobileFocus.y}%`,
+            } as CSSProperties}
           />
         </picture>
         <div

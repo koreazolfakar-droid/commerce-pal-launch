@@ -34,6 +34,7 @@ test("device layouts, placement and focus survive a JSON save/read round trip", 
     desktopLayout: { content: { x: 10, y: 20 }, buttons: { x: 80, y: 90 } },
     mobileLayout: { content: { x: 50, y: 5 }, buttons: { x: 50, y: 100 } },
     focalPoint: { x: 20, y: 30 },
+    mobileFocalPoint: { x: 65, y: 45 },
   });
   assert.deepEqual(normalize(JSON.parse(JSON.stringify(original))), original);
   assert.notDeepEqual(original.desktopLayout, original.mobileLayout);
@@ -47,6 +48,7 @@ test("malformed configuration cannot create unbounded positions or inject CSS", 
     },
     mobileLayout: { content: { x: "50%", y: 0 } },
     focalPoint: { x: 200, y: -20 },
+    mobileFocalPoint: { x: -10, y: 140 },
   });
   assert.equal(result.buttonPlacement, undefined);
   assert.equal(result.mobileLayout, undefined);
@@ -55,6 +57,7 @@ test("malformed configuration cannot create unbounded positions or inject CSS", 
     buttons: { x: 50, y: 50 },
   });
   assert.deepEqual(result.focalPoint, { x: 100, y: 0 });
+  assert.deepEqual(result.mobileFocalPoint, { x: 0, y: 100 });
 });
 test("touch and mouse drag use remaining canvas space and clamp every edge", () => {
   assert.deepEqual(moveHeroPoint({ x: 50, y: 50 }, 100, -50, 200, 100), {

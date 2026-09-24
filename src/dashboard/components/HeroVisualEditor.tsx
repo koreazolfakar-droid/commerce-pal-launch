@@ -55,6 +55,10 @@ export function HeroVisualEditor({
   const layoutKey = mode === "mobile" ? "mobileLayout" : "desktopLayout";
   const layout =
     config[layoutKey] ?? defaultHeroLayout(config, form.contentAlignment, ar);
+  const focusKey: "focalPoint" | "mobileFocalPoint" =
+    mode === "mobile" ? "mobileFocalPoint" : "focalPoint";
+  const focus =
+    config[focusKey] ?? config.focalPoint ?? { x: 50, y: 50 };
   const updateConfig = (patch: Partial<HeroVisualConfig>) =>
     apply({ ...form, visualConfig: { ...config, ...patch } });
   const slide: CmsHeroSlide = {
@@ -148,8 +152,8 @@ export function HeroVisualEditor({
     <div className="space-y-4" dir={ar ? "rtl" : "ltr"}>
       <p className="text-sm text-slate-600">
         {ar
-          ? "اختَر ثيمًا، واسحب النص أو الأزرار بإصبعك. تعديل الهاتف مستقل عن الكمبيوتر. اضغط Save لتطبيق التغييرات."
-          : "Choose a theme, then drag the text or buttons. Mobile and desktop positions are independent. Save to apply your changes."}
+          ? "اختَر ثيمًا، واسحب النص أو الأزرار. مواضع المحتوى وقص الصورة للهاتف مستقلان عن الكمبيوتر. اضغط Save لتطبيق التغييرات."
+          : "Choose a theme, then drag the text or buttons. Mobile content positions and image crop are independent from desktop. Save to apply your changes."}
       </p>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {themes.map((theme) => (
@@ -251,6 +255,19 @@ export function HeroVisualEditor({
         >
           {ar ? "إعادة مواضع هذا الجهاز" : "Reset device positions"}
         </button>
+        <button
+          type="button"
+          className="min-h-11 rounded-lg border px-3 text-xs"
+          onClick={() =>
+            updateConfig(
+              mode === "mobile"
+                ? { mobileFocalPoint: undefined }
+                : { focalPoint: undefined },
+            )
+          }
+        >
+          {ar ? "إعادة قص الصورة" : "Reset image crop"}
+        </button>
       </div>
       <div
         ref={host}
@@ -334,7 +351,7 @@ export function HeroVisualEditor({
           );
         })}
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <label className="text-xs">
           {ar ? "العنصر" : "Element"}
           <select
@@ -384,21 +401,44 @@ export function HeroVisualEditor({
           </label>
         ))}
         <label className="text-xs">
-          {ar ? "تركيز الصورة أفقيًا" : "Image focus"}
+          {ar ? "قص الصورة أفقيًا" : "Image crop horizontal"} · {focus.x}%
           <input
             type="range"
             min="0"
             max="100"
-            value={config.focalPoint?.x ?? 50}
+            value={focus.x}
             onPointerDown={checkpoint}
             onChange={(e) =>
               onChange({
                 ...form,
                 visualConfig: {
                   ...config,
-                  focalPoint: {
+                  [focusKey]: {
+                    ...focus,
                     x: Number(e.target.value),
-                    y: config.focalPoint?.y ?? 50,
+                  },
+                },
+              })
+            }
+            className="mt-3 w-full"
+          />
+        </label>
+        <label className="text-xs">
+          {ar ? "قص الصورة عموديًا" : "Image crop vertical"} · {focus.y}%
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={focus.y}
+            onPointerDown={checkpoint}
+            onChange={(e) =>
+              onChange({
+                ...form,
+                visualConfig: {
+                  ...config,
+                  [focusKey]: {
+                    ...focus,
+                    y: Number(e.target.value),
                   },
                 },
               })
