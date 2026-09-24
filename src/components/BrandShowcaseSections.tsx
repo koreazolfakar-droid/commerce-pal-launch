@@ -11,7 +11,7 @@ import { ArrowRight } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { buildShopifyBrands } from "@/lib/brandDirectory";
+import { buildStoreBrands } from "@/lib/brandDirectory";
 import { findFacetMerchandising } from "@/lib/homeMerchandising";
 import { productsInCategory, productsOfBrand } from "@/lib/taxonomy";
 
@@ -192,7 +192,7 @@ export function BrandShowcase({
 }) {
   const { t, language } = useLanguage();
   const { data: showcases = [] } = useQuery(showcaseCollectionsQueryOptions());
-  const brands = buildShopifyBrands(catalog.brands, collections);
+  const brands = buildStoreBrands(catalog.brands, collections);
   const usedShowcases = new Set(brands.map((brand) => `showcase-${brand.slug}`));
   const categoryFeatures = catalog.categories.flatMap((category) => {
     const merchandising = findFacetMerchandising(collections, "category", category.slug);
@@ -231,7 +231,7 @@ export function BrandShowcase({
       {showcases
         .filter((collection) => !usedShowcases.has(collection.handle))
         .map((collection) => (
-          <ShopifyShowcase key={collection.handle} collection={collection} />
+          <StoreShowcase key={collection.handle} collection={collection} />
         ))}
     </div>
   );
@@ -349,7 +349,7 @@ function FacetSection({
   );
 }
 
-function ShopifyShowcase({ collection }: { collection: ShowcaseCollection }) {
+function StoreShowcase({ collection }: { collection: ShowcaseCollection }) {
   const { t } = useLanguage();
   const storageKey = `showcase-${collection.handle}-view`;
   const { data, isPending } = useQuery(collectionQueryOptions(collection.handle, 12));
