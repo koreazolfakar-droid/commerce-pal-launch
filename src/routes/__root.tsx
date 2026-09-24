@@ -11,7 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n";
 
-import { absoluteUrl } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
 import { CustomerAddressHub } from "@/components/customer-account/CustomerAddressHub";
@@ -136,8 +136,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:site_name", content: STORE_NAME },
       { property: "og:locale", content: "en_LB" },
       { property: "og:locale:alternate", content: "ar_LB" },
-      { property: "og:image", content: absoluteUrl("/logo.svg") },
-      { name: "twitter:image", content: absoluteUrl("/logo.svg") },
+      { property: "og:image", content: DEFAULT_OG_IMAGE },
+      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
       { name: "twitter:card", content: "summary_large_image" },
     ],
 
