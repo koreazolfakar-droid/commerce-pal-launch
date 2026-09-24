@@ -290,7 +290,7 @@ function RangeControl({
         step={step}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-2 h-9 w-full touch-pan-x accent-indigo-600"
+        className="mt-2 h-9 w-full touch-none accent-indigo-600"
       />
     </label>
   );
