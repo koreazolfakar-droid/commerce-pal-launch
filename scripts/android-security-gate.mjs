@@ -82,6 +82,9 @@ for (const forbiddenPermission of [
 requireText(manifest, 'android:allowBackup="false"', "Android backups must stay disabled.");
 requireText(manifest, 'android:fullBackupContent="false"', "Legacy full backup must stay disabled.");
 requireText(manifest, 'android:usesCleartextTraffic="false"', "Cleartext HTTP must stay disabled.");
+requireText(manifest, "<queries>", "HTTPS browser package visibility must be declared explicitly.");
+requireText(manifest, 'android.intent.category.BROWSABLE', "Browser visibility query must remain BROWSABLE-only.");
+requireText(manifest, 'android:scheme="https"', "Browser visibility must remain limited to HTTPS handlers.");
 requireText(
   manifest,
   'android:networkSecurityConfig="@xml/network_security_config"',
