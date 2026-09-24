@@ -14,6 +14,14 @@ const imageOptimizationPreview = await readFile(
   new URL("../src/dashboard/components/ImageOptimizationPreview.tsx", import.meta.url),
   "utf8",
 );
+const heroVisualEditor = await readFile(
+  new URL("../src/dashboard/components/HeroVisualEditor.tsx", import.meta.url),
+  "utf8",
+);
+const heroScene = await readFile(
+  new URL("../src/components/HeroScene.tsx", import.meta.url),
+  "utf8",
+);
 
 test("hero raster images use the shared real WebP conversion pipeline", () => {
   assert.match(heroData, /WEBP_CONVERTIBLE_HERO_MIME_TYPES/);
@@ -218,4 +226,15 @@ test("first desktop Hero artwork enables publishing without overriding later dra
     heroPage,
     /imageUrl: asset\.url,[\s\S]{0,260}isPublished: current\.imageUrl\.trim\(\) \? current\.isPublished : true/,
   );
+});
+
+
+test("Hero crop controls are device-specific and mobile falls back safely", () => {
+  assert.match(heroVisualEditor, /mode === "mobile" \? "mobileFocalPoint" : "focalPoint"/);
+  assert.match(heroVisualEditor, /Image crop horizontal/);
+  assert.match(heroVisualEditor, /Image crop vertical/);
+  assert.match(heroVisualEditor, /Reset image crop/);
+  assert.match(heroScene, /config\.mobileFocalPoint \?\? desktopFocus/);
+  assert.match(heroScene, /--hero-mobile-focus-x/);
+  assert.match(heroScene, /--hero-mobile-focus-y/);
 });
