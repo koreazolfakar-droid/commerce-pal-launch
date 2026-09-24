@@ -19,7 +19,7 @@ import {
   fetchProductsByVendor,
   searchStorefront,
 } from "@/lib/storefrontData";
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
 const CATALOG_STALE_TIME = 60 * 1000;
@@ -35,11 +35,11 @@ const retryDelay = (attemptIndex: number) => Math.min(300 * 2 ** attemptIndex, 1
 
 type CatalogRefreshFallback = {
   cachedAt: number;
-  products: ShopifyProduct[];
+  products: StoreProduct[];
   vendors: string[];
 };
 
-function buildCatalogFromSource(products: ShopifyProduct[], vendors: string[]) {
+function buildCatalogFromSource(products: StoreProduct[], vendors: string[]) {
   const catalog = buildCatalogIndex(products);
   return {
     ...catalog,
@@ -68,7 +68,7 @@ function readCatalogRefreshFallback(): CatalogRefreshFallback | null {
   }
 }
 
-function writeCatalogRefreshFallback(products: ShopifyProduct[], vendors: string[]) {
+function writeCatalogRefreshFallback(products: StoreProduct[], vendors: string[]) {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.setItem(
