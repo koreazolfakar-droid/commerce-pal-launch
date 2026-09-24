@@ -1,5 +1,5 @@
 import type { CmsBrand } from "@/lib/cms";
-import type { ShopifyCollection } from "@/lib/shopify";
+import type { StoreCollection } from "@/lib/storeTypes";
 import type { CatalogFacet } from "@/lib/taxonomy";
 import { slugify } from "@/lib/taxonomy";
 import { orderedBrands } from "@/lib/homeMerchandising";
@@ -37,7 +37,7 @@ export function mergeVendorBrands(brands: CatalogFacet[], vendors: string[]): Ca
   return orderedBrands([...merged.values()]);
 }
 
-function looksLikeLogoImage(collection: ShopifyCollection) {
+function looksLikeLogoImage(collection: StoreCollection) {
   const image = collection.image;
   if (!image?.url) return false;
   const evidence = `${image.altText ?? ""} ${image.url}`.toLowerCase();
@@ -55,7 +55,7 @@ function dedicatedCollectionBrandIdentity(handle: string) {
 
 export function buildShopifyBrands(
   brands: CatalogFacet[],
-  collections: ShopifyCollection[] | undefined,
+  collections: StoreCollection[] | undefined,
 ): ShopifyBrand[] {
   return orderedBrands(brands).map((brand) => {
     const brandIdentity = compactBrandIdentity(brand.slug || brand.label);
