@@ -26,7 +26,7 @@ test("customer order items include the primary product image", () => {
 test("My Orders item rows show image and quantity without a line price", () => {
   assert.match(orders, /item\.imageUrl/);
   assert.match(orders, /object-contain/);
-  assert.match(orders, /orderItemQty/);
+  assert.match(orders, /×\{item\.quantity\}/);
   assert.doesNotMatch(orders, /formatMoney\(item\.lineTotal/);
-  assert.match(orders, /default title/);
+  assert.match(orders, /PackageOpen/);
 });

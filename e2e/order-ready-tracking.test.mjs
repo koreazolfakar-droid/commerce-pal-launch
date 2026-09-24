@@ -32,7 +32,7 @@ test("dashboard exposes ready in types, counts, and next-state progression", () 
 });
 
 test("customer My Orders renders a five-stage tracker and refreshes status automatically", () => {
-  assert.match(storefront, /CUSTOMER_STAGES/);
+  assert.match(storefront, /MINI_ORDER_STAGES/);
   assert.match(storefront, /Received/);
   assert.match(storefront, /Preparing/);
   assert.match(storefront, /Ready/);

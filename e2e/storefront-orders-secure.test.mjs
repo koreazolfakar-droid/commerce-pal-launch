@@ -25,7 +25,7 @@ test("checkout persists an order before WhatsApp is opened", () => {
   const whatsappIndex = checkout.indexOf("whatsappUrl(message.join");
   assert.ok(createIndex > 0, "checkout must call createStorefrontOrder");
   assert.ok(whatsappIndex > createIndex, "WhatsApp must open only after order creation succeeds");
-  assert.match(checkout, /Order"}: #\$\{order\.order_number\}/);
+  assert.match(checkout, /Order"}: #\$\{order\.public_order_number\}/);
   assert.match(checkout, /formatPrice\(order\.total, order\.currency\)/);
 });
 

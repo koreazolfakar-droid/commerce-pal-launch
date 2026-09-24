@@ -145,13 +145,53 @@ function assertResult<T>(
   return result.data;
 }
 
-function optionEntries(value: Json): Array<{ name: string; value: string }> {
+function normalizeOptionName(name: string) {
+  return name.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
+function optionNamePreference(name: string) {
+  const trimmed = name.trim();
+  const letters = trimmed.replace(/[^A-Za-z]/g, "");
+  if (!letters) return 0;
+  if (letters === letters.toUpperCase()) return 3;
+  if (/^[A-Z]/.test(trimmed)) return 2;
+  return 1;
+}
+
+function canonicalOptionNames(values: Json[]) {
+  const names = new Map<string, string>();
+  for (const value of values) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    for (const [rawName, rawValue] of Object.entries(value)) {
+      if (!["string", "number", "boolean"].includes(typeof rawValue)) continue;
+      const displayName = rawName.trim().replace(/\s+/g, " ");
+      if (!displayName) continue;
+      const key = normalizeOptionName(displayName);
+      const current = names.get(key);
+      if (!current || optionNamePreference(displayName) > optionNamePreference(current)) {
+        names.set(key, displayName);
+      }
+    }
+  }
+  return names;
+}
+
+function optionEntries(
+  value: Json,
+  canonicalNames?: ReadonlyMap<string, string>,
+): Array<{ name: string; value: string }> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return [];
-  return Object.entries(value)
-    .filter((entry): entry is [string, string | number | boolean] =>
-      ["string", "number", "boolean"].includes(typeof entry[1]),
-    )
-    .map(([name, raw]) => ({ name, value: String(raw) }));
+
+  const entries = new Map<string, string>();
+  for (const [rawName, raw] of Object.entries(value)) {
+    if (!["string", "number", "boolean"].includes(typeof raw)) continue;
+    const normalized = normalizeOptionName(rawName);
+    if (!normalized) continue;
+    const name = canonicalNames?.get(normalized) ?? rawName.trim().replace(/\s+/g, " ");
+    entries.set(name, String(raw));
+  }
+
+  return [...entries].map(([name, optionValue]) => ({ name, value: optionValue }));
 }
 
 function groupByProduct<T extends { product_id: string }>(rows: T[]) {
@@ -190,9 +230,10 @@ function buildProduct(
       ? null
       : Number(row.compare_at_price);
 
+  const canonicalNames = canonicalOptionNames(sortedVariants.map((variant) => variant.options));
   const optionValues = new Map<string, string[]>();
   for (const variant of sortedVariants) {
-    for (const option of optionEntries(variant.options)) {
+    for (const option of optionEntries(variant.options, canonicalNames)) {
       const values = optionValues.get(option.name) ?? [];
       if (!values.includes(option.value)) values.push(option.value);
       optionValues.set(option.name, values);
@@ -213,10 +254,13 @@ function buildProduct(
             ? null
             : money(Number(variant.compare_at_price), row.currency),
         availableForSale,
+        trackInventory: variant.track_inventory,
+        allowBackorder: variant.allow_backorder,
+        stockQuantity: variant.stock_quantity,
         sku: variant.sku,
         barcode: variant.barcode,
         image: variant.image_url ? { url: variant.image_url, altText: null } : null,
-        selectedOptions: optionEntries(variant.options),
+        selectedOptions: optionEntries(variant.options, canonicalNames),
       },
     };
   });

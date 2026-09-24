@@ -16,13 +16,16 @@ import {
   Camera,
   Check,
   ChevronRight,
+  CircleHelp,
   CircleUserRound,
   Crosshair,
+  FileText,
   Ellipsis,
   Heart,
   Home,
   Hotel,
   Loader2,
+  LogOut,
   MapPinned,
   Mic,
   Pencil,
@@ -35,6 +38,8 @@ import {
 
 import { GoogleDeliveryMap } from "@/components/customer-account/GoogleDeliveryMap";
 import { useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCustomerAuth } from "@/components/customer-auth/CustomerAuthProvider";
 import {
   AlertDialog,
@@ -163,7 +168,7 @@ function addressTypeIcon(type: CustomerAddressType | null) {
 
 export function CustomerAddressHub() {
   const { language, direction } = useLanguage();
-  const { user } = useCustomerAuth();
+  const { user, signOut } = useCustomerAuth();
   const {
     profile,
     addresses,
@@ -236,6 +241,16 @@ export function CustomerAddressHub() {
             accountSubtitle: "إدارة معلوماتك وعناوينك وطلباتك",
             personalInformation: "المعلومات الشخصية",
             personalInformationHelp: "الاسم ورقم الهاتف والبريد الإلكتروني",
+            accountSection: "الحساب",
+            preferences: "التفضيلات",
+            languageLabel: "اللغة",
+            appearance: "المظهر",
+            helpAndLegal: "المساعدة والخصوصية",
+            helpSupport: "المساعدة والدعم",
+            privacyPolicy: "سياسة الخصوصية",
+            termsOfService: "شروط الخدمة",
+            signOut: "تسجيل الخروج",
+            signingOut: "جارٍ تسجيل الخروج...",
             addressesLabel: "العناوين",
             manageAddresses: "إدارة العناوين",
             deliveryAddress: "عنوان التوصيل",
@@ -303,6 +318,16 @@ export function CustomerAddressHub() {
             accountSubtitle: "Manage your personal information, addresses and orders",
             personalInformation: "Personal information",
             personalInformationHelp: "Name, phone number and email",
+            accountSection: "Account",
+            preferences: "Preferences",
+            languageLabel: "Language",
+            appearance: "Appearance",
+            helpAndLegal: "Help & legal",
+            helpSupport: "Help & support",
+            privacyPolicy: "Privacy policy",
+            termsOfService: "Terms of service",
+            signOut: "Sign out",
+            signingOut: "Signing out...",
             addressesLabel: "Addresses",
             manageAddresses: "Manage addresses",
             deliveryAddress: "Delivery address",
@@ -787,6 +812,19 @@ export function CustomerAddressHub() {
     copy.accountTitle;
   const accountSecondary = profile?.email || profile?.phone || user?.email || user?.phone || "";
   const closeHub = () => setAddressBookOpen(false);
+  const handleSignOut = async () => {
+    if (pending === "signout") return;
+    setPending("signout");
+    setError("");
+    try {
+      await signOut();
+      setAddressBookOpen(false);
+    } catch {
+      setError(copy.genericError);
+    } finally {
+      setPending("");
+    }
+  };
 
   return (
     <Dialog open={addressBookOpen} onOpenChange={setAddressBookOpen}>
@@ -857,52 +895,31 @@ export function CustomerAddressHub() {
             </div>
 
             <section className="mt-7">
-              <div className="mb-2 px-1">
-                <h3 className="text-[13px] font-extrabold">{copy.personalInformation}</h3>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  {copy.personalInformationHelp}
-                </p>
-              </div>
+              <h3 className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.08em] text-muted-foreground">
+                {copy.accountSection}
+              </h3>
               <button
                 type="button"
                 onClick={() => setView("profile")}
-                className="w-full overflow-hidden rounded-2xl border border-border/60 bg-card text-start transition-colors hover:bg-surface"
+                className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-card p-4 text-start transition-colors hover:bg-surface"
               >
-                <span className="flex min-h-[58px] items-center gap-3 px-4">
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[10px] font-semibold text-muted-foreground">{copy.name}</span>
-                    <span className="mt-0.5 block truncate text-sm font-bold">{profile?.fullName || "—"}</span>
-                  </span>
-                  <NextIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                  <CircleUserRound className="h-5 w-5" aria-hidden="true" strokeWidth={1.8} />
                 </span>
-                <span className="mx-4 block h-px bg-border/55" />
-                <span className="flex min-h-[58px] items-center gap-3 px-4">
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[10px] font-semibold text-muted-foreground">{copy.phone}</span>
-                    <span className="mt-0.5 block truncate text-sm font-bold">{profile?.phone || user?.phone || "—"}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-extrabold">{copy.personalInformation}</span>
+                  <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                    {copy.personalInformationHelp}
                   </span>
                 </span>
-                <span className="mx-4 block h-px bg-border/55" />
-                <span className="flex min-h-[58px] items-center gap-3 px-4">
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[10px] font-semibold text-muted-foreground">{copy.email}</span>
-                    <span className="mt-0.5 block truncate text-sm font-bold">{profile?.email || user?.email || "—"}</span>
-                  </span>
-                </span>
+                <NextIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
               </button>
             </section>
 
-            <section className="mt-7">
-              <div className="mb-2 flex items-center justify-between gap-3 px-1">
-                <h3 className="text-[13px] font-extrabold">{copy.deliveryAddress}</h3>
-                <button
-                  type="button"
-                  onClick={() => setView("book")}
-                  className="text-[11px] font-bold text-primary hover:underline"
-                >
-                  {copy.manageAddresses}
-                </button>
-              </div>
+            <section className="mt-6">
+              <h3 className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.08em] text-muted-foreground">
+                {copy.deliveryAddress}
+              </h3>
               <button
                 type="button"
                 onClick={() => setView("book")}
@@ -938,6 +955,80 @@ export function CustomerAddressHub() {
                 <NextIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
               </button>
             </section>
+
+            <section className="mt-6">
+              <h3 className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.08em] text-muted-foreground">
+                {copy.preferences}
+              </h3>
+              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
+                <div className="flex min-h-14 items-center gap-3 px-4">
+                  <span className="min-w-0 flex-1 text-sm font-bold">{copy.languageLabel}</span>
+                  <LanguageToggle compact />
+                </div>
+                <div className="mx-4 h-px bg-border/55" />
+                <div className="flex min-h-14 items-center gap-3 px-4">
+                  <span className="min-w-0 flex-1 text-sm font-bold">{copy.appearance}</span>
+                  <ThemeToggle className="h-9 w-9" />
+                </div>
+              </div>
+            </section>
+
+            <section className="mt-6">
+              <h3 className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.08em] text-muted-foreground">
+                {copy.helpAndLegal}
+              </h3>
+              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
+                <Link
+                  to="/help"
+                  onClick={closeHub}
+                  className="flex min-h-14 items-center gap-3 px-4 text-start transition-colors hover:bg-surface"
+                >
+                  <CircleHelp className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" strokeWidth={1.8} />
+                  <span className="min-w-0 flex-1 text-sm font-bold">{copy.helpSupport}</span>
+                  <NextIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </Link>
+                <div className="mx-4 h-px bg-border/55" />
+                <Link
+                  to="/privacy"
+                  onClick={closeHub}
+                  className="flex min-h-14 items-center gap-3 px-4 text-start transition-colors hover:bg-surface"
+                >
+                  <FileText className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" strokeWidth={1.8} />
+                  <span className="min-w-0 flex-1 text-sm font-bold">{copy.privacyPolicy}</span>
+                  <NextIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </Link>
+                <div className="mx-4 h-px bg-border/55" />
+                <Link
+                  to="/terms"
+                  onClick={closeHub}
+                  className="flex min-h-14 items-center gap-3 px-4 text-start transition-colors hover:bg-surface"
+                >
+                  <FileText className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" strokeWidth={1.8} />
+                  <span className="min-w-0 flex-1 text-sm font-bold">{copy.termsOfService}</span>
+                  <NextIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </Link>
+              </div>
+            </section>
+
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              disabled={pending === "signout"}
+              className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-60"
+            >
+              {pending === "signout" ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <LogOut className="h-4 w-4" aria-hidden="true" strokeWidth={1.8} />
+              )}
+              {pending === "signout" ? copy.signingOut : copy.signOut}
+            </button>
+
+            {error ? (
+              <p role="status" className="mt-3 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
           </div>
         ) : null}
 

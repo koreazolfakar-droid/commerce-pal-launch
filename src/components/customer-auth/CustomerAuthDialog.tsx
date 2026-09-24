@@ -103,7 +103,7 @@ export function CustomerAuthDialog() {
     clearOAuthError,
     signOut,
   } = useCustomerAuth();
-  const { openAddressBook } = useCustomerAccount();
+  const { openAccountHub } = useCustomerAccount();
   const { language, direction } = useLanguage();
   const [step, setStep] = useState<Step>("sign-in");
   const [phoneInput, setPhoneInput] = useState("");
@@ -352,7 +352,7 @@ export function CustomerAuthDialog() {
                 disabled={pending !== null}
                 onClick={() => {
                   setAuthOpen(false);
-                  openAddressBook();
+                  openAccountHub();
                 }}
               >
                 <UserRound className="me-2 h-4 w-4" aria-hidden="true" />

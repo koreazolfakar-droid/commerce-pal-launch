@@ -34,6 +34,7 @@ const supplementalCases = [
 const routeGroups = {
   catalog: ["/", "/shop", "/search", "/categories", "/brands"],
   commerce: ["/cart", "/wishlist", "/compare"],
+  product: ["/shop"],
   all: ["/", "/shop", "/search", "/cart", "/wishlist", "/compare", "/categories", "/brands"],
 };
 
@@ -365,7 +366,7 @@ async function runRoutes(browser) {
     await assertViewportHealth(page, `${engineName} critical route ${route}`);
   }
 
-  if (routeGroup === "catalog" || routeGroup === "all") {
+  if (routeGroup === "catalog" || routeGroup === "product" || routeGroup === "all") {
     const shopResponse = await page.goto(`${baseURL}/shop`, { waitUntil: "load" });
     assert.ok(
       shopResponse && shopResponse.status() < 400,
@@ -383,6 +384,44 @@ async function runRoutes(browser) {
     );
     await page.waitForTimeout(140);
     await assertViewportHealth(page, `${engineName} live product route ${href}`);
+
+    if (routeGroup === "product") {
+      const productCases = [
+        { width: 320, height: 700 },
+        { width: 390, height: 844 },
+        { width: 430, height: 932 },
+      ];
+
+      for (const testCase of productCases) {
+        await page.setViewportSize(testCase);
+        const responsiveProduct = await page.goto(`${baseURL}${href}`, { waitUntil: "load" });
+        assert.ok(
+          responsiveProduct && responsiveProduct.status() < 400,
+          `${engineName} ${testCase.width}px ${href}: failed product load`,
+        );
+        await page.waitForTimeout(140);
+        await assertViewportHealth(
+          page,
+          `${engineName} ${testCase.width}px live product route ${href}`,
+        );
+
+        const purchaseBar = page.locator('[data-testid="product-purchase-bar"]:visible');
+        const bottomNav = page.locator('[data-testid="bottom-nav"]:visible');
+        await purchaseBar.waitFor({ state: "visible", timeout: 5000 });
+        await bottomNav.waitFor({ state: "visible", timeout: 5000 });
+
+        const [purchaseBox, navBox] = await Promise.all([
+          purchaseBar.boundingBox(),
+          bottomNav.boundingBox(),
+        ]);
+        assert.ok(purchaseBox, `${engineName} ${testCase.width}px: purchase bar has no box`);
+        assert.ok(navBox, `${engineName} ${testCase.width}px: bottom nav has no box`);
+        assert.ok(
+          (purchaseBox?.y ?? 0) + (purchaseBox?.height ?? 0) <= (navBox?.y ?? 0) + 1,
+          `${engineName} ${testCase.width}px: purchase bar overlaps bottom navigation`,
+        );
+      }
+    }
   }
 
   await page.close();

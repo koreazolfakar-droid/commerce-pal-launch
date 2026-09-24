@@ -643,6 +643,17 @@ workflows:
       - ui-browser:
           requires:
             - ui-browser-deps
+          name: ui-browser-chromium-product-detail
+          engine: chromium
+          suite: routes
+          route_group: product
+          filters:
+            branches:
+              only:
+                - /^ui\/.*/
+      - ui-browser:
+          requires:
+            - ui-browser-deps
           name: ui-browser-webkit-no-hero-container
           engine: webkit
           suite: mode

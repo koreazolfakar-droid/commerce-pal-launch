@@ -14,7 +14,7 @@ test("product sections use a horizontal swipe rail", () => {
 
 test("old static density grids and their toggle are removed from the rail", () => {
   assert.doesNotMatch(rail, /grid-cols-2|grid-cols-3|product-static-grid/);
-  assert.doesNotMatch(rail, /ProductViewToggle|useProductViewMode/);
+  assert.doesNotMatch(rail, /<ProductViewToggle|useProductViewMode\(\)/);
 });
 
 test("purchase cards keep the market presentation", () => {

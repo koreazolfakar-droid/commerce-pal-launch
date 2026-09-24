@@ -5,6 +5,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ChevronDown,
   ChevronRight,
   Heart,
   Loader2,
@@ -17,7 +18,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { BrandLogo } from "@/components/BrandLogo";
 import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { OfficialProductResearch } from "@/components/product/OfficialProductResearch";
@@ -266,20 +266,26 @@ function ProductPage() {
   const hasShipping = content.shipping.length > 0;
   const hasSpecs = specGroups.length > 0;
   const needsSeoOverview = (node.description ?? "").replace(/\s+/g, " ").trim().length < 180;
-  const defaultTab = hasOverview
-    ? "overview"
-    : hasSpecs
-      ? "specifications"
-      : hasBox
-        ? "box"
-        : "shipping";
+  const defaultTab = hasOverview ? "overview" : "specifications";
+  const selectedOptionSummary = (selectedVariant?.selectedOptions ?? [])
+    .filter((option) => option.value !== "Default Title")
+    .map((option) => option.value)
+    .join(" · ");
+  const maxQuantity =
+    selectedVariant?.trackInventory && !selectedVariant.allowBackorder
+      ? Math.max(0, selectedVariant.stockQuantity ?? 0)
+      : 99;
+
+  useEffect(() => {
+    setQuantity((current) => Math.max(1, Math.min(current, Math.max(1, maxQuantity))));
+  }, [maxQuantity, selectedVariant?.id]);
 
   return (
     <StoreLayout>
-      <div className="mx-auto max-w-7xl px-4 py-5 pb-32 lg:py-10 lg:pb-14">
+      <div className="mx-auto max-w-7xl px-4 py-4 pb-[calc(var(--mobile-nav-height)+5.75rem)] sm:px-5 sm:pb-16 lg:px-6 lg:py-10 lg:pb-14">
         <nav
           aria-label="Breadcrumb"
-          className="flex items-center gap-1 text-xs text-muted-foreground"
+          className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex"
         >
           <Link to="/" className="transition-colors hover:text-primary">
             Home
@@ -304,7 +310,10 @@ function ProductPage() {
           <span className="truncate text-foreground">{node.title}</span>
         </nav>
 
-        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,.92fr)] lg:gap-10">
+        <div
+          data-testid="product-detail-canvas"
+          className="mt-0 grid gap-6 sm:mt-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,.95fr)] lg:gap-12"
+        >
           <ProductGallery
             images={images}
             title={node.title}
@@ -312,52 +321,34 @@ function ProductPage() {
             onSelect={setActiveImage}
             badge={
               discount !== null ? (
-                <span className="absolute left-4 top-4 rounded-full bg-destructive px-3 py-1 text-xs font-bold text-destructive-foreground shadow-card">
+                <span className="absolute left-3 top-3 rounded-lg bg-destructive px-2.5 py-1 text-[11px] font-semibold text-destructive-foreground sm:left-4 sm:top-4">
                   -{discount}%
                 </span>
               ) : null
             }
           />
 
-          <div className="flex min-w-0 flex-col gap-4 rounded-[1.5rem] border bg-card p-5 shadow-card sm:gap-6 sm:p-7">
+          <div className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:py-2">
             <div className="min-w-0">
               {brand && (
                 <Link
                   to="/brand/$slug"
                   params={{ slug: brand.slug }}
-                  className="inline-flex items-center gap-2 rounded-full border bg-card py-1 pl-1 pr-3 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
+                  className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary"
                 >
-                  <BrandLogo
-                    slug={brand.slug}
-                    label={brand.label}
-                    size={26}
-                    className="rounded-full"
-                  />
                   {brand.label}
                 </Link>
               )}
-              <h1 className="mt-3 text-[1.55rem] font-bold leading-[1.2] tracking-[-0.02em] sm:text-3xl lg:text-[2.35rem] lg:leading-[1.12]">
+              <h1 className="mt-1.5 text-[1.55rem] font-semibold leading-[1.2] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]">
                 {node.title}
               </h1>
-              <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-2">
-                <span className="text-2xl font-bold tabular-nums tracking-[-0.02em] text-foreground lg:text-[2rem]">
-                  {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
-                </span>
-                {discount !== null && compareAt && (
-                  <>
-                    <span className="text-sm text-muted-foreground line-through">
-                      {formatPrice(compareAt, currency)}
-                    </span>
-                    <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-primary">
-                      Save {discount}%
-                    </span>
-                  </>
-                )}
-              </div>
+              {selectedOptionSummary && (
+                <p className="mt-2 text-sm text-muted-foreground">{selectedOptionSummary}</p>
+              )}
               <p
                 className={cn(
-                  "mt-2.5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold",
-                  inStock ? "border-success/30 text-success" : "text-muted-foreground",
+                  "mt-2 inline-flex items-center gap-2 text-xs font-medium",
+                  inStock ? "text-success" : "text-muted-foreground",
                 )}
               >
                 <span
@@ -378,219 +369,272 @@ function ProductPage() {
               onSelect={handleOptionSelect}
             />
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                  <span className="text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground sm:text-2xl">
+                    {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
+                  </span>
+                  {discount !== null && compareAt && (
+                    <span className="text-sm text-muted-foreground line-through">
+                      {formatPrice(compareAt, currency)}
+                    </span>
+                  )}
+                </div>
+                {discount !== null && (
+                  <p className="mt-1 text-[11px] font-medium text-primary">Save {discount}%</p>
+                )}
+              </div>
+
               <div
-                className="flex h-11 w-fit items-center rounded-full border bg-card p-1"
+                className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-background"
                 aria-label="Quantity"
               >
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 rounded-full"
+                  className="h-11 w-11 rounded-xl"
                   onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                  disabled={quantity <= 1}
+                  disabled={busy || quantity <= 1}
                   aria-label={t("decreaseQuantity")}
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="w-8 text-center text-sm font-semibold" aria-live="polite">
+                <span className="w-8 text-center text-sm font-semibold tabular-nums" aria-live="polite">
                   {quantity}
                 </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 rounded-full"
-                  onClick={() => setQuantity((value) => Math.min(99, value + 1))}
+                  className="h-11 w-11 rounded-xl"
+                  onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
+                  disabled={busy || !inStock || quantity >= maxQuantity}
                   aria-label={t("increaseQuantity")}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-
-              <div className="hidden flex-1 flex-wrap gap-2 sm:flex">
-                <Button
-                  size="lg"
-                  onClick={() => handleAddToCart()}
-                  disabled={busy || !inStock}
-                  className="press flex-1 rounded-full"
-                >
-                  {pending === "cart" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ShoppingBag className="h-4 w-4" />
-                  )}
-                  {t(inStock ? "addToCart" : "soldOut")}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  onClick={() => handleAddToCart(true)}
-                  disabled={busy || !inStock}
-                  className="press rounded-full"
-                >
-                  {pending === "buy" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Zap className="h-4 w-4" />
-                  )}
-                  Buy now
-                </Button>
-              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+            <div className="hidden gap-2 sm:flex">
+              <Button
+                size="lg"
+                onClick={() => handleAddToCart()}
+                disabled={busy || !inStock}
+                className="press flex-1 rounded-xl"
+              >
+                {pending === "cart" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShoppingBag className="h-4 w-4" />
+                )}
+                {t(inStock ? "addToCart" : "soldOut")}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => handleAddToCart(true)}
+                disabled={busy || !inStock}
+                className="press rounded-xl"
+              >
+                {pending === "buy" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Zap className="h-4 w-4" />
+                )}
+                Buy now
+              </Button>
+            </div>
+
+            <div
+              className="grid grid-cols-3 border-y border-border/60 py-1"
+              aria-label="Product actions"
+            >
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => toggleWishlist(node.handle)}
                 aria-pressed={wishlisted}
                 aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
-                className="rounded-full"
+                className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
               >
                 <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
-                {t(wishlisted ? "saved" : "saveWishlist")}
+                <span className="truncate">{t(wishlisted ? "saved" : "saveWishlist")}</span>
               </Button>
-              {isPhone && <CompareButton handle={node.handle} />}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleShare}
                 aria-label={t("shareProduct")}
-                className="rounded-full"
+                className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
               >
                 <Share2 aria-hidden className="h-4 w-4" />
-                {t("shareProduct")}
+                <span className="truncate">{t("shareProduct")}</span>
               </Button>
               <Button
                 asChild
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="rounded-full border-success/40 text-success hover:bg-success/10 hover:text-success"
+                className="h-11 min-w-0 rounded-lg px-2 text-xs text-success hover:bg-success/10 hover:text-success sm:text-sm"
               >
                 <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                  <MessageCircle className="h-4 w-4" />
+                  <span className="truncate">WhatsApp</span>
                 </a>
               </Button>
             </div>
 
-            <ul className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-xs text-muted-foreground">
+            {isPhone && <div className="-mt-2 flex justify-start"><CompareButton handle={node.handle} /></div>}
+
+            <ul className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border/60 pb-5 text-xs text-muted-foreground">
               {PURCHASE_ASSURANCES.slice(0, 3).map((item) => (
-                <li key={item.title} className="inline-flex items-center gap-1.5">
-                  <item.icon aria-hidden className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-foreground">{item.title}</span>
+                <li key={item.title} className="flex min-w-[7rem] flex-1 basis-[30%] items-center gap-1.5">
+                  <item.icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="font-medium text-foreground">{item.title}</span>
                 </li>
               ))}
             </ul>
           </div>
         </div>
 
-        {(hasOverview || hasSpecs || hasBox || hasShipping) && (
-          <section
-            className="mt-8 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7"
-            aria-label="Product details"
-          >
+        {(hasOverview || hasSpecs) && (
+          <section className="mt-8 border-t border-border/60 pt-6 sm:mt-10" aria-label="Product details">
             <Tabs defaultValue={defaultTab} className="w-full">
-              <TabsList className="scroll-rail h-auto w-full justify-start gap-1 rounded-2xl bg-surface p-1.5">
-                {hasOverview && <TabsTrigger value="overview">Description</TabsTrigger>}
-                {hasSpecs && <TabsTrigger value="specifications">Specifications</TabsTrigger>}
-                {hasBox && <TabsTrigger value="box">In the box</TabsTrigger>}
-                {hasShipping && <TabsTrigger value="shipping">Shipping &amp; returns</TabsTrigger>}
+              <TabsList className="h-auto w-full justify-start gap-6 rounded-none border-b border-border/60 bg-transparent p-0">
+                {hasOverview && (
+                  <TabsTrigger
+                    value="overview"
+                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                  >
+                    Description
+                  </TabsTrigger>
+                )}
+                {hasSpecs && (
+                  <TabsTrigger
+                    value="specifications"
+                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                  >
+                    Specifications
+                  </TabsTrigger>
+                )}
               </TabsList>
               {hasOverview && (
-                <TabsContent value="overview" className="pt-6">
+                <TabsContent value="overview" className="pt-5">
                   <ProseSections sections={content.overview} />
                 </TabsContent>
               )}
               {hasSpecs && (
-                <TabsContent value="specifications" className="pt-6">
+                <TabsContent value="specifications" className="pt-5">
                   <SpecSheet groups={specGroups} />
-                </TabsContent>
-              )}
-              {hasBox && (
-                <TabsContent value="box" className="pt-6">
-                  <ProseSections sections={content.box} />
-                </TabsContent>
-              )}
-              {hasShipping && (
-                <TabsContent value="shipping" className="pt-6">
-                  <ProseSections sections={content.shipping} />
                 </TabsContent>
               )}
             </Tabs>
           </section>
         )}
 
-        {needsSeoOverview && (
-          <section
-            className="mt-8 rounded-[1.5rem] border bg-card p-5 shadow-card sm:p-7"
-            aria-labelledby="product-buying-guide"
-          >
-            <h2 id="product-buying-guide" className="text-xl font-bold tracking-tight">
-              {language === "ar" ? `معلومات عن ${node.title}` : `About ${node.title}`}
-            </h2>
-            <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground sm:text-base">
-              {language === "ar"
-                ? `${node.title}${brand?.label ? ` من ${brand.label}` : ""} متوفر عبر ${STORE_NAME}. راجع السعر الحالي والتوفر والخيارات والمواصفات في هذه الصفحة قبل إتمام الطلب.`
-                : `${node.title}${brand?.label ? ` by ${brand.label}` : ""} is available through ${STORE_NAME}. Review the current price, availability, options and specifications on this page before ordering.`}
-            </p>
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl bg-surface p-4">
-                <h3 className="font-bold">
-                  {language === "ar" ? "المواصفات والخيارات" : "Specifications & options"}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {language === "ar"
-                    ? `يمكنك مراجعة ${category?.label ?? node.productType ?? "فئة المنتج"} وخيارات النسخة المتاحة مثل السعة أو اللون عندما تكون مدرجة.`
-                    : `Review the ${category?.label ?? node.productType ?? "product category"} details and available variant options such as storage or colour when listed.`}
-                </p>
-              </div>
-              <div className="rounded-2xl bg-surface p-4">
-                <h3 className="font-bold">
-                  {language === "ar" ? "السعر والتوفر" : "Price & availability"}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {language === "ar"
-                    ? `يعرض المتجر السعر الحالي وحالة المخزون المباشرة. الحالة الحالية: ${inStock ? "متوفر" : "غير متوفر"}.`
-                    : `The store shows the current price and live stock status. Current status: ${inStock ? "in stock" : "out of stock"}.`}
-                </p>
-              </div>
-              <div className="rounded-2xl bg-surface p-4">
-                <h3 className="font-bold">
-                  {language === "ar" ? "التوصيل والضمان" : "Delivery & warranty"}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {language === "ar"
-                    ? "راجع صفحات الشحن والضمان والإرجاع أو تواصل مع الدعم قبل الطلب إذا كنت تحتاج تفاصيل إضافية."
-                    : "Check the shipping, warranty and returns pages, or contact support before ordering if you need additional details."}
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
-              <Link to="/shipping" className="text-primary hover:underline">
-                {t("shippingTitle")}
-              </Link>
-              <Link to="/warranty" className="text-primary hover:underline">
-                {t("warrantyTitle")}
-              </Link>
-              <Link to="/returns" className="text-primary hover:underline">
-                {t("returnsTitle")}
-              </Link>
-            </div>
-          </section>
-        )}
+        <details className="group mt-8 border-y border-border/60">
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20 [&::-webkit-details-marker]:hidden">
+            <span>{language === "ar" ? "معلومات إضافية عن المنتج" : "More product information"}</span>
+            <ChevronDown
+              aria-hidden
+              className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+            />
+          </summary>
+          <div className="space-y-7 border-t border-border/60 py-6">
+            {hasBox && (
+              <section aria-labelledby="product-box-heading">
+                <h2 id="product-box-heading" className="mb-3 text-base font-semibold">
+                  In the box
+                </h2>
+                <ProseSections sections={content.box} />
+              </section>
+            )}
 
-        <section className="mt-8" aria-label="Official manufacturer information">
-          <OfficialProductResearch
-            title={node.title}
-            {...(node.vendor ? { vendor: node.vendor } : {})}
-          />
-        </section>
+            {hasShipping && (
+              <section className={cn(hasBox && "border-t border-border/60 pt-6")} aria-labelledby="product-shipping-heading">
+                <h2 id="product-shipping-heading" className="mb-3 text-base font-semibold">
+                  Shipping &amp; returns
+                </h2>
+                <ProseSections sections={content.shipping} />
+              </section>
+            )}
+
+            {needsSeoOverview && (
+              <section
+                className={cn((hasBox || hasShipping) && "border-t border-border/60 pt-6")}
+                aria-labelledby="product-buying-guide"
+              >
+                <h2 id="product-buying-guide" className="text-base font-semibold tracking-tight">
+                  {language === "ar" ? `معلومات عن ${node.title}` : `About ${node.title}`}
+                </h2>
+                <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground">
+                  {language === "ar"
+                    ? `${node.title}${brand?.label ? ` من ${brand.label}` : ""} متوفر عبر ${STORE_NAME}. راجع السعر الحالي والتوفر والخيارات والمواصفات في هذه الصفحة قبل إتمام الطلب.`
+                    : `${node.title}${brand?.label ? ` by ${brand.label}` : ""} is available through ${STORE_NAME}. Review the current price, availability, options and specifications on this page before ordering.`}
+                </p>
+                <div className="mt-5 grid gap-5 md:grid-cols-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">
+                      {language === "ar" ? "المواصفات والخيارات" : "Specifications & options"}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {language === "ar"
+                        ? `يمكنك مراجعة ${category?.label ?? node.productType ?? "فئة المنتج"} وخيارات النسخة المتاحة مثل السعة أو اللون عندما تكون مدرجة.`
+                        : `Review the ${category?.label ?? node.productType ?? "product category"} details and available variant options such as storage or colour when listed.`}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold">
+                      {language === "ar" ? "السعر والتوفر" : "Price & availability"}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {language === "ar"
+                        ? `يعرض المتجر السعر الحالي وحالة المخزون المباشرة. الحالة الحالية: ${inStock ? "متوفر" : "غير متوفر"}.`
+                        : `The store shows the current price and live stock status. Current status: ${inStock ? "in stock" : "out of stock"}.`}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold">
+                      {language === "ar" ? "التوصيل والضمان" : "Delivery & warranty"}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {language === "ar"
+                        ? "راجع صفحات الشحن والضمان والإرجاع أو تواصل مع الدعم قبل الطلب إذا كنت تحتاج تفاصيل إضافية."
+                        : "Check the shipping, warranty and returns pages, or contact support before ordering if you need additional details."}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 flex flex-wrap gap-4 text-sm font-medium">
+                  <Link to="/shipping" className="text-primary hover:underline">
+                    {t("shippingTitle")}
+                  </Link>
+                  <Link to="/warranty" className="text-primary hover:underline">
+                    {t("warrantyTitle")}
+                  </Link>
+                  <Link to="/returns" className="text-primary hover:underline">
+                    {t("returnsTitle")}
+                  </Link>
+                </div>
+              </section>
+            )}
+
+            <section
+              className={cn((hasBox || hasShipping || needsSeoOverview) && "border-t border-border/60 pt-6")}
+              aria-label="Official manufacturer information"
+            >
+              <OfficialProductResearch
+                title={node.title}
+                {...(node.vendor ? { vendor: node.vendor } : {})}
+              />
+            </section>
+          </div>
+        </details>
 
         {similar.length > 0 && (
-          <section className="mt-16 border-t pt-10" aria-labelledby="similar-products">
+          <section className="mt-12 border-t border-border/60 pt-8" aria-labelledby="similar-products">
             <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
               <div className="min-w-0">
-                <h2 id="similar-products" className="text-xl font-bold tracking-tight">
+                <h2 id="similar-products" className="text-xl font-semibold tracking-tight">
                   You may also like
                 </h2>
                 <p className="mt-1 truncate text-sm text-muted-foreground">
@@ -612,9 +656,9 @@ function ProductPage() {
         )}
 
         {sameVendorProducts.length > 0 && (
-          <section className="mt-12 border-t pt-8" aria-labelledby="more-from-brand">
+          <section className="mt-12 border-t border-border/60 pt-8" aria-labelledby="more-from-brand">
             <div className="home-section-header">
-              <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-bold">
+              <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-semibold">
                 {t("moreFromBrand")} {brand?.label}
               </h2>
               {brand && (
@@ -632,29 +676,30 @@ function ProductPage() {
         )}
       </div>
 
-      <div className="fixed bottom-[var(--mobile-nav-height)] left-0 right-0 z-30 border-t bg-background/90 px-4 py-2.5 backdrop-blur-xl sm:hidden">
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => toggleWishlist(node.handle)}
-            aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
-            aria-pressed={wishlisted}
-            className="press grid h-11 w-11 shrink-0 place-items-center rounded-full border bg-card"
-          >
-            <Heart className={cn("h-5 w-5", wishlisted && "fill-primary text-primary")} />
-          </button>
+      <div
+        data-testid="product-purchase-bar"
+        className="fixed bottom-[var(--mobile-nav-height)] left-0 right-0 z-40 border-t border-border/70 bg-background/95 supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md sm:hidden"
+      >
+        <div className="mx-auto flex min-h-16 max-w-[560px] items-center gap-4 px-4 py-2.5">
+          <div className="min-w-0 shrink-0">
+            <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              {language === "ar" ? "السعر" : "Price"}
+            </span>
+            <span className="block truncate text-base font-semibold tabular-nums text-foreground">
+              {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
+            </span>
+          </div>
           <Button
             onClick={() => handleAddToCart()}
             disabled={busy || !inStock}
-            className="press h-11 flex-1 rounded-full text-sm font-bold"
+            className="press h-11 min-w-0 flex-1 rounded-xl text-sm font-semibold"
           >
             {pending === "cart" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : inStock ? (
               <>
                 <ShoppingBag className="h-4 w-4" />
-                Add to cart ·{" "}
-                {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
+                {t("addToCart")}
               </>
             ) : (
               t("soldOut")
