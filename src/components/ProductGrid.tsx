@@ -3,7 +3,7 @@ import { PackageSearch } from "lucide-react";
 import { CompactProductCard } from "@/components/CompactProductCard";
 import { ProductViewToggle } from "@/components/ProductViewToggle";
 import { useProductViewMode, type ProductViewMode } from "@/hooks/useProductViewMode";
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
 
@@ -38,7 +38,7 @@ export function ProductGrid({
   viewMode: controlledViewMode,
   onViewModeChange,
 }: {
-  products: ShopifyProduct[];
+  products: StoreProduct[];
   className?: string;
   emptyTitle?: string;
   emptyHint?: string;
