@@ -113,6 +113,19 @@ Deno.serve(async (req) => {
     return json({ error: "invalid_request" }, 400);
   }
 
+  // Unauthenticated "failure" reports must not be able to create throttle
+  // records for arbitrary emails — otherwise anyone could lock staff out of
+  // the dashboard. Only record failures for emails that belong to an actual
+  // dashboard staff account; ignore everything else silently.
+  if (outcome === "failure") {
+    const { data: isStaff, error: staffError } = await supabase.rpc(
+      "dashboard_staff_email_exists",
+      { p_email: email },
+    );
+    if (staffError) return json({ error: "throttle_unavailable" }, 503);
+    if (!isStaff) return json({ allowed: true, retryAfter: 0 });
+  }
+
   const ip = clientIp(req);
   const [pairKeyHash, ipKeyHash] = await Promise.all([
     sha256(`pair|${ip}|${email}`),
