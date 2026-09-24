@@ -30,7 +30,7 @@
 .hero-scene picture {
   display: block;
 }
- .hero-scene-artwork {
+.hero-scene-artwork {
   z-index: 1;
 }
 .hero-scene-artwork img {
