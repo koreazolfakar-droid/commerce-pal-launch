@@ -1,49 +1,35 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
-const migratedFiles = [
-  "src/components/CartDrawer.tsx",
-  "src/components/CatalogView.tsx",
-  "src/components/CheckoutDetailsForm.tsx",
-  "src/components/CompactProductCard.tsx",
-  "src/components/DealSpotlight.tsx",
-  "src/components/ProductCard.tsx",
-  "src/components/ProductGrid.tsx",
-  "src/components/ProductRail.tsx",
-  "src/components/WhatsAppCheckoutForm.tsx",
-  "src/components/product/QuickViewButton.tsx",
-  "src/components/product/QuickViewDialog.tsx",
-  "src/routes/brand.$slug.tsx",
-  "src/routes/product.$handle.tsx",
-  "src/routes/sitemap[.]xml.ts",
-  "src/stores/cartStore.ts",
-];
+async function sourceFiles(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const path = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) files.push(...(await sourceFiles(path)));
+    else if (/\.(?:ts|tsx|css)$/.test(entry.name)) files.push(path);
+  }
+  return files;
+}
 
-test("migrated storefront UI no longer imports the Shopify compatibility facade", async () => {
-  for (const path of migratedFiles) {
-    const source = await readFile(new URL(`../${path}`, import.meta.url), "utf8");
+test("storefront source is fully detached from Shopify", async () => {
+  assert.equal(existsSync("src/lib/shopify.ts"), false);
+
+  const files = await sourceFiles("src");
+  assert.ok(files.length > 0);
+
+  for (const path of files) {
+    const source = await readFile(path, "utf8");
     assert.doesNotMatch(source, /@\/lib\/shopify/);
-    assert.doesNotMatch(source, /\bShopify(?:Product|Collection)\b/);
+    assert.doesNotMatch(source, /\bShopify(?:Product|Collection|Brand|Showcase)\b/);
+    assert.doesNotMatch(source, /shopify/i);
   }
 });
 
-test("product-facing UI consumes canonical store types", async () => {
-  for (const path of [
-    "src/components/CatalogView.tsx",
-    "src/components/CompactProductCard.tsx",
-    "src/components/DealSpotlight.tsx",
-    "src/components/ProductCard.tsx",
-    "src/components/ProductGrid.tsx",
-    "src/components/ProductRail.tsx",
-    "src/components/product/QuickViewButton.tsx",
-    "src/components/product/QuickViewDialog.tsx",
-    "src/routes/brand.$slug.tsx",
-    "src/routes/product.$handle.tsx",
-    "src/routes/sitemap[.]xml.ts",
-    "src/stores/cartStore.ts",
-  ]) {
-    const source = await readFile(new URL(`../${path}`, import.meta.url), "utf8");
-    assert.match(source, /@\/lib\/storeTypes/);
-  }
+test("canonical storefront types remain available from storeTypes", async () => {
+  const source = await readFile("src/lib/storeTypes.ts", "utf8");
+  assert.match(source, /export interface StoreProduct/);
+  assert.match(source, /export interface StoreCollection/);
 });
