@@ -10,7 +10,6 @@ This directory contains the hardened Android Trusted Web Activity (TWA) shell fo
 - Minimum SDK: API 24
 - Target / compile SDK: API 36
 - Android Browser Helper: 2.7.3
-- Location delegation: 1.1.2
 
 ## Architecture
 
@@ -28,7 +27,7 @@ runtime TWA launch failures so a broken or missing provider cannot crash the app
 - backups and device-transfer extraction disabled
 - broad media/storage permissions forbidden
 - native camera/media permissions are intentionally absent; browser/system pickers own those flows
-- location hardware is optional and native geolocation permission is delegated just-in-time
+- geolocation is browser-managed and requested by the storefront only when the feature is used
 - FileProvider is private and app-scoped
 - release builds are non-debuggable and R8/resource shrinking is enabled
 - release APK/AAB generation is blocked without the persistent release signing key
@@ -91,6 +90,8 @@ TWA/browser provider and its site-permission flow. Photo/file selection should u
 the browser/system picker, which grants access only to user-selected files and does
 not require broad READ_MEDIA_* or storage permissions in this shell.
 
-Native location is the exception: it uses Browser Helper's location delegation and
-the Android coarse/fine location permissions so the OS permission prompt can occur
-only when the web experience actually requests geolocation.
+Location follows the same least-privilege model: the Android shell does not request
+coarse, fine, or background location. When the storefront calls the web Geolocation
+API, the active TWA/browser provider handles the site permission at that moment.
+This avoids native location-delegation background-launch edge cases while
+preserving just-in-time location access for the storefront.
