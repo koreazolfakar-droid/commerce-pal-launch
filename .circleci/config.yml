@@ -454,10 +454,10 @@ jobs:
             set -euo pipefail
             yes | sdkmanager --licenses >/dev/null || true
             sdkmanager "platform-tools" "emulator" \
-              "system-images;android-36;google_apis_playstore;x86_64"
+              "system-images;android-36;google_apis;x86_64"
             echo "no" | avdmanager create avd \
               -n spacecall-api36 \
-              -k "system-images;android-36;google_apis_playstore;x86_64" \
+              -k "system-images;android-36;google_apis;x86_64" \
               --force
 
       - run:
