@@ -1,4 +1,4 @@
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 
 type SearchField = {
   value: string;
@@ -197,7 +197,7 @@ function scoreFields(term: string, fields: SearchField[]) {
   return score;
 }
 
-export function productSearchScore(product: ShopifyProduct, term: string) {
+export function productSearchScore(product: StoreProduct, term: string) {
   const node = product.node;
   const variants = node.variants.edges.flatMap((edge) => [
     edge.node.title,
@@ -227,7 +227,7 @@ export function productSearchScore(product: ShopifyProduct, term: string) {
   return score >= 60 ? score : 0;
 }
 
-export function matchesProductSearch(product: ShopifyProduct, term: string) {
+export function matchesProductSearch(product: StoreProduct, term: string) {
   return productSearchScore(product, term) > 0;
 }
 
