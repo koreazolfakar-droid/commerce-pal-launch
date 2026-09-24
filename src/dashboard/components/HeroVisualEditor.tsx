@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { HeroScene } from "@/components/HeroScene";
 import { localizedCmsText, type CmsHeroSlide } from "@/lib/cms";
 import {
@@ -29,7 +29,7 @@ export function HeroVisualEditor({
   const host = useRef<HTMLDivElement>(null);
   const scene = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 390, height: 320 });
-  const previewWidth = mode === "mobile" ? 390 : 1200;
+  const previewWidth = mode === "mobile" ? 390 : 960;
   useEffect(() => {
     if (!host.current || !scene.current) return;
     const observer = new ResizeObserver(() =>
@@ -59,6 +59,23 @@ export function HeroVisualEditor({
     mode === "mobile" ? "mobileFocalPoint" : "focalPoint";
   const focus =
     config[focusKey] ?? config.focalPoint ?? { x: 50, y: 50 };
+  const updateFocusFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const nextFocus = {
+      x: Math.max(0, Math.min(100, Math.round(((event.clientX - box.left) / box.width) * 100))),
+      y: Math.max(0, Math.min(100, Math.round(((event.clientY - box.top) / box.height) * 100))),
+    };
+    const live = latest.current;
+    const liveConfig = normalizeHeroVisualConfig(live.visualConfig);
+    onChange({
+      ...live,
+      visualConfig: {
+        ...liveConfig,
+        [focusKey]: nextFocus,
+      },
+    });
+  };
   const updateConfig = (patch: Partial<HeroVisualConfig>) =>
     apply({ ...form, visualConfig: { ...config, ...patch } });
   const slide: CmsHeroSlide = {
@@ -189,7 +206,7 @@ export function HeroVisualEditor({
       </div>
       <div
         ref={host}
-        className={`mx-auto w-full overflow-hidden rounded-2xl bg-slate-100 p-0 ${mode === "desktop" ? "max-w-[520px]" : "max-w-[390px]"}`}
+        className={`mx-auto w-full overflow-hidden rounded-2xl bg-slate-100 p-0 ${mode === "desktop" ? "max-w-[360px]" : "max-w-[390px]"}`}
         style={{ height: dimensions.height * scale }}
       >
         <div
@@ -268,6 +285,70 @@ export function HeroVisualEditor({
             </label>
           );
         })}
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="flex items-center justify-between gap-3 text-xs">
+          <span className="font-semibold text-slate-700">
+            {ar ? "تحديد موضع القص باللمس" : "Touch crop focus"}
+          </span>
+          <span className="font-mono text-[10px] text-slate-500">{focus.x}% · {focus.y}%</span>
+        </div>
+        <div
+          className="relative mt-2 aspect-[16/9] touch-none overflow-hidden rounded-lg bg-slate-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          tabIndex={0}
+          aria-label={ar ? "حرّك نقطة تركيز صورة الهيرو" : "Move the hero image focal point"}
+          onPointerDown={(event) => {
+            checkpoint();
+            event.currentTarget.setPointerCapture(event.pointerId);
+            updateFocusFromPointer(event);
+          }}
+          onPointerMove={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) updateFocusFromPointer(event);
+          }}
+          onPointerUp={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+          }}
+          onPointerCancel={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+          }}
+          onKeyDown={(event) => {
+            if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+            event.preventDefault();
+            const step = event.shiftKey ? 5 : 1;
+            const next = {
+              x: Math.max(0, Math.min(100, focus.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0))),
+              y: Math.max(0, Math.min(100, focus.y + (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0))),
+            };
+            updateConfig({ [focusKey]: next });
+          }}
+        >
+          {(mode === "mobile" ? form.mobileImageUrl || form.imageUrl : form.imageUrl) ? (
+            <img
+              src={mode === "mobile" ? form.mobileImageUrl || form.imageUrl : form.imageUrl}
+              alt=""
+              draggable={false}
+              className="pointer-events-none absolute inset-0 size-full select-none object-cover"
+              style={{ objectPosition: `${focus.x}% ${focus.y}%` }}
+            />
+          ) : null}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-slate-950/25 shadow-lg"
+            style={{ left: `${focus.x}%`, top: `${focus.y}%` }}
+          >
+            <span className="absolute left-1/2 top-1/2 h-px w-8 -translate-x-1/2 -translate-y-1/2 bg-white/90" />
+            <span className="absolute left-1/2 top-1/2 h-8 w-px -translate-x-1/2 -translate-y-1/2 bg-white/90" />
+          </span>
+        </div>
+        <p className="mt-2 text-[10px] leading-4 text-slate-500">
+          {ar
+            ? "اسحب النقطة إلى الجزء المهم من الصورة. يتم حفظ موضع مستقل للهاتف والكمبيوتر."
+            : "Drag to the important part of the image. Mobile and desktop focal points are saved independently."}
+        </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <label className="text-xs">
