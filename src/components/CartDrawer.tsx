@@ -19,7 +19,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cdnImage } from "@/lib/image";
-import { formatPrice } from "@/lib/shopify";
+import { formatPrice } from "@/lib/productPricing";
 import { useCartStore } from "@/stores/cartStore";
 import { useLanguage } from "@/lib/i18n";
 

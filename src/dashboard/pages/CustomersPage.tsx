@@ -147,7 +147,7 @@ export default function CustomersPage() {
           </div>
           <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Customers</h1>
           <p className="mt-1.5 text-sm text-slate-500">
-            Shopify-style CRM backed by real Supabase customer and order data.
+            Commerce CRM backed by real Supabase customer and order data.
           </p>
         </div>
         <div className="flex gap-2">

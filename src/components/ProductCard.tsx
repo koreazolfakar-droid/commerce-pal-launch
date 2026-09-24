@@ -1,4 +1,10 @@
-import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
+import {
+  discountPercent,
+  formatPrice,
+  productCompareAt,
+  productPrimaryVariant,
+  variantSummary,
+} from "@/lib/productPricing";
 import { QuickViewButton } from "@/components/product/QuickViewButton";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
@@ -11,7 +17,7 @@ import { CompareButton } from "@/components/CompareButton";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { discountPercent, formatPrice, variantSummary, type ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
@@ -24,7 +30,7 @@ export const ProductCard = memo(function ProductCard({
   className,
   eager = false,
 }: {
-  product: ShopifyProduct;
+  product: StoreProduct;
   badge?: string;
   className?: string;
   eager?: boolean;

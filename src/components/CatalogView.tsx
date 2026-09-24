@@ -13,7 +13,8 @@ import {
   SORT_OPTIONS,
   type ProductFilters,
 } from "@/lib/filters";
-import { formatPrice, type ShopifyCollection, type ShopifyProduct } from "@/lib/shopify";
+import { formatPrice } from "@/lib/productPricing";
+import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import type { CatalogFacet } from "@/lib/taxonomy";
 import { cn } from "@/lib/utils";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
@@ -22,7 +23,7 @@ import { useProductViewMode } from "@/hooks/useProductViewMode";
 export interface FacetGroups {
   categories?: CatalogFacet[];
   brands?: CatalogFacet[];
-  collections?: ShopifyCollection[];
+  collections?: StoreCollection[];
 }
 
 type Patch = Partial<ProductFilters>;
@@ -214,7 +215,7 @@ export function CatalogView({
 }: {
   title: string;
   description?: string;
-  products: ShopifyProduct[];
+  products: StoreProduct[];
   total: number;
   filters: ProductFilters;
   facets: FacetGroups;

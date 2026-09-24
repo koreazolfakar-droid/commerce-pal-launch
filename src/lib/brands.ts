@@ -4,7 +4,7 @@
  * Every curated logo is served from /public/brand-logos as a normal static
  * asset URL. This deliberately avoids bundler-specific SVG import behaviour
  * that can turn an SVG file into escaped markup instead of an <img> source.
- * Merchant-controlled Shopify artwork is supplied separately by BrandLogo.
+ * Merchant-controlled storefront artwork is supplied separately by BrandLogo.
  * Unknown brands deliberately fall back to the local text/monogram treatment
  * instead of making third-party logo requests that can violate CSP or slow LCP.
  */
@@ -89,7 +89,7 @@ function brandKey(slug: string, label: string) {
   return key;
 }
 
-/** Curated local fallbacks only; merchant Shopify artwork is handled by BrandLogo. */
+/** Curated local fallbacks only; merchant storefront artwork is handled by BrandLogo. */
 export function brandLogoSources(slug: string, label: string, _size = 128): string[] {
   const key = brandKey(slug, label);
   const local = LOCAL_LOGOS[key];

@@ -105,7 +105,7 @@ test("brands page uses CMS/dashboard logos without loading collections", async (
   ]);
 
   assert.doesNotMatch(brandsPage, /collectionsQueryOptions/);
-  assert.match(brandsPage, /buildShopifyBrands\(catalog\.brands, undefined\)/);
+  assert.match(brandsPage, /buildStoreBrands\(catalog\.brands, undefined\)/);
   assert.match(brandDirectory, /override\?\.logo_url\?\.trim\(\)/);
   assert.match(brandDirectory, /\{ image: override\.logo_url\.trim\(\) \}/);
 });

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
 import { fetchCatalogProducts, fetchCollections } from "@/lib/storefrontData";
-import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
+import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { absoluteUrl } from "@/lib/seo";
 import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";
 
@@ -20,7 +20,7 @@ function escapeXml(value: string) {
     .replace(/'/g, "&apos;");
 }
 
-function productLastmod(product: ShopifyProduct) {
+function productLastmod(product: StoreProduct) {
   return (product.node.updatedAt || product.node.createdAt)?.slice(0, 10);
 }
 
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         ]);
 
         const products = productsResult.status === "fulfilled" ? productsResult.value : [];
-        const collections: ShopifyCollection[] =
+        const collections: StoreCollection[] =
           collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
 
         let dynamicEntries: SitemapEntry[] = [];

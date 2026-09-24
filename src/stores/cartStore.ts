@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 
 type Money = { amount: string; currencyCode: string };
 
 export interface CartItem {
   lineId: string | null;
-  product: ShopifyProduct;
+  product: StoreProduct;
   variantId: string;
   variantTitle: string;
   price: Money;
@@ -54,7 +54,7 @@ function localCartState(items: CartItem[]) {
 /**
  * Space Call native cart.
  *
- * The cart is intentionally local-first: no Shopify cart ID, Storefront mutation,
+ * The cart is intentionally local-first: no remote cart ID, Storefront mutation,
  * or remote checkout URL is required. Server-side validation happens when the
  * order is created in the native Supabase order pipeline.
  */
@@ -126,7 +126,7 @@ export const useCartStore = create<CartStore>()(
       clearCart: () => set(localCartState([])),
 
       // Kept for API compatibility with existing UI. Native carts have no
-      // remote state to synchronize and no Shopify checkout URL.
+      // remote state to synchronize and no remote checkout URL.
       syncCart: async () => undefined,
       getCheckoutUrl: () => null,
     }),

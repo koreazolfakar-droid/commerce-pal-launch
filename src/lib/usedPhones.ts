@@ -1,4 +1,4 @@
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 
 const USED_TERMS = [
   "used",
@@ -16,7 +16,7 @@ const USED_TERMS = [
   "مستخدمة",
 ];
 
-export function isUsedPhone(product: ShopifyProduct) {
+export function isUsedPhone(product: StoreProduct) {
   const node = product.node;
   const text = [
     node.title,
@@ -36,6 +36,6 @@ export function isUsedPhone(product: ShopifyProduct) {
   return phoneSignal && USED_TERMS.some((term) => text.includes(term));
 }
 
-export function usedPhoneProducts(products: ShopifyProduct[]) {
+export function usedPhoneProducts(products: StoreProduct[]) {
   return products.filter(isUsedPhone);
 }

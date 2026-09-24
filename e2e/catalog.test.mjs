@@ -32,7 +32,7 @@ const { productSearchScore, normalizeSearchText } = await import(await sourceUrl
 const { productPrice, productDiscountPercent, productPrimaryVariant } = await import(
   await sourceUrl("productPricing")
 );
-const { buildShopifyBrands } = await import(await sourceUrl("brandDirectory"));
+const { buildStoreBrands } = await import(await sourceUrl("brandDirectory"));
 const { findFacetMerchandising } = await import(await sourceUrl("homeMerchandising"));
 const product = (overrides = {}) => ({
   node: { ...structuredClone(products[0].node), ...overrides },
@@ -187,13 +187,13 @@ test("logos and hero images are independent and never match by substring", () =>
     collection("logo-apple", "logo.svg"),
     collection("logo-applecare", "wrong.svg"),
   ];
-  const [brand] = buildShopifyBrands([{ slug: "apple", label: "Apple", count: 2 }], collections);
+  const [brand] = buildStoreBrands([{ slug: "apple", label: "Apple", count: 2 }], collections);
   assert.equal(brand.image, "logo.svg");
   assert.equal(brand.label, "Apple");
   assert.equal(findFacetMerchandising(collections, "brand", "apple").image.url, "hero.jpg");
   assert.equal(findFacetMerchandising(collections, "brand", "app"), undefined);
   assert.equal(
-    buildShopifyBrands([{ slug: "apple", label: "Apple", count: 2 }], [collections[0]])[0].image,
+    buildStoreBrands([{ slug: "apple", label: "Apple", count: 2 }], [collections[0]])[0].image,
     undefined,
   );
 });

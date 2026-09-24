@@ -1,42 +1,21 @@
-import type { ShopifyCollection } from "@/lib/shopify";
+import type { StoreCollection } from "@/lib/storeTypes";
 import type { CatalogFacet } from "@/lib/taxonomy";
 
 /** Exact merchandising handles only; these collections are configuration, not normal catalogue navigation. */
 export function findFacetMerchandising(
-  collections: ShopifyCollection[],
+  collections: StoreCollection[],
   kind: "brand" | "category",
   slug: string,
-): ShopifyCollection | undefined {
+): StoreCollection | undefined {
   const handles =
     kind === "brand" ? [`hero-brand-${slug}`, `showcase-${slug}`] : [`hero-category-${slug}`];
   return handles.map((handle) => collections.find((item) => item.handle === handle)).find(Boolean);
 }
 
 /**
- * Dedicated homepage hero collections are artwork configuration only.
- * Their collection image is used directly; catalogue product images are never a fallback.
- */
-export function homepageHeroCollections(collections: ShopifyCollection[]): ShopifyCollection[] {
-  return collections
-    .filter(
-      (collection) =>
-        Boolean(collection.image?.url) &&
-        /^(homepage-hero$|home-hero-|hero-home-|hero-slide-|hero-(?!brand-|category-))/.test(
-          collection.handle,
-        ),
-    )
-    .sort((a, b) => {
-      const primaryRank =
-        Number(a.handle !== "homepage-hero") - Number(b.handle !== "homepage-hero");
-      return primaryRank || a.handle.localeCompare(b.handle);
-    })
-    .slice(0, 10);
-}
-
-/**
  * Storefront merchandising priority. Keep the most recognizable global
  * electronics companies first, followed by strong accessory/mobile brands.
- * Unknown Shopify vendors remain supported and fall back to alphabetical order.
+ * Unknown catalog vendors remain supported and fall back to alphabetical order.
  */
 const BRAND_PRIORITY_GROUPS = [
   ["apple"],

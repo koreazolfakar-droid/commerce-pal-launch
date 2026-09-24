@@ -1,5 +1,6 @@
 import { cdnImage } from "@/lib/image";
-import { productInStock, type ShopifyProduct } from "@/lib/shopify";
+import { productInStock } from "@/lib/productPricing";
+import type { StoreProduct } from "@/lib/storeTypes";
 import { SITE_URL as CONFIG_SITE_URL, STORE_CONFIG, STORE_NAME, storeUrl } from "@/lib/storeConfig";
 
 export const SITE_URL = CONFIG_SITE_URL;
@@ -55,7 +56,7 @@ export function cleanMetaDescription(
   return `${safe.replace(/[\s,;:.-]+$/g, "")}…`;
 }
 
-export function productMetaDescription(product: ShopifyProduct) {
+export function productMetaDescription(product: StoreProduct) {
   const node = product.node;
   const brand = node.vendor?.trim();
   const type = node.productType?.trim();
@@ -192,8 +193,8 @@ export function websiteJsonLd() {
 
 export function itemListJsonLd(
   name: string,
-  products: ShopifyProduct[],
-  pathForProduct: (product: ShopifyProduct) => string = (product) =>
+  products: StoreProduct[],
+  pathForProduct: (product: StoreProduct) => string = (product) =>
     `/product/${product.node.handle}`,
 ) {
   return {
@@ -219,7 +220,7 @@ function gtinJsonLd(barcode?: string | null): Record<string, string> {
   return {};
 }
 
-export function productJsonLd(product: ShopifyProduct) {
+export function productJsonLd(product: StoreProduct) {
   const node = product.node;
   const variant = node.variants.edges[0]?.node;
   const price = variant?.price ?? node.priceRange.minVariantPrice;

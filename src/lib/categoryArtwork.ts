@@ -1,4 +1,4 @@
-import type { ShopifyCollection } from "@/lib/shopify";
+import type { StoreCollection } from "@/lib/storeTypes";
 
 const CATEGORY_COLLECTION_ALIASES: Record<string, string[]> = {
   smartphones: ["phones", "mobile-phones"],
@@ -21,7 +21,7 @@ function normalize(value: string) {
 }
 
 /**
- * Resolves the Shopify Collection that owns artwork for a storefront category.
+ * Resolves the store collection that owns artwork for a storefront category.
  *
  * Priority:
  * 1. `hero-category-{slug}` for an explicit artwork-only override.
@@ -33,10 +33,10 @@ function normalize(value: string) {
  * built-in CategoryGlyph as a zero-config fallback.
  */
 export function findCategoryArtworkCollection(
-  collections: ShopifyCollection[],
+  collections: StoreCollection[],
   slug: string,
   label?: string,
-): ShopifyCollection | undefined {
+): StoreCollection | undefined {
   const normalizedSlug = normalize(slug);
   const normalizedLabel = label ? normalize(label) : "";
   const preferredHandles = [

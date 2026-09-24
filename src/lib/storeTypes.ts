@@ -1,10 +1,10 @@
 /**
- * Legacy catalog shape kept for compatibility with the existing UI.
+ * Canonical Space Call storefront data shapes.
  *
- * Space Call no longer performs Shopify API requests from this module.
- * Live commerce data is sourced from the native Supabase store.
+ * These types describe the Supabase-native commerce model consumed by the UI.
+ * They intentionally carry no external commerce runtime dependency.
  */
-export interface ShopifyProductNode {
+export interface StoreProductNode {
   id: string;
   title: string;
   description: string;
@@ -43,27 +43,14 @@ export interface ShopifyProductNode {
   options: Array<{ name: string; values: string[] }>;
 }
 
-export interface ShopifyProduct {
-  node: ShopifyProductNode;
+export interface StoreProduct {
+  node: StoreProductNode;
 }
 
-export interface ShopifyCollection {
+export interface StoreCollection {
   id: string;
   handle: string;
   title: string;
   description: string;
   image: { url: string; altText: string | null } | null;
 }
-
-export {
-  formatPrice,
-  discountPercent,
-  variantSummary,
-  productPrimaryVariant,
-  productPrice,
-  productCurrency,
-  productCompareAt,
-  productDiscountPercent,
-  productInStock,
-  productCollectionHandles,
-} from "@/lib/productPricing";

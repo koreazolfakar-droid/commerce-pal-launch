@@ -19,7 +19,7 @@ import {
 import { useLanguage } from "@/lib/i18n";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { downloadOrderInvoicePdf } from "@/lib/orderInvoice";
-import { formatPrice, variantSummary } from "@/lib/shopify";
+import { formatPrice, variantSummary } from "@/lib/productPricing";
 import { STORE_NAME, storeUrl } from "@/lib/storeConfig";
 import { whatsappUrl } from "@/lib/whatsapp";
 import type { CartItem } from "@/stores/cartStore";

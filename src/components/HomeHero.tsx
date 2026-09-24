@@ -1,78 +1,19 @@
 import { HeroScene } from "@/components/HeroScene";
-import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
 import { localizeHeroSlide, type CmsHeroSlide } from "@/lib/cms";
-import { homepageHeroCollections } from "@/lib/homeMerchandising";
 import { useLanguage } from "@/lib/i18n";
-import { collectionsQueryOptions } from "@/lib/queries";
-import type { ShopifyCollection, ShopifyProduct } from "@/lib/shopify";
-
-type HomeHeroCollection =
-  | {
-      collection: ShopifyCollection;
-      products: ShopifyProduct[];
-    }
-  | null
-  | undefined;
 
 const HERO_ROTATION_MS = 8000;
 const HERO_AUTO_ROTATION_ENABLED = false;
-const SHOPIFY_CDN = /cdn\.shopify\.com|shopifycdn\.(net|com)/;
-const HERO_IMAGE_WIDTHS = [640, 960, 1280, 1600, 1920, 2400, 2880] as const;
-
-function heroCdnImage(url: string | undefined, width: number): string | undefined {
-  if (!url) return undefined;
-  if (!SHOPIFY_CDN.test(url)) return url;
-
-  try {
-    const parsed = new URL(url);
-    parsed.searchParams.set("width", String(width));
-    parsed.searchParams.set("format", "webp");
-    parsed.searchParams.set("quality", "88");
-    return parsed.toString();
-  } catch {
-    return url;
-  }
-}
-
-function heroCdnSrcSet(url: string | undefined): string | undefined {
-  if (!url || !SHOPIFY_CDN.test(url)) return undefined;
-  return HERO_IMAGE_WIDTHS.map((width) => `${heroCdnImage(url, width)} ${width}w`).join(", ");
-}
-
 export function HomeHero({
-  heroCollection,
   cmsHeroSlides = [],
 }: {
-  heroCollection?: HomeHeroCollection;
   cmsHeroSlides?: CmsHeroSlide[];
 }) {
   const { t, language } = useLanguage();
-  const queryClient = useQueryClient();
-  const [failedShopifySlideId, setFailedShopifySlideId] = useState<string>();
   const [failedCmsSlideIds, setFailedCmsSlideIds] = useState<string[]>([]);
-
-  const effectiveHeroCollection = heroCollection?.collection ? heroCollection : undefined;
-
-  const cachedCollections = queryClient.getQueryData<ShopifyCollection[]>(
-    collectionsQueryOptions().queryKey,
-  );
-
-  const configuredCollections = useMemo(() => {
-    const collections = cachedCollections ?? [];
-    const primary = effectiveHeroCollection?.collection;
-    if (!primary) return collections;
-
-    return [primary, ...collections.filter((collection) => collection.id !== primary.id)];
-  }, [cachedCollections, effectiveHeroCollection?.collection]);
-
-  const shopifySlides = useMemo(
-    () => homepageHeroCollections(configuredCollections),
-    [configuredCollections],
-  );
-
   const localizedCmsSlides = useMemo(
     () =>
       cmsHeroSlides
@@ -81,10 +22,6 @@ export function HomeHero({
     [cmsHeroSlides, failedCmsSlideIds, language],
   );
 
-  const usingCms = localizedCmsSlides.length > 0;
-  // CMS is the only visual source for the storefront hero. Never replay legacy
-  // Shopify artwork while CMS is loading or temporarily unavailable.
-  const legacyFallbackEnabled = false;
   const slideCount = localizedCmsSlides.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -106,66 +43,8 @@ export function HomeHero({
     return () => window.clearInterval(timer);
   }, [slideCount, paused, interacting]);
 
-  const cmsSlide = usingCms
-    ? localizedCmsSlides[activeIndex] ?? localizedCmsSlides[0]
-    : undefined;
-
-  const shopifySlide = legacyFallbackEnabled && !usingCms
-    ? shopifySlides[activeIndex] ?? shopifySlides[0]
-    : undefined;
-  const shopifyImage = shopifySlide?.image;
-  const shopifyImageActive = Boolean(
-    shopifySlide && shopifyImage && failedShopifySlideId !== shopifySlide.id,
-  );
-
-  const heroFallbackProduct = legacyFallbackEnabled
-    ? effectiveHeroCollection?.products.find((product) =>
-        Boolean(product.node.images.edges[0]?.node.url),
-      )
-    : undefined;
-  const heroFallbackImage = heroFallbackProduct?.node.images.edges[0]?.node;
-
-  const heroSource = cmsSlide
-    ? "supabase-cms"
-    : shopifyImageActive
-      ? "shopify-collection"
-      : heroFallbackImage && heroFallbackProduct
-        ? "hero-product-fallback"
-        : "placeholder";
-
-  useEffect(() => {
-    if (
-      shopifySlide?.id &&
-      failedShopifySlideId &&
-      shopifySlide.id !== failedShopifySlideId
-    ) {
-      setFailedShopifySlideId(undefined);
-    }
-  }, [failedShopifySlideId, shopifySlide?.id]);
-
-  const shopifyHeroPicture =
-    shopifyImageActive && shopifyImage && shopifySlide ? (
-      <picture>
-        <source
-          media="(max-width: 639px)"
-          srcSet={heroCdnSrcSet(shopifyImage.url)}
-          sizes="100vw"
-        />
-        <img
-          key={`${shopifySlide.id}:${shopifyImage.url}`}
-          src={heroCdnImage(shopifyImage.url, 1920)}
-          srcSet={heroCdnSrcSet(shopifyImage.url)}
-          sizes="(min-width: 1440px) 1400px, 100vw"
-          alt={shopifyImage.altText ?? shopifySlide.title ?? "Space Call"}
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-          draggable={false}
-          onError={() => setFailedShopifySlideId(shopifySlide.id)}
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
-      </picture>
-    ) : null;
+  const cmsSlide = localizedCmsSlides[activeIndex] ?? localizedCmsSlides[0];
+  const heroSource = cmsSlide ? "supabase-cms" : "placeholder";
 
   return (
     <>
@@ -188,50 +67,20 @@ export function HomeHero({
         data-testid="home-hero"
         data-hero-source={heroSource}
         data-hero-id={cmsSlide?.id}
-        data-hero-handle={
-          cmsSlide
-            ? `cms:${cmsSlide.id}`
-            : shopifySlide?.handle ?? heroFallbackProduct?.node.handle ?? "none"
-        }
-        data-hero-collection-handle={shopifySlide?.handle}
+        data-hero-handle={cmsSlide ? `cms:${cmsSlide.id}` : "none"}
         className={`${cmsSlide ? "relative isolate w-full min-w-0 max-w-full overflow-hidden" : "relative isolate h-[clamp(15rem,62vw,20rem)] w-full max-w-full min-w-0 overflow-hidden rounded-[1.15rem] border border-primary/45 bg-hero text-hero-foreground shadow-float sm:h-[22rem] sm:rounded-[clamp(1.25rem,3vw,2rem)] sm:border-hero-border md:h-[24rem] lg:h-[28rem] xl:h-[30rem]"}`}
       >
         {cmsSlide ? (
-          <HeroScene slide={cmsSlide} language={language} priority={activeIndex === 0} onImageError={() => setFailedCmsSlideIds(current => [...current, cmsSlide.id])} />
-        ) : shopifyHeroPicture ? (
-          <div
-            data-testid="home-hero-media"
-            aria-label={shopifySlide?.title ?? "Space Call"}
-            className="absolute inset-0 z-[1] block overflow-hidden"
-          >
-            {shopifyHeroPicture}
-          </div>
-        ) : heroFallbackImage && heroFallbackProduct ? (
-          <div
-            data-testid="home-hero-media"
-            aria-label={heroFallbackProduct.node.title ?? "Space Call"}
-            className="absolute inset-0 z-[1] block overflow-hidden bg-white"
-          >
-            <picture>
-              <source
-                media="(max-width: 639px)"
-                srcSet={heroCdnSrcSet(heroFallbackImage.url)}
-                sizes="100vw"
-              />
-              <img
-                key={`${heroFallbackProduct.node.id}:${heroFallbackImage.url}`}
-                src={heroCdnImage(heroFallbackImage.url, 1920)}
-                srcSet={heroCdnSrcSet(heroFallbackImage.url)}
-                sizes="(min-width: 1440px) 1400px, 100vw"
-                alt={heroFallbackImage.altText ?? heroFallbackProduct.node.title ?? "Space Call"}
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-                draggable={false}
-                className="absolute inset-0 h-full w-full object-contain object-center"
-              />
-            </picture>
-          </div>
+          <HeroScene
+            slide={cmsSlide}
+            language={language}
+            priority={activeIndex === 0}
+            onImageError={() =>
+              setFailedCmsSlideIds((current) =>
+                current.includes(cmsSlide.id) ? current : [...current, cmsSlide.id],
+              )
+            }
+          />
         ) : (
           <div
             data-testid="home-hero-media"

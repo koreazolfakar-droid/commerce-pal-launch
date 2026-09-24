@@ -8,7 +8,7 @@ import { allVendorProductsQueryOptions, catalogQueryOptions } from "@/lib/querie
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { buildCatalogIndex, type CatalogIndex } from "@/lib/taxonomy";
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 
 export const Route = createFileRoute("/brand/$slug")({
   validateSearch: parseProductSearch,
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/brand/$slug")({
       (product) => catalog.brandOf.get(product.node.handle)?.slug === params.slug,
     );
 
-    let vendorProducts: ShopifyProduct[] = [];
+    let vendorProducts: StoreProduct[] = [];
     try {
       vendorProducts = await context.queryClient.ensureQueryData(
         allVendorProductsQueryOptions(brand.label),
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/brand/$slug")({
       console.error(`Failed to fetch the complete ${brand.label} brand catalogue.`, error);
     }
 
-    const uniqueProducts = new Map<string, ShopifyProduct>();
+    const uniqueProducts = new Map<string, StoreProduct>();
     for (const product of [...indexedProducts, ...vendorProducts]) {
       uniqueProducts.set(product.node.id, product);
     }
@@ -86,12 +86,12 @@ function BrandPage() {
   const navigate = useNavigate({ from: Route.fullPath });
 
   const inBrand = catalog.products.filter(
-    (product: ShopifyProduct) => catalog.brandOf.get(product.node.handle)?.slug === slug,
+    (product: StoreProduct) => catalog.brandOf.get(product.node.handle)?.slug === slug,
   );
   const products = applyFilters(inBrand, catalog, filters);
 
   const categories = catalog.categories.filter((category: CatalogIndex["categories"][number]) =>
-    inBrand.some((product: ShopifyProduct) =>
+    inBrand.some((product: StoreProduct) =>
       (catalog.categoryOf.get(product.node.handle) ?? []).includes(category.slug),
     ),
   );
@@ -106,8 +106,8 @@ function BrandPage() {
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
           {language === "ar"
-            ? `تصفح منتجات ${brandLabel} المتوفرة لدى Space Call، بما في ذلك الهواتف والأجهزة والإكسسوارات، مع مخزون مباشر وأسعار واضحة وإتمام شراء آمن عبر Shopify.`
-            : `Browse ${brandLabel} products available at Space Call, including phones, devices and accessories, with live availability, clear pricing and secure Shopify checkout.`}
+            ? `تصفح منتجات ${brandLabel} المتوفرة لدى Space Call، بما في ذلك الهواتف والأجهزة والإكسسوارات، مع مخزون مباشر وأسعار واضحة وإتمام طلب آمن.`
+            : `Browse ${brandLabel} products available at Space Call, including phones, devices and accessories, with live availability, clear pricing and secure checkout.`}
         </p>
       </div>
       {categories.length ? (

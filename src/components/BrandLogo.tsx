@@ -22,7 +22,7 @@ function safeImageSource(value?: string) {
   if (!source) return undefined;
 
   // Never allow escaped/raw markup to become an image source. This protects
-  // against Shopify fields accidentally containing an inline <svg> string.
+  // against merchant-managed fields accidentally containing an inline <svg> string.
   if (/<\s*svg\b|<\/?[a-z][^>]*>/i.test(source)) return undefined;
 
   if (/^(?:https?:\/\/|\/|data:image\/|blob:)/i.test(source)) return source;
@@ -100,8 +100,8 @@ function LogoImage({
             .filter(Boolean) as string[]);
     const merchant = safeImageSource(imageUrl);
 
-    // Shopify is the merchant-controlled source of truth. A curated local logo
-    // remains a resilient fallback when Shopify has no image or the remote image
+    // Managed storefront artwork is the merchant-controlled source of truth. A curated local logo
+    // remains a resilient fallback when no managed image exists or the remote image
     // fails to load, but it must never prevent a merchant logo update from showing.
     const ordered = merchant ? [merchant, ...builtIn] : builtIn;
 

@@ -24,9 +24,10 @@ test("store identity and public settings are centralized without Shopify configu
 });
 
 test("storefront commerce reads resolve only through the native Supabase gateway", async () => {
-  const [facade, compat, productRoute, collectionRoute] = await Promise.all([
+  const [facade, nativeStore, storeTypes, productRoute, collectionRoute] = await Promise.all([
     read("src/lib/storefrontData.ts"),
-    read("src/lib/shopify.ts"),
+    read("src/lib/nativeStore.ts"),
+    read("src/lib/storeTypes.ts"),
     read("src/routes/product.$handle.tsx"),
     read("src/routes/collections.$handle.tsx"),
   ]);
@@ -35,7 +36,10 @@ test("storefront commerce reads resolve only through the native Supabase gateway
     assert.match(facade, new RegExp(`nativeStore\\.${fn}`));
   }
   assert.doesNotMatch(facade, /withShopifyFallback|storefrontApiRequest|SHOPIFY_STOREFRONT/);
-  assert.doesNotMatch(compat, /fetch\(|createServerFn|storefrontApiRequest|SHOPIFY_STOREFRONT|myshopify/);
+  assert.match(facade, /@\/lib\/storeTypes/);
+  assert.match(nativeStore, /@\/lib\/storeTypes/);
+  assert.doesNotMatch(nativeStore, /@\/lib\/shopify/);
+  assert.doesNotMatch(storeTypes, /Shopify|GraphQL|STOREFRONT_URL|ACCESS_TOKEN/);
   assert.doesNotMatch(productRoute, /catalogQueryOptions|checkoutUrl|getCheckoutUrl/);
   assert.match(collectionRoute, /@\/lib\/storefrontData/);
 });

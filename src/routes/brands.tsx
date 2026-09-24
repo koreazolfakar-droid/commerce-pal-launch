@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 import { BrandLogo } from "@/components/BrandLogo";
 import { StoreLayout } from "@/components/StoreLayout";
-import { applyCmsBrands, buildShopifyBrands } from "@/lib/brandDirectory";
+import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, fetchCmsSnapshot } from "@/lib/cms";
 import { useLanguage } from "@/lib/i18n";
 import { catalogQueryOptions } from "@/lib/queries";
@@ -47,7 +47,7 @@ function BrandsPage() {
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const { cms } = Route.useLoaderData();
   const { language } = useLanguage();
-  const brands = applyCmsBrands(buildShopifyBrands(catalog.brands, undefined), cms.brands);
+  const brands = applyCmsBrands(buildStoreBrands(catalog.brands, undefined), cms.brands);
 
   return (
     <StoreLayout>

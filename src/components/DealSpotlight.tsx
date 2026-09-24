@@ -2,11 +2,12 @@ import { productPrimaryVariant, productCompareAt } from "@/lib/productPricing";
 import { Link } from "@tanstack/react-router";
 import { ProductImage } from "@/components/ProductImage";
 import { QuickViewButton } from "@/components/product/QuickViewButton";
-import { discountPercent, formatPrice, type ShopifyProduct } from "@/lib/shopify";
+import { discountPercent, formatPrice } from "@/lib/productPricing";
+import type { StoreProduct } from "@/lib/storeTypes";
 import { useLanguage } from "@/lib/i18n";
 
 /** Give a small set of offers enough space without leaving an almost empty rail. */
-export function DealSpotlight({ products }: { products: ShopifyProduct[] }) {
+export function DealSpotlight({ products }: { products: StoreProduct[] }) {
   const { t } = useLanguage();
   return (
     <div data-testid="deal-spotlight" className="grid gap-4">
