@@ -24,6 +24,7 @@ jobs:
           name: High-confidence source and secret scan
           command: |
             node scripts/security-gate.mjs
+            node scripts/android-security-gate.mjs
 
   security-dependencies:
     docker:
@@ -221,6 +222,10 @@ jobs:
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+            - space-call-android-debug-keystore-v1
+
       - run:
           name: Install minimal Android build toolchain
           command: |
@@ -251,6 +256,11 @@ jobs:
               cd dist/android
               sha256sum Space-Call-* > SHA256SUMS.txt
             )
+
+      - save_cache:
+          key: space-call-android-debug-keystore-v1
+          paths:
+            - ~/.android/debug.keystore
 
       - persist_to_workspace:
           root: .
