@@ -16,6 +16,10 @@ const migration = await readFile(
   new URL("../supabase/migrations/20260921112000_cleanup_duplicate_categories.sql", import.meta.url),
   "utf8",
 );
+const permissionMigration = await readFile(
+  new URL("../supabase/migrations/20260924052100_fix_store_category_trigger_permissions.sql", import.meta.url),
+  "utf8",
+);
 
 test("legacy duplicate category URLs redirect to canonical categories", () => {
   for (const [legacy, canonical] of [
@@ -57,4 +61,23 @@ test("Dashboard and database both reject recreated duplicate category families",
   assert.match(dashboardForm, /Use the existing/);
   assert.match(migration, /prevent_duplicate_store_category_family/);
   assert.match(migration, /duplicate_category_family/);
+});
+
+test("category trigger keeps its private helper inaccessible while running as owner", () => {
+  assert.match(
+    permissionMigration,
+    /alter function private\.prevent_duplicate_store_category_family\(\)\s+security definer;/i,
+  );
+  assert.match(
+    permissionMigration,
+    /revoke all on function private\.canonical_store_category_slug\(text\)[\s\S]*from public, anon, authenticated;/i,
+  );
+  assert.match(
+    permissionMigration,
+    /revoke all on function private\.prevent_duplicate_store_category_family\(\)[\s\S]*from public, anon, authenticated;/i,
+  );
+  assert.doesNotMatch(
+    permissionMigration,
+    /grant\s+execute[\s\S]*\b(?:anon|authenticated)\b/i,
+  );
 });
