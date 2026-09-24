@@ -115,14 +115,14 @@ test("public CMS uses an edge gateway with resilient empty fallback", () => {
   assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
 });
 
-test("homepage hydrates CMS once and renders CMS hero before legacy fallback", async () => {
+test("homepage hydrates CMS once and keeps the hero Supabase-native", async () => {
   assert.match(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
+  assert.doesNotMatch(home, /heroCollection=\{heroCollection\}/);
   assert.match(hero, /localizeHeroSlide/);
-  assert.match(hero, /const usingCms = localizedCmsSlides\.length > 0/);
   assert.match(hero, /"supabase-cms"/);
-  assert.match(hero, /"shopify-collection"/);
-  assert.match(hero, /hero-product-fallback/);
+  assert.match(hero, /"placeholder"/);
+  assert.doesNotMatch(hero, /shopify-collection|hero-product-fallback|homepageHeroCollections|SHOPIFY_CDN/i);
   assert.match(hero, /<HeroScene/);
   const scene = await readFile(new URL("../src/components/HeroScene.tsx", import.meta.url), "utf8");
   assert.match(scene, /slide.mobile_image_url/);
@@ -131,7 +131,6 @@ test("homepage hydrates CMS once and renders CMS hero before legacy fallback", a
   assert.match(scene, /noopener noreferrer/);
   assert.match(scene, /normalizeHeroVisualConfig/);
   assert.match(page, /<HeroVisualEditor/);
-
 });
 
 test("hero changes are auditable", async () => {
