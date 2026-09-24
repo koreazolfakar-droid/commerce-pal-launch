@@ -8,16 +8,16 @@ import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, fetchCmsSnapshot } from "@/lib/cms";
 import { useLanguage } from "@/lib/i18n";
 import { catalogQueryOptions } from "@/lib/queries";
-import { absoluteUrl, canonicalLink } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/brands")({
   loader: async ({ context }) => {
-    const [, cms] = await Promise.all([
+    const [catalog, cms] = await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       fetchCmsSnapshot(),
     ]);
-    return { cms };
+    return { catalog, cms };
   },
   head: ({ loaderData }) => {
     const seo = loaderData ? cmsSeoPage(loaderData.cms, "brands") : undefined;
@@ -26,18 +26,50 @@ export const Route = createFileRoute("/brands")({
     const canonical = seo?.canonical_url?.trim();
     const image = seo?.og_image_url?.trim();
 
+    const brands = loaderData?.catalog.brands ?? [];
+
     return {
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "robots", content: seo?.robots?.trim() || "index,follow" },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "website" },
-        { property: "og:url", content: canonical || absoluteUrl("/brands") },
-        ...(image ? [{ property: "og:image", content: image }] : []),
+        {
+          name: "robots",
+          content:
+            seo?.robots?.trim() ||
+            "index, follow, max-image-preview:large, max-snippet:-1",
+        },
+        ...socialMeta({
+          title,
+          description,
+          path: "/brands",
+          ...(image ? { image } : {}),
+        }),
       ],
       links: [canonical ? { rel: "canonical", href: canonical } : canonicalLink("/brands")],
+      scripts: [
+        jsonLd(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Brands", path: "/brands" },
+          ]),
+        ),
+        ...(brands.length
+          ? [
+              jsonLd({
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                name: `${STORE_NAME} brands`,
+                numberOfItems: brands.length,
+                itemListElement: brands.map((brand, index) => ({
+                  "@type": "ListItem",
+                  position: index + 1,
+                  name: brand.label,
+                  url: absoluteUrl(`/brand/${encodeURIComponent(brand.slug)}`),
+                })),
+              }),
+            ]
+          : []),
+      ],
     };
   },
   component: BrandsPage,
