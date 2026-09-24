@@ -238,3 +238,23 @@ test("Hero crop controls are device-specific and mobile falls back safely", () =
   assert.match(heroScene, /--hero-mobile-focus-x/);
   assert.match(heroScene, /--hero-mobile-focus-y/);
 });
+
+
+test("mobile-first hero uploads always produce a storefront-readable primary image", () => {
+  assert.match(
+    heroPage,
+    /imageUrl: form\.imageUrl\.trim\(\) \? form\.imageUrl : asset\.url/,
+  );
+  assert.match(heroPage, /selectedId && !formDirty/);
+  assert.match(heroPage, /updateDashboardHeroSlide\(selectedId, nextForm\)/);
+  assert.match(
+    heroPage,
+    /imageUrl: current\.imageUrl\.trim\(\) \? current\.imageUrl : asset\.url/,
+  );
+});
+
+test("hero dashboard keeps phone controls compact while preserving all actions", () => {
+  assert.match(heroPage, /overflow-x-auto pb-1/);
+  assert.match(heroPage, /order-first col-span-2/);
+  assert.match(heroPage, /grid grid-cols-2 gap-2 sm:flex sm:justify-between/);
+});
