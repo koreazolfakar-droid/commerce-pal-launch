@@ -1,4 +1,10 @@
-import { discountPercent, formatPrice, productCompareAt, productPrimaryVariant, variantSummary } from "@/lib/productPricing";
+import {
+  discountPercent,
+  formatPrice,
+  productCompareAt,
+  productPrimaryVariant,
+  variantSummary,
+} from "@/lib/productPricing";
 import { QuickViewButton } from "@/components/product/QuickViewButton";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { Link } from "@tanstack/react-router";
