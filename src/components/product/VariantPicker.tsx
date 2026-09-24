@@ -134,20 +134,15 @@ export function VariantPicker({
     );
 
   return (
-    <div className="grid gap-4 sm:gap-5">
+    <div className="grid gap-3 sm:gap-4">
       {real.map((option) => {
         const color = isColorOption(option.name);
         return (
           <div key={option.name}>
-            <div className="mb-2 flex items-baseline gap-2 sm:mb-2.5">
-              <h2 className="text-[11px] font-semibold text-muted-foreground">
+            <div className="mb-1.5 flex items-baseline gap-2 sm:mb-2">
+              <h2 className="text-[11px] font-medium text-muted-foreground">
                 {option.name}
               </h2>
-              {selected[option.name] && (
-                <span className="text-[13px] font-semibold text-foreground">
-                  {selected[option.name]}
-                </span>
-              )}
             </div>
             <div className={cn("flex flex-wrap", color ? "gap-2" : "gap-2")}>
               {option.values.map((value) => {
@@ -165,7 +160,7 @@ export function VariantPicker({
                       disabled={!available}
                       onClick={() => onSelect(option.name, value)}
                       className={cn(
-                        "press relative grid h-10 w-10 place-items-center rounded-full border-2 bg-card transition-colors sm:h-11 sm:w-11",
+                        "press relative grid h-9 w-9 place-items-center rounded-full border-2 bg-card transition-colors sm:h-10 sm:w-10",
                         active
                           ? "border-primary ring-2 ring-primary/15"
                           : "border-border hover:border-primary/50",
@@ -175,13 +170,13 @@ export function VariantPicker({
                       {hex ? (
                         <span
                           aria-hidden
-                          className="h-6 w-6 rounded-full border border-border/60 sm:h-7 sm:w-7"
+                          className="h-5.5 w-5.5 rounded-full border border-border/60 sm:h-6 sm:w-6"
                           style={{ backgroundColor: hex }}
                         />
                       ) : (
                         <span
                           aria-hidden
-                          className="h-6 w-6 rounded-full border border-dashed border-muted-foreground/50 bg-gradient-to-br from-surface to-background sm:h-7 sm:w-7"
+                          className="h-5.5 w-5.5 rounded-full border border-dashed border-muted-foreground/50 bg-gradient-to-br from-surface to-background sm:h-6 sm:w-6"
                         />
                       )}
                       {active && (
@@ -201,7 +196,7 @@ export function VariantPicker({
                     disabled={!available}
                     onClick={() => onSelect(option.name, value)}
                     className={cn(
-                      "press min-w-16 rounded-xl border px-4 py-2.5 text-[13px] font-semibold transition-colors",
+                      "press min-w-16 rounded-xl border px-3.5 py-2 text-[13px] font-semibold transition-colors",
                       active
                         ? "border-primary bg-accent text-primary"
                         : "border-border bg-card hover:border-primary/60",
