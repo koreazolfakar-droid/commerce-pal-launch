@@ -47,3 +47,41 @@ test("quick view selects a variant and quantity and restores focus on Escape", a
   ).toBeVisible();
   await expect(await openCart(page)).toContainText("512GB");
 });
+
+
+test("mobile product purchase bar stays separate from navigation across narrow widths", async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 320, height: 720 },
+    { width: 390, height: 844 },
+    { width: 430, height: 932 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/product/fixture-phone-1");
+
+    const canvas = page.getByTestId("product-detail-canvas");
+    const purchaseBar = page.getByTestId("product-purchase-bar");
+    const bottomNav = page.getByTestId("bottom-nav");
+
+    await expect(canvas).toBeVisible();
+    await expect(purchaseBar).toBeVisible();
+    await expect(bottomNav).toBeVisible();
+    await expect(
+      purchaseBar.getByRole("button", { name: "Add to cart", exact: true }),
+    ).toBeVisible();
+    await expect(purchaseBar.getByRole("button", { name: /wish|save/i })).toHaveCount(0);
+
+    const [canvasBox, purchaseBox, navBox] = await Promise.all([
+      canvas.boundingBox(),
+      purchaseBar.boundingBox(),
+      bottomNav.boundingBox(),
+    ]);
+    expect(canvasBox).not.toBeNull();
+    expect(purchaseBox).not.toBeNull();
+    expect(navBox).not.toBeNull();
+    expect(canvasBox!.x).toBeGreaterThanOrEqual(0);
+    expect(canvasBox!.x + canvasBox!.width).toBeLessThanOrEqual(viewport.width + 1);
+    expect(purchaseBox!.y + purchaseBox!.height).toBeLessThanOrEqual(navBox!.y + 1);
+  }
+});
