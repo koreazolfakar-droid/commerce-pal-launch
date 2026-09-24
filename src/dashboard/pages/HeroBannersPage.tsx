@@ -643,35 +643,39 @@ export default function HeroBannersPage() {
   return (
     <div>
       {imageEditor.dialog}
-      <div className="mb-7 flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
-        <div>
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">Store content / CMS</div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Hero banners</h1>
-          <p className="mt-1.5 text-sm text-slate-500">Control the storefront hero, scheduling, links, responsive images and bilingual content from Supabase.</p>
+      <div className="mb-5 flex flex-col justify-between gap-3 sm:mb-7 sm:gap-4 xl:flex-row xl:items-end">
+        <div className="min-w-0">
+          <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.16em] text-[#6a70e7] sm:mb-2 sm:text-[10px] sm:tracking-[.18em]">Store content / CMS</div>
+          <h1 className="text-[24px] font-bold tracking-[-.045em] text-[#14203a] sm:text-[30px] sm:tracking-[-.05em]">Hero banners</h1>
+          <p className="mt-1 text-[12px] leading-5 text-slate-500 sm:mt-1.5 sm:text-sm">
+            <span className="sm:hidden">Manage hero slides, images and publishing.</span>
+            <span className="hidden sm:inline">Control the storefront hero, scheduling, links, responsive images and bilingual content from Supabase.</span>
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => window.open("/", "_blank", "noopener,noreferrer")} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">
-            <ExternalLink className="size-3.5" /> View storefront
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+          <button onClick={() => window.open("/", "_blank", "noopener,noreferrer")} className="flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-600 sm:gap-2 sm:px-4 sm:text-[11px]">
+            <ExternalLink className="size-3.5 shrink-0" />
+            <span className="sm:hidden">View</span><span className="hidden sm:inline">View storefront</span>
           </button>
-          <button onClick={() => void refresh()} disabled={busy} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50">
-            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          <button onClick={() => void refresh()} disabled={busy} className="flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-600 disabled:opacity-50 sm:gap-2 sm:px-4 sm:text-[11px]">
+            <RefreshCw className={`size-3.5 shrink-0 ${loading ? "animate-spin" : ""}`} /> Refresh
           </button>
-          <button onClick={newSlide} disabled={busy} className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-50">
-            <Plus className="size-4" /> New slide
+          <button onClick={newSlide} disabled={busy} className="flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-[#14203a] px-2 text-[10px] font-bold text-white disabled:opacity-50 sm:gap-2 sm:px-4 sm:text-[11px]">
+            <Plus className="size-4 shrink-0" /> <span className="sm:hidden">New</span><span className="hidden sm:inline">New slide</span>
           </button>
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-4 gap-2 sm:gap-3">
         {[
           ["Total slides", slides.length],
           ["Live", liveCount],
           ["Scheduled", scheduledCount],
           ["Media assets", media.length],
         ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="text-[10px] text-slate-400">{label}</div>
-            <div className="mt-1 text-xl font-bold text-[#14203a]">{value}</div>
+          <div key={String(label)} className="min-w-0 rounded-xl border border-slate-200 bg-white px-2 py-2.5 sm:rounded-2xl sm:p-4">
+            <div className="truncate text-[8px] font-semibold leading-3 text-slate-400 sm:text-[10px] sm:font-normal">{label}</div>
+            <div className="mt-0.5 text-lg font-bold leading-none text-[#14203a] sm:mt-1 sm:text-xl sm:leading-normal">{value}</div>
           </div>
         ))}
       </div>
@@ -699,9 +703,9 @@ export default function HeroBannersPage() {
                     setSelectedId(slide.id);
                     setForm(fromSlide(slide));
                   }}
-                  className={`grid min-w-[230px] grid-cols-[64px_1fr] gap-3 rounded-xl border p-3 text-left transition xl:min-w-0 xl:rounded-none xl:border-x-0 xl:border-b-0 xl:first:border-t-0 ${selectedId === slide.id ? "border-indigo-200 bg-indigo-50/70" : "border-slate-100 bg-white hover:bg-slate-50"}`}
+                  className={`grid min-w-[200px] grid-cols-[52px_1fr] gap-2.5 rounded-xl border p-2.5 text-left transition sm:min-w-[230px] sm:grid-cols-[64px_1fr] sm:gap-3 sm:p-3 xl:min-w-0 xl:rounded-none xl:border-x-0 xl:border-b-0 xl:first:border-t-0 ${selectedId === slide.id ? "border-indigo-200 bg-indigo-50/70" : "border-slate-100 bg-white hover:bg-slate-50"}`}
                 >
-                  <div className="grid h-14 w-16 place-items-center overflow-hidden rounded-xl bg-slate-100">
+                  <div className="grid h-12 w-[52px] place-items-center overflow-hidden rounded-lg bg-slate-100 sm:h-14 sm:w-16 sm:rounded-xl">
                     {slide.imageUrl ? <img src={slide.imageUrl} alt="" className="size-full object-cover" /> : <ImageIcon className="size-5 text-slate-300" />}
                   </div>
                   <div className="min-w-0">
@@ -740,16 +744,16 @@ export default function HeroBannersPage() {
                 <p className="mt-1 text-[10px] text-slate-400">{editorSubtitle}</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid w-full grid-cols-4 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
                 {selected ? (
                   <>
-                    <button aria-label="Move slide up" onClick={() => void move(-1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowUp className="size-4" /></button>
-                    <button aria-label="Move slide down" onClick={() => void move(1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowDown className="size-4" /></button>
-                    <button onClick={() => void duplicate()} disabled={busy || dirty} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:opacity-40"><Copy className="size-3.5" /> Duplicate</button>
-                    <button onClick={() => void remove()} disabled={busy} className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600 disabled:opacity-40"><Trash2 className="size-3.5" /> Delete</button>
+                    <button title="Move slide up" aria-label="Move slide up" onClick={() => void move(-1)} disabled={busy || dirty} className="grid h-10 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40 sm:size-9"><ArrowUp className="size-4" /></button>
+                    <button title="Move slide down" aria-label="Move slide down" onClick={() => void move(1)} disabled={busy || dirty} className="grid h-10 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40 sm:size-9"><ArrowDown className="size-4" /></button>
+                    <button title="Duplicate slide" aria-label="Duplicate slide" onClick={() => void duplicate()} disabled={busy || dirty} className="flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-2 text-[10px] font-bold text-slate-600 disabled:opacity-40 sm:h-9 sm:px-3"><Copy className="size-3.5" /><span className="hidden sm:inline">Duplicate</span></button>
+                    <button title="Delete slide" aria-label="Delete slide" onClick={() => void remove()} disabled={busy} className="flex h-10 items-center justify-center gap-2 rounded-xl border border-rose-200 px-2 text-[10px] font-bold text-rose-600 disabled:opacity-40 sm:h-9 sm:px-3"><Trash2 className="size-3.5" /><span className="hidden sm:inline">Delete</span></button>
                   </>
                 ) : null}
-                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || !formDirty} className="flex h-9 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40">
+                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || !formDirty} className="col-span-4 flex h-10 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40 sm:col-span-1 sm:h-9">
                   {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
                   {editorMode === "edit" ? "Save changes" : "Create slide"}
                 </button>
