@@ -290,7 +290,7 @@ function RangeControl({
         step={step}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-2 w-full accent-indigo-600"
+        className="mt-2 h-9 w-full touch-pan-x accent-indigo-600"
       />
     </label>
   );
@@ -485,6 +485,7 @@ function SmartImageEditorDialog({
 
   const beginDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!loaded) return;
+    event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     dragRef.current = { x: event.clientX, y: event.clientY, startX: x, startY: y };
   };
@@ -519,7 +520,7 @@ function SmartImageEditorDialog({
 
   return (
     <div className="fixed inset-0 z-[140] grid place-items-end bg-slate-950/65 p-0 backdrop-blur-sm sm:place-items-center sm:p-4">
-      <div className="max-h-[96vh] w-full overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-w-3xl sm:rounded-[28px]">
+      <div className="max-h-[100dvh] w-full overscroll-contain overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-h-[96vh] sm:max-w-3xl sm:rounded-[28px]">
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/95 px-4 py-4 backdrop-blur sm:px-6">
           <div>
             <div className="text-[10px] font-black uppercase tracking-[.16em] text-indigo-500">Smart image editor</div>
@@ -535,7 +536,7 @@ function SmartImageEditorDialog({
         <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="space-y-3">
             <div
-              className="relative mx-auto w-full max-w-[620px] touch-none overflow-hidden rounded-2xl border border-slate-200 bg-[linear-gradient(45deg,#eef2f7_25%,transparent_25%),linear-gradient(-45deg,#eef2f7_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#eef2f7_75%),linear-gradient(-45deg,transparent_75%,#eef2f7_75%)] bg-[length:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0px] shadow-inner"
+              className={`relative mx-auto max-w-[620px] touch-none cursor-grab overflow-hidden rounded-2xl border border-slate-200 bg-[linear-gradient(45deg,#eef2f7_25%,transparent_25%),linear-gradient(-45deg,#eef2f7_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#eef2f7_75%),linear-gradient(-45deg,transparent_75%,#eef2f7_75%)] bg-[length:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0px] shadow-inner active:cursor-grabbing ${preset === "hero-mobile" ? "h-[46dvh] w-auto max-w-full sm:h-auto sm:w-full" : "w-full"}`}
               style={{ aspectRatio: `${dimensions[0]} / ${dimensions[1]}` }}
               onPointerDown={beginDrag}
               onPointerMove={moveDrag}
@@ -570,7 +571,7 @@ function SmartImageEditorDialog({
               </div>
             </div>
             <p className="text-center text-[10px] leading-4 text-slate-400">
-              Drag the image directly. Auto Center detects the visible subject, trims empty space and centers it visually.
+              Drag the image to choose the crop. Use Zoom for fine adjustment; Auto Center can recenter the visible subject.
             </p>
 
             {request.options.previewContext === "product" && loaded ? (
@@ -650,7 +651,7 @@ function SmartImageEditorDialog({
                 : " PNG is used losslessly before the existing WebP upload pipeline; direct media replacement uses WebP once."}
             </div>
 
-            <button type="button" onClick={() => void save()} disabled={!loaded || loading || saving} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-black text-white disabled:opacity-50">
+            <button type="button" onClick={() => void save()} disabled={!loaded || loading || saving} className="sticky bottom-2 z-10 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-black text-white shadow-lg disabled:opacity-50 sm:static sm:h-11 sm:shadow-none">
               {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
               Save adjustment
             </button>
