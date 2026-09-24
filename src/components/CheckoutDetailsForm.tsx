@@ -27,7 +27,7 @@ import {
   StoreOrderError,
   type CreatedStoreOrder,
 } from "@/lib/orderCheckout";
-import { formatPrice, variantSummary } from "@/lib/shopify";
+import { formatPrice, variantSummary } from "@/lib/productPricing";
 import { STORE_NAME, storeUrl } from "@/lib/storeConfig";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { useCartStore, type CartItem } from "@/stores/cartStore";
