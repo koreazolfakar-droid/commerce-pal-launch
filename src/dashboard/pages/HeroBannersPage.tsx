@@ -598,8 +598,9 @@ export default function HeroBannersPage() {
       setForm(nextForm);
 
       const canAutoPersist =
-        Boolean(selectedId && selected) &&
-        JSON.stringify(currentForm) === JSON.stringify(fromSlide(selected!));
+        selectedId !== null &&
+        selected !== null &&
+        JSON.stringify(currentForm) === JSON.stringify(fromSlide(selected));
       let persisted = false;
       let persistenceFailed = false;
       if (selectedId && canAutoPersist) {
@@ -759,8 +760,8 @@ export default function HeroBannersPage() {
           </div>
         </aside>
 
-        <div className="space-y-4">
-          <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:rounded-2xl sm:p-5">
+        <div className="flex flex-col gap-4">
+          <section className="order-1 rounded-xl border border-slate-200 bg-white p-3.5 sm:rounded-2xl sm:p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -798,7 +799,7 @@ export default function HeroBannersPage() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-3.5 sm:rounded-2xl sm:p-5">
+          <section className="order-3 rounded-xl border border-slate-200 bg-white p-3.5 sm:rounded-2xl sm:p-5 xl:order-2">
             <div className="mb-3 text-[13px] font-bold text-[#14203a] sm:mb-4">Design & live preview</div>
             <div className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:justify-between">
               <div className="flex rounded-xl bg-slate-100 p-1">
@@ -820,7 +821,7 @@ export default function HeroBannersPage() {
             />
 
           </section>
-          <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <details className="group order-4 overflow-hidden rounded-2xl border border-slate-200 bg-white xl:order-3">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
                 <div className="text-[13px] font-bold text-[#14203a]">Content</div>
@@ -886,7 +887,7 @@ export default function HeroBannersPage() {
             </div>
           </details>
 
-          <details open={hasPendingHeroImages || undefined} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <details open={hasPendingHeroImages || undefined} className="group order-2 overflow-hidden rounded-2xl border border-slate-200 bg-white xl:order-4">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
                 <div className="text-[13px] font-bold text-[#14203a]">Media</div>
@@ -1058,7 +1059,7 @@ export default function HeroBannersPage() {
             </div>
           </details>
 
-          <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <details className="group order-5 xl:order-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
                 <div className="text-[13px] font-bold text-[#14203a]">Link & CTA</div>
@@ -1145,7 +1146,7 @@ export default function HeroBannersPage() {
             </div>
           </details>
 
-          <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <details className="group order-6 xl:order-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
                 <div className="text-[13px] font-bold text-[#14203a]">Publishing & schedule</div>
@@ -1171,7 +1172,7 @@ export default function HeroBannersPage() {
             </div>
           </details>
 
-          <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <details className="group order-7 xl:order-7 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
                 <div className="text-[13px] font-bold text-[#14203a]">Advanced appearance</div>
