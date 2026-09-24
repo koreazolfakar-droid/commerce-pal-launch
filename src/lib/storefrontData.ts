@@ -63,10 +63,7 @@ export function fetchProductsByHandles(handles: string[]): Promise<StoreProduct[
   return nativeStore.fetchProductsByHandles(handles);
 }
 
-export function fetchProductRecommendations(
-  handle: string,
-  first = 8,
-): Promise<StoreProduct[]> {
+export function fetchProductRecommendations(handle: string, first = 8): Promise<StoreProduct[]> {
   return nativeStore.fetchProductRecommendations(handle, first);
 }
 
