@@ -266,7 +266,25 @@ export function HeroScene({
       dir={ar ? "rtl" : "ltr"}
     >
       <div className="hero-scene-canvas" data-testid="home-hero-media">
-        <picture>
+        <picture className="hero-scene-backdrop" aria-hidden="true">
+          {!editor ? (
+            <source media="(max-width: 639px)" srcSet={mobileImage} />
+          ) : null}
+          <img
+            src={editor?.mode === "mobile" ? mobileImage : slide.image_url}
+            alt=""
+            draggable={false}
+            loading="lazy"
+            decoding="async"
+            style={{
+              "--hero-focus-x": `${desktopFocus.x}%`,
+              "--hero-focus-y": `${desktopFocus.y}%`,
+              "--hero-mobile-focus-x": `${mobileFocus.x}%`,
+              "--hero-mobile-focus-y": `${mobileFocus.y}%`,
+            } as CSSProperties}
+          />
+        </picture>
+        <picture className="hero-scene-artwork">
           {!editor ? (
             <source media="(max-width: 639px)" srcSet={mobileImage} />
           ) : null}
