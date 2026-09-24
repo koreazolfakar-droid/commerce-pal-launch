@@ -1,4 +1,4 @@
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 
 export function formatPrice(amount: string | number, currencyCode: string) {
   const value = typeof amount === "string" ? parseFloat(amount) : amount;
@@ -31,7 +31,7 @@ export function variantSummary(options?: Array<{ name: string; value: string }>)
 }
 
 /** Cards, quick-add, price filters and discount sorting all describe this same variant. */
-export function productPrimaryVariant(product: ShopifyProduct) {
+export function productPrimaryVariant(product: StoreProduct) {
   const variants = product.node.variants.edges.map((edge) => edge.node);
   const available = variants.filter((variant) => variant.availableForSale);
   return [...(available.length ? available : variants)].sort(
@@ -39,7 +39,7 @@ export function productPrimaryVariant(product: ShopifyProduct) {
   )[0];
 }
 
-export function productPrice(product: ShopifyProduct) {
+export function productPrice(product: StoreProduct) {
   return (
     Number(
       productPrimaryVariant(product)?.price.amount ??
@@ -48,30 +48,30 @@ export function productPrice(product: ShopifyProduct) {
   );
 }
 
-export function productCurrency(product: ShopifyProduct) {
+export function productCurrency(product: StoreProduct) {
   return (
     productPrimaryVariant(product)?.price.currencyCode ??
     product.node.priceRange.minVariantPrice.currencyCode
   );
 }
 
-export function productCompareAt(product: ShopifyProduct) {
+export function productCompareAt(product: StoreProduct) {
   const variant = productPrimaryVariant(product);
   return variant
     ? (variant.compareAtPrice?.amount ?? null)
     : (product.node.compareAtPriceRange?.minVariantPrice.amount ?? null);
 }
 
-export function productDiscountPercent(product: ShopifyProduct) {
+export function productDiscountPercent(product: StoreProduct) {
   return discountPercent(String(productPrice(product)), productCompareAt(product));
 }
 
-export function productInStock(product: ShopifyProduct) {
+export function productInStock(product: StoreProduct) {
   const node = product.node;
   if (typeof node.availableForSale === "boolean") return node.availableForSale;
   return node.variants.edges.some((edge) => edge.node.availableForSale);
 }
 
-export function productCollectionHandles(product: ShopifyProduct) {
+export function productCollectionHandles(product: StoreProduct) {
   return (product.node.collections?.edges ?? []).map((edge) => edge.node.handle);
 }
