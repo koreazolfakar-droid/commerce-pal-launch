@@ -110,96 +110,14 @@ export function HeroVisualEditor({
     secondary_button_style: form.secondaryButtonStyle,
     visual_config: config,
   };
-  const themes = [
-    {
-      name: ar ? "إعلان مركزي" : "Spotlight",
-      theme: "light",
-      opacity: 40,
-      align: "center",
-      content: { x: 50, y: 35 },
-      buttons: { x: 50, y: 90 },
-      placement: "free",
-    },
-    {
-      name: ar ? "بطاقة زجاجية" : "Glass editorial",
-      theme: "glass",
-      opacity: 10,
-      align: "start",
-      content: { x: 0, y: 45 },
-      buttons: { x: 0, y: 100 },
-      placement: "free",
-    },
-    {
-      name: ar ? "صورة وزر تحتها" : "Poster + action bar",
-      theme: "light",
-      opacity: 15,
-      align: "center",
-      content: { x: 50, y: 90 },
-      buttons: { x: 50, y: 100 },
-      placement: "below",
-    },
-    {
-      name: ar ? "كتالوج فاتح" : "Light catalogue",
-      theme: "dark",
-      opacity: 0,
-      align: "start",
-      content: { x: 0, y: 30 },
-      buttons: { x: 0, y: 95 },
-      placement: "free",
-    },
-  ] as const;
+
   return (
     <div className="space-y-4" dir={ar ? "rtl" : "ltr"}>
-      <p className="text-sm text-slate-600">
+      <p className="text-xs leading-5 text-slate-500">
         {ar
-          ? "اختَر ثيمًا، واسحب النص أو الأزرار. مواضع المحتوى وقص الصورة للهاتف مستقلان عن الكمبيوتر. اضغط Save لتطبيق التغييرات."
-          : "Choose a theme, then drag the text or buttons. Mobile content positions and image crop are independent from desktop. Save to apply your changes."}
+          ? "اسحب النص أو الأزرار داخل المعاينة. استخدم أدوات القص بالأسفل لضبط الصورة لكل جهاز بشكل مستقل."
+          : "Drag text or buttons inside the preview. Use the crop controls below to adjust the image independently for each device."}
       </p>
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {themes.map((theme) => (
-          <button
-            type="button"
-            key={theme.name}
-            onClick={() =>
-              apply({
-                ...form,
-                contentTheme: theme.theme,
-                overlayOpacity: theme.opacity,
-                contentAlignment: theme.align,
-                buttonStyle: theme.theme === "dark" ? "dark" : "light",
-                visualConfig: {
-                  ...config,
-                  titleSize: "standard",
-                  contentWidth: "narrow",
-                  buttonRadius: "pill",
-                  buttonPlacement: theme.placement,
-                  desktopLayout: {
-                    content: { ...theme.content },
-                    buttons: { ...theme.buttons },
-                  },
-                  mobileLayout: {
-                    content: { ...theme.content },
-                    buttons: { ...theme.buttons },
-                  },
-                },
-              })
-            }
-            className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-start"
-          >
-            <span
-              className={`relative block h-20 ${theme.theme === "dark" ? "bg-slate-100" : "bg-gradient-to-br from-slate-900 to-indigo-700"}`}
-              aria-hidden="true"
-            >
-              <span
-                className={`absolute top-4 h-6 w-1/2 rounded ${theme.theme === "glass" ? "bg-white/25" : theme.theme === "dark" ? "bg-slate-400" : "bg-white/70"}`}
-                style={{ left: theme.align === "center" ? "25%" : "10%" }}
-              />
-              <span className="absolute bottom-3 left-[10%] h-2 w-12 rounded-full bg-indigo-400" />
-            </span>
-            <span className="block p-3 text-xs font-bold">{theme.name}</span>
-          </button>
-        ))}
-      </div>
       <div className="flex flex-wrap items-center gap-2">
         <label className="text-xs font-semibold">
           {ar ? "مكان الأزرار" : "Button placement"}
@@ -271,7 +189,7 @@ export function HeroVisualEditor({
       </div>
       <div
         ref={host}
-        className="w-full overflow-hidden rounded-2xl bg-slate-100 p-0"
+        className={`mx-auto w-full overflow-hidden rounded-2xl bg-slate-100 p-0 ${mode === "desktop" ? "max-w-[520px]" : "max-w-[390px]"}`}
         style={{ height: dimensions.height * scale }}
       >
         <div
@@ -351,7 +269,7 @@ export function HeroVisualEditor({
           );
         })}
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <label className="text-xs">
           {ar ? "العنصر" : "Element"}
           <select
@@ -396,7 +314,7 @@ export function HeroVisualEditor({
                   },
                 })
               }
-              className="mt-3 w-full"
+              className="mt-3 h-8 w-full accent-indigo-600"
             />
           </label>
         ))}
@@ -420,7 +338,7 @@ export function HeroVisualEditor({
                 },
               })
             }
-            className="mt-3 w-full"
+            className="mt-3 h-8 w-full accent-indigo-600"
           />
         </label>
         <label className="text-xs">
@@ -443,7 +361,7 @@ export function HeroVisualEditor({
                 },
               })
             }
-            className="mt-3 w-full"
+            className="mt-3 h-8 w-full accent-indigo-600"
           />
         </label>
       </div>
