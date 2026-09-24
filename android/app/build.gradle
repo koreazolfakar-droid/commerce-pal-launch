@@ -64,7 +64,6 @@ android {
 
 dependencies {
     implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.7.3"
-    implementation "com.google.androidbrowserhelper:locationdelegation:1.1.2"
 }
 
 gradle.taskGraph.whenReady { graph ->
