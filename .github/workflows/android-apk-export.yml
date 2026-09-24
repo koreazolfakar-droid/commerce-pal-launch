@@ -1,0 +1,81 @@
+name: Android APK Export
+
+on:
+  push:
+    branches:
+      - fix/android-production-foundation-20260924
+    paths:
+      - ".github/workflows/android-apk-export.yml"
+      - "android/**"
+      - "scripts/android-security-gate.mjs"
+      - "public/.well-known/assetlinks.json"
+      - "public/manifest.webmanifest"
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 36 toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.6.0"
+
+      - name: Security gate
+        run: node scripts/android-security-gate.mjs
+
+      - name: URL policy tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/space-call-url-policy
+          mkdir -p /tmp/space-call-url-policy/classes
+          javac --release 8 \
+            -d /tmp/space-call-url-policy/classes \
+            android/app/src/main/java/store/spacecallapp/app/SpaceCallUrlPolicy.java \
+            android/security-tests/store/spacecallapp/app/SpaceCallUrlPolicySelfTest.java
+          java -cp /tmp/space-call-url-policy/classes \
+            store.spacecallapp.app.SpaceCallUrlPolicySelfTest
+
+      - name: Build debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle -p android --no-daemon --stacktrace :app:assembleDebug
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug.apk dist/Space-Call-1.0.2-debug.apk
+          sha256sum dist/Space-Call-1.0.2-debug.apk > dist/SHA256SUMS.txt
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Space-Call-1.0.2-debug
+          path: |
+            dist/Space-Call-1.0.2-debug.apk
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
