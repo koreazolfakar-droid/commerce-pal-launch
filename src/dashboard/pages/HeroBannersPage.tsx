@@ -40,7 +40,6 @@ import {
   type DashboardHeroSlide,
   type HeroAlignment,
   type HeroButtonStyle,
-  type HeroContentTheme,
   type HeroImageTarget,
   type HeroTargetType,
   type HeroVisualConfig,
@@ -150,48 +149,6 @@ function isSafeHeroCustomUrl(value: string) {
   const trimmed = value.trim();
   return /^\/(?!\/)/.test(trimmed) || /^https?:\/\//i.test(trimmed);
 }
-
-const HERO_PRESETS: Array<{
-  id: string;
-  label: string;
-  description: string;
-  patch: Pick<DashboardHeroInput, "contentTheme" | "overlayOpacity" | "contentAlignment" | "visualConfig">;
-}> = [
-  {
-    id: "minimal",
-    label: "Minimal",
-    description: "Clean bottom layout",
-    patch: {
-      contentTheme: "light",
-      overlayOpacity: 15,
-      contentAlignment: "start",
-      visualConfig: { vertical: "bottom", titleSize: "standard", contentWidth: "narrow", buttonRadius: "pill" },
-    },
-  },
-  {
-    id: "center",
-    label: "Centered",
-    description: "Campaign focus",
-    patch: {
-      contentTheme: "light",
-      overlayOpacity: 30,
-      contentAlignment: "center",
-      visualConfig: { vertical: "center", titleSize: "large", contentWidth: "standard", buttonRadius: "rounded" },
-    },
-  },
-  {
-    id: "glass",
-    label: "Glass",
-    description: "Premium glass panel",
-    patch: {
-      contentTheme: "glass",
-      overlayOpacity: 10,
-      contentAlignment: "start",
-      visualConfig: { vertical: "bottom", titleSize: "standard", contentWidth: "standard", buttonRadius: "rounded" },
-    },
-  },
-];
-
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -920,7 +877,7 @@ export default function HeroBannersPage() {
                       </div>
                     </div>
                   </div>
-                  <div className={`relative mb-3 grid overflow-hidden rounded-xl bg-slate-100 ${isDesktop ? "aspect-[16/9]" : "aspect-[9/16] max-h-72"}`}>
+                  <div className={`relative mb-3 grid overflow-hidden rounded-xl bg-slate-100 ${isDesktop ? "aspect-[16/9] w-full max-w-[220px]" : "aspect-[9/16] max-h-72"}`}>
                     {displayUrl ? <img src={displayUrl} alt={alt} className="size-full object-cover" /> : <div className="grid place-items-center"><ImageIcon className="size-7 text-slate-300" /></div>}
                     {pendingPreviewUrl ? (
                       <div className="absolute bottom-2 left-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-[9px] font-bold text-white backdrop-blur">
@@ -1176,39 +1133,18 @@ export default function HeroBannersPage() {
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
                 <div className="text-[13px] font-bold text-[#14203a]">Advanced appearance</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">Theme, overlay, alignment, sizing and positioning controls.</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">Overlay, alignment, sizing and positioning controls.</div>
               </div>
               <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
             </summary>
             <div className="border-t border-slate-100 p-4 sm:p-5">
-            <div className="mb-4 mt-3 grid gap-2 sm:grid-cols-3">
-              {HERO_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => setForm((current) => ({ ...current, ...preset.patch, visualConfig: { ...preset.patch.visualConfig } }))}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-start transition hover:border-indigo-300 hover:bg-indigo-50/50"
-                >
-                  <span className="block text-[11px] font-bold text-slate-700">{preset.label}</span>
-                  <span className="mt-0.5 block text-[9px] text-slate-400">{preset.description}</span>
-                </button>
-              ))}
-            </div>
-            <div className="mb-4 grid gap-4 lg:grid-cols-3">
+            <div className="mb-4 grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content alignment</span>
                 <select value={form.contentAlignment} onChange={(e) => setForm((current) => ({ ...current, contentAlignment: e.target.value as HeroAlignment }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
                   <option value="start">Start</option>
                   <option value="center">Center</option>
                   <option value="end">End</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content theme</span>
-                <select value={form.contentTheme} onChange={(e) => setForm((current) => ({ ...current, contentTheme: e.target.value as HeroContentTheme }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="light">Light text</option>
-                  <option value="dark">Dark text</option>
-                  <option value="glass">Glass panel</option>
                 </select>
               </label>
               <label>
