@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import type { ShopifyProduct } from "@/lib/shopify";
+import type { StoreProduct } from "@/lib/storeTypes";
 
 type Money = { amount: string; currencyCode: string };
 
 export interface CartItem {
   lineId: string | null;
-  product: ShopifyProduct;
+  product: StoreProduct;
   variantId: string;
   variantTitle: string;
   price: Money;
