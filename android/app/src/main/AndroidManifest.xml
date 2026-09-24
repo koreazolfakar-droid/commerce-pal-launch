@@ -88,7 +88,9 @@
                 android:value="@string/launch_url" />
         </activity>
 
-        <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity" />
+        <activity
+            android:name="com.google.androidbrowserhelper.trusted.FocusActivity"
+            android:exported="true" />
 
         <activity android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity" />
 
