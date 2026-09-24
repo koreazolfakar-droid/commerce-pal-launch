@@ -52,6 +52,7 @@ test("editor has storefront-aware presets for logos, cards and responsive hero m
   assert.match(editor, /square: \[1400, 1400\]/);
   assert.match(editor, /"hero-desktop": \[1920, 1080\]/);
   assert.match(editor, /"hero-mobile": \[1080, 608\]/);
+  assert.doesNotMatch(editor, /h-\[46dvh\]/);
   assert.match(editor, /preset === "logo"/);
 });
 
