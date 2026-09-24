@@ -40,7 +40,7 @@ export interface CategoryDefinition {
 
 /**
  * Category dictionary. It maps *keywords* to sections — never individual
- * products — so any new Shopify product resolves automatically.
+ * products — so any new catalog product resolves automatically.
  */
 export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
   {
@@ -356,7 +356,7 @@ function sortByHierarchy(categories: Iterable<CategoryDefinition>) {
   );
 }
 
-/** Known names are stable; new explicit Shopify types/tags also get real category routes. */
+/** Known names are stable; new explicit product types/tags also get real category routes. */
 function explicitCategory(value: string): CategoryDefinition {
   const slug = slugify(value);
   return (
@@ -527,9 +527,9 @@ export interface CatalogIndex {
 }
 
 /**
- * Builds the whole dynamic taxonomy from live Shopify products.
+ * Builds the whole dynamic taxonomy from live catalog products.
  * Nothing here is hardcoded per product: sections exist only when products
- * resolve into them, so new Shopify products appear without code changes.
+ * resolve into them, so new catalog products appear without code changes.
  */
 export function buildCatalogIndex(products: StoreProduct[]): CatalogIndex {
   const categoryCounts = new Map<string, { definition: CategoryDefinition; count: number }>();
