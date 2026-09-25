@@ -231,3 +231,26 @@ test("global navigation categories come from managed Supabase categories", async
   assert.match(nativeStore, /canonicalCategorySlug\(inferredSlug\)/);
   assert.match(nativeStore, /filter\(\(category\) => category\.count > 0\)/);
 });
+
+
+test("used phones have one canonical indexable landing", async () => {
+  const [categoryRoute, sitemap, nativeStore, productRoute, categories, mobileMenu] =
+    await Promise.all([
+      source("src/routes/category.$slug.tsx"),
+      source("src/routes/sitemap[.]xml.ts"),
+      source("src/lib/nativeStore.ts"),
+      source("src/routes/product.$handle.tsx"),
+      source("src/routes/categories.tsx"),
+      source("src/components/MobileMenu.tsx"),
+    ]);
+
+  assert.match(categoryRoute, /canonicalSlug === "used-phone"/);
+  assert.match(categoryRoute, /to: "\/used-phones"/);
+  assert.match(sitemap, /category\.slug !== "used-phone"/);
+  assert.match(nativeStore, /category\.slug !== "used-phone"/);
+  assert.match(productRoute, /isUsedPhone\(product\)/);
+  assert.match(productRoute, /path: "\/used-phones"/);
+  assert.match(categories, /category\.slug === "used-phone"/);
+  assert.match(categories, /to="\/used-phones"/);
+  assert.match(mobileMenu, /to="\/used-phones"/);
+});
