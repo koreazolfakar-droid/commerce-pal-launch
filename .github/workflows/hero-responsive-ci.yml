@@ -1,28 +1,7 @@
 name: Hero Responsive CI
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "src/components/HomeHero.tsx"
-      - "src/styles.css"
-      - "src/ui-overhaul.css"
-      - "src/design-consistency.css"
-      - "src/dark-black.css"
-      - "e2e/hero-responsive-check.mjs"
-      - ".github/workflows/hero-responsive-ci.yml"
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "src/components/HomeHero.tsx"
-      - "src/styles.css"
-      - "src/ui-overhaul.css"
-      - "src/design-consistency.css"
-      - "src/dark-black.css"
-      - "e2e/hero-responsive-check.mjs"
-      - ".github/workflows/hero-responsive-ci.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
