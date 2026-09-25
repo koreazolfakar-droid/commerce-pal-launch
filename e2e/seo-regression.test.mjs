@@ -218,3 +218,15 @@ test("category aliases converge on the managed Supabase canonical URLs", async (
   assert.match(product, /canonicalCategorySlug\(category\.slug\)/);
   assert.match(showcase, /canonicalCategorySlug\(category\.slug\)/);
 });
+
+
+test("global navigation categories come from managed Supabase categories", async () => {
+  const nativeStore = await source("src/lib/nativeStore.ts");
+  assert.match(nativeStore, /"id,title,handle,brand_id,category_id,product_type,tags"/);
+  assert.match(nativeStore, /from\("store_categories"\)/);
+  assert.match(nativeStore, /STOREFRONT_CATEGORY_SELECT/);
+  assert.match(nativeStore, /managedById/);
+  assert.match(nativeStore, /counts\.get\(category\.slug\)/);
+  assert.match(nativeStore, /canonicalCategorySlug\(inferredSlug\)/);
+  assert.match(nativeStore, /filter\(\(category\) => category\.count > 0\)/);
+});
