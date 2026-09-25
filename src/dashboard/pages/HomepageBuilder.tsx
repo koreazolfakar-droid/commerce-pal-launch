@@ -584,9 +584,11 @@ function Editor({
   update,
   brands,
   products,
+  productsReady,
 }: {
   brands: DashboardBrand[];
   products: DashboardProduct[];
+  productsReady: boolean;
   section: HomepageSection;
   update: (patch: Partial<HomepageSection>) => void;
 }) {
@@ -840,21 +842,28 @@ function Editor({
 
             {productSource === "manual" ? (
               <div className="sm:col-span-2">
-                <ManualProductPicker
-                  products={products}
-                  selectedIds={manualProductIds}
-                  onChange={(ids) =>
-                    update({
-                      settings: {
-                        ...settings,
-                        source: "manual",
-                        manualProductIds: ids,
-                        sourceValue: ids.join(","),
-                        count: Math.max(Number(settings.count ?? 5), ids.length),
-                      },
-                    })
-                  }
-                />
+                {productsReady ? (
+                  <ManualProductPicker
+                    products={products}
+                    selectedIds={manualProductIds}
+                    onChange={(ids) =>
+                      update({
+                        settings: {
+                          ...settings,
+                          source: "manual",
+                          manualProductIds: ids,
+                          sourceValue: ids.join(","),
+                          count: Math.max(Number(settings.count ?? 5), ids.length),
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-[11px] font-semibold text-slate-500">
+                    <Loader2 className="size-4 animate-spin text-indigo-500" />
+                    Loading products only when you need manual ordering…
+                  </div>
+                )}
               </div>
             ) : null}
 
@@ -1278,6 +1287,8 @@ function createHomepageSectionKey(type: string, suffix = Date.now()) {
 export default function HomepageBuilderPage() {
   const [brands, setBrands] = useState<DashboardBrand[]>([]);
   const [products, setProducts] = useState<DashboardProduct[]>([]);
+  const [productsReady, setProductsReady] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [reload, setReload] = useState(0);
   const [sections, setSections] = useState<HomepageSection[]>([]);
@@ -1298,15 +1309,10 @@ export default function HomepageBuilderPage() {
     setLoading(true);
 
     setLoadError("");
-    Promise.all([
-      loadDashboardHomepageWorkspace(),
-      listDashboardBrands(),
-      listDashboardProducts(),
-    ])
-      .then(([{ sections: liveSections, role }, liveBrands, liveProducts]) => {
+    Promise.all([loadDashboardHomepageWorkspace(), listDashboardBrands()])
+      .then(([{ sections: liveSections, role }, liveBrands]) => {
         if (cancelled) return;
         setBrands(liveBrands);
-        setProducts(liveProducts);
         setSections(liveSections);
         setPersistedIds(new Set(liveSections.map((section) => section.id)));
         setSelectedId(liveSections[0]?.id ?? "");
@@ -1327,6 +1333,43 @@ export default function HomepageBuilderPage() {
       cancelled = true;
     };
   }, [reload]);
+
+  const selectedProductSource = selected
+    ? String(
+        selected.settings.source ??
+          (selected.sectionId === "featured_products" ? "best_sellers" : "collection"),
+      )
+    : "";
+  const needsManualProducts =
+    Boolean(selected) &&
+    ["product-carousel", "featured-products"].includes(selected.type) &&
+    selectedProductSource === "manual";
+
+  useEffect(() => {
+    if (!needsManualProducts || productsReady || productsLoading) return;
+
+    let cancelled = false;
+    setProductsLoading(true);
+    listDashboardProducts()
+      .then((liveProducts) => {
+        if (!cancelled) setProducts(liveProducts);
+      })
+      .catch((cause) => {
+        if (!cancelled) {
+          toast.error(cause instanceof Error ? cause.message : "Unable to load products.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setProductsReady(true);
+          setProductsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [needsManualProducts, productsReady, productsLoading]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -1624,6 +1667,7 @@ export default function HomepageBuilderPage() {
               <Editor
                 brands={brands}
                 products={products}
+                productsReady={productsReady}
                 section={selected}
                 update={updateSelected}
               />
