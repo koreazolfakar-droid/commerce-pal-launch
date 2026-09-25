@@ -15,6 +15,8 @@ export interface StoreProductNode {
   availableForSale?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   tags?: string[];
   priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
   compareAtPriceRange?: { minVariantPrice: { amount: string; currencyCode: string } };
