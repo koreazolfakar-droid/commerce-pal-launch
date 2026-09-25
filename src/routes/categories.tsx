@@ -94,7 +94,11 @@ export const Route = createFileRoute("/categories")({
                   "@type": "ListItem",
                   position: index + 1,
                   name: category.name,
-                  url: absoluteUrl(`/category/${encodeURIComponent(category.slug)}`),
+                  url: absoluteUrl(
+                    category.slug === "used-phone"
+                      ? "/used-phones"
+                      : `/category/${encodeURIComponent(category.slug)}`,
+                  ),
                 })),
               }),
             ]
@@ -147,43 +151,63 @@ function CategoriesPage() {
           role="list"
           aria-label={language === "ar" ? "تصنيفات المتجر" : "Store categories"}
         >
-          {items.map((category: CategoryDisplayItem) => (
-            <Link
-              key={category.slug}
-              to="/category/$slug"
-              params={{ slug: category.slug }}
-              role="listitem"
-              aria-label={category.label}
-              className="group flex min-w-0 flex-col items-center gap-2 rounded-lg px-1.5 py-2 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:gap-2.5 sm:px-2"
-            >
-              <span
-                className="relative grid h-[4.6rem] w-[4.6rem] shrink-0 place-items-center overflow-hidden rounded-lg border border-border/70 bg-card shadow-card transition-colors duration-150 group-hover:border-primary/25 sm:h-[5.3rem] sm:w-[5.3rem]"
-                aria-hidden="true"
-              >
-                <span className="pointer-events-none absolute inset-0 bg-card" />
-                {category.imageUrl ? (
-                  <img
-                    src={category.imageUrl}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    width={240}
-                    height={240}
-                    className="relative h-full w-full object-contain p-1.5"
-                  />
-                ) : (
-                  <CategoryGlyph
-                    slug={category.glyphSlug}
-                    className="relative h-[4.1rem] w-[4.1rem] sm:h-[4.75rem] sm:w-[4.75rem]"
-                  />
-                )}
-              </span>
+          {items.map((category: CategoryDisplayItem) => {
+            const tile = (
+              <>
+                <span
+                  className="relative grid h-[4.6rem] w-[4.6rem] shrink-0 place-items-center overflow-hidden rounded-lg border border-border/70 bg-card shadow-card transition-colors duration-150 group-hover:border-primary/25 sm:h-[5.3rem] sm:w-[5.3rem]"
+                  aria-hidden="true"
+                >
+                  <span className="pointer-events-none absolute inset-0 bg-card" />
+                  {category.imageUrl ? (
+                    <img
+                      src={category.imageUrl}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      width={240}
+                      height={240}
+                      className="relative h-full w-full object-contain p-1.5"
+                    />
+                  ) : (
+                    <CategoryGlyph
+                      slug={category.glyphSlug}
+                      className="relative h-[4.1rem] w-[4.1rem] sm:h-[4.75rem] sm:w-[4.75rem]"
+                    />
+                  )}
+                </span>
 
-              <h2 className="line-clamp-2 min-h-[2rem] max-w-full text-[11px] font-semibold leading-[1.3] tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.15rem] sm:text-xs">
-                {category.label}
-              </h2>
-            </Link>
-          ))}
+                <h2 className="line-clamp-2 min-h-[2rem] max-w-full text-[11px] font-semibold leading-[1.3] tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.15rem] sm:text-xs">
+                  {category.label}
+                </h2>
+              </>
+            );
+            const className =
+              "group flex min-w-0 flex-col items-center gap-2 rounded-lg px-1.5 py-2 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:gap-2.5 sm:px-2";
+
+            return category.slug === "used-phone" ? (
+              <Link
+                key={category.slug}
+                to="/used-phones"
+                role="listitem"
+                aria-label={category.label}
+                className={className}
+              >
+                {tile}
+              </Link>
+            ) : (
+              <Link
+                key={category.slug}
+                to="/category/$slug"
+                params={{ slug: category.slug }}
+                role="listitem"
+                aria-label={category.label}
+                className={className}
+              >
+                {tile}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </StoreLayout>
