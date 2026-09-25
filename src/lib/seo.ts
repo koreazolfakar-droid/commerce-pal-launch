@@ -26,8 +26,7 @@ export function canonicalUrl(path: string, override?: string | null) {
 
     resolved.search = "";
     resolved.hash = "";
-    resolved.pathname =
-      resolved.pathname === "/" ? "/" : resolved.pathname.replace(/\/+$/, "");
+    resolved.pathname = resolved.pathname === "/" ? "/" : resolved.pathname.replace(/\/+$/, "");
     return resolved.toString();
   } catch {
     return fallback;
@@ -103,6 +102,7 @@ export function socialMeta({
   imageHeight,
   locale = "en_LB",
   alternateLocale = "ar_LB",
+  url,
 }: {
   title: string;
   description: string;
@@ -113,12 +113,13 @@ export function socialMeta({
   imageHeight?: number;
   locale?: "en_LB" | "ar_LB";
   alternateLocale?: "en_LB" | "ar_LB";
+  url?: string;
 }) {
   return [
     { property: "og:title", content: title },
     { property: "og:description", content: description },
     { property: "og:type", content: type },
-    { property: "og:url", content: absoluteUrl(path) },
+    { property: "og:url", content: url ?? absoluteUrl(path) },
     { property: "og:image", content: image },
     ...(imageWidth ? [{ property: "og:image:width", content: String(imageWidth) }] : []),
     ...(imageHeight ? [{ property: "og:image:height", content: String(imageHeight) }] : []),
