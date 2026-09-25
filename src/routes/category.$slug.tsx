@@ -8,7 +8,7 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { categoryDefinition, displayCollections, productsInCategory } from "@/lib/taxonomy";
-import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
+import { breadcrumbJsonLd, canonicalLink, cleanMetaDescription, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import type { CatalogIndex } from "@/lib/taxonomy";
 
@@ -114,7 +114,11 @@ export const Route = createFileRoute("/category/$slug")({
     }
     const label = loaderData.label ?? categoryDefinition(params.slug)?.label ?? "Category";
     const title = `${label} in Lebanon | ${STORE_NAME}`;
-    const description = `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
+    const fallbackDescription = `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
+    const description = cleanMetaDescription(
+      loaderData.description,
+      fallbackDescription,
+    );
     const path = `/category/${params.slug}`;
     const hasProducts = loaderData.products.length > 0;
     return {
@@ -127,7 +131,12 @@ export const Route = createFileRoute("/category/$slug")({
             ? "index, follow, max-image-preview:large, max-snippet:-1"
             : "noindex, follow",
         },
-        ...socialMeta({ title, description, path }),
+        ...socialMeta({
+          title,
+          description,
+          path,
+          ...(loaderData.imageUrl ? { image: loaderData.imageUrl } : {}),
+        }),
       ],
       links: [canonicalLink(path)],
       scripts: [
