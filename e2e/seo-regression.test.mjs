@@ -176,7 +176,7 @@ test("product breadcrumbs use the resolved commerce category when available", as
   const productRoute = await source("src/routes/product.$handle.tsx");
   assert.match(productRoute, /const category = primaryCategory\(product\)/);
   assert.match(productRoute, /category\.label/);
-  assert.match(productRoute, /\/category\/\$\{category\.slug\}/);
+  assert.match(productRoute, /canonicalCategorySlug\(category\.slug\)/);
 });
 
 test("sitemap fails closed instead of publishing a partial URL set", async () => {
@@ -187,7 +187,6 @@ test("sitemap fails closed instead of publishing a partial URL set", async () =>
   assert.match(sitemap, /productResult\.status === "rejected"/);
   assert.match(sitemap, /supportResult\.status === "rejected"/);
 });
-
 
 test("category aliases converge on the managed Supabase canonical URLs", async () => {
   const [canonical, categoryRoute, sitemap, footer, header, product, showcase] =
@@ -215,13 +214,12 @@ test("category aliases converge on the managed Supabase canonical URLs", async (
 
   assert.match(categoryRoute, /canonicalCategorySlug\(params\.slug\)/);
   assert.match(categoryRoute, /canonicalSlug !== params\.slug/);
-  assert.match(sitemap, /isCanonicalCategorySlug\(category\.slug\)/);
+  assert.doesNotMatch(sitemap, /catalog\.categories[\s\S]*?\/category\//);
   assert.match(footer, /canonicalCategorySlug\(entry\.slug\)/);
   assert.match(header, /canonicalCategorySlug/);
   assert.match(product, /canonicalCategorySlug\(category\.slug\)/);
   assert.match(showcase, /canonicalCategorySlug\(category\.slug\)/);
 });
-
 
 test("global navigation categories come from managed Supabase categories", async () => {
   const nativeStore = await source("src/lib/nativeStore.ts");
