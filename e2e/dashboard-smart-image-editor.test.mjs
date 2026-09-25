@@ -98,10 +98,21 @@ test("product editor mirrors the live storefront media geometry without double p
 
 test("hero images have separate desktop and mobile smart crops and can be re-edited", () => {
   assert.match(hero, /useSmartImageEditor/);
-  assert.match(hero, /preset: isDesktop \? "hero-desktop" : "hero-mobile"/);
+  assert.match(hero, /preset: target === "desktop" \? "hero-desktop" : "hero-mobile"/);
   assert.match(hero, /Adjust existing desktop hero/);
   assert.match(hero, /Adjust existing mobile hero/);
   assert.match(hero, /setPendingHeroImages/);
+  assert.match(hero, /setPreviewMode\(target\)/);
+});
+
+test("hero smart editor cannot shrink artwork inside the frame", () => {
+  assert.match(editor, /const isHeroPreset = preset === "hero-desktop" \|\| preset === "hero-mobile"/);
+  assert.match(editor, /Hero safety lock: Fill mode · 0% padding · minimum 100% zoom/);
+  assert.match(editor, /min=\{isHeroPreset \? 1 : 0\.55\}/);
+  assert.match(editor, /setZoom\(isHeroPreset \? Math\.max\(1, value\) : value\)/);
+  assert.match(editor, /setPadding\(isHeroPreset \? 0 : initialPadding\)/);
+  assert.match(editor, /setFit\(isHeroPreset \? "cover" : initialFit\)/);
+  assert.match(editor, /isHeroPreset \? "Use this crop" : "Save adjustment"/);
 });
 
 test("shared media surfaces support smart adjustment without breaking existing links", () => {
