@@ -134,9 +134,8 @@ export default function CategoryForm({
 
   const applyAiPatch = (values: Record<string, string>) => {
     const suggestedIcon = values.icon?.trim();
-    const icon = suggestedIcon && categoryIconOptions.includes(suggestedIcon)
-      ? suggestedIcon
-      : undefined;
+    const icon =
+      suggestedIcon && categoryIconOptions.includes(suggestedIcon) ? suggestedIcon : undefined;
 
     patch({
       ...(values.name !== undefined ? { name: values.name } : {}),
@@ -301,7 +300,8 @@ export default function CategoryForm({
                 {
                   key: "description",
                   label: "Description",
-                  description: "Useful category copy describing the products customers should expect.",
+                  description:
+                    "Useful category copy describing the products customers should expect.",
                   maxLength: 3000,
                 },
                 {
