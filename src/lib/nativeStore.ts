@@ -914,6 +914,24 @@ export async function fetchAllProductsByVendor(vendor: string) {
   return fetchProductsByVendor(vendor, Number.MAX_SAFE_INTEGER);
 }
 
+export async function fetchProductsByIds(ids: string[]) {
+  const normalizedIds = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+  const order = new Map(normalizedIds.map((id, index) => [id, index]));
+  if (!order.size) return [];
+
+  const productResult = await publicSupabase
+    .from("store_products")
+    .select(STOREFRONT_PRODUCT_SELECT)
+    .in("id", normalizedIds)
+    .eq("status", "active");
+  const products = await hydrateProductRows(assertResult(productResult, "products by ids"));
+  return products.sort(
+    (a, b) =>
+      (order.get(a.node.id) ?? Number.MAX_SAFE_INTEGER) -
+      (order.get(b.node.id) ?? Number.MAX_SAFE_INTEGER),
+  );
+}
+
 export async function fetchProductsByHandles(handles: string[]) {
   const normalizedHandles = [
     ...new Set(handles.map((handle) => handle.trim().toLowerCase()).filter(Boolean)),
