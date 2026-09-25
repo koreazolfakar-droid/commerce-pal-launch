@@ -48,14 +48,14 @@ GEMINI_API_KEY=<secret>
 Optional:
 
 ```text
-GEMINI_MODEL=gemini-3.8-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 Never expose the Gemini key through a `VITE_*` variable or browser code.
 
-The Edge Function uses the Gemini Interactions API with structured JSON output. It attempts Google Search grounding first. If Search grounding is unavailable for the current API project/tier, it retries without Search and forces the result into an unverified/manual-review state.
+The Edge Function uses the Gemini Interactions API with structured JSON output and defaults to Gemini 3.5 Flash-Lite. It attempts Google Search grounding first. If Search grounding is unavailable for the current API project/tier or quota, it retries without Search and forces the result into an unverified/manual-review state.
 
-As of September 2026, Gemini model token usage has Free Tier support for selected models, but Google Search grounding is not available through the Free Tier API. Paid Gemini 3.x projects currently include a monthly Search grounding allowance before per-search charges. Verify current limits before enabling billing:
+As of September 2026, Gemini API Free Tier access depends on the selected model/project. Search grounding also has separate tier/quota rules, so the implementation never assumes Search is available: a 400/403/429 Search failure falls back to ungrounded manual-review output. Verify current model and grounding limits before enabling billing:
 
 - https://ai.google.dev/gemini-api/docs/pricing
 - https://ai.google.dev/gemini-api/docs/google-search
