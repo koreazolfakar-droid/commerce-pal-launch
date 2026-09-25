@@ -71,16 +71,24 @@ const SUPPORT_DISCOVERY_LINKS: RelatedLink[] = [
   { to: "/help", en: "Help center", ar: "مركز المساعدة" },
   { to: "/faq", en: "Frequently asked questions", ar: "الأسئلة الشائعة" },
   { to: "/contact", en: "Contact Space Call", ar: "تواصل مع Space Call" },
+];
+
+const POLICY_DISCOVERY_LINKS: RelatedLink[] = [
   { to: "/shipping", en: "Shipping information", ar: "معلومات الشحن" },
   { to: "/returns", en: "Returns guidance", ar: "إرشادات الإرجاع" },
   { to: "/warranty", en: "Warranty guidance", ar: "إرشادات الضمان" },
+  { to: "/privacy", en: "Privacy policy", ar: "سياسة الخصوصية" },
+  { to: "/terms", en: "Terms of service", ar: "شروط الخدمة" },
 ];
 
 function relatedLinksForPage(page: InfoPageName): RelatedLink[] {
-  if (page === "about" || page === "contact" || page === "help" || page === "faq") {
-    return [...SHOP_DISCOVERY_LINKS, ...SUPPORT_DISCOVERY_LINKS.slice(0, 2)];
-  }
-  return [...SUPPORT_DISCOVERY_LINKS, ...SHOP_DISCOVERY_LINKS.slice(0, 2)];
+  const currentPath = `/${page}`;
+  const links =
+    page === "about" || page === "contact" || page === "help" || page === "faq"
+      ? [...SHOP_DISCOVERY_LINKS, ...SUPPORT_DISCOVERY_LINKS, ...POLICY_DISCOVERY_LINKS]
+      : [...POLICY_DISCOVERY_LINKS, ...SUPPORT_DISCOVERY_LINKS, ...SHOP_DISCOVERY_LINKS];
+
+  return links.filter((link) => link.to !== currentPath).slice(0, 7);
 }
 
 const PAGE_GUIDES: Partial<Record<InfoPageName, PageGuide>> = {
