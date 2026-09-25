@@ -9,7 +9,7 @@ import {
   WandSparkles,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { requestDashboardAiAssist } from "@/dashboard/ai/client";
@@ -354,7 +354,7 @@ function ActionButton({
   onClick,
 }: {
   label: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   active: boolean;
   disabled: boolean;
   onClick: () => void;
