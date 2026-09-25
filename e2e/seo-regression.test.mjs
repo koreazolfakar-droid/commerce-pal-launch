@@ -130,3 +130,78 @@ test("commercial indexes noindex themselves when empty", async () => {
   assert.match(product, /const hasValidPrice = productPrice\(product\) > 0/);
   assert.match(product, /"noindex, follow"/);
 });
+
+test("phase 2 loads product SEO fields only on product detail requests", async () => {
+  const [types, nativeStore, seo, productRoute] = await Promise.all([
+    source("src/lib/storeTypes.ts"),
+    source("src/lib/nativeStore.ts"),
+    source("src/lib/seo.ts"),
+    source("src/routes/product.$handle.tsx"),
+  ]);
+
+  assert.match(types, /seoTitle\?: string/);
+  assert.match(types, /seoDescription\?: string/);
+  assert.match(nativeStore, /STOREFRONT_PRODUCT_DETAIL_SELECT/);
+  assert.match(
+    nativeStore,
+    /STOREFRONT_PRODUCT_DETAIL_SELECT\s*=\s*\n\s*"[^"]*seo_title,seo_description/,
+  );
+  assert.doesNotMatch(
+    nativeStore,
+    /STOREFRONT_PRODUCT_SELECT\s*=\s*\n\s*"[^"]*seo_title/,
+  );
+  assert.match(
+    nativeStore,
+    /fetchProductByHandle[\s\S]*?\.select\(STOREFRONT_PRODUCT_DETAIL_SELECT\)/,
+  );
+  assert.match(nativeStore, /seoTitle:\s*row\.seo_title\?\.trim\(\)/);
+  assert.match(nativeStore, /seoDescription:\s*row\.seo_description\?\.trim\(\)/);
+  assert.match(seo, /const dashboardDescription = node\.seoDescription\?\.trim\(\)/);
+  assert.match(productRoute, /product\.node\.seoTitle\?\.trim\(\)/);
+});
+
+test("phase 2 wires existing category SEO fields without adding a new data source", async () => {
+  const category = await source("src/routes/category.$slug.tsx");
+  assert.match(
+    category,
+    /\.select\("name,name_ar,slug,description,image_url,seo_title,seo_description"\)/,
+  );
+  assert.match(category, /seoTitle:\s*managedCategory\.seo_title/);
+  assert.match(category, /seoDescription:\s*managedCategory\.seo_description/);
+  assert.match(category, /loaderData\.seoTitle\?\.trim\(\)/);
+  assert.match(category, /loaderData\.seoDescription \|\| loaderData\.description/);
+  assert.doesNotMatch(category, /canonicalCategorySlug/);
+});
+
+test("phase 2 exposes collection SEO fields through the existing collection facade", async () => {
+  const [types, nativeStore, collection] = await Promise.all([
+    source("src/lib/storeTypes.ts"),
+    source("src/lib/nativeStore.ts"),
+    source("src/routes/collections.$handle.tsx"),
+  ]);
+
+  assert.match(types, /export interface StoreCollection[\s\S]*?seoTitle\?: string/);
+  assert.match(types, /export interface StoreCollection[\s\S]*?seoDescription\?: string/);
+  assert.match(
+    nativeStore,
+    /"id,handle,title,description,image_url,seo_title,seo_description"/,
+  );
+  assert.match(nativeStore, /seoTitle:\s*row\.seo_title\?\.trim\(\)/);
+  assert.match(nativeStore, /seoDescription:\s*row\.seo_description\?\.trim\(\)/);
+  assert.match(collection, /collection\.seoTitle\?\.trim\(\)/);
+  assert.match(collection, /collection\.seoDescription\?\.trim\(\)/);
+});
+
+test("phase 2 still excludes risky production routing and SSR changes", async () => {
+  const [server, root, config, navigation] = await Promise.all([
+    source("src/server.ts"),
+    source("src/routes/__root.tsx"),
+    source("src/lib/storeConfig.ts"),
+    source("src/lib/nativeStore.ts"),
+  ]);
+
+  assert.doesNotMatch(server, /canonicalHostRedirect|CANONICAL_HOST|ALTERNATE_HOST/);
+  assert.doesNotMatch(root, /useLocation/);
+  assert.match(config, /https:\/\/spacecallapp\.store/);
+  assert.doesNotMatch(navigation, /STOREFRONT_CATEGORY_SELECT|managedById|managedBySlug/);
+});

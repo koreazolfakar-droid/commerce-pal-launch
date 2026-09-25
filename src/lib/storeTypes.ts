@@ -15,6 +15,8 @@ export interface StoreProductNode {
   availableForSale?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   tags?: string[];
   priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
   compareAtPriceRange?: { minVariantPrice: { amount: string; currencyCode: string } };
@@ -52,5 +54,7 @@ export interface StoreCollection {
   handle: string;
   title: string;
   description: string;
+  seoTitle?: string;
+  seoDescription?: string;
   image: { url: string; altText: string | null } | null;
 }

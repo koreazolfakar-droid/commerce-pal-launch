@@ -7,7 +7,14 @@ import { buildCatalogIndex } from "@/lib/taxonomy";
 import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchCollectionByHandle } from "@/lib/storefrontData";
-import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
+import {
+  breadcrumbJsonLd,
+  canonicalLink,
+  cleanMetaDescription,
+  itemListJsonLd,
+  jsonLd,
+  socialMeta,
+} from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/collections/$handle")({
@@ -27,12 +34,18 @@ export const Route = createFileRoute("/collections/$handle")({
       };
     }
     const collectionName = loaderData.collection.title;
-    const title = `${collectionName} in Lebanon | ${STORE_NAME}`;
-    const rawDescription = loaderData.collection.description?.trim() ?? "";
+    const title =
+      loaderData.collection.seoTitle?.trim() ||
+      `${collectionName} in Lebanon | ${STORE_NAME}`;
+    const fallbackDescription = `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and direct Space Call checkout.`;
+    const rawDescription =
+      loaderData.collection.seoDescription?.trim() ||
+      loaderData.collection.description?.trim() ||
+      "";
     const description =
       rawDescription.length >= 90
-        ? rawDescription.slice(0, 155)
-        : `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and direct Space Call checkout.`;
+        ? cleanMetaDescription(rawDescription, fallbackDescription)
+        : fallbackDescription;
     const image = loaderData.collection.image?.url;
     const path = `/collections/${params.handle}`;
     return {
