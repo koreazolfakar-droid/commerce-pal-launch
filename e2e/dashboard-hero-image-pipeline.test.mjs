@@ -63,6 +63,7 @@ test("hero dashboard exposes real before and after optimization metadata", () =>
 
 test("hero dashboard media preview matches the 16:9 storefront shape on both devices", () => {
   assert.match(heroPage, /16:9 landscape/);
+  assert.match(heroPage, /aspect-\[16\/9\]/);
   assert.doesNotMatch(heroPage, /aspect-\[9\/16\]/);
 });
 
@@ -254,6 +255,8 @@ test("Hero crop controls are device-specific, touch friendly and reflected by st
   assert.doesNotMatch(heroScene, /hero-scene-backdrop/);
   assert.match(heroSceneCss, /aspect-ratio: 16 \/ 9/);
   assert.match(heroSceneCss, /object-position: var\(--hero-mobile-focus-x/);
+  assert.match(heroSceneCss, /transform: scale\(1\.06\)/);
+  assert.match(heroSceneCss, /transform-origin: var\(--hero-mobile-focus-x/);
 });
 
 
