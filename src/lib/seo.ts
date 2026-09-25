@@ -85,6 +85,11 @@ export function productMetaDescription(product: StoreProduct) {
 
   // Very short merchant descriptions are not useful snippets. Use a complete,
   // purchase-oriented fallback instead of cutting a sentence mid-way.
+  const dashboardDescription = node.seoDescription?.trim();
+  if (dashboardDescription) {
+    return cleanMetaDescription(dashboardDescription, fallback);
+  }
+
   const source = (node.description ?? "").replace(/\s+/g, " ").trim();
   if (source.length < 90) return cleanMetaDescription(fallback, fallback);
 
