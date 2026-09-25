@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
-const DEFAULT_MODEL = "gemini-3.8-flash";
+const DEFAULT_MODEL = "gemini-3.5-flash-lite";
 const MAX_BODY_BYTES = 32 * 1024;
 const GEMINI_TIMEOUT_MS = 25_000;
 
@@ -293,15 +293,16 @@ async function callGemini(args: {
       input: args.input,
       store: false,
       generation_config: {
-        temperature: 0.15,
         max_output_tokens: 4096,
         thinking_level: "low",
       },
-      response_format: {
-        type: "text",
-        mime_type: "application/json",
-        schema: responseSchema(args.fields),
-      },
+      response_format: [
+        {
+          type: "text",
+          mime_type: "application/json",
+          schema: responseSchema(args.fields),
+        },
+      ],
     };
     if (args.withSearch) payload.tools = [{ type: "google_search" }];
 
