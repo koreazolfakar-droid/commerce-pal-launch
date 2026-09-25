@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { StoreLayout } from "@/components/StoreLayout";
+import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import {
@@ -127,7 +128,7 @@ function ArabicLandingPage() {
               <Link
                 key={slug}
                 to="/category/$slug"
-                params={{ slug }}
+                params={{ slug: canonicalCategorySlug(slug) }}
                 className="group flex items-center gap-4 rounded-2xl border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-accent/50"
               >
                 <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
