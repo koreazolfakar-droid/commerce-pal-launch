@@ -25,13 +25,12 @@ export const Route = createFileRoute("/brands")({
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       fetchCmsSnapshot(),
     ]);
-    return { catalog, cms };
+    const seoBrands = applyCmsBrands(buildStoreBrands(catalog.brands, undefined), cms.brands);
+    return { cms, seoBrands };
   },
   head: ({ loaderData }) => {
     const seo = loaderData ? cmsSeoPage(loaderData.cms, "brands") : undefined;
-    const brands = loaderData
-      ? applyCmsBrands(buildStoreBrands(loaderData.catalog.brands, undefined), loaderData.cms.brands)
-      : [];
+    const brands = loaderData?.seoBrands ?? [];
     const title =
       seo?.title?.trim() || `Electronics Brands in Lebanon | ${STORE_NAME}`;
     const fallbackDescription =
