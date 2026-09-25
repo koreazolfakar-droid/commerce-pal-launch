@@ -118,6 +118,8 @@ test("product actions stay aligned without overlapping compact card content", as
   assert.match(consistency, /width: 2\.25rem;/);
   assert.match(consistency, /height: 2\.25rem;/);
   assert.match(consistency, /\.market-product-card \.market-product-action svg\.lucide/);
+  assert.match(consistency, /grid-template-rows: 1rem 2\.2rem 1rem 1\.1rem 2\.375rem/);
+  assert.match(consistency, /\.market-product-card \.market-product-action \{[\s\S]*?width: 2\.375rem/);
 });
 
 test("dashboard shared chrome stays compact without changing navigation structure", async () => {
