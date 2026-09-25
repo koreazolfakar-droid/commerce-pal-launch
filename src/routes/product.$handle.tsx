@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { fetchProductByHandle } from "@/lib/storefrontData";
 import { discountPercent, formatPrice } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
@@ -97,7 +98,7 @@ export const Route = createFileRoute("/product/$handle")({
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             ...(category
-              ? [{ name: category.label, path: `/category/${category.slug}` }]
+              ? [{ name: category.label, path: `/category/${canonicalCategorySlug(category.slug)}` }]
               : [{ name: "Shop", path: "/shop" }]),
             { name: title, path },
           ]),
@@ -303,7 +304,7 @@ function ProductPage() {
               <ChevronRight aria-hidden className="h-3.5 w-3.5" />
               <Link
                 to="/category/$slug"
-                params={{ slug: category.slug }}
+                params={{ slug: canonicalCategorySlug(category.slug) }}
                 className="transition-colors hover:text-primary"
               >
                 {category.label}
@@ -648,7 +649,7 @@ function ProductPage() {
               {category && (
                 <Link
                   to="/category/$slug"
-                  params={{ slug: category.slug }}
+                  params={{ slug: canonicalCategorySlug(category.slug) }}
                   className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
                 >
                   View all <ChevronRight aria-hidden className="h-4 w-4" />
