@@ -5,7 +5,6 @@ import { BottomNav, MOBILE_NAV_HEIGHT } from "@/components/BottomNav";
 import {
   CmsAnnouncementBar,
   CmsNavigationStrip,
-  CmsTrustStrip,
 } from "@/components/CmsStoreControls";
 import { DeferredCartDrawer } from "@/components/DeferredCartDrawer";
 import { DeferredDesktopHeader } from "@/components/DeferredDesktopHeader";
@@ -51,8 +50,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       <main id="main-content" tabIndex={-1} className={onCartPage ? "min-w-0" : "min-w-0 flex-1"}>
         {children}
       </main>
-      <CmsTrustStrip />
-      <CmsNavigationStrip area="footer" />
+       <CmsNavigationStrip area="footer" />
       {onHomePage ? <SiteFooter /> : null}
       <BottomNav />
       <DeferredCartDrawer />
