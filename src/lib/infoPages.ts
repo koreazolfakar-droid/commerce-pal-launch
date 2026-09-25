@@ -37,7 +37,7 @@ const INFO_PAGE_SEO: Record<
   {
     title: string;
     description: string;
-    schemaType: "WebPage" | "AboutPage" | "ContactPage" | "FAQPage";
+    schemaType: "WebPage" | "AboutPage" | "ContactPage";
   }
 > = {
   about: {
@@ -48,7 +48,7 @@ const INFO_PAGE_SEO: Record<
   faq: {
     title: `${STORE_NAME} FAQ | Orders, Delivery, Returns & Warranty`,
     description: `Find answers about ${STORE_NAME} orders, authentic products, delivery in Lebanon, returns, warranty, tracking and WhatsApp support.`,
-    schemaType: "FAQPage",
+    schemaType: "WebPage",
   },
   contact: {
     title: `Contact ${STORE_NAME} | Product & Order Support Lebanon`,
@@ -87,13 +87,6 @@ const INFO_PAGE_SEO: Record<
   },
 };
 
-const FAQ_ITEMS = [
-  ["faqOriginalQ", "faqOriginalA"],
-  ["faqTrackingQ", "faqTrackingA"],
-  ["faqReturnsQ", "faqReturnsA"],
-  ["faqDeliveryQ", "faqDeliveryA"],
-  ["faqWhatsAppQ", "faqWhatsAppA"],
-] as const satisfies ReadonlyArray<readonly [TranslationKey, TranslationKey]>;
 
 function infoPageJsonLd(page: InfoPageName) {
   const seo = INFO_PAGE_SEO[page];
@@ -112,17 +105,6 @@ function infoPageJsonLd(page: InfoPageName) {
     publisher: { "@id": `${SITE_URL}/#organization` },
     inLanguage: ["en-LB", "ar-LB"],
   } as Record<string, unknown>;
-
-  if (page === "faq") {
-    base["mainEntity"] = FAQ_ITEMS.map(([question, answer]) => ({
-      "@type": "Question",
-      name: translate("en", question),
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: translate("en", answer),
-      },
-    }));
-  }
 
   return base;
 }
