@@ -344,7 +344,6 @@ export function productJsonLd(product: StoreProduct) {
             ? "https://schema.org/InStock"
             : "https://schema.org/OutOfStock",
           itemCondition: productItemCondition(product),
-          hasMerchantReturnPolicy: { "@id": MERCHANT_RETURN_POLICY_ID },
           areaServed: {
             "@type": "Country",
             name: "Lebanon",
