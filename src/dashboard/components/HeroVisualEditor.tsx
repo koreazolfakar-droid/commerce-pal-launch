@@ -26,11 +26,14 @@ export function HeroVisualEditor({
   const [history, setHistory] = useState<DashboardHeroInput[]>([]);
   const [future, setFuture] = useState<DashboardHeroInput[]>([]);
   const latest = useRef(form);
-  latest.current = form;
   const host = useRef<HTMLDivElement>(null);
   const scene = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 390, height: 320 });
   const previewWidth = mode === "mobile" ? 390 : 960;
+  useEffect(() => {
+    latest.current = form;
+  }, [form]);
+
   useEffect(() => {
     if (!host.current || !scene.current) return;
     const observer = new ResizeObserver(() =>
@@ -210,7 +213,13 @@ export function HeroVisualEditor({
           className={`min-h-11 rounded-lg border px-3 text-xs font-semibold ${cropMode ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "bg-white"}`}
           onClick={() => setCropMode((value) => !value)}
         >
-          {ar ? (cropMode ? "إنهاء ضبط الصورة" : "ضبط الصورة باللمس") : (cropMode ? "Done adjusting image" : "Adjust image by touch")}
+          {ar
+            ? cropMode
+              ? "إنهاء ضبط الصورة"
+              : "ضبط الصورة باللمس"
+            : cropMode
+              ? "Done adjusting image"
+              : "Adjust image by touch"}
         </button>
       </div>
       <div
@@ -261,7 +270,9 @@ export function HeroVisualEditor({
               updateFocusFromPointer(event);
             }}
             onPointerMove={(event) => {
-              if (event.currentTarget.hasPointerCapture(event.pointerId)) updateFocusFromPointer(event);
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                updateFocusFromPointer(event);
+              }
             }}
             onPointerUp={(event) => {
               if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -274,12 +285,40 @@ export function HeroVisualEditor({
               }
             }}
             onKeyDown={(event) => {
-              if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+              if (
+                !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+                  event.key,
+                )
+              ) {
+                return;
+              }
               event.preventDefault();
               const step = event.shiftKey ? 5 : 1;
               const next = {
-                x: Math.max(0, Math.min(100, focus.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0))),
-                y: Math.max(0, Math.min(100, focus.y + (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0))),
+                x: Math.max(
+                  0,
+                  Math.min(
+                    100,
+                    focus.x +
+                      (event.key === "ArrowLeft"
+                        ? -step
+                        : event.key === "ArrowRight"
+                          ? step
+                          : 0),
+                  ),
+                ),
+                y: Math.max(
+                  0,
+                  Math.min(
+                    100,
+                    focus.y +
+                      (event.key === "ArrowUp"
+                        ? -step
+                        : event.key === "ArrowDown"
+                          ? step
+                          : 0),
+                  ),
+                ),
               };
               updateConfig({ [focusKey]: next });
             }}
