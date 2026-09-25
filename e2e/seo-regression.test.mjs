@@ -155,3 +155,42 @@ test("bare production host redirects permanently to canonical www without changi
   assert.match(server, /Location:\s*url\.toString\(\)/);
   assert.match(server, /method !== "GET" && method !== "HEAD"/);
 });
+
+
+test("website schema keeps site-name support without retired sitelinks search markup", async () => {
+  const seo = await source("src/lib/seo.ts");
+  assert.match(seo, /"@type": "WebSite"/);
+  assert.doesNotMatch(seo, /SearchAction/);
+  assert.doesNotMatch(seo, /search_term_string/);
+});
+
+test("Arabic landing emits Arabic social locale and SSR document language", async () => {
+  const [root, ar, i18n] = await Promise.all([
+    source("src/routes/__root.tsx"),
+    source("src/routes/ar.tsx"),
+    source("src/lib/i18n.tsx"),
+  ]);
+  assert.match(ar, /locale:\s*"ar_LB"/);
+  assert.match(ar, /alternateLocale:\s*"en_LB"/);
+  assert.match(root, /useLocation/);
+  assert.match(root, /pathname === "\/ar"/);
+  assert.match(root, /lang=\{isArabicLanding \? "ar" : "en"\}/);
+  assert.match(root, /dir=\{isArabicLanding \? "rtl" : "ltr"\}/);
+  assert.match(i18n, /forceArabic = location\.pathname === "\/ar"/);
+});
+
+test("product breadcrumbs use the resolved commerce category when available", async () => {
+  const productRoute = await source("src/routes/product.$handle.tsx");
+  assert.match(productRoute, /const category = primaryCategory\(product\)/);
+  assert.match(productRoute, /category\.label/);
+  assert.match(productRoute, /\/category\/\$\{category\.slug\}/);
+});
+
+test("sitemap fails closed instead of publishing a partial URL set", async () => {
+  const sitemap = await source("src/routes/sitemap[.]xml.ts");
+  assert.match(sitemap, /Sitemap data is temporarily unavailable/);
+  assert.match(sitemap, /status:\s*503/);
+  assert.match(sitemap, /"Retry-After":\s*"300"/);
+  assert.match(sitemap, /productResult\.status === "rejected"/);
+  assert.match(sitemap, /supportResult\.status === "rejected"/);
+});
