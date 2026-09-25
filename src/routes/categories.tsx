@@ -68,7 +68,9 @@ export const Route = createFileRoute("/categories")({
         { name: "description", content: description },
         {
           name: "robots",
-          content: "index, follow, max-image-preview:large, max-snippet:-1",
+          content: categories.length
+            ? "index, follow, max-image-preview:large, max-snippet:-1"
+            : "noindex, follow",
         },
         ...socialMeta({ title, description, path: "/categories" }),
       ],
