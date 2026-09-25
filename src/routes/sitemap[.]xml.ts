@@ -3,7 +3,6 @@ import type {} from "@tanstack/react-start";
 
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Tables } from "@/integrations/supabase/types";
-import { isCanonicalCategorySlug } from "@/lib/categoryCanonical";
 import { absoluteUrl } from "@/lib/seo";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex, displayCollections } from "@/lib/taxonomy";
@@ -234,9 +233,6 @@ export const Route = createFileRoute("/sitemap.xml")({
         );
 
         const dynamicEntries: SitemapEntry[] = [
-          ...catalog.categories
-            .filter((category) => category.count > 0 && isCanonicalCategorySlug(category.slug))
-            .map((category) => ({ path: `/category/${encodeURIComponent(category.slug)}` })),
           ...managedCategories.map((category) => ({
             path: `/category/${encodeURIComponent(category.slug)}`,
           })),
