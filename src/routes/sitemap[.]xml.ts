@@ -223,8 +223,8 @@ export const Route = createFileRoute("/sitemap.xml")({
             .map((row) => row.category_id)
             .filter((value): value is string => Boolean(value)),
         );
-        const managedCategories = support.categories.filter((category) =>
-          activeCategoryIds.has(category.id),
+        const managedCategories = support.categories.filter(
+          (category) => activeCategoryIds.has(category.id) && category.slug !== "used-phone",
         );
         const collections = displayCollections(
           support.collections
