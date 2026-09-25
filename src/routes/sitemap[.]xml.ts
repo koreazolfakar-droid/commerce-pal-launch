@@ -180,11 +180,24 @@ export const Route = createFileRoute("/sitemap.xml")({
           fetchSitemapSupportData(),
         ]);
 
-        const productRows = productResult.status === "fulfilled" ? productResult.value : [];
-        const support =
-          supportResult.status === "fulfilled"
-            ? supportResult.value
-            : { brands: [], categories: [], collections: [], links: [] };
+        if (productResult.status === "rejected" || supportResult.status === "rejected") {
+          console.error(
+            "Sitemap generation failed.",
+            productResult.status === "rejected" ? productResult.reason : supportResult.reason,
+          );
+          return new Response("Sitemap data is temporarily unavailable.", {
+            status: 503,
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "no-store",
+              "Retry-After": "300",
+              "X-Robots-Tag": "noindex",
+            },
+          });
+        }
+
+        const productRows = productResult.value;
+        const support = supportResult.value;
 
         const brandsById = new Map(support.brands.map((brand) => [brand.id, brand.name]));
         const products = productRows.map((row) =>
