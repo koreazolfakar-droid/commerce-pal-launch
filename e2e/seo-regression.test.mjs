@@ -232,7 +232,6 @@ test("global navigation categories come from managed Supabase categories", async
   assert.match(nativeStore, /filter\(\(category\) => category\.count > 0\)/);
 });
 
-
 test("used phones have one canonical indexable landing", async () => {
   const [categoryRoute, sitemap, nativeStore, productRoute, categories, mobileMenu] =
     await Promise.all([
@@ -255,7 +254,6 @@ test("used phones have one canonical indexable landing", async () => {
   assert.match(categories, /to="\/used-phones"/);
   assert.match(mobileMenu, /to="\/used-phones"/);
 });
-
 
 test("retired compare page permanently redirects instead of being indexed", async () => {
   const compare = await source("src/routes/compare.tsx");
