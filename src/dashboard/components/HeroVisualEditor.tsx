@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { HeroScene } from "@/components/HeroScene";
 import { localizedCmsText, type CmsHeroSlide } from "@/lib/cms";
 import {
@@ -22,14 +22,18 @@ export function HeroVisualEditor({
 }) {
   const ar = language === "ar";
   const [selected, setSelected] = useState<keyof HeroLayout>("content");
+  const [cropMode, setCropMode] = useState(false);
   const [history, setHistory] = useState<DashboardHeroInput[]>([]);
   const [future, setFuture] = useState<DashboardHeroInput[]>([]);
   const latest = useRef(form);
-  latest.current = form;
   const host = useRef<HTMLDivElement>(null);
   const scene = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 390, height: 320 });
-  const previewWidth = mode === "mobile" ? 390 : 1200;
+  const previewWidth = mode === "mobile" ? 390 : 960;
+  useEffect(() => {
+    latest.current = form;
+  }, [form]);
+
   useEffect(() => {
     if (!host.current || !scene.current) return;
     const observer = new ResizeObserver(() =>
@@ -59,6 +63,23 @@ export function HeroVisualEditor({
     mode === "mobile" ? "mobileFocalPoint" : "focalPoint";
   const focus =
     config[focusKey] ?? config.focalPoint ?? { x: 50, y: 50 };
+  const updateFocusFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const nextFocus = {
+      x: Math.max(0, Math.min(100, Math.round(((event.clientX - box.left) / box.width) * 100))),
+      y: Math.max(0, Math.min(100, Math.round(((event.clientY - box.top) / box.height) * 100))),
+    };
+    const live = latest.current;
+    const liveConfig = normalizeHeroVisualConfig(live.visualConfig);
+    onChange({
+      ...live,
+      visualConfig: {
+        ...liveConfig,
+        [focusKey]: nextFocus,
+      },
+    });
+  };
   const updateConfig = (patch: Partial<HeroVisualConfig>) =>
     apply({ ...form, visualConfig: { ...config, ...patch } });
   const slide: CmsHeroSlide = {
@@ -115,8 +136,8 @@ export function HeroVisualEditor({
     <div className="space-y-4" dir={ar ? "rtl" : "ltr"}>
       <p className="text-xs leading-5 text-slate-500">
         {ar
-          ? "اسحب النص أو الأزرار داخل المعاينة. استخدم أدوات القص بالأسفل لضبط الصورة لكل جهاز بشكل مستقل."
-          : "Drag text or buttons inside the preview. Use the crop controls below to adjust the image independently for each device."}
+          ? "اسحب النص أو الأزرار داخل المعاينة. فعّل ضبط الصورة باللمس لتحريك نقطة التركيز، مع حفظ إعداد مستقل لكل جهاز."
+          : "Drag text or buttons inside the preview. Enable touch image adjustment to move the focal point, saved independently for each device."}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <label className="text-xs font-semibold">
@@ -186,10 +207,24 @@ export function HeroVisualEditor({
         >
           {ar ? "إعادة قص الصورة" : "Reset image crop"}
         </button>
+        <button
+          type="button"
+          aria-pressed={cropMode}
+          className={`min-h-11 rounded-lg border px-3 text-xs font-semibold ${cropMode ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "bg-white"}`}
+          onClick={() => setCropMode((value) => !value)}
+        >
+          {ar
+            ? cropMode
+              ? "إنهاء ضبط الصورة"
+              : "ضبط الصورة باللمس"
+            : cropMode
+              ? "Done adjusting image"
+              : "Adjust image by touch"}
+        </button>
       </div>
       <div
         ref={host}
-        className={`mx-auto w-full overflow-hidden rounded-2xl bg-slate-100 p-0 ${mode === "desktop" ? "max-w-[520px]" : "max-w-[390px]"}`}
+        className={`relative mx-auto w-full overflow-hidden rounded-2xl bg-slate-100 p-0 ${mode === "desktop" ? "max-w-[360px]" : "max-w-[390px]"}`}
         style={{ height: dimensions.height * scale }}
       >
         <div
@@ -223,6 +258,84 @@ export function HeroVisualEditor({
             </div>
           )}
         </div>
+        {cropMode && form.imageUrl ? (
+          <div
+            className="absolute inset-0 z-20 touch-none cursor-crosshair bg-slate-950/5 outline-none ring-inset focus-visible:ring-2 focus-visible:ring-indigo-500"
+            tabIndex={0}
+            role="group"
+            aria-label={ar ? "حرّك نقطة تركيز صورة الهيرو" : "Move the hero image focal point"}
+            onPointerDown={(event) => {
+              checkpoint();
+              event.currentTarget.setPointerCapture(event.pointerId);
+              updateFocusFromPointer(event);
+            }}
+            onPointerMove={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                updateFocusFromPointer(event);
+              }
+            }}
+            onPointerUp={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+            }}
+            onPointerCancel={(event) => {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (
+                !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+                  event.key,
+                )
+              ) {
+                return;
+              }
+              event.preventDefault();
+              const step = event.shiftKey ? 5 : 1;
+              const next = {
+                x: Math.max(
+                  0,
+                  Math.min(
+                    100,
+                    focus.x +
+                      (event.key === "ArrowLeft"
+                        ? -step
+                        : event.key === "ArrowRight"
+                          ? step
+                          : 0),
+                  ),
+                ),
+                y: Math.max(
+                  0,
+                  Math.min(
+                    100,
+                    focus.y +
+                      (event.key === "ArrowUp"
+                        ? -step
+                        : event.key === "ArrowDown"
+                          ? step
+                          : 0),
+                  ),
+                ),
+              };
+              updateConfig({ [focusKey]: next });
+            }}
+          >
+            <span className="absolute left-3 top-3 rounded-full bg-slate-950/65 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm backdrop-blur">
+              {ar ? "اسحب لتحديد الجزء المهم" : "Drag to set image focus"}
+            </span>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-indigo-500/25 shadow-lg"
+              style={{ left: `${focus.x}%`, top: `${focus.y}%` }}
+            >
+              <span className="absolute left-1/2 top-1/2 h-px w-9 -translate-x-1/2 -translate-y-1/2 bg-white" />
+              <span className="absolute left-1/2 top-1/2 h-9 w-px -translate-x-1/2 -translate-y-1/2 bg-white" />
+            </span>
+          </div>
+        ) : null}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {(selected === "content"

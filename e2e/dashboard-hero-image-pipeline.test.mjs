@@ -22,6 +22,10 @@ const heroScene = await readFile(
   new URL("../src/components/HeroScene.tsx", import.meta.url),
   "utf8",
 );
+const heroSceneCss = await readFile(
+  new URL("../src/components/hero-scene.css", import.meta.url),
+  "utf8",
+);
 
 test("hero raster images use the shared real WebP conversion pipeline", () => {
   assert.match(heroData, /WEBP_CONVERTIBLE_HERO_MIME_TYPES/);
@@ -55,6 +59,12 @@ test("hero dashboard exposes real before and after optimization metadata", () =>
   assert.match(heroPage, /formatBytes\(optimization\.source\.bytes\)/);
   assert.match(heroPage, /formatBytes\(optimization\.output\.bytes\)/);
   assert.match(heroPage, /max \{isDesktop \? "1920" : "1080"\}px/);
+});
+
+test("hero dashboard media preview matches the 16:9 storefront shape on both devices", () => {
+  assert.match(heroPage, /16:9 landscape/);
+  assert.match(heroPage, /aspect-\[16\/9\]/);
+  assert.doesNotMatch(heroPage, /aspect-\[9\/16\]/);
 });
 
 
@@ -229,21 +239,31 @@ test("first desktop Hero artwork enables publishing without overriding later dra
 });
 
 
-test("Hero crop controls are device-specific and mobile falls back safely", () => {
+test("Hero crop controls are device-specific, touch friendly and reflected by storefront rendering", () => {
   assert.match(heroVisualEditor, /mode === "mobile" \? "mobileFocalPoint" : "focalPoint"/);
   assert.match(heroVisualEditor, /Image crop horizontal/);
   assert.match(heroVisualEditor, /Image crop vertical/);
   assert.match(heroVisualEditor, /Reset image crop/);
+  assert.match(heroVisualEditor, /Adjust image by touch/);
+  assert.match(heroVisualEditor, /absolute inset-0 z-20 touch-none cursor-crosshair/);
+  assert.doesNotMatch(heroVisualEditor, /Touch crop focus/);
+  assert.match(heroVisualEditor, /setPointerCapture\(event\.pointerId\)/);
+  assert.match(heroVisualEditor, /max-w-\[360px\]/);
   assert.match(heroScene, /config\.mobileFocalPoint \?\? desktopFocus/);
   assert.match(heroScene, /--hero-mobile-focus-x/);
   assert.match(heroScene, /--hero-mobile-focus-y/);
+  assert.doesNotMatch(heroScene, /hero-scene-backdrop/);
+  assert.match(heroSceneCss, /aspect-ratio: 16 \/ 9/);
+  assert.match(heroSceneCss, /object-position: var\(--hero-mobile-focus-x/);
+  assert.match(heroSceneCss, /transform: scale\(1\.06\)/);
+  assert.match(heroSceneCss, /transform-origin: var\(--hero-mobile-focus-x/);
 });
 
 
 test("mobile-first hero uploads always produce a storefront-readable primary image", () => {
   assert.match(
     heroPage,
-    /imageUrl: form\.imageUrl\.trim\(\) \? form\.imageUrl : asset\.url/,
+    /imageUrl: currentForm\.imageUrl\.trim\(\) \? currentForm\.imageUrl : asset\.url/,
   );
   assert.match(heroPage, /const currentForm = formRef\.current/);
   assert.match(heroPage, /selectedId !== null/);

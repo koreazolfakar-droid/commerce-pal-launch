@@ -870,15 +870,33 @@ export default function HeroBannersPage() {
                 <div key={target} className="rounded-xl border border-slate-200 bg-slate-50/40 p-4 sm:p-5">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <div className="flex items-center gap-2 text-[12px] font-bold text-[#14203a]">{isDesktop ? <Monitor className="size-4" /> : <Smartphone className="size-4" />} {isDesktop ? "Desktop image" : "Mobile image"}</div>
-                      <div className="mt-1 text-[10px] text-slate-400">{isDesktop ? "Required when published" : "Optional mobile-specific crop"}</div>
+                      <div className="flex items-center gap-2 text-[12px] font-bold text-[#14203a]">
+                        {isDesktop ? (
+                          <Monitor className="size-4" />
+                        ) : (
+                          <Smartphone className="size-4" />
+                        )}{" "}
+                        {isDesktop ? "Desktop image" : "Mobile image"}
+                      </div>
+                      <div className="mt-1 text-[10px] text-slate-400">
+                        {isDesktop
+                          ? "Required when published · 16:9 landscape"
+                          : "Optional mobile-specific crop · 16:9 landscape"}
+                      </div>
                       <div className="mt-1 text-[9px] font-semibold text-emerald-600">
-                        JPG / PNG / WebP / AVIF → WebP · max {isDesktop ? "1920" : "1080"}px
+                        JPG / PNG / WebP / AVIF → WebP · max{" "}
+                        {isDesktop ? "1920" : "1080"}px
                       </div>
                     </div>
                   </div>
-                  <div className={`relative mb-3 grid overflow-hidden rounded-xl bg-slate-100 ${isDesktop ? "aspect-[16/9] w-full max-w-[220px]" : "aspect-[9/16] max-h-72"}`}>
-                    {displayUrl ? <img src={displayUrl} alt={alt} className="size-full object-cover" /> : <div className="grid place-items-center"><ImageIcon className="size-7 text-slate-300" /></div>}
+                  <div className="relative mb-3 grid aspect-[16/9] w-full max-w-[220px] overflow-hidden rounded-xl bg-slate-100">
+                    {displayUrl ? (
+                      <img src={displayUrl} alt={alt} className="size-full object-cover" />
+                    ) : (
+                      <div className="grid place-items-center">
+                        <ImageIcon className="size-7 text-slate-300" />
+                      </div>
+                    )}
                     {pendingPreviewUrl ? (
                       <div className="absolute bottom-2 left-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-[9px] font-bold text-white backdrop-blur">
                         Ready to upload
