@@ -24,7 +24,7 @@ const FOOTER_BRAND_LINKS = [
   { slug: "poco", label: "POCO" },
 ] as const;
 
-export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: boolean }) {
+export function SiteFooter() {
   const { language, t } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
   const isAr = language === "ar";
@@ -63,7 +63,7 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
   ] as const;
 
   return (
-    <footer className={`${compactTopSpacing ? "mt-4" : "mt-16"} border-t bg-surface`}>
+    <footer className="mt-0 border-t bg-surface">
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid min-w-0 gap-10 md:grid-cols-2 lg:grid-cols-6">
           <div className="min-w-0 lg:col-span-2">
