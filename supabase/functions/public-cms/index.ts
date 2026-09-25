@@ -80,7 +80,7 @@ Deno.serve(async (req: Request) => {
         .order("sort_order"),
       db
         .from("cms_brands")
-        .select("id,name,slug,logo_url,href,sort_order,is_visible")
+        .select("id,name,slug,logo_url,href,sort_order,is_visible,is_featured")
         .eq("is_visible", true)
         .order("sort_order")
         .order("name"),
