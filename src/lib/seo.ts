@@ -289,7 +289,10 @@ export function productJsonLd(product: StoreProduct) {
   const sku = variant?.sku || undefined;
   const brand = node.vendor?.trim() || undefined;
   const activePrice = Number(price.amount);
-  const offerPrice = Number.isFinite(activePrice) ? activePrice : price.amount;
+  const hasValidMerchantPrice =
+    Number.isFinite(activePrice) &&
+    activePrice > 0 &&
+    /^[A-Z]{3}$/.test(price.currencyCode);
   const compareAt = variant?.compareAtPrice;
   const compareAtPrice = compareAt ? Number(compareAt.amount) : NaN;
   const compareAtCurrency = compareAt?.currencyCode ?? price.currencyCode;
@@ -321,31 +324,33 @@ export function productJsonLd(product: StoreProduct) {
       : {}),
     url: absoluteUrl(`/product/${node.handle}`),
     mainEntityOfPage: absoluteUrl(`/product/${node.handle}`),
-    offers: {
-      "@type": "Offer",
-      url: absoluteUrl(`/product/${node.handle}`),
-      priceCurrency: price.currencyCode,
-      price: offerPrice,
-      ...(hasStrikethroughPrice
-        ? {
-            priceSpecification: {
-              "@type": "UnitPriceSpecification",
-              priceType: "https://schema.org/StrikethroughPrice",
-              price: compareAtPrice,
-              priceCurrency: compareAtCurrency,
-            },
-          }
-        : {}),
-      availability: productInStock(product)
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      itemCondition: productItemCondition(product),
-      hasMerchantReturnPolicy: { "@id": MERCHANT_RETURN_POLICY_ID },
-      areaServed: {
-        "@type": "Country",
-        name: "Lebanon",
-      },
-      seller: { "@id": `${SITE_URL}/#organization` },
-    },
+    offers: hasValidMerchantPrice
+      ? {
+          "@type": "Offer",
+          url: absoluteUrl(`/product/${node.handle}`),
+          priceCurrency: price.currencyCode,
+          price: activePrice,
+          ...(hasStrikethroughPrice
+            ? {
+                priceSpecification: {
+                  "@type": "UnitPriceSpecification",
+                  priceType: "https://schema.org/StrikethroughPrice",
+                  price: compareAtPrice,
+                  priceCurrency: compareAtCurrency,
+                },
+              }
+            : {}),
+          availability: productInStock(product)
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+          itemCondition: productItemCondition(product),
+          hasMerchantReturnPolicy: { "@id": MERCHANT_RETURN_POLICY_ID },
+          areaServed: {
+            "@type": "Country",
+            name: "Lebanon",
+          },
+          seller: { "@id": `${SITE_URL}/#organization` },
+        }
+      : undefined,
   };
 }
