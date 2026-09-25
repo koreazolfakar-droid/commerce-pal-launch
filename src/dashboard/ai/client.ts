@@ -5,6 +5,17 @@ function text(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
+function safeHttpUrl(value: unknown) {
+  const raw = text(value).trim();
+  if (!raw || raw.length > 2048) return "";
+  try {
+    const parsed = new URL(raw);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
 function normalizeResponse(value: unknown): DashboardAiResponse {
   if (!value || typeof value !== "object") {
     throw new Error("AI assistant returned an invalid response.");
@@ -31,7 +42,7 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
   const sources = Array.isArray(row.sources)
     ? row.sources
         .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
-        .map((item) => ({ title: text(item.title), url: text(item.url) }))
+        .map((item) => ({ title: text(item.title), url: safeHttpUrl(item.url) }))
         .filter((item) => item.url)
     : [];
 
