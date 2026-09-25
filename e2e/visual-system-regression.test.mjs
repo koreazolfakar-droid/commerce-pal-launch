@@ -110,7 +110,7 @@ test("product actions stay aligned without overlapping compact card content", as
   );
   assert.match(
     compact,
-    /product-card-title line-clamp-2 min-h-\[2\.35rem\]/,
+    /product-card-title line-clamp-2 min-h-\[2\.15rem\]/,
     "market cards should reserve a stable two-line title area",
   );
 
