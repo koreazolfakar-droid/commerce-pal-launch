@@ -1,5 +1,6 @@
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
+import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 import { productSearchScore, textSearchScore } from "@/lib/searchRanking";
@@ -10,6 +11,7 @@ type ImageRow = Tables<"store_product_images">;
 type CollectionRow = Tables<"store_collections">;
 type CollectionLinkRow = Tables<"store_collection_products">;
 type BrandRow = Tables<"cms_brands">;
+type CategoryRow = Tables<"store_categories">;
 
 type StorefrontProductRow = Pick<
   ProductRow,
@@ -62,9 +64,10 @@ type StorefrontCollectionLinkRow = Pick<
   "collection_id" | "product_id" | "sort_order"
 >;
 type StorefrontBrandRow = Pick<BrandRow, "id" | "name">;
+type StorefrontCategoryRow = Pick<CategoryRow, "id" | "name" | "slug" | "sort_order">;
 type NavigationProductRow = Pick<
   ProductRow,
-  "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
+  "id" | "title" | "handle" | "brand_id" | "category_id" | "product_type" | "tags"
 >;
 
 const STOREFRONT_PRODUCT_SELECT =
@@ -78,8 +81,9 @@ const STOREFRONT_COLLECTION_SELECT =
 const STOREFRONT_COLLECTION_LINK_SELECT =
   "collection_id,product_id,sort_order" as const;
 const STOREFRONT_BRAND_SELECT = "id,name" as const;
+const STOREFRONT_CATEGORY_SELECT = "id,name,slug,sort_order" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
-  "id,title,handle,brand_id,product_type,tags" as const;
+  "id,title,handle,brand_id,category_id,product_type,tags" as const;
 
 type NativeProduct = {
   product: StoreProduct;
@@ -551,31 +555,42 @@ export async function fetchBrandVendors(): Promise<string[]> {
  * variant or image tables merely to render navigation.
  */
 export async function fetchNavigationCatalogFacets() {
-  const [productResult, collectionResult, linkResult, brandResult] = await Promise.all([
-    publicSupabase
-      .from("store_products")
-      .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
-      .eq("status", "active")
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_collections")
-      .select(STOREFRONT_COLLECTION_SELECT)
-      .eq("is_active", true),
-    publicSupabase
-      .from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("cms_brands")
-      .select(STOREFRONT_BRAND_SELECT)
-      .eq("is_visible", true)
-      .order("sort_order", { ascending: true }),
-  ]);
+  const [productResult, collectionResult, linkResult, brandResult, categoryResult] =
+    await Promise.all([
+      publicSupabase
+        .from("store_products")
+        .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
+        .eq("status", "active")
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("store_collections")
+        .select(STOREFRONT_COLLECTION_SELECT)
+        .eq("is_active", true),
+      publicSupabase
+        .from("store_collection_products")
+        .select(STOREFRONT_COLLECTION_LINK_SELECT)
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("cms_brands")
+        .select(STOREFRONT_BRAND_SELECT)
+        .eq("is_visible", true)
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("store_categories")
+        .select(STOREFRONT_CATEGORY_SELECT)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true }),
+    ]);
 
   const productRows = assertResult(productResult, "navigation products") as NavigationProductRow[];
   const collectionRows = assertResult(collectionResult, "navigation collections");
   const links = assertResult(linkResult, "navigation collection links");
   const brands = assertResult(brandResult, "navigation brands");
+  const managedCategories = assertResult(
+    categoryResult,
+    "navigation categories",
+  ) as StorefrontCategoryRow[];
 
   const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
   const linksByProduct = groupByProduct(links);
@@ -610,7 +625,50 @@ export async function fetchNavigationCatalogFacets() {
   });
 
   const catalog = buildCatalogIndex(products);
-  return { categories: catalog.categories, brands: catalog.brands };
+  const catalogCategoryBySlug = new Map(catalog.categories.map((category) => [category.slug, category]));
+  const managedById = new Map(managedCategories.map((category) => [category.id, category]));
+  const managedBySlug = new Map(managedCategories.map((category) => [category.slug, category]));
+  const counts = new Map<string, number>();
+  const iconBySlug = new Map<string, NonNullable<(typeof catalog.categories)[number]["icon"]>>();
+
+  for (const row of productRows) {
+    const inferredSlugs = catalog.categoryOf.get(row.handle) ?? [];
+    const managed = row.category_id ? managedById.get(row.category_id) : undefined;
+
+    if (managed) {
+      counts.set(managed.slug, (counts.get(managed.slug) ?? 0) + 1);
+      const inferred = inferredSlugs
+        .map((slug) => catalogCategoryBySlug.get(slug))
+        .find((category) => category?.icon);
+      if (inferred?.icon && !iconBySlug.has(managed.slug)) {
+        iconBySlug.set(managed.slug, inferred.icon);
+      }
+      continue;
+    }
+
+    for (const inferredSlug of inferredSlugs) {
+      const canonicalSlug = canonicalCategorySlug(inferredSlug);
+      const canonicalManaged = managedBySlug.get(canonicalSlug);
+      if (canonicalManaged) {
+        counts.set(canonicalSlug, (counts.get(canonicalSlug) ?? 0) + 1);
+        const inferred = catalogCategoryBySlug.get(inferredSlug);
+        if (inferred?.icon && !iconBySlug.has(canonicalSlug)) {
+          iconBySlug.set(canonicalSlug, inferred.icon);
+        }
+      }
+    }
+  }
+
+  const categories = managedCategories
+    .map((category) => ({
+      slug: category.slug,
+      label: category.name,
+      count: counts.get(category.slug) ?? 0,
+      ...(iconBySlug.get(category.slug) ? { icon: iconBySlug.get(category.slug) } : {}),
+    }))
+    .filter((category) => category.count > 0);
+
+  return { categories, brands: catalog.brands };
 }
 
 export async function fetchProductByHandle(handle: string): Promise<StoreProduct | null> {
