@@ -666,7 +666,7 @@ export async function fetchNavigationCatalogFacets() {
       count: counts.get(category.slug) ?? 0,
       ...(iconBySlug.get(category.slug) ? { icon: iconBySlug.get(category.slug) } : {}),
     }))
-    .filter((category) => category.count > 0);
+    .filter((category) => category.count > 0 && category.slug !== "used-phone");
 
   return { categories, brands: catalog.brands };
 }
