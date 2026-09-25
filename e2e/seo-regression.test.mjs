@@ -42,6 +42,19 @@ test("product structured data exposes Google product and offer fields", async ()
   assert.match(productRoute, /jsonLd\(productJsonLd\(product\)\)/);
 });
 
+test("merchant product markup stays truthful for condition, returns, and sale pricing", async () => {
+  const seo = await source("src/lib/seo.ts");
+  const infoPages = await source("src/lib/infoPages.ts");
+  assert.match(seo, /"@type": "OnlineStore"/);
+  assert.match(seo, /merchantReturnLink: absoluteUrl\("\/returns"\)/);
+  assert.match(seo, /RefurbishedCondition/);
+  assert.match(seo, /UsedCondition/);
+  assert.match(seo, /NewCondition/);
+  assert.match(seo, /StrikethroughPrice/);
+  assert.match(seo, /UnitPriceSpecification/);
+  assert.match(infoPages, /merchantReturnPolicyJsonLd/);
+});
+
 test("header account and tracking links stay first-party", async () => {
   const [header, infoPage] = await Promise.all([
     source("src/components/SiteHeader.tsx"),
