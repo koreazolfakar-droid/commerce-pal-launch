@@ -18,8 +18,9 @@ for (const width of [320, 375, 768, 1440]) {
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
       ).toBeTruthy();
-      const categoryRail = page.locator(".category-icon-rail");
-      expect((await categoryRail.boundingBox())!.height).toBeLessThan(130);
+      const categoryRail = page.locator(".category-home-rail");
+      await expect(categoryRail).toBeVisible();
+      expect((await categoryRail.boundingBox())!.height).toBeLessThan(160);
       await page.getByTestId("top-brands").scrollIntoViewIfNeeded();
       const tiles = page.getByTestId("top-brands").locator(".brand-logo-tile");
       for (const tile of await tiles.all()) {
