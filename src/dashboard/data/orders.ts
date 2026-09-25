@@ -123,9 +123,27 @@ function throwIfError(error: { message: string } | null, label: string) {
 }
 
 async function requireDashboardStaff() {
-  const role = await getDashboardRole();
-  if (!role) throw new Error("Dashboard authentication is required.");
-  return role;
+  let role = await getDashboardRole();
+  if (role) return role;
+
+  // Mobile browsers can suspend a dashboard tab long enough for its access
+  // token to expire. Refresh the existing tab-scoped session once before
+  // failing closed. Database RLS/RPC staff + MFA checks remain authoritative.
+  try {
+    const {
+      data: { session },
+      error: refreshError,
+    } = await supabase.auth.refreshSession();
+
+    if (!refreshError && session) {
+      role = await getDashboardRole();
+      if (role) return role;
+    }
+  } catch {
+    // Invalid/blocked refresh tokens are authentication failures, not order errors.
+  }
+
+  throw new Error("Dashboard authentication is required.");
 }
 
 function statusFromRow(value: string): DashboardOrderStatus {

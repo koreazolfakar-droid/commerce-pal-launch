@@ -50,6 +50,14 @@ test("orders data layer reads Supabase and mutates only through guarded RPCs", (
   assert.match(data, /p_expected_version/);
 });
 
+test("orders recover a suspended staff session once and fail closed when refresh rejects", () => {
+  assert.match(data, /try \{[\s\S]*await supabase\.auth\.refreshSession\(\)/);
+  assert.match(data, /if \(!refreshError && session\)/);
+  assert.match(data, /role = await getDashboardRole\(\)/);
+  assert.match(data, /catch \{[\s\S]*authentication failures, not order errors/);
+  assert.match(data, /throw new Error\("Dashboard authentication is required\."\)/);
+});
+
 test("secure order migration blocks direct client writes", () => {
   assert.match(migration, /revoke insert, update, delete on public\.store_orders from authenticated/i);
   assert.match(migration, /revoke insert, update, delete on public\.store_order_items from authenticated/i);
