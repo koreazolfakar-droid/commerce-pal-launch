@@ -5,21 +5,52 @@
 // framed preview, keep production auth tab-scoped in sessionStorage.
 const SPACE_CALL_SUPABASE_AUTH_KEY = 'sb-rtwyankpxtffqqrasyzw-auth-token';
 
+function createMemoryStorage() {
+  const values = new Map<string, string>();
+  return {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
+    },
+    removeItem: (key: string) => {
+      values.delete(key);
+    },
+  };
+}
+
+function safeBrowserStorage(kind: 'session' | 'local') {
+  try {
+    const storage = kind === 'session' ? window.sessionStorage : window.localStorage;
+    const probe = '__spacecall_storage_probe__';
+    storage.setItem(probe, '1');
+    storage.removeItem(probe);
+    return storage;
+  } catch {
+    return null;
+  }
+}
+
 function useTabScopedProductionStorage() {
+  const tabStorage = safeBrowserStorage('session');
+  if (!tabStorage) {
+    // Privacy-restricted browsers can block Web Storage entirely. Keep the
+    // client usable with memory-only auth rather than crashing at startup.
+    return createMemoryStorage();
+  }
+
   // Migrate the pre-hardening session into this tab once, then remove the
   // durable localStorage copy so storefront auth in another tab cannot replace
   // an already-open dashboard staff session.
-  try {
-    const legacySession = localStorage.getItem(SPACE_CALL_SUPABASE_AUTH_KEY);
-    if (legacySession && !sessionStorage.getItem(SPACE_CALL_SUPABASE_AUTH_KEY)) {
-      sessionStorage.setItem(SPACE_CALL_SUPABASE_AUTH_KEY, legacySession);
+  const legacyStorage = safeBrowserStorage('local');
+  if (legacyStorage) {
+    const legacySession = legacyStorage.getItem(SPACE_CALL_SUPABASE_AUTH_KEY);
+    if (legacySession && !tabStorage.getItem(SPACE_CALL_SUPABASE_AUTH_KEY)) {
+      tabStorage.setItem(SPACE_CALL_SUPABASE_AUTH_KEY, legacySession);
     }
-    localStorage.removeItem(SPACE_CALL_SUPABASE_AUTH_KEY);
-  } catch {
-    // Storage can be unavailable in privacy-restricted browser contexts.
+    legacyStorage.removeItem(SPACE_CALL_SUPABASE_AUTH_KEY);
   }
 
-  return sessionStorage;
+  return tabStorage;
 }
 
 export function brokeredPreviewStorage() {
