@@ -71,7 +71,8 @@ export const Route = createFileRoute("/product/$handle")({
     }
     const product = loaderData.product;
     const title = product.node.title || "Product";
-    const fullTitle = `${title} — ${STORE_NAME}`;
+    const fullTitle =
+      product.node.seoTitle?.trim() || `${title} — ${STORE_NAME}`;
     const description = productMetaDescription(product);
     const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
