@@ -7,7 +7,10 @@ const [edge, client, panel, product, category, brand, env] = await Promise.all([
   readFile(new URL("../src/dashboard/ai/client.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/components/ai/AiAssistPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProductFormPage.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../src/dashboard/components/categories/CategoryForm.tsx", import.meta.url), "utf8"),
+  readFile(
+    new URL("../src/dashboard/components/categories/CategoryForm.tsx", import.meta.url),
+    "utf8",
+  ),
   readFile(new URL("../src/dashboard/components/brands/BrandForm.tsx", import.meta.url), "utf8"),
   readFile(new URL("../.env.example", import.meta.url), "utf8"),
 ]);
@@ -38,10 +41,7 @@ test("dashboard AI grounds research and validates structured output", () => {
     (edge.match(/systemInstruction: geminiRequest\.systemInstruction/g) || []).length,
     2,
   );
-  assert.equal(
-    (edge.match(/input: geminiRequest\.input/g) || []).length,
-    2,
-  );
+  assert.equal((edge.match(/input: geminiRequest\.input/g) || []).length, 2);
   assert.match(panel, /Nothing is saved automatically/);
   assert.match(panel, /Apply selected/);
   assert.match(panel, /Web research grounded/);
