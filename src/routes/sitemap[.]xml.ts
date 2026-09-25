@@ -16,10 +16,18 @@ interface SitemapEntry {
 
 type SitemapProductRow = Pick<
   Tables<"store_products">,
-  "id" | "title" | "handle" | "brand_id" | "product_type" | "tags" | "created_at" | "updated_at"
+  | "id"
+  | "title"
+  | "handle"
+  | "brand_id"
+  | "category_id"
+  | "product_type"
+  | "tags"
+  | "created_at"
+  | "updated_at"
 >;
 type SitemapBrandRow = Pick<Tables<"cms_brands">, "id" | "name">;
-type SitemapCategoryRow = Pick<Tables<"store_categories">, "name" | "slug">;
+type SitemapCategoryRow = Pick<Tables<"store_categories">, "id" | "name" | "slug">;
 type SitemapCollectionRow = Pick<
   Tables<"store_collections">,
   "id" | "handle" | "title" | "description" | "image_url"
@@ -50,7 +58,7 @@ async function fetchAllActiveProducts(): Promise<SitemapProductRow[]> {
   for (let offset = 0; ; offset += QUERY_PAGE_SIZE) {
     const { data, error } = await publicSupabase
       .from("store_products")
-      .select("id,title,handle,brand_id,product_type,tags,created_at,updated_at")
+      .select("id,title,handle,brand_id,category_id,product_type,tags,created_at,updated_at")
       .eq("status", "active")
       .order("id", { ascending: true })
       .range(offset, offset + QUERY_PAGE_SIZE - 1);
@@ -88,7 +96,7 @@ async function fetchSitemapSupportData() {
       .order("name", { ascending: true }),
     publicSupabase
       .from("store_categories")
-      .select("name,slug")
+      .select("id,name,slug")
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true }),
@@ -211,13 +219,13 @@ export const Route = createFileRoute("/sitemap.xml")({
             .filter((link) => activeProductIds.has(link.product_id))
             .map((link) => link.collection_id),
         );
-        const productTypes = new Set(
+        const activeCategoryIds = new Set(
           productRows
-            .map((row) => row.product_type?.trim().toLocaleLowerCase())
+            .map((row) => row.category_id)
             .filter((value): value is string => Boolean(value)),
         );
         const managedCategories = support.categories.filter((category) =>
-          productTypes.has(category.name.trim().toLocaleLowerCase()),
+          activeCategoryIds.has(category.id),
         );
         const collections = displayCollections(
           support.collections
