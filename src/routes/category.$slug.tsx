@@ -4,6 +4,7 @@ import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
+import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
@@ -43,21 +44,12 @@ async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory 
   return (data as ManagedStoreCategory | null) ?? null;
 }
 
-const LEGACY_CATEGORY_REDIRECTS: Record<string, string> = {
-  "mobile-phones": "smartphone",
-  "foldable-smartphone": "smartphone",
-  "smartphone-bundle": "smartphone",
-  "gaming-tablet": "tablet",
-  "wall-charger": "charger",
-  "charging-cable": "cable",
-  "هاتف-مستعمل": "used-phone",
-};
 
 export const Route = createFileRoute("/category/$slug")({
   validateSearch: parseProductSearch,
   beforeLoad: ({ params }) => {
-    const canonicalSlug = LEGACY_CATEGORY_REDIRECTS[params.slug];
-    if (canonicalSlug) {
+    const canonicalSlug = canonicalCategorySlug(params.slug);
+    if (canonicalSlug !== params.slug) {
       throw redirect({
         to: "/category/$slug",
         params: { slug: canonicalSlug },
