@@ -205,3 +205,32 @@ test("phase 2 still excludes risky production routing and SSR changes", async ()
   assert.match(config, /https:\/\/spacecallapp\.store/);
   assert.doesNotMatch(navigation, /STOREFRONT_CATEGORY_SELECT|managedById|managedBySlug/);
 });
+
+test("phase 3 keeps sitemap changes isolated from production request routing", async () => {
+  const [sitemap, server, root, config] = await Promise.all([
+    source("src/routes/sitemap[.]xml.ts"),
+    source("src/server.ts"),
+    source("src/routes/__root.tsx"),
+    source("src/lib/storeConfig.ts"),
+  ]);
+
+  assert.match(sitemap, /fetchCatalogProducts\(500\)/);
+  assert.match(sitemap, /fetchCollections\(500\)/);
+  assert.match(sitemap, /fetchProductUpdatedAt/);
+  assert.match(sitemap, /select\("handle,updated_at"\)/);
+  assert.match(sitemap, /productPrice\(product\) > 0/);
+  assert.match(sitemap, /Sitemap data is temporarily unavailable/);
+  assert.match(sitemap, /status:\s*503/);
+  assert.match(sitemap, /"Retry-After":\s*"300"/);
+  assert.doesNotMatch(server, /canonicalHostRedirect|CANONICAL_HOST|ALTERNATE_HOST/);
+  assert.doesNotMatch(root, /useLocation/);
+  assert.match(config, /https:\/\/spacecallapp\.store/);
+});
+
+test("phase 3 uses real updated_at when available without fabricating static lastmod", async () => {
+  const sitemap = await source("src/routes/sitemap[.]xml.ts");
+  assert.match(sitemap, /updatedByHandle\.get\(product\.node\.handle\)/);
+  assert.match(sitemap, /updatedAt \|\| product\.node\.updatedAt \|\| product\.node\.createdAt/);
+  assert.doesNotMatch(sitemap, /new Date\(\)\.toISOString/);
+  assert.doesNotMatch(sitemap, /<changefreq>|<priority>/);
+});
