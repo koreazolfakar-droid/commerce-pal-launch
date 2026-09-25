@@ -49,6 +49,9 @@ export const Route = createFileRoute("/category/$slug")({
   validateSearch: parseProductSearch,
   beforeLoad: ({ params }) => {
     const canonicalSlug = canonicalCategorySlug(params.slug);
+    if (canonicalSlug === "used-phone") {
+      throw redirect({ to: "/used-phones", replace: true });
+    }
     if (canonicalSlug !== params.slug) {
       throw redirect({
         to: "/category/$slug",
