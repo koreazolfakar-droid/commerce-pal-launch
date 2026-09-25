@@ -24,6 +24,8 @@ type StorefrontProductRow = Pick<
   | "product_type"
   | "created_at"
   | "updated_at"
+  | "seo_title"
+  | "seo_description"
   | "tags"
   | "base_price"
   | "compare_at_price"
@@ -71,7 +73,7 @@ type NavigationProductRow = Pick<
 >;
 
 const STOREFRONT_PRODUCT_SELECT =
-  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
 const STOREFRONT_IMAGE_SELECT =
@@ -283,6 +285,8 @@ function buildProduct(
       availableForSale,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      seoTitle: row.seo_title?.trim() || undefined,
+      seoDescription: row.seo_description?.trim() || undefined,
       tags: row.tags,
       priceRange: { minVariantPrice: money(minPrice, row.currency) },
       compareAtPriceRange:
