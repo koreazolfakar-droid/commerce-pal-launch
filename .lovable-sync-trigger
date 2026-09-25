@@ -23,3 +23,8 @@ Force the Lovable-connected branch to pull and rebuild the latest main snapshot 
 
 Republish request: 2026-09-20T14:05:00+03:00
 Action: emergency rebuild after storefront outage. Main was rolled back to the known-good commit 0a29f87770fa57a9c33cd979af025ed3b30a13fd. This marker contains no runtime changes; it only forces the connected deployment to rebuild the restored snapshot.
+
+Rollback republish request: 2026-09-25T06:14:00+03:00
+Action: restore the last pre-SEO production snapshot after the SEO deployment caused a production regression.
+Expected runtime snapshot: fb3bd23a72bda574e9ef6c86a586de61d7da9280
+Rollback commit on main: d98fc68ca5ca71f3ed276afc78253c318ca7ef09
