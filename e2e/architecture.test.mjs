@@ -94,9 +94,13 @@ test("homepage uses bounded product reads and keeps brand shelves lazy", async (
 
   assert.match(homeSections, /productsByHandlesQueryOptions/);
   assert.match(homeSections, /handles\.slice\(0, 6\)/);
-  assert.doesNotMatch(homeSections, /BenefitsBar|const BENEFITS/);
-  assert.match(index, /function withoutRepeatedProducts/);
+  assert.doesNotMatch(homeSections, /BenefitsBar|const BENEFITS|ServicesStrip/);
+  assert.match(index, /function takeUniqueProducts/);
   assert.match(index, /seenHomepageProductIds/);
+  assert.match(index, /brandFeatureFlagsAvailable/);
+  assert.match(index, /brands=\{showcaseBrands\}/);
+  assert.match(index, /excludedProductIds=\{seenHomepageProductIds\}/);
+  assert.match(shelves, /withoutExcludedProducts/);
 });
 
 test("global navigation uses lightweight facets instead of the full catalog snapshot", async () => {

@@ -85,6 +85,7 @@ export type CmsBrand = {
   href: string | null;
   sort_order: number;
   is_visible: boolean;
+  is_featured?: boolean;
 };
 
 export type CmsSeoPage = {
