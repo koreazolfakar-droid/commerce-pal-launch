@@ -4,6 +4,7 @@ import {
   breadcrumbJsonLd,
   canonicalLink,
   jsonLd,
+  merchantReturnPolicyJsonLd,
   SITE_URL,
   socialMeta,
 } from "@/lib/seo";
@@ -144,6 +145,7 @@ export function infoPageHead(page: InfoPageName) {
     links: [canonicalLink(path)],
     scripts: [
       jsonLd(infoPageJsonLd(page)),
+      ...(page === "returns" ? [jsonLd(merchantReturnPolicyJsonLd())] : []),
       jsonLd(
         breadcrumbJsonLd([
           { name: "Home", path: "/" },
