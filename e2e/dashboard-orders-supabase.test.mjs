@@ -15,6 +15,10 @@ const data = await readFile(
   new URL("../src/dashboard/data/orders.ts", import.meta.url),
   "utf8",
 );
+const catalog = await readFile(
+  new URL("../src/dashboard/data/catalog.ts", import.meta.url),
+  "utf8",
+);
 const quickDrawer = await readFile(
   new URL("../src/dashboard/components/orders/OrderQuickDrawer.tsx", import.meta.url),
   "utf8",
@@ -50,12 +54,12 @@ test("orders data layer reads Supabase and mutates only through guarded RPCs", (
   assert.match(data, /p_expected_version/);
 });
 
-test("orders recover a suspended staff session once and fail closed when refresh rejects", () => {
-  assert.match(data, /try \{[\s\S]*await supabase\.auth\.refreshSession\(\)/);
-  assert.match(data, /if \(!refreshError && session\)/);
-  assert.match(data, /role = await getDashboardRole\(\)/);
-  assert.match(data, /catch \{[\s\S]*authentication failures, not order errors/);
+test("orders use the shared dashboard session recovery path", () => {
+  assert.match(data, /const role = await getDashboardRole\(\)/);
   assert.match(data, /throw new Error\("Dashboard authentication is required\."\)/);
+  assert.doesNotMatch(data, /auth\.refreshSession\(\)/);
+  assert.match(catalog, /refreshDashboardSessionOnce/);
+  assert.match(catalog, /await supabase\.auth\.refreshSession\(\)/);
 });
 
 test("secure order migration blocks direct client writes", () => {

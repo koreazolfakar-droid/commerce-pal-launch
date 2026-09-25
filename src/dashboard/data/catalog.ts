@@ -186,6 +186,9 @@ function slugify(value: string) {
 }
 
 const DASHBOARD_ROLE_CACHE_TTL_MS = 15_000;
+const DASHBOARD_ACCESS_TOKEN_REFRESH_SKEW_MS = 5_000;
+
+export const DASHBOARD_AUTH_REQUIRED_EVENT = "spacecall:dashboard-auth-required";
 
 let dashboardRoleCache:
   | { userId: string; role: DashboardRole; expiresAt: number }
@@ -193,14 +196,118 @@ let dashboardRoleCache:
 let dashboardRoleRequest:
   | { userId: string; promise: Promise<DashboardRole | null> }
   | null = null;
+let dashboardSessionRefreshRequest: Promise<boolean> | null = null;
 
 function clearDashboardRoleCache() {
   dashboardRoleCache = null;
   dashboardRoleRequest = null;
 }
 
+function notifyDashboardAuthRequired() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(DASHBOARD_AUTH_REQUIRED_EVENT));
+}
+
+function dashboardSessionNeedsRefresh(session: { expires_at?: number | null }) {
+  const expiresAtMs = Number(session.expires_at ?? 0) * 1000;
+  return (
+    !Number.isFinite(expiresAtMs) ||
+    expiresAtMs <= Date.now() + DASHBOARD_ACCESS_TOKEN_REFRESH_SKEW_MS
+  );
+}
+
+async function refreshDashboardSessionOnce() {
+  if (dashboardSessionRefreshRequest) return dashboardSessionRefreshRequest;
+
+  const request = (async () => {
+    try {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.refreshSession();
+      if (error || !session?.user) return false;
+      clearDashboardRoleCache();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  dashboardSessionRefreshRequest = request;
+  try {
+    return await request;
+  } finally {
+    if (dashboardSessionRefreshRequest === request) {
+      dashboardSessionRefreshRequest = null;
+    }
+  }
+}
+
+async function getValidatedDashboardUser() {
+  let refreshed = false;
+  const refresh = async () => {
+    if (refreshed) return false;
+    refreshed = true;
+    return refreshDashboardSessionOnce();
+  };
+
+  let sessionResult = await supabase.auth.getSession();
+  let session = sessionResult.data.session;
+
+  if (sessionResult.error || !session?.user || dashboardSessionNeedsRefresh(session)) {
+    if (!(await refresh())) {
+      clearDashboardRoleCache();
+      notifyDashboardAuthRequired();
+      return null;
+    }
+    sessionResult = await supabase.auth.getSession();
+    session = sessionResult.data.session;
+  }
+
+  if (sessionResult.error || !session?.user) {
+    clearDashboardRoleCache();
+    notifyDashboardAuthRequired();
+    return null;
+  }
+
+  const expectedUserId = session.user.id;
+  let userResult = await supabase.auth.getUser();
+  let user = userResult.data.user;
+
+  if (userResult.error || !user || user.id !== expectedUserId) {
+    if (!(await refresh())) {
+      clearDashboardRoleCache();
+      notifyDashboardAuthRequired();
+      return null;
+    }
+
+    sessionResult = await supabase.auth.getSession();
+    session = sessionResult.data.session;
+    if (sessionResult.error || !session?.user) {
+      clearDashboardRoleCache();
+      notifyDashboardAuthRequired();
+      return null;
+    }
+
+    userResult = await supabase.auth.getUser();
+    user = userResult.data.user;
+    if (userResult.error || !user || user.id !== session.user.id) {
+      clearDashboardRoleCache();
+      notifyDashboardAuthRequired();
+      return null;
+    }
+  }
+
+  return user;
+}
+
 supabase.auth.onAuthStateChange((event) => {
-  if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+  if (
+    event === "SIGNED_IN" ||
+    event === "SIGNED_OUT" ||
+    event === "TOKEN_REFRESHED" ||
+    event === "USER_UPDATED"
+  ) {
     clearDashboardRoleCache();
   }
 });
@@ -212,17 +319,10 @@ async function requireDashboardRole(): Promise<DashboardRole> {
 }
 
 export async function getDashboardRole(): Promise<DashboardRole | null> {
-  const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+  const user = await getValidatedDashboardUser();
+  if (!user) return null;
 
-  if (sessionError || !session?.user) {
-    clearDashboardRoleCache();
-    return null;
-  }
-
-  const userId = session.user.id;
+  const userId = user.id;
   if (
     dashboardRoleCache?.userId === userId &&
     dashboardRoleCache.expiresAt > Date.now()
@@ -235,21 +335,18 @@ export async function getDashboardRole(): Promise<DashboardRole | null> {
   }
 
   const request = (async (): Promise<DashboardRole | null> => {
-    // Validate the browser session with Supabase on cache misses. RLS remains the
-    // authorization boundary for every data query; this only removes duplicate
-    // role round-trips fired by parallel dashboard loaders.
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError || !user || user.id !== userId) return null;
-
+    // RLS remains the authorization boundary for every data query. This cache
+    // only removes duplicate role round-trips fired by parallel dashboard loaders.
     const { data, error } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .maybeSingle();
-    if (error || !data) return null;
+    if (error) return null;
+    if (!data) {
+      notifyDashboardAuthRequired();
+      return null;
+    }
 
     const role =
       data.role === "admin" || data.role === "editor" ? data.role : null;
@@ -259,6 +356,8 @@ export async function getDashboardRole(): Promise<DashboardRole | null> {
         role,
         expiresAt: Date.now() + DASHBOARD_ROLE_CACHE_TTL_MS,
       };
+    } else {
+      notifyDashboardAuthRequired();
     }
     return role;
   })();
@@ -623,11 +722,8 @@ export async function deleteDashboardPasskey(passkeyId: string): Promise<void> {
 }
 
 export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null> {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !user) return null;
+  const user = await getValidatedDashboardUser();
+  if (!user) return null;
 
   const { data: roleRow, error: roleError } = await supabase
     .from("user_roles")

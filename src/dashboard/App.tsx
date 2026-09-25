@@ -1,5 +1,6 @@
 import { navSections } from "@/dashboard/config/navigation";
 import {
+  DASHBOARD_AUTH_REQUIRED_EVENT,
   getDashboardMfaStatus,
   listDashboardProductSearchIndex,
   signOutDashboard,
@@ -76,9 +77,11 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Route, Switch, useLocation } from "wouter";
+
+const DASHBOARD_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 const iconMap: Record<string, typeof LayoutDashboard> = {
   LayoutDashboard,
@@ -588,6 +591,16 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
 function DashboardGate() {
   const [, navigate] = useLocation();
   const [state, setState] = useState<"loading" | "ready" | "denied">("loading");
+  const lastActivityAt = useRef(Date.now());
+  const expiringSession = useRef(false);
+
+  const expireDashboardSession = useCallback(async () => {
+    if (expiringSession.current) return;
+    expiringSession.current = true;
+    await signOutDashboard().catch(() => undefined);
+    toast.info("Dashboard session expired after 30 minutes of inactivity.");
+    navigate("/dashboard/login");
+  }, [navigate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -596,6 +609,7 @@ function DashboardGate() {
         if (cancelled) return;
 
         if (status?.ready) {
+          lastActivityAt.current = Date.now();
           setState("ready");
           return;
         }
@@ -618,18 +632,62 @@ function DashboardGate() {
   useEffect(() => {
     if (state !== "ready") return;
 
-    const idleMs = 30 * 60 * 1000;
-    let timeoutId = window.setTimeout(() => undefined, idleMs);
-
-    const expire = async () => {
-      await signOutDashboard().catch(() => undefined);
-      toast.info("Dashboard session expired after 30 minutes of inactivity.");
-      navigate("/dashboard/login");
+    const redirectForStatus = (status: Awaited<ReturnType<typeof getDashboardMfaStatus>>) => {
+      setState("denied");
+      navigate(status ? "/dashboard/login?mode=mfa" : "/dashboard/login");
     };
 
+    const handleAuthRequired = () => {
+      redirectForStatus(null);
+    };
+
+    let revalidating = false;
+    const revalidateVisibleSession = async () => {
+      if (revalidating || document.visibilityState === "hidden") return;
+      if (Date.now() - lastActivityAt.current >= DASHBOARD_IDLE_TIMEOUT_MS) {
+        await expireDashboardSession();
+        return;
+      }
+
+      revalidating = true;
+      try {
+        const status = await getDashboardMfaStatus();
+        if (!status?.ready) redirectForStatus(status);
+      } catch {
+        // A temporary network failure should not sign the user out. Protected
+        // data calls still fail closed, and a real auth loss emits the event above.
+      } finally {
+        revalidating = false;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") void revalidateVisibleSession();
+    };
+
+    window.addEventListener(DASHBOARD_AUTH_REQUIRED_EVENT, handleAuthRequired);
+    window.addEventListener("focus", revalidateVisibleSession);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener(DASHBOARD_AUTH_REQUIRED_EVENT, handleAuthRequired);
+      window.removeEventListener("focus", revalidateVisibleSession);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [expireDashboardSession, navigate, state]);
+
+  useEffect(() => {
+    if (state !== "ready") return;
+
+    let timeoutId = window.setTimeout(() => undefined, DASHBOARD_IDLE_TIMEOUT_MS);
+
     const reset = () => {
+      lastActivityAt.current = Date.now();
       window.clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(() => void expire(), idleMs);
+      timeoutId = window.setTimeout(
+        () => void expireDashboardSession(),
+        DASHBOARD_IDLE_TIMEOUT_MS,
+      );
     };
 
     const events: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "touchstart", "scroll"];
@@ -640,7 +698,7 @@ function DashboardGate() {
       window.clearTimeout(timeoutId);
       events.forEach((eventName) => window.removeEventListener(eventName, reset));
     };
-  }, [navigate, state]);
+  }, [expireDashboardSession, state]);
 
   if (state !== "ready") {
     return (
