@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
+import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 import ProductVariantManager from "@/dashboard/components/products/ProductVariantManager";
 import {
@@ -139,6 +140,38 @@ export default function ProductFormPage({ id }: { id?: string }) {
     setSaved(false);
     setForm((current) => ({ ...current, [key]: value }));
   };
+
+  const applyAiPatch = useCallback((values: Record<string, string>) => {
+    const brandName = values.brandName?.trim();
+    const categoryName = values.categoryName?.trim();
+    const normalizedBrand = brandName?.toLocaleLowerCase();
+    const normalizedCategory = categoryName?.toLocaleLowerCase();
+    const brandMatch = normalizedBrand
+      ? brands.find((brand) => brand.name.trim().toLocaleLowerCase() === normalizedBrand)
+      : undefined;
+    const categoryMatch = normalizedCategory
+      ? categories.find((category) => category.name.trim().toLocaleLowerCase() === normalizedCategory)
+      : undefined;
+
+    setSaved(false);
+    setForm((current) => ({
+      ...current,
+      ...(values.title !== undefined ? { title: values.title } : {}),
+      ...(values.description !== undefined ? { description: values.description } : {}),
+      ...(values.seoTitle !== undefined ? { seoTitle: values.seoTitle } : {}),
+      ...(values.seoDescription !== undefined ? { seoDescription: values.seoDescription } : {}),
+      ...(values.barcode !== undefined ? { barcode: values.barcode } : {}),
+      ...(brandMatch ? { brandId: brandMatch.id } : {}),
+      ...(categoryMatch ? { categoryId: categoryMatch.id } : {}),
+    }));
+
+    if (brandName && !brandMatch) {
+      toast.info(`AI suggested brand "${brandName}". Create or select that brand before saving.`);
+    }
+    if (categoryName && !categoryMatch) {
+      toast.info(`AI suggested category "${categoryName}". Create or select that category before saving.`);
+    }
+  }, [brands, categories]);
 
   const variantLocked = variantCount > 1;
 
@@ -332,6 +365,76 @@ export default function ProductFormPage({ id }: { id?: string }) {
               ) : null}
             </>
           ) : null}
+          <AiAssistPanel
+            entity="product"
+            query={form.title}
+            currentData={{
+              title: form.title,
+              description: form.description,
+              brandName: brands.find((brand) => brand.id === form.brandId)?.name ?? "",
+              categoryName: categories.find((category) => category.id === form.categoryId)?.name ?? "",
+              barcode: form.barcode,
+              seoTitle: form.seoTitle,
+              seoDescription: form.seoDescription,
+            }}
+            fields={[
+              {
+                key: "title",
+                label: "Product title",
+                description: "Exact clean product name including model when supported.",
+                maxLength: 180,
+              },
+              {
+                key: "description",
+                label: "Description",
+                description: "Original factual ecommerce description based on verified product information.",
+                maxLength: 5000,
+              },
+              {
+                key: "brandName",
+                label: "Brand",
+                description: "Exact official brand name. It must map to an existing dashboard brand.",
+                review: true,
+                maxLength: 120,
+              },
+              {
+                key: "categoryName",
+                label: "Category",
+                description: "Best matching existing Space Call category.",
+                review: true,
+                maxLength: 120,
+              },
+              {
+                key: "barcode",
+                label: "Barcode / GTIN",
+                description: "Only an official exact GTIN/EAN/UPC for this exact product model.",
+                review: true,
+                maxLength: 80,
+              },
+              {
+                key: "seoTitle",
+                label: "SEO title",
+                description: "Natural search title for Space Call. Keep product identity accurate.",
+                maxLength: 70,
+              },
+              {
+                key: "seoDescription",
+                label: "Meta description",
+                description: "Useful natural search description without keyword stuffing.",
+                maxLength: 180,
+              },
+            ]}
+            context={{
+              market: "Lebanon",
+              store: "Space Call",
+              availableBrands: brands.map((brand) => ({ name: brand.name, slug: brand.slug })),
+              availableCategories: categories.map((category) => ({
+                name: category.name,
+                slug: category.slug,
+              })),
+            }}
+            onApply={applyAiPatch}
+          />
           <button
             onClick={() => void handleSave()}
             disabled={saving}
