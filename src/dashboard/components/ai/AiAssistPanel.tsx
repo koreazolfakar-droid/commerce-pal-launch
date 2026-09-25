@@ -287,9 +287,7 @@ export default function AiAssistPanel({
                       ) : (
                         <AlertTriangle className="size-3.5" />
                       )}
-                      {result.grounded
-                        ? "Web research grounded"
-                        : "Web grounding unavailable"}
+                      {result.grounded ? "Web research grounded" : "Web grounding unavailable"}
                     </div>
                     {result.summary ? <p className="mt-1">{result.summary}</p> : null}
                   </div>
