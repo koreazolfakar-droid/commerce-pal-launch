@@ -20,6 +20,10 @@ test("dashboard AI secret stays server-side and requests are authenticated", () 
   assert.match(edge, /admin\.auth\.getUser\(token\)/);
   assert.match(edge, /user_roles/);
   assert.match(edge, /row\.role === "admin" \|\| row\.role === "editor"/);
+  assert.ok(
+    edge.indexOf('if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);') <
+      edge.indexOf('if (!geminiKey)'),
+  );
   assert.doesNotMatch(client, /GEMINI_API_KEY|x-goog-api-key/);
   assert.match(client, /safeHttpUrl/);
   assert.doesNotMatch(env, /VITE_GEMINI_API_KEY/);
@@ -45,6 +49,14 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(panel, /Nothing is saved automatically/);
   assert.match(panel, /Apply selected/);
   assert.match(panel, /Web research grounded/);
+  assert.match(panel, /suggestion\.verified/);
+  assert.doesNotMatch(panel, /suggestion\.verified\s*\|\|\s*action\s*===\s*"seo"/);
+  assert.match(panel, /role="dialog"/);
+  assert.match(panel, /aria-modal="true"/);
+  assert.match(panel, /queryInputRef\.current\?\.focus\(\)/);
+  assert.match(panel, /event\.key === "Escape"/);
+  assert.match(panel, /querySelectorAll<HTMLElement>/);
+  assert.match(panel, /triggerRef\.current\?\.focus\(\)/);
 });
 
 test("phase one connects the reusable AI assistant to product, category and brand forms", () => {
