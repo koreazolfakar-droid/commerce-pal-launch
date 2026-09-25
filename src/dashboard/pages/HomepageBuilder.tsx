@@ -1346,7 +1346,7 @@ export default function HomepageBuilderPage() {
     selectedProductSource === "manual";
 
   useEffect(() => {
-    if (!needsManualProducts || productsReady || productsLoading) return;
+    if (!needsManualProducts || productsReady) return;
 
     let cancelled = false;
     setProductsLoading(true);
@@ -1369,7 +1369,7 @@ export default function HomepageBuilderPage() {
     return () => {
       cancelled = true;
     };
-  }, [needsManualProducts, productsReady, productsLoading]);
+  }, [needsManualProducts, productsReady]);
 
   useEffect(() => {
     const handler = (event: Event) => {
