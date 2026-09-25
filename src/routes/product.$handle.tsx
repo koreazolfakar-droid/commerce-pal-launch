@@ -34,7 +34,7 @@ import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { fetchProductByHandle } from "@/lib/storefrontData";
 import { isUsedPhone } from "@/lib/usedPhones";
-import { discountPercent, formatPrice } from "@/lib/productPricing";
+import { discountPercent, formatPrice, productPrice } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
@@ -76,13 +76,16 @@ export const Route = createFileRoute("/product/$handle")({
     const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
     const category = primaryCategory(product);
+    const hasValidPrice = productPrice(product) > 0;
     return {
       meta: [
         { title: fullTitle },
         { name: "description", content: description },
         {
           name: "robots",
-          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+          content: hasValidPrice
+            ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+            : "noindex, follow",
         },
         ...socialMeta({
           title: fullTitle,
