@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
+import { publicSupabase } from "@/integrations/supabase/publicClient";
+import { productPrice } from "@/lib/productPricing";
 import { fetchCatalogProducts, fetchCollections } from "@/lib/storefrontData";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { absoluteUrl } from "@/lib/seo";
@@ -20,8 +22,31 @@ function escapeXml(value: string) {
     .replace(/'/g, "&apos;");
 }
 
-function productLastmod(product: StoreProduct) {
-  return (product.node.updatedAt || product.node.createdAt)?.slice(0, 10);
+function productLastmod(
+  product: StoreProduct,
+  updatedByHandle: ReadonlyMap<string, string>,
+) {
+  const updatedAt = updatedByHandle.get(product.node.handle);
+  return (updatedAt || product.node.updatedAt || product.node.createdAt)?.slice(0, 10);
+}
+
+async function fetchProductUpdatedAt() {
+  const { data, error } = await publicSupabase
+    .from("store_products")
+    .select("handle,updated_at")
+    .eq("status", "active")
+    .limit(1000);
+
+  if (error) {
+    console.warn("Sitemap lastmod metadata unavailable.", error);
+    return new Map<string, string>();
+  }
+
+  return new Map(
+    (data ?? [])
+      .filter((row) => Boolean(row.handle && row.updated_at))
+      .map((row) => [row.handle, row.updated_at] as const),
+  );
 }
 
 function buildStaticEntries(): SitemapEntry[] {
@@ -56,32 +81,41 @@ export const Route = createFileRoute("/sitemap.xml")({
           fetchCollections(500),
         ]);
 
-        const products = productsResult.status === "fulfilled" ? productsResult.value : [];
-        const collections: StoreCollection[] =
-          collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
-
-        let dynamicEntries: SitemapEntry[] = [];
-
-        try {
-          const catalog = buildCatalogIndex(products);
-          dynamicEntries = [
-            ...catalog.categories
-              .filter((category) => category.count > 0)
-              .map((category) => ({ path: `/category/${encodeURIComponent(category.slug)}` })),
-            ...catalog.brands
-              .filter((brand) => brand.count > 0)
-              .map((brand) => ({ path: `/brand/${encodeURIComponent(brand.slug)}` })),
-            ...displayCollections(collections).map((collection) => ({
-              path: `/collections/${encodeURIComponent(collection.handle)}`,
-            })),
-            ...products.map((product) => ({
-              path: `/product/${encodeURIComponent(product.node.handle)}`,
-              lastmod: productLastmod(product),
-            })),
-          ];
-        } catch {
-          dynamicEntries = [];
+        if (productsResult.status === "rejected" || collectionsResult.status === "rejected") {
+          console.error(
+            "Sitemap source data unavailable.",
+            productsResult.status === "rejected" ? productsResult.reason : collectionsResult.reason,
+          );
+          return new Response("Sitemap data is temporarily unavailable.", {
+            status: 503,
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "no-store",
+              "Retry-After": "300",
+              "X-Robots-Tag": "noindex",
+            },
+          });
         }
+
+        const products = productsResult.value.filter((product) => productPrice(product) > 0);
+        const collections: StoreCollection[] = collectionsResult.value;
+        const updatedByHandle = await fetchProductUpdatedAt();
+        const catalog = buildCatalogIndex(products);
+        const dynamicEntries: SitemapEntry[] = [
+          ...catalog.categories
+            .filter((category) => category.count > 0)
+            .map((category) => ({ path: `/category/${encodeURIComponent(category.slug)}` })),
+          ...catalog.brands
+            .filter((brand) => brand.count > 0)
+            .map((brand) => ({ path: `/brand/${encodeURIComponent(brand.slug)}` })),
+          ...displayCollections(collections).map((collection) => ({
+            path: `/collections/${encodeURIComponent(collection.handle)}`,
+          })),
+          ...products.map((product) => ({
+            path: `/product/${encodeURIComponent(product.node.handle)}`,
+            lastmod: productLastmod(product, updatedByHandle),
+          })),
+        ];
 
         const entries: SitemapEntry[] = [...buildStaticEntries(), ...dynamicEntries];
         const seen = new Set<string>();
