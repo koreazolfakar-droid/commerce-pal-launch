@@ -32,7 +32,7 @@ import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
-import { discountPercent, formatPrice } from "@/lib/productPricing";
+import { discountPercent, formatPrice, productPrice } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
@@ -73,13 +73,16 @@ export const Route = createFileRoute("/product/$handle")({
     const description = productMetaDescription(product);
     const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
+    const hasValidPrice = productPrice(product) > 0;
     return {
       meta: [
         { title: fullTitle },
         { name: "description", content: description },
         {
           name: "robots",
-          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+          content: hasValidPrice
+            ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+            : "noindex, follow",
         },
         ...socialMeta({
           title: fullTitle,
