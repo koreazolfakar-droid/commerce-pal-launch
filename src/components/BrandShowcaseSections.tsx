@@ -11,7 +11,7 @@ import { ArrowRight } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { buildStoreBrands } from "@/lib/brandDirectory";
+import type { StoreBrand } from "@/lib/brandDirectory";
 import { findFacetMerchandising } from "@/lib/homeMerchandising";
 import { productsInCategory, productsOfBrand } from "@/lib/taxonomy";
 
@@ -30,6 +30,14 @@ function mergeUniqueProducts(...groups: StoreProduct[][]) {
     merged.push(product);
   }
   return merged;
+}
+
+function withoutExcludedProducts(
+  products: StoreProduct[],
+  excludedProductIds: ReadonlySet<string>,
+) {
+  if (excludedProductIds.size === 0) return products;
+  return products.filter((product) => !excludedProductIds.has(product.node.id));
 }
 
 function useNearViewport(enabled: boolean) {
@@ -186,13 +194,16 @@ export function BundleSection({ collections }: { collections: StoreCollection[] 
 export function BrandShowcase({
   catalog,
   collections,
+  brands,
+  excludedProductIds,
 }: {
   catalog: CatalogIndex;
   collections: StoreCollection[];
+  brands: StoreBrand[];
+  excludedProductIds: ReadonlySet<string>;
 }) {
   const { t, language } = useLanguage();
   const { data: showcases = [] } = useQuery(showcaseCollectionsQueryOptions());
-  const brands = buildStoreBrands(catalog.brands, collections);
   const usedShowcases = new Set(brands.map((brand) => `showcase-${brand.slug}`));
   const categoryFeatures = catalog.categories.flatMap((category) => {
     const merchandising = findFacetMerchandising(collections, "category", category.slug);
@@ -201,7 +212,10 @@ export function BrandShowcase({
   return (
     <div className="space-y-5 sm:space-y-6" data-testid="brand-showcases">
       {brands.map((brand) => {
-        const products = productsOfBrand(catalog, brand.slug);
+        const products = withoutExcludedProducts(
+          productsOfBrand(catalog, brand.slug),
+          excludedProductIds,
+        );
         const merchandising = findFacetMerchandising(collections, "brand", brand.slug);
         return (
           <BrandFacetSection
@@ -213,6 +227,7 @@ export function BrandShowcase({
             description={merchandising?.description || t("brandSelection")}
             href={`/brand/${brand.slug}`}
             products={products}
+            excludedProductIds={excludedProductIds}
           />
         );
       })}
@@ -225,7 +240,10 @@ export function BrandShowcase({
           title={merchandising.title || categoryLabel(category, language)}
           description={merchandising.description}
           href={`/category/${category.slug}`}
-          products={productsInCategory(catalog, category.slug)}
+          products={withoutExcludedProducts(
+            productsInCategory(catalog, category.slug),
+            excludedProductIds,
+          )}
         />
       ))}
       {showcases
@@ -245,6 +263,7 @@ function BrandFacetSection({
   description,
   href,
   products: indexedProducts,
+  excludedProductIds,
 }: {
   id: string;
   slug: string;
@@ -253,10 +272,13 @@ function BrandFacetSection({
   description?: string | null;
   href: string;
   products: StoreProduct[];
+  excludedProductIds: ReadonlySet<string>;
 }) {
-  const needsBackfill = indexedProducts.length < HOME_BRAND_PRODUCT_TARGET;
+  const eligibleIndexedProducts = withoutExcludedProducts(indexedProducts, excludedProductIds);
+  const needsBackfill = eligibleIndexedProducts.length < HOME_BRAND_PRODUCT_TARGET;
   const { ref, nearby } = useNearViewport(needsBackfill);
   const exactVendor =
+    eligibleIndexedProducts.find((product) => product.node.vendor?.trim())?.node.vendor?.trim() ||
     indexedProducts.find((product) => product.node.vendor?.trim())?.node.vendor?.trim() ||
     vendorLabel;
   const vendorQuery = homeVendorProductsQueryOptions(exactVendor);
@@ -268,9 +290,13 @@ function BrandFacetSection({
     ...vendorQuery,
     enabled: Boolean(exactVendor) && needsBackfill && nearby,
   });
+  const eligibleVendorProducts = withoutExcludedProducts(vendorProducts, excludedProductIds);
   const products = needsBackfill
-    ? mergeUniqueProducts(indexedProducts, vendorProducts).slice(0, HOME_BRAND_PRODUCT_TARGET)
-    : indexedProducts;
+    ? mergeUniqueProducts(eligibleIndexedProducts, eligibleVendorProducts).slice(
+        0,
+        HOME_BRAND_PRODUCT_TARGET,
+      )
+    : eligibleIndexedProducts;
   const loading = needsBackfill && products.length === 0 && (!nearby || isPending);
   const resolvedEmpty =
     needsBackfill &&
