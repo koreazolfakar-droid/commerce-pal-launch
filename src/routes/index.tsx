@@ -17,6 +17,7 @@ import {
   navigationCatalogQueryOptions,
   collectionQueryOptions,
   collectionsQueryOptions,
+  productsByIdsQueryOptions,
 } from "@/lib/queries";
 import { productDiscountPercent } from "@/lib/productPricing";
 import {
@@ -276,6 +277,26 @@ function cmsSectionIsScheduled(section: CmsSection) {
   return (!startDate || today >= startDate) && (!endDate || today <= endDate);
 }
 
+function cmsManualProductIds(section?: CmsSection) {
+  if (!section) return [];
+
+  const builder = cmsBuilderState(section);
+  const settings =
+    builder["settings"] && typeof builder["settings"] === "object" && !Array.isArray(builder["settings"])
+      ? (builder["settings"] as Record<string, unknown>)
+      : {};
+
+  if (settings["source"] !== "manual") return [];
+
+  const configured = Array.isArray(settings["manualProductIds"])
+    ? settings["manualProductIds"].filter((id): id is string => typeof id === "string")
+    : typeof settings["sourceValue"] === "string"
+      ? settings["sourceValue"].split(",")
+      : [];
+
+  return [...new Set(configured.map((id) => id.trim()).filter(Boolean))].slice(0, 20);
+}
+
 function cmsSectionDeviceClass(section?: CmsSection) {
   if (!section) return "";
   const builder = cmsBuilderState(section);
@@ -473,6 +494,11 @@ function Index() {
   const { t, language } = useLanguage();
   const deferredWorkReady = useDeferredHomepageWork();
   const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
+  const homepageSectionsForMerch = cms.sections.filter((section) => section.page_slug === "home");
+  const featuredMerchSection = homepageSectionsForMerch.find(
+    (section) => section.section_key === "featured_products",
+  );
+  const manualFeaturedProductIds = cmsManualProductIds(featuredMerchSection);
   const { data: navigationCatalog } = useQuery(navigationCatalogQueryOptions());
   const { data: catalog } = useQuery({
     ...homepageCatalogQueryOptions(),
@@ -499,7 +525,11 @@ function Index() {
   });
   const { data: bestSellers = [] } = useQuery({
     ...bestSellingQueryOptions(),
-    enabled: secondaryQueriesReady,
+    enabled: secondaryQueriesReady && manualFeaturedProductIds.length === 0,
+  });
+  const { data: manualFeaturedProducts = [] } = useQuery({
+    ...productsByIdsQueryOptions(manualFeaturedProductIds),
+    enabled: secondaryQueriesReady && manualFeaturedProductIds.length > 0,
   });
 
   const heroOnlyProductIds = new Set(
@@ -525,11 +555,13 @@ function Index() {
   const navigationReady = Boolean(navigationCatalog || catalog);
   const brands = applyCmsBrands(buildStoreBrands(navigationBrands, collections), cms.brands);
   const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
-  const best = (bestSellers ?? []).filter(isHomepageMerchandise);
+  const best = (
+    manualFeaturedProductIds.length > 0 ? manualFeaturedProducts : bestSellers
+  ).filter(isHomepageMerchandise);
   const latest = newItems.filter(isHomepageMerchandise);
 
 
-  const homeSections = cms.sections.filter((section) => section.page_slug === "home");
+  const homeSections = homepageSectionsForMerch;
   const sectionByKey = new Map(homeSections.map((section) => [section.section_key, section]));
   const coreKeys = new Set(["hero", "categories", "brands", "featured_products", "trust"]);
   const coreSection = (key: string) => sectionByKey.get(key);
