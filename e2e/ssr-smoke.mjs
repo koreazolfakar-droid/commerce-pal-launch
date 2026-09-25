@@ -42,6 +42,24 @@ const mutationResponse = await handler.fetch(
 );
 assert.notEqual(mutationResponse.status, 308, "Mutation requests must not be host-redirected");
 
+for (const [sourcePath, expectedLocation] of [
+  ["/category/smartphones", "/category/smartphone"],
+  ["/category/used-phone", "/used-phones"],
+  ["/compare", "/"],
+]) {
+  const response = await handler.fetch(
+    new Request(new URL(sourcePath, CANONICAL_ORIGIN)),
+    {},
+    context,
+  );
+  assert.equal(response.status, 308, `${sourcePath} must permanently redirect`);
+  assert.equal(
+    response.headers.get("location"),
+    new URL(expectedLocation, CANONICAL_ORIGIN).toString(),
+    `${sourcePath} must redirect to its canonical replacement`,
+  );
+}
+
 const home = await request("/");
 assert.equal((home.body.match(/<h1\b/g) ?? []).length, 1, "Homepage keeps exactly one H1");
 assert.match(home.body, /data-testid="home-hero"/);
