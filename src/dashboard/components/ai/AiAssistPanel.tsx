@@ -45,11 +45,14 @@ export default function AiAssistPanel({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const queryInputRef = useRef<HTMLInputElement>(null);
+  const requestIdRef = useRef(0);
   const dialogTitleId = useId();
 
   useEffect(() => {
     if (!open) return;
+    requestIdRef.current += 1;
     setResearchQuery(query);
+    setLoadingAction(null);
     setResult(null);
     setSelected(new Set());
   }, [open, query]);
@@ -115,6 +118,7 @@ export default function AiAssistPanel({
 
   const run = async (action: DashboardAiAction) => {
     if (loadingAction) return;
+    const requestId = ++requestIdRef.current;
     setLoadingAction(action);
     try {
       const response = await requestDashboardAiAssist({
@@ -125,6 +129,7 @@ export default function AiAssistPanel({
         fields,
         context,
       });
+      if (requestId !== requestIdRef.current) return;
       setResult(response);
       setSelected(
         new Set(
@@ -142,9 +147,10 @@ export default function AiAssistPanel({
         ),
       );
     } catch (cause) {
+      if (requestId !== requestIdRef.current) return;
       toast.error(cause instanceof Error ? cause.message : "AI assistant failed.");
     } finally {
-      setLoadingAction(null);
+      if (requestId === requestIdRef.current) setLoadingAction(null);
     }
   };
 
@@ -229,7 +235,13 @@ export default function AiAssistPanel({
                 <input
                   ref={queryInputRef}
                   value={researchQuery}
-                  onChange={(event) => setResearchQuery(event.target.value)}
+                  onChange={(event) => {
+                    requestIdRef.current += 1;
+                    setResearchQuery(event.target.value);
+                    setLoadingAction(null);
+                    setResult(null);
+                    setSelected(new Set());
+                  }}
                   placeholder="Exact product, category or brand name"
                   className="h-11 w-full rounded-xl border border-slate-200 px-3 text-[12px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                 />
