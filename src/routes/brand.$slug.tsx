@@ -54,11 +54,17 @@ export const Route = createFileRoute("/brand/$slug")({
     const title = `${label} Products in Lebanon | ${STORE_NAME}`;
     const description = `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and direct Space Call checkout.`;
     const path = `/brand/${params.slug}`;
+    const hasProducts = loaderData.catalog.products.length > 0;
     return {
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "robots", content: "index, follow, max-image-preview:large" },
+        {
+          name: "robots",
+          content: hasProducts
+            ? "index, follow, max-image-preview:large, max-snippet:-1"
+            : "noindex, follow",
+        },
         ...socialMeta({ title, description, path }),
       ],
       links: [canonicalLink(path)],
