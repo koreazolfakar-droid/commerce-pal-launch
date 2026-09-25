@@ -292,3 +292,29 @@ test("dashboard product SEO fields drive storefront metadata", async () => {
   assert.match(seo, /node\.seoDescription\?\.trim\(\)/);
   assert.match(productRoute, /product\.node\.seoTitle\?\.trim\(\)/);
 });
+
+test("dashboard category brand and collection SEO fields reach storefront heads", async () => {
+  const [category, brand, collection, nativeStore, storeTypes] = await Promise.all([
+    source("src/routes/category.$slug.tsx"),
+    source("src/routes/brand.$slug.tsx"),
+    source("src/routes/collections.$handle.tsx"),
+    source("src/lib/nativeStore.ts"),
+    source("src/lib/storeTypes.ts"),
+  ]);
+
+  assert.match(category, /seo_title/);
+  assert.match(category, /seo_description/);
+  assert.match(category, /loaderData\.seoTitle\?\.trim\(\)/);
+  assert.match(category, /loaderData\.seoDescription \|\| loaderData\.description/);
+
+  assert.match(brand, /from\("cms_brands"\)/);
+  assert.match(brand, /seo_title,seo_description,description,cover_image_url/);
+  assert.match(brand, /loaderData\.seo\?\.seo_title\?\.trim\(\)/);
+  assert.match(brand, /cleanMetaDescription/);
+
+  assert.match(storeTypes, /seoTitle\?: string/);
+  assert.match(storeTypes, /seoDescription\?: string/);
+  assert.match(nativeStore, /image_url,seo_title,seo_description/);
+  assert.match(collection, /collection\.seoTitle\?\.trim\(\)/);
+  assert.match(collection, /collection\.seoDescription\?\.trim\(\)/);
+});
