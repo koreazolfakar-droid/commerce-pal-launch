@@ -1,10 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import { Boxes, MessageCircle, PackageCheck, SearchCheck } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  ArrowRight,
+  Boxes,
+  Heart,
+  MessageCircle,
+  PackageCheck,
+  SearchCheck,
+  Tag,
+} from "lucide-react";
 
 import { localizeSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { generalWhatsAppUrl } from "@/lib/whatsapp";
 
 const REASONS = [
   {
@@ -40,21 +50,31 @@ const REASONS = [
       ar: "راجع المنتجات والخيارات والإجمالي قبل تأكيد الطلب.",
     },
   },
+] as const;
+
+const QUICK_ACTIONS = [
+  {
+    icon: Heart,
+    title: "serviceSavedFavorites",
+    cta: "serviceSavedAction",
+    to: "/wishlist" as const,
+  },
+  {
+    icon: Tag,
+    title: "serviceDeals",
+    cta: "serviceDealsAction",
+    to: "/shop" as const,
+  },
   {
     icon: MessageCircle,
-    title: {
-      en: "Direct support",
-      ar: "دعم مباشر",
-    },
-    detail: {
-      en: "Contact Space Call directly when you need help before or after ordering.",
-      ar: "تواصل مباشرة مع Space Call عند الحاجة إلى مساعدة قبل الطلب أو بعده.",
-    },
+    title: "serviceWhatsApp",
+    cta: "serviceWhatsAppAction",
+    to: undefined,
   },
 ] as const;
 
 export function WhyShop() {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
   const section = cms?.sections.find(
     (item) => item.page_slug === "home" && item.section_key === "trust",
@@ -66,6 +86,13 @@ export function WhyShop() {
     (language === "ar"
       ? "توفر مباشر، أسعار واضحة ودعم عند الحاجة."
       : "Live availability, clear pricing and direct support.");
+  const cmsStoreName = cms?.settings["site_name"];
+  const cmsWhatsApp = cms?.settings["whatsapp_number"];
+  const storeName =
+    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
+  const whatsappNumber =
+    typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
+  const whatsappHref = generalWhatsAppUrl(whatsappNumber, storeName);
 
   return (
     <section aria-labelledby="why-shop" data-testid="why-shop">
@@ -81,7 +108,7 @@ export function WhyShop() {
         </p>
       </div>
 
-      <div className="mt-3 grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+      <div className="mt-3 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
         {REASONS.map((reason) => {
           const Icon = reason.icon;
           return (
@@ -104,6 +131,48 @@ export function WhyShop() {
           );
         })}
       </div>
+
+      <nav
+        aria-label={t("storeServices")}
+        className="mt-3 grid gap-2 min-[420px]:grid-cols-3"
+        data-testid="home-quick-actions"
+      >
+        {QUICK_ACTIONS.map((action) => {
+          const Icon = action.icon;
+          const className =
+            "group flex min-h-11 min-w-0 items-center gap-2.5 rounded-xl border border-border/65 bg-card px-3 py-2.5 text-start transition-colors hover:border-primary/25";
+          const content = (
+            <>
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface text-primary">
+                <Icon className="size-4" strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[12px] font-semibold">{t(action.title)}</span>
+                <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium text-primary">
+                  {t(action.cta)}
+                  <ArrowRight className="size-3 rtl:rotate-180" aria-hidden="true" />
+                </span>
+              </span>
+            </>
+          );
+
+          return action.to ? (
+            <Link key={action.title} to={action.to} className={className}>
+              {content}
+            </Link>
+          ) : (
+            <a
+              key={action.title}
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={className}
+            >
+              {content}
+            </a>
+          );
+        })}
+      </nav>
     </section>
   );
 }
