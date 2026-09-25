@@ -185,3 +185,36 @@ test("sitemap fails closed instead of publishing a partial URL set", async () =>
   assert.match(sitemap, /productResult\.status === "rejected"/);
   assert.match(sitemap, /supportResult\.status === "rejected"/);
 });
+
+
+test("category aliases converge on the managed Supabase canonical URLs", async () => {
+  const [canonical, categoryRoute, sitemap, footer, header, product, showcase] =
+    await Promise.all([
+      source("src/lib/categoryCanonical.ts"),
+      source("src/routes/category.$slug.tsx"),
+      source("src/routes/sitemap[.]xml.ts"),
+      source("src/components/SiteFooter.tsx"),
+      source("src/components/SiteHeader.tsx"),
+      source("src/routes/product.$handle.tsx"),
+      source("src/components/BrandShowcaseSections.tsx"),
+    ]);
+
+  for (const [legacy, target] of [
+    ["smartphones", "smartphone"],
+    ["tablets", "tablet"],
+    ["smartwatches", "smart-watch"],
+    ["chargers", "charger"],
+    ["cables", "cable"],
+    ["power-banks", "power-bank"],
+  ]) {
+    assert.match(canonical, new RegExp(`["']${legacy}["']\\s*:\\s*["']${target}["']`));
+  }
+
+  assert.match(categoryRoute, /canonicalCategorySlug\(params\.slug\)/);
+  assert.match(categoryRoute, /canonicalSlug !== params\.slug/);
+  assert.match(sitemap, /isCanonicalCategorySlug\(category\.slug\)/);
+  assert.match(footer, /canonicalCategorySlug\(entry\.slug\)/);
+  assert.match(header, /canonicalCategorySlug/);
+  assert.match(product, /canonicalCategorySlug\(category\.slug\)/);
+  assert.match(showcase, /canonicalCategorySlug\(category\.slug\)/);
+});
