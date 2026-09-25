@@ -74,12 +74,6 @@ export function HeroScene({
   const desktopFocus = config.focalPoint ?? { x: 50, y: 50 };
   const mobileFocus = config.mobileFocalPoint ?? desktopFocus;
   const ar = language === "ar";
-  const hasInlineContent = Boolean(
-    slide.eyebrow ||
-      slide.title ||
-      slide.subtitle ||
-      (placement === "inline" && buttons.length > 0),
-  );
   const patch = (
     part: Part,
     next: HeroLayout[Part],
@@ -235,6 +229,12 @@ export function HeroScene({
       blank: slide.secondary_open_in_new_tab,
     },
   ].filter((button) => button.label && button.url);
+  const hasInlineContent = Boolean(
+    slide.eyebrow ||
+      slide.title ||
+      slide.subtitle ||
+      (placement === "inline" && buttons.length > 0),
+  );
   const buttonNodes = (
     <div className="hero-scene-buttons-row">
       {buttons.map((button, i) =>
