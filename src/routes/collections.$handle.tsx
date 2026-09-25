@@ -27,8 +27,13 @@ export const Route = createFileRoute("/collections/$handle")({
       };
     }
     const collectionName = loaderData.collection.title;
-    const title = `${collectionName} in Lebanon | ${STORE_NAME}`;
-    const rawDescription = loaderData.collection.description?.trim() ?? "";
+    const title =
+      loaderData.collection.seoTitle?.trim() ||
+      `${collectionName} in Lebanon | ${STORE_NAME}`;
+    const rawDescription =
+      loaderData.collection.seoDescription?.trim() ||
+      loaderData.collection.description?.trim() ||
+      "";
     const fallbackDescription = `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and direct Space Call checkout.`;
     const description =
       rawDescription.length >= 90
