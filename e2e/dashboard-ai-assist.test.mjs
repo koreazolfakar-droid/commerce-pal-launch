@@ -20,10 +20,11 @@ test("dashboard AI secret stays server-side and requests are authenticated", () 
   assert.match(edge, /admin\.auth\.getUser\(token\)/);
   assert.match(edge, /user_roles/);
   assert.match(edge, /row\.role === "admin" \|\| row\.role === "editor"/);
-  assert.ok(
-    edge.indexOf('if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);') <
-      edge.indexOf('if (!geminiKey)'),
-  );
+  const accessGuard = 'if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);';
+  const geminiGuard = "if (!geminiKey)";
+  assert.ok(edge.includes(accessGuard));
+  assert.ok(edge.includes(geminiGuard));
+  assert.ok(edge.indexOf(accessGuard) < edge.indexOf(geminiGuard));
   assert.doesNotMatch(client, /GEMINI_API_KEY|x-goog-api-key/);
   assert.match(client, /safeHttpUrl/);
   assert.doesNotMatch(env, /VITE_GEMINI_API_KEY/);
@@ -73,4 +74,5 @@ test("phase one connects the reusable AI assistant to product, category and bran
   assert.match(product, /entity="product"/);
   assert.match(category, /entity="category"/);
   assert.match(brand, /entity="brand"/);
+  assert.match(product, /values\.barcode !== undefined && variantCount <= 1/);
 });
