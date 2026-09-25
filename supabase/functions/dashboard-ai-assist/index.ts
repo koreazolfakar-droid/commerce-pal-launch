@@ -545,7 +545,8 @@ Deno.serve(async (req) => {
       const retry = await callGemini({
         apiKey: geminiKey,
         model,
-        prompt,
+        systemInstruction: geminiRequest.systemInstruction,
+        input: geminiRequest.input,
         fields,
         withSearch: false,
       });
