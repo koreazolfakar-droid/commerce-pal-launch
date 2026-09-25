@@ -75,14 +75,23 @@ export const Route = createFileRoute("/brands")({
                 "@type": "ItemList",
                 name: `${STORE_NAME} brands`,
                 numberOfItems: brands.length,
-                itemListElement: brands.map((brand, index) => ({
-                  "@type": "ListItem",
-                  position: index + 1,
-                  name: brand.label,
-                  url: brand.href?.startsWith("https://")
-                    ? brand.href
-                    : absoluteUrl(brand.href || `/brand/${encodeURIComponent(brand.slug)}`),
-                })),
+                itemListElement: brands.map((brand, index) => {
+                  const fallbackHref = `/brand/${encodeURIComponent(brand.slug)}`;
+                  const href = brand.href?.trim() || fallbackHref;
+                  const url =
+                    href.startsWith("/")
+                      ? absoluteUrl(href)
+                      : href.startsWith("https://")
+                        ? href
+                        : absoluteUrl(fallbackHref);
+
+                  return {
+                    "@type": "ListItem",
+                    position: index + 1,
+                    name: brand.label,
+                    url,
+                  };
+                }),
               }),
             ]
           : []),
