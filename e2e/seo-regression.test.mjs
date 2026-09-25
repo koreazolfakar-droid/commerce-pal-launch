@@ -18,6 +18,8 @@ test("sitemap uses lightweight paginated Supabase data with truthful lastmod", a
   assert.match(sitemap, /MAX_SITEMAP_URLS\s*=\s*50_000/);
   assert.match(sitemap, /nonEmptyCollectionIds/);
   assert.match(sitemap, /managedCategories/);
+  assert.match(sitemap, /activeCategoryIds/);
+  assert.match(sitemap, /category_id/);
   assert.doesNotMatch(sitemap, /fetchCatalogProducts\(500\)|@\/lib\/storefrontData/);
   assert.doesNotMatch(sitemap, /storefrontApiRequest|SHOPIFY_|myshopify/);
   assert.doesNotMatch(sitemap, /<changefreq>|<priority>/);
@@ -203,6 +205,7 @@ test("category aliases converge on the managed Supabase canonical URLs", async (
     ["smartphones", "smartphone"],
     ["tablets", "tablet"],
     ["smartwatches", "smart-watch"],
+    ["headphones", "wireless-earbuds"],
     ["chargers", "charger"],
     ["cables", "cable"],
     ["power-banks", "power-bank"],
