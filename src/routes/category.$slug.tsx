@@ -116,11 +116,17 @@ export const Route = createFileRoute("/category/$slug")({
     const title = `${label} in Lebanon | ${STORE_NAME}`;
     const description = `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
     const path = `/category/${params.slug}`;
+    const hasProducts = loaderData.products.length > 0;
     return {
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "robots", content: "index, follow, max-image-preview:large" },
+        {
+          name: "robots",
+          content: hasProducts
+            ? "index, follow, max-image-preview:large, max-snippet:-1"
+            : "noindex, follow",
+        },
         ...socialMeta({ title, description, path }),
       ],
       links: [canonicalLink(path)],
