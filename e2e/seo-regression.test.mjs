@@ -144,7 +144,9 @@ test("CMS canonical overrides stay on the Space Call origin", async () => {
   const home = await source("src/routes/index.tsx");
   const brands = await source("src/routes/brands.tsx");
   assert.match(seo, /resolved\.origin !== site\.origin/);
-  assert.match(home, /canonicalLink\("\/", canonicalUrl\)/);
+  assert.match(home, /const canonical = canonicalUrl\("\/", cmsSeo\?\.canonical_url\)/);
+  assert.match(home, /canonicalLink\("\/", canonical\)/);
+  assert.match(home, /url:\s*canonical/);
   assert.match(brands, /canonicalUrl\("\/brands", seo\?\.canonical_url\)/);
   assert.match(brands, /url:\s*canonical/);
   assert.match(brands, /applyCmsBrands\(buildStoreBrands\(loaderData\.catalog\.brands/);
@@ -317,4 +319,13 @@ test("dashboard category brand and collection SEO fields reach storefront heads"
   assert.match(nativeStore, /image_url,seo_title,seo_description/);
   assert.match(collection, /collection\.seoTitle\?\.trim\(\)/);
   assert.match(collection, /collection\.seoDescription\?\.trim\(\)/);
+});
+
+test("sitemap only lists indexable commerce index pages", async () => {
+  const sitemap = await source("src/routes/sitemap[.]xml.ts");
+  assert.match(sitemap, /hasProducts: productRows\.length > 0/);
+  assert.match(sitemap, /hasCategories: managedCategories\.length > 0/);
+  assert.match(sitemap, /hasBrands: catalog\.brands\.some/);
+  assert.match(sitemap, /hasCollections: collections\.length > 0/);
+  assert.match(sitemap, /hasUsedPhones: products\.some\(isUsedPhone\)/);
 });
