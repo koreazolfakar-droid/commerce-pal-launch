@@ -522,41 +522,6 @@ export default function HeroBannersPage() {
     }
   };
 
-  const editHeroFile = async (file: File, target: HeroImageTarget) => {
-    setPreviewMode(target);
-    if (["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
-      const edited = await imageEditor.editFile(file, {
-        title: target === "desktop" ? "Adjust desktop hero" : "Adjust mobile hero",
-        preset: target === "desktop" ? "hero-desktop" : "hero-mobile",
-        transparent: true,
-        defaultFit: "cover",
-      });
-      if (!edited) return;
-      setPendingHeroImages((current) => ({ ...current, [target]: edited }));
-      return;
-    }
-    await upload(file, target);
-  };
-
-  const adjustExistingHero = async (
-    target: HeroImageTarget,
-    url: string,
-  ) => {
-    if (!url) return;
-    setPreviewMode(target);
-    const edited = await imageEditor.editUrl(url, {
-      title:
-        target === "desktop"
-          ? "Adjust existing desktop hero"
-          : "Adjust existing mobile hero",
-      preset: target === "desktop" ? "hero-desktop" : "hero-mobile",
-      transparent: true,
-      defaultFit: "cover",
-    });
-    if (!edited) return;
-    setPendingHeroImages((current) => ({ ...current, [target]: edited }));
-  };
-
   const upload = async (file: File | undefined, target: HeroImageTarget) => {
     if (!file || uploading !== null) return;
     let completed = false;
@@ -631,6 +596,41 @@ export default function HeroBannersPage() {
       if (mobileFileRef.current) mobileFileRef.current.value = "";
       if (completed) clearPendingHeroImages(target);
     }
+  };
+
+  const editHeroFile = async (file: File, target: HeroImageTarget) => {
+    setPreviewMode(target);
+    if (["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
+      const edited = await imageEditor.editFile(file, {
+        title: target === "desktop" ? "Adjust desktop hero" : "Adjust mobile hero",
+        preset: target === "desktop" ? "hero-desktop" : "hero-mobile",
+        transparent: true,
+        defaultFit: "cover",
+      });
+      if (!edited) return;
+      setPendingHeroImages((current) => ({ ...current, [target]: edited }));
+      return;
+    }
+    await upload(file, target);
+  };
+
+  const adjustExistingHero = async (
+    target: HeroImageTarget,
+    url: string,
+  ) => {
+    if (!url) return;
+    setPreviewMode(target);
+    const edited = await imageEditor.editUrl(url, {
+      title:
+        target === "desktop"
+          ? "Adjust existing desktop hero"
+          : "Adjust existing mobile hero",
+      preset: target === "desktop" ? "hero-desktop" : "hero-mobile",
+      transparent: true,
+      defaultFit: "cover",
+    });
+    if (!edited) return;
+    setPendingHeroImages((current) => ({ ...current, [target]: edited }));
   };
 
   const chooseMedia = (asset: DashboardHeroMediaAsset) => {
