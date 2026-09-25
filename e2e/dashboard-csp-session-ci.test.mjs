@@ -69,15 +69,18 @@ test("CSP uses a per-request nonce and removes script unsafe-inline", () => {
   assert.doesNotMatch(errorPage, /onclick=|javascript:/i);
 });
 
-test("production Supabase sessions do not persist in localStorage", () => {
-  assert.match(storage, /if \(!projectId \|\| !framed\) return sessionStorage/);
+test("production Supabase sessions are tab-scoped and migrate the legacy auth key once", () => {
+  assert.match(storage, /if \(!projectId \|\| !framed\) return useTabScopedProductionStorage\(\)/);
   assert.doesNotMatch(storage, /if \(!projectId \|\| !framed\) return localStorage/);
+  assert.match(storage, /SPACE_CALL_SUPABASE_AUTH_KEY = 'sb-rtwyankpxtffqqrasyzw-auth-token'/);
+  assert.match(storage, /sessionStorage\.setItem\(SPACE_CALL_SUPABASE_AUTH_KEY, legacySession\)/);
+  assert.match(storage, /localStorage\.removeItem\(SPACE_CALL_SUPABASE_AUTH_KEY\)/);
   assert.match(client, /storage: brokeredPreviewStorage\(\)/);
   assert.match(client, /persistSession: true/);
   assert.match(client, /autoRefreshToken: true/);
 
   // Lovable's framed preview broker may keep its own local fallback for editor
-  // interoperability. The production/non-preview path above must remain sessionStorage.
+  // interoperability. The production/non-preview path above remains sessionStorage.
   assert.match(storage, /localStorage\.setItem/);
 });
 
