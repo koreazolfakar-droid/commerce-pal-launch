@@ -21,8 +21,11 @@ export const Route = createFileRoute("/brands")({
   },
   head: ({ loaderData }) => {
     const seo = loaderData ? cmsSeoPage(loaderData.cms, "brands") : undefined;
-    const title = seo?.title?.trim() || `Brands — ${STORE_NAME}`;
-    const description = seo?.description?.trim() || `Browse all brands available at ${STORE_NAME}.`;
+    const title =
+      seo?.title?.trim() || `Electronics Brands in Lebanon | ${STORE_NAME}`;
+    const description =
+      seo?.description?.trim() ||
+      `Browse smartphone, tablet, laptop, audio, gaming and electronics brands available from ${STORE_NAME} in Lebanon.`;
     const canonical = canonicalUrl("/brands", seo?.canonical_url);
     const image = seo?.og_image_url?.trim();
 
