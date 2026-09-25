@@ -123,10 +123,7 @@ export const CompactProductCard = memo(function CompactProductCard({
     >
       <Heart
         aria-hidden
-        className={cn(
-          market ? "h-4 w-4" : "h-4 w-4",
-          wishlisted && "fill-primary text-primary",
-        )}
+        className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")}
         strokeWidth={1.9}
       />
     </button>
