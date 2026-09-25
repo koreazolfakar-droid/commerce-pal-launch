@@ -451,16 +451,6 @@ Deno.serve(async (req) => {
   const model = Deno.env.get("GEMINI_MODEL")?.trim() || DEFAULT_MODEL;
 
   if (!url || !serviceKey) return json(req, { error: "server_not_configured" }, 503);
-  if (!geminiKey) {
-    return json(
-      req,
-      {
-        error: "gemini_not_configured",
-        message: "Set GEMINI_API_KEY in Supabase Edge Function secrets.",
-      },
-      503,
-    );
-  }
 
   const token = bearerToken(req);
   if (!token) return json(req, { error: "authentication_required" }, 401);
@@ -483,6 +473,17 @@ Deno.serve(async (req) => {
   if (roleError) return json(req, { error: "authorization_unavailable" }, 503);
   const allowed = (roleRows ?? []).some((row) => row.role === "admin" || row.role === "editor");
   if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);
+
+  if (!geminiKey) {
+    return json(
+      req,
+      {
+        error: "gemini_not_configured",
+        message: "Set GEMINI_API_KEY in Supabase Edge Function secrets.",
+      },
+      503,
+    );
+  }
 
   let body: AiBody;
   try {
