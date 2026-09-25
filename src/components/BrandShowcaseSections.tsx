@@ -207,7 +207,12 @@ export function BrandShowcase({
   const usedShowcases = new Set(brands.map((brand) => `showcase-${brand.slug}`));
   const categoryFeatures = catalog.categories.flatMap((category) => {
     const merchandising = findFacetMerchandising(collections, "category", category.slug);
-    return merchandising ? [{ category, merchandising }] : [];
+    if (!merchandising) return [];
+    const products = withoutExcludedProducts(
+      productsInCategory(catalog, category.slug),
+      excludedProductIds,
+    );
+    return products.length ? [{ category, merchandising, products }] : [];
   });
   return (
     <div className="space-y-5 sm:space-y-6" data-testid="brand-showcases">
@@ -231,7 +236,7 @@ export function BrandShowcase({
           />
         );
       })}
-      {categoryFeatures.map(({ category, merchandising }) => (
+      {categoryFeatures.map(({ category, merchandising, products }) => (
         <FacetSection
           key={category.slug}
           id={`category-${category.slug}`}
@@ -240,10 +245,7 @@ export function BrandShowcase({
           title={merchandising.title || categoryLabel(category, language)}
           description={merchandising.description}
           href={`/category/${category.slug}`}
-          products={withoutExcludedProducts(
-            productsInCategory(catalog, category.slug),
-            excludedProductIds,
-          )}
+          products={products}
         />
       ))}
       {showcases
@@ -303,7 +305,7 @@ function BrandFacetSection({
     nearby &&
     products.length === 0 &&
     !isPending &&
-    (vendorProducts.length === 0 || isError);
+    (eligibleVendorProducts.length === 0 || isError);
 
   if (resolvedEmpty) return null;
 
