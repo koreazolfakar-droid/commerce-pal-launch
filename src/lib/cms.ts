@@ -62,6 +62,7 @@ export type CmsSection = {
   content_ar?: { [key: string]: CmsJsonValue } | null;
   sort_order: number;
   is_visible: boolean;
+  is_featured?: boolean;
 };
 
 export type CmsNavigationItem = {
