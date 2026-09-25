@@ -111,11 +111,26 @@ export default function BrandForm({
   const patch = (next: Partial<CatalogBrand>) => setDraft((current) => ({ ...current, ...next }));
 
   const applyAiPatch = (values: Record<string, string>) => {
+    let safeWebsite: string | undefined;
+    if (values.website !== undefined) {
+      try {
+        const parsed = new URL(values.website.trim());
+        if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+          safeWebsite = parsed.toString();
+        }
+      } catch {
+        // Keep the current website when AI returns an invalid URL.
+      }
+      if (!safeWebsite) {
+        toast.info("AI website suggestion was not a valid HTTP(S) URL, so it was not applied.");
+      }
+    }
+
     patch({
       ...(values.name !== undefined ? { name: values.name } : {}),
       ...(values.slug !== undefined ? { slug: normalizeBrandSlug(values.slug) } : {}),
       ...(values.description !== undefined ? { description: values.description } : {}),
-      ...(values.website !== undefined ? { website: values.website } : {}),
+      ...(safeWebsite !== undefined ? { website: safeWebsite } : {}),
       ...(values.seoTitle !== undefined ? { seoTitle: values.seoTitle } : {}),
       ...(values.seoDescription !== undefined ? { seoDescription: values.seoDescription } : {}),
     });
