@@ -229,6 +229,12 @@ export function HeroScene({
       blank: slide.secondary_open_in_new_tab,
     },
   ].filter((button) => button.label && button.url);
+  const hasInlineContent = Boolean(
+    slide.eyebrow ||
+      slide.title ||
+      slide.subtitle ||
+      (placement === "inline" && buttons.length > 0),
+  );
   const buttonNodes = (
     <div className="hero-scene-buttons-row">
       {buttons.map((button, i) =>
@@ -298,26 +304,27 @@ export function HeroScene({
           }}
         />
         <div className="hero-scene-safe" data-testid="home-hero-content">
-          {positioned(
-            "content",
-            <div className="hero-scene-copy">
-              {slide.eyebrow ? (
-                <div className="hero-scene-eyebrow">{slide.eyebrow}</div>
-              ) : null}
-              {slide.title ? <h2>{slide.title}</h2> : null}
-              {slide.subtitle ? <p>{slide.subtitle}</p> : null}
-              {placement === "inline" && buttons.length > 0
-                ? buttonNodes
-                : null}
-              {editor && !slide.title && !slide.subtitle && !slide.eyebrow ? (
-                <span>
-                  {ar
-                    ? "أضف عنوانًا من حقول النص"
-                    : "Add a title using the text fields"}
-                </span>
-              ) : null}
-            </div>,
-          )}
+          {hasInlineContent
+            ? positioned(
+                "content",
+                <div className="hero-scene-copy">
+                  {slide.eyebrow ? (
+                    <div className="hero-scene-eyebrow">{slide.eyebrow}</div>
+                  ) : null}
+                  {slide.title ? <h2>{slide.title}</h2> : null}
+                  {slide.subtitle ? <p>{slide.subtitle}</p> : null}
+                  {placement === "inline" && buttons.length > 0
+                    ? buttonNodes
+                    : null}
+                </div>,
+              )
+            : editor
+              ? (
+                  <span className="hero-scene-editor-empty">
+                    {ar ? "لا يوجد نص بعد" : "No content yet"}
+                  </span>
+                )
+              : null}
           {placement === "free" && buttons.length > 0
             ? positioned("buttons", buttonNodes)
             : null}

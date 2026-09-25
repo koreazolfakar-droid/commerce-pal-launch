@@ -598,9 +598,45 @@ export default function HeroBannersPage() {
     }
   };
 
+  const editHeroFile = async (file: File, target: HeroImageTarget) => {
+    setPreviewMode(target);
+    if (["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
+      const edited = await imageEditor.editFile(file, {
+        title: target === "desktop" ? "Adjust desktop hero" : "Adjust mobile hero",
+        preset: target === "desktop" ? "hero-desktop" : "hero-mobile",
+        transparent: true,
+        defaultFit: "cover",
+      });
+      if (!edited) return;
+      setPendingHeroImages((current) => ({ ...current, [target]: edited }));
+      return;
+    }
+    await upload(file, target);
+  };
+
+  const adjustExistingHero = async (
+    target: HeroImageTarget,
+    url: string,
+  ) => {
+    if (!url) return;
+    setPreviewMode(target);
+    const edited = await imageEditor.editUrl(url, {
+      title:
+        target === "desktop"
+          ? "Adjust existing desktop hero"
+          : "Adjust existing mobile hero",
+      preset: target === "desktop" ? "hero-desktop" : "hero-mobile",
+      transparent: true,
+      defaultFit: "cover",
+    });
+    if (!edited) return;
+    setPendingHeroImages((current) => ({ ...current, [target]: edited }));
+  };
+
   const chooseMedia = (asset: DashboardHeroMediaAsset) => {
     if (!mediaTarget || uploading !== null) return;
     const target = mediaTarget;
+    setPreviewMode(target);
     clearPendingHeroImages(target);
     setForm((current) =>
       target === "desktop"
@@ -620,6 +656,13 @@ export default function HeroBannersPage() {
     setLastOptimizations((current) => ({ ...current, [target]: undefined }));
     setMediaTarget(null);
   };
+
+  const activePreviewTarget: HeroImageTarget = previewMode;
+  const activePreviewUrl =
+    previewMode === "desktop"
+      ? form.imageUrl
+      : form.mobileImageUrl || form.imageUrl;
+  const activePendingHeroImage = pendingHeroImages[activePreviewTarget];
 
   const linkOptions = form.targetType === "product" ? products : form.targetType === "collection" ? collections : [];
   const secondaryLinkOptions = form.secondaryTargetType === "product" ? products : form.secondaryTargetType === "collection" ? collections : [];
@@ -756,7 +799,7 @@ export default function HeroBannersPage() {
             </div>
           </section>
 
-          <section className="order-3 rounded-xl border border-slate-200 bg-white p-3.5 sm:rounded-2xl sm:p-5 xl:order-2">
+          <section className="order-2 rounded-xl border border-slate-200 bg-white p-3.5 sm:rounded-2xl sm:p-5 xl:order-2">
             <div className="mb-3 text-[13px] font-bold text-[#14203a] sm:mb-4">Design & live preview</div>
             <div className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:justify-between">
               <div className="flex rounded-xl bg-slate-100 p-1">
@@ -769,6 +812,87 @@ export default function HeroBannersPage() {
               </div>
             </div>
 
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-2">
+              <button
+                type="button"
+                onClick={() =>
+                  (activePreviewTarget === "desktop"
+                    ? desktopFileRef.current
+                    : mobileFileRef.current
+                  )?.click()
+                }
+                disabled={uploading !== null}
+                className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 text-[10px] font-bold text-white disabled:opacity-50 sm:flex-none"
+              >
+                {uploading === activePreviewTarget ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <UploadCloud className="size-3.5" />
+                )}
+                {activePreviewUrl ? "Replace image" : "Upload image"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMediaTarget(activePreviewTarget)}
+                disabled={uploading !== null}
+                className="flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 disabled:opacity-50"
+              >
+                <ImageIcon className="size-3.5" /> Library
+              </button>
+              {activePreviewUrl ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    void adjustExistingHero(activePreviewTarget, activePreviewUrl)
+                  }
+                  disabled={uploading !== null}
+                  className="flex min-h-10 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
+                >
+                  Adjust
+                </button>
+              ) : null}
+            </div>
+
+            {activePendingHeroImage ? (
+              <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[10px] font-bold text-amber-900">
+                      {previewMode === "desktop" ? "Desktop" : "Mobile"} image ready
+                    </div>
+                    <div className="mt-0.5 text-[9px] leading-4 text-amber-700">
+                      Review the Hero above, then confirm the upload.
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[8px] font-bold text-amber-700">
+                    Not uploaded yet
+                  </span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void upload(activePendingHeroImage, activePreviewTarget)
+                    }
+                    disabled={uploading !== null}
+                    className="min-h-11 rounded-lg bg-[#14203a] px-3 text-[10px] font-bold text-white disabled:opacity-50"
+                  >
+                    {uploading === activePreviewTarget
+                      ? "Uploading…"
+                      : "Confirm upload"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => clearPendingHeroImages(activePreviewTarget)}
+                    disabled={uploading !== null}
+                    className="min-h-11 rounded-lg border border-amber-200 bg-white px-3 text-[10px] font-bold text-amber-800 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             <HeroVisualEditor
               key={selectedId ?? "new"}
               form={previewForm}
@@ -778,7 +902,7 @@ export default function HeroBannersPage() {
             />
 
           </section>
-          <details className="group order-4 overflow-hidden rounded-2xl border border-slate-200 bg-white xl:order-3">
+          <details className="group order-3 overflow-hidden rounded-2xl border border-slate-200 bg-white xl:order-3">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
                 <div className="text-[13px] font-bold text-[#14203a]">Content</div>
@@ -844,7 +968,7 @@ export default function HeroBannersPage() {
             </div>
           </details>
 
-          <details open={hasPendingHeroImages || undefined} className="group order-2 overflow-hidden rounded-2xl border border-slate-200 bg-white xl:order-4">
+          <details open={hasPendingHeroImages || undefined} className="group order-4 overflow-hidden rounded-2xl border border-slate-200 bg-white xl:order-4">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
                 <div className="text-[13px] font-bold text-[#14203a]">Media</div>
@@ -912,19 +1036,7 @@ export default function HeroBannersPage() {
                       const file = event.target.files?.[0];
                       event.currentTarget.value = "";
                       if (!file) return;
-                      if (["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
-                        void imageEditor.editFile(file, {
-                          title: isDesktop ? "Adjust desktop hero" : "Adjust mobile hero",
-                          preset: isDesktop ? "hero-desktop" : "hero-mobile",
-                          transparent: true,
-                          defaultFit: "cover",
-                        }).then((edited) => {
-                          if (!edited) return;
-                          setPendingHeroImages((current) => ({ ...current, [target]: edited }));
-                        });
-                      } else {
-                        void upload(file, target);
-                      }
+                      void editHeroFile(file, target);
                     }}
                   />
                   <div className="flex flex-wrap gap-2">
@@ -937,17 +1049,7 @@ export default function HeroBannersPage() {
                     {url ? (
                       <button
                         type="button"
-                        onClick={() => {
-                          void imageEditor.editUrl(url, {
-                            title: isDesktop ? "Adjust existing desktop hero" : "Adjust existing mobile hero",
-                            preset: isDesktop ? "hero-desktop" : "hero-mobile",
-                            transparent: true,
-                            defaultFit: "cover",
-                          }).then((edited) => {
-                            if (!edited) return;
-                            setPendingHeroImages((current) => ({ ...current, [target]: edited }));
-                          });
-                        }}
+                        onClick={() => void adjustExistingHero(target, url)}
                         disabled={uploading !== null}
                         className="h-9 rounded-xl border border-indigo-200 px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
                       >

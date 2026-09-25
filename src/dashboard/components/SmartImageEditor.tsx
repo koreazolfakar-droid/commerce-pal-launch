@@ -363,6 +363,7 @@ function SmartImageEditorDialog({
   onDone: (file: File | null) => void;
 }) {
   const preset = request.options.preset ?? "square";
+  const isHeroPreset = preset === "hero-desktop" || preset === "hero-mobile";
   const transparent = request.options.transparent ?? true;
   const outputFormat = request.options.outputFormat ?? "png";
   const outputType = outputFormat === "webp" ? "image/webp" : "image/png";
@@ -438,8 +439,8 @@ function SmartImageEditorDialog({
     setZoom(1);
     setX(0);
     setY(0);
-    setPadding(initialPadding);
-    setFit(initialFit);
+    setPadding(isHeroPreset ? 0 : initialPadding);
+    setFit(isHeroPreset ? "cover" : initialFit);
   };
 
   const save = async () => {
@@ -571,7 +572,9 @@ function SmartImageEditorDialog({
               </div>
             </div>
             <p className="text-center text-[10px] leading-4 text-slate-400">
-              Drag the image to choose the crop. Use Zoom for fine adjustment; Auto Center can recenter the visible subject.
+              {isHeroPreset
+                ? "Drag to position the Hero. It always fills the 16:9 frame; zoom in only when needed."
+                : "Drag the image to choose the crop. Use Zoom for fine adjustment; Auto Center can recenter the visible subject."}
             </p>
 
             {request.options.previewContext === "product" && loaded ? (
@@ -618,31 +621,77 @@ function SmartImageEditorDialog({
               </button>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 p-3">
-              <div className="mb-2 flex items-center justify-between text-[10px] font-bold text-slate-600">
-                <span>Fit mode</span><Maximize2 className="size-3.5 text-slate-400" />
+            {isHeroPreset ? (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2.5 text-[9px] leading-4 text-indigo-700">
+                Hero safety lock: Fill mode · 0% padding · minimum 100% zoom.
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {(["contain", "cover"] as const).map((mode) => (
-                  <button key={mode} type="button" onClick={() => setFit(mode)} className={`h-9 rounded-xl text-[10px] font-black transition ${fit === mode ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"}`}>
-                    {mode === "contain" ? "Fit" : "Fill"}
-                  </button>
-                ))}
+            ) : (
+              <div className="rounded-2xl border border-slate-200 p-3">
+                <div className="mb-2 flex items-center justify-between text-[10px] font-bold text-slate-600">
+                  <span>Fit mode</span>
+                  <Maximize2 className="size-3.5 text-slate-400" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["contain", "cover"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setFit(mode)}
+                      className={`h-9 rounded-xl text-[10px] font-black transition ${
+                        fit === mode
+                          ? "bg-slate-900 text-white"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {mode === "contain" ? "Fit" : "Fill"}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <RangeControl label="Zoom" value={zoom} min={0.55} max={3} step={0.01} display={`${Math.round(zoom * 100)}%`} onChange={setZoom} />
-            <RangeControl label="Horizontal" value={x} min={-45} max={45} step={1} display={String(Math.round(x))} onChange={setX} />
-            <RangeControl label="Vertical" value={y} min={-45} max={45} step={1} display={String(Math.round(y))} onChange={setY} />
             <RangeControl
-              label={request.options.previewContext === "product" ? "Extra image padding" : "Padding"}
-              value={padding}
-              min={0}
-              max={30}
-              step={1}
-              display={`${Math.round(padding)}%`}
-              onChange={setPadding}
+              label="Zoom"
+              value={zoom}
+              min={isHeroPreset ? 1 : 0.55}
+              max={3}
+              step={0.01}
+              display={`${Math.round(zoom * 100)}%`}
+              onChange={(value) => setZoom(isHeroPreset ? Math.max(1, value) : value)}
             />
+            <RangeControl
+              label="Horizontal"
+              value={x}
+              min={-45}
+              max={45}
+              step={1}
+              display={String(Math.round(x))}
+              onChange={setX}
+            />
+            <RangeControl
+              label="Vertical"
+              value={y}
+              min={-45}
+              max={45}
+              step={1}
+              display={String(Math.round(y))}
+              onChange={setY}
+            />
+            {!isHeroPreset ? (
+              <RangeControl
+                label={
+                  request.options.previewContext === "product"
+                    ? "Extra image padding"
+                    : "Padding"
+                }
+                value={padding}
+                min={0}
+                max={30}
+                step={1}
+                display={`${Math.round(padding)}%`}
+                onChange={setPadding}
+              />
+            ) : null}
 
             <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-[9px] leading-4 text-slate-500">
               Output: {dimensions[0]}×{dimensions[1]} {outputFormat.toUpperCase()}.
@@ -653,7 +702,7 @@ function SmartImageEditorDialog({
 
             <button type="button" onClick={() => void save()} disabled={!loaded || loading || saving} className="sticky bottom-2 z-10 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-black text-white shadow-lg disabled:opacity-50 sm:static sm:h-11 sm:shadow-none">
               {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-              Save adjustment
+              {isHeroPreset ? "Use this crop" : "Save adjustment"}
             </button>
           </div>
         </div>

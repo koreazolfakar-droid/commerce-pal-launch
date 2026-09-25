@@ -241,14 +241,17 @@ test("first desktop Hero artwork enables publishing without overriding later dra
 
 test("Hero crop controls are device-specific, touch friendly and reflected by storefront rendering", () => {
   assert.match(heroVisualEditor, /mode === "mobile" \? "mobileFocalPoint" : "focalPoint"/);
-  assert.match(heroVisualEditor, /Image crop horizontal/);
-  assert.match(heroVisualEditor, /Image crop vertical/);
-  assert.match(heroVisualEditor, /Reset image crop/);
+  assert.match(heroVisualEditor, /Horizontal focus/);
+  assert.match(heroVisualEditor, /Vertical focus/);
+  assert.match(heroVisualEditor, /Reset image focus/);
   assert.match(heroVisualEditor, /Adjust image by touch/);
   assert.match(heroVisualEditor, /absolute inset-0 z-20 touch-none cursor-crosshair/);
-  assert.doesNotMatch(heroVisualEditor, /Touch crop focus/);
   assert.match(heroVisualEditor, /setPointerCapture\(event\.pointerId\)/);
   assert.match(heroVisualEditor, /max-w-\[360px\]/);
+  assert.match(
+    heroVisualEditor,
+    /mode === "mobile"[\s\S]*?Boolean\(form\.mobileImageUrl \|\| form\.imageUrl\)/,
+  );
   assert.match(heroScene, /config\.mobileFocalPoint \?\? desktopFocus/);
   assert.match(heroScene, /--hero-mobile-focus-x/);
   assert.match(heroScene, /--hero-mobile-focus-y/);
@@ -280,6 +283,29 @@ test("hero dashboard keeps phone controls compact while preserving all actions",
   assert.match(heroPage, /overflow-x-auto pb-1/);
   assert.match(heroPage, /order-first col-span-2/);
   assert.match(heroPage, /grid grid-cols-2 gap-2 sm:flex sm:justify-between/);
-  assert.match(heroPage, /group order-2 overflow-hidden[^"]*xl:order-4/);
-  assert.match(heroPage, /order-3 rounded-xl[^"]*xl:order-2/);
+  assert.match(heroPage, /group order-4 overflow-hidden[^"]*xl:order-4/);
+  assert.match(heroPage, /order-2 rounded-xl[^"]*xl:order-2/);
+  assert.match(heroPage, /group order-3 overflow-hidden[^"]*xl:order-3/);
+  assert.match(heroVisualEditor, /Fine controls/);
+  assert.match(heroVisualEditor, /Text & buttons/);
+  assert.match(heroVisualEditor, /Adjust image by touch/);
+});
+
+test("mobile Hero upload can be reviewed and confirmed directly beside the live preview", () => {
+  assert.match(heroPage, /const activePreviewTarget: HeroImageTarget = previewMode/);
+  assert.match(heroPage, /const activePendingHeroImage = pendingHeroImages\[activePreviewTarget\]/);
+  assert.match(heroPage, /Review the Hero above, then confirm the upload/);
+  assert.match(heroPage, /Confirm upload/);
+  assert.match(
+    heroPage,
+    /void upload\(activePendingHeroImage, activePreviewTarget\)/,
+  );
+  assert.match(heroPage, /void editHeroFile\(file, target\)/);
+  assert.match(heroPage, /setPreviewMode\(target\)/);
+});
+
+test("empty Hero editor no longer draws a large fake title across the artwork", () => {
+  assert.doesNotMatch(heroScene, /Add a title using the text fields/);
+  assert.match(heroScene, /No content yet/);
+  assert.match(heroSceneCss, /\.hero-scene-editor-empty/);
 });
