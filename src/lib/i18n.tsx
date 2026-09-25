@@ -93,21 +93,24 @@ const translations = {
     privacyTitle: "Privacy policy",
     termsTitle: "Terms of service",
     aboutTitle: `About ${STORE_NAME}`,
-    aboutBody: `${STORE_NAME} is a premium electronics retailer offering smartphones, tablets, audio, and accessories. We work directly with brands to bring you the latest technology with official warranty and hassle-free returns.`,
+    aboutBody: `${STORE_NAME} is an electronics store in Lebanon offering smartphones, tablets, laptops, audio, accessories and other technology products with live catalogue availability and direct support.`,
     faqTitle: "Frequently asked questions",
     faqOriginalQ: "Are the products genuine?",
-    faqOriginalA: "Yes. All our products are 100% genuine and come with an official warranty.",
+    faqOriginalA:
+      "Product condition and available warranty information are shown on the relevant product page when available. Contact us before ordering if you need confirmation for a specific item.",
     faqTrackingQ: "How do I track my order?",
     faqTrackingA: "Contact us on WhatsApp with your order number for tracking support.",
     faqReturnsQ: "What is the return policy?",
     faqReturnsA:
-      "Returns are accepted within 7 days of receipt, with the product in its original condition.",
+      "Return eligibility depends on the item, its condition, the order details and the store’s published return guidance. Contact support before sending any item back.",
     faqDeliveryQ: "Is delivery free?",
-    faqDeliveryA: "It depends on your order value and area. See our shipping page for details.",
+    faqDeliveryA:
+      "Delivery availability, fees and timing can depend on the order and destination. Check the shipping page or contact support for the details that apply to your order.",
     faqWhatsAppQ: "How do I order on WhatsApp?",
-    faqWhatsAppA: "Tap Contact us and our team will reply within minutes.",
+    faqWhatsAppA:
+      "Tap Contact us to open WhatsApp and send your product or order question directly to Space Call support.",
     policyPending:
-      "This policy will be published soon. Please contact us on WhatsApp for details before ordering.",
+      "A detailed policy is not published here yet. Use the guidance on this page and contact us for the exact terms that apply before ordering.",
     policyLoading: "Loading policy…",
     viewPolicy: "Read the published policy",
     quickView: "Quick view",
@@ -326,20 +329,24 @@ const translations = {
     privacyTitle: "سياسة الخصوصية",
     termsTitle: "شروط الخدمة",
     aboutTitle: `عن ${STORE_NAME}`,
-    aboutBody: `${STORE_NAME} متجر إلكترونيات راقٍ يقدّم الهواتف الذكية والأجهزة اللوحية والصوتيات والإكسسوارات. نعمل مباشرة مع العلامات التجارية لنوفر لك أحدث التقنيات مع ضمان رسمي وإرجاع سهل.`,
+    aboutBody: `${STORE_NAME} متجر إلكترونيات في لبنان يقدّم الهواتف الذكية والأجهزة اللوحية واللابتوبات والصوتيات والإكسسوارات ومنتجات تقنية أخرى مع توفر مباشر من الكتالوج ودعم واضح.`,
     faqTitle: "الأسئلة الشائعة",
     faqOriginalQ: "هل المنتجات أصلية؟",
-    faqOriginalA: "نعم، جميع منتجاتنا أصلية 100% مع ضمان رسمي.",
+    faqOriginalA:
+      "تظهر حالة المنتج ومعلومات الضمان المتاحة في صفحة المنتج عند توفرها. تواصل معنا قبل الطلب إذا كنت تحتاج تأكيداً لمنتج محدد.",
     faqTrackingQ: "كيف أتتبع طلبي؟",
     faqTrackingA: "تواصل معنا على واتساب مع رقم الطلب للحصول على تحديثات التتبع.",
     faqReturnsQ: "ما سياسة الإرجاع؟",
-    faqReturnsA: "7 أيام من تاريخ الاستلام، والمنتج بحالته الأصلية.",
+    faqReturnsA:
+      "تعتمد أهلية الإرجاع على المنتج وحالته وتفاصيل الطلب وإرشادات الإرجاع المنشورة في المتجر. تواصل مع الدعم قبل إعادة أي منتج.",
     faqDeliveryQ: "هل التوصيل مجاني؟",
-    faqDeliveryA: "يعتمد على قيمة الطلب والمنطقة، والتفاصيل على صفحة الشحن.",
+    faqDeliveryA:
+      "قد يختلف توفر التوصيل ورسومه ومدته حسب الطلب والمنطقة. راجع صفحة الشحن أو تواصل مع الدعم لمعرفة التفاصيل التي تنطبق على طلبك.",
     faqWhatsAppQ: "كيف أطلب عبر واتساب؟",
-    faqWhatsAppA: "اضغط زر تواصل معنا وسيردّ فريقنا خلال دقائق.",
+    faqWhatsAppA:
+      "اضغط زر تواصل معنا لفتح واتساب وإرسال سؤالك عن المنتج أو الطلب مباشرة إلى دعم Space Call.",
     policyPending:
-      "ستُنشر هذه السياسة قريبًا. تواصل معنا عبر واتساب للاطلاع على التفاصيل قبل الطلب.",
+      "لا توجد سياسة تفصيلية منشورة هنا بعد. استخدم الإرشادات الموجودة في الصفحة وتواصل معنا لتأكيد الشروط التي تنطبق قبل الطلب.",
     policyLoading: "جارٍ تحميل السياسة…",
     viewPolicy: "قراءة السياسة المنشورة",
     quickView: "معاينة سريعة",

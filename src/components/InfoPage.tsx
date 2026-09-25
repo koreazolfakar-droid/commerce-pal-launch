@@ -54,6 +54,43 @@ const PAGE_ICONS: Record<InfoPageName, LucideIcon> = {
   terms: FileText,
 };
 
+type RelatedLink = {
+  to: string;
+  en: string;
+  ar: string;
+};
+
+const SHOP_DISCOVERY_LINKS: RelatedLink[] = [
+  { to: "/shop", en: "Shop electronics", ar: "تصفّح الإلكترونيات" },
+  { to: "/categories", en: "Browse categories", ar: "تصفّح الفئات" },
+  { to: "/brands", en: "Browse brands", ar: "تصفّح العلامات التجارية" },
+  { to: "/used-phones", en: "Used phones", ar: "الهواتف المستعملة" },
+];
+
+const SUPPORT_DISCOVERY_LINKS: RelatedLink[] = [
+  { to: "/help", en: "Help center", ar: "مركز المساعدة" },
+  { to: "/faq", en: "Frequently asked questions", ar: "الأسئلة الشائعة" },
+  { to: "/contact", en: "Contact Space Call", ar: "تواصل مع Space Call" },
+];
+
+const POLICY_DISCOVERY_LINKS: RelatedLink[] = [
+  { to: "/shipping", en: "Shipping information", ar: "معلومات الشحن" },
+  { to: "/returns", en: "Returns guidance", ar: "إرشادات الإرجاع" },
+  { to: "/warranty", en: "Warranty guidance", ar: "إرشادات الضمان" },
+  { to: "/privacy", en: "Privacy policy", ar: "سياسة الخصوصية" },
+  { to: "/terms", en: "Terms of service", ar: "شروط الخدمة" },
+];
+
+function relatedLinksForPage(page: InfoPageName): RelatedLink[] {
+  const currentPath = `/${page}`;
+  const links =
+    page === "about" || page === "contact" || page === "help" || page === "faq"
+      ? [...SHOP_DISCOVERY_LINKS, ...SUPPORT_DISCOVERY_LINKS, ...POLICY_DISCOVERY_LINKS]
+      : [...POLICY_DISCOVERY_LINKS, ...SUPPORT_DISCOVERY_LINKS, ...SHOP_DISCOVERY_LINKS];
+
+  return links.filter((link) => link.to !== currentPath).slice(0, 7);
+}
+
 const PAGE_GUIDES: Partial<Record<InfoPageName, PageGuide>> = {
   about: {
     intro: {
@@ -538,16 +575,29 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                   </a>
                 ) : null}
               </>
-            ) : (
+            ) : isPending ? (
               <div className="rounded-xl bg-surface px-4 py-4 text-sm leading-7 text-muted-foreground">
-                <p>{t(isPending ? "policyLoading" : "policyPending")}</p>
-                {!isPending ? (
-                  <p className="mt-2">
-                    {language === "ar"
-                      ? "المعلومات الموجودة أعلى الصفحة تبقى دليلاً عملياً، ولتأكيد الشروط الخاصة بطلب معيّن تواصل معنا قبل الشراء."
-                      : "The guidance above remains a useful practical overview. For exact terms on a specific order, contact us before purchasing."}
-                  </p>
-                ) : null}
+                <p>{t("policyLoading")}</p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-primary/15 bg-primary/[0.035] p-5 sm:p-6">
+                <h3 className="text-base font-semibold text-foreground">
+                  {language === "ar" ? "تفاصيل السياسة والدعم" : "Policy details & support"}
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                  {language === "ar"
+                    ? "لا توجد حالياً سياسة تفصيلية منشورة من لوحة Space Call لهذه الصفحة. المعلومات العملية أعلاه توضّح طريقة التعامل الحالية، وإذا كانت لديك حالة خاصة تتعلق بطلب أو منتج فتواصل معنا قبل الشراء لتأكيد الشروط التي تنطبق عليها."
+                    : "A detailed policy has not been published from the Space Call dashboard for this page yet. The practical guidance above explains the current process; if a specific condition matters for an order or product, contact us before purchasing so the applicable terms can be confirmed."}
+                </p>
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border bg-background px-4 py-2.5 text-sm font-semibold text-foreground hover:border-primary/30 hover:text-primary"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  {t("contactWhatsApp")}
+                </a>
               </div>
             )}
           </section>
@@ -582,6 +632,7 @@ export function InfoPage({ page }: { page: InfoPageName }) {
                 <Link
                   key={name}
                   to={`/${name}`}
+                  preload="intent"
                   className="rounded-xl border bg-card px-4 py-3 text-sm font-semibold hover:bg-accent"
                 >
                   {t(INFO_PAGES[name])}
@@ -590,6 +641,35 @@ export function InfoPage({ page }: { page: InfoPageName }) {
             </div>
           </section>
         )}
+
+        <section
+          aria-labelledby="info-page-discovery"
+          className="rounded-lg border bg-card p-5 shadow-card sm:p-7"
+        >
+          <h2 id="info-page-discovery" className="text-xl font-semibold tracking-tight">
+            {language === "ar" ? "اكتشف المزيد من Space Call" : "Explore more from Space Call"}
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground">
+            {language === "ar"
+              ? "انتقل مباشرةً إلى كتالوج الإلكترونيات والفئات والعلامات التجارية، أو استخدم صفحات المساعدة للحصول على معلومات واضحة قبل الطلب وبعده."
+              : "Continue to the electronics catalogue, categories and brands, or use the support pages for clear information before and after an order."}
+          </p>
+          <nav
+            aria-label={language === "ar" ? "روابط ذات صلة" : "Related links"}
+            className="mt-4 flex flex-wrap gap-2.5"
+          >
+            {relatedLinksForPage(page).map((link) => (
+              <Link
+                key={link.to}
+                to={link.to as never}
+                preload="intent"
+                className="inline-flex min-h-10 items-center rounded-xl border bg-background px-3.5 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+              >
+                {language === "ar" ? link.ar : link.en}
+              </Link>
+            ))}
+          </nav>
+        </section>
       </article>
     </StoreLayout>
   );
