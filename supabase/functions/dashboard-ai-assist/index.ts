@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
-const DEFAULT_MODEL = "gemini-3.5-flash-lite";
+const DEFAULT_MODEL = "gemini-3.8-flash";
 const MAX_BODY_BYTES = 32 * 1024;
 const GEMINI_TIMEOUT_MS = 25_000;
 
@@ -36,6 +36,40 @@ const forbiddenFields = new Set([
   "userid",
   "user_id",
 ]);
+
+const allowedFieldKeys: Record<string, Set<string>> = {
+  product: new Set([
+    "title",
+    "description",
+    "brandName",
+    "categoryName",
+    "barcode",
+    "seoTitle",
+    "seoDescription",
+  ]),
+  category: new Set([
+    "name",
+    "slug",
+    "description",
+    "icon",
+    "seoTitle",
+    "seoDescription",
+  ]),
+  brand: new Set([
+    "name",
+    "slug",
+    "description",
+    "website",
+    "seoTitle",
+    "seoDescription",
+  ]),
+};
+
+const allowedContextKeys: Record<string, Set<string>> = {
+  product: new Set(["market", "store", "availableBrands", "availableCategories"]),
+  category: new Set(["market", "store", "existingCategories", "allowedIcons"]),
+  brand: new Set(["market", "store", "existingBrands"]),
+};
 
 type AiField = {
   key: string;
@@ -92,16 +126,11 @@ function serverSecretKey() {
   }
 }
 
-function cleanRecord(value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  const entries = Object.entries(value as Record<string, unknown>)
-    .slice(0, 80)
-    .map(([key, item]) => [key.slice(0, 80), typeof item === "string" ? item.slice(0, 5000) : item]);
-  return Object.fromEntries(entries);
-}
-
-function cleanFields(value: unknown): AiField[] {
+function cleanFields(value: unknown, entity: string): AiField[] {
   if (!Array.isArray(value)) return [];
+  const entityAllowlist = allowedFieldKeys[entity];
+  if (!entityAllowlist) return [];
+
   const seen = new Set<string>();
   const fields: AiField[] = [];
 
@@ -111,7 +140,12 @@ function cleanFields(value: unknown): AiField[] {
     const key = typeof row.key === "string" ? row.key.trim() : "";
     const normalized = key.toLowerCase().replace(/[^a-z0-9_]/g, "");
     if (!key || !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(key)) continue;
-    if (forbiddenFields.has(normalized) || seen.has(key)) continue;
+    if (
+      !entityAllowlist.has(key) ||
+      forbiddenFields.has(normalized) ||
+      seen.has(key)
+    ) continue;
+
     seen.add(key);
     fields.push({
       key,
@@ -126,6 +160,47 @@ function cleanFields(value: unknown): AiField[] {
   }
 
   return fields;
+}
+
+function cleanCurrentData(value: unknown, fields: AiField[]) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const row = value as Record<string, unknown>;
+  const cleaned: Record<string, string> = {};
+
+  for (const field of fields) {
+    const item = row[field.key];
+    if (typeof item === "string") cleaned[field.key] = item.slice(0, 5000);
+  }
+
+  return cleaned;
+}
+
+function cleanContextItem(value: unknown): unknown {
+  if (typeof value === "string") return value.slice(0, 500);
+  if (Array.isArray(value)) return value.slice(0, 100).map(cleanContextItem);
+  if (!value || typeof value !== "object") return undefined;
+
+  const row = value as Record<string, unknown>;
+  const cleaned: Record<string, string> = {};
+  for (const key of ["name", "slug"]) {
+    if (typeof row[key] === "string") cleaned[key] = row[key].slice(0, 200);
+  }
+  return cleaned;
+}
+
+function cleanContext(value: unknown, entity: string) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const allowed = allowedContextKeys[entity];
+  if (!allowed) return {};
+
+  const row = value as Record<string, unknown>;
+  const cleaned: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (!(key in row)) continue;
+    const next = cleanContextItem(row[key]);
+    if (next !== undefined) cleaned[key] = next;
+  }
+  return cleaned;
 }
 
 function responseSchema(fields: AiField[]) {
@@ -204,22 +279,24 @@ async function callGemini(args: {
 
   try {
     const payload: Record<string, unknown> = {
-      contents: [{ role: "user", parts: [{ text: args.prompt }] }],
-      generationConfig: {
+      model: args.model,
+      input: args.prompt,
+      store: false,
+      generation_config: {
         temperature: 0.15,
-        maxOutputTokens: 4096,
-        responseFormat: {
-          text: {
-            mimeType: "application/json",
-            schema: responseSchema(args.fields),
-          },
-        },
+        max_output_tokens: 4096,
+        thinking_level: "low",
+      },
+      response_format: {
+        type: "text",
+        mime_type: "application/json",
+        schema: responseSchema(args.fields),
       },
     };
-    if (args.withSearch) payload.tools = [{ googleSearch: {} }];
+    if (args.withSearch) payload.tools = [{ type: "google_search" }];
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(args.model)}:generateContent`,
+      "https://generativelanguage.googleapis.com/v1/interactions",
       {
         method: "POST",
         headers: {
@@ -238,55 +315,88 @@ async function callGemini(args: {
   }
 }
 
-function geminiText(payload: Record<string, unknown>) {
-  const candidates = Array.isArray(payload.candidates) ? payload.candidates : [];
-  const candidate = candidates[0] && typeof candidates[0] === "object"
-    ? candidates[0] as Record<string, unknown>
-    : {};
-  const content = candidate.content && typeof candidate.content === "object"
-    ? candidate.content as Record<string, unknown>
-    : {};
-  const parts = Array.isArray(content.parts) ? content.parts : [];
+function modelOutputBlocks(payload: Record<string, unknown>) {
+  const steps = Array.isArray(payload.steps) ? payload.steps : [];
+  const blocks: Record<string, unknown>[] = [];
 
-  return parts
-    .filter((part): part is Record<string, unknown> => Boolean(part) && typeof part === "object")
-    .map((part) => typeof part.text === "string" ? part.text : "")
+  for (const step of steps) {
+    if (!step || typeof step !== "object") continue;
+    const row = step as Record<string, unknown>;
+    if (row.type !== "model_output" || !Array.isArray(row.content)) continue;
+    for (const content of row.content) {
+      if (content && typeof content === "object") {
+        blocks.push(content as Record<string, unknown>);
+      }
+    }
+  }
+
+  return blocks;
+}
+
+function geminiText(payload: Record<string, unknown>) {
+  return modelOutputBlocks(payload)
+    .filter((block) => block.type === "text")
+    .map((block) => typeof block.text === "string" ? block.text : "")
     .join("")
     .trim();
 }
 
+function safeHttpUrl(value: unknown) {
+  if (typeof value !== "string" || value.length > 2048) return "";
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
 function grounding(payload: Record<string, unknown>) {
-  const candidates = Array.isArray(payload.candidates) ? payload.candidates : [];
-  const candidate = candidates[0] && typeof candidates[0] === "object"
-    ? candidates[0] as Record<string, unknown>
-    : {};
-  const metadata = candidate.groundingMetadata && typeof candidate.groundingMetadata === "object"
-    ? candidate.groundingMetadata as Record<string, unknown>
-    : {};
-
-  const queries = Array.isArray(metadata.webSearchQueries)
-    ? metadata.webSearchQueries.filter((value): value is string => typeof value === "string")
-    : [];
-
-  const chunks = Array.isArray(metadata.groundingChunks) ? metadata.groundingChunks : [];
+  const steps = Array.isArray(payload.steps) ? payload.steps : [];
   const sources: Array<{ title: string; url: string }> = [];
   const seen = new Set<string>();
+  let searchUsed = false;
 
-  for (const chunk of chunks) {
-    if (!chunk || typeof chunk !== "object") continue;
-    const web = (chunk as Record<string, unknown>).web;
-    if (!web || typeof web !== "object") continue;
-    const row = web as Record<string, unknown>;
-    const url = typeof row.uri === "string" ? row.uri : "";
-    if (!url || seen.has(url)) continue;
+  const addSource = (urlValue: unknown, titleValue: unknown) => {
+    const url = safeHttpUrl(urlValue);
+    if (!url || seen.has(url)) return;
     seen.add(url);
     sources.push({
-      title: typeof row.title === "string" ? row.title.slice(0, 240) : url,
+      title: typeof titleValue === "string" ? titleValue.slice(0, 240) : url,
       url,
     });
+  };
+
+  for (const step of steps) {
+    if (!step || typeof step !== "object") continue;
+    const row = step as Record<string, unknown>;
+
+    if (row.type === "google_search_call") searchUsed = true;
+
+    if (row.type === "google_search_result" && Array.isArray(row.result)) {
+      searchUsed = true;
+      for (const item of row.result) {
+        if (!item || typeof item !== "object") continue;
+        const result = item as Record<string, unknown>;
+        addSource(result.url, result.title);
+      }
+    }
   }
 
-  return { grounded: Boolean(queries.length || sources.length), sources: sources.slice(0, 12) };
+  for (const block of modelOutputBlocks(payload)) {
+    const annotations = Array.isArray(block.annotations) ? block.annotations : [];
+    for (const annotation of annotations) {
+      if (!annotation || typeof annotation !== "object") continue;
+      const row = annotation as Record<string, unknown>;
+      if (row.type !== "url_citation") continue;
+      addSource(row.url ?? row.uri, row.title);
+    }
+  }
+
+  return {
+    grounded: searchUsed && sources.length > 0,
+    sources: sources.slice(0, 12),
+  };
 }
 
 function normalizeAiResult(
@@ -390,13 +500,14 @@ Deno.serve(async (req) => {
   const entity = typeof body.entity === "string" ? body.entity : "";
   const action = typeof body.action === "string" ? body.action : "";
   const query = typeof body.query === "string" ? body.query.trim() : "";
-  const fields = cleanFields(body.fields);
-  const currentData = cleanRecord(body.currentData);
-  const context = cleanRecord(body.context);
 
   if (!allowedEntities.has(entity)) return json(req, { error: "invalid_entity" }, 400);
   if (!allowedActions.has(action)) return json(req, { error: "invalid_action" }, 400);
   if (query.length < 2 || query.length > 500) return json(req, { error: "invalid_query" }, 400);
+
+  const fields = cleanFields(body.fields, entity);
+  const currentData = cleanCurrentData(body.currentData, fields);
+  const context = cleanContext(body.context, entity);
   if (!fields.length) return json(req, { error: "no_allowed_fields" }, 400);
 
   const prompt = buildPrompt({ entity, action, query, currentData, fields, context });
