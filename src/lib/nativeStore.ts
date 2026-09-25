@@ -59,7 +59,7 @@ type StorefrontImageRow = Pick<
 >;
 type StorefrontCollectionRow = Pick<
   CollectionRow,
-  "id" | "handle" | "title" | "description" | "image_url"
+  "id" | "handle" | "title" | "description" | "image_url" | "seo_title" | "seo_description"
 >;
 type StorefrontCollectionLinkRow = Pick<
   CollectionLinkRow,
@@ -79,7 +79,7 @@ const STOREFRONT_VARIANT_SELECT =
 const STOREFRONT_IMAGE_SELECT =
   "product_id,url,alt_text,is_primary,sort_order" as const;
 const STOREFRONT_COLLECTION_SELECT =
-  "id,handle,title,description,image_url" as const;
+  "id,handle,title,description,image_url,seo_title,seo_description" as const;
 const STOREFRONT_COLLECTION_LINK_SELECT =
   "collection_id,product_id,sort_order" as const;
 const STOREFRONT_BRAND_SELECT = "id,name" as const;
@@ -771,6 +771,8 @@ function mapCollection(row: StorefrontCollectionRow): StoreCollection {
     handle: row.handle,
     title: row.title,
     description: row.description,
+    seoTitle: row.seo_title?.trim() || undefined,
+    seoDescription: row.seo_description?.trim() || undefined,
     image: row.image_url ? { url: row.image_url, altText: row.title } : null,
   };
 }
