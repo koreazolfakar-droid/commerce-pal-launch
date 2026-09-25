@@ -19,7 +19,7 @@ const INFINITE_CYCLES = [0, 1, 2] as const;
 /** Reserves a compact, bounded rail slot while allowing longer wordmarks a little more room. */
 function brandSlotWidth(brand: StoreBrand) {
   const compactLength = brand.label.replace(/[^a-z0-9]/gi, "").length;
-  return Math.min(106, Math.max(96, 90 + compactLength * 2));
+  return Math.min(118, Math.max(104, 96 + compactLength * 2));
 }
 
 /**
@@ -366,12 +366,14 @@ export function TopBrands({ brands }: { brands: StoreBrand[] }) {
               <div
                 key={cycleIndex}
                 data-brand-cycle={cycleIndex}
-                className="flex shrink-0 items-center gap-1 px-1 sm:gap-2 sm:px-1.5 lg:gap-2.5"
+                className="flex shrink-0 items-center gap-3 px-1.5 sm:gap-4 sm:px-2 lg:gap-5"
                 style={{ contain: "layout paint" }}
                 aria-hidden={cycleIndex === 1 ? undefined : true}
               >
                 {railBrands.map((brand) => {
                   const isActive = brand.slug === activeSlug;
+                  const isFeatured = brand.slug === strongestSlug;
+                  const isHighlighted = isActive || (!activeSlug && isFeatured);
                   const isPrimaryCycle = cycleIndex === 1;
 
                   return (
@@ -383,22 +385,25 @@ export function TopBrands({ brands }: { brands: StoreBrand[] }) {
                       aria-label={isPrimaryCycle ? brand.label : undefined}
                       tabIndex={isPrimaryCycle ? undefined : -1}
                       data-brand-slug={brand.slug}
-                      data-featured-brand={brand.slug === strongestSlug ? "true" : undefined}
+                      data-featured-brand={isFeatured ? "true" : undefined}
+                      data-brand-highlighted={isHighlighted ? "true" : undefined}
                       style={{ width: brandSlotWidth(brand) }}
                       onClick={() => {
                         interactionRef.current.resumeAt = Number.POSITIVE_INFINITY;
                       }}
-                      className="group flex h-12 shrink-0 select-none items-center justify-center overflow-hidden px-0.5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-14 sm:px-1 md:hover:-translate-y-0.5"
+                      className="group flex h-14 shrink-0 select-none items-center justify-center overflow-hidden px-1 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:translate-y-px motion-reduce:transform-none motion-reduce:transition-none sm:h-16 sm:px-1.5 md:hover:-translate-y-0.5"
                     >
                       <span
-                        className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.08] group-hover:opacity-100 ${
-                          isActive ? "scale-[1.04] opacity-100" : "scale-100 opacity-[0.88]"
+                        className={`pointer-events-none flex h-full w-full items-center justify-center transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-[1.06] group-hover:opacity-100 ${
+                          isHighlighted
+                            ? "scale-[1.10] opacity-100"
+                            : "scale-100 opacity-[0.78] sm:opacity-[0.84]"
                         }`}
                       >
                         <BrandLogo
                           slug={brand.slug}
                           label={brand.label}
-                          size={32}
+                          size={36}
                           wordmark
                           frameless
                           normalizeForRail
