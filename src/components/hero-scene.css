@@ -37,6 +37,8 @@
   display: block;
   object-fit: cover;
   object-position: var(--hero-mobile-focus-x, 50%) var(--hero-mobile-focus-y, 50%);
+  transform: scale(1.06);
+  transform-origin: var(--hero-mobile-focus-x, 50%) var(--hero-mobile-focus-y, 50%);
 }
 .hero-scene-shade {
   z-index: 2;
@@ -204,6 +206,8 @@
   .hero-scene-artwork img {
     object-fit: cover;
     object-position: var(--hero-focus-x, 50%) var(--hero-focus-y, 50%);
+    transform: none;
+    transform-origin: center;
   }
   .hero-scene-safe {
     inset: 32px 32px 48px;
