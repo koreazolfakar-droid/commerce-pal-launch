@@ -109,10 +109,74 @@ async function readJsonBody(req: Request): Promise<AiBody> {
   return JSON.parse(text) as AiBody;
 }
 
+function originAllowed(origin: string) {
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const u = new URL(origin);
+    return (
+      u.protocol === "https:" &&
+      (u.hostname.endsWith(".lovable.app") || u.hostname.endsWith(".lovableproject.com"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function callLovable(args: { systemInstruction: string; input: string }) {
+  const key = Deno.env.get("LOVABLE_API_KEY")?.trim();
+  if (!key) return { ok: false, status: 503, text: "" };
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+      "X-Lovable-AIG-SDK": "fetch",
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-6-astra",
+      instructions: `${args.systemInstruction}\nReturn ONLY a valid JSON object matching the requested shape, no markdown.`,
+      input: args.input,
+      reasoning: { effort: "low" },
+      store: false,
+      stream: true,
+    }),
+  });
+  if (!response.ok || !response.body) {
+    console.warn("[dashboard-ai] Lovable AI failed", response.status);
+    return { ok: false, status: response.status, text: "" };
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let out = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data:")) continue;
+      const data = line.slice(5).trim();
+      if (!data || data === "[DONE]") continue;
+      try {
+        const evt = JSON.parse(data);
+        if (evt.type === "response.output_text.delta" && typeof evt.delta === "string") {
+          out += evt.delta;
+        }
+      } catch {
+        // partial frame
+      }
+    }
+  }
+  const text = out.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+  return { ok: Boolean(text), status: 200, text };
+}
+
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
   return {
-    "Access-Control-Allow-Origin": allowedOrigins.has(origin)
+    "Access-Control-Allow-Origin": originAllowed(origin)
       ? origin
       : "https://spacecallapp.store",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -509,16 +573,6 @@ Deno.serve(async (req) => {
   const allowed = (roleRows ?? []).some((row) => row.role === "admin" || row.role === "editor");
   if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);
 
-  if (!geminiKey) {
-    return json(
-      req,
-      {
-        error: "gemini_not_configured",
-        message: "Set GEMINI_API_KEY in Supabase Edge Function secrets.",
-      },
-      503,
-    );
-  }
 
   let body: AiBody;
   try {
@@ -552,69 +606,94 @@ Deno.serve(async (req) => {
     context,
   });
 
-  let gemini;
+  let gemini: { ok: boolean; status: number; body: unknown } | undefined;
   let fallbackWarning = "";
-  try {
-    gemini = await callGemini({
-      apiKey: geminiKey,
-      model,
-      systemInstruction: geminiRequest.systemInstruction,
-      input: geminiRequest.input,
-      fields,
-      withSearch: true,
-    });
-
-    if (!gemini.ok && (gemini.status === 400 || gemini.status === 403 || gemini.status === 429)) {
-      const retry = await callGemini({
+  if (geminiKey) {
+    try {
+      gemini = await callGemini({
         apiKey: geminiKey,
         model,
         systemInstruction: geminiRequest.systemInstruction,
         input: geminiRequest.input,
         fields,
-        withSearch: false,
+        withSearch: true,
       });
-      if (retry.ok) {
-        gemini = retry;
-        fallbackWarning =
-          "Google Search grounding was unavailable for the current Gemini project/tier. Suggestions are unverified until manually checked.";
+
+      if (!gemini.ok && (gemini.status === 400 || gemini.status === 403 || gemini.status === 429)) {
+        const retry = await callGemini({
+          apiKey: geminiKey,
+          model,
+          systemInstruction: geminiRequest.systemInstruction,
+          input: geminiRequest.input,
+          fields,
+          withSearch: false,
+        });
+        if (retry.ok) {
+          gemini = retry;
+          fallbackWarning =
+            "Google Search grounding was unavailable for the current Gemini project/tier. Suggestions are unverified until manually checked.";
+        }
       }
+    } catch (error) {
+      console.warn("[dashboard-ai] Gemini call threw", error instanceof Error ? error.name : error);
+      gemini = undefined;
     }
-  } catch (error) {
-    const message =
-      error instanceof DOMException && error.name === "AbortError"
-        ? "gemini_timeout"
-        : "gemini_unavailable";
-    return json(req, { error: message }, 503);
+    if (gemini && !gemini.ok) {
+      const providerError =
+        gemini.body && typeof gemini.body === "object"
+          ? (gemini.body as Record<string, unknown>).error
+          : null;
+      console.warn("[dashboard-ai] Gemini request failed", gemini.status, providerError);
+    }
   }
 
-  if (!gemini?.ok) {
-    const providerError =
-      gemini?.body && typeof gemini.body === "object"
-        ? (gemini.body as Record<string, unknown>).error
-        : null;
-    console.warn("[dashboard-ai] Gemini request failed", gemini?.status, providerError);
-    return json(req, { error: "gemini_request_failed" }, 502);
+  let providerPayload: Record<string, unknown> = {};
+  let rawText = "";
+  let usedModel = model;
+  if (gemini?.ok) {
+    providerPayload = gemini.body as Record<string, unknown>;
+    rawText = geminiText(providerPayload);
   }
 
-  const providerPayload = gemini.body as Record<string, unknown>;
-  const rawText = geminiText(providerPayload);
-  if (!rawText) return json(req, { error: "empty_ai_response" }, 502);
+  if (!rawText) {
+    try {
+      const fallback = await callLovable({
+        systemInstruction: `${geminiRequest.systemInstruction}\nJSON schema:\n${JSON.stringify(responseSchema(fields))}`,
+        input: geminiRequest.input,
+      });
+      if (fallback.status === 402) {
+        return json(req, { error: "ai_credits_exhausted", message: "AI credits are exhausted. Add credits in workspace settings." }, 402);
+      }
+      if (fallback.status === 429) {
+        return json(req, { error: "ai_rate_limited", message: "AI is busy right now. Try again in a minute." }, 429);
+      }
+      if (!fallback.ok) return json(req, { error: "ai_unavailable", message: "AI assistant is unavailable right now." }, 502);
+      rawText = fallback.text;
+      usedModel = "openai/gpt-6-astra";
+      providerPayload = {};
+      fallbackWarning = "Generated without live web search. Review before saving.";
+    } catch {
+      return json(req, { error: "ai_unavailable", message: "AI assistant is unavailable right now." }, 503);
+    }
+  }
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(rawText);
+    const start = rawText.indexOf("{");
+    const end = rawText.lastIndexOf("}");
+    parsed = JSON.parse(start >= 0 && end > start ? rawText.slice(start, end + 1) : rawText);
   } catch {
-    return json(req, { error: "invalid_ai_response" }, 502);
+    return json(req, { error: "invalid_ai_response", message: "AI returned an unreadable answer. Try again." }, 502);
   }
 
-  const research = grounding(providerPayload);
+  const research = usedModel === model ? grounding(providerPayload) : { grounded: false, sources: [] };
   const normalized = normalizeAiResult(parsed, fields, research.grounded, fallbackWarning);
 
   return json(req, {
     ok: true,
     entity,
     action,
-    model,
+    model: usedModel,
     grounded: research.grounded,
     ...normalized,
     sources: research.sources,
