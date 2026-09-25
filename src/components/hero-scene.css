@@ -65,6 +65,19 @@
   overflow: auto;
   scrollbar-width: thin;
 }
+.hero-scene-editor-empty {
+  align-self: flex-start;
+  max-width: 100%;
+  border-radius: 999px;
+  background: #020617a8;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: white;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+}
 .hero-scene[data-align="center"] .hero-scene-safe {
   align-items: center;
   text-align: center;
