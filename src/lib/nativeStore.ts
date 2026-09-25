@@ -625,11 +625,16 @@ export async function fetchNavigationCatalogFacets() {
   });
 
   const catalog = buildCatalogIndex(products);
-  const catalogCategoryBySlug = new Map(catalog.categories.map((category) => [category.slug, category]));
+  const catalogCategoryBySlug = new Map(
+    catalog.categories.map((category) => [category.slug, category]),
+  );
   const managedById = new Map(managedCategories.map((category) => [category.id, category]));
   const managedBySlug = new Map(managedCategories.map((category) => [category.slug, category]));
   const counts = new Map<string, number>();
-  const iconBySlug = new Map<string, NonNullable<(typeof catalog.categories)[number]["icon"]>>();
+  const iconBySlug = new Map<
+    string,
+    NonNullable<(typeof catalog.categories)[number]["icon"]>
+  >();
 
   for (const row of productRows) {
     const inferredSlugs = catalog.categoryOf.get(row.handle) ?? [];
