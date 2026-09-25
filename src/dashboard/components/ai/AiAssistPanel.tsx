@@ -9,7 +9,7 @@ import {
   WandSparkles,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { requestDashboardAiAssist } from "@/dashboard/ai/client";
@@ -42,6 +42,10 @@ export default function AiAssistPanel({
   const [loadingAction, setLoadingAction] = useState<DashboardAiAction | null>(null);
   const [result, setResult] = useState<DashboardAiResponse | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const queryInputRef = useRef<HTMLInputElement>(null);
+  const dialogTitleId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -49,6 +53,60 @@ export default function AiAssistPanel({
     setResult(null);
     setSelected(new Set());
   }, [open, query]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      queryInputRef.current?.focus();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      triggerRef.current?.focus();
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (!loadingAction) setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.getAttribute("aria-hidden") !== "true");
+
+      if (!focusable.length) {
+        event.preventDefault();
+        panel.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || active === panel)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, loadingAction]);
 
   const fieldMap = useMemo(
     () => new Map(fields.map((field) => [field.key, field] as const)),
@@ -77,7 +135,7 @@ export default function AiAssistPanel({
                 definition &&
                 !definition.review &&
                 suggestion.confidence >= 0.75 &&
-                (suggestion.verified || action === "seo")
+                suggestion.verified
               );
             })
             .map((suggestion) => suggestion.field),
@@ -108,6 +166,7 @@ export default function AiAssistPanel({
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
         className={
@@ -127,14 +186,24 @@ export default function AiAssistPanel({
             if (event.target === event.currentTarget && !loadingAction) setOpen(false);
           }}
         >
-          <div className="flex max-h-[96vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:m-4 sm:max-w-xl sm:rounded-2xl">
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={dialogTitleId}
+            tabIndex={-1}
+            className="flex max-h-[96vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:m-4 sm:max-w-xl sm:rounded-2xl"
+          >
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
               <div>
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.14em] text-indigo-500">
                   <Sparkles className="size-3.5" />
                   Space Call AI
                 </div>
-                <h2 className="mt-1 text-[19px] font-black tracking-[-.03em] text-[#14203a]">
+                <h2
+                  id={dialogTitleId}
+                  className="mt-1 text-[19px] font-black tracking-[-.03em] text-[#14203a]"
+                >
                   Research, fill and improve
                 </h2>
                 <p className="mt-1 text-[10px] leading-4 text-slate-400">
@@ -158,6 +227,7 @@ export default function AiAssistPanel({
                   What should AI research?
                 </span>
                 <input
+                  ref={queryInputRef}
                   value={researchQuery}
                   onChange={(event) => setResearchQuery(event.target.value)}
                   placeholder="Exact product, category or brand name"
