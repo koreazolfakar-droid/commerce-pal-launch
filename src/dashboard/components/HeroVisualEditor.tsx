@@ -137,6 +137,10 @@ export function HeroVisualEditor({
       ? Boolean(form.mobileImageUrl || form.imageUrl)
       : Boolean(form.imageUrl);
 
+  useEffect(() => {
+    if (!hasPreviewImage && cropMode) setCropMode(false);
+  }, [cropMode, hasPreviewImage]);
+
   return (
     <div className="space-y-3" dir={ar ? "rtl" : "ltr"}>
       <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
