@@ -275,3 +275,20 @@ test("zero-price products are kept out of merchant SEO surfaces", async () => {
   assert.match(productRoute, /: "noindex, follow"/);
   assert.match(sitemap, /Number\(product\.base_price\) > 0/);
 });
+
+test("dashboard product SEO fields drive storefront metadata", async () => {
+  const [types, nativeStore, seo, productRoute] = await Promise.all([
+    source("src/lib/storeTypes.ts"),
+    source("src/lib/nativeStore.ts"),
+    source("src/lib/seo.ts"),
+    source("src/routes/product.$handle.tsx"),
+  ]);
+  assert.match(types, /seoTitle\?: string/);
+  assert.match(types, /seoDescription\?: string/);
+  assert.match(nativeStore, /seo_title/);
+  assert.match(nativeStore, /seo_description/);
+  assert.match(nativeStore, /seoTitle:\s*row\.seo_title/);
+  assert.match(nativeStore, /seoDescription:\s*row\.seo_description/);
+  assert.match(seo, /node\.seoDescription\?\.trim\(\)/);
+  assert.match(productRoute, /product\.node\.seoTitle\?\.trim\(\)/);
+});
