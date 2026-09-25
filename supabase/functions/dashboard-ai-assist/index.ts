@@ -693,7 +693,7 @@ Deno.serve(async (req) => {
     ok: true,
     entity,
     action,
-    model,
+    model: usedModel,
     grounded: research.grounded,
     ...normalized,
     sources: research.sources,
