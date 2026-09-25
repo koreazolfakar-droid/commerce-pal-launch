@@ -13,6 +13,7 @@ import {
   breadcrumbJsonLd,
   canonicalLink,
   canonicalUrl,
+  cleanMetaDescription,
   jsonLd,
   socialMeta,
 } from "@/lib/seo";
@@ -30,9 +31,9 @@ export const Route = createFileRoute("/brands")({
     const seo = loaderData ? cmsSeoPage(loaderData.cms, "brands") : undefined;
     const title =
       seo?.title?.trim() || `Electronics Brands in Lebanon | ${STORE_NAME}`;
-    const description =
-      seo?.description?.trim() ||
+    const fallbackDescription =
       `Browse smartphone, tablet, laptop, audio, gaming and electronics brands available from ${STORE_NAME} in Lebanon.`;
+    const description = cleanMetaDescription(seo?.description, fallbackDescription);
     const canonical = canonicalUrl("/brands", seo?.canonical_url);
     const image = seo?.og_image_url?.trim();
 
