@@ -36,7 +36,9 @@ export const Route = createFileRoute("/brands")({
           name: "robots",
           content:
             seo?.robots?.trim() ||
-            "index, follow, max-image-preview:large, max-snippet:-1",
+            (brands.length
+              ? "index, follow, max-image-preview:large, max-snippet:-1"
+              : "noindex, follow"),
         },
         ...socialMeta({
           title,
