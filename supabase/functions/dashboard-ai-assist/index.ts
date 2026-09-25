@@ -47,22 +47,8 @@ const allowedFieldKeys: Record<string, Set<string>> = {
     "seoTitle",
     "seoDescription",
   ]),
-  category: new Set([
-    "name",
-    "slug",
-    "description",
-    "icon",
-    "seoTitle",
-    "seoDescription",
-  ]),
-  brand: new Set([
-    "name",
-    "slug",
-    "description",
-    "website",
-    "seoTitle",
-    "seoDescription",
-  ]),
+  category: new Set(["name", "slug", "description", "icon", "seoTitle", "seoDescription"]),
+  brand: new Set(["name", "slug", "description", "website", "seoTitle", "seoDescription"]),
 };
 
 const allowedContextKeys: Record<string, Set<string>> = {
@@ -140,11 +126,7 @@ function cleanFields(value: unknown, entity: string): AiField[] {
     const key = typeof row.key === "string" ? row.key.trim() : "";
     const normalized = key.toLowerCase().replace(/[^a-z0-9_]/g, "");
     if (!key || !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(key)) continue;
-    if (
-      !entityAllowlist.has(key) ||
-      forbiddenFields.has(normalized) ||
-      seen.has(key)
-    ) continue;
+    if (!entityAllowlist.has(key) || forbiddenFields.has(normalized) || seen.has(key)) continue;
 
     seen.add(key);
     fields.push({
@@ -306,18 +288,15 @@ async function callGemini(args: {
     };
     if (args.withSearch) payload.tools = [{ type: "google_search" }];
 
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/interactions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": args.apiKey,
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
+    const response = await fetch("https://generativelanguage.googleapis.com/v1/interactions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": args.apiKey,
       },
-    );
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
 
     const body = await response.json().catch(() => ({}));
     return { ok: response.ok, status: response.status, body };
@@ -347,7 +326,7 @@ function modelOutputBlocks(payload: Record<string, unknown>) {
 function geminiText(payload: Record<string, unknown>) {
   return modelOutputBlocks(payload)
     .filter((block) => block.type === "text")
-    .map((block) => typeof block.text === "string" ? block.text : "")
+    .map((block) => (typeof block.text === "string" ? block.text : ""))
     .join("")
     .trim();
 }
@@ -417,7 +396,7 @@ function normalizeAiResult(
   extraWarning?: string,
 ) {
   const allowed = new Map(fields.map((field) => [field.key, field] as const));
-  const root = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+  const root = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const suggestions = Array.isArray(root.suggestions) ? root.suggestions : [];
   const normalized = [];
 
@@ -473,10 +452,14 @@ Deno.serve(async (req) => {
 
   if (!url || !serviceKey) return json(req, { error: "server_not_configured" }, 503);
   if (!geminiKey) {
-    return json(req, {
-      error: "gemini_not_configured",
-      message: "Set GEMINI_API_KEY in Supabase Edge Function secrets.",
-    }, 503);
+    return json(
+      req,
+      {
+        error: "gemini_not_configured",
+        message: "Set GEMINI_API_KEY in Supabase Edge Function secrets.",
+      },
+      503,
+    );
   }
 
   const token = bearerToken(req);
@@ -558,9 +541,10 @@ Deno.serve(async (req) => {
       }
     }
   } catch (error) {
-    const message = error instanceof DOMException && error.name === "AbortError"
-      ? "gemini_timeout"
-      : "gemini_unavailable";
+    const message =
+      error instanceof DOMException && error.name === "AbortError"
+        ? "gemini_timeout"
+        : "gemini_unavailable";
     return json(req, { error: message }, 503);
   }
 
