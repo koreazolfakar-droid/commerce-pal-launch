@@ -4,9 +4,6 @@ on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -46,10 +43,7 @@ jobs:
       - name: Dependency security gate
         run: bun audit --audit-level=high
 
-      - name: Dashboard security regression tests
-        run: node --test e2e/dashboard-*.test.mjs
-
-      - name: Unit and architecture tests
+      - name: Unit, security regression and architecture tests
         run: bun run test:unit
 
       - name: Install Chromium for responsive UI checks
@@ -67,6 +61,8 @@ jobs:
             sleep 1
           done
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ui-polish-responsive-check.mjs
+          E2E_BASE_URL=http://127.0.0.1:4173 node e2e/hero-responsive-check.mjs
+          E2E_BASE_URL=http://127.0.0.1:4173 node e2e/bottom-nav-responsive-check.mjs
 
       - name: Production build
         run: bun run build
