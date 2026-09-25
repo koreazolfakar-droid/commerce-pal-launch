@@ -9,23 +9,46 @@ export type PreviewProduct = {
   currency: string;
   image: string;
 };
+
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function manualIds(section: HomepageSection) {
+  const configured = Array.isArray(section.settings.manualProductIds)
+    ? section.settings.manualProductIds
+        .filter((id): id is string => typeof id === "string")
+        .map((id) => id.trim())
+        .filter((id) => uuid.test(id))
+    : [];
+
+  if (configured.length) return [...new Set(configured)];
+
+  return String(section.settings.sourceValue ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => uuid.test(id));
+}
 
 export function previewSource(section: HomepageSection) {
   const source =
     section.type === "collection" || section.type === "collection-grid"
       ? "collection"
-      : String(section.settings.source ?? "collection");
+      : String(
+          section.settings.source ??
+            (section.sectionId === "featured_products" ? "best_sellers" : "collection"),
+        );
   const value = String(
     source === "collection"
       ? (section.settings.collection ?? section.settings.sourceValue ?? "")
-      : (section.settings.sourceValue ?? ""),
+      : source === "manual"
+        ? manualIds(section).join(",")
+        : (section.settings.sourceValue ?? ""),
   ).trim();
-  const count = Number(section.settings.count ?? 5);
+  const count =
+    source === "manual" ? manualIds(section).length || 1 : Number(section.settings.count ?? 5);
   return {
     source,
     value,
-    limit: Number.isFinite(count) ? Math.min(20, Math.max(1, Math.floor(count))) : 5,
+    limit: Number.isFinite(count) ? Math.min(10, Math.max(1, Math.floor(count))) : 5,
   };
 }
 
@@ -33,15 +56,21 @@ export async function loadHomepagePreviewProducts(
   section: HomepageSection,
 ): Promise<PreviewProduct[]> {
   if (!(await getDashboardRole())) throw new Error("Dashboard authentication is required.");
+
   const { source, value, limit } = previewSource(section);
-  if (!value) return [];
+  if (!value && source !== "best_sellers") return [];
+
+  let requestedOrder: string[] = [];
   let query = supabase
     .from("store_products")
     .select(
       "id,title,base_price,currency,store_product_images(url,is_primary,sort_order),store_product_variants(price,is_active,sort_order)",
     )
     .eq("status", "active");
-  if (source === "brand" || source === "category") {
+
+  if (source === "best_sellers") {
+    query = query.eq("best_seller", true).order("sort_order", { ascending: true });
+  } else if (source === "brand" || source === "category") {
     const result =
       source === "brand"
         ? await supabase.from("cms_brands").select("id,name,slug").eq("is_visible", true)
@@ -71,25 +100,37 @@ export async function loadHomepagePreviewProducts(
       .limit(limit);
     if (members.error) throw members.error;
     if (!members.data?.length) return [];
-    query = query.in(
-      "id",
-      members.data.map((row) => row.product_id),
-    );
+    requestedOrder = members.data.map((row) => row.product_id);
+    query = query.in("id", requestedOrder);
   } else if (source === "manual") {
-    const ids = value
+    requestedOrder = value
       .split(",")
       .map((id) => id.trim())
       .filter((id) => uuid.test(id))
       .slice(0, limit);
-    if (!ids.length) return [];
-    query = query.in("id", ids);
-  } else return [];
-  const { data, error } = await query
-    .order("updated_at", { ascending: false })
-    .order("id")
-    .limit(limit);
+    if (!requestedOrder.length) return [];
+    query = query.in("id", requestedOrder);
+  } else {
+    return [];
+  }
+
+  if (source !== "best_sellers") {
+    query = query.order("updated_at", { ascending: false }).order("id");
+  }
+
+  const { data, error } = await query.limit(limit);
   if (error) throw error;
-  return (data ?? []).map((row) => ({
+
+  const order = new Map(requestedOrder.map((id, index) => [id, index]));
+  const rows = requestedOrder.length
+    ? [...(data ?? [])].sort(
+        (a, b) =>
+          (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+          (order.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+      )
+    : (data ?? []);
+
+  return rows.map((row) => ({
     id: row.id,
     name: row.title,
     currency: row.currency,

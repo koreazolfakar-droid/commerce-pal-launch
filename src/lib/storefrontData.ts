@@ -59,6 +59,10 @@ export function fetchAllProductsByVendor(vendor: string): Promise<StoreProduct[]
   return nativeStore.fetchAllProductsByVendor(vendor);
 }
 
+export function fetchProductsByIds(ids: string[]): Promise<StoreProduct[]> {
+  return nativeStore.fetchProductsByIds(ids);
+}
+
 export function fetchProductsByHandles(handles: string[]): Promise<StoreProduct[]> {
   return nativeStore.fetchProductsByHandles(handles);
 }

@@ -16,6 +16,7 @@ import {
   fetchProductByHandle,
   fetchProductRecommendations,
   fetchProductsByHandles,
+  fetchProductsByIds,
   fetchProductsByVendor,
   searchStorefront,
 } from "@/lib/storefrontData";
@@ -220,6 +221,18 @@ export const allVendorProductsQueryOptions = (vendor: string) =>
     retry: QUERY_RETRY_COUNT,
     retryDelay,
   });
+
+export const productsByIdsQueryOptions = (ids: string[]) => {
+  const normalized = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+  return queryOptions({
+    queryKey: ["supabase", "products-by-ids", normalized],
+    queryFn: () => fetchProductsByIds(normalized),
+    enabled: normalized.length > 0,
+    staleTime: CATALOG_STALE_TIME,
+    retry: QUERY_RETRY_COUNT,
+    retryDelay,
+  });
+};
 
 export const productsByHandlesQueryOptions = (handles: string[]) => {
   const normalized = [...new Set(handles)].sort();

@@ -24,7 +24,12 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { listDashboardBrands, type DashboardBrand } from "@/dashboard/data/catalog";
+import {
+  listDashboardBrands,
+  listDashboardProducts,
+  type DashboardBrand,
+  type DashboardProduct,
+} from "@/dashboard/data/catalog";
 import { loadHomepagePreviewProducts, type PreviewProduct } from "@/dashboard/data/homepagePreview";
 import {
   createSection,
@@ -402,12 +407,188 @@ function FaqItems({
   );
 }
 
+function ManualProductPicker({
+  products,
+  selectedIds,
+  onChange,
+}: {
+  products: DashboardProduct[];
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const ids = [...new Set(selectedIds)].slice(0, 10);
+  const byId = new Map(products.map((product) => [product.id, product]));
+  const selectedProducts = ids
+    .map((id) => byId.get(id))
+    .filter((product): product is DashboardProduct => Boolean(product));
+  const normalizedQuery = query.trim().toLowerCase();
+  const available =
+    ids.length >= 10
+      ? []
+      : products
+          .filter((product) => product.status === "Active" && !ids.includes(product.id))
+          .filter((product) => {
+            if (!normalizedQuery) return true;
+            return [product.name, product.brand, product.category, product.sku]
+              .join(" ")
+              .toLowerCase()
+              .includes(normalizedQuery);
+          })
+          .slice(0, 8);
+
+  const reorder = (from: number, to: number) => {
+    if (from < 0 || to < 0 || from >= ids.length || to >= ids.length || from === to) return;
+    const next = [...ids];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onChange(next);
+  };
+
+  const move = (index: number, direction: -1 | 1) => {
+    reorder(index, index + direction);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2.5">
+        <div className="text-[11px] font-bold text-indigo-700">
+          Manual order · the first product here is the first product customers see.
+        </div>
+        <div className="mt-0.5 text-[10px] text-indigo-500">
+          Drag to reorder on desktop, or use ↑ ↓ on mobile. You can add up to 10 active products.
+        </div>
+      </div>
+
+      {selectedProducts.length ? (
+        <div className="space-y-2">
+          {selectedProducts.map((product, index) => (
+            <div
+              key={product.id}
+              draggable
+              onDragStart={(event) => event.dataTransfer.setData("manual-product-id", product.id)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const sourceId = event.dataTransfer.getData("manual-product-id");
+                reorder(ids.indexOf(sourceId), ids.indexOf(product.id));
+              }}
+              className="flex cursor-grab items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 active:cursor-grabbing"
+            >
+              <div className="grid size-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-black text-slate-500">
+                {index + 1}
+              </div>
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt=""
+                  className="size-10 shrink-0 rounded-lg border border-slate-100 object-contain"
+                />
+              ) : (
+                <div className="size-10 shrink-0 rounded-lg bg-slate-50" />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[11px] font-bold text-slate-700">{product.name}</div>
+                <div className="truncate text-[9px] text-slate-400">
+                  {[product.brand, product.category].filter(Boolean).join(" · ")}
+                </div>
+              </div>
+              <button
+                type="button"
+                title="Move up"
+                disabled={index === 0}
+                onClick={() => move(index, -1)}
+                className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-25"
+              >
+                <ArrowUp className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                title="Move down"
+                disabled={index === selectedProducts.length - 1}
+                onClick={() => move(index, 1)}
+                className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-25"
+              >
+                <ArrowDown className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                title="Remove"
+                onClick={() => onChange(ids.filter((id) => id !== product.id))}
+                className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-[11px] text-slate-400">
+          No products selected yet. Search below and tap Add.
+        </div>
+      )}
+
+      <div>
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search product name, brand, category or SKU…"
+          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
+        />
+        {ids.length >= 10 ? (
+          <div className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-700">
+            Product limit reached. Remove one product before adding another.
+          </div>
+        ) : null}
+        <div className="mt-2 max-h-64 space-y-1 overflow-y-auto">
+          {available.map((product) => (
+            <button
+              key={product.id}
+              type="button"
+              onClick={() => {
+                onChange([...ids, product.id]);
+                setQuery("");
+              }}
+              className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left hover:bg-slate-50"
+            >
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt=""
+                  className="size-9 shrink-0 rounded-lg border border-slate-100 object-contain"
+                />
+              ) : (
+                <div className="size-9 shrink-0 rounded-lg bg-slate-50" />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[11px] font-semibold text-slate-700">
+                  {product.name}
+                </div>
+                <div className="truncate text-[9px] text-slate-400">
+                  {[product.brand, product.category, product.sku].filter(Boolean).join(" · ")}
+                </div>
+              </div>
+              <span className="rounded-lg bg-indigo-50 px-2 py-1 text-[9px] font-bold text-indigo-600">
+                Add
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Editor({
   section,
   update,
   brands,
+  products,
+  productsReady,
 }: {
   brands: DashboardBrand[];
+  products: DashboardProduct[];
+  productsReady: boolean;
   section: HomepageSection;
   update: (patch: Partial<HomepageSection>) => void;
 }) {
@@ -415,6 +596,15 @@ function Editor({
   const settings = section.settings;
   const setSetting = (key: string, value: unknown) =>
     update({ settings: { ...settings, [key]: value } });
+  const productSource = String(
+    settings.source ?? (section.sectionId === "featured_products" ? "best_sellers" : "collection"),
+  );
+  const manualProductIds = Array.isArray(settings.manualProductIds)
+    ? settings.manualProductIds.filter((id): id is string => typeof id === "string")
+    : String(settings.sourceValue ?? "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
@@ -610,34 +800,80 @@ function Editor({
       )}
       {["product-carousel", "featured-products"].includes(section.type) && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Product source</div>
+          <div className="mb-1 text-[13px] font-bold text-[#14203a]">Products and order</div>
+          <div className="mb-4 text-[10px] text-slate-400">
+            Choose automatic best sellers or take full manual control of exactly what appears first.
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
                 Products source
               </span>
               <select
-                value={String(settings.source ?? "collection")}
-                onChange={(e) => setSetting("source", e.target.value)}
+                value={productSource}
+                onChange={(e) =>
+                  update({ settings: { ...settings, source: e.target.value } })
+                }
                 className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
               >
-                <option value="manual">Manual products</option>
+                <option value="best_sellers">Automatic · Best sellers</option>
+                <option value="manual">Manual · I choose and order products</option>
                 <option value="collection">Collection</option>
                 <option value="brand">Brand</option>
                 <option value="category">Category</option>
               </select>
             </label>
-            <Field
-              label="Source"
-              value={String(settings.sourceValue ?? "")}
-              onChange={(v) => setSetting("sourceValue", v)}
-              placeholder="Name, slug, or comma-separated product IDs"
-            />
-            <Field
-              label="Number of products"
-              value={String(settings.count ?? 5)}
-              onChange={(v) => setSetting("count", Number(v) || 1)}
-            />
+
+            {productSource === "best_sellers" ? (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2.5">
+                <div className="text-[11px] font-bold text-emerald-700">Automatic mode</div>
+                <div className="mt-0.5 text-[10px] leading-4 text-emerald-600">
+                  Uses products marked Best Seller and keeps their storefront sort order.
+                </div>
+              </div>
+            ) : productSource !== "manual" ? (
+              <Field
+                label="Source"
+                value={String(settings.sourceValue ?? "")}
+                onChange={(v) => setSetting("sourceValue", v)}
+                placeholder="Collection, brand or category name / slug"
+              />
+            ) : null}
+
+            {productSource === "manual" ? (
+              <div className="sm:col-span-2">
+                {productsReady ? (
+                  <ManualProductPicker
+                    products={products}
+                    selectedIds={manualProductIds}
+                    onChange={(ids) =>
+                      update({
+                        settings: {
+                          ...settings,
+                          source: "manual",
+                          manualProductIds: ids,
+                          sourceValue: ids.join(","),
+                          count: ids.length,
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-[11px] font-semibold text-slate-500">
+                    <Loader2 className="size-4 animate-spin text-indigo-500" />
+                    Loading products only when you need manual ordering…
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {productSource !== "manual" ? (
+              <Field
+                label="Number of products"
+                value={String(settings.count ?? 5)}
+                onChange={(v) => setSetting("count", Number(v) || 1)}
+              />
+            ) : null}
             <label className="block">
               <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
                 Display layout
@@ -1052,6 +1288,9 @@ function createHomepageSectionKey(type: string, suffix = Date.now()) {
 
 export default function HomepageBuilderPage() {
   const [brands, setBrands] = useState<DashboardBrand[]>([]);
+  const [products, setProducts] = useState<DashboardProduct[]>([]);
+  const [productsReady, setProductsReady] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [reload, setReload] = useState(0);
   const [sections, setSections] = useState<HomepageSection[]>([]);
@@ -1096,6 +1335,43 @@ export default function HomepageBuilderPage() {
       cancelled = true;
     };
   }, [reload]);
+
+  const selectedProductSource = selected
+    ? String(
+        selected.settings.source ??
+          (selected.sectionId === "featured_products" ? "best_sellers" : "collection"),
+      )
+    : "";
+  const needsManualProducts =
+    Boolean(selected) &&
+    ["product-carousel", "featured-products"].includes(selected.type) &&
+    selectedProductSource === "manual";
+
+  useEffect(() => {
+    if (!needsManualProducts || productsReady) return;
+
+    let cancelled = false;
+    setProductsLoading(true);
+    listDashboardProducts()
+      .then((liveProducts) => {
+        if (!cancelled) setProducts(liveProducts);
+      })
+      .catch((cause) => {
+        if (!cancelled) {
+          toast.error(cause instanceof Error ? cause.message : "Unable to load products.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setProductsReady(true);
+          setProductsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [needsManualProducts, productsReady]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -1390,7 +1666,13 @@ export default function HomepageBuilderPage() {
           </div>
           <div>
             {selected ? (
-              <Editor brands={brands} section={selected} update={updateSelected} />
+              <Editor
+                brands={brands}
+                products={products}
+                productsReady={productsReady}
+                section={selected}
+                update={updateSelected}
+              />
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-400">
                 Select a section to edit it.
