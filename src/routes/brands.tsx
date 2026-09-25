@@ -8,7 +8,14 @@ import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, fetchCmsSnapshot } from "@/lib/cms";
 import { useLanguage } from "@/lib/i18n";
 import { catalogQueryOptions } from "@/lib/queries";
-import { absoluteUrl, breadcrumbJsonLd, canonicalLink, canonicalUrl, jsonLd, socialMeta } from "@/lib/seo";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  canonicalLink,
+  canonicalUrl,
+  jsonLd,
+  socialMeta,
+} from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/brands")({
@@ -29,7 +36,9 @@ export const Route = createFileRoute("/brands")({
     const canonical = canonicalUrl("/brands", seo?.canonical_url);
     const image = seo?.og_image_url?.trim();
 
-    const brands = loaderData?.catalog.brands ?? [];
+    const brands = loaderData
+      ? applyCmsBrands(buildStoreBrands(loaderData.catalog.brands, undefined), loaderData.cms.brands)
+      : [];
 
     return {
       meta: [
@@ -37,8 +46,7 @@ export const Route = createFileRoute("/brands")({
         { name: "description", content: description },
         {
           name: "robots",
-          content:
-            seo?.robots?.trim() ||
+          content: seo?.robots?.trim() ||
             (brands.length
               ? "index, follow, max-image-preview:large, max-snippet:-1"
               : "noindex, follow"),
@@ -47,6 +55,7 @@ export const Route = createFileRoute("/brands")({
           title,
           description,
           path: "/brands",
+          url: canonical,
           ...(image ? { image } : {}),
         }),
       ],
@@ -65,12 +74,23 @@ export const Route = createFileRoute("/brands")({
                 "@type": "ItemList",
                 name: `${STORE_NAME} brands`,
                 numberOfItems: brands.length,
-                itemListElement: brands.map((brand, index) => ({
-                  "@type": "ListItem",
-                  position: index + 1,
-                  name: brand.label,
-                  url: absoluteUrl(`/brand/${encodeURIComponent(brand.slug)}`),
-                })),
+                itemListElement: brands.map((brand, index) => {
+                  const fallbackHref = `/brand/${encodeURIComponent(brand.slug)}`;
+                  const href = brand.href?.trim() || fallbackHref;
+                  const url =
+                    href.startsWith("/")
+                      ? absoluteUrl(href)
+                      : href.startsWith("https://")
+                        ? href
+                        : absoluteUrl(fallbackHref);
+
+                  return {
+                    "@type": "ListItem",
+                    position: index + 1,
+                    name: brand.label,
+                    url,
+                  };
+                }),
               }),
             ]
           : []),
