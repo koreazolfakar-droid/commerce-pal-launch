@@ -101,6 +101,8 @@ export function socialMeta({
   type = "website",
   imageWidth,
   imageHeight,
+  locale = "en_LB",
+  alternateLocale = "ar_LB",
 }: {
   title: string;
   description: string;
@@ -109,6 +111,8 @@ export function socialMeta({
   type?: "website" | "product";
   imageWidth?: number;
   imageHeight?: number;
+  locale?: "en_LB" | "ar_LB";
+  alternateLocale?: "en_LB" | "ar_LB";
 }) {
   return [
     { property: "og:title", content: title },
@@ -120,8 +124,10 @@ export function socialMeta({
     ...(imageHeight ? [{ property: "og:image:height", content: String(imageHeight) }] : []),
     { property: "og:image:alt", content: title },
     { property: "og:site_name", content: SITE_NAME },
-    { property: "og:locale", content: "en_LB" },
-    { property: "og:locale:alternate", content: "ar_LB" },
+    { property: "og:locale", content: locale },
+    ...(alternateLocale !== locale
+      ? [{ property: "og:locale:alternate", content: alternateLocale }]
+      : []),
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
@@ -188,6 +194,9 @@ export function organizationJsonLd() {
     "@type": "OnlineStore",
     "@id": `${SITE_URL}/#organization`,
     name: SITE_NAME,
+    ...(STORE_CONFIG.invoiceLegalName && STORE_CONFIG.invoiceLegalName !== SITE_NAME
+      ? { legalName: STORE_CONFIG.invoiceLegalName }
+      : {}),
     alternateName: ["Space Call Lebanon", "SpaceCall"],
     url: SITE_URL,
     logo: {
@@ -239,11 +248,6 @@ export function websiteJsonLd() {
     url: SITE_URL,
     publisher: { "@id": `${SITE_URL}/#organization` },
     inLanguage: ["en-LB", "ar-LB"],
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${SITE_URL}/search?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
   };
 }
 
