@@ -119,6 +119,7 @@ test("product actions stay aligned without overlapping compact card content", as
   assert.match(consistency, /height: 2\.25rem;/);
   assert.match(consistency, /\.market-product-card \.market-product-action svg\.lucide/);
   assert.match(consistency, /grid-template-rows: 1rem 2\.2rem 1rem 1\.1rem 2\.375rem/);
+  assert.match(consistency, /\.homepage-product-card \.product-card-title \{[\s\S]*?min-height: 2\.15rem/);
   assert.match(consistency, /\.market-product-card \.market-product-action \{[\s\S]*?width: 2\.375rem/);
   assert.match(consistency, /\.market-product-quantity button \{[\s\S]*?min-width: 2rem/);
 });
