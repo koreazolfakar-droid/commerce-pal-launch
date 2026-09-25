@@ -10,7 +10,9 @@ function safeHttpUrl(value: unknown) {
   if (!raw || raw.length > 2048) return "";
   try {
     const parsed = new URL(raw);
-    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.toString() : "";
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? parsed.toString()
+      : "";
   } catch {
     return "";
   }
@@ -28,7 +30,9 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
 
   const suggestions = Array.isArray(row.suggestions)
     ? row.suggestions
-        .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+        .filter(
+          (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
+        )
         .map((item) => ({
           field: text(item.field),
           value: text(item.value),
