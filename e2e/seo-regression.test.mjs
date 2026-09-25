@@ -246,6 +246,7 @@ test("used phones have one canonical indexable landing", async () => {
 
   assert.match(categoryRoute, /canonicalSlug === "used-phone"/);
   assert.match(categoryRoute, /to: "\/used-phones"/);
+  assert.match(categoryRoute, /statusCode:\s*308/);
   assert.match(sitemap, /category\.slug !== "used-phone"/);
   assert.match(nativeStore, /category\.slug !== "used-phone"/);
   assert.match(productRoute, /isUsedPhone\(product\)/);
@@ -253,4 +254,12 @@ test("used phones have one canonical indexable landing", async () => {
   assert.match(categories, /category\.slug === "used-phone"/);
   assert.match(categories, /to="\/used-phones"/);
   assert.match(mobileMenu, /to="\/used-phones"/);
+});
+
+
+test("retired compare page permanently redirects instead of being indexed", async () => {
+  const compare = await source("src/routes/compare.tsx");
+  assert.match(compare, /to: "\/"/);
+  assert.match(compare, /statusCode:\s*308/);
+  assert.doesNotMatch(compare, /component:/);
 });
