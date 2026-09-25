@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Bike, CreditCard, Heart, MessageCircle, RotateCcw, ShieldCheck, Tag } from "lucide-react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Heart, MessageCircle, Tag } from "lucide-react";
 
 import { cdnImage } from "@/lib/image";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
@@ -10,60 +9,6 @@ import { useLanguage } from "@/lib/i18n";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
-
-const BENEFITS = [
-  { icon: Bike, title: "benefitFreeDelivery", detail: "benefitEligibleOrders", fastDelivery: true },
-  { icon: ShieldCheck, title: "benefitWarranty", detail: "benefitAuthentic", fastDelivery: false },
-  { icon: RotateCcw, title: "benefitReturns", detail: "benefitReturnsPolicy", fastDelivery: false },
-  {
-    icon: CreditCard,
-    title: "benefitSecurePayment",
-    detail: "benefitEncryptedCheckout",
-    fastDelivery: false,
-  },
-] as const;
-
-export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
-  const { t, language } = useLanguage();
-
-  return (
-    <section
-      aria-label={t("shoppingBenefits")}
-      data-testid="benefits-bar"
-      className="w-full"
-      data-compact={compact ? "true" : "false"}
-    >
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-        {BENEFITS.map((benefit) => (
-          <div
-            key={benefit.title}
-            className="group flex min-h-[5.75rem] min-w-0 items-start gap-2.5 rounded-lg border border-border/70 bg-card p-3 shadow-card transition-colors duration-150 hover:border-primary/20 sm:min-h-[6.25rem] sm:p-3.5"
-          >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-10 sm:w-10">
-              <benefit.icon
-                className="h-[18px] w-[18px] sm:h-5 sm:w-5"
-                strokeWidth={1.8}
-                aria-hidden="true"
-              />
-            </span>
-            <div className="min-w-0 pt-0.5">
-              <p className="break-words text-[11px] font-extrabold leading-snug tracking-[-0.01em] sm:text-xs">
-                {benefit.fastDelivery
-                  ? language === "ar"
-                    ? "توصيل سريع"
-                    : "Fast delivery"
-                  : t(benefit.title)}
-              </p>
-              <p className="mt-1 break-words text-[10px] leading-snug text-muted-foreground sm:text-[11px]">
-                {t(benefit.detail)}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 const SERVICES = [
   {
