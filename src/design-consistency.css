@@ -377,6 +377,11 @@
   margin: 0;
 }
 
+.store-layout .market-product-card.homepage-product-card .product-card-title {
+  min-height: 2.15rem;
+  line-height: 1.42;
+}
+
 .store-layout .market-product-card.homepage-product-card .market-product-price-row {
   align-self: center;
 }
