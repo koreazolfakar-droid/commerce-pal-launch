@@ -27,7 +27,27 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
   ];
   for (let i = 1; i < expected.length; i++)
     expect(order.indexOf(expected[i]!)).toBeGreaterThan(order.indexOf(expected[i - 1]!));
-  await expect(page.getByTestId("deal-spotlight").locator("article")).toHaveCount(2);
+  const productShelves = page.locator(
+    '[data-testid="best-sellers"], [data-testid="deals-section"], [data-testid="new-items"]',
+  );
+  const shelfProducts = await productShelves.evaluateAll((sections) =>
+    sections.flatMap((section) => {
+      const shelf = section.getAttribute("data-testid") ?? "unknown";
+      const hrefs = [
+        ...new Set(
+          Array.from(section.querySelectorAll<HTMLAnchorElement>('a[href^="/product/"]')).map(
+            (link) => link.getAttribute("href") ?? "",
+          ),
+        ),
+      ].filter(Boolean);
+      return hrefs.map((href) => ({ shelf, href }));
+    }),
+  );
+  const firstShelfByProduct = new Map<string, string>();
+  for (const item of shelfProducts) {
+    expect(firstShelfByProduct.get(item.href), `${item.href} repeats across homepage product shelves`).toBeUndefined();
+    firstShelfByProduct.set(item.href, item.shelf);
+  }
   if (isMobile) await expect(page.getByTestId("bottom-nav")).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
