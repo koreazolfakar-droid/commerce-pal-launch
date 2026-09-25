@@ -335,23 +335,23 @@
 }
 
 .store-layout .market-product-card .market-product-action {
-  width: 2.625rem;
-  height: 2.625rem;
-  min-width: 2.625rem;
-  min-height: 2.625rem;
-  flex: 0 0 2.625rem;
+  width: 2.375rem;
+  height: 2.375rem;
+  min-width: 2.375rem;
+  min-height: 2.375rem;
+  flex: 0 0 2.375rem;
 }
 .store-layout .market-product-card .market-add-button {
-  width: 2.75rem;
-  height: 2.75rem;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  flex-basis: 2.75rem;
+  width: 2.375rem;
+  height: 2.375rem;
+  min-width: 2.375rem;
+  min-height: 2.375rem;
+  flex-basis: 2.375rem;
 }
 .store-layout .market-product-card .market-product-action svg.lucide {
-  width: 1.125rem;
-  height: 1.125rem;
-  stroke-width: 1.9;
+  width: 1rem;
+  height: 1rem;
+  stroke-width: 1.85;
 }
 .store-layout .market-product-footer {
   position: relative;
@@ -362,8 +362,8 @@
  * height and every piece of product information lands on the same baseline. */
 .store-layout .market-product-card.homepage-product-card .market-product-copy-grid {
   display: grid;
-  grid-template-rows: 1rem 2.45rem 1.25rem 1.15rem 2.75rem;
-  row-gap: 0.25rem;
+  grid-template-rows: 1rem 2.2rem 1rem 1.1rem 2.375rem;
+  row-gap: 0.2rem;
   align-content: start;
   flex: 0 0 auto;
   padding: 0.625rem;
