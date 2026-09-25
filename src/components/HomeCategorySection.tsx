@@ -116,25 +116,24 @@ export function HomeCategorySection({
       data-testid="category-section"
       className="overflow-hidden"
     >
-      <div className="home-section-header">
+      <div className="home-section-header flex-nowrap items-end">
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-            <h2 id="home-categories" className="break-words text-xl font-black tracking-tight">
-              {title}
-            </h2>
-            <Link
-              to="/categories"
-              className="inline-flex shrink-0 items-center gap-1 rounded-full px-1 py-1 text-xs font-bold text-primary transition-colors hover:text-primary/80 hover:underline"
-            >
-              {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
-            </Link>
-          </div>
+          <h2 id="home-categories" className="break-words text-xl font-bold tracking-[-0.02em]">
+            {title}
+          </h2>
         </div>
+        <Link
+          to="/categories"
+          preload="intent"
+          className="inline-flex min-h-10 shrink-0 items-center gap-1 text-xs font-bold text-primary transition-colors hover:text-primary/80 hover:underline"
+        >
+          {t("viewAll")} <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
+        </Link>
       </div>
 
       <div className="relative -mx-4 sm:mx-0">
         <div
-          className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 pe-14 scroll-smooth [scroll-padding-inline:1rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 sm:px-0 sm:pe-0 lg:gap-5"
+          className="category-home-rail flex snap-x snap-proximity gap-3 overflow-x-auto px-4 pb-2 pe-10 scroll-smooth [scroll-padding-inline:1rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 sm:px-0 sm:pe-0 lg:gap-5"
           role="list"
           aria-label={title}
         >
@@ -150,7 +149,7 @@ export function HomeCategorySection({
               category.glyphSlug,
               category.label,
             );
-            const imageUrl = cdnImage(category.image || artwork?.image?.url, 128);
+            const imageUrl = cdnImage(category.image || artwork?.image?.url, 192);
 
             return (
               <Link
@@ -159,10 +158,11 @@ export function HomeCategorySection({
                 params={{ slug: category.slug }}
                 role="listitem"
                 aria-label={label}
-                className="category-home-item group flex w-[6.15rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-lg px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.75rem] sm:gap-2 lg:w-[7.1rem]"
+                preload="intent"
+                className="category-home-item group flex w-[5.9rem] shrink-0 snap-start flex-col items-center gap-2 px-0.5 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.65rem] sm:gap-2.5 lg:w-[7.15rem]"
               >
                 <span
-                  className="category-home-media relative grid h-[4.8rem] w-[4.8rem] shrink-0 place-items-center overflow-hidden rounded-lg border border-border/70 bg-card shadow-card transition-colors duration-150 group-hover:border-primary/25 sm:h-[5.2rem] sm:w-[5.2rem] lg:h-[5.6rem] lg:w-[5.6rem]"
+                  className="category-home-media relative grid h-[5.25rem] w-[5.25rem] shrink-0 place-items-center overflow-hidden rounded-xl border border-border/45 bg-card shadow-[0_1px_3px_rgba(15,23,42,0.05)] transition-[border-color,box-shadow,transform] duration-150 group-hover:-translate-y-px group-hover:scale-[1.035] group-hover:border-primary/25 group-hover:shadow-[0_6px_16px_-12px_rgba(15,23,42,0.28)] sm:h-[5.65rem] sm:w-[5.65rem] lg:h-[6rem] lg:w-[6rem]"
                   aria-hidden="true"
                 >
                   <span className="pointer-events-none absolute inset-0 bg-card" />
@@ -174,16 +174,16 @@ export function HomeCategorySection({
                       decoding="async"
                       width={128}
                       height={128}
-                      className="relative h-full w-full object-contain p-1.5"
+                      className="relative h-full w-full object-contain p-1"
                     />
                   ) : (
                     <CategoryGlyph
                       slug={category.glyphSlug}
-                      className="relative h-[4.15rem] w-[4.15rem] sm:h-[4.65rem] sm:w-[4.65rem] lg:h-[5rem] lg:w-[5rem]"
+                      className="relative h-[4.7rem] w-[4.7rem] sm:h-[5.05rem] sm:w-[5.05rem] lg:h-[5.35rem] lg:w-[5.35rem]"
                     />
                   )}
                 </span>
-                <h3 className="category-home-label line-clamp-2 min-h-[2.2rem] w-full max-w-full text-center text-[11px] font-bold leading-[1.2] tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.25rem] sm:text-xs">
+                <h3 className="category-home-label line-clamp-2 min-h-[2.1rem] w-full max-w-full text-center text-[11.5px] font-semibold leading-[1.25] tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.2rem] sm:text-xs">
                   {label}
                 </h3>
               </Link>
@@ -191,7 +191,7 @@ export function HomeCategorySection({
           })}
         </div>
         <div
-          className="pointer-events-none absolute inset-y-0 end-0 w-10 bg-gradient-to-l from-background via-background/90 to-transparent sm:hidden"
+          className="pointer-events-none absolute inset-y-0 end-0 w-7 bg-gradient-to-l from-background via-background/75 to-transparent sm:hidden"
           aria-hidden="true"
         />
       </div>
