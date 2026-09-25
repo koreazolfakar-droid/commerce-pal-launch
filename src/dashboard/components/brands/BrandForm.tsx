@@ -1,6 +1,7 @@
 import { Check, Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import type { ImageBackgroundRemovalOptions } from "@/dashboard/lib/imageProcessing";
@@ -109,6 +110,32 @@ export default function BrandForm({
   const imageEditor = useSmartImageEditor();
   const patch = (next: Partial<CatalogBrand>) => setDraft((current) => ({ ...current, ...next }));
 
+  const applyAiPatch = (values: Record<string, string>) => {
+    let safeWebsite: string | undefined;
+    if (values.website !== undefined) {
+      try {
+        const parsed = new URL(values.website.trim());
+        if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+          safeWebsite = parsed.toString();
+        }
+      } catch {
+        // Keep the current website when AI returns an invalid URL.
+      }
+      if (!safeWebsite) {
+        toast.info("AI website suggestion was not a valid HTTP(S) URL, so it was not applied.");
+      }
+    }
+
+    patch({
+      ...(values.name !== undefined ? { name: values.name } : {}),
+      ...(values.slug !== undefined ? { slug: normalizeBrandSlug(values.slug) } : {}),
+      ...(values.description !== undefined ? { description: values.description } : {}),
+      ...(safeWebsite !== undefined ? { website: safeWebsite } : {}),
+      ...(values.seoTitle !== undefined ? { seoTitle: values.seoTitle } : {}),
+      ...(values.seoDescription !== undefined ? { seoDescription: values.seoDescription } : {}),
+    });
+  };
+
   const submit = async () => {
     const name = draft.name.trim();
     if (!name) {
@@ -192,6 +219,65 @@ export default function BrandForm({
               </h2>
             </div>
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <AiAssistPanel
+              entity="brand"
+              query={draft.name}
+              currentData={{
+                name: draft.name,
+                slug: draft.slug,
+                description: draft.description,
+                website: draft.website || "",
+                seoTitle: draft.seoTitle || "",
+                seoDescription: draft.seoDescription || "",
+              }}
+              fields={[
+                {
+                  key: "name",
+                  label: "Brand name",
+                  description: "Official customer-facing brand name.",
+                  maxLength: 120,
+                },
+                {
+                  key: "slug",
+                  label: "Slug",
+                  description: "Short stable lowercase URL slug.",
+                  maxLength: 120,
+                },
+                {
+                  key: "description",
+                  label: "Description",
+                  description: "Original factual brand description relevant to the catalog.",
+                  maxLength: 3000,
+                },
+                {
+                  key: "website",
+                  label: "Official website",
+                  description: "Official brand or manufacturer website only.",
+                  review: true,
+                  maxLength: 500,
+                },
+                {
+                  key: "seoTitle",
+                  label: "SEO title",
+                  description: "Natural brand search title for Space Call.",
+                  maxLength: 70,
+                },
+                {
+                  key: "seoDescription",
+                  label: "Meta description",
+                  description: "Natural useful brand search description.",
+                  maxLength: 180,
+                },
+              ]}
+              context={{
+                market: "Lebanon",
+                store: "Space Call",
+                existingBrands: brands.map((item) => ({ name: item.name, slug: item.slug })),
+              }}
+              onApply={applyAiPatch}
+              compact
+            />
           <button
             type="button"
             onClick={onClose}
@@ -201,6 +287,7 @@ export default function BrandForm({
           >
             <X className="size-4" />
           </button>
+          </div>
         </div>
 
         <div className="space-y-6 px-5 py-5 sm:px-6">

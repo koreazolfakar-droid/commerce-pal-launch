@@ -2,6 +2,7 @@ import { Check, Loader2, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
+import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import {
@@ -131,6 +132,25 @@ export default function CategoryForm({
     setDraft((current) => ({ ...current, ...next }));
   };
 
+  const applyAiPatch = (values: Record<string, string>) => {
+    const suggestedIcon = values.icon?.trim();
+    const icon =
+      suggestedIcon && categoryIconOptions.includes(suggestedIcon) ? suggestedIcon : undefined;
+
+    patch({
+      ...(values.name !== undefined ? { name: values.name } : {}),
+      ...(values.slug !== undefined ? { slug: normalizeCategorySlug(values.slug) } : {}),
+      ...(values.description !== undefined ? { description: values.description } : {}),
+      ...(icon ? { icon } : {}),
+      ...(values.seoTitle !== undefined ? { seoTitle: values.seoTitle } : {}),
+      ...(values.seoDescription !== undefined ? { seoDescription: values.seoDescription } : {}),
+    });
+
+    if (suggestedIcon && !icon) {
+      toast.info("AI suggested an unsupported category icon, so the current icon was kept.");
+    }
+  };
+
   const selectImage = async (file?: File) => {
     if (!file) return;
     try {
@@ -252,6 +272,70 @@ export default function CategoryForm({
               </p>
             </div>
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <AiAssistPanel
+              entity="category"
+              query={draft.name}
+              currentData={{
+                name: draft.name,
+                slug: draft.slug,
+                description: draft.description,
+                icon: draft.icon || "",
+                seoTitle: draft.seoTitle || "",
+                seoDescription: draft.seoDescription || "",
+              }}
+              fields={[
+                {
+                  key: "name",
+                  label: "Category name",
+                  description: "Clear customer-facing category name.",
+                  maxLength: 120,
+                },
+                {
+                  key: "slug",
+                  label: "Slug",
+                  description: "Short stable lowercase URL slug.",
+                  maxLength: 120,
+                },
+                {
+                  key: "description",
+                  label: "Description",
+                  description:
+                    "Useful category copy describing the products customers should expect.",
+                  maxLength: 3000,
+                },
+                {
+                  key: "icon",
+                  label: "Icon",
+                  description: "Choose only from the allowed dashboard icon names.",
+                  review: true,
+                  maxLength: 80,
+                },
+                {
+                  key: "seoTitle",
+                  label: "SEO title",
+                  description: "Natural category search title for Space Call.",
+                  maxLength: 70,
+                },
+                {
+                  key: "seoDescription",
+                  label: "Meta description",
+                  description: "Natural useful category search description.",
+                  maxLength: 180,
+                },
+              ]}
+              context={{
+                market: "Lebanon",
+                store: "Space Call",
+                existingCategories: categories.map((item) => ({
+                  name: item.name,
+                  slug: item.slug,
+                })),
+                allowedIcons: categoryIconOptions,
+              }}
+              onApply={applyAiPatch}
+              compact
+            />
           <button
             type="button"
             onClick={onClose}
@@ -261,6 +345,7 @@ export default function CategoryForm({
           >
             <X className="size-4" />
           </button>
+          </div>
         </div>
 
         <div className="space-y-6 px-5 py-5 sm:px-6">
