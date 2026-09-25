@@ -49,14 +49,14 @@ export default function AiAssistPanel({
   const requestIdRef = useRef(0);
   const dialogTitleId = useId();
 
-  useEffect(() => {
-    if (!open) return;
+  const openPanel = () => {
     requestIdRef.current += 1;
     setResearchQuery(query);
     setLoadingAction(null);
     setResult(null);
     setSelected(new Set());
-  }, [open, query]);
+    setOpen(true);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -180,7 +180,7 @@ export default function AiAssistPanel({
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openPanel}
         className={
           compact
             ? "inline-flex h-9 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 transition hover:bg-indigo-100"
