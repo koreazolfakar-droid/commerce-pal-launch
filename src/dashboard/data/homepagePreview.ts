@@ -43,11 +43,12 @@ export function previewSource(section: HomepageSection) {
         ? manualIds(section).join(",")
         : (section.settings.sourceValue ?? ""),
   ).trim();
-  const count = Number(section.settings.count ?? 5);
+  const count =
+    source === "manual" ? manualIds(section).length || 1 : Number(section.settings.count ?? 5);
   return {
     source,
     value,
-    limit: Number.isFinite(count) ? Math.min(20, Math.max(1, Math.floor(count))) : 5,
+    limit: Number.isFinite(count) ? Math.min(10, Math.max(1, Math.floor(count))) : 5,
   };
 }
 
