@@ -18,6 +18,11 @@ test("homepage builder exposes simple automatic and manual merchandising modes",
   assert.match(builder, /the first product here is the first product customers see/);
   assert.match(builder, /listDashboardProducts/);
   assert.match(builder, /manualProductIds/);
+  assert.match(builder, /manual-product-id/);
+  assert.match(builder, /Drag to reorder on desktop/);
+  assert.match(builder, /ids\.length >= 10/);
+  assert.match(builder, /needsManualProducts/);
+  assert.match(builder, /\[needsManualProducts, productsReady\]/);
 });
 
 test("manual preview preserves dashboard product order", () => {
