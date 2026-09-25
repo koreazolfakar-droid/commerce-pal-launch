@@ -417,14 +417,14 @@ function ManualProductPicker({
   onChange: (ids: string[]) => void;
 }) {
   const [query, setQuery] = useState("");
-  const ids = [...new Set(selectedIds)].slice(0, 20);
+  const ids = [...new Set(selectedIds)].slice(0, 10);
   const byId = new Map(products.map((product) => [product.id, product]));
   const selectedProducts = ids
     .map((id) => byId.get(id))
     .filter((product): product is DashboardProduct => Boolean(product));
   const normalizedQuery = query.trim().toLowerCase();
   const available =
-    ids.length >= 20
+    ids.length >= 10
       ? []
       : products
           .filter((product) => product.status === "Active" && !ids.includes(product.id))
@@ -456,7 +456,7 @@ function ManualProductPicker({
           Manual order · the first product here is the first product customers see.
         </div>
         <div className="mt-0.5 text-[10px] text-indigo-500">
-          Drag to reorder on desktop, or use ↑ ↓ on mobile. You can add up to 20 active products.
+          Drag to reorder on desktop, or use ↑ ↓ on mobile. You can add up to 10 active products.
         </div>
       </div>
 
@@ -535,7 +535,7 @@ function ManualProductPicker({
           placeholder="Search product name, brand, category or SKU…"
           className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
         />
-        {ids.length >= 20 ? (
+        {ids.length >= 10 ? (
           <div className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-700">
             Product limit reached. Remove one product before adding another.
           </div>
@@ -853,7 +853,7 @@ function Editor({
                           source: "manual",
                           manualProductIds: ids,
                           sourceValue: ids.join(","),
-                          count: Math.max(Number(settings.count ?? 5), ids.length),
+                          count: ids.length,
                         },
                       })
                     }
@@ -867,11 +867,13 @@ function Editor({
               </div>
             ) : null}
 
-            <Field
-              label="Number of products"
-              value={String(settings.count ?? 5)}
-              onChange={(v) => setSetting("count", Number(v) || 1)}
-            />
+            {productSource !== "manual" ? (
+              <Field
+                label="Number of products"
+                value={String(settings.count ?? 5)}
+                onChange={(v) => setSetting("count", Number(v) || 1)}
+              />
+            ) : null}
             <label className="block">
               <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
                 Display layout
