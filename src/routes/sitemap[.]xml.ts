@@ -157,14 +157,26 @@ function toStoreCollection(row: SitemapCollectionRow): StoreCollection {
   };
 }
 
-function buildStaticEntries(hasUsedPhones: boolean): SitemapEntry[] {
+function buildStaticEntries({
+  hasProducts,
+  hasCategories,
+  hasBrands,
+  hasCollections,
+  hasUsedPhones,
+}: {
+  hasProducts: boolean;
+  hasCategories: boolean;
+  hasBrands: boolean;
+  hasCollections: boolean;
+  hasUsedPhones: boolean;
+}): SitemapEntry[] {
   return [
     { path: "/" },
     { path: "/ar" },
-    { path: "/shop" },
-    { path: "/categories" },
-    { path: "/brands" },
-    { path: "/collections" },
+    ...(hasProducts ? [{ path: "/shop" }] : []),
+    ...(hasCategories ? [{ path: "/categories" }] : []),
+    ...(hasBrands ? [{ path: "/brands" }] : []),
+    ...(hasCollections ? [{ path: "/collections" }] : []),
     ...(hasUsedPhones ? [{ path: "/used-phones" }] : []),
     ...[
       "help",
@@ -252,7 +264,13 @@ export const Route = createFileRoute("/sitemap.xml")({
         ];
 
         const entries: SitemapEntry[] = [
-          ...buildStaticEntries(products.some(isUsedPhone)),
+          ...buildStaticEntries({
+            hasProducts: productRows.length > 0,
+            hasCategories: managedCategories.length > 0,
+            hasBrands: catalog.brands.some((brand) => brand.count > 0),
+            hasCollections: collections.length > 0,
+            hasUsedPhones: products.some(isUsedPhone),
+          }),
           ...dynamicEntries,
         ];
         const seen = new Set<string>();
