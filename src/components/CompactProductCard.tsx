@@ -117,16 +117,13 @@ export const CompactProductCard = memo(function CompactProductCard({
         "hover:border-primary/35 hover:bg-background hover:text-primary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         market
-          ? "market-product-action market-wishlist-button end-2 top-2 h-[42px] w-[42px]"
+          ? "market-product-action market-wishlist-button end-2 top-2 h-[38px] w-[38px]"
           : "end-2.5 top-2.5 h-9 w-9",
       )}
     >
       <Heart
         aria-hidden
-        className={cn(
-          market ? "h-[18px] w-[18px]" : "h-4 w-4",
-          wishlisted && "fill-primary text-primary",
-        )}
+        className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")}
         strokeWidth={1.9}
       />
     </button>
@@ -370,7 +367,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           </div>
 
           <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
-            <h3 className="product-card-title line-clamp-2 min-h-[2.35rem] break-words text-[0.8rem] font-semibold leading-[1.45] text-foreground transition-colors group-hover:text-primary sm:text-sm">
+            <h3 className="product-card-title line-clamp-2 min-h-[2.15rem] break-words text-[0.8rem] font-semibold leading-[1.42] text-foreground transition-colors group-hover:text-primary sm:text-sm">
               {node.title}
             </h3>
           </Link>
@@ -413,7 +410,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
             {cartQuantity > 0 ? (
               <div
-                className="market-product-quantity inline-flex h-9 shrink-0 items-center overflow-hidden rounded-full border border-primary/15 bg-primary/10 text-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                className="market-product-quantity inline-flex h-[38px] shrink-0 items-center overflow-hidden rounded-full border border-border/70 bg-background text-primary shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
                 aria-label={`${node.title} quantity ${cartQuantity}`}
               >
                 <button
@@ -421,9 +418,9 @@ export const CompactProductCard = memo(function CompactProductCard({
                   onClick={(event) => void handleDecrement(cartQuantity, event.currentTarget)}
                   disabled={isAdding}
                   aria-label={`Decrease ${node.title} quantity`}
-                  className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40"
+                  className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/10 disabled:opacity-40"
                 >
-                  <Minus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.15} />
+                  <Minus aria-hidden className="h-3.5 w-3.5" strokeWidth={2} />
                 </button>
                 <span className="min-w-5 px-0.5 text-center text-[11px] font-bold tabular-nums">
                   {cartQuantity}
@@ -433,12 +430,12 @@ export const CompactProductCard = memo(function CompactProductCard({
                   onClick={() => handleQuantityChange(cartQuantity + 1)}
                   disabled={isAdding || !inStock}
                   aria-label={`Increase ${node.title} quantity`}
-                  className="press grid h-full w-7 place-items-center transition-colors hover:bg-primary/15 disabled:opacity-40"
+                  className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/10 disabled:opacity-40"
                 >
                   {isAdding ? (
                     <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Plus aria-hidden className="h-3.5 w-3.5" strokeWidth={2.15} />
+                    <Plus aria-hidden className="h-3.5 w-3.5" strokeWidth={2} />
                   )}
                 </button>
               </div>
@@ -449,12 +446,12 @@ export const CompactProductCard = memo(function CompactProductCard({
                 onClick={handleAdd}
                 disabled={isAdding || !variant || !inStock}
                 aria-label={`Add ${node.title} to bag`}
-                className="market-product-action market-add-button product-card-primary-action product-action-button press relative grid h-11 w-11 shrink-0 place-items-center rounded-full border border-primary/15 bg-primary/10 text-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-[background-color,color,transform,box-shadow] hover:bg-primary hover:text-primary-foreground hover:shadow-md active:scale-95 disabled:opacity-40"
+                className="market-product-action market-add-button product-card-primary-action product-action-button press relative grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full border border-border/70 bg-background text-primary shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-[background-color,color,border-color,transform,box-shadow] hover:border-primary/35 hover:bg-primary/10 hover:shadow-sm active:scale-95 disabled:opacity-40"
               >
                 {isAdding ? (
                   <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Plus aria-hidden className="h-4 w-4" strokeWidth={2.15} />
+                  <Plus aria-hidden className="h-4 w-4" strokeWidth={2} />
                 )}
               </button>
             )}
