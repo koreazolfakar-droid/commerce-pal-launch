@@ -163,15 +163,13 @@ export default function ProductFormPage({ id }: { id?: string }) {
         ...(values.description !== undefined ? { description: values.description } : {}),
         ...(values.seoTitle !== undefined ? { seoTitle: values.seoTitle } : {}),
         ...(values.seoDescription !== undefined ? { seoDescription: values.seoDescription } : {}),
-        ...(values.barcode !== undefined ? { barcode: values.barcode } : {}),
+        ...(values.barcode !== undefined && variantCount <= 1 ? { barcode: values.barcode } : {}),
         ...(brandMatch ? { brandId: brandMatch.id } : {}),
         ...(categoryMatch ? { categoryId: categoryMatch.id } : {}),
       }));
 
       if (brandName && !brandMatch) {
-        toast.info(
-          `AI suggested brand "${brandName}". Create or select that brand before saving.`,
-        );
+        toast.info(`AI suggested brand "${brandName}". Create or select that brand before saving.`);
       }
       if (categoryName && !categoryMatch) {
         toast.info(
@@ -179,7 +177,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         );
       }
     },
-    [brands, categories],
+    [brands, categories, variantCount],
   );
 
   const variantLocked = variantCount > 1;
