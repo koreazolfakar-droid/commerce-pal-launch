@@ -105,6 +105,17 @@ function useDeferredHomepageWork() {
   return ready;
 }
 
+function withoutRepeatedProducts<T extends { node: { id: string } }>(
+  products: T[],
+  seenProductIds: Set<string>,
+) {
+  return products.filter((product) => {
+    if (seenProductIds.has(product.node.id)) return false;
+    seenProductIds.add(product.node.id);
+    return true;
+  });
+}
+
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
     // The CMS hero is the storefront's only visual hero source. Keep legacy
@@ -524,9 +535,19 @@ function Index() {
   const navigationBrands = navigationCatalog?.brands ?? catalog?.brands ?? [];
   const navigationReady = Boolean(navigationCatalog || catalog);
   const brands = applyCmsBrands(buildStoreBrands(navigationBrands, collections), cms.brands);
-  const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
-  const best = (bestSellers ?? []).filter(isHomepageMerchandise);
-  const latest = newItems.filter(isHomepageMerchandise);
+  const seenHomepageProductIds = new Set<string>();
+  const best = withoutRepeatedProducts(
+    (bestSellers ?? []).filter(isHomepageMerchandise),
+    seenHomepageProductIds,
+  );
+  const deals = withoutRepeatedProducts(
+    merchandiseProducts.filter((product) => productDiscountPercent(product) !== null),
+    seenHomepageProductIds,
+  );
+  const latest = withoutRepeatedProducts(
+    newItems.filter(isHomepageMerchandise),
+    seenHomepageProductIds,
+  );
 
 
   const homeSections = cms.sections.filter((section) => section.page_slug === "home");
