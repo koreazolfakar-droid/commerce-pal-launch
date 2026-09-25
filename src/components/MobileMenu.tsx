@@ -45,6 +45,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { navigationCatalogQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
@@ -405,6 +406,16 @@ export function MobileMenu({
                   className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
                 />
               </Link>
+              <Link to="/used-phones" onClick={close} className={rowClass}>
+                <Smartphone aria-hidden="true" className={rowIconClass} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
+                  {t("usedPhones")}
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground/80 rtl:rotate-180"
+                />
+              </Link>
               <Link
                 to="/shop"
                 search={{ sort: "newest" } as never}
@@ -468,7 +479,7 @@ export function MobileMenu({
                   <Link
                     key={item.slug}
                     to="/category/$slug"
-                    params={{ slug: item.slug }}
+                    params={{ slug: canonicalCategorySlug(item.slug) }}
                     className={rowClass}
                     onClick={close}
                   >

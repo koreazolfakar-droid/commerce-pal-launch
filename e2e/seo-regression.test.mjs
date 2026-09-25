@@ -6,13 +6,25 @@ async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("sitemap is generated from the native storefront facade", async () => {
-  const sitemap = await source("src/routes/sitemap[.]xml.ts");
-  assert.match(sitemap, /fetchCatalogProducts/);
-  assert.match(sitemap, /fetchCollections/);
-  assert.match(sitemap, /@\/lib\/storefrontData/);
+test("sitemap uses lightweight paginated Supabase data with truthful lastmod", async () => {
+  const [sitemap, nativeStore] = await Promise.all([
+    source("src/routes/sitemap[.]xml.ts"),
+    source("src/lib/nativeStore.ts"),
+  ]);
+  assert.match(sitemap, /publicSupabase/);
+  assert.match(sitemap, /QUERY_PAGE_SIZE\s*=\s*1000/);
+  assert.match(sitemap, /\.range\(offset, offset \+ QUERY_PAGE_SIZE - 1\)/);
+  assert.match(sitemap, /updated_at/);
+  assert.match(sitemap, /MAX_SITEMAP_URLS\s*=\s*50_000/);
+  assert.match(sitemap, /nonEmptyCollectionIds/);
+  assert.match(sitemap, /managedCategories/);
+  assert.match(sitemap, /activeCategoryIds/);
+  assert.match(sitemap, /category_id/);
+  assert.doesNotMatch(sitemap, /fetchCatalogProducts\(500\)|@\/lib\/storefrontData/);
   assert.doesNotMatch(sitemap, /storefrontApiRequest|SHOPIFY_|myshopify/);
   assert.doesNotMatch(sitemap, /<changefreq>|<priority>/);
+  assert.match(nativeStore, /"updated_at"/);
+  assert.match(nativeStore, /updatedAt:\s*row\.updated_at/);
 });
 
 test("global crawler metadata stays indexable without fake hreflang alternates", async () => {
@@ -32,11 +44,63 @@ test("product structured data exposes Google product and offer fields", async ()
   assert.match(seo, /priceCurrency:/);
   assert.match(seo, /availability:/);
   assert.match(seo, /seller:/);
+  assert.match(seo, /productPrimaryVariant/);
+  assert.match(seo, /additionalProperty/);
+  assert.doesNotMatch(seo, /mpn:\s*sku/);
   assert.match(seo, /gtin8/);
   assert.match(seo, /gtin12/);
   assert.match(seo, /gtin13/);
   assert.match(seo, /gtin14/);
   assert.match(productRoute, /jsonLd\(productJsonLd\(product\)\)/);
+});
+
+test("merchant product markup stays truthful for condition, returns, and sale pricing", async () => {
+  const seo = await source("src/lib/seo.ts");
+  const infoPages = await source("src/lib/infoPages.ts");
+  assert.match(seo, /"@type": "OnlineStore"/);
+  assert.match(seo, /merchantReturnLink: absoluteUrl\("\/returns"\)/);
+  assert.match(seo, /RefurbishedCondition/);
+  assert.match(seo, /UsedCondition/);
+  assert.match(seo, /NewCondition/);
+  assert.match(seo, /StrikethroughPrice/);
+  assert.match(seo, /UnitPriceSpecification/);
+  assert.match(infoPages, /merchantReturnPolicyJsonLd/);
+});
+
+test("faceted listing URLs are kept out of crawl while search remains crawlable for noindex", async () => {
+  const [robots, search] = await Promise.all([
+    source("public/robots.txt"),
+    source("src/routes/search.tsx"),
+  ]);
+  assert.match(robots, /Disallow: \/shop\?\*/);
+  assert.match(robots, /Disallow: \/category\/\*\?\*/);
+  assert.match(robots, /Disallow: \/brand\/\*\?\*/);
+  assert.match(robots, /Disallow: \/collections\/\*\?\*/);
+  assert.doesNotMatch(robots, /Disallow: \/search/);
+  assert.match(search, /noindex, follow/);
+});
+
+test("empty commerce landing pages are not indexable", async () => {
+  const pages = await Promise.all([
+    source("src/routes/shop.tsx"),
+    source("src/routes/categories.tsx"),
+    source("src/routes/brands.tsx"),
+    source("src/routes/collections.index.tsx"),
+    source("src/routes/category.$slug.tsx"),
+    source("src/routes/brand.$slug.tsx"),
+    source("src/routes/collections.$handle.tsx"),
+    source("src/routes/used-phones.tsx"),
+  ]);
+  for (const page of pages) {
+    assert.match(page, /noindex, follow/);
+  }
+});
+
+test("FAQ remains a normal content page without deprecated Google FAQ rich-result markup", async () => {
+  const infoPages = await source("src/lib/infoPages.ts");
+  assert.doesNotMatch(infoPages, /FAQPage/);
+  assert.doesNotMatch(infoPages, /acceptedAnswer/);
+  assert.match(infoPages, /faq:\s*\{[\s\S]*?schemaType:\s*"WebPage"/);
 });
 
 test("header account and tracking links stay first-party", async () => {
@@ -63,4 +127,205 @@ test("commercial landing pages carry Lebanon search intent", async () => {
     assert.match(page, /Lebanon/);
     assert.match(page, /canonicalLink/);
   }
+});
+
+test("production canonical signals resolve to the www origin", async () => {
+  const [config, robots] = await Promise.all([
+    source("src/lib/storeConfig.ts"),
+    source("public/robots.txt"),
+  ]);
+  assert.match(config, /https:\/\/www\.spacecallapp\.store/);
+  assert.match(config, /normalized === "https:\/\/spacecallapp\.store"/);
+  assert.match(robots, /Sitemap: https:\/\/www\.spacecallapp\.store\/sitemap\.xml/);
+});
+
+test("CMS canonical overrides stay on the Space Call origin", async () => {
+  const seo = await source("src/lib/seo.ts");
+  const home = await source("src/routes/index.tsx");
+  const brands = await source("src/routes/brands.tsx");
+  assert.match(seo, /resolved\.origin !== site\.origin/);
+  assert.match(home, /const canonical = canonicalUrl\("\/", cmsSeo\?\.canonical_url\)/);
+  assert.match(home, /canonicalLink\("\/", canonical\)/);
+  assert.match(home, /url:\s*canonical/);
+  assert.match(brands, /canonicalUrl\("\/brands", seo\?\.canonical_url\)/);
+  assert.match(brands, /url:\s*canonical/);
+  assert.match(brands, /applyCmsBrands\(buildStoreBrands\(loaderData\.catalog\.brands/);
+});
+
+test("website schema keeps site-name support without retired sitelinks search markup", async () => {
+  const seo = await source("src/lib/seo.ts");
+  assert.match(seo, /"@type": "WebSite"/);
+  assert.doesNotMatch(seo, /SearchAction/);
+  assert.doesNotMatch(seo, /search_term_string/);
+});
+
+test("Arabic landing emits Arabic social locale and SSR document language", async () => {
+  const [root, ar, i18n] = await Promise.all([
+    source("src/routes/__root.tsx"),
+    source("src/routes/ar.tsx"),
+    source("src/lib/i18n.tsx"),
+  ]);
+  assert.match(ar, /locale:\s*"ar_LB"/);
+  assert.match(ar, /alternateLocale:\s*"en_LB"/);
+  assert.match(root, /useLocation/);
+  assert.match(root, /pathname === "\/ar"/);
+  assert.match(root, /lang=\{isArabicLanding \? "ar" : "en"\}/);
+  assert.match(root, /dir=\{isArabicLanding \? "rtl" : "ltr"\}/);
+  assert.match(i18n, /forceArabic = location\.pathname === "\/ar"/);
+});
+
+test("product breadcrumbs use the resolved commerce category when available", async () => {
+  const productRoute = await source("src/routes/product.$handle.tsx");
+  assert.match(productRoute, /const category = primaryCategory\(product\)/);
+  assert.match(productRoute, /category\.label/);
+  assert.match(productRoute, /canonicalCategorySlug\(category\.slug\)/);
+});
+
+test("sitemap fails closed instead of publishing a partial URL set", async () => {
+  const sitemap = await source("src/routes/sitemap[.]xml.ts");
+  assert.match(sitemap, /Sitemap data is temporarily unavailable/);
+  assert.match(sitemap, /status:\s*503/);
+  assert.match(sitemap, /"Retry-After":\s*"300"/);
+  assert.match(sitemap, /productResult\.status === "rejected"/);
+  assert.match(sitemap, /supportResult\.status === "rejected"/);
+});
+
+test("category aliases converge on the managed Supabase canonical URLs", async () => {
+  const [canonical, categoryRoute, sitemap, footer, header, product, showcase] =
+    await Promise.all([
+      source("src/lib/categoryCanonical.ts"),
+      source("src/routes/category.$slug.tsx"),
+      source("src/routes/sitemap[.]xml.ts"),
+      source("src/components/SiteFooter.tsx"),
+      source("src/components/SiteHeader.tsx"),
+      source("src/routes/product.$handle.tsx"),
+      source("src/components/BrandShowcaseSections.tsx"),
+    ]);
+
+  for (const [legacy, target] of [
+    ["smartphones", "smartphone"],
+    ["tablets", "tablet"],
+    ["smartwatches", "smart-watch"],
+    ["headphones", "wireless-earbuds"],
+    ["chargers", "charger"],
+    ["cables", "cable"],
+    ["power-banks", "power-bank"],
+  ]) {
+    assert.match(canonical, new RegExp(`["']${legacy}["']\\s*:\\s*["']${target}["']`));
+  }
+
+  assert.match(categoryRoute, /canonicalCategorySlug\(params\.slug\)/);
+  assert.match(categoryRoute, /canonicalSlug !== params\.slug/);
+  assert.doesNotMatch(sitemap, /catalog\.categories[\s\S]*?\/category\//);
+  assert.match(footer, /canonicalCategorySlug\(entry\.slug\)/);
+  assert.match(header, /canonicalCategorySlug/);
+  assert.match(product, /canonicalCategorySlug\(category\.slug\)/);
+  assert.match(showcase, /canonicalCategorySlug\(category\.slug\)/);
+});
+
+test("global navigation categories come from managed Supabase categories", async () => {
+  const nativeStore = await source("src/lib/nativeStore.ts");
+  assert.match(nativeStore, /"id,title,handle,brand_id,category_id,product_type,tags"/);
+  assert.match(nativeStore, /from\("store_categories"\)/);
+  assert.match(nativeStore, /STOREFRONT_CATEGORY_SELECT/);
+  assert.match(nativeStore, /managedById/);
+  assert.match(nativeStore, /counts\.get\(category\.slug\)/);
+  assert.match(nativeStore, /canonicalCategorySlug\(inferredSlug\)/);
+  assert.match(nativeStore, /filter\(\(category\) => category\.count > 0\)/);
+});
+
+test("used phones have one canonical indexable landing", async () => {
+  const [categoryRoute, sitemap, nativeStore, productRoute, categories, mobileMenu] =
+    await Promise.all([
+      source("src/routes/category.$slug.tsx"),
+      source("src/routes/sitemap[.]xml.ts"),
+      source("src/lib/nativeStore.ts"),
+      source("src/routes/product.$handle.tsx"),
+      source("src/routes/categories.tsx"),
+      source("src/components/MobileMenu.tsx"),
+    ]);
+
+  assert.match(categoryRoute, /canonicalSlug === "used-phone"/);
+  assert.match(categoryRoute, /to: "\/used-phones"/);
+  assert.match(categoryRoute, /statusCode:\s*308/);
+  assert.match(sitemap, /category\.slug !== "used-phone"/);
+  assert.match(nativeStore, /category\.slug !== "used-phone"/);
+  assert.match(productRoute, /isUsedPhone\(product\)/);
+  assert.match(productRoute, /path: "\/used-phones"/);
+  assert.match(categories, /category\.slug === "used-phone"/);
+  assert.match(categories, /to="\/used-phones"/);
+  assert.match(mobileMenu, /to="\/used-phones"/);
+});
+
+test("retired compare page permanently redirects instead of being indexed", async () => {
+  const compare = await source("src/routes/compare.tsx");
+  assert.match(compare, /to: "\/"/);
+  assert.match(compare, /statusCode:\s*308/);
+  assert.doesNotMatch(compare, /component:/);
+});
+
+test("zero-price products are kept out of merchant SEO surfaces", async () => {
+  const [seo, productRoute, sitemap] = await Promise.all([
+    source("src/lib/seo.ts"),
+    source("src/routes/product.$handle.tsx"),
+    source("src/routes/sitemap[.]xml.ts"),
+  ]);
+  assert.match(seo, /hasValidMerchantPrice/);
+  assert.match(seo, /activePrice > 0/);
+  assert.match(seo, /offers: hasValidMerchantPrice/);
+  assert.match(productRoute, /const hasValidPrice = productPrice\(product\) > 0/);
+  assert.match(productRoute, /: "noindex, follow"/);
+  assert.match(sitemap, /Number\(product\.base_price\) > 0/);
+});
+
+test("dashboard product SEO fields drive storefront metadata", async () => {
+  const [types, nativeStore, seo, productRoute] = await Promise.all([
+    source("src/lib/storeTypes.ts"),
+    source("src/lib/nativeStore.ts"),
+    source("src/lib/seo.ts"),
+    source("src/routes/product.$handle.tsx"),
+  ]);
+  assert.match(types, /seoTitle\?: string/);
+  assert.match(types, /seoDescription\?: string/);
+  assert.match(nativeStore, /seo_title/);
+  assert.match(nativeStore, /seo_description/);
+  assert.match(nativeStore, /seoTitle:\s*row\.seo_title/);
+  assert.match(nativeStore, /seoDescription:\s*row\.seo_description/);
+  assert.match(seo, /node\.seoDescription\?\.trim\(\)/);
+  assert.match(productRoute, /product\.node\.seoTitle\?\.trim\(\)/);
+});
+
+test("dashboard category brand and collection SEO fields reach storefront heads", async () => {
+  const [category, brand, collection, nativeStore, storeTypes] = await Promise.all([
+    source("src/routes/category.$slug.tsx"),
+    source("src/routes/brand.$slug.tsx"),
+    source("src/routes/collections.$handle.tsx"),
+    source("src/lib/nativeStore.ts"),
+    source("src/lib/storeTypes.ts"),
+  ]);
+
+  assert.match(category, /seo_title/);
+  assert.match(category, /seo_description/);
+  assert.match(category, /loaderData\.seoTitle\?\.trim\(\)/);
+  assert.match(category, /loaderData\.seoDescription \|\| loaderData\.description/);
+
+  assert.match(brand, /from\("cms_brands"\)/);
+  assert.match(brand, /seo_title,seo_description,description,cover_image_url/);
+  assert.match(brand, /loaderData\.seo\?\.seo_title\?\.trim\(\)/);
+  assert.match(brand, /cleanMetaDescription/);
+
+  assert.match(storeTypes, /seoTitle\?: string/);
+  assert.match(storeTypes, /seoDescription\?: string/);
+  assert.match(nativeStore, /image_url,seo_title,seo_description/);
+  assert.match(collection, /collection\.seoTitle\?\.trim\(\)/);
+  assert.match(collection, /collection\.seoDescription\?\.trim\(\)/);
+});
+
+test("sitemap only lists indexable commerce index pages", async () => {
+  const sitemap = await source("src/routes/sitemap[.]xml.ts");
+  assert.match(sitemap, /hasProducts: productRows\.length > 0/);
+  assert.match(sitemap, /hasCategories: managedCategories\.length > 0/);
+  assert.match(sitemap, /hasBrands: catalog\.brands\.some/);
+  assert.match(sitemap, /hasCollections: collections\.length > 0/);
+  assert.match(sitemap, /hasUsedPhones: products\.some\(isUsedPhone\)/);
 });

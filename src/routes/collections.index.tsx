@@ -5,50 +5,54 @@ import { BottomNav } from "@/components/BottomNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { collectionsQueryOptions } from "@/lib/queries";
-import { absoluteUrl, canonicalLink, jsonLd } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, canonicalLink, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/collections/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(collectionsQueryOptions()),
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `All Collections — ${STORE_NAME}` },
-      {
-        name: "description",
-        content: `Browse every ${STORE_NAME} collection: smartphones, tablets, audio, chargers, cases and more.`,
-      },
-      { property: "og:title", content: `All Collections — ${STORE_NAME}` },
-      {
-        property: "og:description",
-        content: `Browse every ${STORE_NAME} collection across phones, tablets, audio and accessories.`,
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/collections") },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: `All Collections — ${STORE_NAME}` },
-      {
-        name: "twitter:description",
-        content: `Browse every ${STORE_NAME} collection across phones, tablets, audio and accessories.`,
-      },
-    ],
-    links: [canonicalLink("/collections")],
-    scripts: loaderData
-      ? [
-          jsonLd({
-            "@context": "https://schema.org",
-            "@type": "ItemList",
-            name: `${STORE_NAME} collections`,
-            numberOfItems: loaderData.length,
-            itemListElement: loaderData.map((collection, index) => ({
-              "@type": "ListItem",
-              position: index + 1,
-              name: collection.title,
-              url: absoluteUrl(`/collections/${collection.handle}`),
-            })),
-          }),
-        ]
-      : [],
-  }),
+  head: ({ loaderData }) => {
+    const title = `Electronics Collections in Lebanon | ${STORE_NAME}`;
+    const description = `Browse ${STORE_NAME} electronics collections in Lebanon across smartphones, tablets, audio, chargers, cases and accessories.`;
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        {
+          name: "robots",
+          content: loaderData?.length
+            ? "index, follow, max-image-preview:large, max-snippet:-1"
+            : "noindex, follow",
+        },
+        ...socialMeta({ title, description, path: "/collections" }),
+      ],
+      links: [canonicalLink("/collections")],
+      scripts: [
+        jsonLd(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Collections", path: "/collections" },
+          ]),
+        ),
+        ...(loaderData
+          ? [
+              jsonLd({
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                name: `${STORE_NAME} collections`,
+                numberOfItems: loaderData.length,
+                itemListElement: loaderData.map((collection, index) => ({
+                  "@type": "ListItem",
+                  position: index + 1,
+                  name: collection.title,
+                  url: absoluteUrl(`/collections/${encodeURIComponent(collection.handle)}`),
+                })),
+              }),
+            ]
+          : []),
+      ],
+    };
+  },
   component: CollectionsIndex,
 });
 

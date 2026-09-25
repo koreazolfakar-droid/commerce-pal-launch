@@ -7,7 +7,17 @@ function value(name: string, fallback: string) {
 }
 
 function normalizedOrigin(input: string) {
-  return input.replace(/\/+$/, "");
+  const normalized = input.replace(/\/+$/, "");
+  // Keep every SEO signal on the same production origin. The bare host redirects
+  // to the canonical www origin, while preview/local origins remain untouched.
+  if (
+    normalized === "https://spacecallapp.store" ||
+    normalized === "http://spacecallapp.store" ||
+    normalized === "http://www.spacecallapp.store"
+  ) {
+    return "https://www.spacecallapp.store";
+  }
+  return normalized;
 }
 
 const generatedVersion = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
@@ -22,7 +32,7 @@ export const STORE_CONFIG = Object.freeze({
   socialYoutube: value("VITE_SOCIAL_YOUTUBE", ""),
   name: defaultStoreName,
   version: generatedVersion,
-  siteUrl: normalizedOrigin(value("VITE_SITE_URL", "https://spacecallapp.store")),
+  siteUrl: normalizedOrigin(value("VITE_SITE_URL", "https://www.spacecallapp.store")),
   whatsappNumber: defaultWhatsappNumber.replace(/\D/g, ""),
   invoiceLegalName: value("VITE_INVOICE_LEGAL_NAME", defaultStoreName),
   invoiceAddress: value("VITE_INVOICE_ADDRESS", "Lebanon"),

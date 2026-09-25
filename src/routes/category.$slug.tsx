@@ -4,11 +4,12 @@ import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
+import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { categoryDefinition, displayCollections, productsInCategory } from "@/lib/taxonomy";
-import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
+import { breadcrumbJsonLd, canonicalLink, cleanMetaDescription, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import type { CatalogIndex } from "@/lib/taxonomy";
 
@@ -18,6 +19,8 @@ type ManagedStoreCategory = {
   slug: string;
   description: string | null;
   image_url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
 };
 
 function normalizeCategoryName(value: string | undefined) {
@@ -34,7 +37,7 @@ function productsInManagedCategory(catalog: CatalogIndex, categoryName: string) 
 async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory | null> {
   const { data, error } = await publicSupabase
     .from("store_categories")
-    .select("name,name_ar,slug,description,image_url")
+    .select("name,name_ar,slug,description,image_url,seo_title,seo_description")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -43,25 +46,20 @@ async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory 
   return (data as ManagedStoreCategory | null) ?? null;
 }
 
-const LEGACY_CATEGORY_REDIRECTS: Record<string, string> = {
-  "mobile-phones": "smartphone",
-  "foldable-smartphone": "smartphone",
-  "smartphone-bundle": "smartphone",
-  "gaming-tablet": "tablet",
-  "wall-charger": "charger",
-  "charging-cable": "cable",
-  "هاتف-مستعمل": "used-phone",
-};
 
 export const Route = createFileRoute("/category/$slug")({
   validateSearch: parseProductSearch,
   beforeLoad: ({ params }) => {
-    const canonicalSlug = LEGACY_CATEGORY_REDIRECTS[params.slug];
-    if (canonicalSlug) {
+    const canonicalSlug = canonicalCategorySlug(params.slug);
+    if (canonicalSlug === "used-phone") {
+      throw redirect({ to: "/used-phones", replace: true, statusCode: 308 });
+    }
+    if (canonicalSlug !== params.slug) {
       throw redirect({
         to: "/category/$slug",
         params: { slug: canonicalSlug },
         replace: true,
+        statusCode: 308,
       });
     }
   },
@@ -81,6 +79,8 @@ export const Route = createFileRoute("/category/$slug")({
         managedCategoryName: managedCategory.name,
         description: managedCategory.description,
         imageUrl: managedCategory.image_url,
+        seoTitle: managedCategory.seo_title,
+        seoDescription: managedCategory.seo_description,
         products,
       };
     }
@@ -100,6 +100,8 @@ export const Route = createFileRoute("/category/$slug")({
       managedCategoryName: null,
       description: null,
       imageUrl: null,
+      seoTitle: null,
+      seoDescription: null,
       products: productsInCategory(catalog, params.slug),
     };
   },
@@ -113,15 +115,31 @@ export const Route = createFileRoute("/category/$slug")({
       };
     }
     const label = loaderData.label ?? categoryDefinition(params.slug)?.label ?? "Category";
-    const title = `${label} in Lebanon | ${STORE_NAME}`;
-    const description = `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
+    const title =
+      loaderData.seoTitle?.trim() || `${label} in Lebanon | ${STORE_NAME}`;
+    const fallbackDescription = `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
+    const description = cleanMetaDescription(
+      loaderData.seoDescription || loaderData.description,
+      fallbackDescription,
+    );
     const path = `/category/${params.slug}`;
+    const hasProducts = loaderData.products.length > 0;
     return {
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "robots", content: "index, follow, max-image-preview:large" },
-        ...socialMeta({ title, description, path }),
+        {
+          name: "robots",
+          content: hasProducts
+            ? "index, follow, max-image-preview:large, max-snippet:-1"
+            : "noindex, follow",
+        },
+        ...socialMeta({
+          title,
+          description,
+          path,
+          ...(loaderData.imageUrl ? { image: loaderData.imageUrl } : {}),
+        }),
       ],
       links: [canonicalLink(path)],
       scripts: [

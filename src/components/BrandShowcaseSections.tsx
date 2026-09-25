@@ -1,3 +1,4 @@
+import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import {
   collectionQueryOptions,
@@ -224,7 +225,7 @@ export function BrandShowcase({
           slug={category.slug}
           title={merchandising.title || categoryLabel(category, language)}
           description={merchandising.description}
-          href={`/category/${category.slug}`}
+          href={`/category/${canonicalCategorySlug(category.slug)}`}
           products={productsInCategory(catalog, category.slug)}
         />
       ))}

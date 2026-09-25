@@ -2,13 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 // Run after `bun run build`. The production SSR entry reads the public,
- // read-only Space Call Supabase storefront.
+// read-only Space Call Supabase storefront.
 const { default: handler } = await import("../.output/server/index.mjs");
 const pending = [];
 const context = { waitUntil: (promise) => pending.push(promise), passThroughOnException() {} };
 
+const CANONICAL_ORIGIN = "https://www.spacecallapp.store";
+
 async function request(path) {
-  let url = new URL(path, "https://spacecallapp.store");
+  let url = new URL(path, CANONICAL_ORIGIN);
   let response;
   for (let hop = 0; hop < 4; hop++) {
     response = await handler.fetch(new Request(url), {}, context);
@@ -16,11 +18,46 @@ async function request(path) {
     const location = response.headers.get("location");
     assert.ok(location, "Redirect must include a destination");
     url = new URL(location, url);
-    assert.equal(url.origin, "https://spacecallapp.store", "SSR tests only follow internal redirects");
+    assert.equal(url.origin, CANONICAL_ORIGIN, "SSR tests only follow canonical internal redirects");
   }
   const body = await response.text();
   assert.equal(response.status, 200, `${path} must render successfully`);
   return { response, body };
+}
+
+const bareUrl = "https://spacecallapp.store/product/seo-probe?source=canonical-test";
+for (const method of ["GET", "HEAD"]) {
+  const response = await handler.fetch(new Request(bareUrl, { method }), {}, context);
+  assert.equal(response.status, 308, `${method} bare-host request must permanently redirect`);
+  assert.equal(
+    response.headers.get("location"),
+    "https://www.spacecallapp.store/product/seo-probe?source=canonical-test",
+    `${method} redirect must preserve path and query`,
+  );
+}
+const mutationResponse = await handler.fetch(
+  new Request("https://spacecallapp.store/seo-probe", { method: "POST" }),
+  {},
+  context,
+);
+assert.notEqual(mutationResponse.status, 308, "Mutation requests must not be host-redirected");
+
+for (const [sourcePath, expectedLocation] of [
+  ["/category/smartphones", "/category/smartphone"],
+  ["/category/used-phone", "/used-phones"],
+  ["/compare", "/"],
+]) {
+  const response = await handler.fetch(
+    new Request(new URL(sourcePath, CANONICAL_ORIGIN)),
+    {},
+    context,
+  );
+  assert.equal(response.status, 308, `${sourcePath} must permanently redirect`);
+  assert.equal(
+    response.headers.get("location"),
+    new URL(expectedLocation, CANONICAL_ORIGIN).toString(),
+    `${sourcePath} must redirect to its canonical replacement`,
+  );
 }
 
 const home = await request("/");
@@ -59,7 +96,7 @@ const shop = await request("/shop");
 assert.equal((shop.body.match(/<h1\b/g) ?? []).length, 1);
 
 const sitemap = await request("/sitemap.xml");
-assert.match(sitemap.body, /https:\/\/spacecallapp\.store\//);
+assert.match(sitemap.body, /https:\/\/www\.spacecallapp\.store\//);
 assert.equal(sitemap.response.headers.get("x-frame-options"), "SAMEORIGIN");
 
 const robots = await readFile(new URL("../public/robots.txt", import.meta.url), "utf8");
