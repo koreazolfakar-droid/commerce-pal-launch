@@ -69,18 +69,23 @@ test("CSP uses a per-request nonce and removes script unsafe-inline", () => {
   assert.doesNotMatch(errorPage, /onclick=|javascript:/i);
 });
 
-test("production Supabase sessions are tab-scoped and migrate the legacy auth key once", () => {
+test("production Supabase sessions are tab-scoped, migrate legacy auth, and survive blocked storage", () => {
   assert.match(storage, /if \(!projectId \|\| !framed\) return useTabScopedProductionStorage\(\)/);
   assert.doesNotMatch(storage, /if \(!projectId \|\| !framed\) return localStorage/);
   assert.match(storage, /SPACE_CALL_SUPABASE_AUTH_KEY = 'sb-rtwyankpxtffqqrasyzw-auth-token'/);
-  assert.match(storage, /sessionStorage\.setItem\(SPACE_CALL_SUPABASE_AUTH_KEY, legacySession\)/);
-  assert.match(storage, /localStorage\.removeItem\(SPACE_CALL_SUPABASE_AUTH_KEY\)/);
+  assert.match(storage, /safeBrowserStorage\('session'\)/);
+  assert.match(storage, /safeBrowserStorage\('local'\)/);
+  assert.match(storage, /tabStorage\.setItem\(SPACE_CALL_SUPABASE_AUTH_KEY, legacySession\)/);
+  assert.match(storage, /legacyStorage\.removeItem\(SPACE_CALL_SUPABASE_AUTH_KEY\)/);
+  assert.match(storage, /return createMemoryStorage\(\)/);
+  assert.match(storage, /window\.sessionStorage/);
+  assert.match(storage, /window\.localStorage/);
   assert.match(client, /storage: brokeredPreviewStorage\(\)/);
   assert.match(client, /persistSession: true/);
   assert.match(client, /autoRefreshToken: true/);
 
   // Lovable's framed preview broker may keep its own local fallback for editor
-  // interoperability. The production/non-preview path above remains sessionStorage.
+  // interoperability. The production/non-preview path above remains tab-scoped.
   assert.match(storage, /localStorage\.setItem/);
 });
 
