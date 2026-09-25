@@ -1,34 +1,7 @@
 name: Bottom Nav Responsive CI
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "src/components/BottomNav.tsx"
-      - "src/components/StoreLayout.tsx"
-      - "src/components/MobileMenu.tsx"
-      - "src/mobile-bottom-nav.css"
-      - "src/styles.css"
-      - "src/ui-overhaul.css"
-      - "src/design-consistency.css"
-      - "src/dark-black.css"
-      - "e2e/bottom-nav-responsive-check.mjs"
-      - ".github/workflows/bottom-nav-responsive-ci.yml"
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "src/components/BottomNav.tsx"
-      - "src/components/StoreLayout.tsx"
-      - "src/components/MobileMenu.tsx"
-      - "src/mobile-bottom-nav.css"
-      - "src/styles.css"
-      - "src/ui-overhaul.css"
-      - "src/design-consistency.css"
-      - "src/dark-black.css"
-      - "e2e/bottom-nav-responsive-check.mjs"
-      - ".github/workflows/bottom-nav-responsive-ci.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
