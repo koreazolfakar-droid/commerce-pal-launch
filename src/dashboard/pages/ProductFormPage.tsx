@@ -141,37 +141,46 @@ export default function ProductFormPage({ id }: { id?: string }) {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
-  const applyAiPatch = useCallback((values: Record<string, string>) => {
-    const brandName = values.brandName?.trim();
-    const categoryName = values.categoryName?.trim();
-    const normalizedBrand = brandName?.toLocaleLowerCase();
-    const normalizedCategory = categoryName?.toLocaleLowerCase();
-    const brandMatch = normalizedBrand
-      ? brands.find((brand) => brand.name.trim().toLocaleLowerCase() === normalizedBrand)
-      : undefined;
-    const categoryMatch = normalizedCategory
-      ? categories.find((category) => category.name.trim().toLocaleLowerCase() === normalizedCategory)
-      : undefined;
+  const applyAiPatch = useCallback(
+    (values: Record<string, string>) => {
+      const brandName = values.brandName?.trim();
+      const categoryName = values.categoryName?.trim();
+      const normalizedBrand = brandName?.toLocaleLowerCase();
+      const normalizedCategory = categoryName?.toLocaleLowerCase();
+      const brandMatch = normalizedBrand
+        ? brands.find((brand) => brand.name.trim().toLocaleLowerCase() === normalizedBrand)
+        : undefined;
+      const categoryMatch = normalizedCategory
+        ? categories.find(
+            (category) => category.name.trim().toLocaleLowerCase() === normalizedCategory,
+          )
+        : undefined;
 
-    setSaved(false);
-    setForm((current) => ({
-      ...current,
-      ...(values.title !== undefined ? { title: values.title } : {}),
-      ...(values.description !== undefined ? { description: values.description } : {}),
-      ...(values.seoTitle !== undefined ? { seoTitle: values.seoTitle } : {}),
-      ...(values.seoDescription !== undefined ? { seoDescription: values.seoDescription } : {}),
-      ...(values.barcode !== undefined ? { barcode: values.barcode } : {}),
-      ...(brandMatch ? { brandId: brandMatch.id } : {}),
-      ...(categoryMatch ? { categoryId: categoryMatch.id } : {}),
-    }));
+      setSaved(false);
+      setForm((current) => ({
+        ...current,
+        ...(values.title !== undefined ? { title: values.title } : {}),
+        ...(values.description !== undefined ? { description: values.description } : {}),
+        ...(values.seoTitle !== undefined ? { seoTitle: values.seoTitle } : {}),
+        ...(values.seoDescription !== undefined ? { seoDescription: values.seoDescription } : {}),
+        ...(values.barcode !== undefined ? { barcode: values.barcode } : {}),
+        ...(brandMatch ? { brandId: brandMatch.id } : {}),
+        ...(categoryMatch ? { categoryId: categoryMatch.id } : {}),
+      }));
 
-    if (brandName && !brandMatch) {
-      toast.info(`AI suggested brand "${brandName}". Create or select that brand before saving.`);
-    }
-    if (categoryName && !categoryMatch) {
-      toast.info(`AI suggested category "${categoryName}". Create or select that category before saving.`);
-    }
-  }, [brands, categories]);
+      if (brandName && !brandMatch) {
+        toast.info(
+          `AI suggested brand "${brandName}". Create or select that brand before saving.`,
+        );
+      }
+      if (categoryName && !categoryMatch) {
+        toast.info(
+          `AI suggested category "${categoryName}". Create or select that category before saving.`,
+        );
+      }
+    },
+    [brands, categories],
+  );
 
   const variantLocked = variantCount > 1;
 
@@ -372,7 +381,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
               title: form.title,
               description: form.description,
               brandName: brands.find((brand) => brand.id === form.brandId)?.name ?? "",
-              categoryName: categories.find((category) => category.id === form.categoryId)?.name ?? "",
+              categoryName:
+                categories.find((category) => category.id === form.categoryId)?.name ?? "",
               barcode: form.barcode,
               seoTitle: form.seoTitle,
               seoDescription: form.seoDescription,
@@ -387,13 +397,15 @@ export default function ProductFormPage({ id }: { id?: string }) {
               {
                 key: "description",
                 label: "Description",
-                description: "Original factual ecommerce description based on verified product information.",
+                description:
+                  "Original factual ecommerce description based on verified product information.",
                 maxLength: 5000,
               },
               {
                 key: "brandName",
                 label: "Brand",
-                description: "Exact official brand name. It must map to an existing dashboard brand.",
+                description:
+                  "Exact official brand name. It must map to an existing dashboard brand.",
                 review: true,
                 maxLength: 120,
               },
