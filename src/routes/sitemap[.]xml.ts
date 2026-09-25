@@ -21,6 +21,7 @@ type SitemapProductRow = Pick<
   | "brand_id"
   | "category_id"
   | "product_type"
+  | "base_price"
   | "tags"
   | "created_at"
   | "updated_at"
@@ -57,7 +58,7 @@ async function fetchAllActiveProducts(): Promise<SitemapProductRow[]> {
   for (let offset = 0; ; offset += QUERY_PAGE_SIZE) {
     const { data, error } = await publicSupabase
       .from("store_products")
-      .select("id,title,handle,brand_id,category_id,product_type,tags,created_at,updated_at")
+      .select("id,title,handle,brand_id,category_id,product_type,base_price,tags,created_at,updated_at")
       .eq("status", "active")
       .order("id", { ascending: true })
       .range(offset, offset + QUERY_PAGE_SIZE - 1);
@@ -204,7 +205,9 @@ export const Route = createFileRoute("/sitemap.xml")({
           });
         }
 
-        const productRows = productResult.value;
+        const productRows = productResult.value.filter(
+          (product) => Number(product.base_price) > 0,
+        );
         const support = supportResult.value;
 
         const brandsById = new Map(support.brands.map((brand) => [brand.id, brand.name]));
