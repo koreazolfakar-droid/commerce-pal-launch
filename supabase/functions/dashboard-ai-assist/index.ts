@@ -74,6 +74,41 @@ type AiBody = {
   context?: unknown;
 };
 
+class RequestTooLargeError extends Error {}
+
+async function readJsonBody(req: Request): Promise<AiBody> {
+  const reader = req.body?.getReader();
+  if (!reader) throw new SyntaxError("empty body");
+
+  const decoder = new TextDecoder();
+  let text = "";
+  let total = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      total += value.byteLength;
+      if (total > MAX_BODY_BYTES) {
+        try {
+          await reader.cancel();
+        } catch {
+          // The request is already being rejected.
+        }
+        throw new RequestTooLargeError();
+      }
+
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+  } finally {
+    reader.releaseLock();
+  }
+
+  return JSON.parse(text) as AiBody;
+}
+
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
   return {
@@ -489,8 +524,11 @@ Deno.serve(async (req) => {
 
   let body: AiBody;
   try {
-    body = await req.json();
-  } catch {
+    body = await readJsonBody(req);
+  } catch (error) {
+    if (error instanceof RequestTooLargeError) {
+      return json(req, { error: "request_too_large" }, 413);
+    }
     return json(req, { error: "invalid_json" }, 400);
   }
 
