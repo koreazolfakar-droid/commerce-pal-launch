@@ -60,6 +60,9 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(panel, /triggerRef\.current\?\.focus\(\)/);
   assert.match(panel, /requestIdRef/);
   assert.match(panel, /requestId !== requestIdRef\.current/);
+  assert.match(panel, /createPortal/);
+  assert.match(panel, /document\.body/);
+  assert.match(panel, /typeof document !== "undefined"/);
   assert.match(edge, /readJsonBody/);
   assert.match(edge, /RequestTooLargeError/);
   assert.doesNotMatch(edge, /body = await req\.json\(\)/);
