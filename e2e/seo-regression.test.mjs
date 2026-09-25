@@ -6,13 +6,23 @@ async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("sitemap is generated from the native storefront facade", async () => {
-  const sitemap = await source("src/routes/sitemap[.]xml.ts");
-  assert.match(sitemap, /fetchCatalogProducts/);
-  assert.match(sitemap, /fetchCollections/);
-  assert.match(sitemap, /@\/lib\/storefrontData/);
+test("sitemap uses lightweight paginated Supabase data with truthful lastmod", async () => {
+  const [sitemap, nativeStore] = await Promise.all([
+    source("src/routes/sitemap[.]xml.ts"),
+    source("src/lib/nativeStore.ts"),
+  ]);
+  assert.match(sitemap, /publicSupabase/);
+  assert.match(sitemap, /QUERY_PAGE_SIZE\s*=\s*1000/);
+  assert.match(sitemap, /\.range\(offset, offset \+ QUERY_PAGE_SIZE - 1\)/);
+  assert.match(sitemap, /updated_at/);
+  assert.match(sitemap, /MAX_SITEMAP_URLS\s*=\s*50_000/);
+  assert.match(sitemap, /nonEmptyCollectionIds/);
+  assert.match(sitemap, /managedCategories/);
+  assert.doesNotMatch(sitemap, /fetchCatalogProducts\(500\)|@\/lib\/storefrontData/);
   assert.doesNotMatch(sitemap, /storefrontApiRequest|SHOPIFY_|myshopify/);
   assert.doesNotMatch(sitemap, /<changefreq>|<priority>/);
+  assert.match(nativeStore, /"updated_at"/);
+  assert.match(nativeStore, /updatedAt:\s*row\.updated_at/);
 });
 
 test("global crawler metadata stays indexable without fake hreflang alternates", async () => {
@@ -53,6 +63,42 @@ test("merchant product markup stays truthful for condition, returns, and sale pr
   assert.match(seo, /StrikethroughPrice/);
   assert.match(seo, /UnitPriceSpecification/);
   assert.match(infoPages, /merchantReturnPolicyJsonLd/);
+});
+
+test("faceted listing URLs are kept out of crawl while search remains crawlable for noindex", async () => {
+  const [robots, search] = await Promise.all([
+    source("public/robots.txt"),
+    source("src/routes/search.tsx"),
+  ]);
+  assert.match(robots, /Disallow: \/shop\?\*/);
+  assert.match(robots, /Disallow: \/category\/\*\?\*/);
+  assert.match(robots, /Disallow: \/brand\/\*\?\*/);
+  assert.match(robots, /Disallow: \/collections\/\*\?\*/);
+  assert.doesNotMatch(robots, /Disallow: \/search/);
+  assert.match(search, /noindex, follow/);
+});
+
+test("empty commerce landing pages are not indexable", async () => {
+  const pages = await Promise.all([
+    source("src/routes/shop.tsx"),
+    source("src/routes/categories.tsx"),
+    source("src/routes/brands.tsx"),
+    source("src/routes/collections.index.tsx"),
+    source("src/routes/category.$slug.tsx"),
+    source("src/routes/brand.$slug.tsx"),
+    source("src/routes/collections.$handle.tsx"),
+    source("src/routes/used-phones.tsx"),
+  ]);
+  for (const page of pages) {
+    assert.match(page, /noindex, follow/);
+  }
+});
+
+test("FAQ remains a normal content page without deprecated Google FAQ rich-result markup", async () => {
+  const infoPages = await source("src/lib/infoPages.ts");
+  assert.doesNotMatch(infoPages, /FAQPage/);
+  assert.doesNotMatch(infoPages, /acceptedAnswer/);
+  assert.match(infoPages, /faq:\s*\{[\s\S]*?schemaType:\s*"WebPage"/);
 });
 
 test("header account and tracking links stay first-party", async () => {
