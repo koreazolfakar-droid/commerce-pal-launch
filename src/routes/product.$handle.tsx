@@ -33,6 +33,7 @@ import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/q
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { fetchProductByHandle } from "@/lib/storefrontData";
+import { isUsedPhone } from "@/lib/usedPhones";
 import { discountPercent, formatPrice } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
@@ -97,9 +98,16 @@ export const Route = createFileRoute("/product/$handle")({
         jsonLd(
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
-            ...(category
-              ? [{ name: category.label, path: `/category/${canonicalCategorySlug(category.slug)}` }]
-              : [{ name: "Shop", path: "/shop" }]),
+            ...(isUsedPhone(product)
+              ? [{ name: "Used Phones", path: "/used-phones" }]
+              : category
+                ? [
+                    {
+                      name: category.label,
+                      path: `/category/${canonicalCategorySlug(category.slug)}`,
+                    },
+                  ]
+                : [{ name: "Shop", path: "/shop" }]),
             { name: title, path },
           ]),
         ),
