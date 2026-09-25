@@ -73,6 +73,7 @@ export const Route = createFileRoute("/product/$handle")({
     const description = productMetaDescription(product);
     const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
+    const category = primaryCategory(product);
     return {
       meta: [
         { title: fullTitle },
@@ -95,7 +96,9 @@ export const Route = createFileRoute("/product/$handle")({
         jsonLd(
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
-            { name: "Shop", path: "/shop" },
+            ...(category
+              ? [{ name: category.label, path: `/category/${category.slug}` }]
+              : [{ name: "Shop", path: "/shop" }]),
             { name: title, path },
           ]),
         ),
