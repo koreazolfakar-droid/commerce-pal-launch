@@ -35,11 +35,17 @@ export const Route = createFileRoute("/collections/$handle")({
         : `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and direct Space Call checkout.`;
     const image = loaderData.collection.image?.url;
     const path = `/collections/${params.handle}`;
+    const hasProducts = loaderData.products.length > 0;
     return {
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "robots", content: "index, follow, max-image-preview:large" },
+        {
+          name: "robots",
+          content: hasProducts
+            ? "index, follow, max-image-preview:large, max-snippet:-1"
+            : "noindex, follow",
+        },
         ...socialMeta({ title, description, path, ...(image ? { image } : {}) }),
       ],
       links: [canonicalLink(path)],
