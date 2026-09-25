@@ -21,17 +21,22 @@ test("dashboard AI secret stays server-side and requests are authenticated", () 
   assert.match(edge, /user_roles/);
   assert.match(edge, /row\.role === "admin" \|\| row\.role === "editor"/);
   const accessGuard = 'if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);';
-  const geminiGuard = "if (!geminiKey)";
   assert.ok(edge.includes(accessGuard));
-  assert.ok(edge.includes(geminiGuard));
-  assert.ok(edge.indexOf(accessGuard) < edge.indexOf(geminiGuard));
-  assert.doesNotMatch(client, /GEMINI_API_KEY|x-goog-api-key/);
+  assert.match(edge, /Deno\.env\.get\("LOVABLE_API_KEY"\)/);
+  assert.match(edge, /callLovable/);
+  assert.match(edge, /ai_fallback_not_configured/);
+  assert.match(edge, /provider config gemini=/);
+  assert.doesNotMatch(client, /GEMINI_API_KEY|LOVABLE_API_KEY|x-goog-api-key/);
   assert.match(client, /safeHttpUrl/);
+  assert.match(client, /invokeErrorMessage/);
+  assert.match(client, /context instanceof Response/);
   assert.doesNotMatch(env, /VITE_GEMINI_API_KEY/);
 });
 
 test("dashboard AI grounds research and validates structured output", () => {
   assert.match(edge, /type: "google_search"/);
+  assert.match(edge, /ai\.gateway\.lovable\.dev\/v1\/responses/);
+  assert.match(edge, /Generated without live web search\. Review before saving\./);
   assert.match(edge, /response_format/);
   assert.match(edge, /response_format:\s*\[/);
   assert.match(edge, /\/v1\/interactions/);

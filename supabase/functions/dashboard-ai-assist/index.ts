@@ -122,9 +122,11 @@ function originAllowed(origin: string) {
   }
 }
 
-async function callLovable(args: { systemInstruction: string; input: string }) {
+async function callLovable(
+  args: { systemInstruction: string; input: string },
+): Promise<{ ok: boolean; status: number; text: string; reason?: string }> {
   const key = Deno.env.get("LOVABLE_API_KEY")?.trim();
-  if (!key) return { ok: false, status: 503, text: "" };
+  if (!key) return { ok: false, status: 503, text: "", reason: "not_configured" };
   const response = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
     method: "POST",
     headers: {
@@ -143,7 +145,7 @@ async function callLovable(args: { systemInstruction: string; input: string }) {
   });
   if (!response.ok || !response.body) {
     console.warn("[dashboard-ai] Lovable AI failed", response.status);
-    return { ok: false, status: response.status, text: "" };
+    return { ok: false, status: response.status, text: "", reason: "provider_error" };
   }
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -547,6 +549,7 @@ Deno.serve(async (req) => {
   const url = Deno.env.get("SUPABASE_URL")?.trim();
   const serviceKey = serverSecretKey();
   const geminiKey = Deno.env.get("GEMINI_API_KEY")?.trim();
+  const lovableConfigured = Boolean(Deno.env.get("LOVABLE_API_KEY")?.trim());
   const model = Deno.env.get("GEMINI_MODEL")?.trim() || DEFAULT_MODEL;
 
   if (!url || !serviceKey) return json(req, { error: "server_not_configured" }, 503);
@@ -573,6 +576,9 @@ Deno.serve(async (req) => {
   const allowed = (roleRows ?? []).some((row) => row.role === "admin" || row.role === "editor");
   if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);
 
+  console.info(
+    `[dashboard-ai] provider config gemini=${Boolean(geminiKey)} lovable=${lovableConfigured}`,
+  );
 
   let body: AiBody;
   try {
@@ -665,9 +671,34 @@ Deno.serve(async (req) => {
         return json(req, { error: "ai_credits_exhausted", message: "AI credits are exhausted. Add credits in workspace settings." }, 402);
       }
       if (fallback.status === 429) {
-        return json(req, { error: "ai_rate_limited", message: "AI is busy right now. Try again in a minute." }, 429);
+        return json(
+          req,
+          { error: "ai_rate_limited", message: "AI is busy right now. Try again in a minute." },
+          429,
+        );
       }
-      if (!fallback.ok) return json(req, { error: "ai_unavailable", message: "AI assistant is unavailable right now." }, 502);
+      if (!fallback.ok && fallback.reason === "not_configured") {
+        const primaryMessage = !geminiKey
+          ? "Gemini is not configured."
+          : gemini?.status === 429
+            ? "Gemini quota or rate limit was reached."
+            : "Gemini did not return a usable answer.";
+        return json(
+          req,
+          {
+            error: "ai_fallback_not_configured",
+            message: `${primaryMessage} Lovable AI fallback is not configured in Supabase.`,
+          },
+          503,
+        );
+      }
+      if (!fallback.ok) {
+        return json(
+          req,
+          { error: "ai_unavailable", message: "AI assistant is unavailable right now." },
+          502,
+        );
+      }
       rawText = fallback.text;
       usedModel = "openai/gpt-6-astra";
       providerPayload = {};

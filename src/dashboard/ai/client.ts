@@ -16,6 +16,30 @@ function safeHttpUrl(value: unknown) {
   }
 }
 
+async function invokeErrorMessage(error: unknown) {
+  const fallback =
+    error && typeof error === "object" && "message" in error
+      ? text((error as { message?: unknown }).message)
+      : "Unable to reach the AI assistant.";
+
+  const context =
+    error && typeof error === "object" && "context" in error
+      ? (error as { context?: unknown }).context
+      : undefined;
+
+  if (typeof Response !== "undefined" && context instanceof Response) {
+    try {
+      const payload = (await context.clone().json()) as Record<string, unknown>;
+      const message = text(payload.message) || text(payload.error);
+      if (message) return message;
+    } catch {
+      // Fall back to the Supabase Functions error below.
+    }
+  }
+
+  return fallback || "Unable to reach the AI assistant.";
+}
+
 function normalizeResponse(value: unknown): DashboardAiResponse {
   if (!value || typeof value !== "object") {
     throw new Error("AI assistant returned an invalid response.");
@@ -76,7 +100,7 @@ export async function requestDashboardAiAssist(request: DashboardAiRequest) {
   });
 
   if (error) {
-    throw new Error(error.message || "Unable to reach the AI assistant.");
+    throw new Error(await invokeErrorMessage(error));
   }
 
   return normalizeResponse(data);
