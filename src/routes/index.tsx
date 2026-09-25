@@ -307,7 +307,7 @@ function cmsManualProductIds(section?: CmsSection) {
       ? settings["sourceValue"].split(",")
       : [];
 
-  return [...new Set(configured.map((id) => id.trim()).filter(Boolean))].slice(0, 20);
+  return [...new Set(configured.map((id) => id.trim()).filter(Boolean))].slice(0, 10);
 }
 
 function cmsSectionDeviceClass(section?: CmsSection) {
