@@ -54,5 +54,7 @@ export interface StoreCollection {
   handle: string;
   title: string;
   description: string;
+  seoTitle?: string;
+  seoDescription?: string;
   image: { url: string; altText: string | null } | null;
 }
