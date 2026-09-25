@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
 import { requestDashboardAiAssist } from "@/dashboard/ai/client";
@@ -185,8 +186,9 @@ export default function AiAssistPanel({
         AI Assist
       </button>
 
-      {open ? (
-        <div
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <div
           className="fixed inset-0 z-[120] flex items-end justify-end bg-slate-950/45 backdrop-blur-[2px]"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !loadingAction) setOpen(false);
@@ -422,8 +424,10 @@ export default function AiAssistPanel({
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
