@@ -18,6 +18,7 @@ export const CATEGORY_SLUG_REDIRECTS: Readonly<Record<string, string>> = Object.
   "charging-cable": "cable",
   cables: "cable",
   smartwatches: "smart-watch",
+  headphones: "wireless-earbuds",
   "power-banks": "power-bank",
   "used-phones": "used-phone",
   "هاتف-مستعمل": "used-phone",
