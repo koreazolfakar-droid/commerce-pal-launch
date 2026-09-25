@@ -287,6 +287,7 @@ export function productJsonLd(product: StoreProduct) {
   const offerPrice = Number.isFinite(activePrice) ? activePrice : price.amount;
   const compareAt = variant?.compareAtPrice;
   const compareAtPrice = compareAt ? Number(compareAt.amount) : NaN;
+  const compareAtCurrency = compareAt?.currencyCode ?? price.currencyCode;
   const hasStrikethroughPrice =
     Number.isFinite(activePrice) &&
     Number.isFinite(compareAtPrice) &&
@@ -326,7 +327,7 @@ export function productJsonLd(product: StoreProduct) {
               "@type": "UnitPriceSpecification",
               priceType: "https://schema.org/StrikethroughPrice",
               price: compareAtPrice,
-              priceCurrency: compareAt.currencyCode,
+              priceCurrency: compareAtCurrency,
             },
           }
         : {}),
