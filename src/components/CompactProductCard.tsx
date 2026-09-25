@@ -263,7 +263,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                   onClick={(event) => void handleDecrement(cartQuantity, event.currentTarget)}
                   disabled={isAdding}
                   aria-label={`Decrease ${node.title} quantity`}
-                  className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/8 disabled:opacity-40"
+                  className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/10 disabled:opacity-40"
                 >
                   <Minus aria-hidden className="h-3.5 w-3.5" strokeWidth={2} />
                 </button>
@@ -275,7 +275,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                   onClick={() => handleQuantityChange(cartQuantity + 1)}
                   disabled={isAdding || !inStock}
                   aria-label={`Increase ${node.title} quantity`}
-                  className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/8 disabled:opacity-40"
+                  className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/10 disabled:opacity-40"
                 >
                   {isAdding ? (
                     <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
@@ -291,7 +291,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                 onClick={handleAdd}
                 disabled={isAdding || !variant || !inStock}
                 aria-label={`Add ${node.title} to bag`}
-                className="press grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border/70 bg-background text-primary shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-[background-color,color,border-color,transform,box-shadow] hover:border-primary/35 hover:bg-primary/8 hover:shadow-sm active:scale-95 disabled:opacity-40"
+                className="press grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border/70 bg-background text-primary shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-[background-color,color,border-color,transform,box-shadow] hover:border-primary/35 hover:bg-primary/10 hover:shadow-sm active:scale-95 disabled:opacity-40"
               >
                 {isAdding ? (
                   <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
