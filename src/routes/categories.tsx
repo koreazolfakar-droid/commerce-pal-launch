@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { StoreLayout } from "@/components/StoreLayout";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
+import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { cdnImage } from "@/lib/image";
 import { catalogQueryOptions } from "@/lib/queries";
