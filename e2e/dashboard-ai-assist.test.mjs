@@ -57,6 +57,8 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(panel, /event\.key === "Escape"/);
   assert.match(panel, /querySelectorAll<HTMLElement>/);
   assert.match(panel, /triggerRef\.current\?\.focus\(\)/);
+  assert.doesNotMatch(edge, /\.from\(["']store_(?:products|orders|inventory)/);
+  assert.doesNotMatch(edge, /\.(?:insert|update|upsert|delete)\(/);
 });
 
 test("phase one connects the reusable AI assistant to product, category and brand forms", () => {
