@@ -18,6 +18,7 @@ test("dashboard AI secret stays server-side and requests are authenticated", () 
   assert.match(edge, /user_roles/);
   assert.match(edge, /row\.role === "admin" \|\| row\.role === "editor"/);
   assert.doesNotMatch(client, /GEMINI_API_KEY|x-goog-api-key/);
+  assert.match(client, /safeHttpUrl/);
   assert.doesNotMatch(env, /VITE_GEMINI_API_KEY/);
 });
 
