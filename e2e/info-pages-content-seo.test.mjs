@@ -16,6 +16,8 @@ test("public info pages stay useful when detailed CMS policies are absent", asyn
   assert.match(infoPage, /Explore more from Space Call/);
   assert.match(infoPage, /SHOP_DISCOVERY_LINKS/);
   assert.match(infoPage, /SUPPORT_DISCOVERY_LINKS/);
+  assert.match(infoPage, /POLICY_DISCOVERY_LINKS/);
+  assert.match(infoPage, /links\.filter\(\(link\) => link\.to !== currentPath\)\.slice\(0, 7\)/);
   assert.match(infoPage, /to=\{link\.to as never\}[\s\S]*?preload="intent"/);
   assert.match(infoPage, /to=\{\`\/\$\{name\}\`\}[\s\S]*?preload="intent"/);
 
