@@ -1,5 +1,6 @@
 import { navSections } from "@/dashboard/config/navigation";
 import {
+  DASHBOARD_AUTH_REQUIRED_EVENT,
   getDashboardMfaStatus,
   listDashboardProductSearchIndex,
   signOutDashboard,
@@ -614,6 +615,48 @@ function DashboardGate() {
       cancelled = true;
     };
   }, [navigate]);
+
+  useEffect(() => {
+    if (state !== "ready") return;
+
+    const redirectForStatus = (status: Awaited<ReturnType<typeof getDashboardMfaStatus>>) => {
+      setState("denied");
+      navigate(status ? "/dashboard/login?mode=mfa" : "/dashboard/login");
+    };
+
+    const handleAuthRequired = () => {
+      redirectForStatus(null);
+    };
+
+    let revalidating = false;
+    const revalidateVisibleSession = async () => {
+      if (revalidating || document.visibilityState === "hidden") return;
+      revalidating = true;
+      try {
+        const status = await getDashboardMfaStatus();
+        if (!status?.ready) redirectForStatus(status);
+      } catch {
+        // A temporary network failure should not sign the user out. Protected
+        // data calls still fail closed, and a real auth loss emits the event above.
+      } finally {
+        revalidating = false;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") void revalidateVisibleSession();
+    };
+
+    window.addEventListener(DASHBOARD_AUTH_REQUIRED_EVENT, handleAuthRequired);
+    window.addEventListener("focus", revalidateVisibleSession);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener(DASHBOARD_AUTH_REQUIRED_EVENT, handleAuthRequired);
+      window.removeEventListener("focus", revalidateVisibleSession);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [navigate, state]);
 
   useEffect(() => {
     if (state !== "ready") return;
