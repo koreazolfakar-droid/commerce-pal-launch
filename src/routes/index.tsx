@@ -126,10 +126,10 @@ export const Route = createFileRoute("/")({
   head: ({ loaderData }) => {
     const cmsSeo = loaderData?.cmsSeo;
     const title =
-      cmsSeo?.title?.trim() || `${SITE_NAME} Lebanon | Official Online Electronics Store`;
+      cmsSeo?.title?.trim() || `${SITE_NAME} Lebanon | Phones, Laptops & Electronics`;
     const description =
       cmsSeo?.description?.trim() ||
-      `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
+      `Shop smartphones, tablets, laptops, audio and accessories from ${SITE_NAME} in Lebanon with live availability, clear pricing and direct checkout.`;
     const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroPreload?.desktop;
     const canonicalUrl = cmsSeo?.canonical_url?.trim();
     const customJsonLd = cmsSeo?.json_ld;
