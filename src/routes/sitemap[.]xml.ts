@@ -42,11 +42,11 @@ async function fetchProductUpdatedAt() {
     return new Map<string, string>();
   }
 
-  return new Map(
-    (data ?? [])
-      .filter((row) => Boolean(row.handle && row.updated_at))
-      .map((row) => [row.handle, row.updated_at] as const),
-  );
+  const updatedByHandle = new Map<string, string>();
+  for (const row of data ?? []) {
+    if (row.handle && row.updated_at) updatedByHandle.set(row.handle, row.updated_at);
+  }
+  return updatedByHandle;
 }
 
 function buildStaticEntries(): SitemapEntry[] {
