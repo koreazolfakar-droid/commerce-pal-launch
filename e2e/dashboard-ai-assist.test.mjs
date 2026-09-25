@@ -65,6 +65,11 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(panel, /triggerRef\.current\?\.focus\(\)/);
   assert.match(panel, /requestIdRef/);
   assert.match(panel, /requestId !== requestIdRef\.current/);
+  assert.match(panel, /action === "research_fill"/);
+  assert.match(panel, /suggestion\.confidence >= 0\.5/);
+  assert.match(panel, /onApply\(patch\)/);
+  assert.match(panel, /safe AI field/);
+  assert.match(panel, /const openPanel = \(\) =>/);
   assert.match(panel, /createPortal/);
   assert.match(panel, /document\.body/);
   assert.match(panel, /typeof document !== "undefined"/);
