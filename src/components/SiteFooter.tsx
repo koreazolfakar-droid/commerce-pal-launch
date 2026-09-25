@@ -5,7 +5,6 @@ import { Facebook, Instagram, MessageCircle, Youtube, Twitter } from "lucide-rea
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
-import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { STORE_CONFIG, STORE_NAME } from "@/lib/storeConfig";
 
 const FOOTER_SHOP_LINKS = [
@@ -124,7 +123,7 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
               <li key={entry.slug}>
                 <Link
                   to="/category/$slug"
-                  params={{ slug: canonicalCategorySlug(entry.slug) }}
+                  params={{ slug: entry.slug }}
                   className="text-sm text-muted-foreground hover:text-primary"
                 >
                   {isAr ? entry.ar : entry.en}

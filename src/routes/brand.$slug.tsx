@@ -1,44 +1,14 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 
 import { CatalogView } from "@/components/CatalogView";
-import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { allVendorProductsQueryOptions, catalogQueryOptions } from "@/lib/queries";
-import {
-  breadcrumbJsonLd,
-  canonicalLink,
-  cleanMetaDescription,
-  itemListJsonLd,
-  jsonLd,
-  socialMeta,
-} from "@/lib/seo";
+import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { buildCatalogIndex, type CatalogIndex } from "@/lib/taxonomy";
 import type { StoreProduct } from "@/lib/storeTypes";
-
-type BrandSeoRow = {
-  seo_title: string | null;
-  seo_description: string | null;
-  description: string | null;
-  cover_image_url: string | null;
-};
-
-async function fetchBrandSeo(slug: string): Promise<BrandSeoRow | null> {
-  const { data, error } = await publicSupabase
-    .from("cms_brands")
-    .select("seo_title,seo_description,description,cover_image_url")
-    .eq("slug", slug)
-    .eq("is_visible", true)
-    .maybeSingle();
-
-  if (error) {
-    console.warn(`Loading brand SEO metadata failed for ${slug}.`, error);
-    return null;
-  }
-  return (data as BrandSeoRow | null) ?? null;
-}
 
 export const Route = createFileRoute("/brand/$slug")({
   validateSearch: parseProductSearch,
@@ -51,7 +21,6 @@ export const Route = createFileRoute("/brand/$slug")({
       (product) => catalog.brandOf.get(product.node.handle)?.slug === params.slug,
     );
 
-    const seoPromise = fetchBrandSeo(params.slug);
     let vendorProducts: StoreProduct[] = [];
     try {
       vendorProducts = await context.queryClient.ensureQueryData(
@@ -66,12 +35,10 @@ export const Route = createFileRoute("/brand/$slug")({
       uniqueProducts.set(product.node.id, product);
     }
     const brandCatalog = buildCatalogIndex([...uniqueProducts.values()]);
-    const seo = await seoPromise;
 
     return {
       label: brand.label,
       catalog: brandCatalog,
-      seo,
     };
   },
   head: ({ params, loaderData }) => {
@@ -84,34 +51,15 @@ export const Route = createFileRoute("/brand/$slug")({
       };
     }
     const label = loaderData.label ?? params.slug.replace(/-/g, " ");
-    const title =
-      loaderData.seo?.seo_title?.trim() ||
-      `${label} Products in Lebanon | ${STORE_NAME}`;
-    const fallbackDescription = `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and direct Space Call checkout.`;
-    const description = cleanMetaDescription(
-      loaderData.seo?.seo_description || loaderData.seo?.description,
-      fallbackDescription,
-    );
+    const title = `${label} Products in Lebanon | ${STORE_NAME}`;
+    const description = `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and direct Space Call checkout.`;
     const path = `/brand/${params.slug}`;
-    const hasProducts = loaderData.catalog.products.length > 0;
     return {
       meta: [
         { title },
         { name: "description", content: description },
-        {
-          name: "robots",
-          content: hasProducts
-            ? "index, follow, max-image-preview:large, max-snippet:-1"
-            : "noindex, follow",
-        },
-        ...socialMeta({
-          title,
-          description,
-          path,
-          ...(loaderData.seo?.cover_image_url
-            ? { image: loaderData.seo.cover_image_url }
-            : {}),
-        }),
+        { name: "robots", content: "index, follow, max-image-preview:large" },
+        ...socialMeta({ title, description, path }),
       ],
       links: [canonicalLink(path)],
       scripts: [

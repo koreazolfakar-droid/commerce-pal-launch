@@ -5,7 +5,6 @@ import { ArrowRight } from "lucide-react";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
-import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { cdnImage } from "@/lib/image";
 import { localizeSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
@@ -157,7 +156,7 @@ export function HomeCategorySection({
               <Link
                 key={category.slug}
                 to="/category/$slug"
-                params={{ slug: canonicalCategorySlug(category.slug) }}
+                params={{ slug: category.slug }}
                 role="listitem"
                 aria-label={label}
                 className="category-home-item group flex w-[6.15rem] shrink-0 snap-start flex-col items-center gap-1.5 rounded-lg px-1 py-1.5 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.75rem] sm:gap-2 lg:w-[7.1rem]"

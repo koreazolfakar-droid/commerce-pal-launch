@@ -7,7 +7,7 @@ import { buildCatalogIndex } from "@/lib/taxonomy";
 import { useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchCollectionByHandle } from "@/lib/storefrontData";
-import { breadcrumbJsonLd, canonicalLink, cleanMetaDescription, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
+import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/collections/$handle")({
@@ -27,31 +27,19 @@ export const Route = createFileRoute("/collections/$handle")({
       };
     }
     const collectionName = loaderData.collection.title;
-    const title =
-      loaderData.collection.seoTitle?.trim() ||
-      `${collectionName} in Lebanon | ${STORE_NAME}`;
-    const rawDescription =
-      loaderData.collection.seoDescription?.trim() ||
-      loaderData.collection.description?.trim() ||
-      "";
-    const fallbackDescription = `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and direct Space Call checkout.`;
+    const title = `${collectionName} in Lebanon | ${STORE_NAME}`;
+    const rawDescription = loaderData.collection.description?.trim() ?? "";
     const description =
       rawDescription.length >= 90
-        ? cleanMetaDescription(rawDescription, fallbackDescription)
-        : fallbackDescription;
+        ? rawDescription.slice(0, 155)
+        : `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and direct Space Call checkout.`;
     const image = loaderData.collection.image?.url;
     const path = `/collections/${params.handle}`;
-    const hasProducts = loaderData.products.length > 0;
     return {
       meta: [
         { title },
         { name: "description", content: description },
-        {
-          name: "robots",
-          content: hasProducts
-            ? "index, follow, max-image-preview:large, max-snippet:-1"
-            : "noindex, follow",
-        },
+        { name: "robots", content: "index, follow, max-image-preview:large" },
         ...socialMeta({ title, description, path, ...(image ? { image } : {}) }),
       ],
       links: [canonicalLink(path)],

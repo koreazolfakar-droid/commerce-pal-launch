@@ -21,8 +21,6 @@ import {
 import { productDiscountPercent } from "@/lib/productPricing";
 import {
   canonicalLink,
-  canonicalUrl,
-  cleanMetaDescription,
   jsonLd,
   languageAlternateLinks,
   organizationJsonLd,
@@ -128,12 +126,12 @@ export const Route = createFileRoute("/")({
   head: ({ loaderData }) => {
     const cmsSeo = loaderData?.cmsSeo;
     const title =
-      cmsSeo?.title?.trim() || `${SITE_NAME} Lebanon | Phones, Laptops & Electronics`;
-    const fallbackDescription =
-      `Shop smartphones, tablets, laptops, audio and accessories from ${SITE_NAME} in Lebanon with live availability, clear pricing and direct checkout.`;
-    const description = cleanMetaDescription(cmsSeo?.description, fallbackDescription);
+      cmsSeo?.title?.trim() || `${SITE_NAME} Lebanon | Official Online Electronics Store`;
+    const description =
+      cmsSeo?.description?.trim() ||
+      `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
     const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroPreload?.desktop;
-    const canonical = canonicalUrl("/", cmsSeo?.canonical_url);
+    const canonicalUrl = cmsSeo?.canonical_url?.trim();
     const customJsonLd = cmsSeo?.json_ld;
     const heroPreload = loaderData?.heroPreload;
     const heroPreloadLinks = heroPreload
@@ -171,13 +169,12 @@ export const Route = createFileRoute("/")({
           title,
           description,
           path: "/",
-          url: canonical,
           ...(image ? { image } : {}),
         }),
       ],
       links: [
         ...heroPreloadLinks,
-        canonicalLink("/", canonical),
+        canonicalUrl ? { rel: "canonical", href: canonicalUrl } : canonicalLink("/"),
         ...languageAlternateLinks({ path: "/", arabicPath: "/ar" }),
       ],
       scripts: [

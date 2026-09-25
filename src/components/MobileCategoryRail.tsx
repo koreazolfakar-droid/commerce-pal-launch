@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { LayoutGrid } from "lucide-react";
 
 import { useHydrated } from "@/hooks/useHydrated";
-import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { catalogQueryOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
@@ -56,13 +55,12 @@ export function MobileCategoryRail({ activeSlug }: { activeSlug?: string | undef
       </Link>
       {list.map((category) => {
         const Icon = category.icon;
-        const canonicalSlug = canonicalCategorySlug(category.slug);
-        const active = activeSlug === canonicalSlug;
+        const active = activeSlug === category.slug;
         return (
           <Link
             key={category.slug}
             to="/category/$slug"
-            params={{ slug: canonicalSlug }}
+            params={{ slug: category.slug }}
             className={cn(
               "press flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors",
               active

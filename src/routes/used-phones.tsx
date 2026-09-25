@@ -14,45 +14,28 @@ import { STORE_NAME } from "@/lib/storeConfig";
 
 export const Route = createFileRoute("/used-phones")({
   validateSearch: parseProductSearch,
-  loader: async ({ context }) => {
-    const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
-    void context.queryClient.prefetchQuery(collectionsQueryOptions());
-    return { products: usedPhoneProducts(catalog.products) };
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(catalogQueryOptions());
+    context.queryClient.prefetchQuery(collectionsQueryOptions());
   },
-  head: ({ loaderData }) => {
-    const title = `Used Phones in Lebanon | ${STORE_NAME}`;
-    const description = `Browse used, pre-owned and refurbished phones available from ${STORE_NAME} in Lebanon with live pricing and stock.`;
-    const products = loaderData?.products ?? [];
-    return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        {
-          name: "robots",
-          content: products.length
-            ? "index, follow, max-image-preview:large, max-snippet:-1"
-            : "noindex, follow",
-        },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "website" },
-        { property: "og:url", content: absoluteUrl("/used-phones") },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-      links: [canonicalLink("/used-phones")],
-      scripts: products.length
-        ? [
-            jsonLd(
-              breadcrumbJsonLd([
-                { name: "Home", path: "/" },
-                { name: "Used Phones", path: "/used-phones" },
-              ]),
-            ),
-            jsonLd(itemListJsonLd("Used phones", products)),
-          ]
-        : [],
-    };
-  },
+  head: () => ({
+    meta: [
+      { title: `Used Phones — ${STORE_NAME}` },
+      {
+        name: "description",
+        content: `Browse real used and pre-owned phones identified from the live ${STORE_NAME} catalogue.`,
+      },
+      { property: "og:title", content: `Used Phones — ${STORE_NAME}` },
+      {
+        property: "og:description",
+        content: `Browse real used and pre-owned phones from the live ${STORE_NAME} catalogue.`,
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: absoluteUrl("/used-phones") },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [canonicalLink("/used-phones")],
+  }),
   component: UsedPhonesPage,
 });
 

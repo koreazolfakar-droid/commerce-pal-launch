@@ -19,7 +19,6 @@ export const Route = createFileRoute("/shop")({
   head: ({ loaderData }) => {
     const title = `Phones & Tech in Lebanon | ${STORE_NAME}`;
     const description = `Shop smartphones, tablets, laptops, audio, wearables, chargers and accessories in Lebanon at ${STORE_NAME} with live pricing and stock.`;
-    const hasProducts = (loaderData?.products.length ?? 0) > 0;
 
     return {
       meta: [
@@ -27,9 +26,7 @@ export const Route = createFileRoute("/shop")({
         { name: "description", content: description },
         {
           name: "robots",
-          content: hasProducts
-            ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-            : "noindex, follow",
+          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
         },
         ...socialMeta({ title, description, path: "/shop" }),
       ],

@@ -4,7 +4,6 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  useLocation,
   HeadContent,
   ScriptOnce,
   Scripts,
@@ -12,7 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n";
 
-import { DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
 import { CustomerAddressHub } from "@/components/customer-account/CustomerAddressHub";
@@ -137,8 +136,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:site_name", content: STORE_NAME },
       { property: "og:locale", content: "en_LB" },
       { property: "og:locale:alternate", content: "ar_LB" },
-      { property: "og:image", content: DEFAULT_OG_IMAGE },
-      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
+      { property: "og:image", content: absoluteUrl("/logo.svg") },
+      { name: "twitter:image", content: absoluteUrl("/logo.svg") },
       { name: "twitter:card", content: "summary_large_image" },
     ],
 
@@ -171,15 +170,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  const pathname = useLocation({ select: (location) => location.pathname });
-  const isArabicLanding = pathname === "/ar";
-
   return (
-    <html
-      lang={isArabicLanding ? "ar" : "en"}
-      dir={isArabicLanding ? "rtl" : "ltr"}
-      suppressHydrationWarning
-    >
+    <html lang="en" suppressHydrationWarning>
       <head>
         <ScriptOnce>{THEME_INIT_SCRIPT}</ScriptOnce>
         <ScriptOnce>{LANGUAGE_INIT_SCRIPT}</ScriptOnce>
@@ -222,13 +214,9 @@ function RootComponent() {
 
 function LocalizedDocument() {
   const { language, direction } = useLanguage();
-  const pathname = useLocation({ select: (location) => location.pathname });
-
   useEffect(() => {
-    const routeLanguage = pathname === "/ar" ? "ar" : language;
-    const routeDirection = pathname === "/ar" ? "rtl" : direction;
-    document.documentElement.lang = routeLanguage;
-    document.documentElement.dir = routeDirection;
-  }, [language, direction, pathname]);
+    document.documentElement.lang = language;
+    document.documentElement.dir = direction;
+  }, [language, direction]);
   return null;
 }

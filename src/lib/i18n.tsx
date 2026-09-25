@@ -5,7 +5,7 @@ export type Language = "en" | "ar";
 
 const STORAGE_KEY = "space-cell-language";
 
-export const LANGUAGE_INIT_SCRIPT = `(() => { try { const forceArabic = location.pathname === "/ar"; const l = localStorage.getItem("${STORAGE_KEY}"); if (forceArabic || l === "ar") { document.documentElement.lang = "ar"; document.documentElement.dir = "rtl"; } else { document.documentElement.lang = "en"; document.documentElement.dir = "ltr"; } } catch (_) {} })();`;
+export const LANGUAGE_INIT_SCRIPT = `(() => { try { const l = localStorage.getItem("${STORAGE_KEY}"); if (l === "ar") { document.documentElement.lang = "ar"; document.documentElement.dir = "rtl"; } else { document.documentElement.lang = "en"; document.documentElement.dir = "ltr"; } } catch (_) {} })();`;
 
 const translations = {
   en: {

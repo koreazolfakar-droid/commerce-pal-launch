@@ -31,10 +31,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
-import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { fetchProductByHandle } from "@/lib/storefrontData";
-import { isUsedPhone } from "@/lib/usedPhones";
-import { discountPercent, formatPrice, productPrice } from "@/lib/productPricing";
+import { discountPercent, formatPrice } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
@@ -71,22 +69,17 @@ export const Route = createFileRoute("/product/$handle")({
     }
     const product = loaderData.product;
     const title = product.node.title || "Product";
-    const fullTitle =
-      product.node.seoTitle?.trim() || `${title} — ${STORE_NAME}`;
+    const fullTitle = `${title} — ${STORE_NAME}`;
     const description = productMetaDescription(product);
     const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
-    const category = primaryCategory(product);
-    const hasValidPrice = productPrice(product) > 0;
     return {
       meta: [
         { title: fullTitle },
         { name: "description", content: description },
         {
           name: "robots",
-          content: hasValidPrice
-            ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-            : "noindex, follow",
+          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
         },
         ...socialMeta({
           title: fullTitle,
@@ -102,16 +95,7 @@ export const Route = createFileRoute("/product/$handle")({
         jsonLd(
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
-            ...(isUsedPhone(product)
-              ? [{ name: "Used Phones", path: "/used-phones" }]
-              : category
-                ? [
-                    {
-                      name: category.label,
-                      path: `/category/${canonicalCategorySlug(category.slug)}`,
-                    },
-                  ]
-                : [{ name: "Shop", path: "/shop" }]),
+            { name: "Shop", path: "/shop" },
             { name: title, path },
           ]),
         ),
@@ -316,7 +300,7 @@ function ProductPage() {
               <ChevronRight aria-hidden className="h-3.5 w-3.5" />
               <Link
                 to="/category/$slug"
-                params={{ slug: canonicalCategorySlug(category.slug) }}
+                params={{ slug: category.slug }}
                 className="transition-colors hover:text-primary"
               >
                 {category.label}
@@ -661,7 +645,7 @@ function ProductPage() {
               {category && (
                 <Link
                   to="/category/$slug"
-                  params={{ slug: canonicalCategorySlug(category.slug) }}
+                  params={{ slug: category.slug }}
                   className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
                 >
                   View all <ChevronRight aria-hidden className="h-4 w-4" />

@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 
 import { StoreLayout } from "@/components/StoreLayout";
-import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import {
@@ -36,13 +35,8 @@ export const Route = createFileRoute("/ar")({
       { title },
       { name: "description", content: description },
       { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1" },
-      ...socialMeta({
-        title,
-        description,
-        path: "/ar",
-        locale: "ar_LB",
-        alternateLocale: "en_LB",
-      }),
+      ...socialMeta({ title, description, path: "/ar" }),
+      { property: "og:locale", content: "ar_LB" },
     ],
     links: [canonicalLink("/ar"), ...languageAlternateLinks({ path: "/", arabicPath: "/ar" })],
     scripts: [
@@ -128,7 +122,7 @@ function ArabicLandingPage() {
               <Link
                 key={slug}
                 to="/category/$slug"
-                params={{ slug: canonicalCategorySlug(slug) }}
+                params={{ slug }}
                 className="group flex items-center gap-4 rounded-2xl border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-accent/50"
               >
                 <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">

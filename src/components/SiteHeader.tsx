@@ -37,7 +37,6 @@ import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccoun
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
-import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { useHydrated } from "@/hooks/useHydrated";
@@ -239,7 +238,7 @@ export function SiteHeader() {
               <Link
                 key={item.slug}
                 to="/category/$slug"
-                params={{ slug: canonicalCategorySlug(item.slug) }}
+                params={{ slug: item.slug }}
                 activeProps={{ className: "bg-accent text-accent-foreground" }}
                 className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-[13px] font-semibold transition-colors hover:bg-surface"
               >
@@ -319,7 +318,7 @@ export function SiteHeader() {
                     <DropdownMenuItem key={category.slug} asChild>
                       <Link
                         to="/category/$slug"
-                        params={{ slug: canonicalCategorySlug(category.slug) }}
+                        params={{ slug: category.slug }}
                         className="flex min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium"
                       >
                         {category.icon && (

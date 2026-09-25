@@ -1,6 +1,5 @@
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
-import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 import { productSearchScore, textSearchScore } from "@/lib/searchRanking";
@@ -11,7 +10,6 @@ type ImageRow = Tables<"store_product_images">;
 type CollectionRow = Tables<"store_collections">;
 type CollectionLinkRow = Tables<"store_collection_products">;
 type BrandRow = Tables<"cms_brands">;
-type CategoryRow = Tables<"store_categories">;
 
 type StorefrontProductRow = Pick<
   ProductRow,
@@ -23,7 +21,6 @@ type StorefrontProductRow = Pick<
   | "brand_id"
   | "product_type"
   | "created_at"
-  | "updated_at"
   | "tags"
   | "base_price"
   | "compare_at_price"
@@ -33,8 +30,7 @@ type StorefrontProductRow = Pick<
   | "stock_quantity"
   | "best_seller"
   | "sort_order"
-> &
-  Partial<Pick<ProductRow, "seo_title" | "seo_description">>;
+>;
 type StorefrontVariantRow = Pick<
   VariantRow,
   | "id"
@@ -58,35 +54,31 @@ type StorefrontImageRow = Pick<
 >;
 type StorefrontCollectionRow = Pick<
   CollectionRow,
-  "id" | "handle" | "title" | "description" | "image_url" | "seo_title" | "seo_description"
+  "id" | "handle" | "title" | "description" | "image_url"
 >;
 type StorefrontCollectionLinkRow = Pick<
   CollectionLinkRow,
   "collection_id" | "product_id" | "sort_order"
 >;
 type StorefrontBrandRow = Pick<BrandRow, "id" | "name">;
-type StorefrontCategoryRow = Pick<CategoryRow, "id" | "name" | "slug" | "sort_order">;
 type NavigationProductRow = Pick<
   ProductRow,
-  "id" | "title" | "handle" | "brand_id" | "category_id" | "product_type" | "tags"
+  "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
 >;
 
 const STOREFRONT_PRODUCT_SELECT =
-  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
-const STOREFRONT_PRODUCT_DETAIL_SELECT =
-  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+  "id,title,description,description_html,handle,brand_id,product_type,created_at,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
 const STOREFRONT_IMAGE_SELECT =
   "product_id,url,alt_text,is_primary,sort_order" as const;
 const STOREFRONT_COLLECTION_SELECT =
-  "id,handle,title,description,image_url,seo_title,seo_description" as const;
+  "id,handle,title,description,image_url" as const;
 const STOREFRONT_COLLECTION_LINK_SELECT =
   "collection_id,product_id,sort_order" as const;
 const STOREFRONT_BRAND_SELECT = "id,name" as const;
-const STOREFRONT_CATEGORY_SELECT = "id,name,slug,sort_order" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
-  "id,title,handle,brand_id,category_id,product_type,tags" as const;
+  "id,title,handle,brand_id,product_type,tags" as const;
 
 type NativeProduct = {
   product: StoreProduct;
@@ -285,9 +277,6 @@ function buildProduct(
       productType: row.product_type ?? undefined,
       availableForSale,
       createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      seoTitle: row.seo_title?.trim() || undefined,
-      seoDescription: row.seo_description?.trim() || undefined,
       tags: row.tags,
       priceRange: { minVariantPrice: money(minPrice, row.currency) },
       compareAtPriceRange:
@@ -560,42 +549,31 @@ export async function fetchBrandVendors(): Promise<string[]> {
  * variant or image tables merely to render navigation.
  */
 export async function fetchNavigationCatalogFacets() {
-  const [productResult, collectionResult, linkResult, brandResult, categoryResult] =
-    await Promise.all([
-      publicSupabase
-        .from("store_products")
-        .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
-        .eq("status", "active")
-        .order("sort_order", { ascending: true }),
-      publicSupabase
-        .from("store_collections")
-        .select(STOREFRONT_COLLECTION_SELECT)
-        .eq("is_active", true),
-      publicSupabase
-        .from("store_collection_products")
-        .select(STOREFRONT_COLLECTION_LINK_SELECT)
-        .order("sort_order", { ascending: true }),
-      publicSupabase
-        .from("cms_brands")
-        .select(STOREFRONT_BRAND_SELECT)
-        .eq("is_visible", true)
-        .order("sort_order", { ascending: true }),
-      publicSupabase
-        .from("store_categories")
-        .select(STOREFRONT_CATEGORY_SELECT)
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-        .order("name", { ascending: true }),
-    ]);
+  const [productResult, collectionResult, linkResult, brandResult] = await Promise.all([
+    publicSupabase
+      .from("store_products")
+      .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
+      .eq("status", "active")
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_collections")
+      .select(STOREFRONT_COLLECTION_SELECT)
+      .eq("is_active", true),
+    publicSupabase
+      .from("store_collection_products")
+      .select(STOREFRONT_COLLECTION_LINK_SELECT)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("cms_brands")
+      .select(STOREFRONT_BRAND_SELECT)
+      .eq("is_visible", true)
+      .order("sort_order", { ascending: true }),
+  ]);
 
   const productRows = assertResult(productResult, "navigation products") as NavigationProductRow[];
   const collectionRows = assertResult(collectionResult, "navigation collections");
   const links = assertResult(linkResult, "navigation collection links");
   const brands = assertResult(brandResult, "navigation brands");
-  const managedCategories = assertResult(
-    categoryResult,
-    "navigation categories",
-  ) as StorefrontCategoryRow[];
 
   const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
   const linksByProduct = groupByProduct(links);
@@ -630,55 +608,7 @@ export async function fetchNavigationCatalogFacets() {
   });
 
   const catalog = buildCatalogIndex(products);
-  const catalogCategoryBySlug = new Map(
-    catalog.categories.map((category) => [category.slug, category]),
-  );
-  const managedById = new Map(managedCategories.map((category) => [category.id, category]));
-  const managedBySlug = new Map(managedCategories.map((category) => [category.slug, category]));
-  const counts = new Map<string, number>();
-  const iconBySlug = new Map<
-    string,
-    NonNullable<(typeof catalog.categories)[number]["icon"]>
-  >();
-
-  for (const row of productRows) {
-    const inferredSlugs = catalog.categoryOf.get(row.handle) ?? [];
-    const managed = row.category_id ? managedById.get(row.category_id) : undefined;
-
-    if (managed) {
-      counts.set(managed.slug, (counts.get(managed.slug) ?? 0) + 1);
-      const inferred = inferredSlugs
-        .map((slug) => catalogCategoryBySlug.get(slug))
-        .find((category) => category?.icon);
-      if (inferred?.icon && !iconBySlug.has(managed.slug)) {
-        iconBySlug.set(managed.slug, inferred.icon);
-      }
-      continue;
-    }
-
-    for (const inferredSlug of inferredSlugs) {
-      const canonicalSlug = canonicalCategorySlug(inferredSlug);
-      const canonicalManaged = managedBySlug.get(canonicalSlug);
-      if (canonicalManaged) {
-        counts.set(canonicalSlug, (counts.get(canonicalSlug) ?? 0) + 1);
-        const inferred = catalogCategoryBySlug.get(inferredSlug);
-        if (inferred?.icon && !iconBySlug.has(canonicalSlug)) {
-          iconBySlug.set(canonicalSlug, inferred.icon);
-        }
-      }
-    }
-  }
-
-  const categories = managedCategories
-    .map((category) => ({
-      slug: category.slug,
-      label: category.name,
-      count: counts.get(category.slug) ?? 0,
-      ...(iconBySlug.get(category.slug) ? { icon: iconBySlug.get(category.slug) } : {}),
-    }))
-    .filter((category) => category.count > 0 && category.slug !== "used-phone");
-
-  return { categories, brands: catalog.brands };
+  return { categories: catalog.categories, brands: catalog.brands };
 }
 
 export async function fetchProductByHandle(handle: string): Promise<StoreProduct | null> {
@@ -687,7 +617,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
 
   const productResult = await publicSupabase
     .from("store_products")
-    .select(STOREFRONT_PRODUCT_DETAIL_SELECT)
+      .select(STOREFRONT_PRODUCT_SELECT)
     .eq("handle", normalized)
     .eq("status", "active")
     .maybeSingle();
@@ -772,8 +702,6 @@ function mapCollection(row: StorefrontCollectionRow): StoreCollection {
     handle: row.handle,
     title: row.title,
     description: row.description,
-    seoTitle: row.seo_title?.trim() || undefined,
-    seoDescription: row.seo_description?.trim() || undefined,
     image: row.image_url ? { url: row.image_url, altText: row.title } : null,
   };
 }
