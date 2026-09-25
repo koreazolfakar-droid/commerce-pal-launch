@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 // Run after `bun run build`. The production SSR entry reads the public,
- // read-only Space Call Supabase storefront.
+// read-only Space Call Supabase storefront.
 const { default: handler } = await import("../.output/server/index.mjs");
 const pending = [];
 const context = { waitUntil: (promise) => pending.push(promise), passThroughOnException() {} };
