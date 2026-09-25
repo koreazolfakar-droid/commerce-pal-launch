@@ -385,6 +385,16 @@
   align-self: stretch;
   align-items: center;
 }
+
+.store-layout .market-product-card.homepage-product-card .market-product-quantity {
+  height: 2.375rem;
+}
+
+.store-layout .market-product-card.homepage-product-card .market-product-quantity button {
+  width: 2rem;
+  min-width: 2rem;
+  min-height: 2.375rem;
+}
 .store-layout .market-product-stock {
   overflow-wrap: anywhere;
   word-break: normal;
