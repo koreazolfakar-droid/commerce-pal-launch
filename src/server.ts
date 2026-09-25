@@ -193,6 +193,8 @@ export function guardIncomingRequest(request: Request): Response | null {
   return null;
 }
 
+// Production recovery marker: this file intentionally preserves the last known-good
+// request flow while forcing deployment systems that watch src/** to rebuild.
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     const blocked = guardIncomingRequest(request);
