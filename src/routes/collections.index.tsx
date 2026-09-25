@@ -20,7 +20,9 @@ export const Route = createFileRoute("/collections/")({
         { name: "description", content: description },
         {
           name: "robots",
-          content: "index, follow, max-image-preview:large, max-snippet:-1",
+          content: loaderData?.length
+            ? "index, follow, max-image-preview:large, max-snippet:-1"
+            : "noindex, follow",
         },
         ...socialMeta({ title, description, path: "/collections" }),
       ],
