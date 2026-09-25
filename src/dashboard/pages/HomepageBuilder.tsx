@@ -423,23 +423,30 @@ function ManualProductPicker({
     .map((id) => byId.get(id))
     .filter((product): product is DashboardProduct => Boolean(product));
   const normalizedQuery = query.trim().toLowerCase();
-  const available = products
-    .filter((product) => product.status === "Active" && !ids.includes(product.id))
-    .filter((product) => {
-      if (!normalizedQuery) return true;
-      return [product.name, product.brand, product.category, product.sku]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery);
-    })
-    .slice(0, 8);
+  const available =
+    ids.length >= 20
+      ? []
+      : products
+          .filter((product) => product.status === "Active" && !ids.includes(product.id))
+          .filter((product) => {
+            if (!normalizedQuery) return true;
+            return [product.name, product.brand, product.category, product.sku]
+              .join(" ")
+              .toLowerCase()
+              .includes(normalizedQuery);
+          })
+          .slice(0, 8);
+
+  const reorder = (from: number, to: number) => {
+    if (from < 0 || to < 0 || from >= ids.length || to >= ids.length || from === to) return;
+    const next = [...ids];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onChange(next);
+  };
 
   const move = (index: number, direction: -1 | 1) => {
-    const target = index + direction;
-    if (target < 0 || target >= ids.length) return;
-    const next = [...ids];
-    [next[index], next[target]] = [next[target], next[index]];
-    onChange(next);
+    reorder(index, index + direction);
   };
 
   return (
@@ -449,7 +456,7 @@ function ManualProductPicker({
           Manual order · the first product here is the first product customers see.
         </div>
         <div className="mt-0.5 text-[10px] text-indigo-500">
-          Use ↑ ↓ to reorder on mobile. You can add up to 20 active products.
+          Drag to reorder on desktop, or use ↑ ↓ on mobile. You can add up to 20 active products.
         </div>
       </div>
 
@@ -458,7 +465,15 @@ function ManualProductPicker({
           {selectedProducts.map((product, index) => (
             <div
               key={product.id}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2"
+              draggable
+              onDragStart={(event) => event.dataTransfer.setData("manual-product-id", product.id)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const sourceId = event.dataTransfer.getData("manual-product-id");
+                reorder(ids.indexOf(sourceId), ids.indexOf(product.id));
+              }}
+              className="flex cursor-grab items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 active:cursor-grabbing"
             >
               <div className="grid size-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-black text-slate-500">
                 {index + 1}
@@ -520,6 +535,11 @@ function ManualProductPicker({
           placeholder="Search product name, brand, category or SKU…"
           className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
         />
+        {ids.length >= 20 ? (
+          <div className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-700">
+            Product limit reached. Remove one product before adding another.
+          </div>
+        ) : null}
         <div className="mt-2 max-h-64 space-y-1 overflow-y-auto">
           {available.map((product) => (
             <button
