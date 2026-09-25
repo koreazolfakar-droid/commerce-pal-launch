@@ -49,14 +49,14 @@ export default function AiAssistPanel({
   const requestIdRef = useRef(0);
   const dialogTitleId = useId();
 
-  useEffect(() => {
-    if (!open) return;
+  const openPanel = () => {
     requestIdRef.current += 1;
     setResearchQuery(query);
     setLoadingAction(null);
     setResult(null);
     setSelected(new Set());
-  }, [open, query]);
+    setOpen(true);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -132,21 +132,26 @@ export default function AiAssistPanel({
       });
       if (requestId !== requestIdRef.current) return;
       setResult(response);
-      setSelected(
-        new Set(
-          response.suggestions
-            .filter((suggestion) => {
-              const definition = fieldMap.get(suggestion.field);
-              return (
-                definition &&
-                !definition.review &&
-                suggestion.confidence >= 0.75 &&
-                suggestion.verified
-              );
-            })
-            .map((suggestion) => suggestion.field),
-        ),
-      );
+      const safeSuggestions = response.suggestions.filter((suggestion) => {
+        const definition = fieldMap.get(suggestion.field);
+        return (
+          definition &&
+          !definition.review &&
+          suggestion.value.trim().length > 0 &&
+          suggestion.confidence >= 0.5
+        );
+      });
+      setSelected(new Set(safeSuggestions.map((suggestion) => suggestion.field)));
+
+      if (action === "research_fill" && safeSuggestions.length) {
+        const patch = Object.fromEntries(
+          safeSuggestions.map((suggestion) => [suggestion.field, suggestion.value]),
+        );
+        onApply(patch);
+        toast.success(
+          `${safeSuggestions.length} safe AI field${safeSuggestions.length === 1 ? "" : "s"} filled. Review before saving.`,
+        );
+      }
     } catch (cause) {
       if (requestId !== requestIdRef.current) return;
       toast.error(cause instanceof Error ? cause.message : "AI assistant failed.");
@@ -175,7 +180,7 @@ export default function AiAssistPanel({
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openPanel}
         className={
           compact
             ? "inline-flex h-9 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 transition hover:bg-indigo-100"
@@ -215,7 +220,7 @@ export default function AiAssistPanel({
                       Research, fill and improve
                     </h2>
                     <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                      Nothing is saved automatically. Review every suggestion before saving the form.
+                      Research & Fill updates safe draft fields automatically. Nothing is saved until you save the form.
                     </p>
                   </div>
                   <button
