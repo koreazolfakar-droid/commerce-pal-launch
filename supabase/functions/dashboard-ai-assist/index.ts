@@ -335,7 +335,9 @@ function safeHttpUrl(value: unknown) {
   if (typeof value !== "string" || value.length > 2048) return "";
   try {
     const parsed = new URL(value);
-    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.toString() : "";
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? parsed.toString()
+      : "";
   } catch {
     return "";
   }
@@ -526,7 +528,10 @@ Deno.serve(async (req) => {
       withSearch: true,
     });
 
-    if (!gemini.ok && (gemini.status === 400 || gemini.status === 403 || gemini.status === 429)) {
+    if (
+      !gemini.ok &&
+      (gemini.status === 400 || gemini.status === 403 || gemini.status === 429)
+    ) {
       const retry = await callGemini({
         apiKey: geminiKey,
         model,
@@ -570,7 +575,12 @@ Deno.serve(async (req) => {
   }
 
   const research = grounding(providerPayload);
-  const normalized = normalizeAiResult(parsed, fields, research.grounded, fallbackWarning);
+  const normalized = normalizeAiResult(
+    parsed,
+    fields,
+    research.grounded,
+    fallbackWarning,
+  );
 
   return json(req, {
     ok: true,
