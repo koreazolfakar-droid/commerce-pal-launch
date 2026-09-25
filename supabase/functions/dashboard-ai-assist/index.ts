@@ -109,10 +109,74 @@ async function readJsonBody(req: Request): Promise<AiBody> {
   return JSON.parse(text) as AiBody;
 }
 
+function originAllowed(origin: string) {
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const u = new URL(origin);
+    return (
+      u.protocol === "https:" &&
+      (u.hostname.endsWith(".lovable.app") || u.hostname.endsWith(".lovableproject.com"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function callLovable(args: { systemInstruction: string; input: string }) {
+  const key = Deno.env.get("LOVABLE_API_KEY")?.trim();
+  if (!key) return { ok: false, status: 503, text: "" };
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+      "X-Lovable-AIG-SDK": "fetch",
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-6-astra",
+      instructions: `${args.systemInstruction}\nReturn ONLY a valid JSON object matching the requested shape, no markdown.`,
+      input: args.input,
+      reasoning: { effort: "low" },
+      store: false,
+      stream: true,
+    }),
+  });
+  if (!response.ok || !response.body) {
+    console.warn("[dashboard-ai] Lovable AI failed", response.status);
+    return { ok: false, status: response.status, text: "" };
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let out = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data:")) continue;
+      const data = line.slice(5).trim();
+      if (!data || data === "[DONE]") continue;
+      try {
+        const evt = JSON.parse(data);
+        if (evt.type === "response.output_text.delta" && typeof evt.delta === "string") {
+          out += evt.delta;
+        }
+      } catch {
+        // partial frame
+      }
+    }
+  }
+  const text = out.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+  return { ok: Boolean(text), status: 200, text };
+}
+
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
   return {
-    "Access-Control-Allow-Origin": allowedOrigins.has(origin)
+    "Access-Control-Allow-Origin": originAllowed(origin)
       ? origin
       : "https://spacecallapp.store",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
