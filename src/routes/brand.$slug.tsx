@@ -51,6 +51,7 @@ export const Route = createFileRoute("/brand/$slug")({
       (product) => catalog.brandOf.get(product.node.handle)?.slug === params.slug,
     );
 
+    const seoPromise = fetchBrandSeo(params.slug);
     let vendorProducts: StoreProduct[] = [];
     try {
       vendorProducts = await context.queryClient.ensureQueryData(
@@ -65,7 +66,7 @@ export const Route = createFileRoute("/brand/$slug")({
       uniqueProducts.set(product.node.id, product);
     }
     const brandCatalog = buildCatalogIndex([...uniqueProducts.values()]);
-    const seo = await fetchBrandSeo(params.slug);
+    const seo = await seoPromise;
 
     return {
       label: brand.label,
