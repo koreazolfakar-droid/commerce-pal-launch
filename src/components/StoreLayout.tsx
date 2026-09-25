@@ -50,7 +50,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       <main id="main-content" tabIndex={-1} className={onCartPage ? "min-w-0" : "min-w-0 flex-1"}>
         {children}
       </main>
-       <CmsNavigationStrip area="footer" />
+      <CmsNavigationStrip area="footer" />
       {onHomePage ? <SiteFooter /> : null}
       <BottomNav />
       <DeferredCartDrawer />
