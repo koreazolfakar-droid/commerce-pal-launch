@@ -18,6 +18,7 @@ import {
   collectionQueryOptions,
   collectionsQueryOptions,
 } from "@/lib/queries";
+import { findFacetMerchandising } from "@/lib/homeMerchandising";
 import { productDiscountPercent } from "@/lib/productPricing";
 import {
   canonicalLink,
@@ -37,9 +38,6 @@ const LazyProductRail = lazy(() =>
 );
 const LazyRecentlyViewed = lazy(() =>
   import("@/components/HomeSections").then((module) => ({ default: module.RecentlyViewed })),
-);
-const LazyServicesStrip = lazy(() =>
-  import("@/components/HomeSections").then((module) => ({ default: module.ServicesStrip })),
 );
 const LazyTopBrands = lazy(() =>
   import("@/components/TopBrands").then((module) => ({ default: module.TopBrands })),
@@ -105,15 +103,19 @@ function useDeferredHomepageWork() {
   return ready;
 }
 
-function withoutRepeatedProducts<T extends { node: { id: string } }>(
+function takeUniqueProducts<T extends { node: { id: string } }>(
   products: T[],
   seenProductIds: Set<string>,
+  limit = 10,
 ) {
-  return products.filter((product) => {
-    if (seenProductIds.has(product.node.id)) return false;
+  const unique: T[] = [];
+  for (const product of products) {
+    if (seenProductIds.has(product.node.id)) continue;
     seenProductIds.add(product.node.id);
-    return true;
-  });
+    unique.push(product);
+    if (unique.length >= limit) break;
+  }
+  return unique;
 }
 
 export const Route = createFileRoute("/")({
@@ -535,16 +537,27 @@ function Index() {
   const navigationBrands = navigationCatalog?.brands ?? catalog?.brands ?? [];
   const navigationReady = Boolean(navigationCatalog || catalog);
   const brands = applyCmsBrands(buildStoreBrands(navigationBrands, collections), cms.brands);
+  const brandFeatureFlagsAvailable = cms.brands.some(
+    (brand) => typeof brand.is_featured === "boolean",
+  );
+  const showcaseBrands = brandFeatureFlagsAvailable
+    ? brands.filter(
+        (brand) =>
+          brand.featured === true ||
+          Boolean(findFacetMerchandising(collections, "brand", brand.slug)),
+      )
+    : brands;
+
   const seenHomepageProductIds = new Set<string>();
-  const best = withoutRepeatedProducts(
+  const best = takeUniqueProducts(
     (bestSellers ?? []).filter(isHomepageMerchandise),
     seenHomepageProductIds,
   );
-  const deals = withoutRepeatedProducts(
+  const deals = takeUniqueProducts(
     merchandiseProducts.filter((product) => productDiscountPercent(product) !== null),
     seenHomepageProductIds,
   );
-  const latest = withoutRepeatedProducts(
+  const latest = takeUniqueProducts(
     newItems.filter(isHomepageMerchandise),
     seenHomepageProductIds,
   );
@@ -672,7 +685,12 @@ function Index() {
             <Suspense fallback={<SectionFallback className="h-64" />}>
               <LazyBundleSection collections={collections} />
               {homepageCatalog ? (
-                <LazyBrandShowcase catalog={homepageCatalog} collections={collections} />
+                <LazyBrandShowcase
+                  catalog={homepageCatalog}
+                  collections={collections}
+                  brands={showcaseBrands}
+                  excludedProductIds={seenHomepageProductIds}
+                />
               ) : null}
             </Suspense>
           ) : null}
@@ -698,7 +716,6 @@ function Index() {
       visible: deferredWorkReady && isLive(coreSection("trust")),
       node: (
         <Suspense fallback={null}>
-          <LazyServicesStrip />
           <LazyWhyShop />
         </Suspense>
       ),
