@@ -1,4 +1,12 @@
 User-agent: *
 Allow: /
 
+# Storefront filters/sorts are UX states, not indexable landing pages.
+# Keep canonical category/brand/collection/product URLs crawlable.
+Disallow: /shop?*
+Disallow: /category/*?*
+Disallow: /brand/*?*
+Disallow: /collections/*?*
+Disallow: /used-phones?*
+
 Sitemap: https://www.spacecallapp.store/sitemap.xml
