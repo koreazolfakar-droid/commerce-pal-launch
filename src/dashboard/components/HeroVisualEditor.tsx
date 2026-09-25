@@ -132,99 +132,62 @@ export function HeroVisualEditor({
     visual_config: config,
   };
 
+  const hasPreviewImage =
+    mode === "mobile"
+      ? Boolean(form.mobileImageUrl || form.imageUrl)
+      : Boolean(form.imageUrl);
+
   return (
-    <div className="space-y-4" dir={ar ? "rtl" : "ltr"}>
-      <p className="text-xs leading-5 text-slate-500">
-        {ar
-          ? "اسحب النص أو الأزرار داخل المعاينة. فعّل ضبط الصورة باللمس لتحريك نقطة التركيز، مع حفظ إعداد مستقل لكل جهاز."
-          : "Drag text or buttons inside the preview. Enable touch image adjustment to move the focal point, saved independently for each device."}
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="text-xs font-semibold">
-          {ar ? "مكان الأزرار" : "Button placement"}
-          <select
-            className="ms-2 min-h-11 rounded-lg border bg-white px-3"
-            value={config.buttonPlacement ?? "inline"}
-            onChange={(e) =>
-              updateConfig({
-                buttonPlacement: e.target
-                  .value as HeroVisualConfig["buttonPlacement"],
-              })
-            }
-          >
-            <option value="inline">{ar ? "مع النص" : "With text"}</option>
-            <option value="free">
-              {ar ? "حر داخل الصورة" : "Drag inside hero"}
-            </option>
-            <option value="below">{ar ? "تحت الصورة" : "Below hero"}</option>
-          </select>
-        </label>
+    <div className="space-y-3" dir={ar ? "rtl" : "ltr"}>
+      <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
         <button
           type="button"
-          disabled={!history.length}
-          className="min-h-11 rounded-lg border px-3 text-xs disabled:opacity-40"
-          onClick={() => {
-            const previous = history.at(-1);
-            if (!previous) return;
-            setFuture((f) => [...f, form]);
-            setHistory((h) => h.slice(0, -1));
-            onChange(previous);
-          }}
+          aria-pressed={!cropMode}
+          onClick={() => setCropMode(false)}
+          className={`min-h-11 rounded-lg px-3 text-[10px] font-bold transition ${
+            !cropMode
+              ? "bg-white text-[#14203a] shadow-sm"
+              : "text-slate-500"
+          }`}
         >
-          {ar ? "تراجع" : "Undo"}
-        </button>
-        <button
-          type="button"
-          disabled={!future.length}
-          className="min-h-11 rounded-lg border px-3 text-xs disabled:opacity-40"
-          onClick={() => {
-            const next = future.at(-1);
-            if (!next) return;
-            setHistory((h) => [...h, form]);
-            setFuture((f) => f.slice(0, -1));
-            onChange(next);
-          }}
-        >
-          {ar ? "إعادة" : "Redo"}
-        </button>
-        <button
-          type="button"
-          className="min-h-11 rounded-lg border px-3 text-xs"
-          onClick={() => updateConfig({ [layoutKey]: undefined })}
-        >
-          {ar ? "إعادة مواضع هذا الجهاز" : "Reset device positions"}
-        </button>
-        <button
-          type="button"
-          className="min-h-11 rounded-lg border px-3 text-xs"
-          onClick={() =>
-            updateConfig(
-              mode === "mobile"
-                ? { mobileFocalPoint: undefined }
-                : { focalPoint: undefined },
-            )
-          }
-        >
-          {ar ? "إعادة قص الصورة" : "Reset image crop"}
+          <span className="block">{ar ? "المحتوى" : "Content"}</span>
+          <span className="mt-0.5 block text-[8px] font-medium opacity-65">
+            {ar ? "النص والأزرار" : "Text & buttons"}
+          </span>
         </button>
         <button
           type="button"
           aria-pressed={cropMode}
-          className={`min-h-11 rounded-lg border px-3 text-xs font-semibold ${cropMode ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "bg-white"}`}
-          onClick={() => setCropMode((value) => !value)}
+          disabled={!hasPreviewImage}
+          onClick={() => setCropMode(true)}
+          className={`min-h-11 rounded-lg px-3 text-[10px] font-bold transition disabled:opacity-40 ${
+            cropMode
+              ? "bg-white text-indigo-700 shadow-sm"
+              : "text-slate-500"
+          }`}
         >
-          {ar
-            ? cropMode
-              ? "إنهاء ضبط الصورة"
-              : "ضبط الصورة باللمس"
-            : cropMode
-              ? "Done adjusting image"
-              : "Adjust image by touch"}
+          <span className="block">{ar ? "الصورة" : "Image"}</span>
+          <span className="mt-0.5 block text-[8px] font-medium opacity-65">
+            {ar ? "ضبط الصورة باللمس" : "Adjust image by touch"}
+          </span>
         </button>
       </div>
+
+      <p className="px-1 text-[10px] leading-4 text-slate-400">
+        {cropMode
+          ? ar
+            ? "اسحب داخل المعاينة لتحديد الجزء المهم من الصورة."
+            : "Drag directly on the preview to choose the important image area."
+          : ar
+            ? "حرّك النص أو الأزرار داخل المعاينة، أو عدّل الحقول مباشرة تحتها."
+            : "Move text or buttons in the preview, or edit the fields directly below it."}
+      </p>
+
       <div
         ref={host}
-        className={`relative mx-auto w-full overflow-hidden rounded-2xl bg-slate-100 p-0 ${mode === "desktop" ? "max-w-[360px]" : "max-w-[390px]"}`}
+        className={`relative mx-auto w-full overflow-hidden rounded-2xl bg-slate-100 p-0 ${
+          mode === "desktop" ? "max-w-[360px]" : "max-w-[390px]"
+        }`}
         style={{ height: dimensions.height * scale }}
       >
         <div
@@ -236,7 +199,7 @@ export function HeroVisualEditor({
             marginInline: "auto",
           }}
         >
-          {form.imageUrl ? (
+          {hasPreviewImage ? (
             <HeroScene
               slide={slide}
               language={language}
@@ -251,19 +214,24 @@ export function HeroVisualEditor({
               }}
             />
           ) : (
-            <div className="grid h-64 place-items-center text-slate-500">
-              {ar
-                ? "ارفع صورة لتبدأ المعاينة"
-                : "Upload an image to start previewing"}
+            <div className="grid aspect-[16/9] place-items-center rounded-2xl bg-slate-100 px-6 text-center">
+              <span className="text-[11px] font-medium text-slate-400">
+                {ar
+                  ? "ارفع صورة لهذا الجهاز لتبدأ المعاينة"
+                  : "Upload an image for this device to start previewing"}
+              </span>
             </div>
           )}
         </div>
-        {cropMode && form.imageUrl ? (
+
+        {cropMode && hasPreviewImage ? (
           <div
             className="absolute inset-0 z-20 touch-none cursor-crosshair bg-slate-950/5 outline-none ring-inset focus-visible:ring-2 focus-visible:ring-indigo-500"
             tabIndex={0}
             role="group"
-            aria-label={ar ? "حرّك نقطة تركيز صورة الهيرو" : "Move the hero image focal point"}
+            aria-label={
+              ar ? "حرّك نقطة تركيز صورة الهيرو" : "Move the hero image focal point"
+            }
             onPointerDown={(event) => {
               checkpoint();
               event.currentTarget.setPointerCapture(event.pointerId);
@@ -323,8 +291,8 @@ export function HeroVisualEditor({
               updateConfig({ [focusKey]: next });
             }}
           >
-            <span className="absolute left-3 top-3 rounded-full bg-slate-950/65 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm backdrop-blur">
-              {ar ? "اسحب لتحديد الجزء المهم" : "Drag to set image focus"}
+            <span className="absolute left-3 top-3 rounded-full bg-slate-950/65 px-2.5 py-1 text-[9px] font-semibold text-white shadow-sm backdrop-blur">
+              {ar ? "اسحب الصورة" : "Drag image focus"}
             </span>
             <span
               aria-hidden="true"
@@ -337,152 +305,262 @@ export function HeroVisualEditor({
           </div>
         ) : null}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {(selected === "content"
-          ? (["title", "subtitle"] as const)
-          : (["buttonLabel", "secondaryButtonLabel"] as const)
-        ).map((field) => {
-          const key = `${field}${ar ? "Ar" : "En"}` as
-            | "titleAr"
-            | "titleEn"
-            | "subtitleAr"
-            | "subtitleEn"
-            | "buttonLabelAr"
-            | "buttonLabelEn"
-            | "secondaryButtonLabelAr"
-            | "secondaryButtonLabelEn";
-          const label =
-            field === "title"
-              ? ar
-                ? "العنوان"
-                : "Title"
-              : field === "subtitle"
-                ? ar
-                  ? "النص الوصفي"
-                  : "Subtitle"
-                : field === "buttonLabel"
-                  ? ar
-                    ? "نص الزر"
-                    : "Button label"
-                  : ar
-                    ? "نص الزر الثاني"
-                    : "Second button label";
-          return (
-            <label key={key} className="text-xs font-semibold">
-              {label}
+
+      {cropMode ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-[10px] font-semibold text-slate-600">
+              {ar ? "أفقي" : "Horizontal focus"} · {focus.x}%
               <input
-                className="mt-1 min-h-11 w-full rounded-lg border bg-white px-3"
-                value={form[key]}
-                onFocus={checkpoint}
+                type="range"
+                min="0"
+                max="100"
+                value={focus.x}
+                onPointerDown={checkpoint}
                 onChange={(event) =>
-                  onChange({ ...form, [key]: event.target.value })
-                }
-              />
-            </label>
-          );
-        })}
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <label className="text-xs">
-          {ar ? "العنصر" : "Element"}
-          <select
-            className="mt-1 min-h-11 w-full rounded-lg border bg-white px-2"
-            value={selected}
-            onChange={(e) => setSelected(e.target.value as keyof HeroLayout)}
-          >
-            <option value="content">{ar ? "النص" : "Text"}</option>
-            {config.buttonPlacement === "free" ? (
-              <option value="buttons">{ar ? "الأزرار" : "Buttons"}</option>
-            ) : null}
-          </select>
-        </label>
-        {(["x", "y"] as const).map((axis) => (
-          <label key={axis} className="text-xs">
-            {axis === "x"
-              ? ar
-                ? "أفقي"
-                : "Horizontal"
-              : ar
-                ? "عمودي"
-                : "Vertical"}{" "}
-            · {layout[selected][axis]}%
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={layout[selected][axis]}
-              onPointerDown={checkpoint}
-              onChange={(e) =>
-                onChange({
-                  ...form,
-                  visualConfig: {
-                    ...config,
-                    [layoutKey]: {
-                      ...layout,
-                      [selected]: {
-                        ...layout[selected],
-                        [axis]: Number(e.target.value),
+                  onChange({
+                    ...form,
+                    visualConfig: {
+                      ...config,
+                      [focusKey]: {
+                        ...focus,
+                        x: Number(event.target.value),
                       },
                     },
-                  },
-                })
-              }
-              className="mt-3 h-8 w-full accent-indigo-600"
-            />
-          </label>
-        ))}
-        <label className="text-xs">
-          {ar ? "قص الصورة أفقيًا" : "Image crop horizontal"} · {focus.x}%
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={focus.x}
-            onPointerDown={checkpoint}
-            onChange={(e) =>
-              onChange({
-                ...form,
-                visualConfig: {
-                  ...config,
-                  [focusKey]: {
-                    ...focus,
-                    x: Number(e.target.value),
-                  },
-                },
-              })
+                  })
+                }
+                className="mt-2 h-9 w-full accent-indigo-600"
+              />
+            </label>
+            <label className="text-[10px] font-semibold text-slate-600">
+              {ar ? "عمودي" : "Vertical focus"} · {focus.y}%
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={focus.y}
+                onPointerDown={checkpoint}
+                onChange={(event) =>
+                  onChange({
+                    ...form,
+                    visualConfig: {
+                      ...config,
+                      [focusKey]: {
+                        ...focus,
+                        y: Number(event.target.value),
+                      },
+                    },
+                  })
+                }
+                className="mt-2 h-9 w-full accent-indigo-600"
+              />
+            </label>
+          </div>
+          <button
+            type="button"
+            className="mt-2 min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-600"
+            onClick={() =>
+              updateConfig(
+                mode === "mobile"
+                  ? { mobileFocalPoint: undefined }
+                  : { focalPoint: undefined },
+              )
             }
-            className="mt-3 h-8 w-full accent-indigo-600"
-          />
-        </label>
-        <label className="text-xs">
-          {ar ? "قص الصورة عموديًا" : "Image crop vertical"} · {focus.y}%
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={focus.y}
-            onPointerDown={checkpoint}
-            onChange={(e) =>
-              onChange({
-                ...form,
-                visualConfig: {
-                  ...config,
-                  [focusKey]: {
-                    ...focus,
-                    y: Number(e.target.value),
-                  },
-                },
-              })
-            }
-            className="mt-3 h-8 w-full accent-indigo-600"
-          />
-        </label>
-      </div>
-      <p className="text-xs text-slate-500">
-        {ar
-          ? "الصور المتعددة: أضف شريحة من New slide، ارفع صورتها ثم انشرها. رتّب الشرائح بالسهمين. القالب الفاتح مناسب للصور ذات الخلفية الفاتحة."
-          : "Multiple images: add a New slide, upload its image and publish it. Use the arrows to reorder. Light catalogue works best with light artwork."}
-      </p>
+          >
+            {ar ? "إعادة تركيز الصورة" : "Reset image focus"}
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {(selected === "content"
+            ? (["title", "subtitle"] as const)
+            : (["buttonLabel", "secondaryButtonLabel"] as const)
+          ).map((field) => {
+            const key = `${field}${ar ? "Ar" : "En"}` as
+              | "titleAr"
+              | "titleEn"
+              | "subtitleAr"
+              | "subtitleEn"
+              | "buttonLabelAr"
+              | "buttonLabelEn"
+              | "secondaryButtonLabelAr"
+              | "secondaryButtonLabelEn";
+            const label =
+              field === "title"
+                ? ar
+                  ? "العنوان"
+                  : "Title"
+                : field === "subtitle"
+                  ? ar
+                    ? "النص الوصفي"
+                    : "Subtitle"
+                  : field === "buttonLabel"
+                    ? ar
+                      ? "نص الزر"
+                      : "Button label"
+                    : ar
+                      ? "نص الزر الثاني"
+                      : "Second button label";
+            return (
+              <label key={key} className="text-[10px] font-semibold text-slate-600">
+                {label}
+                <input
+                  className="mt-1 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] outline-none focus:border-indigo-400"
+                  value={form[key]}
+                  onFocus={checkpoint}
+                  onChange={(event) =>
+                    onChange({ ...form, [key]: event.target.value })
+                  }
+                />
+              </label>
+            );
+          })}
+        </div>
+      )}
+
+      <details className="group overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-[10px] font-semibold text-slate-600 [&::-webkit-details-marker]:hidden">
+          <span>{ar ? "تحكم دقيق" : "Fine controls"}</span>
+          <span className="text-[9px] text-slate-400 group-open:hidden">
+            {ar ? "اختياري" : "Optional"}
+          </span>
+          <span className="hidden text-[9px] text-slate-400 group-open:inline">
+            {ar ? "إخفاء" : "Hide"}
+          </span>
+        </summary>
+        <div className="space-y-3 border-t border-slate-100 p-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <button
+              type="button"
+              disabled={!history.length}
+              className="min-h-10 rounded-lg border px-3 text-[10px] disabled:opacity-40"
+              onClick={() => {
+                const previous = history.at(-1);
+                if (!previous) return;
+                setFuture((f) => [...f, form]);
+                setHistory((h) => h.slice(0, -1));
+                onChange(previous);
+              }}
+            >
+              {ar ? "تراجع" : "Undo"}
+            </button>
+            <button
+              type="button"
+              disabled={!future.length}
+              className="min-h-10 rounded-lg border px-3 text-[10px] disabled:opacity-40"
+              onClick={() => {
+                const next = future.at(-1);
+                if (!next) return;
+                setHistory((h) => [...h, form]);
+                setFuture((f) => f.slice(0, -1));
+                onChange(next);
+              }}
+            >
+              {ar ? "إعادة" : "Redo"}
+            </button>
+            <button
+              type="button"
+              className="min-h-10 rounded-lg border px-3 text-[10px]"
+              onClick={() => updateConfig({ [layoutKey]: undefined })}
+            >
+              {ar ? "إعادة المواضع" : "Reset positions"}
+            </button>
+            <button
+              type="button"
+              className="min-h-10 rounded-lg border px-3 text-[10px]"
+              onClick={() => setCropMode((value) => !value)}
+            >
+              {cropMode
+                ? ar
+                  ? "تعديل المحتوى"
+                  : "Edit content"
+                : ar
+                  ? "تعديل الصورة"
+                  : "Edit image"}
+            </button>
+          </div>
+
+          {!cropMode ? (
+            <>
+              <label className="block text-[10px] font-semibold text-slate-600">
+                {ar ? "مكان الأزرار" : "Button placement"}
+                <select
+                  className="mt-1 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3"
+                  value={config.buttonPlacement ?? "inline"}
+                  onChange={(event) =>
+                    updateConfig({
+                      buttonPlacement: event.target
+                        .value as HeroVisualConfig["buttonPlacement"],
+                    })
+                  }
+                >
+                  <option value="inline">{ar ? "مع النص" : "With text"}</option>
+                  <option value="free">
+                    {ar ? "حر داخل الصورة" : "Drag inside hero"}
+                  </option>
+                  <option value="below">{ar ? "تحت الصورة" : "Below hero"}</option>
+                </select>
+              </label>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="text-[10px] font-semibold text-slate-600">
+                  {ar ? "العنصر" : "Element"}
+                  <select
+                    className="mt-1 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-2"
+                    value={selected}
+                    onChange={(event) =>
+                      setSelected(event.target.value as keyof HeroLayout)
+                    }
+                  >
+                    <option value="content">{ar ? "النص" : "Text"}</option>
+                    {config.buttonPlacement === "free" ? (
+                      <option value="buttons">{ar ? "الأزرار" : "Buttons"}</option>
+                    ) : null}
+                  </select>
+                </label>
+                {(["x", "y"] as const).map((axis) => (
+                  <label
+                    key={axis}
+                    className="text-[10px] font-semibold text-slate-600"
+                  >
+                    {axis === "x"
+                      ? ar
+                        ? "أفقي"
+                        : "Horizontal"
+                      : ar
+                        ? "عمودي"
+                        : "Vertical"}{" "}
+                    · {layout[selected][axis]}%
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={layout[selected][axis]}
+                      onPointerDown={checkpoint}
+                      onChange={(event) =>
+                        onChange({
+                          ...form,
+                          visualConfig: {
+                            ...config,
+                            [layoutKey]: {
+                              ...layout,
+                              [selected]: {
+                                ...layout[selected],
+                                [axis]: Number(event.target.value),
+                              },
+                            },
+                          },
+                        })
+                      }
+                      className="mt-2 h-9 w-full accent-indigo-600"
+                    />
+                  </label>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
+      </details>
     </div>
   );
 }
