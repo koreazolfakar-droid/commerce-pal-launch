@@ -1,5 +1,4 @@
 name: Deep Security Scan
-# Trigger verification: harmless workflow-only change
 
 on:
   pull_request:
