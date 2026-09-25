@@ -45,6 +45,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import { canonicalCategorySlug } from "@/lib/categoryCanonical";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { navigationCatalogQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
@@ -468,7 +469,7 @@ export function MobileMenu({
                   <Link
                     key={item.slug}
                     to="/category/$slug"
-                    params={{ slug: item.slug }}
+                    params={{ slug: canonicalCategorySlug(item.slug) }}
                     className={rowClass}
                     onClick={close}
                   >
