@@ -21,6 +21,8 @@ import {
 import { productDiscountPercent } from "@/lib/productPricing";
 import {
   canonicalLink,
+  canonicalUrl,
+  cleanMetaDescription,
   jsonLd,
   languageAlternateLinks,
   organizationJsonLd,
@@ -127,11 +129,11 @@ export const Route = createFileRoute("/")({
     const cmsSeo = loaderData?.cmsSeo;
     const title =
       cmsSeo?.title?.trim() || `${SITE_NAME} Lebanon | Phones, Laptops & Electronics`;
-    const description =
-      cmsSeo?.description?.trim() ||
+    const fallbackDescription =
       `Shop smartphones, tablets, laptops, audio and accessories from ${SITE_NAME} in Lebanon with live availability, clear pricing and direct checkout.`;
+    const description = cleanMetaDescription(cmsSeo?.description, fallbackDescription);
     const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroPreload?.desktop;
-    const canonicalUrl = cmsSeo?.canonical_url?.trim();
+    const canonical = canonicalUrl("/", cmsSeo?.canonical_url);
     const customJsonLd = cmsSeo?.json_ld;
     const heroPreload = loaderData?.heroPreload;
     const heroPreloadLinks = heroPreload
@@ -169,12 +171,13 @@ export const Route = createFileRoute("/")({
           title,
           description,
           path: "/",
+          url: canonical,
           ...(image ? { image } : {}),
         }),
       ],
       links: [
         ...heroPreloadLinks,
-        canonicalLink("/", canonicalUrl),
+        canonicalLink("/", canonical),
         ...languageAlternateLinks({ path: "/", arabicPath: "/ar" }),
       ],
       scripts: [
