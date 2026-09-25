@@ -59,7 +59,7 @@ export const Route = createFileRoute("/categories")({
           }))
         : loaderData.catalog.categories.map((category) => ({
             name: category.label,
-            slug: category.slug,
+            slug: canonicalCategorySlug(category.slug),
           }))
       : [];
 
@@ -122,7 +122,7 @@ function CategoriesPage() {
           glyphSlug: category.slug,
         }))
       : catalog.categories.map((category: CatalogFacet) => ({
-          slug: category.slug,
+          slug: canonicalCategorySlug(category.slug),
           label: categoryLabel(category, language),
           imageUrl: undefined,
           glyphSlug: category.slug,
