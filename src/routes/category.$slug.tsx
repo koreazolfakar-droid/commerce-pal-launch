@@ -50,13 +50,14 @@ export const Route = createFileRoute("/category/$slug")({
   beforeLoad: ({ params }) => {
     const canonicalSlug = canonicalCategorySlug(params.slug);
     if (canonicalSlug === "used-phone") {
-      throw redirect({ to: "/used-phones", replace: true });
+      throw redirect({ to: "/used-phones", replace: true, statusCode: 308 });
     }
     if (canonicalSlug !== params.slug) {
       throw redirect({
         to: "/category/$slug",
         params: { slug: canonicalSlug },
         replace: true,
+        statusCode: 308,
       });
     }
   },
