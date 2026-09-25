@@ -82,6 +82,13 @@ export function productMetaDescription(product: StoreProduct) {
   const type = node.productType?.trim();
   const fallback = `Shop ${node.title}${brand ? ` by ${brand}` : ""} in Lebanon at ${SITE_NAME}. View price, availability, specifications, delivery and warranty information.`;
 
+  // Prefer the dashboard SEO description when present. The normal product
+  // description remains the fallback so existing catalogue behavior is unchanged.
+  const dashboardDescription = node.seoDescription?.trim();
+  if (dashboardDescription) {
+    return cleanMetaDescription(dashboardDescription, fallback);
+  }
+
   // Very short merchant descriptions are not useful snippets. Use a complete,
   // purchase-oriented fallback instead of cutting a sentence mid-way.
   const source = (node.description ?? "").replace(/\s+/g, " ").trim();
