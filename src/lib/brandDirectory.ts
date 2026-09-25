@@ -10,6 +10,7 @@ export interface StoreBrand extends CatalogFacet {
   imageAlt?: string;
   collectionHandle?: string;
   href?: string;
+  featured?: boolean;
 }
 
 const GENERIC_VENDOR_LABELS = new Set([
@@ -112,6 +113,9 @@ export function applyCmsBrands(storeBrands: StoreBrand[], cmsBrands: CmsBrand[])
       ...(override?.name?.trim() ? { label: override.name.trim() } : {}),
       ...(override?.logo_url?.trim() ? { image: override.logo_url.trim() } : {}),
       ...(override?.href?.trim() ? { href: override.href.trim() } : {}),
+      ...(override && typeof override.is_featured === "boolean"
+        ? { featured: override.is_featured }
+        : {}),
       ...(override ? { __cmsOrder: override.sort_order } : {}),
     });
   }
@@ -124,6 +128,7 @@ export function applyCmsBrands(storeBrands: StoreBrand[], cmsBrands: CmsBrand[])
       count: 0,
       ...(brand.logo_url ? { image: brand.logo_url } : {}),
       ...(brand.href ? { href: brand.href } : {}),
+      ...(typeof brand.is_featured === "boolean" ? { featured: brand.is_featured } : {}),
       __cmsOrder: brand.sort_order,
     });
   }
