@@ -45,7 +45,9 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
 
   const sources = Array.isArray(row.sources)
     ? row.sources
-        .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+        .filter(
+          (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
+        )
         .map((item) => ({ title: text(item.title), url: safeHttpUrl(item.url) }))
         .filter((item) => item.url)
     : [];
