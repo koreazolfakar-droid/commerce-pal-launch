@@ -261,3 +261,17 @@ test("retired compare page permanently redirects instead of being indexed", asyn
   assert.match(compare, /statusCode:\s*308/);
   assert.doesNotMatch(compare, /component:/);
 });
+
+test("zero-price products are kept out of merchant SEO surfaces", async () => {
+  const [seo, productRoute, sitemap] = await Promise.all([
+    source("src/lib/seo.ts"),
+    source("src/routes/product.$handle.tsx"),
+    source("src/routes/sitemap[.]xml.ts"),
+  ]);
+  assert.match(seo, /hasValidMerchantPrice/);
+  assert.match(seo, /activePrice > 0/);
+  assert.match(seo, /offers: hasValidMerchantPrice/);
+  assert.match(productRoute, /const hasValidPrice = productPrice\(product\) > 0/);
+  assert.match(productRoute, /: "noindex, follow"/);
+  assert.match(sitemap, /Number\(product\.base_price\) > 0/);
+});
