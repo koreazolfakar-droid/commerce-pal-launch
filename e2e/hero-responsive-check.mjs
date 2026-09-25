@@ -75,7 +75,10 @@ try {
 
     if (source === "supabase-cms" && testCase.mobile) {
       const ratio = mediaBox.width / mediaBox.height;
-      assert.ok(ratio >= 1.7 && ratio <= 1.85, `${testCase.name}: mobile CMS hero is not close to 16:9`);
+      assert.ok(
+        ratio >= 1.7 && ratio <= 1.85,
+        `${testCase.name}: mobile CMS hero is not close to 16:9`,
+      );
     } else if (source === "supabase-cms") {
       assert.ok(metrics.height >= 318, `${testCase.name}: desktop CMS hero became too short`);
       assert.ok(metrics.height <= 442, `${testCase.name}: desktop CMS hero became too tall`);
