@@ -25,6 +25,7 @@ test("dashboard AI secret stays server-side and requests are authenticated", () 
 test("dashboard AI grounds research and validates structured output", () => {
   assert.match(edge, /type: "google_search"/);
   assert.match(edge, /response_format/);
+  assert.match(edge, /response_format:\s*\[/);
   assert.match(edge, /\/v1\/interactions/);
   assert.match(edge, /allowedFieldKeys/);
   assert.match(edge, /forbiddenFields/);
