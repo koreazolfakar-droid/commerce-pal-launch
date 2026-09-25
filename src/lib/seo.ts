@@ -1,12 +1,14 @@
 import { cdnImage } from "@/lib/image";
 import { productInStock, productPrimaryVariant } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
+import { isUsedPhone } from "@/lib/usedPhones";
 import { SITE_URL as CONFIG_SITE_URL, STORE_CONFIG, STORE_NAME, storeUrl } from "@/lib/storeConfig";
 
 export const SITE_URL = CONFIG_SITE_URL;
 export const SITE_NAME = STORE_NAME;
 // PNG is more widely supported by social crawlers than SVG for Open Graph previews.
 export const DEFAULT_OG_IMAGE = storeUrl("/logo.png");
+export const MERCHANT_RETURN_POLICY_ID = `${storeUrl("/returns")}#policy`;
 
 export function absoluteUrl(path = "/") {
   return storeUrl(path);
@@ -140,6 +142,34 @@ export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
   };
 }
 
+export function merchantReturnPolicyJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "MerchantReturnPolicy",
+    "@id": MERCHANT_RETURN_POLICY_ID,
+    merchantReturnLink: absoluteUrl("/returns"),
+  };
+}
+
+function productItemCondition(product: StoreProduct) {
+  const node = product.node;
+  const text = [
+    node.title,
+    node.productType,
+    ...(node.tags ?? []),
+    ...(node.collections?.edges ?? []).flatMap((edge) => [edge.node.handle, edge.node.title]),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/refurbished|renewed|مجدد|مجددة/.test(text)) {
+    return "https://schema.org/RefurbishedCondition";
+  }
+  if (isUsedPhone(product)) return "https://schema.org/UsedCondition";
+  return "https://schema.org/NewCondition";
+}
+
 export function organizationJsonLd() {
   const sameAs = [
     STORE_CONFIG.socialInstagram,
@@ -155,7 +185,7 @@ export function organizationJsonLd() {
 
   return {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "OnlineStore",
     "@id": `${SITE_URL}/#organization`,
     name: SITE_NAME,
     alternateName: ["Space Call Lebanon", "SpaceCall"],
@@ -166,6 +196,11 @@ export function organizationJsonLd() {
     },
     image: DEFAULT_OG_IMAGE,
     description: `${SITE_NAME} is an electronics store in Lebanon for smartphones, tablets, laptops, audio, wearables and accessories.`,
+    hasMerchantReturnPolicy: {
+      "@type": "MerchantReturnPolicy",
+      "@id": MERCHANT_RETURN_POLICY_ID,
+      merchantReturnLink: absoluteUrl("/returns"),
+    },
     address: {
       "@type": "PostalAddress",
       addressCountry: "LB",
@@ -175,6 +210,7 @@ export function organizationJsonLd() {
       "@type": "Country",
       name: "Lebanon",
     },
+    ...(STORE_CONFIG.invoiceEmail ? { email: STORE_CONFIG.invoiceEmail } : {}),
     ...(telephone
       ? {
           telephone,
@@ -247,6 +283,15 @@ export function productJsonLd(product: StoreProduct) {
   const images = node.images.edges.slice(0, 10).map((entry) => cdnImage(entry.node.url, 1200));
   const sku = variant?.sku || undefined;
   const brand = node.vendor?.trim() || undefined;
+  const activePrice = Number(price.amount);
+  const offerPrice = Number.isFinite(activePrice) ? activePrice : price.amount;
+  const compareAt = variant?.compareAtPrice;
+  const compareAtPrice = compareAt ? Number(compareAt.amount) : NaN;
+  const hasStrikethroughPrice =
+    Number.isFinite(activePrice) &&
+    Number.isFinite(compareAtPrice) &&
+    compareAtPrice > activePrice &&
+    compareAt?.currencyCode === price.currencyCode;
 
   return {
     "@context": "https://schema.org",
@@ -274,11 +319,22 @@ export function productJsonLd(product: StoreProduct) {
       "@type": "Offer",
       url: absoluteUrl(`/product/${node.handle}`),
       priceCurrency: price.currencyCode,
-      price: price.amount,
+      price: offerPrice,
+      ...(hasStrikethroughPrice
+        ? {
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              priceType: "https://schema.org/StrikethroughPrice",
+              price: compareAtPrice,
+              priceCurrency: compareAt.currencyCode,
+            },
+          }
+        : {}),
       availability: productInStock(product)
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
+      itemCondition: productItemCondition(product),
+      hasMerchantReturnPolicy: { "@id": MERCHANT_RETURN_POLICY_ID },
       areaServed: {
         "@type": "Country",
         name: "Lebanon",
