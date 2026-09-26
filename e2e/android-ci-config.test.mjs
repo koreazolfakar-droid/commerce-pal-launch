@@ -29,6 +29,9 @@ test("Android CI builds, validates and runtime-smoke-tests the debug APK", async
 
   assert.match(localBuild, /^#!\/usr\/bin\/env bash/m);
   assert.match(localBuild, /set -euo pipefail/);
+  assert.match(localBuild, /Gradle 9\.6\.0 is required/);
+  assert.match(localBuild, /platforms\/android-36\/android\.jar/);
+  assert.match(localBuild, /build-tools\/36\.0\.0/);
   assert.match(localBuild, /node scripts\/android-security-gate\.mjs/);
   assert.match(localBuild, /javac --release 8/);
   assert.match(localBuild, /:app:lintDebug :app:assembleDebug/);
