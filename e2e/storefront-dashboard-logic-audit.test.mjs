@@ -200,9 +200,14 @@ test("product media mutations serialize on the parent product row", async () => 
   );
 });
 
-test("brand metadata remains optional for route availability", () => {
+test("brand and category metadata remain optional for route availability", () => {
   assert.match(brandRoute, /console\.warn\("Loading optional storefront brand metadata failed\."/);
   assert.match(brandRoute, /managedBrandResult\.error \? null : managedBrandResult\.data/);
+  assert.match(
+    categoryRoute,
+    /console\.warn\("Loading optional storefront category metadata failed\."/,
+  );
+  assert.match(categoryRoute, /return null/);
 });
 
 test("retired CI log endpoint cannot write through a service-role client", () => {
