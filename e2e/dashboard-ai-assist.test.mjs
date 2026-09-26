@@ -64,7 +64,7 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(panel, /Nothing changes until Apply selected/);
   assert.match(panel, /Apply selected/);
   assert.match(panel, /Web research grounded/);
-  assert.match(panel, /suggestion\.verified/);
+  assert.match(panel, /suggestion\.decision/);
   assert.doesNotMatch(panel, /suggestion\.verified\s*\|\|\s*action\s*===\s*"seo"/);
   assert.match(panel, /role="dialog"/);
   assert.match(panel, /aria-modal="true"/);
