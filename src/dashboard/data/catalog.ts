@@ -1572,73 +1572,79 @@ export async function uploadDashboardProductImage(
   productId: string,
   source: File,
   resolution: ProductImageResolution,
-  altText = "",
-): Promise<{ images: DashboardProductImage[]; conversion: ProductImageConversionResult }> {
+  altText: string,
+  sortOrder: number,
+  isPrimary: boolean,
+): Promise<{ image: DashboardProductImage; conversion: ProductImageConversionResult }> {
   await requireDashboardRole();
-
-  const current = await listDashboardProductImages(productId);
-  const nextOrder = current.reduce((max, image) => Math.max(max, image.sortOrder), -1) + 1;
-  const shouldBePrimary = !current.some((image) => image.isPrimary);
   const uploaded = await uploadProductImageFile(productId, source, resolution);
 
   try {
-    const { error } = await supabase.from("store_product_images").insert({
-      product_id: productId,
-      url: uploaded.url,
-      alt_text: altText.trim() || source.name.replace(/\.[^.]+$/, ""),
-      sort_order: nextOrder,
-      is_primary: shouldBePrimary,
-    });
+    const { data, error } = await supabase
+      .from("store_product_images")
+      .insert({
+        product_id: productId,
+        url: uploaded.url,
+        alt_text: altText.trim() || source.name.replace(/\.[^.]+$/, ""),
+        sort_order: Math.max(0, Math.trunc(sortOrder)),
+        is_primary: isPrimary,
+      })
+      .select("*")
+      .single();
     throwIfError(error, "Saving product image failed");
+    if (!data) throw new Error("Saving product image returned no row.");
+
+    invalidateNativeStoreCache();
+    broadcastStorefrontRefresh();
+    return {
+      image: mapProductImage(data as ImageRow),
+      conversion: uploaded.conversion,
+    };
   } catch (error) {
     await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([uploaded.objectPath]);
     throw error;
   }
-
-  invalidateNativeStoreCache();
-  broadcastStorefrontRefresh();
-  return {
-    images: await listDashboardProductImages(productId),
-    conversion: uploaded.conversion,
-  };
 }
 
 export async function replaceDashboardProductImage(
   image: DashboardProductImage,
   source: File,
   resolution: ProductImageResolution,
-): Promise<{ images: DashboardProductImage[]; conversion: ProductImageConversionResult }> {
+): Promise<{ image: DashboardProductImage; conversion: ProductImageConversionResult }> {
   await requireDashboardRole();
   const uploaded = await uploadProductImageFile(image.productId, source, resolution);
 
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("store_product_images")
       .update({
         url: uploaded.url,
         alt_text: source.name.replace(/\.[^.]+$/, ""),
       })
       .eq("id", image.id)
-      .eq("product_id", image.productId);
+      .eq("product_id", image.productId)
+      .select("*")
+      .single();
     throwIfError(error, "Replacing product image failed");
+    if (!data) throw new Error("Replacing product image returned no row.");
+
+    await removeOwnedProductImageFile(image.url).catch(() => undefined);
+    invalidateNativeStoreCache();
+    broadcastStorefrontRefresh();
+    return {
+      image: mapProductImage(data as ImageRow),
+      conversion: uploaded.conversion,
+    };
   } catch (error) {
     await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([uploaded.objectPath]);
     throw error;
   }
-
-  await removeOwnedProductImageFile(image.url).catch(() => undefined);
-  invalidateNativeStoreCache();
-  broadcastStorefrontRefresh();
-  return {
-    images: await listDashboardProductImages(image.productId),
-    conversion: uploaded.conversion,
-  };
 }
 
 export async function setDashboardPrimaryProductImage(
   productId: string,
   imageId: string,
-): Promise<DashboardProductImage[]> {
+): Promise<void> {
   await requireDashboardRole();
 
   const { error: resetError } = await supabase
@@ -1656,12 +1662,11 @@ export async function setDashboardPrimaryProductImage(
 
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();
-  return listDashboardProductImages(productId);
 }
 
 export async function deleteDashboardProductImage(
   image: DashboardProductImage,
-): Promise<DashboardProductImage[]> {
+): Promise<{ promotedImageId: string | null }> {
   await requireDashboardRole();
 
   const { error } = await supabase
@@ -1673,32 +1678,52 @@ export async function deleteDashboardProductImage(
 
   await removeOwnedProductImageFile(image.url).catch(() => undefined);
 
-  const remaining = await listDashboardProductImages(image.productId);
-  if (image.isPrimary && remaining[0]) {
-    return setDashboardPrimaryProductImage(image.productId, remaining[0].id);
+  let promotedImageId: string | null = null;
+  if (image.isPrimary) {
+    const { data: nextImage, error: nextImageError } = await supabase
+      .from("store_product_images")
+      .select("id")
+      .eq("product_id", image.productId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    throwIfError(nextImageError, "Loading replacement primary image failed");
+
+    if (nextImage?.id) {
+      const { error: promoteError } = await supabase
+        .from("store_product_images")
+        .update({ is_primary: true })
+        .eq("id", nextImage.id)
+        .eq("product_id", image.productId);
+      throwIfError(promoteError, "Promoting replacement primary image failed");
+      promotedImageId = nextImage.id;
+    }
   }
 
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();
-  return remaining;
+  return { promotedImageId };
 }
 
 export async function reorderDashboardProductImages(
   productId: string,
   orderedIds: string[],
-): Promise<DashboardProductImage[]> {
+): Promise<void> {
   await requireDashboardRole();
 
-  for (let index = 0; index < orderedIds.length; index += 1) {
-    const { error } = await supabase
+  const updates = orderedIds.map((imageId, index) =>
+    supabase
       .from("store_product_images")
       .update({ sort_order: index })
-      .eq("id", orderedIds[index])
-      .eq("product_id", productId);
-    throwIfError(error, "Reordering product images failed");
+      .eq("id", imageId)
+      .eq("product_id", productId),
+  );
+  const results = await Promise.all(updates);
+  for (const result of results) {
+    throwIfError(result.error, "Reordering product images failed");
   }
 
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();
-  return listDashboardProductImages(productId);
 }
