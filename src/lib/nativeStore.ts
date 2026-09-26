@@ -869,6 +869,96 @@ export async function fetchCollectionByHandle(
   return { collection: mapCollection(row), products };
 }
 
+export type HomepageProductSource =
+  | "best_sellers"
+  | "newest"
+  | "manual"
+  | "collection"
+  | "brand"
+  | "category";
+
+export async function fetchHomepageConfiguredProducts(config: {
+  source: HomepageProductSource;
+  sourceValue?: string;
+  manualProductIds?: string[];
+  count?: number;
+}): Promise<StoreProduct[]> {
+  const count = Math.min(10, Math.max(1, Math.trunc(config.count ?? 5)));
+  const value = config.sourceValue?.trim() ?? "";
+
+  if (config.source === "best_sellers") return fetchBestSellingProducts(count);
+  if (config.source === "newest") return fetchNewestProducts(count);
+  if (config.source === "manual") {
+    return (await fetchProductsByIds(config.manualProductIds ?? [])).slice(0, count);
+  }
+
+  if (!value) return [];
+  const normalized = value.toLowerCase();
+
+  if (config.source === "brand") {
+    const brandResult = await publicSupabase
+      .from("cms_brands")
+      .select("id,name,slug")
+      .eq("is_visible", true);
+    const brands = assertResult(brandResult, "homepage brand source");
+    const brand = brands.find((row) =>
+      [row.id, row.name, row.slug].some((entry) => entry.toLowerCase() === normalized),
+    );
+    if (!brand) return [];
+
+    const productResult = await publicSupabase
+      .from("store_products")
+      .select(STOREFRONT_PRODUCT_SELECT)
+      .eq("status", "active")
+      .eq("brand_id", brand.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(count);
+    return hydrateProductRows(assertResult(productResult, "homepage brand products"));
+  }
+
+  if (config.source === "category") {
+    const categoryResult = await publicSupabase
+      .from("store_categories")
+      .select("id,name,slug")
+      .eq("is_active", true);
+    const categories = assertResult(categoryResult, "homepage category source");
+    const category = categories.find((row) =>
+      [row.id, row.name, row.slug].some((entry) => entry.toLowerCase() === normalized),
+    );
+    if (!category) return [];
+
+    const productResult = await publicSupabase
+      .from("store_products")
+      .select(STOREFRONT_PRODUCT_SELECT)
+      .eq("status", "active")
+      .eq("category_id", category.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(count);
+    return hydrateProductRows(assertResult(productResult, "homepage category products"));
+  }
+
+  const collectionResult = await publicSupabase
+    .from("store_collections")
+    .select("id,title,handle")
+    .eq("is_active", true);
+  const collections = assertResult(collectionResult, "homepage collection source");
+  const collection = collections.find((row) =>
+    [row.id, row.title, row.handle].some((entry) => entry.toLowerCase() === normalized),
+  );
+  if (!collection) return [];
+
+  const linkResult = await publicSupabase
+    .from("store_collection_products")
+    .select("product_id")
+    .eq("collection_id", collection.id)
+    .order("sort_order", { ascending: true })
+    .limit(count);
+  const links = assertResult(linkResult, "homepage collection products");
+  return (await fetchProductsByIds(links.map((row) => row.product_id))).slice(0, count);
+}
+
 export async function fetchNewestProducts(first = 12) {
   if (first <= 0) return [];
   const productResult = await publicSupabase
