@@ -68,6 +68,9 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
               ? item.decision
               : "review",
           checks: Array.isArray(item.checks) ? item.checks.map(text).filter(Boolean) : [],
+          sourceUrls: Array.isArray(item.sourceUrls)
+            ? item.sourceUrls.map(safeHttpUrl).filter(Boolean).slice(0, 5)
+            : [],
         }))
         .filter((item) => item.field)
     : [];
