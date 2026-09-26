@@ -596,19 +596,15 @@ function hostname(value: string) {
   }
 }
 
-function officialHosts(context: Record<string, unknown>) {
-  const values = Array.isArray(context.officialDomains) ? context.officialDomains : [];
-  return values
-    .filter((value): value is string => typeof value === "string")
-    .map(hostname)
-    .filter(Boolean);
+function officialHosts(values: string[]) {
+  return values.map(hostname).filter(Boolean);
 }
 
 function scoreSources(
   sources: Array<{ title: string; url: string }>,
-  context: Record<string, unknown>,
+  officialDomains: string[],
 ): ScoredSource[] {
-  const official = officialHosts(context);
+  const official = officialHosts(officialDomains);
 
   return sources.map((source) => {
     const host = hostname(source.url);
@@ -701,10 +697,6 @@ function normalizeAiResult(raw: unknown, fields: AiField[], grounded: boolean, e
   };
 }
 
-function contextId(context: Record<string, unknown>) {
-  return typeof context.entityId === "string" ? context.entityId.trim() : "";
-}
-
 function allowedIconNames(context: Record<string, unknown>) {
   return Array.isArray(context.allowedIcons)
     ? context.allowedIcons.filter((item): item is string => typeof item === "string")
@@ -721,8 +713,6 @@ async function databaseChecks(args: {
   const blockers: string[] = [];
   const reviews: string[] = [];
   const passes: string[] = [];
-  const entityId = contextId(args.context);
-
   try {
     if (args.field === "slug" && args.entity === "category") {
       let query = args.admin
@@ -730,7 +720,6 @@ async function databaseChecks(args: {
         .select("id,slug")
         .eq("slug", args.value)
         .limit(5);
-      if (entityId) query = query.neq("id", entityId);
       const { data, error } = await query;
       if (error) reviews.push("Category slug availability could not be verified");
       else if (data?.length) blockers.push("Slug is already used by another category");
@@ -743,7 +732,6 @@ async function databaseChecks(args: {
         .select("id,slug")
         .eq("slug", args.value)
         .limit(5);
-      if (entityId) query = query.neq("id", entityId);
       const { data, error } = await query;
       if (error) reviews.push("Brand slug availability could not be verified");
       else if (data?.length) blockers.push("Slug is already used by another brand");
@@ -790,10 +778,8 @@ async function databaseChecks(args: {
       if (products.error || variants.error) {
         reviews.push("Barcode uniqueness could not be verified");
       } else {
-        const productConflict = (products.data ?? []).some((row) => !entityId || row.id !== entityId);
-        const variantConflict = (variants.data ?? []).some(
-          (row) => !entityId || row.product_id !== entityId,
-        );
+        const productConflict = Boolean(products.data?.length);
+        const variantConflict = Boolean(variants.data?.length);
         if (productConflict || variantConflict) {
           blockers.push("Barcode is already assigned to another product or variant");
         } else {
@@ -806,6 +792,36 @@ async function databaseChecks(args: {
   }
 
   return { blockers, reviews, passes };
+}
+
+async function trustedOfficialDomains(args: {
+  admin: ReturnType<typeof createClient>;
+  entity: string;
+  currentData: Record<string, string>;
+}) {
+  const brandName =
+    args.entity === "brand"
+      ? args.currentData.name?.trim()
+      : args.entity === "product"
+        ? args.currentData.brandName?.trim()
+        : "";
+  if (!brandName) return [];
+
+  try {
+    const { data, error } = await args.admin
+      .from("cms_brands")
+      .select("name,href")
+      .ilike("name", brandName)
+      .limit(5);
+    if (error) return [];
+
+    const match = (data ?? []).find(
+      (row) => row.name.trim().toLowerCase() === brandName.toLowerCase(),
+    );
+    return match?.href ? [match.href] : [];
+  } catch {
+    return [];
+  }
 }
 
 function localFieldChecks(args: {
@@ -1179,7 +1195,8 @@ ${JSON.stringify(responseSchema(fields))}`,
 
   const research =
     usedModel === model ? grounding(providerPayload) : { grounded: false, sources: [] };
-  const sources = scoreSources(research.sources, context);
+  const officialDomains = await trustedOfficialDomains({ admin, entity, currentData });
+  const sources = scoreSources(research.sources, officialDomains);
   const normalized = normalizeAiResult(parsed, fields, research.grounded, fallbackWarning);
   const suggestions = await verifySuggestions({
     admin,
