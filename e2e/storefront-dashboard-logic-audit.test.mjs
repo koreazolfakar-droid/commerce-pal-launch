@@ -119,7 +119,10 @@ test("backorders only decrement and release stock that physically existed", () =
   assert.match(backorderMigration, /quantity_to_release/);
   assert.match(backorderMigration, /reference_type = 'order'/);
   assert.match(backorderMigration, /movement\.movement_type = 'sale'/);
-  assert.match(backorderMigration, /stock_quantity = stock_quantity \+ v_item\.quantity_to_release/);
+  assert.match(
+    backorderMigration,
+    /stock_quantity = stock_quantity \+ v_item\.quantity_to_release/,
+  );
   assert.doesNotMatch(
     backorderMigration,
     /stock_quantity = stock_quantity \+ v_item\.quantity,[\s\S]*Released after cancellation/,
