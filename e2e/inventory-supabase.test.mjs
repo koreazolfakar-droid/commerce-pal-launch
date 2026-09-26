@@ -33,6 +33,14 @@ test("inventory writes go through atomic Supabase RPCs", () => {
   assert.doesNotMatch(inventoryData, /@\/dashboard\/mock\//);
 });
 
+test("inventory pagination RPCs keep the Supabase client binding", () => {
+  assert.equal(
+    (inventoryData.match(/supabase\.rpc\.bind\(supabase\)/g) ?? []).length,
+    2,
+  );
+  assert.doesNotMatch(inventoryData, /const rpc = supabase\.rpc as unknown as/);
+});
+
 test("inventory RPCs run with caller RLS and synchronize product stock", () => {
   assert.match(inventoryMigration, /security invoker/gi);
   assert.doesNotMatch(inventoryMigration, /security definer/gi);
