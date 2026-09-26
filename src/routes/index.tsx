@@ -330,7 +330,12 @@ function cmsFeaturedProductConfig(section?: CmsSection) {
     ? (requestedSource as HomepageProductSource)
     : "best_sellers";
   const manualProductIds = source === "manual" ? cmsManualProductIds(section) : [];
-  const sourceValue = typeof settings["sourceValue"] === "string" ? settings["sourceValue"].trim() : "";
+  const sourceValue =
+    source === "collection" && typeof settings["collection"] === "string"
+      ? settings["collection"].trim()
+      : typeof settings["sourceValue"] === "string"
+        ? settings["sourceValue"].trim()
+        : "";
   const rawCount = Number(settings["count"] ?? (manualProductIds.length || 5));
   const count = Math.min(
     10,
