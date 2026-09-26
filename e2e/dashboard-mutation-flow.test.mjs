@@ -147,7 +147,9 @@ test("product media mutations return targeted results without success-path list 
   assert.doesNotMatch(mediaMutations, /return listDashboardProductImages/);
   assert.match(mediaMutations, /image: mapProductImage/);
   assert.match(mediaMutations, /promotedImageId/);
-  assert.match(mediaMutations, /rpc\("set_store_product_primary_image"/);\n  assert.match(mediaMutations, /rpc\("delete_store_product_image"/);\n  assert.match(mediaMutations, /rpc\("reorder_store_product_images"/);
+  assert.match(mediaMutations, /rpc\("set_store_product_primary_image"/);
+  assert.match(mediaMutations, /rpc\("delete_store_product_image"/);
+  assert.match(mediaMutations, /rpc\("reorder_store_product_images"/);
 
   assert.doesNotMatch(media, /sync\(await (?:delete|set|reorder)DashboardProductImage/);
   assert.match(media, /result\.image/);
