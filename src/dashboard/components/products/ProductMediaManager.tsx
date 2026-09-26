@@ -10,6 +10,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { toast } from "sonner";
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import {
@@ -47,6 +48,7 @@ export default function ProductMediaManager({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DashboardProductImage | null>(null);
   const [replaceTarget, setReplaceTarget] = useState<DashboardProductImage | null>(null);
   const [resolution, setResolution] = useState<ProductImageResolution>(() =>
     getProductImageResolution(),
@@ -146,8 +148,9 @@ export default function ProductMediaManager({
     }
   };
 
-  const remove = async (image: DashboardProductImage) => {
-    if (!window.confirm("Delete this image from the product?")) return;
+  const remove = async () => {
+    if (!deleteTarget || busyId) return;
+    const image = deleteTarget;
     setBusyId(image.id);
     try {
       const result = await deleteDashboardProductImage(image);
@@ -158,6 +161,7 @@ export default function ProductMediaManager({
           isPrimary: result.promotedImageId ? row.id === result.promotedImageId : row.isPrimary,
         }));
       sync(remaining);
+      setDeleteTarget(null);
       toast.success("Image deleted.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image deletion failed.");
@@ -542,8 +546,8 @@ export default function ProductMediaManager({
                   </button>
                   <button
                     type="button"
-                    onClick={() => void remove(image)}
-                    disabled={busyId === image.id}
+                    onClick={() => setDeleteTarget(image)}
+                    disabled={busyId !== null}
                     className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500 hover:bg-rose-50 disabled:opacity-40"
                     aria-label="Delete image"
                   >
@@ -593,6 +597,24 @@ export default function ProductMediaManager({
           </span>
         </button>
       )}
+
+      <DashboardConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete this product image?"
+        description={
+          deleteTarget?.isPrimary
+            ? "This is the primary image. After deletion, the next image in the gallery will become primary automatically."
+            : "The image will be removed from this product and its owned media file will be cleaned up when possible."
+        }
+        confirmLabel="Delete image"
+        pendingLabel="Deleting..."
+        pending={Boolean(deleteTarget && busyId === deleteTarget.id)}
+        destructive
+        onClose={() => {
+          if (!busyId) setDeleteTarget(null);
+        }}
+        onConfirm={() => void remove()}
+      />
     </div>
   );
 }
