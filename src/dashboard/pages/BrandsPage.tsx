@@ -1152,7 +1152,8 @@ export default function BrandsPage() {
                   <select
                     value={deleteDestination}
                     onChange={(event) => setDeleteDestination(event.target.value)}
-                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none"
+                    disabled={deleting}
+                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <option value="unbranded">Unbranded</option>
                     {brands
