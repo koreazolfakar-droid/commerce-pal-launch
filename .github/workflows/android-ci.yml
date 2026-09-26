@@ -9,6 +9,7 @@ on:
       - "public/.well-known/assetlinks.json"
       - "public/manifest.webmanifest"
       - "scripts/android-security-gate.mjs"
+      - "scripts/android-local-debug-build.sh"
       - ".github/workflows/android-ci.yml"
       - ".github/scripts/android-emulator-smoke-test.sh"
       - "e2e/android-ci-config.test.mjs"
@@ -20,6 +21,7 @@ on:
       - "public/.well-known/assetlinks.json"
       - "public/manifest.webmanifest"
       - "scripts/android-security-gate.mjs"
+      - "scripts/android-local-debug-build.sh"
       - ".github/workflows/android-ci.yml"
       - ".github/scripts/android-emulator-smoke-test.sh"
       - "e2e/android-ci-config.test.mjs"
@@ -64,47 +66,8 @@ jobs:
         with:
           gradle-version: "9.6.0"
 
-      - name: Android source security gate
-        run: node scripts/android-security-gate.mjs
-
-      - name: URL policy Java 8 security tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/space-call-url-policy
-          mkdir -p /tmp/space-call-url-policy/classes
-          javac --release 8 -d /tmp/space-call-url-policy/classes android/app/src/main/java/store/spacecallapp/app/SpaceCallUrlPolicy.java android/security-tests/store/spacecallapp/app/SpaceCallUrlPolicySelfTest.java
-          java -cp /tmp/space-call-url-policy/classes store.spacecallapp.app.SpaceCallUrlPolicySelfTest
-
-      - name: Lint and build debug APK
-        run: gradle -p android --no-daemon --stacktrace :app:lintDebug :app:assembleDebug
-
-      - name: Verify APK identity, signature and alignment
-        shell: bash
-        run: |
-          set -euo pipefail
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          BUILD_TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
-          AAPT="${BUILD_TOOLS}/aapt"
-          APKSIGNER="${BUILD_TOOLS}/apksigner"
-          ZIPALIGN="${BUILD_TOOLS}/zipalign"
-
-          test -s "$APK"
-          test -x "$AAPT"
-          test -x "$APKSIGNER"
-          test -x "$ZIPALIGN"
-
-          "$AAPT" dump badging "$APK" | tee /tmp/spacecall-apk-badging.txt
-          grep -q "package: name='store.spacecallapp.app.debug'" /tmp/spacecall-apk-badging.txt
-          grep -q "versionCode='3'" /tmp/spacecall-apk-badging.txt
-          grep -q "versionName='1.0.2-debug'" /tmp/spacecall-apk-badging.txt
-
-          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/spacecall-apksigner.txt
-          "$ZIPALIGN" -c -P 16 -v 4 "$APK" | tee /tmp/spacecall-zipalign.txt
-
-          mkdir -p android/artifacts
-          cp "$APK" android/artifacts/Space-Call-1.0.2-debug.apk
-          sha256sum android/artifacts/Space-Call-1.0.2-debug.apk | tee android/artifacts/Space-Call-1.0.2-debug.apk.sha256
+      - name: Build and validate debug APK
+        run: bash scripts/android-local-debug-build.sh
 
       - name: Emulator cold-launch smoke test
         uses: reactivecircus/android-emulator-runner@v2
@@ -124,9 +87,9 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           path: |
-            android/artifacts/Space-Call-1.0.2-debug.apk
-            android/artifacts/Space-Call-1.0.2-debug.apk.sha256
-            android/artifacts/RUNTIME-VALIDATED.txt
+            dist/android/Space-Call-1.0.2-debug.apk
+            dist/android/Space-Call-1.0.2-debug.apk.sha256
+            dist/android/RUNTIME-VALIDATED.txt
             android/app/build/reports/lint-results-debug.html
             /tmp/spacecall-apk-badging.txt
             /tmp/spacecall-apksigner.txt
