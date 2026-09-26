@@ -868,12 +868,7 @@ export async function fetchCollectionByHandle(
 }
 
 export type HomepageProductSource =
-  | "best_sellers"
-  | "newest"
-  | "manual"
-  | "collection"
-  | "brand"
-  | "category";
+  "best_sellers" | "newest" | "manual" | "collection" | "brand" | "category";
 
 export async function fetchHomepageConfiguredProducts(config: {
   source: HomepageProductSource;
