@@ -802,7 +802,7 @@ function Editor({
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
           <div className="mb-1 text-[13px] font-bold text-[#14203a]">Products and order</div>
           <div className="mb-4 text-[10px] text-slate-400">
-            Choose automatic best sellers or take full manual control of exactly what appears first.
+            Choose an automatic source or take full manual control of exactly what appears first.
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
@@ -817,6 +817,7 @@ function Editor({
                 className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
               >
                 <option value="best_sellers">Automatic · Best sellers</option>
+                <option value="newest">Automatic · Newest products</option>
                 <option value="manual">Manual · I choose and order products</option>
                 <option value="collection">Collection</option>
                 <option value="brand">Brand</option>
@@ -824,11 +825,13 @@ function Editor({
               </select>
             </label>
 
-            {productSource === "best_sellers" ? (
+            {productSource === "best_sellers" || productSource === "newest" ? (
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2.5">
                 <div className="text-[11px] font-bold text-emerald-700">Automatic mode</div>
                 <div className="mt-0.5 text-[10px] leading-4 text-emerald-600">
-                  Uses products marked Best Seller and keeps their storefront sort order.
+                  {productSource === "best_sellers"
+                    ? "Uses products marked Best Seller and keeps their storefront sort order."
+                    : "Uses the newest active products automatically."}
                 </div>
               </div>
             ) : productSource !== "manual" ? (
