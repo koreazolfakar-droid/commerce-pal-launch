@@ -1,11 +1,13 @@
 -- Category-aware structured product specifications.
 -- Additive and legacy-safe: unsupported specification JSON is retained under "legacy".
+
 alter table public.store_categories
   add column if not exists spec_template jsonb not null default '{"sections":[]}'::jsonb;
 
 alter table public.store_products
   alter column specifications set default '{"values":{},"keySpecs":[]}'::jsonb;
 
+-- Backfill the old empty object and preserve any unsupported legacy payload.
 update public.store_products
 set specifications = case
   when specifications is null or specifications = '{}'::jsonb
@@ -57,9 +59,11 @@ $$;
 
 alter table public.store_categories
   validate constraint store_categories_spec_template_shape;
+
 alter table public.store_products
   validate constraint store_products_specs_shape;
 
+-- Seed reusable templates only when a category still has the empty default.
 update public.store_categories set spec_template = '{"sections":[{"title":"Display","fields":[{"key":"screen","label":"Screen size","unit":"inches"},{"key":"resolution","label":"Resolution"},{"key":"refresh_rate","label":"Refresh rate","unit":"Hz"}]},{"title":"Performance","fields":[{"key":"chipset","label":"Chipset"},{"key":"ram","label":"RAM","unit":"GB"},{"key":"storage","label":"Storage","unit":"GB"}]},{"title":"Cameras","fields":[{"key":"rear_camera","label":"Rear camera"},{"key":"front_camera","label":"Front camera"}]},{"title":"Power & Connectivity","fields":[{"key":"battery","label":"Battery","unit":"mAh"},{"key":"charging","label":"Charging","unit":"W"},{"key":"network","label":"Network"},{"key":"bluetooth","label":"Bluetooth","unit":"Bluetooth"}]}]}'::jsonb where slug = 'smartphone' and spec_template = '{"sections":[]}'::jsonb;
 update public.store_categories set spec_template = '{"sections":[{"title":"Display","fields":[{"key":"screen","label":"Screen size","unit":"inches"},{"key":"resolution","label":"Resolution"},{"key":"refresh_rate","label":"Refresh rate","unit":"Hz"}]},{"title":"Performance","fields":[{"key":"chipset","label":"Chipset"},{"key":"ram","label":"RAM","unit":"GB"},{"key":"storage","label":"Storage","unit":"GB"}]},{"title":"Power & Connectivity","fields":[{"key":"battery","label":"Battery","unit":"mAh"},{"key":"charging","label":"Charging","unit":"W"},{"key":"connectivity","label":"Connectivity"},{"key":"stylus","label":"Stylus support"}]}]}'::jsonb where slug = 'tablet' and spec_template = '{"sections":[]}'::jsonb;
 update public.store_categories set spec_template = '{"sections":[{"title":"Display","fields":[{"key":"screen","label":"Screen size","unit":"inches"},{"key":"resolution","label":"Resolution"},{"key":"refresh_rate","label":"Refresh rate","unit":"Hz"}]},{"title":"Hardware","fields":[{"key":"processor","label":"Processor"},{"key":"ram","label":"RAM","unit":"GB"},{"key":"storage","label":"Storage","unit":"GB"},{"key":"graphics","label":"Graphics"}]},{"title":"Other","fields":[{"key":"battery","label":"Battery"},{"key":"ports","label":"Ports"},{"key":"weight","label":"Weight"},{"key":"os","label":"Operating system"}]}]}'::jsonb where slug = 'laptops' and spec_template = '{"sections":[]}'::jsonb;
@@ -89,6 +93,7 @@ declare
   unit_name text;
   valid_keys text[] := array[]::text[];
 begin
+  -- Empty structured specs remain valid even for uncategorized legacy products.
   if coalesce(new.specifications->'values', '{}'::jsonb) = '{}'::jsonb
     and coalesce(new.specifications->'keySpecs', '[]'::jsonb) = '[]'::jsonb then
     return new;
@@ -98,10 +103,10 @@ begin
     raise exception 'A category is required for specifications';
   end if;
 
-  select c.spec_template
+  select category.spec_template
   into template
-  from public.store_categories c
-  where c.id = new.category_id
+  from public.store_categories as category
+  where category.id = new.category_id
   for share;
 
   if template is null then
@@ -123,10 +128,10 @@ begin
   end loop;
 
   for spec_key, spec_value in
-    select key, value
-    from jsonb_each_text(new.specifications->'values')
+    select entry.key, entry.value
+    from jsonb_each_text(new.specifications->'values') as entry(key, value)
   loop
-    if not spec_key = any(valid_keys)
+    if not (spec_key = any(valid_keys))
       or length(trim(spec_value)) < 1
       or length(spec_value) > 240 then
       raise exception 'Invalid specification field: %', spec_key;
@@ -142,7 +147,7 @@ begin
 
     if unit_name in ('GB', 'TB', 'mAh', 'W', 'Hz', 'inches')
       and spec_value !~* (
-        '^[0-9]+(\.[0-9]+)?[[:space:]]*(' ||
+        '^[0-9]+([.][0-9]+)?[[:space:]]*(' ||
         case unit_name
           when 'inches' then 'inches|inch|in|″|"'
           else unit_name
@@ -153,7 +158,7 @@ begin
     end if;
 
     if unit_name = 'Bluetooth'
-      and spec_value !~* '^(Bluetooth[[:space:]]*)?[0-9]+\.[0-9]+$' then
+      and spec_value !~* '^(Bluetooth[[:space:]]*)?[0-9]+[.][0-9]+$' then
       raise exception 'Invalid Bluetooth version';
     end if;
   end loop;
@@ -162,11 +167,24 @@ begin
     raise exception 'Too many key specifications';
   end if;
 
+  if (
+    select count(*)
+    from jsonb_array_elements_text(new.specifications->'keySpecs')
+      as key_spec(value)
+  ) <> (
+    select count(distinct key_spec.value)
+    from jsonb_array_elements_text(new.specifications->'keySpecs')
+      as key_spec(value)
+  ) then
+    raise exception 'Key specifications must be unique';
+  end if;
+
   if exists (
     select 1
-    from jsonb_array_elements_text(new.specifications->'keySpecs') as key_spec(value)
+    from jsonb_array_elements_text(new.specifications->'keySpecs')
+      as key_spec(value)
     where not (new.specifications->'values' ? key_spec.value)
-      or not key_spec.value = any(valid_keys)
+       or not (key_spec.value = any(valid_keys))
   ) then
     raise exception 'Invalid key specification';
   end if;
@@ -175,10 +193,14 @@ begin
 end;
 $$;
 
-drop trigger if exists validate_store_product_specifications on public.store_products;
+drop trigger if exists validate_store_product_specifications
+  on public.store_products;
+
 create trigger validate_store_product_specifications
-before insert or update of specifications, category_id on public.store_products
-for each row execute function private.validate_store_product_specifications();
+before insert or update of specifications, category_id
+on public.store_products
+for each row
+execute function private.validate_store_product_specifications();
 
 create or replace function private.guard_store_category_spec_template()
 returns trigger
@@ -191,32 +213,45 @@ begin
     return new;
   end if;
 
+  if jsonb_typeof(new.spec_template) <> 'object'
+    or coalesce(jsonb_typeof(new.spec_template->'sections'), '') <> 'array' then
+    raise exception 'Invalid specification template';
+  end if;
+
   if exists (
     select 1
-    from jsonb_array_elements(new.spec_template->'sections') as section(section_value)
+    from jsonb_array_elements(new.spec_template->'sections')
+      as section(section_value)
     where jsonb_typeof(section.section_value) <> 'object'
-      or jsonb_typeof(section.section_value->'fields') <> 'array'
+       or coalesce(jsonb_typeof(section.section_value->'fields'), '') <> 'array'
+       or length(trim(coalesce(section.section_value->>'title', ''))) < 1
   ) then
     raise exception 'Invalid specification template section';
   end if;
 
   if exists (
     select 1
-    from jsonb_array_elements(new.spec_template->'sections') as section(section_value)
+    from jsonb_array_elements(new.spec_template->'sections')
+      as section(section_value)
     cross join lateral jsonb_array_elements(section.section_value->'fields')
       as spec_field(field_value)
-    where coalesce(spec_field.field_value->>'key', '') !~ '^[a-z][a-z0-9_]{0,39}
+    where jsonb_typeof(spec_field.field_value) <> 'object'
+       or coalesce(spec_field.field_value->>'key', '') !~ '^[a-z][a-z0-9_]{0,39}$'
+       or length(trim(coalesce(spec_field.field_value->>'label', ''))) < 1
+  ) then
     raise exception 'Invalid specification template field';
   end if;
 
   if (
     select count(*)
-    from jsonb_array_elements(new.spec_template->'sections') as section(section_value)
+    from jsonb_array_elements(new.spec_template->'sections')
+      as section(section_value)
     cross join lateral jsonb_array_elements(section.section_value->'fields')
       as spec_field(field_value)
   ) <> (
-    select count(distinct (spec_field.field_value->>'key'))
-    from jsonb_array_elements(new.spec_template->'sections') as section(section_value)
+    select count(distinct spec_field.field_value->>'key')
+    from jsonb_array_elements(new.spec_template->'sections')
+      as section(section_value)
     cross join lateral jsonb_array_elements(section.section_value->'fields')
       as spec_field(field_value)
   ) then
@@ -229,14 +264,15 @@ begin
 
   if exists (
     select 1
-    from public.store_products product
+    from public.store_products as product
     cross join lateral jsonb_object_keys(
       coalesce(product.specifications->'values', '{}'::jsonb)
     ) as used_key(key)
     where product.category_id = new.id
       and not exists (
         select 1
-        from jsonb_array_elements(new.spec_template->'sections') as section(section_value)
+        from jsonb_array_elements(new.spec_template->'sections')
+          as section(section_value)
         cross join lateral jsonb_array_elements(section.section_value->'fields')
           as spec_field(field_value)
         where spec_field.field_value->>'key' = used_key.key
@@ -247,21 +283,23 @@ begin
 
   if exists (
     select 1
-    from public.store_products product
+    from public.store_products as product
     cross join lateral jsonb_object_keys(
       coalesce(product.specifications->'values', '{}'::jsonb)
     ) as used_key(key)
     where product.category_id = new.id
       and coalesce((
         select spec_field.field_value->>'unit'
-        from jsonb_array_elements(old.spec_template->'sections') as section(section_value)
+        from jsonb_array_elements(old.spec_template->'sections')
+          as section(section_value)
         cross join lateral jsonb_array_elements(section.section_value->'fields')
           as spec_field(field_value)
         where spec_field.field_value->>'key' = used_key.key
         limit 1
       ), '') is distinct from coalesce((
         select spec_field.field_value->>'unit'
-        from jsonb_array_elements(new.spec_template->'sections') as section(section_value)
+        from jsonb_array_elements(new.spec_template->'sections')
+          as section(section_value)
         cross join lateral jsonb_array_elements(section.section_value->'fields')
           as spec_field(field_value)
         where spec_field.field_value->>'key' = used_key.key
@@ -275,134 +313,14 @@ begin
 end;
 $$;
 
-drop trigger if exists guard_store_category_spec_template on public.store_categories;
+drop trigger if exists guard_store_category_spec_template
+  on public.store_categories;
+
 create trigger guard_store_category_spec_template
-before insert or update of spec_template on public.store_categories
-for each row execute function private.guard_store_category_spec_template();
-
-create or replace function public.update_store_category_with_spec_template(
-  p_category_id uuid,
-  p_name text,
-  p_slug text,
-  p_description text,
-  p_image_url text,
-  p_icon text,
-  p_sort_order integer,
-  p_is_active boolean,
-  p_is_featured boolean,
-  p_seo_title text,
-  p_seo_description text,
-  p_spec_template jsonb
-)
-returns void
-language plpgsql
-security invoker
-set search_path = public
-as $$
-begin
-  update public.store_categories
-  set name = p_name,
-      slug = p_slug,
-      description = nullif(p_description, ''),
-      image_url = nullif(p_image_url, ''),
-      icon = nullif(p_icon, ''),
-      sort_order = p_sort_order,
-      is_active = p_is_active,
-      is_featured = p_is_featured,
-      seo_title = nullif(p_seo_title, ''),
-      seo_description = nullif(p_seo_description, ''),
-      spec_template = p_spec_template,
-      updated_at = now()
-  where id = p_category_id;
-
-  update public.store_products
-  set product_type = p_name,
-      updated_at = now()
-  where category_id = p_category_id;
-end;
-$$;
-
-grant execute on function public.update_store_category_with_spec_template(
-  uuid,
-  text,
-  text,
-  text,
-  text,
-  text,
-  integer,
-  boolean,
-  boolean,
-  text,
-  text,
-  jsonb
-) to authenticated;
-
-      or length(trim(coalesce(spec_field.field_value->>'label', ''))) < 1
-  ) then
-    raise exception 'Invalid specification template field';
-  end if;
-
-  if (
-    select count(*)
-    from jsonb_array_elements(new.spec_template->'sections') section,
-      lateral jsonb_array_elements(section->'fields') field
-  ) <> (
-    select count(distinct field->>'key')
-    from jsonb_array_elements(new.spec_template->'sections') section,
-      lateral jsonb_array_elements(section->'fields') field
-  ) then
-    raise exception 'Specification template keys must be unique';
-  end if;
-
-  if exists (
-    select 1
-    from public.store_products product,
-      lateral jsonb_object_keys(
-        coalesce(product.specifications->'values', '{}'::jsonb)
-      ) used_key
-    where product.category_id = new.id
-      and not exists (
-        select 1
-        from jsonb_array_elements(new.spec_template->'sections') section,
-          lateral jsonb_array_elements(section->'fields') field
-        where field->>'key' = used_key
-      )
-  ) then
-    raise exception 'A template field is used by products in this category. Keep its key or migrate those products first.';
-  end if;
-
-  if exists (
-    select 1
-    from public.store_products product,
-      lateral jsonb_object_keys(
-        coalesce(product.specifications->'values', '{}'::jsonb)
-      ) used_key
-    where product.category_id = new.id
-      and coalesce((
-        select field->>'unit'
-        from jsonb_array_elements(old.spec_template->'sections') section,
-          lateral jsonb_array_elements(section->'fields') field
-        where field->>'key' = used_key
-        limit 1
-      ), '') is distinct from coalesce((
-        select field->>'unit'
-        from jsonb_array_elements(new.spec_template->'sections') section,
-          lateral jsonb_array_elements(section->'fields') field
-        where field->>'key' = used_key
-        limit 1
-      ), '')
-  ) then
-    raise exception 'A template unit is used by products in this category. Migrate those product values before changing the unit.';
-  end if;
-
-  return new;
-end;
-$$;
-
-drop trigger if exists guard_store_category_spec_template on public.store_categories;
-create trigger guard_store_category_spec_template
-before update of spec_template on public.store_categories
-for each row execute function private.guard_store_category_spec_template();
+before insert or update of spec_template
+on public.store_categories
+for each row
+execute function private.guard_store_category_spec_template();
 
 create or replace function public.update_store_category_with_spec_template(
   p_category_id uuid,
