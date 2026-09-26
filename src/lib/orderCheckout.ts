@@ -101,7 +101,9 @@ async function hashCheckoutFingerprint(fingerprint: string) {
   const bytes = new TextEncoder().encode(fingerprint);
   if (typeof crypto !== "undefined" && crypto.subtle) {
     const digest = await crypto.subtle.digest("SHA-256", bytes);
-    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(
+      "",
+    );
   }
 
   // Keep raw customer details out of localStorage even on older webviews.
