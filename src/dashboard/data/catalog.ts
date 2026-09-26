@@ -1312,37 +1312,63 @@ async function uniqueHandle(title: string, existingId?: string) {
 export async function saveDashboardProduct(input: DashboardProductInput) {
   await requireDashboardRole();
 
-  const [brands, categories] = await Promise.all([
-    listDashboardBrands(),
-    listDashboardCategories(),
-  ]);
-  const brand = input.brandId ? brands.find((item) => item.id === input.brandId) : undefined;
-  const category = input.categoryId
-    ? categories.find((item) => item.id === input.categoryId)
-    : undefined;
+  const existingProductRequest = input.id
+    ? supabase
+        .from("store_products")
+        .select("id,handle,published_at")
+        .eq("id", input.id)
+        .maybeSingle()
+    : Promise.resolve({ data: null, error: null });
 
-  let existingProduct: Pick<ProductRow, "id" | "handle" | "published_at"> | null = null;
-  if (input.id) {
-    const { data, error } = await supabase
-      .from("store_products")
-      .select("id,handle,published_at")
-      .eq("id", input.id)
-      .maybeSingle();
-    throwIfError(error, "Loading product before save failed");
-    if (!data) throw new Error("Product not found.");
-    existingProduct = data;
-  }
+  const variantRequest = input.id
+    ? supabase
+        .from("store_product_variants")
+        .select("*")
+        .eq("product_id", input.id)
+        .order("sort_order", { ascending: true })
+    : Promise.resolve({ data: [] as VariantRow[], error: null });
 
-  let preexistingVariants: VariantRow[] = [];
-  if (input.id) {
-    const { data, error } = await supabase
-      .from("store_product_variants")
-      .select("*")
-      .eq("product_id", input.id)
-      .order("sort_order", { ascending: true });
-    throwIfError(error, "Loading product variants before save failed");
-    preexistingVariants = (data ?? []) as VariantRow[];
-  }
+  const categoryRequest = input.categoryId
+    ? supabase
+        .from("store_categories")
+        .select("id,name")
+        .eq("id", input.categoryId)
+        .maybeSingle()
+    : Promise.resolve({ data: null, error: null });
+
+  const imageRequest =
+    input.id && input.imageUrl.trim()
+      ? supabase
+          .from("store_product_images")
+          .select("id,url,alt_text")
+          .eq("product_id", input.id)
+          .order("is_primary", { ascending: false })
+          .order("sort_order", { ascending: true })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null });
+
+  const [existingProductResult, variantResult, categoryResult, imageResult] =
+    await Promise.all([
+      existingProductRequest,
+      variantRequest,
+      categoryRequest,
+      imageRequest,
+    ]);
+
+  throwIfError(existingProductResult.error, "Loading product before save failed");
+  throwIfError(variantResult.error, "Loading product variants before save failed");
+  throwIfError(categoryResult.error, "Loading product category before save failed");
+  throwIfError(imageResult.error, "Loading product image before save failed");
+
+  const existingProduct = existingProductResult.data as
+    | Pick<ProductRow, "id" | "handle" | "published_at">
+    | null;
+  if (input.id && !existingProduct) throw new Error("Product not found.");
+
+  const preexistingVariants = (variantResult.data ?? []) as VariantRow[];
+  const category = categoryResult.data as { id: string; name: string } | null;
+  if (input.categoryId && !category) throw new Error("Selected category no longer exists.");
 
   let variantManagedSeparately = preexistingVariants.length > 1;
   const handle = existingProduct?.handle ?? (await uniqueHandle(input.title));
@@ -1388,15 +1414,7 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   }
   if (!productId) throw new Error("Product save completed without an id.");
 
-  const { data: existingVariants, error: variantReadError } = await supabase
-    .from("store_product_variants")
-    .select("*")
-    .eq("product_id", productId)
-    .order("sort_order", { ascending: true });
-  throwIfError(variantReadError, "Loading product variants failed");
-
-  const variantRows = (existingVariants ?? []) as VariantRow[];
-  variantManagedSeparately = variantRows.length > 1;
+  const variantRows = preexistingVariants;
   if (variantRows.length <= 1) {
     const variantPayload = {
       title: variantRows[0]?.title ?? "Default",
@@ -1425,26 +1443,25 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   }
 
   if (input.imageUrl.trim()) {
-    const { data: existingImage, error: imageReadError } = await supabase
-      .from("store_product_images")
-      .select("id")
-      .eq("product_id", productId)
-      .order("is_primary", { ascending: false })
-      .order("sort_order", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    throwIfError(imageReadError, "Loading product image failed");
+    const existingImage = imageResult.data as
+      | { id: string; url: string; alt_text: string | null }
+      | null;
+    const nextImageUrl = input.imageUrl.trim();
+    const nextAltText = input.title.trim();
+
     if (existingImage) {
-      const { error } = await supabase
-        .from("store_product_images")
-        .update({ url: input.imageUrl.trim(), alt_text: input.title.trim(), is_primary: true })
-        .eq("id", existingImage.id);
-      throwIfError(error, "Updating product image failed");
+      if (existingImage.url !== nextImageUrl || existingImage.alt_text !== nextAltText) {
+        const { error } = await supabase
+          .from("store_product_images")
+          .update({ url: nextImageUrl, alt_text: nextAltText, is_primary: true })
+          .eq("id", existingImage.id);
+        throwIfError(error, "Updating product image failed");
+      }
     } else {
       const { error } = await supabase.from("store_product_images").insert({
         product_id: productId,
-        url: input.imageUrl.trim(),
-        alt_text: input.title.trim(),
+        url: nextImageUrl,
+        alt_text: nextAltText,
         is_primary: true,
         sort_order: 0,
       });
@@ -1465,7 +1482,7 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   }
 
   invalidateNativeStoreCache();
-  return { id: productId, handle, variantManagedSeparately, brandName: brand?.name ?? "" };
+  return { id: productId, handle, variantManagedSeparately };
 }
 
 
