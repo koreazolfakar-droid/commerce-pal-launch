@@ -11,15 +11,39 @@ This directory contains the hardened Android Trusted Web Activity (TWA) shell fo
 - Target / compile SDK: API 36
 - Android Browser Helper: 2.7.3
 
+## Build toolchain
+
+The Android project currently uses:
+
+- Android Gradle Plugin: 9.4.0
+- Gradle: 9.6.0
+- JDK: 17
+- Android SDK Platform: 36
+- Android Build Tools: 36.0.0
+
+For a local debug build, set `ANDROID_HOME` or `ANDROID_SDK_ROOT` and run:
+
+`bash scripts/android-local-debug-build.sh`
+
+That command runs the Android source security gate, the standalone Java 8 URL
+policy regression test, `lintDebug`, `assembleDebug`, package/version checks,
+signature verification, 16 KB ZIP alignment verification, and SHA-256 generation.
+
+A successful run writes:
+
+- `dist/android/Space-Call-1.0.2-debug.apk`
+- `dist/android/Space-Call-1.0.2-debug.apk.sha256`
+
 ## Architecture
 
 The storefront remains the source of truth. Android launches the canonical HTTPS
 origin through a TWA and falls back only to an external browser / Custom Tab.
 There is intentionally no embedded WebView fallback.
 
-`SpaceCallLauncherActivity` is the only launcher entry point. It accepts only Space Call web URLs, upgrades HTTP links to the canonical HTTPS
-origin, rejects non-web or foreign hosts, strips user-info/ports, and catches
-runtime TWA launch failures so a broken or missing provider cannot crash the app.
+`SpaceCallLauncherActivity` is the only launcher entry point. It accepts only
+Space Call web URLs, upgrades HTTP links to the canonical HTTPS origin, rejects
+non-web or foreign hosts, strips user-info/ports, and catches runtime TWA launch
+failures so a broken or missing provider cannot crash the app.
 
 ## Security baseline
 
@@ -73,14 +97,18 @@ must be persistent and must never reuse a disposable debug signing key.
 A green Android pipeline must include all of the following:
 
 1. source security gate
-2. Android lint with real errors blocking; warnings remain visible for review
-3. debug APK build
-4. APK signature/package inspection
-5. emulator install and cold-launch smoke test
-6. crash-buffer and fatal-log scan
-7. Digital Asset Links validation
-8. signed release APK/AAB only when persistent release signing is configured
+2. Java 8 URL policy regression test
+3. Android lint with real errors blocking; warnings remain visible for review
+4. debug APK build
+5. APK package/version/signature/alignment inspection
+6. emulator install and cold-launch smoke test
+7. crash-buffer and fatal-log scan
+8. Digital Asset Links validation
+9. signed release APK/AAB only when persistent release signing is configured
 
+The emulator smoke test is kept separate from the local build script because it
+requires an Android virtual or physical device. CI runs it through
+`.github/scripts/android-emulator-smoke-test.sh`.
 
 ## Camera and photos
 
