@@ -156,9 +156,9 @@ export const useCartStore = create<CartStore>()(
 
         set({ isSyncing: true });
         try {
-          const products = await fetchProductsByIds(
-            [...new Set(current.map((item) => item.product.node.id))],
-          );
+          const products = await fetchProductsByIds([
+            ...new Set(current.map((item) => item.product.node.id)),
+          ]);
           const productById = new Map(products.map((product) => [product.node.id, product]));
           const fetchedProductIds = new Set(current.map((item) => item.product.node.id));
           const next: CartItem[] = [];
@@ -193,7 +193,10 @@ export const useCartStore = create<CartStore>()(
 
           set(localCartState(next));
         } catch (error) {
-          console.warn("[cart] storefront synchronization failed; keeping the last local cart.", error);
+          console.warn(
+            "[cart] storefront synchronization failed; keeping the last local cart.",
+            error,
+          );
         } finally {
           set({ isSyncing: false });
         }
