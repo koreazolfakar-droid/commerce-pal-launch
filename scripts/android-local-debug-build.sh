@@ -11,9 +11,21 @@ for tool in node javac java gradle; do
   fi
 done
 
+GRADLE_VERSION="$(gradle --version | awk '/^Gradle / { print $2; exit }')"
+if [ "$GRADLE_VERSION" != "9.6.0" ]; then
+  echo "Gradle 9.6.0 is required by Android Gradle Plugin 9.4.0; found: ${GRADLE_VERSION:-unknown}" >&2
+  exit 2
+fi
+
 SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 if [ -z "$SDK_ROOT" ]; then
   echo "ANDROID_HOME or ANDROID_SDK_ROOT must point to the Android SDK." >&2
+  exit 2
+fi
+
+PLATFORM_JAR="$SDK_ROOT/platforms/android-36/android.jar"
+if [ ! -f "$PLATFORM_JAR" ]; then
+  echo "Android SDK Platform 36 is missing: $PLATFORM_JAR" >&2
   exit 2
 fi
 
@@ -39,7 +51,7 @@ node scripts/android-security-gate.mjs
 echo "== Java 8 URL policy security tests =="
 rm -rf /tmp/space-call-url-policy
 mkdir -p /tmp/space-call-url-policy/classes
-javac --release 8 -d /tmp/space-call-url-policy/classes   android/app/src/main/java/store/spacecallapp/app/SpaceCallUrlPolicy.java   android/security-tests/store/spacecallapp/app/SpaceCallUrlPolicySelfTest.java
+javac --release 8 -d /tmp/space-call-url-policy/classes android/app/src/main/java/store/spacecallapp/app/SpaceCallUrlPolicy.java android/security-tests/store/spacecallapp/app/SpaceCallUrlPolicySelfTest.java
 java -cp /tmp/space-call-url-policy/classes store.spacecallapp.app.SpaceCallUrlPolicySelfTest
 
 echo "== Android lint + debug APK build =="
@@ -63,7 +75,7 @@ echo "== APK alignment =="
 echo "== Package artifact =="
 mkdir -p dist/android
 cp "$APK" dist/android/Space-Call-1.0.2-debug.apk
-sha256sum dist/android/Space-Call-1.0.2-debug.apk   | tee dist/android/Space-Call-1.0.2-debug.apk.sha256
+sha256sum dist/android/Space-Call-1.0.2-debug.apk | tee dist/android/Space-Call-1.0.2-debug.apk.sha256
 
 echo
 echo "APK READY: dist/android/Space-Call-1.0.2-debug.apk"
