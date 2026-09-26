@@ -28,7 +28,12 @@ test("dashboard expires inactive Supabase sessions", () => {
 
 test("dashboard session recovery is centralized, bounded and tab-scoped", () => {
   assert.match(catalog, /DASHBOARD_ACCESS_TOKEN_REFRESH_SKEW_MS = 5_000/);
+  assert.match(catalog, /DASHBOARD_USER_VALIDATION_CACHE_TTL_MS = 5_000/);
   assert.match(catalog, /let dashboardSessionRefreshRequest: Promise<boolean> \| null = null/);
+  assert.match(catalog, /dashboardUserValidationRequest/);
+  assert.match(catalog, /async function getServerValidatedDashboardUser/);
+  assert.match(catalog, /dashboardValidatedUserCache\.expiresAt > Date\.now\(\)/);
+  assert.match(catalog, /clearDashboardAuthCaches\(\)/);
   assert.match(catalog, /async function refreshDashboardSessionOnce\(\)/);
   assert.match(catalog, /await supabase\.auth\.refreshSession\(\)/);
   assert.match(catalog, /let refreshed = false/);
