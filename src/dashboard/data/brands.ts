@@ -6,7 +6,7 @@ import {
   listDashboardProducts,
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 import {
   convertProductImageToWebp,
   getImageCompressionPreset,
@@ -202,6 +202,7 @@ export async function createDashboardBrand(brand: CatalogBrand) {
   throwIfError(error, "Creating brand failed");
   if (!data) throw new Error("Creating brand returned no record.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapBrand(data as BrandRow);
 }
 
@@ -235,6 +236,7 @@ export async function updateDashboardBrand(brand: CatalogBrand) {
   }
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapBrand(data as BrandRow);
 }
 
@@ -248,6 +250,7 @@ export async function assignProductsToDashboardBrand(productIds: string[], brand
     .in("id", ids);
   throwIfError(error, "Assigning products to brand failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function deleteDashboardBrand(
@@ -279,6 +282,7 @@ export async function deleteDashboardBrand(
   );
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function reorderDashboardBrands(brands: CatalogBrand[]) {
@@ -292,6 +296,7 @@ export async function reorderDashboardBrands(brands: CatalogBrand[]) {
   }));
   throwIfError(error, "Saving brand order failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function refreshDashboardProducts() {
