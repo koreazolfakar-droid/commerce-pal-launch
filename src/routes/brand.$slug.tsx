@@ -23,12 +23,12 @@ export const Route = createFileRoute("/brand/$slug")({
         .eq("is_visible", true)
         .maybeSingle(),
     ]);
-    if (managedBrandResult.error) {
-      throw new Error(`Loading storefront brand failed: ${managedBrandResult.error.message}`);
-    }
     const brand = catalog.brands.find((entry) => entry.slug === params.slug);
     if (!brand) throw notFound();
-    const managedBrand = managedBrandResult.data;
+    if (managedBrandResult.error) {
+      console.warn("Loading optional storefront brand metadata failed.", managedBrandResult.error);
+    }
+    const managedBrand = managedBrandResult.error ? null : managedBrandResult.data;
 
     const indexedProducts = catalog.products.filter(
       (product) => catalog.brandOf.get(product.node.handle)?.slug === params.slug,
