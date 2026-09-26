@@ -117,7 +117,9 @@ export async function loadHomepagePreviewProducts(
   }
 
   if (source !== "best_sellers" && source !== "newest") {
-    query = query.order("updated_at", { ascending: false }).order("id");
+    query = query
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
   }
 
   const { data, error } = await query.limit(limit);
