@@ -392,6 +392,36 @@ export default function AiAssistPanel({
                         {result.summary ? <p className="mt-1">{result.summary}</p> : null}
                       </div>
 
+                      <div
+                        className={
+                          "rounded-xl border px-3.5 py-3 text-[10px] leading-4 " +
+                          (result.entityMatch.status === "exact"
+                            ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                            : result.entityMatch.status === "partial"
+                              ? "border-amber-100 bg-amber-50 text-amber-800"
+                              : "border-rose-100 bg-rose-50 text-rose-700")
+                        }
+                      >
+                        <div className="flex items-center gap-2 font-black">
+                          {result.entityMatch.status === "exact" ? (
+                            <ShieldCheck className="size-3.5" />
+                          ) : (
+                            <AlertTriangle className="size-3.5" />
+                          )}
+                          {result.entityMatch.status === "exact"
+                            ? "Exact entity verified"
+                            : result.entityMatch.status === "partial"
+                              ? "Partial entity match"
+                              : "Entity uncertain"}
+                        </div>
+                        {result.entityMatch.canonicalName ? (
+                          <p className="mt-1 font-bold">{result.entityMatch.canonicalName}</p>
+                        ) : null}
+                        {result.entityMatch.reason ? (
+                          <p className="mt-1 opacity-80">{result.entityMatch.reason}</p>
+                        ) : null}
+                      </div>
+
                       {result.warnings.length ? (
                         <div className="rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3">
                           <div className="text-[10px] font-black text-amber-800">Review warnings</div>
@@ -414,8 +444,10 @@ export default function AiAssistPanel({
                             definition,
                             context,
                           });
-                          const noChange = issue === "No change";
-                          const blocked = Boolean(issue);
+                          const noChange =
+                            issue === "No change" ||
+                            suggestion.checks.includes("No meaningful change from the current value");
+                          const blocked = Boolean(issue) || suggestion.decision === "block";
                           const checked = !blocked && selected.has(suggestion.field);
                           const current = currentData[suggestion.field] ?? "";
                           return (
@@ -455,16 +487,32 @@ export default function AiAssistPanel({
                                         "rounded-full px-2 py-0.5 text-[8px] font-black " +
                                         (noChange
                                           ? "bg-slate-200 text-slate-600"
-                                          : suggestion.verified
+                                          : suggestion.decision === "allow"
                                             ? "bg-emerald-100 text-emerald-700"
-                                            : "bg-amber-100 text-amber-700")
+                                            : suggestion.decision === "block"
+                                              ? "bg-rose-100 text-rose-700"
+                                              : "bg-amber-100 text-amber-700")
                                       }
                                     >
                                       {noChange
-                                        ? "No change"
-                                        : suggestion.verified
-                                          ? "Verified"
-                                          : "Review"}
+                                        ? "No meaningful change"
+                                        : suggestion.decision === "allow"
+                                          ? "Safe to apply"
+                                          : suggestion.decision === "block"
+                                            ? "Blocked"
+                                            : "Review"}
+                                    </span>
+                                    <span
+                                      className={
+                                        "rounded-full px-2 py-0.5 text-[8px] font-black " +
+                                        (suggestion.risk === "high"
+                                          ? "bg-rose-50 text-rose-600"
+                                          : suggestion.risk === "medium"
+                                            ? "bg-amber-50 text-amber-600"
+                                            : "bg-slate-100 text-slate-500")
+                                      }
+                                    >
+                                      {suggestion.risk} risk
                                     </span>
                                     {!noChange ? (
                                       <span className="text-[9px] font-bold text-slate-400">
@@ -484,6 +532,13 @@ export default function AiAssistPanel({
                                     <div className="mt-1 text-[9px] leading-4 text-slate-400">
                                       {suggestion.reason}
                                     </div>
+                                  ) : null}
+                                  {suggestion.checks.length ? (
+                                    <ul className="mt-1.5 space-y-0.5 text-[9px] leading-4 text-slate-500">
+                                      {suggestion.checks.map((check, index) => (
+                                        <li key={index}>• {check}</li>
+                                      ))}
+                                    </ul>
                                   ) : null}
                                   {issue && !noChange ? (
                                     <div className="mt-1 text-[9px] font-bold text-rose-600">
@@ -521,8 +576,18 @@ export default function AiAssistPanel({
                                 rel="noreferrer"
                                 className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 text-[10px] font-semibold text-slate-600 hover:border-indigo-100 hover:text-indigo-700"
                               >
-                                <span className="truncate">{source.title || source.url}</span>
-                                <ExternalLink className="size-3 shrink-0" />
+                                <span className="min-w-0 truncate">{source.title || source.url}</span>
+                                <span className="flex shrink-0 items-center gap-1.5 text-[8px] font-black">
+                                  {source.official ? (
+                                    <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-emerald-700">
+                                      Official
+                                    </span>
+                                  ) : null}
+                                  <span className="text-slate-400">
+                                    {Math.round(source.quality * 100)}%
+                                  </span>
+                                  <ExternalLink className="size-3" />
+                                </span>
                               </a>
                             ))}
                           </div>
