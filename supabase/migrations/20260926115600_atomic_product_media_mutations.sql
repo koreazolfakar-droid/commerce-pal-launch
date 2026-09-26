@@ -2,6 +2,12 @@
 -- Dashboard staff may choose one primary image, reorder the full gallery,
 -- or delete an image while promoting the next image in the same transaction.
 
+-- Enforce the invariant at the database layer as well as in the RPCs.
+-- Current production data has at most one primary image per product.
+create unique index if not exists store_product_images_one_primary_uidx
+  on public.store_product_images (product_id)
+  where is_primary = true;
+
 create or replace function public.set_store_product_primary_image(
   p_product_id uuid,
   p_image_id uuid
