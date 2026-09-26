@@ -140,11 +140,9 @@ test("product media mutations return targeted results without success-path list 
     read("src/dashboard/components/products/ProductVariantManager.tsx"),
   ]);
 
-  const mediaMutations = functionSlice(
-    catalog,
-    "export async function uploadDashboardProductImage",
-    "export type DashboardSeoPage",
-  );
+  const mediaStart = catalog.indexOf("export async function uploadDashboardProductImage");
+  assert.ok(mediaStart >= 0, "product media mutation block should exist");
+  const mediaMutations = catalog.slice(mediaStart);
 
   assert.doesNotMatch(mediaMutations, /return listDashboardProductImages/);
   assert.match(mediaMutations, /image: mapProductImage/);
