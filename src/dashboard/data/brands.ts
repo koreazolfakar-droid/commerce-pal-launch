@@ -7,6 +7,7 @@ import {
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { safeStoreHref } from "@/lib/safeUrl";
 import {
   convertProductImageToWebp,
   getImageCompressionPreset,
@@ -94,6 +95,7 @@ export async function removeDashboardBrandImage(url: string) {
 }
 
 function mapBrand(row: BrandRow): CatalogBrand {
+  const safeWebsite = safeStoreHref(row.href);
   return {
     id: row.id,
     name: row.name,
@@ -104,7 +106,7 @@ function mapBrand(row: BrandRow): CatalogBrand {
     order: row.sort_order,
     ...(row.logo_url ? { logo: row.logo_url } : {}),
     ...(row.cover_image_url ? { coverImage: row.cover_image_url } : {}),
-    ...(row.href ? { website: row.href } : {}),
+    ...(safeWebsite ? { website: safeWebsite } : {}),
     ...(row.seo_title ? { seoTitle: row.seo_title } : {}),
     ...(row.seo_description ? { seoDescription: row.seo_description } : {}),
     createdAt: row.created_at,
@@ -113,6 +115,12 @@ function mapBrand(row: BrandRow): CatalogBrand {
 }
 
 function toBrandPayload(brand: CatalogBrand) {
+  const rawWebsite = brand.website?.trim() ?? "";
+  const safeWebsite = rawWebsite ? safeStoreHref(rawWebsite) : null;
+  if (rawWebsite && !safeWebsite) {
+    throw new Error("Brand website must be a site path, #anchor, or a valid http(s) URL without embedded credentials.");
+  }
+
   return {
     name: brand.name.trim(),
     slug: normalizeBrandSlug(brand.slug || brand.name),
@@ -122,7 +130,7 @@ function toBrandPayload(brand: CatalogBrand) {
     sort_order: Math.max(0, Math.trunc(brand.order)),
     logo_url: brand.logo?.trim() || null,
     cover_image_url: brand.coverImage?.trim() || null,
-    href: brand.website?.trim() || null,
+    href: safeWebsite,
     seo_title: brand.seoTitle?.trim() || null,
     seo_description: brand.seoDescription?.trim() || null,
   };

@@ -34,3 +34,10 @@ Action: force the Lovable-connected production deployment to rebuild the current
 Expected runtime snapshot: afc1430dffe4d3dccd3ea2abfa8a450c79e1f40b
 Includes MFA UI merge: e62def6287830de14c383b16bf7339998da0b110
 Runtime behavior changed by this marker: none.
+
+Security hardening republish request: 2026-09-26
+Action: force the Lovable-connected Space Call production project to rebuild current main after final session/CI/URL hardening.
+Required runtime snapshot: the merge commit containing branch security/session-ci-final-hardening-20260926.
+Includes: tab-scoped production Supabase auth storage, legacy localStorage cleanup, shared URL allowlist, restored automatic security CI.
+Do not deploy the separate "Deploy. Done." Lovable project.
+Runtime behavior changed by this marker: none; marker exists only to force the correct connected deployment to sync after merge.

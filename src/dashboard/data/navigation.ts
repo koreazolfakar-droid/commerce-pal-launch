@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole, type DashboardRole } from "@/dashboard/data/catalog";
+import { safeStoreHref } from "@/lib/safeUrl";
 
 type NavigationRow = Tables<"cms_navigation_items">;
 
@@ -60,17 +61,11 @@ function mapNavigation(row: NavigationRow): DashboardNavigationItem {
 function normalizeHref(value: string) {
   const href = value.trim();
   if (!href) return "";
-  if (href.startsWith("/") || href.startsWith("#")) return href;
-  let parsed: URL;
-  try {
-    parsed = new URL(href);
-  } catch {
-    throw new Error("Navigation URL must be a site path, #anchor, or a valid http(s) URL.");
+  const safe = safeStoreHref(href);
+  if (!safe) {
+    throw new Error("Navigation URL must be a site path, #anchor, or a valid http(s) URL without embedded credentials.");
   }
-  if (!["http:", "https:"].includes(parsed.protocol)) {
-    throw new Error("Navigation URL must use http:// or https://.");
-  }
-  return parsed.toString();
+  return safe;
 }
 
 function normalizeInput(input: DashboardNavigationInput) {

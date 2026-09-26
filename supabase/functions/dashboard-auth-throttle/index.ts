@@ -9,16 +9,47 @@ const IP_HARD_FAILURES = 50;
 const SOFT_BLOCK_MS = 15 * 60 * 1000;
 const HARD_BLOCK_MS = 60 * 60 * 1000;
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Cache-Control": "no-store",
-  "Content-Type": "application/json; charset=utf-8",
-};
+const allowedOrigins = new Set([
+  "https://spacecallapp.store",
+  "https://www.spacecallapp.store",
+  "http://localhost:3000",
+  "http://localhost:5173",
+]);
 
-function json(body: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: cors });
+function originAllowed(origin: string) {
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "https:" &&
+      (
+        url.hostname.endsWith(".lovable.app") ||
+        url.hostname.endsWith(".lovableproject.com") ||
+        url.hostname.endsWith(".lovableproject-dev.com") ||
+        url.hostname.endsWith(".gpt-eng.com") ||
+        url.hostname.endsWith(".gptengineer.run")
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
+function cors(req: Request) {
+  const origin = req.headers.get("origin")?.trim() ?? "";
+  return {
+    ...(originAllowed(origin)
+      ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" }
+      : {}),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Cache-Control": "no-store",
+    "Content-Type": "application/json; charset=utf-8",
+  };
+}
+
+function json(req: Request, body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: cors(req) });
 }
 
 function clientIp(req: Request) {
@@ -47,25 +78,25 @@ type Bucket = {
 type Outcome = "attempt" | "check" | "failure" | "success";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
+  if (req.method !== "POST") return json(req, { error: "method_not_allowed" }, 405);
 
   const url = Deno.env.get("SUPABASE_URL");
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!url || !serviceRole) return json({ error: "server_not_configured" }, 503);
+  if (!url || !serviceRole) return json(req, { error: "server_not_configured" }, 503);
 
   let payload: { email?: unknown; outcome?: unknown };
   try {
     payload = await req.json();
   } catch {
-    return json({ error: "invalid_json" }, 400);
+    return json(req, { error: "invalid_json" }, 400);
   }
 
   const requestedEmail =
     typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   const requestedOutcome = String(payload.outcome ?? "");
   if (!["attempt", "check", "failure", "success"].includes(requestedOutcome)) {
-    return json({ error: "invalid_request" }, 400);
+    return json(req, { error: "invalid_request" }, 400);
   }
   const outcome = requestedOutcome as Outcome;
 
@@ -73,7 +104,7 @@ Deno.serve(async (req) => {
     outcome !== "success" &&
     (!requestedEmail || requestedEmail.length > 320 || !requestedEmail.includes("@"))
   ) {
-    return json({ error: "invalid_request" }, 400);
+    return json(req, { error: "invalid_request" }, 400);
   }
 
   const supabase = createClient(url, serviceRole, {
@@ -84,18 +115,18 @@ Deno.serve(async (req) => {
   if (outcome === "success") {
     const authorization = req.headers.get("authorization")?.trim() ?? "";
     if (!authorization.toLowerCase().startsWith("bearer ")) {
-      return json({ error: "authentication_required" }, 401);
+      return json(req, { error: "authentication_required" }, 401);
     }
 
     const token = authorization.slice(7).trim();
-    if (!token) return json({ error: "authentication_required" }, 401);
+    if (!token) return json(req, { error: "authentication_required" }, 401);
 
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser(token);
     if (authError || !user?.id || !user.email) {
-      return json({ error: "authentication_required" }, 401);
+      return json(req, { error: "authentication_required" }, 401);
     }
 
     const { data: roleRow, error: roleError } = await supabase
@@ -103,9 +134,9 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", user.id)
       .maybeSingle();
-    if (roleError) return json({ error: "throttle_unavailable" }, 503);
+    if (roleError) return json(req, { error: "throttle_unavailable" }, 503);
     if (roleRow?.role !== "admin" && roleRow?.role !== "editor") {
-      return json({ error: "dashboard_access_required" }, 403);
+      return json(req, { error: "dashboard_access_required" }, 403);
     }
 
     // Never trust a client-supplied email for a successful login reset.
@@ -114,14 +145,14 @@ Deno.serve(async (req) => {
   }
 
   if (!email || email.length > 320 || !email.includes("@")) {
-    return json({ error: "invalid_request" }, 400);
+    return json(req, { error: "invalid_request" }, 400);
   }
 
   // Compatibility for clients deployed before the attempt-based protocol.
   // Failure reports no longer inspect account existence or mutate account-specific
   // state. The pre-auth "check" request below already consumes the attempt.
   if (outcome === "failure") {
-    return json({ allowed: true, retryAfter: 0 });
+    return json(req, { allowed: true, retryAfter: 0 });
   }
 
   const ip = clientIp(req);
@@ -205,7 +236,7 @@ Deno.serve(async (req) => {
       const pairRetry = retryAfter(pairBucket, now);
       const ipRetry = retryAfter(ipBucket, now);
       const retry = Math.max(pairRetry, ipRetry);
-      if (retry > 0) return json({ allowed: false, retryAfter: retry });
+      if (retry > 0) return json(req, { allowed: false, retryAfter: retry });
 
       await Promise.all([
         resetExpired(pairKeyHash, pairBucket, now),
@@ -219,7 +250,7 @@ Deno.serve(async (req) => {
 
       // The attempt that reaches a threshold is still allowed to proceed. The
       // newly-created block applies to the next attempt, matching the old UX.
-      return json({
+      return json(req, {
         allowed: true,
         retryAfter: 0,
         remainingBeforeBlock: Math.min(
@@ -242,8 +273,8 @@ Deno.serve(async (req) => {
       .delete()
       .lt("last_attempt_at", new Date(now - 48 * 60 * 60 * 1000).toISOString());
 
-    return json({ allowed: true, retryAfter: 0 });
+    return json(req, { allowed: true, retryAfter: 0 });
   } catch {
-    return json({ error: "throttle_unavailable" }, 503);
+    return json(req, { error: "throttle_unavailable" }, 503);
   }
 });

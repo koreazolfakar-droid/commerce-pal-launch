@@ -6,16 +6,47 @@ const HIBP_TIMEOUT_MS = 8_000;
 const MIN_PASSWORD_LENGTH = 10;
 const MAX_PASSWORD_LENGTH = 256;
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Cache-Control": "no-store",
-  "Content-Type": "application/json; charset=utf-8",
-};
+const allowedOrigins = new Set([
+  "https://spacecallapp.store",
+  "https://www.spacecallapp.store",
+  "http://localhost:3000",
+  "http://localhost:5173",
+]);
 
-function json(body: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: cors });
+function originAllowed(origin: string) {
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "https:" &&
+      (
+        url.hostname.endsWith(".lovable.app") ||
+        url.hostname.endsWith(".lovableproject.com") ||
+        url.hostname.endsWith(".lovableproject-dev.com") ||
+        url.hostname.endsWith(".gpt-eng.com") ||
+        url.hostname.endsWith(".gptengineer.run")
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
+function cors(req: Request) {
+  const origin = req.headers.get("origin")?.trim() ?? "";
+  return {
+    ...(originAllowed(origin)
+      ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" }
+      : {}),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Cache-Control": "no-store",
+    "Content-Type": "application/json; charset=utf-8",
+  };
+}
+
+function json(req: Request, body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: cors(req) });
 }
 
 function bearerToken(req: Request) {
@@ -93,31 +124,31 @@ async function isPasswordCompromised(password: string) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
+  if (req.method !== "POST") return json(req, { error: "method_not_allowed" }, 405);
 
   const url = Deno.env.get("SUPABASE_URL");
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!url || !serviceRole) return json({ error: "server_not_configured" }, 503);
+  if (!url || !serviceRole) return json(req, { error: "server_not_configured" }, 503);
 
   const token = bearerToken(req);
-  if (!token) return json({ error: "authentication_required" }, 401);
+  if (!token) return json(req, { error: "authentication_required" }, 401);
 
   const declaredLength = Number(req.headers.get("content-length") ?? "0");
   if (Number.isFinite(declaredLength) && declaredLength > 4096) {
-    return json({ error: "request_too_large" }, 413);
+    return json(req, { error: "request_too_large" }, 413);
   }
 
   let body: { password?: unknown };
   try {
     body = await req.json();
   } catch {
-    return json({ error: "invalid_json" }, 400);
+    return json(req, { error: "invalid_json" }, 400);
   }
 
   const password = typeof body.password === "string" ? body.password : "";
   if (password.length < MIN_PASSWORD_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
-    return json({ error: "invalid_password_length" }, 400);
+    return json(req, { error: "invalid_password_length" }, 400);
   }
 
   const admin = createClient(url, serviceRole, {
@@ -130,12 +161,12 @@ Deno.serve(async (req) => {
   } = await admin.auth.getUser(token);
 
   if (userError || !user?.id) {
-    return json({ error: "authentication_required" }, 401);
+    return json(req, { error: "authentication_required" }, 401);
   }
 
   const claims = decodeJwtPayload(token);
   if (!claims || claims.sub !== user.id || claims.aal !== "aal2") {
-    return json({ error: "aal2_required" }, 403);
+    return json(req, { error: "aal2_required" }, 403);
   }
 
   const { data: roleRows, error: roleError } = await admin
@@ -143,7 +174,7 @@ Deno.serve(async (req) => {
     .select("role,mfa_required,mfa_enrolled_at")
     .eq("user_id", user.id);
 
-  if (roleError) return json({ error: "authorization_unavailable" }, 503);
+  if (roleError) return json(req, { error: "authorization_unavailable" }, 503);
 
   const hasEnforcedStaffRole = (roleRows ?? []).some(
     (row) =>
@@ -152,7 +183,7 @@ Deno.serve(async (req) => {
       Boolean(row.mfa_enrolled_at),
   );
   if (!hasEnforcedStaffRole) {
-    return json({ error: "dashboard_access_required" }, 403);
+    return json(req, { error: "dashboard_access_required" }, 403);
   }
 
   let compromised: boolean;
@@ -161,11 +192,11 @@ Deno.serve(async (req) => {
   } catch {
     // Fail closed. A password must never be changed when breach screening
     // could not be completed.
-    return json({ error: "breach_screening_unavailable" }, 503);
+    return json(req, { error: "breach_screening_unavailable" }, 503);
   }
 
   if (compromised) {
-    return json({ error: "compromised_password" }, 422);
+    return json(req, { error: "compromised_password" }, 422);
   }
 
   const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
@@ -173,7 +204,7 @@ Deno.serve(async (req) => {
   });
 
   if (updateError) {
-    return json({ error: "password_update_failed" }, 500);
+    return json(req, { error: "password_update_failed" }, 500);
   }
 
   const sessionId = typeof claims.session_id === "string" ? claims.session_id : null;
@@ -193,5 +224,5 @@ Deno.serve(async (req) => {
     console.warn("[dashboard-security] server password audit log failed", auditError.message);
   }
 
-  return json({ ok: true });
+  return json(req, { ok: true });
 });

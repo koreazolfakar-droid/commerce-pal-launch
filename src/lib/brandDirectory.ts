@@ -4,6 +4,7 @@ import type { CatalogFacet } from "@/lib/taxonomy";
 import { slugify } from "@/lib/taxonomy";
 import { orderedBrands } from "@/lib/homeMerchandising";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { safeStoreHref } from "@/lib/safeUrl";
 
 export interface StoreBrand extends CatalogFacet {
   image?: string;
@@ -112,7 +113,7 @@ export function applyCmsBrands(storeBrands: StoreBrand[], cmsBrands: CmsBrand[])
       ...brand,
       ...(override?.name?.trim() ? { label: override.name.trim() } : {}),
       ...(override?.logo_url?.trim() ? { image: override.logo_url.trim() } : {}),
-      ...(override?.href?.trim() ? { href: override.href.trim() } : {}),
+      ...(safeStoreHref(override?.href) ? { href: safeStoreHref(override?.href)! } : {}),
       ...(override && typeof override.is_featured === "boolean"
         ? { featured: override.is_featured }
         : {}),
@@ -127,7 +128,7 @@ export function applyCmsBrands(storeBrands: StoreBrand[], cmsBrands: CmsBrand[])
       label: brand.name,
       count: 0,
       ...(brand.logo_url ? { image: brand.logo_url } : {}),
-      ...(brand.href ? { href: brand.href } : {}),
+      ...(safeStoreHref(brand.href) ? { href: safeStoreHref(brand.href)! } : {}),
       ...(typeof brand.is_featured === "boolean" ? { featured: brand.is_featured } : {}),
       __cmsOrder: brand.sort_order,
     });

@@ -97,7 +97,7 @@ test("Auth0 dashboard tokens remain memory-only", () => {
 
 test("GitHub CI automatically validates important dashboard and storefront updates", () => {
   assert.match(workflow, /workflow_dispatch/);
-  assert.match(workflow, /\npush:/);
+  assert.match(workflow, /\n  push:/);
   assert.match(workflow, /\n  pull_request:/);
   assert.match(workflow, /Source security gate/);
   assert.match(workflow, /Dependency security gate/);
