@@ -675,6 +675,71 @@ function meaningfullySame(field: string, current: string, suggested: string) {
   return normalizeComparable(field, current) === normalizeComparable(field, suggested);
 }
 
+function slugRelatedToName(slug: string, name: string) {
+  const slugTokens = new Set(slug.toLowerCase().split("-").filter(Boolean));
+  const nameTokens = identityTokens(name);
+  if (!slugTokens.size || !nameTokens.size) return true;
+  return [...slugTokens].some((token) => nameTokens.has(token));
+}
+
+function identityTokens(value: string) {
+  const normalized = value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/(\d+)\s*(gb|tb|mb)/g, "$1$2");
+  return new Set(normalized.match(/[\p{L}\p{N}]+/gu) ?? []);
+}
+
+function calibrateEntityMatch(
+  match: EntityMatch,
+  entity: string,
+  query: string,
+  currentData: Record<string, string>,
+): EntityMatch {
+  if (match.status !== "exact") return match;
+  if (!match.canonicalName.trim()) {
+    return {
+      status: "uncertain",
+      canonicalName: "",
+      reason: "AI reported an exact match without a canonical entity name.",
+    };
+  }
+
+  const reference = [
+    query,
+    currentData.title ?? "",
+    currentData.name ?? "",
+    currentData.brandName ?? "",
+  ].join(" ");
+  const referenceTokens = identityTokens(reference);
+  const canonicalTokens = identityTokens(match.canonicalName);
+  const overlap = [...canonicalTokens].filter((token) => referenceTokens.has(token)).length;
+  const denominator = Math.max(1, Math.min(canonicalTokens.size, referenceTokens.size));
+  const overlapRatio = overlap / denominator;
+
+  if (overlapRatio < 0.5) {
+    return {
+      ...match,
+      status: "uncertain",
+      reason: `Server verification downgraded the entity match: ${match.reason || "canonical identity does not sufficiently match the requested entity"}`,
+    };
+  }
+
+  if (entity === "product") {
+    const variantTokens = [...identityTokens(query)].filter((token) => /\d/.test(token));
+    const missingVariantToken = variantTokens.find((token) => !canonicalTokens.has(token));
+    if (missingVariantToken) {
+      return {
+        ...match,
+        status: "partial",
+        reason: `Server verification downgraded the match because variant token "${missingVariantToken}" is missing from the canonical entity.`,
+      };
+    }
+  }
+
+  return match;
+}
+
 function parseEntityMatch(root: Record<string, unknown>): EntityMatch {
   const raw =
     root.entityMatch && typeof root.entityMatch === "object"
@@ -999,11 +1064,15 @@ async function verifySuggestions(args: {
 }) {
   const definitions = new Map(args.fields.map((field) => [field.key, field] as const));
   const valuesByField = new Map<string, Set<string>>();
+  const firstSuggestionValue = new Map<string, string>();
 
   for (const suggestion of args.suggestions) {
     const values = valuesByField.get(suggestion.field) ?? new Set<string>();
     values.add(normalizeComparable(suggestion.field, suggestion.value));
     valuesByField.set(suggestion.field, values);
+    if (!firstSuggestionValue.has(suggestion.field)) {
+      firstSuggestionValue.set(suggestion.field, suggestion.value);
+    }
   }
 
   const conflictingFields = new Set(
@@ -1038,6 +1107,19 @@ async function verifySuggestions(args: {
       const blockers = [...local.blockers, ...database.blockers];
       const reviews = [...local.reviews, ...database.reviews];
       const passes = [...local.passes, ...database.passes];
+
+      if (
+        suggestion.field === "slug" &&
+        (args.entity === "category" || args.entity === "brand")
+      ) {
+        const relatedName =
+          firstSuggestionValue.get("name") ?? args.currentData.name ?? "";
+        if (relatedName && !slugRelatedToName(suggestion.value, relatedName)) {
+          reviews.push("Slug does not closely match the entity name");
+        } else if (relatedName) {
+          passes.push("Slug is aligned with the entity name");
+        }
+      }
 
       if (conflictingFields.has(suggestion.field)) {
         blockers.push("Conflicting AI values were returned for this field");
@@ -1289,13 +1371,19 @@ ${JSON.stringify(responseSchema(suggestionFields))}`,
     research.grounded,
     fallbackWarning,
   );
+  const entityMatch = calibrateEntityMatch(
+    normalized.entityMatch,
+    entity,
+    query,
+    currentData,
+  );
   const suggestions = await verifySuggestions({
     admin,
     entity,
     fields: suggestionFields,
     currentData,
     context,
-    entityMatch: normalized.entityMatch,
+    entityMatch,
     suggestions: normalized.suggestions,
     grounded: research.grounded,
     sources,
@@ -1307,7 +1395,7 @@ ${JSON.stringify(responseSchema(suggestionFields))}`,
     action,
     model: usedModel,
     grounded: research.grounded,
-    entityMatch: normalized.entityMatch,
+    entityMatch,
     summary: normalized.summary,
     suggestions,
     warnings: normalized.warnings,
