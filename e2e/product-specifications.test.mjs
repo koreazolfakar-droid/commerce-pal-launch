@@ -13,6 +13,7 @@ const [
   productRoute,
   compareRoute,
   migration,
+  nativeStore,
 ] = await Promise.all([
   read("src/lib/specifications.ts"),
   read("src/lib/filters.ts"),
@@ -22,6 +23,7 @@ const [
   read("src/routes/product.$handle.tsx"),
   read("src/routes/compare.tsx"),
   read("supabase/migrations/20260926153325_final_category_product_specifications.sql"),
+  read("src/lib/nativeStore.ts"),
 ]);
 
 test("legacy specification JSON survives dashboard normalization", () => {
@@ -85,4 +87,19 @@ test("database rollout is legacy-safe, validates later, and accepts empty uncate
   assert.match(migration, /for share;/i);
   assert.match(migration, /security definer/i);
   assert.match(migration, /update_store_category_with_spec_template/);
+});
+
+
+test("catalog hydration batches category templates instead of querying per product", () => {
+  assert.match(nativeStore, /STOREFRONT_CATEGORY_SELECT/);
+  assert.match(
+    nativeStore,
+    /publicSupabase\.from\("store_categories"\)\.select\(STOREFRONT_CATEGORY_SELECT\)/,
+  );
+  assert.match(nativeStore, /templatesByCategoryId/);
+  assert.match(nativeStore, /parseTemplate\(row\.spec_template\)/);
+  assert.match(
+    nativeStore,
+    /row\.category_id \? templatesByCategoryId\.get\(row\.category_id\) : undefined/,
+  );
 });
