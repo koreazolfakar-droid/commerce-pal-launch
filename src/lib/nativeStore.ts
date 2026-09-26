@@ -653,8 +653,12 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
       .eq("product_id", row.id)
       .order("sort_order", { ascending: true }),
     row.brand_id
-      ? publicSupabase.from("cms_brands")
-      .select(STOREFRONT_BRAND_SELECT).eq("id", row.brand_id).maybeSingle()
+      ? publicSupabase
+          .from("cms_brands")
+          .select(STOREFRONT_BRAND_SELECT)
+          .eq("id", row.brand_id)
+          .eq("is_visible", true)
+          .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
