@@ -1224,7 +1224,8 @@ export default function CategoriesPage() {
                   <select
                     value={deleteDestination}
                     onChange={(event) => setDeleteDestination(event.target.value)}
-                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none"
+                    disabled={deleting}
+                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <option value="uncategorized">Uncategorized</option>
                     {categories
@@ -1258,6 +1259,7 @@ export default function CategoriesPage() {
               type="button"
               onClick={confirmDelete}
               disabled={deleting}
+              aria-busy={deleting}
               className="flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
               {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
