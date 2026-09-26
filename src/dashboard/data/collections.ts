@@ -196,7 +196,7 @@ export async function getDashboardCollection(id: string): Promise<DashboardColle
 
 export async function createDashboardCollection(
   input: DashboardCollectionInput,
-): Promise<DashboardCollectionDetail | null> {
+): Promise<DashboardCollectionListItem> {
   await requireDashboardStaff();
   const { data, error } = await supabase.rpc("create_store_collection", rpcArgs({
     p_title: input.title,
@@ -210,15 +210,17 @@ export async function createDashboardCollection(
     p_seo_description: input.seoDescription || null,
   }));
   throwIfError(error, "Creating collection failed");
-  return data ? getDashboardCollection(data.id) : null;
+  const created = data as unknown as CollectionRow | null;
+  if (!created?.id) throw new Error("Creating collection returned no row.");
+  return mapCollection(created);
 }
 
 export async function updateDashboardCollection(
   id: string,
   input: DashboardCollectionInput,
-): Promise<DashboardCollectionDetail | null> {
+): Promise<DashboardCollectionListItem> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_collection", rpcArgs({
+  const { data, error } = await supabase.rpc("update_store_collection", rpcArgs({
     p_collection_id: id,
     p_title: input.title,
     p_handle: input.handle,
@@ -231,7 +233,9 @@ export async function updateDashboardCollection(
     p_seo_description: input.seoDescription || null,
   }));
   throwIfError(error, "Updating collection failed");
-  return getDashboardCollection(id);
+  const updated = data as unknown as CollectionRow | null;
+  if (!updated?.id) throw new Error("Updating collection returned no row.");
+  return mapCollection(updated);
 }
 
 export async function deleteDashboardCollection(id: string): Promise<void> {
@@ -243,14 +247,13 @@ export async function deleteDashboardCollection(id: string): Promise<void> {
 export async function saveDashboardCollectionProducts(
   id: string,
   productIds: string[],
-): Promise<DashboardCollectionDetail | null> {
+): Promise<void> {
   await requireDashboardStaff();
   const { error } = await supabase.rpc("set_store_collection_products", rpcArgs({
     p_collection_id: id,
     p_product_ids: productIds,
   }));
   throwIfError(error, "Saving collection products failed");
-  return getDashboardCollection(id);
 }
 
 export async function reorderDashboardCollections(

@@ -10,6 +10,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { toast } from "sonner";
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import {
@@ -47,6 +48,7 @@ export default function ProductMediaManager({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DashboardProductImage | null>(null);
   const [replaceTarget, setReplaceTarget] = useState<DashboardProductImage | null>(null);
   const [resolution, setResolution] = useState<ProductImageResolution>(() =>
     getProductImageResolution(),
@@ -87,15 +89,31 @@ export default function ProductMediaManager({
       const inspected = await Promise.all(files.map((file) => inspectProductImageSource(file)));
       setPendingInfo(inspected);
 
-      let rows = images;
+      let rows = [...images];
+      let nextOrder = rows.reduce((max, image) => Math.max(max, image.sortOrder), -1) + 1;
+      let hasPrimary = rows.some((image) => image.isPrimary);
       const conversions: ProductImageConversionResult[] = [];
       for (const file of files) {
-        const result = await uploadDashboardProductImage(productId, file, resolution, productTitle);
-        rows = result.images;
+        const result = await uploadDashboardProductImage(
+          productId,
+          file,
+          resolution,
+          productTitle,
+          nextOrder,
+          !hasPrimary,
+        );
+        rows = [...rows, result.image].sort(
+          (a, b) =>
+            Number(b.isPrimary) - Number(a.isPrimary) ||
+            a.sortOrder - b.sortOrder ||
+            a.createdAt.localeCompare(b.createdAt),
+        );
+        nextOrder += 1;
+        hasPrimary = hasPrimary || result.image.isPrimary;
         conversions.push(result.conversion);
         setLastConversions([...conversions]);
+        sync(rows);
       }
-      sync(rows);
       toast.success(files.length === 1 ? "Image uploaded." : `${files.length} images uploaded.`);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product image upload failed.");
@@ -117,7 +135,7 @@ export default function ProductMediaManager({
     try {
       setPendingInfo([await inspectProductImageSource(file)]);
       const result = await replaceDashboardProductImage(target, file, resolution);
-      sync(result.images);
+      sync(images.map((image) => (image.id === result.image.id ? result.image : image)));
       setLastConversions([result.conversion]);
       toast.success(successMessage);
     } catch (cause) {
@@ -130,11 +148,20 @@ export default function ProductMediaManager({
     }
   };
 
-  const remove = async (image: DashboardProductImage) => {
-    if (!window.confirm("Delete this image from the product?")) return;
+  const remove = async () => {
+    if (!deleteTarget || busyId) return;
+    const image = deleteTarget;
     setBusyId(image.id);
     try {
-      sync(await deleteDashboardProductImage(image));
+      const result = await deleteDashboardProductImage(image);
+      const remaining = images
+        .filter((row) => row.id !== image.id)
+        .map((row) => ({
+          ...row,
+          isPrimary: result.promotedImageId ? row.id === result.promotedImageId : row.isPrimary,
+        }));
+      sync(remaining);
+      setDeleteTarget(null);
       toast.success("Image deleted.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image deletion failed.");
@@ -147,7 +174,8 @@ export default function ProductMediaManager({
     if (image.isPrimary) return;
     setBusyId(image.id);
     try {
-      sync(await setDashboardPrimaryProductImage(productId, image.id));
+      await setDashboardPrimaryProductImage(productId, image.id);
+      sync(images.map((row) => ({ ...row, isPrimary: row.id === image.id })));
       toast.success("Primary image updated.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Primary image update failed.");
@@ -162,11 +190,12 @@ export default function ProductMediaManager({
 
     const reordered = [...images];
     [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
-    setImages(reordered);
+    const normalized = reordered.map((image, position) => ({ ...image, sortOrder: position }));
+    sync(normalized);
     setBusyId(images[index].id);
 
     try {
-      sync(await reorderDashboardProductImages(productId, reordered.map((image) => image.id)));
+      await reorderDashboardProductImages(productId, normalized.map((image) => image.id));
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image order update failed.");
       await load();
@@ -517,8 +546,8 @@ export default function ProductMediaManager({
                   </button>
                   <button
                     type="button"
-                    onClick={() => void remove(image)}
-                    disabled={busyId === image.id}
+                    onClick={() => setDeleteTarget(image)}
+                    disabled={busyId !== null}
                     className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500 hover:bg-rose-50 disabled:opacity-40"
                     aria-label="Delete image"
                   >
@@ -568,6 +597,24 @@ export default function ProductMediaManager({
           </span>
         </button>
       )}
+
+      <DashboardConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete this product image?"
+        description={
+          deleteTarget?.isPrimary
+            ? "This is the primary image. After deletion, the next image in the gallery will become primary automatically."
+            : "The image will be removed from this product and its owned media file will be cleaned up when possible."
+        }
+        confirmLabel="Delete image"
+        pendingLabel="Deleting..."
+        pending={Boolean(deleteTarget && busyId === deleteTarget.id)}
+        destructive
+        onClose={() => {
+          if (!busyId) setDeleteTarget(null);
+        }}
+        onConfirm={() => void remove()}
+      />
     </div>
   );
 }

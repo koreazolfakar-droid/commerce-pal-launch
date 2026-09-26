@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import {
@@ -148,6 +149,8 @@ export default function ProductVariantManager({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingVariantId, setDeletingVariantId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DashboardProductVariant | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [imageResolution, setImageResolution] = useState<ProductImageResolution>(() => getProductImageResolution());
@@ -232,16 +235,25 @@ export default function ProductVariantManager({
     }
   };
 
-  const remove = async (variant: DashboardProductVariant) => {
-    if (!canDelete) return toast.error("Only admins can permanently delete variants.");
-    if (!window.confirm(`Permanently delete variant "${variant.title}"?`)) return;
+  const remove = async () => {
+    if (!deleteTarget || deletingVariantId) return;
+    if (!canDelete) {
+      toast.error("Only admins can permanently delete variants.");
+      setDeleteTarget(null);
+      return;
+    }
+
+    setDeletingVariantId(deleteTarget.id);
     try {
-      await deleteDashboardProductVariant(variant.id);
-      const next = variants.filter((row) => row.id !== variant.id);
+      await deleteDashboardProductVariant(deleteTarget.id);
+      const next = variants.filter((row) => row.id !== deleteTarget.id);
       publishState(next);
+      setDeleteTarget(null);
       toast.success("Variant deleted.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Variant delete failed.");
+    } finally {
+      setDeletingVariantId(null);
     }
   };
 
@@ -423,8 +435,9 @@ export default function ProductVariantManager({
                 {canDelete ? (
                   <button
                     type="button"
-                    onClick={() => void remove(variant)}
-                    className="grid size-8 place-items-center rounded-lg text-rose-500 hover:bg-rose-50"
+                    onClick={() => setDeleteTarget(variant)}
+                    disabled={deletingVariantId !== null}
+                    className="grid size-8 place-items-center rounded-lg text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label={`Delete ${variant.title}`}
                   >
                     <Trash2 className="size-3.5" />
@@ -615,6 +628,24 @@ export default function ProductVariantManager({
           </div>
         </div>
       ) : null}
+
+      <DashboardConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete this variant permanently?"
+        description={
+          deleteTarget
+            ? `"${deleteTarget.title}" will be permanently removed. The server will reject deletion when protected inventory or order history requires the variant to be preserved.`
+            : ""
+        }
+        confirmLabel="Delete variant"
+        pendingLabel="Deleting..."
+        pending={deletingVariantId !== null}
+        destructive
+        onClose={() => {
+          if (!deletingVariantId) setDeleteTarget(null);
+        }}
+        onConfirm={() => void remove()}
+      />
     </div>
   );
 }

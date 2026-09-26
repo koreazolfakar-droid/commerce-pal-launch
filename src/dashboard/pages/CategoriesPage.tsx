@@ -33,7 +33,6 @@ import {
   getCategoryProductCount,
   getProductsForCategory,
   loadCategoriesWorkspace,
-  refreshDashboardCategoryProducts,
   reorderDashboardCategories,
   updateDashboardCategory,
   uploadDashboardCategoryImage,
@@ -151,6 +150,7 @@ export default function CategoriesPage() {
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CatalogCategory | null>(null);
   const [deleteDestination, setDeleteDestination] = useState("uncategorized");
+  const [deleting, setDeleting] = useState(false);
   const [moveProduct, setMoveProduct] = useState<DashboardProduct | null>(null);
   const [moveDestination, setMoveDestination] = useState("");
   const [productMenuId, setProductMenuId] = useState<string | null>(null);
@@ -186,6 +186,42 @@ export default function CategoriesPage() {
   }, []);
 
   const selected = categories.find((category) => category.id === selectedId) || categories[0];
+
+  const patchProductCategoryAssignments = (
+    productIds: string[],
+    destination: CatalogCategory | null,
+  ) => {
+    const ids = new Set(productIds);
+    if (!ids.size) return;
+    setProducts((current) =>
+      current.map((product) =>
+        ids.has(product.id)
+          ? {
+              ...product,
+              categoryId: destination?.id ?? null,
+              category: destination?.name ?? "",
+            }
+          : product,
+      ),
+    );
+  };
+
+  const reassignProductsFromCategory = (
+    sourceCategoryId: string,
+    destination: CatalogCategory | null,
+  ) => {
+    setProducts((current) =>
+      current.map((product) =>
+        product.categoryId === sourceCategoryId
+          ? {
+              ...product,
+              categoryId: destination?.id ?? null,
+              category: destination?.name ?? "",
+            }
+          : product,
+      ),
+    );
+  };
 
   const assignedProducts = useMemo(
     () => (selected ? getProductsForCategory(products, selected) : []),
@@ -319,7 +355,11 @@ export default function CategoriesPage() {
       setCategories((current) =>
         current.map((category) => (category.id === saved.id ? saved : category)),
       );
-      setProducts(await refreshDashboardCategoryProducts());
+      setProducts((current) =>
+        current.map((product) =>
+          product.categoryId === saved.id ? { ...product, category: saved.name } : product,
+        ),
+      );
       setSelectedId(saved.id);
       setEditing(null);
     } catch (cause) {
@@ -373,30 +413,41 @@ export default function CategoriesPage() {
       toast.error("Keep at least one category in the catalog.");
       return;
     }
+    setDeleting(false);
     setDeleteTarget(category);
     setDeleteDestination("uncategorized");
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || deleting) return;
     const destinationId =
       deleteDestination === "uncategorized" ? null : deleteDestination || null;
+    const deletedCategoryId = deleteTarget.id;
+    const destination =
+      destinationId === null
+        ? null
+        : categories.find((category) => category.id === destinationId) ?? null;
+    const remainingCategories = categories.filter(
+      (category) => category.id !== deletedCategoryId,
+    );
 
+    setDeleting(true);
     try {
-      await deleteDashboardCategory(deleteTarget.id, destinationId);
-      const workspace = await loadCategoriesWorkspace();
-      setCategories(workspace.categories);
-      setProducts(workspace.products);
+      await deleteDashboardCategory(deletedCategoryId, destinationId);
+      setCategories(remainingCategories);
+      reassignProductsFromCategory(deletedCategoryId, destination);
       setSelectedId((current) =>
-        current === deleteTarget.id ||
-        !workspace.categories.some((category) => category.id === current)
-          ? workspace.categories[0]?.id || ""
+        current === deletedCategoryId ||
+        !remainingCategories.some((category) => category.id === current)
+          ? remainingCategories[0]?.id || ""
           : current,
       );
       setDeleteTarget(null);
       toast.success("Category deleted and product assignments updated in Supabase.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Category deletion failed.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -404,7 +455,7 @@ export default function CategoriesPage() {
     if (!selected) return;
     try {
       await assignProductsToDashboardCategory(productIds, selected);
-      setProducts(await refreshDashboardCategoryProducts());
+      patchProductCategoryAssignments(productIds, selected);
       setAssignmentOpen(false);
       toast.success(
         productIds.length === 1
@@ -419,7 +470,7 @@ export default function CategoriesPage() {
   const removeProductFromCategory = async (product: DashboardProduct) => {
     try {
       await assignProductsToDashboardCategory([product.id], null);
-      setProducts(await refreshDashboardCategoryProducts());
+      patchProductCategoryAssignments([product.id], null);
       setProductMenuId(null);
       toast.success(product.name + " moved to Uncategorized in Supabase.");
     } catch (cause) {
@@ -437,7 +488,7 @@ export default function CategoriesPage() {
 
     try {
       await assignProductsToDashboardCategory([moveProduct.id], destination);
-      setProducts(await refreshDashboardCategoryProducts());
+      patchProductCategoryAssignments([moveProduct.id], destination);
       toast.success(moveProduct.name + " moved to " + destinationName + " in Supabase.");
       setMoveProduct(null);
       setMoveDestination("");
@@ -1155,7 +1206,9 @@ export default function CategoriesPage() {
         <ModalShell
           title={"Delete " + deleteTarget.name + "?"}
           subtitle="The category can be removed, but products are never deleted."
-          onClose={() => setDeleteTarget(null)}
+          onClose={() => {
+            if (!deleting) setDeleteTarget(null);
+          }}
         >
           {getCategoryProductCount(products, deleteTarget) > 0 ? (
             <div className="space-y-4">
@@ -1171,7 +1224,8 @@ export default function CategoriesPage() {
                   <select
                     value={deleteDestination}
                     onChange={(event) => setDeleteDestination(event.target.value)}
-                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none"
+                    disabled={deleting}
+                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <option value="uncategorized">Uncategorized</option>
                     {categories
@@ -1196,17 +1250,20 @@ export default function CategoriesPage() {
             <button
               type="button"
               onClick={() => setDeleteTarget(null)}
-              className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
+              disabled={deleting}
+              className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={confirmDelete}
-              className="flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[11px] font-bold text-white"
+              disabled={deleting}
+              aria-busy={deleting}
+              className="flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Trash2 className="size-4" />
-              Delete Category
+              {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+              {deleting ? "Deleting..." : "Delete Category"}
             </button>
           </div>
         </ModalShell>

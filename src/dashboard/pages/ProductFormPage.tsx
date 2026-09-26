@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 
 import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 import ProductVariantManager from "@/dashboard/components/products/ProductVariantManager";
 import {
@@ -74,12 +75,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [categories, setCategories] = useState<Awaited<ReturnType<typeof listDashboardCategories>>>([]);
   const [collections, setCollections] = useState<Awaited<ReturnType<typeof listDashboardCollections>>>([]);
   const [collectionIds, setCollectionIds] = useState<string[]>([]);
+  const [persistedCollectionIds, setPersistedCollectionIds] = useState<string[]>([]);
   const [variantCount, setVariantCount] = useState(0);
   const [variantRevision, setVariantRevision] = useState(0);
   const [role, setRole] = useState<"admin" | "editor" | null>(null);
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
-  const [working, setWorking] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"duplicate" | "archive" | "delete" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"archive" | "delete" | null>(null);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState<ProductDraft>(EMPTY);
 
@@ -101,6 +104,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         setCategories(categoryRows);
         setCollections(collectionRows);
         setCollectionIds(productCollectionIds);
+        setPersistedCollectionIds(productCollectionIds);
         setRole(dashboardRole);
         setVariantCount(product?.variantCount ?? 0);
         setSaved(false);
@@ -219,6 +223,30 @@ export default function ProductFormPage({ id }: { id?: string }) {
       return;
     }
 
+    const nextPrice = Number(form.price) || 0;
+    const nextCompareAt = form.compareAt.trim() ? Number(form.compareAt) : null;
+    const nextStock = Number(form.stock) || 0;
+    const nextCollectionIds = [...new Set(collectionIds)].sort();
+    const previousCollectionIds = [...new Set(persistedCollectionIds)].sort();
+    const collectionsChanged =
+      nextCollectionIds.length !== previousCollectionIds.length ||
+      nextCollectionIds.some((collectionId, index) => collectionId !== previousCollectionIds[index]);
+    const variantFieldsChanged = Boolean(
+      id &&
+        existing &&
+        variantCount <= 1 &&
+        (
+          existing.price !== nextPrice ||
+          existing.compareAt !== nextCompareAt ||
+          existing.sku !== form.sku.trim() ||
+          existing.barcode !== form.barcode.trim() ||
+          existing.stock !== nextStock
+        ),
+    );
+    const shouldRefreshVariantManager = Boolean(
+      id && variantCount <= 1 && (variantCount === 0 || variantFieldsChanged),
+    );
+
     setSaving(true);
     try {
       const savedProduct = await saveDashboardProduct({
@@ -228,23 +256,60 @@ export default function ProductFormPage({ id }: { id?: string }) {
         brandId: form.brandId || null,
         categoryId: form.categoryId || null,
         status: form.status,
-        price: Number(form.price) || 0,
-        compareAt: form.compareAt.trim() ? Number(form.compareAt) : null,
+        price: nextPrice,
+        compareAt: nextCompareAt,
         sku: form.sku,
         barcode: form.barcode,
-        stock: Number(form.stock) || 0,
+        stock: nextStock,
         imageUrl: form.imageUrl,
         seoTitle: form.seoTitle,
         seoDescription: form.seoDescription,
         collectionId: null,
       });
-      await setDashboardProductCollections(savedProduct.id, collectionIds);
+      if (collectionsChanged) {
+        await setDashboardProductCollections(savedProduct.id, nextCollectionIds);
+        setPersistedCollectionIds(nextCollectionIds);
+      }
+
+      if (id) {
+        const selectedBrand = brands.find((brand) => brand.id === form.brandId);
+        const selectedCategory = categories.find((category) => category.id === form.categoryId);
+        setExisting((current) =>
+          current
+            ? {
+                ...current,
+                name: form.title.trim(),
+                description: form.description.trim(),
+                brandId: form.brandId || null,
+                brand: selectedBrand?.name ?? "",
+                categoryId: form.categoryId || null,
+                category: selectedCategory?.name ?? "",
+                status: form.status,
+                price: savedProduct.variantManagedSeparately ? current.price : nextPrice,
+                compareAt: savedProduct.variantManagedSeparately ? current.compareAt : nextCompareAt,
+                stock: savedProduct.variantManagedSeparately ? current.stock : nextStock,
+                sku: savedProduct.variantManagedSeparately ? current.sku : form.sku.trim(),
+                barcode: savedProduct.variantManagedSeparately ? current.barcode : form.barcode.trim(),
+                image: form.imageUrl.trim(),
+                seoTitle: form.seoTitle.trim(),
+                seoDescription: form.seoDescription.trim(),
+              }
+            : current,
+        );
+      }
+
       setSaved(true);
-      setVariantRevision((value) => value + 1);
+      if (shouldRefreshVariantManager) {
+        setVariantRevision((value) => value + 1);
+      }
       toast.success(
         savedProduct.variantManagedSeparately
-          ? "Product details and collections saved. Variant pricing and inventory stayed independent."
-          : "Product saved to Supabase.",
+          ? collectionsChanged
+            ? "Product details and collections saved. Variant pricing and inventory stayed independent."
+            : "Product details saved. Variant pricing and inventory stayed independent."
+          : collectionsChanged
+            ? "Product and collections saved to Supabase."
+            : "Product saved to Supabase.",
       );
       if (!id) navigate(`/dashboard/products/${savedProduct.id}`);
     } catch (cause) {
@@ -255,8 +320,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
 
   const duplicate = async () => {
-    if (!id || working) return;
-    setWorking(true);
+    if (!id || pendingAction || saving) return;
+    setPendingAction("duplicate");
     try {
       const newId = await duplicateDashboardProduct(id);
       toast.success("Draft copy created with zero stock and blank SKU/barcode.");
@@ -264,38 +329,38 @@ export default function ProductFormPage({ id }: { id?: string }) {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product duplicate failed.");
     } finally {
-      setWorking(false);
+      setPendingAction(null);
     }
   };
 
   const archive = async () => {
-    if (!id || working) return;
-    if (!window.confirm("Archive this product and remove it from the live storefront?")) return;
-    setWorking(true);
+    if (!id || pendingAction || saving) return;
+    setPendingAction("archive");
     try {
       await setDashboardProductsStatus([id], "Archived");
       setForm((current) => ({ ...current, status: "Archived" }));
       setExisting((current) => current ? { ...current, status: "Archived" } : current);
+      setConfirmAction(null);
       toast.success("Product archived safely.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product archive failed.");
     } finally {
-      setWorking(false);
+      setPendingAction(null);
     }
   };
 
   const remove = async () => {
-    if (!id || working || role !== "admin") return;
-    if (!window.confirm("Permanently delete this product? Products with stock, orders or inventory history cannot be deleted.")) return;
-    setWorking(true);
+    if (!id || pendingAction || saving || role !== "admin") return;
+    setPendingAction("delete");
     try {
       await deleteDashboardProductSafe(id);
+      setConfirmAction(null);
       toast.success("Product permanently deleted.");
       navigate("/dashboard/products");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product delete failed.");
     } finally {
-      setWorking(false);
+      setPendingAction(null);
     }
   };
 
@@ -349,22 +414,23 @@ export default function ProductFormPage({ id }: { id?: string }) {
             <>
               <button
                 onClick={() => void duplicate()}
-                disabled={working}
+                disabled={saving || pendingAction !== null}
                 className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-600 disabled:opacity-50"
               >
-                <Copy className="size-3.5" /> Duplicate
+                {pendingAction === "duplicate" ? <Loader2 className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
+                {pendingAction === "duplicate" ? "Duplicating..." : "Duplicate"}
               </button>
               <button
-                onClick={() => void archive()}
-                disabled={working || form.status === "Archived"}
+                onClick={() => setConfirmAction("archive")}
+                disabled={saving || pendingAction !== null || form.status === "Archived"}
                 className="flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-[10px] font-bold text-amber-700 disabled:opacity-40"
               >
                 <Archive className="size-3.5" /> Archive
               </button>
               {role === "admin" ? (
                 <button
-                  onClick={() => void remove()}
-                  disabled={working}
+                  onClick={() => setConfirmAction("delete")}
+                  disabled={saving || pendingAction !== null}
                   className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 text-[10px] font-bold text-rose-700 disabled:opacity-50"
                 >
                   <Trash2 className="size-3.5" /> Delete
@@ -455,7 +521,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           />
           <button
             onClick={() => void handleSave()}
-            disabled={saving}
+            disabled={saving || pendingAction !== null}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:opacity-60"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}
@@ -600,6 +666,33 @@ export default function ProductFormPage({ id }: { id?: string }) {
           ) : null}
         </div>
       </div>
+
+      <DashboardConfirmDialog
+        open={confirmAction === "archive"}
+        title="Archive this product?"
+        description="The product will be removed from the live storefront but kept in the dashboard, including its variants, media, inventory history and order references."
+        confirmLabel="Archive product"
+        pendingLabel="Archiving..."
+        pending={pendingAction === "archive"}
+        onClose={() => {
+          if (!pendingAction) setConfirmAction(null);
+        }}
+        onConfirm={() => void archive()}
+      />
+
+      <DashboardConfirmDialog
+        open={confirmAction === "delete"}
+        title="Permanently delete this product?"
+        description="Safe deletion is allowed only when the product has no protected stock, order references or inventory history. Otherwise the server will reject the deletion and the product will remain unchanged."
+        confirmLabel="Delete permanently"
+        pendingLabel="Deleting..."
+        pending={pendingAction === "delete"}
+        destructive
+        onClose={() => {
+          if (!pendingAction) setConfirmAction(null);
+        }}
+        onConfirm={() => void remove()}
+      />
     </div>
   );
 }
