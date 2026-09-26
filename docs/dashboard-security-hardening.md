@@ -95,3 +95,4 @@ Auth0's additional dashboard token cache remains memory-only.
 - Dashboard saves now reject executable, protocol-relative, credential-bearing, or otherwise invalid managed links.
 - Current CMS URL data was checked before this change and contained no unsafe navigation, brand, or canonical destinations.
 - Production Supabase logs for `dashboard-auth-throttle` showed successful requests and no observed function errors during the inspected window.
+- Sensitive dashboard Edge endpoints now return browser CORS access only to Space Call production origins, localhost development, and trusted Lovable preview zones; arbitrary origins receive no `Access-Control-Allow-Origin`.
