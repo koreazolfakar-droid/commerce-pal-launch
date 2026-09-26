@@ -11,6 +11,7 @@ import {
   fetchCollectionByHandle,
   fetchCollections,
   fetchHomepageProducts,
+  fetchHomepageConfiguredProducts,
   fetchNewestProducts,
   fetchNavigationCatalogFacets,
   fetchProductByHandle,
@@ -19,6 +20,7 @@ import {
   fetchProductsByIds,
   fetchProductsByVendor,
   searchStorefront,
+  type HomepageProductSource,
 } from "@/lib/storefrontData";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex } from "@/lib/taxonomy";
@@ -144,6 +146,35 @@ export const navigationCatalogQueryOptions = () =>
     retry: QUERY_RETRY_COUNT,
     retryDelay,
   });
+
+export const homepageConfiguredProductsQueryOptions = (config: {
+  source: HomepageProductSource;
+  sourceValue?: string;
+  manualProductIds?: string[];
+  count?: number;
+}) => {
+  const manualIds = [...new Set(config.manualProductIds ?? [])];
+  const count = Math.min(10, Math.max(1, Math.trunc(config.count ?? 5)));
+  return queryOptions({
+    queryKey: [
+      "supabase",
+      "homepage-configured-products",
+      config.source,
+      config.sourceValue?.trim() ?? "",
+      manualIds,
+      count,
+    ],
+    queryFn: () =>
+      fetchHomepageConfiguredProducts({
+        ...config,
+        manualProductIds: manualIds,
+        count,
+      }),
+    staleTime: CATALOG_STALE_TIME,
+    retry: QUERY_RETRY_COUNT,
+    retryDelay,
+  });
+};
 
 export const bestSellingQueryOptions = () =>
   queryOptions({
