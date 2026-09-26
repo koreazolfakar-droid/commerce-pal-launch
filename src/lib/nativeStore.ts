@@ -21,6 +21,9 @@ type StorefrontProductRow = Pick<
   | "brand_id"
   | "product_type"
   | "created_at"
+  | "updated_at"
+  | "seo_title"
+  | "seo_description"
   | "tags"
   | "base_price"
   | "compare_at_price"
@@ -54,29 +57,29 @@ type StorefrontImageRow = Pick<
 >;
 type StorefrontCollectionRow = Pick<
   CollectionRow,
-  "id" | "handle" | "title" | "description" | "image_url"
+  "id" | "handle" | "title" | "description" | "image_url" | "seo_title" | "seo_description"
 >;
 type StorefrontCollectionLinkRow = Pick<
   CollectionLinkRow,
   "collection_id" | "product_id" | "sort_order"
 >;
-type StorefrontBrandRow = Pick<BrandRow, "id" | "name">;
+type StorefrontBrandRow = Pick<BrandRow, "id" | "name" | "slug">;
 type NavigationProductRow = Pick<
   ProductRow,
   "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
 >;
 
 const STOREFRONT_PRODUCT_SELECT =
-  "id,title,description,description_html,handle,brand_id,product_type,created_at,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
 const STOREFRONT_IMAGE_SELECT =
   "product_id,url,alt_text,is_primary,sort_order" as const;
 const STOREFRONT_COLLECTION_SELECT =
-  "id,handle,title,description,image_url" as const;
+  "id,handle,title,description,image_url,seo_title,seo_description" as const;
 const STOREFRONT_COLLECTION_LINK_SELECT =
   "collection_id,product_id,sort_order" as const;
-const STOREFRONT_BRAND_SELECT = "id,name" as const;
+const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
   "id,title,handle,brand_id,product_type,tags" as const;
 
@@ -274,9 +277,13 @@ function buildProduct(
       descriptionHtml: row.description_html ?? undefined,
       handle: row.handle,
       vendor: brand?.name,
+      vendorSlug: brand?.slug,
       productType: row.product_type ?? undefined,
+      seoTitle: row.seo_title ?? undefined,
+      seoDescription: row.seo_description ?? undefined,
       availableForSale,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
       tags: row.tags,
       priceRange: { minVariantPrice: money(minPrice, row.currency) },
       compareAtPriceRange:
@@ -591,6 +598,7 @@ export async function fetchNavigationCatalogFacets() {
         description: "",
         handle: row.handle,
         vendor: row.brand_id ? brandsById.get(row.brand_id)?.name : undefined,
+        vendorSlug: row.brand_id ? brandsById.get(row.brand_id)?.slug : undefined,
         productType: row.product_type ?? undefined,
         tags: row.tags,
         availableForSale: true,
@@ -702,6 +710,8 @@ function mapCollection(row: StorefrontCollectionRow): StoreCollection {
     handle: row.handle,
     title: row.title,
     description: row.description,
+    seoTitle: row.seo_title ?? undefined,
+    seoDescription: row.seo_description ?? undefined,
     image: row.image_url ? { url: row.image_url, altText: row.title } : null,
   };
 }
