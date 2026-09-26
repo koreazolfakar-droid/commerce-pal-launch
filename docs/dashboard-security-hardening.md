@@ -6,11 +6,11 @@
 - `user_roles` keeps a narrow self-read bootstrap path at AAL1 so a staff account can discover its role and complete TOTP enrollment; this does not grant dashboard data access.
 - Cloudflare Turnstile client integration for dashboard sign-in and password recovery.
 - Native Supabase Auth `captchaToken` forwarding.
-- Pre-auth Edge Function throttling with opaque SHA-256 buckets:
-  - IP + email pair: 5 failures / 10 minutes -> 15 minute block.
-  - IP + email pair: 10 failures / 10 minutes -> 60 minute block.
-  - Global source IP: 25 failures / 10 minutes -> 15 minute block.
-  - Global source IP: 50 failures / 10 minutes -> 60 minute block.
+- Pre-auth Edge Function throttling with opaque SHA-256 buckets. Every login attempt is consumed before Supabase Auth is called, so the throttle does not query whether the submitted email belongs to dashboard staff:
+  - IP + email pair: 5 attempts / 10 minutes -> 15 minute block for subsequent attempts.
+  - IP + email pair: 10 attempts / 10 minutes -> 60 minute block for subsequent attempts.
+  - Global source IP: 25 attempts / 10 minutes -> 15 minute block for subsequent attempts.
+  - Global source IP: 50 attempts / 10 minutes -> 60 minute block for subsequent attempts.
 - No raw email address or IP is stored in the throttle table.
 - Security event audit trail with sensitive metadata stripping.
 - Explicit Supabase session revocation:
@@ -54,10 +54,18 @@ Supabase's native **Leaked Password Protection** is still recommended if the pro
 
 ## Rate limiting
 
-The project-level Edge throttle is already deployed as `dashboard-auth-throttle`.
+The project-level dashboard auth throttle is deployed as `dashboard-auth-throttle`.
 Keep Supabase Auth's native rate limits enabled as an independent defense layer.
 
-The Edge throttle is intentionally fail-open if its infrastructure is unavailable so an Edge outage cannot lock the administrator out; TOTP MFA, Supabase Auth, RLS, and (when configured) Turnstile remain independent controls.
+Dashboard login throttling remains fail-open at the browser integration boundary if the Edge Function is unavailable, while TOTP MFA, Supabase Auth, RLS, and (when configured) Turnstile remain independent controls.
+
+The application server's global mutation limiter no longer uses process-local memory. It consumes the shared `consume_edge_rate_limit` database RPC through the server-only Supabase admin client, with the source address stored only as a SHA-256-derived bucket key. Mutating requests fail closed with HTTP 503 if that shared protection cannot be reached, avoiding per-instance bypasses during production scaling.
+
+## Privileged database RPC boundary
+
+Privileged dashboard RPC implementations are stored in the non-exposed `private` schema as `SECURITY DEFINER` functions. The existing `public` RPC names are preserved as `SECURITY INVOKER` wrappers, so the dashboard API contract remains stable without exposing definer functions directly through the Data API.
+
+The retired `ci_debug_logs` table has been removed. The old `ci-debug-log` Edge Function remains a 410 Gone tombstone and cannot write data.
 
 ## Secret handling
 
