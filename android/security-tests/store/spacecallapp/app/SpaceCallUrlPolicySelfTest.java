@@ -24,6 +24,12 @@ public final class SpaceCallUrlPolicySelfTest {
                         "https://www.spacecallapp.store/shop?q=iphone#top"));
 
         expect(
+                "encodedComponentsArePreserved",
+                "https://www.spacecallapp.store/search/a%20b?q=a%20b%26c#x%20y",
+                SpaceCallUrlPolicy.sanitize(
+                        "https://spacecallapp.store/search/a%20b?q=a%20b%26c#x%20y"));
+
+        expect(
                 "httpIsUpgradedToHttps",
                 "https://www.spacecallapp.store/my-orders?id=123",
                 SpaceCallUrlPolicy.sanitize(
