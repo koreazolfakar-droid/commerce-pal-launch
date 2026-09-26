@@ -1439,11 +1439,15 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
     ...(variantManagedSeparately
       ? {}
       : {
-          base_price: input.price,
-          compare_at_price: input.compareAt,
           sku: input.sku.trim() || null,
           barcode: input.barcode.trim() || null,
-          stock_quantity: Math.max(0, Math.trunc(input.stock)),
+          ...(existingProduct
+            ? {}
+            : {
+                base_price: input.price,
+                compare_at_price: input.compareAt,
+                stock_quantity: Math.max(0, Math.trunc(input.stock)),
+              }),
         }),
   };
 
