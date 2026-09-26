@@ -463,6 +463,8 @@ export function resolveBrand(
   product: StoreProduct,
   genericVendors: Set<string> = new Set(),
 ): BrandRef | null {
+  if (product.node.vendorHidden) return null;
+
   const identity = (value: string): BrandRef | null => {
     const slug = slugify(value);
     if (!slug) return null;
