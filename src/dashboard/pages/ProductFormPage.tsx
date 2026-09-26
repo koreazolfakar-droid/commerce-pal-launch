@@ -340,7 +340,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
       await setDashboardProductsStatus([id], "Archived");
       setForm((current) => ({ ...current, status: "Archived" }));
       setExisting((current) => current ? { ...current, status: "Archived" } : current);
-      setSaved(true);
       setConfirmAction(null);
       toast.success("Product archived safely.");
     } catch (cause) {
