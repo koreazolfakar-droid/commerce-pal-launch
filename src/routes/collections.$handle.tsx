@@ -67,12 +67,14 @@ function CollectionPage() {
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const products = applyFilters(allProducts, catalog, filters);
+  const facetProducts = applyFilters(allProducts, catalog, { ...filters, spec: undefined });
   return (
     <StoreLayout>
       <CatalogView
         title={collection.title}
         description={collection.description}
         products={products}
+        facetProducts={facetProducts}
         total={allProducts.length}
         filters={filters}
         facets={{ categories: catalog.categories, brands: catalog.brands }}
