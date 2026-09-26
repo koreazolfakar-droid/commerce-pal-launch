@@ -102,7 +102,7 @@ test("checkout keys are bound to the full payload and stale failures recover", (
   }
   assert.match(
     checkoutClient,
-    /idempotency_key: checkoutIdempotencyKey\(checkoutFingerprint\(input\)\)/,
+    /idempotency_key: await checkoutIdempotencyKey\(checkoutFingerprint\(input\)\)/,
   );
   assert.match(checkout, /clearCheckoutAttempt\(\)/);
   assert.match(checkout, /await syncCart\(\)/);
