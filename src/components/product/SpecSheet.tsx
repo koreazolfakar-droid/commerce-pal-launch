@@ -7,6 +7,7 @@ import type { SpecGroup } from "@/lib/productContent";
  */
 export function SpecSheet({ groups }: { groups: SpecGroup[] }) {
   if (groups.length === 0) return null;
+
   return (
     <div className="space-y-2">
       {groups.map((group) => (
@@ -15,10 +16,11 @@ export function SpecSheet({ groups }: { groups: SpecGroup[] }) {
           className="group overflow-hidden rounded-xl border bg-card"
           open={groups.length === 1 ? true : undefined}
         >
-          <summary
-            className="flex min-h-12 cursor-pointer items-center justify-between px-4 text-sm font-semibold text-foreground marker:hidden"
-          >
-            {group.title}<span aria-hidden className="text-muted-foreground group-open:rotate-180">⌄</span>
+          <summary className="flex min-h-12 cursor-pointer items-center justify-between px-4 text-sm font-semibold text-foreground marker:hidden">
+            {group.title}
+            <span aria-hidden className="text-muted-foreground group-open:rotate-180">
+              ⌄
+            </span>
           </summary>
           <dl className="divide-y">
             {group.rows.map((row) => (
