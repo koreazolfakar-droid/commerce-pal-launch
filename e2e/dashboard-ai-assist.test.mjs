@@ -114,6 +114,8 @@ test("phase two adds deterministic verification metadata", () => {
   assert.match(edge, /Exact entity or product variant was not verified/);
   assert.match(edge, /Slug is already used by another category/);
   assert.match(edge, /Barcode is already assigned to another product or variant/);
+  assert.match(edge, /function validGtin/);
+  assert.match(edge, /Barcode \/ GTIN checksum or length is invalid/);
   assert.match(edge, /sourceQuality >= 0\.95/);
   assert.match(panel, /Exact entity verified/);
   assert.match(panel, /Safe to apply/);
