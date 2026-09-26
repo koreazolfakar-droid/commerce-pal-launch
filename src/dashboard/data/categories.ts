@@ -6,7 +6,7 @@ import {
   listDashboardProducts,
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 import {
   convertProductImageToWebp,
   type ProductImageConversionResult,
@@ -198,6 +198,7 @@ export async function createDashboardCategory(category: CatalogCategory) {
   throwIfError(error, "Creating category failed");
   if (!data) throw new Error("Creating category returned no record.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapCategory(data as CategoryRow);
 }
 
@@ -241,6 +242,7 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   }
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapCategory(data as CategoryRow);
 }
 
@@ -289,6 +291,7 @@ export async function uploadDashboardCategoryImage(
     }
 
     invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
     return {
       category: mapCategory(data as CategoryRow),
       conversion,
@@ -316,6 +319,7 @@ export async function deleteDashboardCategoryImage(
 
   await removeOwnedCategoryImageFile(previousImageUrl).catch(() => undefined);
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapCategory(data as CategoryRow);
 }
 
@@ -335,6 +339,7 @@ export async function assignProductsToDashboardCategory(
     .in("id", ids);
   throwIfError(error, "Assigning products to category failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function deleteDashboardCategory(
@@ -353,6 +358,7 @@ export async function deleteDashboardCategory(
   ));
   throwIfError(error, "Deleting category failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function reorderDashboardCategories(categories: CatalogCategory[]) {
@@ -366,6 +372,7 @@ export async function reorderDashboardCategories(categories: CatalogCategory[]) 
   }));
   throwIfError(error, "Saving category order failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function refreshDashboardCategoryProducts() {
