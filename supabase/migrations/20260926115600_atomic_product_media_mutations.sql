@@ -16,6 +16,15 @@ begin
     raise exception 'dashboard staff required';
   end if;
 
+  perform 1
+  from public.store_products
+  where id = p_product_id
+  for update;
+
+  if not found then
+    raise exception 'product not found';
+  end if;
+
   if not exists (
     select 1
     from public.store_product_images
@@ -53,6 +62,15 @@ declare
 begin
   if auth.uid() is null or not private.is_dashboard_staff() then
     raise exception 'dashboard staff required';
+  end if;
+
+  perform 1
+  from public.store_products
+  where id = p_product_id
+  for update;
+
+  if not found then
+    raise exception 'product not found';
   end if;
 
   select count(*)::integer
@@ -107,6 +125,15 @@ declare
 begin
   if auth.uid() is null or not private.is_dashboard_staff() then
     raise exception 'dashboard staff required';
+  end if;
+
+  perform 1
+  from public.store_products
+  where id = p_product_id
+  for update;
+
+  if not found then
+    raise exception 'product not found';
   end if;
 
   delete from public.store_product_images
