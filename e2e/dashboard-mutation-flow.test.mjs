@@ -108,3 +108,26 @@ test("product save avoids redundant catalog reads and editor refreshes", async (
     /setDashboardProductCollections\(savedProduct\.id, collectionIds\)/,
   );
 });
+
+
+test("product destructive actions use dashboard confirmation and scoped pending state", async () => {
+  const [form, dialog] = await Promise.all([
+    read("src/dashboard/pages/ProductFormPage.tsx"),
+    read("src/dashboard/components/DashboardConfirmDialog.tsx"),
+  ]);
+
+  assert.doesNotMatch(form, /window\.confirm/);
+  assert.match(form, /pendingAction/);
+  assert.match(form, /confirmAction/);
+  assert.match(form, /setConfirmAction\("archive"\)/);
+  assert.match(form, /setConfirmAction\("delete"\)/);
+  assert.match(form, /pendingAction === "duplicate"/);
+  assert.match(form, /pendingAction === "archive"/);
+  assert.match(form, /pendingAction === "delete"/);
+  assert.match(form, /<DashboardConfirmDialog/);
+
+  assert.match(dialog, /role="dialog"/);
+  assert.match(dialog, /aria-modal="true"/);
+  assert.match(dialog, /aria-busy=\{pending\}/);
+  assert.match(dialog, /event\.key === "Escape"/);
+});
