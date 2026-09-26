@@ -18,6 +18,8 @@ type ManagedStoreCategory = {
   slug: string;
   description: string | null;
   image_url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
 };
 
 function normalizeCategoryName(value: string | undefined) {
@@ -34,7 +36,7 @@ function productsInManagedCategory(catalog: CatalogIndex, categoryName: string) 
 async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory | null> {
   const { data, error } = await publicSupabase
     .from("store_categories")
-    .select("name,name_ar,slug,description,image_url")
+    .select("name,name_ar,slug,description,image_url,seo_title,seo_description")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -81,6 +83,8 @@ export const Route = createFileRoute("/category/$slug")({
         managedCategoryName: managedCategory.name,
         description: managedCategory.description,
         imageUrl: managedCategory.image_url,
+        seoTitle: managedCategory.seo_title,
+        seoDescription: managedCategory.seo_description,
         products,
       };
     }
@@ -100,6 +104,8 @@ export const Route = createFileRoute("/category/$slug")({
       managedCategoryName: null,
       description: null,
       imageUrl: null,
+      seoTitle: null,
+      seoDescription: null,
       products: productsInCategory(catalog, params.slug),
     };
   },
@@ -113,8 +119,10 @@ export const Route = createFileRoute("/category/$slug")({
       };
     }
     const label = loaderData.label ?? categoryDefinition(params.slug)?.label ?? "Category";
-    const title = `${label} in Lebanon | ${STORE_NAME}`;
-    const description = `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
+    const title = loaderData.seoTitle?.trim() || `${label} in Lebanon | ${STORE_NAME}`;
+    const description =
+      loaderData.seoDescription?.trim() ||
+      `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
     const path = `/category/${params.slug}`;
     return {
       meta: [
