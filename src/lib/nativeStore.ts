@@ -73,12 +73,10 @@ const STOREFRONT_PRODUCT_SELECT =
   "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
-const STOREFRONT_IMAGE_SELECT =
-  "product_id,url,alt_text,is_primary,sort_order" as const;
+const STOREFRONT_IMAGE_SELECT = "product_id,url,alt_text,is_primary,sort_order" as const;
 const STOREFRONT_COLLECTION_SELECT =
   "id,handle,title,description,image_url,seo_title,seo_description" as const;
-const STOREFRONT_COLLECTION_LINK_SELECT =
-  "collection_id,product_id,sort_order" as const;
+const STOREFRONT_COLLECTION_LINK_SELECT = "collection_id,product_id,sort_order" as const;
 const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
   "id,title,handle,brand_id,product_type,tags" as const;
