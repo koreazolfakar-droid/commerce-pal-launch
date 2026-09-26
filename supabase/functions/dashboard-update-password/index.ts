@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
 
   let body: { password?: unknown };
   try {
-    body = await req.json(req, );
+    body = await req.json();
   } catch {
     return json(req, { error: "invalid_json" }, 400);
   }
