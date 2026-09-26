@@ -1177,8 +1177,21 @@ ${JSON.stringify(responseSchema(fields))}`,
     return json(req, { error: "invalid_ai_response", message: "AI returned an unreadable answer. Try again." }, 502);
   }
 
-  const research = usedModel === model ? grounding(providerPayload) : { grounded: false, sources: [] };
+  const research =
+    usedModel === model ? grounding(providerPayload) : { grounded: false, sources: [] };
+  const sources = scoreSources(research.sources, context);
   const normalized = normalizeAiResult(parsed, fields, research.grounded, fallbackWarning);
+  const suggestions = await verifySuggestions({
+    admin,
+    entity,
+    fields,
+    currentData,
+    context,
+    entityMatch: normalized.entityMatch,
+    suggestions: normalized.suggestions,
+    grounded: research.grounded,
+    sources,
+  });
 
   return json(req, {
     ok: true,
@@ -1186,7 +1199,10 @@ ${JSON.stringify(responseSchema(fields))}`,
     action,
     model: usedModel,
     grounded: research.grounded,
-    ...normalized,
-    sources: research.sources,
+    entityMatch: normalized.entityMatch,
+    summary: normalized.summary,
+    suggestions,
+    warnings: normalized.warnings,
+    sources,
   });
 });
