@@ -1485,16 +1485,22 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
     };
 
     if (existingVariant) {
-      const { error } = await supabase.rpc("update_store_product_variant", rpcArgs({
-        p_variant_id: existingVariant.id,
-        ...variantPayload,
-      }));
+      const { error } = await supabase.rpc(
+        "update_store_product_variant",
+        rpcArgs({
+          p_variant_id: existingVariant.id,
+          ...variantPayload,
+        }),
+      );
       throwIfError(error, "Updating product variant failed");
     } else {
-      const { error } = await supabase.rpc("create_store_product_variant", rpcArgs({
-        p_product_id: productId,
-        ...variantPayload,
-      }));
+      const { error } = await supabase.rpc(
+        "create_store_product_variant",
+        rpcArgs({
+          p_product_id: productId,
+          ...variantPayload,
+        }),
+      );
       throwIfError(error, "Creating product variant failed");
     }
   }
@@ -1705,10 +1711,13 @@ export async function setDashboardPrimaryProductImage(
 ): Promise<void> {
   await requireDashboardRole();
 
-  const { error } = await supabase.rpc("set_store_product_primary_image", rpcArgs({
-    p_product_id: productId,
-    p_image_id: imageId,
-  }));
+  const { error } = await supabase.rpc(
+    "set_store_product_primary_image",
+    rpcArgs({
+      p_product_id: productId,
+      p_image_id: imageId,
+    }),
+  );
   throwIfError(error, "Setting primary product image failed");
 
   invalidateNativeStoreCache();
@@ -1742,10 +1751,13 @@ export async function reorderDashboardProductImages(
 ): Promise<void> {
   await requireDashboardRole();
 
-  const { error } = await supabase.rpc("reorder_store_product_images", rpcArgs({
-    p_product_id: productId,
-    p_image_ids: orderedIds,
-  }));
+  const { error } = await supabase.rpc(
+    "reorder_store_product_images",
+    rpcArgs({
+      p_product_id: productId,
+      p_image_ids: orderedIds,
+    }),
+  );
   throwIfError(error, "Reordering product images failed");
 
   invalidateNativeStoreCache();
