@@ -33,7 +33,6 @@ import {
   getBrandProductCount,
   getProductsForBrand,
   loadBrandsWorkspace,
-  refreshDashboardProducts,
   reorderDashboardBrands,
   updateDashboardBrand,
   uploadDashboardBrandImage,
@@ -188,6 +187,42 @@ export default function BrandsPage() {
 
   const selected = brands.find((brand) => brand.id === selectedId) || brands[0];
 
+  const patchProductBrandAssignments = (
+    productIds: string[],
+    destination: CatalogBrand | null,
+  ) => {
+    const ids = new Set(productIds);
+    if (!ids.size) return;
+    setProducts((current) =>
+      current.map((product) =>
+        ids.has(product.id)
+          ? {
+              ...product,
+              brandId: destination?.id ?? null,
+              brand: destination?.name ?? "",
+            }
+          : product,
+      ),
+    );
+  };
+
+  const reassignProductsFromBrand = (
+    sourceBrandId: string,
+    destination: CatalogBrand | null,
+  ) => {
+    setProducts((current) =>
+      current.map((product) =>
+        product.brandId === sourceBrandId
+          ? {
+              ...product,
+              brandId: destination?.id ?? null,
+              brand: destination?.name ?? "",
+            }
+          : product,
+      ),
+    );
+  };
+
   const assignedProducts = useMemo(
     () => (selected ? getProductsForBrand(products, selected) : []),
     [products, selected],
@@ -300,6 +335,11 @@ export default function BrandsPage() {
           : [...current, saved];
         return next.sort((a, b) => a.order - b.order);
       });
+      setProducts((current) =>
+        current.map((product) =>
+          product.brandId === saved.id ? { ...product, brand: saved.name } : product,
+        ),
+      );
       setSelectedId(saved.id);
 
       toast.success(
@@ -370,13 +410,20 @@ export default function BrandsPage() {
 
     setDeleting(true);
     try {
-      await deleteDashboardBrand(deleteTarget.id, destinationId);
-      const workspace = await loadBrandsWorkspace();
-      setBrands(workspace.brands);
-      setProducts(workspace.products);
+      const deletedBrandId = deleteTarget.id;
+      const destination =
+        destinationId === null
+          ? null
+          : brands.find((brand) => brand.id === destinationId) ?? null;
+      const remainingBrands = brands.filter((brand) => brand.id !== deletedBrandId);
+
+      await deleteDashboardBrand(deletedBrandId, destinationId);
+
+      setBrands(remainingBrands);
+      reassignProductsFromBrand(deletedBrandId, destination);
       setSelectedId((current) =>
-        current === deleteTarget.id || !workspace.brands.some((brand) => brand.id === current)
-          ? workspace.brands[0]?.id || ""
+        current === deletedBrandId || !remainingBrands.some((brand) => brand.id === current)
+          ? remainingBrands[0]?.id || ""
           : current,
       );
       setDeleteTarget(null);
@@ -392,7 +439,7 @@ export default function BrandsPage() {
     if (!selected) return;
     try {
       await assignProductsToDashboardBrand(productIds, selected.id);
-      setProducts(await refreshDashboardProducts());
+      patchProductBrandAssignments(productIds, selected);
       setAssignmentOpen(false);
       toast.success(
         productIds.length === 1
@@ -407,7 +454,7 @@ export default function BrandsPage() {
   const removeProductFromBrand = async (product: DashboardProduct) => {
     try {
       await assignProductsToDashboardBrand([product.id], null);
-      setProducts(await refreshDashboardProducts());
+      patchProductBrandAssignments([product.id], null);
       setProductMenuId(null);
       toast.success(product.name + " moved to Unbranded in Supabase.");
     } catch (cause) {
@@ -428,7 +475,7 @@ export default function BrandsPage() {
 
     try {
       await assignProductsToDashboardBrand([moveProduct.id], destinationId);
-      setProducts(await refreshDashboardProducts());
+      patchProductBrandAssignments([moveProduct.id], destination ?? null);
       toast.success(moveProduct.name + " moved to " + destinationName + " in Supabase.");
       setMoveProduct(null);
       setMoveDestination("");
