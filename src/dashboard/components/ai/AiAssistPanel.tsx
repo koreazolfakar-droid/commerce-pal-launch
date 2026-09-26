@@ -222,15 +222,14 @@ export default function AiAssistPanel({
         const definition = fieldMap.get(suggestion.field);
         return (
           definition &&
-          !definition.review &&
+          suggestion.decision === "allow" &&
           !suggestionIssue({
             field: suggestion.field,
             value: suggestion.value,
             currentData,
             definition,
             context,
-          }) &&
-          suggestion.confidence >= 0.5
+          })
         );
       });
       setSelected(new Set(safeSuggestions.map((suggestion) => suggestion.field)));
@@ -256,7 +255,9 @@ export default function AiAssistPanel({
         definition,
         context,
       });
-      if (!issue) patch[suggestion.field] = suggestion.value;
+      if (!issue && suggestion.decision !== "block") {
+        patch[suggestion.field] = suggestion.value;
+      }
     }
     if (!Object.keys(patch).length) {
       toast.info("Select at least one AI suggestion.");
