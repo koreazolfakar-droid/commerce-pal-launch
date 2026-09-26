@@ -42,19 +42,33 @@ final class SpaceCallUrlPolicy {
                 return CANONICAL_URL;
             }
 
-            String path = requested.getRawPath();
-            if (path == null || path.isEmpty()) {
-                path = "/";
+            String rawPath = requested.getRawPath();
+            if (rawPath == null || rawPath.isEmpty()) {
+                rawPath = "/";
             }
 
-            URI canonical = new URI(
-                    "https",
-                    null,
-                    CANONICAL_HOST,
-                    -1,
-                    path,
-                    requested.getRawQuery(),
-                    requested.getRawFragment());
+            StringBuilder rebuilt = new StringBuilder("https://")
+                    .append(CANONICAL_HOST)
+                    .append(rawPath);
+
+            String rawQuery = requested.getRawQuery();
+            if (rawQuery != null) {
+                rebuilt.append('?').append(rawQuery);
+            }
+
+            String rawFragment = requested.getRawFragment();
+            if (rawFragment != null) {
+                rebuilt.append('#').append(rawFragment);
+            }
+
+            URI canonical = new URI(rebuilt.toString());
+            if (!"https".equalsIgnoreCase(canonical.getScheme())
+                    || !CANONICAL_HOST.equalsIgnoreCase(canonical.getHost())
+                    || canonical.getUserInfo() != null
+                    || canonical.getPort() != -1) {
+                return CANONICAL_URL;
+            }
+
             return canonical.toASCIIString();
         } catch (IllegalArgumentException | URISyntaxException invalidUrl) {
             return CANONICAL_URL;
