@@ -71,7 +71,9 @@ export async function loadHomepagePreviewProducts(
   if (source === "best_sellers") {
     query = query.eq("best_seller", true).order("sort_order", { ascending: true });
   } else if (source === "newest") {
-    query = query.order("created_at", { ascending: false }).order("sort_order", { ascending: true });
+    query = query
+      .order("created_at", { ascending: false })
+      .order("sort_order", { ascending: true });
   } else if (source === "brand" || source === "category") {
     const result =
       source === "brand"
