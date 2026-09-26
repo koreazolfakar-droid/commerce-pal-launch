@@ -43,6 +43,17 @@ export function fetchCollectionByHandle(
   return nativeStore.fetchCollectionByHandle(handle, pageSize);
 }
 
+export type HomepageProductSource = nativeStore.HomepageProductSource;
+
+export function fetchHomepageConfiguredProducts(config: {
+  source: HomepageProductSource;
+  sourceValue?: string;
+  manualProductIds?: string[];
+  count?: number;
+}): Promise<StoreProduct[]> {
+  return nativeStore.fetchHomepageConfiguredProducts(config);
+}
+
 export function fetchNewestProducts(first = 12): Promise<StoreProduct[]> {
   return nativeStore.fetchNewestProducts(first);
 }
