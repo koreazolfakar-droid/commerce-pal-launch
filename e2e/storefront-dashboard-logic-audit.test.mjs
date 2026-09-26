@@ -77,6 +77,8 @@ test("native cart synchronizes price, availability and quantity from live produc
   assert.match(cart, /quantity: Math\.min\(Math\.max\(1, item\.quantity\), maxQuantity\)/);
   assert.match(cartSync, /subscribeStorefrontRefresh/);
   assert.match(cartSync, /void syncCart\(\)/);
+  assert.match(cart, /fetchedProductIds/);
+  assert.match(cart, /for \(const item of get\(\)\.items\)/);
 });
 
 test("all shopper quantity controls respect tracked on-hand stock", () => {
@@ -84,7 +86,7 @@ test("all shopper quantity controls respect tracked on-hand stock", () => {
   assert.match(quickView, /max=\{maxQuantity\}/);
   assert.match(quickView, /amount <= maxQuantity/);
   assert.match(cartRoute, /item\.quantity >= maxQuantity/);
-  assert.match(cartRoute, /variant\.stockQuantity/);
+  assert.match(cartRoute, /cartItemMaxQuantity\(item\)/);
 });
 
 test("checkout keys are bound to the full payload and stale failures recover", () => {
@@ -113,6 +115,7 @@ test("backorders only decrement and release stock that physically existed", () =
   assert.match(backorderMigration, /v_stock_decrement := least\(greatest\(v_stock, 0\), v_qty\)/);
   assert.match(backorderMigration, /stock_quantity = stock_quantity - v_stock_decrement/);
   assert.match(backorderMigration, /'sale',[\s\S]*-v_stock_decrement/);
+  assert.match(backorderMigration, /group by \(duplicate_item ->> 'variant_id'\)::uuid/);
   assert.match(backorderMigration, /quantity_to_release/);
   assert.match(backorderMigration, /reference_type = 'order'/);
   assert.match(backorderMigration, /movement\.movement_type = 'sale'/);
@@ -152,7 +155,36 @@ test("brand identity uses the persisted slug and hidden brands stay hidden", () 
   assert.match(nativeStore, /STOREFRONT_BRAND_SELECT = "id,name,slug"/);
   assert.match(nativeStore, /vendorHidden: Boolean\(row\.brand_id && !brand\)/);
   assert.match(taxonomy, /if \(product\.node\.vendorHidden\) return null/);
-  assert.match(taxonomy, /product\.node\.vendorSlug/);
+  assert.match(taxonomy, /const canonicalSlug = product\.node\.vendorSlug/);
+  assert.ok(
+    taxonomy.indexOf("const canonicalSlug = product.node.vendorSlug") <
+      taxonomy.indexOf("for (const tag of product.node.tags"),
+  );
+});
+
+test("homepage collection source filters active products before applying its display count", () => {
+  const start = nativeStore.indexOf("export async function fetchHomepageConfiguredProducts");
+  const end = nativeStore.indexOf("export async function fetchNewestProducts", start);
+  const configured = nativeStore.slice(start, end);
+  assert.match(configured, /store_collection_products/);
+  assert.doesNotMatch(configured, /\.limit\(count\)[\s\S]*fetchProductsByIds/);
+  assert.match(configured, /fetchProductsByIds\(links\.map/);
+  assert.match(configured, /\.slice\(0, count\)/);
+});
+
+test("product media mutations serialize on the parent product row", async () => {
+  const mediaMigration = await read(
+    "supabase/migrations/20260926115600_atomic_product_media_mutations.sql",
+  );
+  assert.equal(
+    (mediaMigration.match(/from public\.store_products[\s\S]*?for update/g) ?? []).length,
+    3,
+  );
+});
+
+test("brand metadata remains optional for route availability", () => {
+  assert.match(brandRoute, /console\.warn\("Loading optional storefront brand metadata failed\."/);
+  assert.match(brandRoute, /managedBrandResult\.error \? null : managedBrandResult\.data/);
 });
 
 test("retired CI log endpoint cannot write through a service-role client", () => {
