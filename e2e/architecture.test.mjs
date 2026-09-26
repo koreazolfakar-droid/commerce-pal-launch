@@ -133,7 +133,9 @@ test("native cart keeps local totals and native checkout", async () => {
     read("src/routes/product.$handle.tsx"),
   ]);
   assert.match(store, /function localCartState/);
-  assert.match(store, /syncCart:\s*async \(\) => \{/);\n  assert.match(store, /fetchProductsByIds/);\n  assert.match(store, /cartItemMaxQuantity/);
+  assert.match(store, /syncCart:\s*async \(\) => \{/);
+  assert.match(store, /fetchProductsByIds/);
+  assert.match(store, /cartItemMaxQuantity/);
   assert.match(drawer, /\bto="\/cart"/);
   assert.doesNotMatch(drawer, /checkoutShopify|getCheckoutUrl|myshopify/);
   assert.match(productRoute, /window\.location\.assign\("\/cart"\)/);
