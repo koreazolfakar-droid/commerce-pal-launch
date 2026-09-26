@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
 
   let payload: { email?: unknown; outcome?: unknown };
   try {
-    payload = await req.json(req, );
+    payload = await req.json();
   } catch {
     return json(req, { error: "invalid_json" }, 400);
   }
