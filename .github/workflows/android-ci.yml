@@ -1,0 +1,136 @@
+name: Android CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "android/**"
+      - "public/.well-known/assetlinks.json"
+      - "public/manifest.webmanifest"
+      - "scripts/android-security-gate.mjs"
+      - ".github/workflows/android-ci.yml"
+      - "e2e/android-ci-config.test.mjs"
+  push:
+    branches:
+      - main
+    paths:
+      - "android/**"
+      - "public/.well-known/assetlinks.json"
+      - "public/manifest.webmanifest"
+      - "scripts/android-security-gate.mjs"
+      - ".github/workflows/android-ci.yml"
+      - "e2e/android-ci-config.test.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug-apk:
+    name: Build and smoke-test debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.4.0"
+
+      - name: Android source security gate
+        run: node scripts/android-security-gate.mjs
+
+      - name: Lint and build debug APK
+        run: gradle -p android --no-daemon --stacktrace :app:lintDebug :app:assembleDebug
+
+      - name: Verify APK identity and signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+
+          AAPT="$(find "${ANDROID_HOME}/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          APKSIGNER="$(find "${ANDROID_HOME}/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+
+          test -x "$AAPT"
+          test -x "$APKSIGNER"
+
+          "$AAPT" dump badging "$APK" | tee /tmp/spacecall-apk-badging.txt
+          grep -q "package: name='store.spacecallapp.app.debug'" /tmp/spacecall-apk-badging.txt
+
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/spacecall-apksigner.txt
+
+          mkdir -p android/artifacts
+          cp "$APK" android/artifacts/Space-Call-1.0.2-debug.apk
+          sha256sum android/artifacts/Space-Call-1.0.2-debug.apk | tee android/artifacts/Space-Call-1.0.2-debug.apk.sha256
+
+      - name: Emulator cold-launch smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            APK="android/artifacts/Space-Call-1.0.2-debug.apk"
+            adb install -r "$APK"
+            adb logcat -c
+
+            adb shell am force-stop store.spacecallapp.app.debug || true
+            adb shell am start -W \
+              -a android.intent.action.MAIN \
+              -c android.intent.category.LAUNCHER \
+              -n store.spacecallapp.app.debug/store.spacecallapp.app.SpaceCallLauncherActivity \
+              | tee /tmp/spacecall-launch.txt
+
+            sleep 5
+            adb logcat -d | tee /tmp/spacecall-logcat.txt
+
+            if grep -E "FATAL EXCEPTION|AndroidRuntime:.*store\\.spacecallapp\\.app" /tmp/spacecall-logcat.txt; then
+              echo "Space Call Android runtime crash detected."
+              exit 1
+            fi
+
+      - name: Upload APK and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: space-call-android-debug
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            android/artifacts/Space-Call-1.0.2-debug.apk
+            android/artifacts/Space-Call-1.0.2-debug.apk.sha256
+            android/app/build/reports/lint-results-debug.html
+            /tmp/spacecall-apk-badging.txt
+            /tmp/spacecall-apksigner.txt
+            /tmp/spacecall-launch.txt
+            /tmp/spacecall-logcat.txt
