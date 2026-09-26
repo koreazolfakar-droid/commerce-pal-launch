@@ -1448,7 +1448,8 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
     title: input.title.trim(),
     handle,
     description: input.description.trim(),
-    specifications: input.specifications as unknown as import("@/integrations/supabase/types").Json,
+    specifications:
+      input.specifications as unknown as import("@/integrations/supabase/types").Json,
     brand_id: input.brandId,
     category_id: input.categoryId,
     product_type: category?.name ?? null,

@@ -105,8 +105,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
       id ? loadDashboardProductCollectionIds(id) : Promise.resolve([]),
       getDashboardRole(),
     ])
-      .then(([product, brandRows, categoryRows, collectionRows, productCollectionIds, dashboardRole]) => {
-        if (cancelled) return;
+      .then(
+        ([product, brandRows, categoryRows, collectionRows, productCollectionIds, dashboardRole]) => {
+          if (cancelled) return;
         setExisting(product);
         setBrands(brandRows);
         setCategories(categoryRows);
@@ -137,7 +138,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
           setForm(EMPTY);
           setSpecifications(EMPTY_SPECS);
         }
-      })
+        },
+      )
       .catch((cause) => {
         toast.error(cause instanceof Error ? cause.message : "Unable to load product.");
       })

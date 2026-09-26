@@ -218,20 +218,23 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   const previousImageUrl = existing?.image_url ?? null;
   const nextImageUrl = category.image?.trim() || "";
 
-  const { error } = await supabase.rpc("update_store_category_with_spec_template", rpcArgs({
-    p_category_id: category.id,
-    p_name: category.name.trim(),
-    p_slug: normalizeCategorySlug(category.slug || category.name),
-    p_description: category.description.trim(),
-    p_image_url: category.image?.trim() || "",
-    p_icon: category.icon?.trim() || "",
-    p_sort_order: Math.max(0, Math.trunc(category.order)),
-    p_is_active: category.active,
-    p_is_featured: category.featured,
-    p_seo_title: category.seoTitle?.trim() || "",
-    p_seo_description: category.seoDescription?.trim() || "",
-    p_spec_template: parseTemplate(category.specTemplate) as unknown as Json,
-  }));
+  const { error } = await supabase.rpc(
+    "update_store_category_with_spec_template",
+    rpcArgs({
+      p_category_id: category.id,
+      p_name: category.name.trim(),
+      p_slug: normalizeCategorySlug(category.slug || category.name),
+      p_description: category.description.trim(),
+      p_image_url: category.image?.trim() || "",
+      p_icon: category.icon?.trim() || "",
+      p_sort_order: Math.max(0, Math.trunc(category.order)),
+      p_is_active: category.active,
+      p_is_featured: category.featured,
+      p_seo_title: category.seoTitle?.trim() || "",
+      p_seo_description: category.seoDescription?.trim() || "",
+      p_spec_template: parseTemplate(category.specTemplate) as unknown as Json,
+    }),
+  );
   throwIfError(error, "Updating category failed");
 
   const { data, error: readError } = await supabase
