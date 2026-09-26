@@ -27,9 +27,7 @@ export const Route = createFileRoute("/collections/$handle")({
       };
     }
     const collectionName = loaderData.collection.title;
-    const title =
-      loaderData.collection.seoTitle?.trim() ||
-      `${collectionName} in Lebanon | ${STORE_NAME}`;
+    const title = loaderData.collection.seoTitle?.trim() || `${collectionName} in Lebanon | ${STORE_NAME}`;
     const rawDescription = loaderData.collection.description?.trim() ?? "";
     const description =
       loaderData.collection.seoDescription?.trim() ||
