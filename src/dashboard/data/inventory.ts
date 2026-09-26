@@ -2,7 +2,7 @@ import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -514,6 +514,7 @@ export async function adjustInventoryDelta(
   const result = data?.[0];
   if (!result) throw new Error("Inventory adjustment returned no result.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return result.new_stock;
 }
 
@@ -537,5 +538,6 @@ export async function setInventoryStock(
   const result = data?.[0];
   if (!result) throw new Error("Inventory update returned no result.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return result.new_stock;
 }
