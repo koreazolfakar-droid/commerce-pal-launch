@@ -131,3 +131,33 @@ test("product destructive actions use dashboard confirmation and scoped pending 
   assert.match(dialog, /aria-busy=\{pending\}/);
   assert.match(dialog, /event\.key === "Escape"/);
 });
+
+
+test("product media mutations return targeted results without success-path list reloads", async () => {
+  const [catalog, media, variants] = await Promise.all([
+    read("src/dashboard/data/catalog.ts"),
+    read("src/dashboard/components/products/ProductMediaManager.tsx"),
+    read("src/dashboard/components/products/ProductVariantManager.tsx"),
+  ]);
+
+  const mediaMutations = functionSlice(
+    catalog,
+    "export async function uploadDashboardProductImage",
+    "export type DashboardSeoPage",
+  );
+
+  assert.doesNotMatch(mediaMutations, /return listDashboardProductImages/);
+  assert.match(mediaMutations, /image: mapProductImage/);
+  assert.match(mediaMutations, /promotedImageId/);
+  assert.match(mediaMutations, /Promise\.all\(updates\)/);
+
+  assert.doesNotMatch(media, /sync\(await (?:delete|set|reorder)DashboardProductImage/);
+  assert.match(media, /result\.image/);
+  assert.match(media, /result\.promotedImageId/);
+  assert.match(media, /sync\(normalized\)/);
+  assert.doesNotMatch(media, /window\.confirm/);
+
+  assert.doesNotMatch(variants, /window\.confirm/);
+  assert.match(variants, /deletingVariantId/);
+  assert.match(variants, /<DashboardConfirmDialog/);
+});
