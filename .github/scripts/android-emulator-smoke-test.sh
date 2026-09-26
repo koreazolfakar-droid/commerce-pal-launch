@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APK="android/artifacts/Space-Call-1.0.2-debug.apk"
+APK="dist/android/Space-Call-1.0.2-debug.apk"
 PACKAGE="store.spacecallapp.app.debug"
 ACTIVITY="store.spacecallapp.app.SpaceCallLauncherActivity"
 
@@ -25,5 +25,5 @@ if grep -Eqi "Process: store\.spacecallapp\.app\.debug|AndroidRuntime.*store\.sp
   exit 1
 fi
 
-mkdir -p android/artifacts
-printf '%s\n' "Android emulator cold-launch passed without a Space Call runtime crash." > android/artifacts/RUNTIME-VALIDATED.txt
+mkdir -p dist/android
+printf '%s\n' "Android emulator cold-launch passed without a Space Call runtime crash." > dist/android/RUNTIME-VALIDATED.txt
