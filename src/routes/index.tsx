@@ -295,7 +295,9 @@ function cmsManualProductIds(section?: CmsSection) {
 
   const builder = cmsBuilderState(section);
   const settings =
-    builder["settings"] && typeof builder["settings"] === "object" && !Array.isArray(builder["settings"])
+    builder["settings"] &&
+    typeof builder["settings"] === "object" &&
+    !Array.isArray(builder["settings"])
       ? (builder["settings"] as Record<string, unknown>)
       : {};
 
@@ -337,10 +339,7 @@ function cmsFeaturedProductConfig(section?: CmsSection) {
         ? settings["sourceValue"].trim()
         : "";
   const rawCount = Number(settings["count"] ?? (manualProductIds.length || 5));
-  const count = Math.min(
-    10,
-    Math.max(1, Number.isFinite(rawCount) ? Math.trunc(rawCount) : 5),
-  );
+  const count = Math.min(10, Math.max(1, Number.isFinite(rawCount) ? Math.trunc(rawCount) : 5));
 
   return { source, sourceValue, manualProductIds, count };
 }
