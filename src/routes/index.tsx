@@ -11,14 +11,14 @@ import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, cmsText, EMPTY_CMS, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import {
-  bestSellingQueryOptions,
   newestQueryOptions,
   homepageCatalogQueryOptions,
+  homepageConfiguredProductsQueryOptions,
   navigationCatalogQueryOptions,
   collectionQueryOptions,
   collectionsQueryOptions,
-  productsByIdsQueryOptions,
 } from "@/lib/queries";
+import type { HomepageProductSource } from "@/lib/storefrontData";
 import { findFacetMerchandising } from "@/lib/homeMerchandising";
 import { productDiscountPercent } from "@/lib/productPricing";
 import {
@@ -310,6 +310,36 @@ function cmsManualProductIds(section?: CmsSection) {
   return [...new Set(configured.map((id) => id.trim()).filter(Boolean))].slice(0, 10);
 }
 
+function cmsFeaturedProductConfig(section?: CmsSection) {
+  const builder = section ? cmsBuilderState(section) : {};
+  const settings =
+    builder["settings"] && typeof builder["settings"] === "object" && !Array.isArray(builder["settings"])
+      ? (builder["settings"] as Record<string, unknown>)
+      : {};
+  const allowed = new Set<HomepageProductSource>([
+    "best_sellers",
+    "newest",
+    "manual",
+    "collection",
+    "brand",
+    "category",
+  ]);
+  const requestedSource =
+    typeof settings["source"] === "string" ? settings["source"] : "best_sellers";
+  const source: HomepageProductSource = allowed.has(requestedSource as HomepageProductSource)
+    ? (requestedSource as HomepageProductSource)
+    : "best_sellers";
+  const manualProductIds = source === "manual" ? cmsManualProductIds(section) : [];
+  const sourceValue = typeof settings["sourceValue"] === "string" ? settings["sourceValue"].trim() : "";
+  const rawCount = Number(settings["count"] ?? (manualProductIds.length || 5));
+  const count = Math.min(
+    10,
+    Math.max(1, Number.isFinite(rawCount) ? Math.trunc(rawCount) : 5),
+  );
+
+  return { source, sourceValue, manualProductIds, count };
+}
+
 function cmsSectionDeviceClass(section?: CmsSection) {
   if (!section) return "";
   const builder = cmsBuilderState(section);
@@ -511,7 +541,7 @@ function Index() {
   const featuredMerchSection = homeSections.find(
     (section) => section.section_key === "featured_products",
   );
-  const manualFeaturedProductIds = cmsManualProductIds(featuredMerchSection);
+  const featuredProductConfig = cmsFeaturedProductConfig(featuredMerchSection);
   const { data: navigationCatalog } = useQuery(navigationCatalogQueryOptions());
   const { data: catalog } = useQuery({
     ...homepageCatalogQueryOptions(),
@@ -536,13 +566,9 @@ function Index() {
     ...newestQueryOptions(),
     enabled: secondaryQueriesReady,
   });
-  const { data: bestSellers = [] } = useQuery({
-    ...bestSellingQueryOptions(),
-    enabled: secondaryQueriesReady && manualFeaturedProductIds.length === 0,
-  });
-  const { data: manualFeaturedProducts = [] } = useQuery({
-    ...productsByIdsQueryOptions(manualFeaturedProductIds),
-    enabled: secondaryQueriesReady && manualFeaturedProductIds.length > 0,
+  const { data: configuredFeaturedProducts = [] } = useQuery({
+    ...homepageConfiguredProductsQueryOptions(featuredProductConfig),
+    enabled: secondaryQueriesReady,
   });
 
   const heroOnlyProductIds = new Set(
@@ -580,9 +606,7 @@ function Index() {
 
   const seenHomepageProductIds = new Set<string>();
   const best = takeUniqueProducts(
-    (manualFeaturedProductIds.length > 0 ? manualFeaturedProducts : bestSellers).filter(
-      isHomepageMerchandise,
-    ),
+    configuredFeaturedProducts.filter(isHomepageMerchandise),
     seenHomepageProductIds,
   );
   const deals = takeUniqueProducts(
@@ -607,9 +631,19 @@ function Index() {
     ? localizeSection(featuredSection, language)
     : undefined;
   const featuredTitle =
-    localizedFeaturedSection?.title?.trim() || t("bestSellers");
+    localizedFeaturedSection?.title?.trim() ||
+    (featuredProductConfig.source === "best_sellers"
+      ? t("bestSellers")
+      : featuredProductConfig.source === "newest"
+        ? t("newItems")
+        : t("featured"));
   const featuredSubtitle =
-    localizedFeaturedSection?.subtitle?.trim() || t("bestSellersDescription");
+    localizedFeaturedSection?.subtitle?.trim() ||
+    (featuredProductConfig.source === "best_sellers"
+      ? t("bestSellersDescription")
+      : featuredProductConfig.source === "newest"
+        ? t("newItemsDescription")
+        : undefined);
 
   const blocks: Array<{
     key: string;
