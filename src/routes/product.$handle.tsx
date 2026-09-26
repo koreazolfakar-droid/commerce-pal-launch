@@ -274,7 +274,7 @@ function ProductPage() {
     .join(" · ");
   const maxQuantity =
     selectedVariant?.trackInventory && !selectedVariant.allowBackorder
-      ? Math.max(0, selectedVariant.stockQuantity ?? 0)
+      ? Math.max(0, Math.min(99, Math.trunc(selectedVariant.stockQuantity ?? 0)))
       : 99;
 
   useEffect(() => {
