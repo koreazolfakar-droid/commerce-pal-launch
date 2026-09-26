@@ -59,5 +59,6 @@ test("refresh broadcasts are scoped to public product and variant media mutation
 test("storefront query cache refetches Supabase data when dashboard signals a change", () => {
   assert.match(router, /subscribeStorefrontRefresh/);
   assert.match(router, /queryClient\.invalidateQueries/);
-  assert.match(router, /query\.queryKey\[0\] === "supabase"/);\n  assert.match(router, /query\.queryKey\[0\] === "storefront"/);
+  assert.match(router, /query\.queryKey\[0\] === "supabase"/);
+  assert.match(router, /query\.queryKey\[0\] === "storefront"/);
 });
