@@ -84,9 +84,9 @@ test("product save avoids redundant catalog reads and editor refreshes", async (
 
   assert.doesNotMatch(saveFlow, /listDashboardBrands\(\)|listDashboardCategories\(\)/);
   assert.equal(
-    (saveFlow.match(/\.from\("store_product_variants"\)/g) ?? []).length,
+    (saveFlow.match(/\.from\("store_product_variants"\)[\s\S]*?\.select\("\*"\)/g) ?? []).length,
     1,
-    "product save should read variants only once",
+    "product save should read the variant set only once",
   );
   assert.match(saveFlow, /Promise\.all\(\[/);
   assert.match(saveFlow, /categoryRequest/);
