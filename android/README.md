@@ -16,7 +16,7 @@ This directory contains the hardened Android Trusted Web Activity (TWA) shell fo
 The Android project currently uses:
 
 - Android Gradle Plugin: 9.4.0
-- Gradle: 9.6.0
+- Gradle: 9.6.0 minimum (CI pins 9.6.0)
 - JDK: 17
 - Android SDK Platform: 36
 - Android Build Tools: 36.0.0
