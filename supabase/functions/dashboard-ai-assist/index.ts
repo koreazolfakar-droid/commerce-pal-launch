@@ -675,9 +675,9 @@ function normalizeAiResult(raw: unknown, fields: AiField[], grounded: boolean, e
     const definition = allowed.get(field);
     if (!definition) continue;
 
-    let value = typeof row.value === "string" ? row.value.trim() : "";
+    const value =
+      typeof row.value === "string" ? row.value.trim().slice(0, 20_000) : "";
     if (!value) continue;
-    if (definition.maxLength) value = value.slice(0, definition.maxLength);
 
     normalized.push({
       field,
@@ -990,7 +990,7 @@ async function verifySuggestions(args: {
         checks: [...blockers, ...reviews, ...passes].slice(0, 8),
       };
     }),
-  ).then((items) => items.filter((item): item is NonNullable<typeof item> => Boolean(item)));
+  ).then((items) => items.filter((item) => item !== null));
 }
 
 Deno.serve(async (req) => {
