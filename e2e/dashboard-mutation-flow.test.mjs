@@ -159,3 +159,45 @@ test("product media mutations return targeted results without success-path list 
   assert.match(variants, /deletingVariantId/);
   assert.match(variants, /<DashboardConfirmDialog/);
 });
+
+
+test("collection mutations avoid heavy detail reloads and use scoped pending state", async () => {
+  const [data, listPage, detailPage] = await Promise.all([
+    read("src/dashboard/data/collections.ts"),
+    read("src/dashboard/pages/CollectionsPage.tsx"),
+    read("src/dashboard/pages/CollectionDetailPage.tsx"),
+  ]);
+
+  const createStart = data.indexOf("export async function createDashboardCollection");
+  const deleteStart = data.indexOf("export async function deleteDashboardCollection", createStart);
+  assert.ok(createStart >= 0 && deleteStart > createStart);
+  const profileMutations = data.slice(createStart, deleteStart);
+  assert.doesNotMatch(profileMutations, /getDashboardCollection\(/);
+  assert.match(profileMutations, /return mapCollection\(created\)/);
+  assert.match(profileMutations, /return mapCollection\(updated\)/);
+
+  const membershipStart = data.indexOf("export async function saveDashboardCollectionProducts");
+  const reorderStart = data.indexOf("export async function reorderDashboardCollections", membershipStart);
+  assert.ok(membershipStart >= 0 && reorderStart > membershipStart);
+  const membershipMutation = data.slice(membershipStart, reorderStart);
+  assert.doesNotMatch(membershipMutation, /getDashboardCollection\(/);
+  assert.match(membershipMutation, /Promise<void>/);
+
+  assert.doesNotMatch(listPage, /window\.confirm/);
+  assert.match(listPage, /<DashboardConfirmDialog/);
+
+  assert.doesNotMatch(detailPage, /window\.confirm/);
+  assert.match(detailPage, /savingProfile/);
+  assert.match(detailPage, /savingProducts/);
+  assert.match(detailPage, /nextAvailableProducts/);
+  assert.match(detailPage, /productCount: normalized\.length/);
+  assert.match(detailPage, /<DashboardConfirmDialog/);
+
+  const saveProductsFlow = functionSlice(
+    detailPage,
+    "const saveProducts = async",
+    "const addProduct =",
+  );
+  assert.doesNotMatch(saveProductsFlow, /void load\(\)/);
+  assert.match(saveProductsFlow, /setCollection\(/);
+});
