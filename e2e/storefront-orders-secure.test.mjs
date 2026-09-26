@@ -33,7 +33,10 @@ test("checkout retries reuse a full-payload idempotency key", () => {
   assert.match(client, /CHECKOUT_ATTEMPT_KEY/);
   assert.match(client, /checkoutFingerprint/);
   assert.match(client, /crypto\.randomUUID/);
-  assert.match(client, /idempotency_key: await checkoutIdempotencyKey\(checkoutFingerprint\(input\)\)/);
+  assert.match(
+    client,
+    /idempotency_key: await checkoutIdempotencyKey\(checkoutFingerprint\(input\)\)/,
+  );
   assert.match(client, /fingerprintHash/);
 });
 
