@@ -28,6 +28,7 @@ const [
   brandRoute,
   collectionRoute,
   backorderMigration,
+  ledgerReconciliation,
   retiredCiDebug,
 ] = await Promise.all([
   read("src/stores/cartStore.ts"),
@@ -53,6 +54,7 @@ const [
   read("src/routes/brand.$slug.tsx"),
   read("src/routes/collections.$handle.tsx"),
   read("supabase/migrations/20260926115500_fix_backorder_inventory_release.sql"),
+  read("supabase/migrations/20260926115700_reconcile_inventory_movement_ledger.sql"),
   read("supabase/functions/ci-debug-log/index.ts"),
 ]);
 
@@ -128,6 +130,17 @@ test("backorders only decrement and release stock that physically existed", () =
     backorderMigration,
     /stock_quantity = stock_quantity \+ v_item\.quantity,[\s\S]*Released after cancellation/,
   );
+});
+
+test("legacy inventory reconciliation preserves stock and repairs only the movement ledger", () => {
+  assert.match(ledgerReconciliation, /variant\.track_inventory = true/);
+  assert.match(
+    ledgerReconciliation,
+    /variant\.stock_quantity - coalesce\(movement\.movement_stock, 0\) as quantity_delta/,
+  );
+  assert.match(ledgerReconciliation, /'inventory_reconciliation'/);
+  assert.match(ledgerReconciliation, /'adjustment'/);
+  assert.doesNotMatch(ledgerReconciliation, /update public\.store_product_variants/);
 });
 
 test("storefront refresh covers catalog, CMS and cross-tab cart state", () => {
