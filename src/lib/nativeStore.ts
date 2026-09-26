@@ -11,6 +11,7 @@ type ImageRow = Tables<"store_product_images">;
 type CollectionRow = Tables<"store_collections">;
 type CollectionLinkRow = Tables<"store_collection_products">;
 type BrandRow = Tables<"cms_brands">;
+type CategoryRow = Tables<"store_categories">;
 
 type StorefrontProductRow = Pick<
   ProductRow,
@@ -67,6 +68,7 @@ type StorefrontCollectionLinkRow = Pick<
   "collection_id" | "product_id" | "sort_order"
 >;
 type StorefrontBrandRow = Pick<BrandRow, "id" | "name" | "slug">;
+type StorefrontCategoryRow = Pick<CategoryRow, "id" | "spec_template">;
 type NavigationProductRow = Pick<
   ProductRow,
   "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
@@ -81,6 +83,7 @@ const STOREFRONT_COLLECTION_SELECT =
   "id,handle,title,description,image_url,seo_title,seo_description" as const;
 const STOREFRONT_COLLECTION_LINK_SELECT = "collection_id,product_id,sort_order" as const;
 const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
+const STOREFRONT_CATEGORY_SELECT = "id,spec_template" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
   "id,title,handle,brand_id,product_type,tags" as const;
 
@@ -328,7 +331,7 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
 
   if (missingRows.length) {
     const productIds = missingRows.map((row) => row.id);
-    const [variantResult, imageResult, linkResult] = await Promise.all([
+    const [variantResult, imageResult, linkResult, categoryResult] = await Promise.all([
       publicSupabase
         .from("store_product_variants")
         .select(STOREFRONT_VARIANT_SELECT)
@@ -345,11 +348,13 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
         .select(STOREFRONT_COLLECTION_LINK_SELECT)
         .in("product_id", productIds)
         .order("sort_order", { ascending: true }),
+      publicSupabase.from("store_categories").select(STOREFRONT_CATEGORY_SELECT),
     ]);
 
     const variants = assertResult(variantResult, "bounded product variants");
     const images = assertResult(imageResult, "bounded product images");
     const links = assertResult(linkResult, "bounded product collection links");
+    const categories = assertResult(categoryResult, "bounded product categories");
     const variantsByProduct = groupByProduct(variants);
     const imagesByProduct = groupByProduct(images);
     const linksByProduct = groupByProduct(links);
@@ -380,6 +385,9 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
 
     const collectionsById = new Map(collections.map((row) => [row.id, row]));
     const brandsById = new Map(brands.map((row) => [row.id, row]));
+    const templatesByCategoryId = new Map(
+      categories.map((row) => [row.id, parseTemplate(row.spec_template)]),
+    );
     const expiresAt = Date.now() + HYDRATED_PRODUCT_CACHE_TTL_MS;
 
     for (const row of missingRows) {
@@ -392,6 +400,7 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
         imagesByProduct.get(row.id) ?? [],
         productCollections,
         row.brand_id ? brandsById.get(row.brand_id) : undefined,
+        row.category_id ? templatesByCategoryId.get(row.category_id) : undefined,
       );
       hydratedProductCache.set(row.id, { expiresAt, product });
       cachedProducts.set(row.id, product);
@@ -404,75 +413,91 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
 }
 
 async function fetchSnapshot(): Promise<NativeSnapshot> {
-  const [productResult, variantResult, imageResult, collectionResult, linkResult, brandResult] =
-      await Promise.all([
-        publicSupabase
-          .from("store_products")
+  const [
+    productResult,
+    variantResult,
+    imageResult,
+    collectionResult,
+    linkResult,
+    brandResult,
+    categoryResult,
+  ] = await Promise.all([
+    publicSupabase
+      .from("store_products")
       .select(STOREFRONT_PRODUCT_SELECT)
-          .eq("status", "active")
-          .order("sort_order", { ascending: true })
-          .order("created_at", { ascending: false }),
-        publicSupabase
-          .from("store_product_variants")
+      .eq("status", "active")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false }),
+    publicSupabase
+      .from("store_product_variants")
       .select(STOREFRONT_VARIANT_SELECT)
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true }),
-        publicSupabase
-          .from("store_product_images")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_product_images")
       .select(STOREFRONT_IMAGE_SELECT)
-          .order("sort_order", { ascending: true }),
-        publicSupabase
-          .from("store_collections")
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_collections")
       .select(STOREFRONT_COLLECTION_SELECT)
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true })
-          .order("title", { ascending: true }),
-        publicSupabase.from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT).order("sort_order", { ascending: true }),
-        publicSupabase
-          .from("cms_brands")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("title", { ascending: true }),
+    publicSupabase
+      .from("store_collection_products")
+      .select(STOREFRONT_COLLECTION_LINK_SELECT)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("cms_brands")
       .select(STOREFRONT_BRAND_SELECT)
-          .eq("is_visible", true)
-          .order("sort_order", { ascending: true }),
-      ]);
+      .eq("is_visible", true)
+      .order("sort_order", { ascending: true }),
+    publicSupabase.from("store_categories").select(STOREFRONT_CATEGORY_SELECT),
+  ]);
 
-    const productRows = assertResult(productResult, "products");
-    const variantRows = assertResult(variantResult, "variants");
-    const imageRows = assertResult(imageResult, "images");
-    const collectionRows = assertResult(collectionResult, "collections");
-    const links = assertResult(linkResult, "collection links");
-    const brands = assertResult(brandResult, "brands");
+  const productRows = assertResult(productResult, "products");
+  const variantRows = assertResult(variantResult, "variants");
+  const imageRows = assertResult(imageResult, "images");
+  const collectionRows = assertResult(collectionResult, "collections");
+  const links = assertResult(linkResult, "collection links");
+  const brands = assertResult(brandResult, "brands");
+  const categories = assertResult(categoryResult, "categories");
 
-    const variantsByProduct = groupByProduct(variantRows);
-    const imagesByProduct = groupByProduct(imageRows);
-    const linksByProduct = groupByProduct(links);
-    const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
-    const brandsById = new Map(brands.map((row) => [row.id, row]));
+  const variantsByProduct = groupByProduct(variantRows);
+  const imagesByProduct = groupByProduct(imageRows);
+  const linksByProduct = groupByProduct(links);
+  const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
+  const brandsById = new Map(brands.map((row) => [row.id, row]));
+  const templatesByCategoryId = new Map(
+    categories.map((row) => [row.id, parseTemplate(row.spec_template)]),
+  );
 
-    const products: NativeProduct[] = productRows.map((row) => {
-      const productCollections = (linksByProduct.get(row.id) ?? [])
-        .map((link) => collectionsById.get(link.collection_id))
-        .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
-      return {
+  const products: NativeProduct[] = productRows.map((row) => {
+    const productCollections = (linksByProduct.get(row.id) ?? [])
+      .map((link) => collectionsById.get(link.collection_id))
+      .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
+
+    return {
+      row,
+      product: buildProduct(
         row,
-        product: buildProduct(
-          row,
-          variantsByProduct.get(row.id) ?? [],
-          imagesByProduct.get(row.id) ?? [],
-          productCollections,
-          row.brand_id ? brandsById.get(row.brand_id) : undefined,
-        ),
-      };
-    });
-
-    const value = { products, collections: collectionRows, links, brands };
-    const fetchedAt = Date.now();
-    cachedSnapshot = {
-      expiresAt: fetchedAt + CACHE_TTL_MS,
-      staleUntil: fetchedAt + CACHE_TTL_MS + STALE_TTL_MS,
-      value,
+        variantsByProduct.get(row.id) ?? [],
+        imagesByProduct.get(row.id) ?? [],
+        productCollections,
+        row.brand_id ? brandsById.get(row.brand_id) : undefined,
+        row.category_id ? templatesByCategoryId.get(row.category_id) : undefined,
+      ),
     };
-    return value;
+  });
+
+  const value = { products, collections: collectionRows, links, brands };
+  const fetchedAt = Date.now();
+  cachedSnapshot = {
+    expiresAt: fetchedAt + CACHE_TTL_MS,
+    staleUntil: fetchedAt + CACHE_TTL_MS + STALE_TTL_MS,
+    value,
+  };
+  return value;
 }
 
 function startSnapshotRefresh(): Promise<NativeSnapshot> {
