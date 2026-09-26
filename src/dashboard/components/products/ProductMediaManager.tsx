@@ -87,15 +87,31 @@ export default function ProductMediaManager({
       const inspected = await Promise.all(files.map((file) => inspectProductImageSource(file)));
       setPendingInfo(inspected);
 
-      let rows = images;
+      let rows = [...images];
+      let nextOrder = rows.reduce((max, image) => Math.max(max, image.sortOrder), -1) + 1;
+      let hasPrimary = rows.some((image) => image.isPrimary);
       const conversions: ProductImageConversionResult[] = [];
       for (const file of files) {
-        const result = await uploadDashboardProductImage(productId, file, resolution, productTitle);
-        rows = result.images;
+        const result = await uploadDashboardProductImage(
+          productId,
+          file,
+          resolution,
+          productTitle,
+          nextOrder,
+          !hasPrimary,
+        );
+        rows = [...rows, result.image].sort(
+          (a, b) =>
+            Number(b.isPrimary) - Number(a.isPrimary) ||
+            a.sortOrder - b.sortOrder ||
+            a.createdAt.localeCompare(b.createdAt),
+        );
+        nextOrder += 1;
+        hasPrimary = hasPrimary || result.image.isPrimary;
         conversions.push(result.conversion);
         setLastConversions([...conversions]);
+        sync(rows);
       }
-      sync(rows);
       toast.success(files.length === 1 ? "Image uploaded." : `${files.length} images uploaded.`);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product image upload failed.");
@@ -117,7 +133,7 @@ export default function ProductMediaManager({
     try {
       setPendingInfo([await inspectProductImageSource(file)]);
       const result = await replaceDashboardProductImage(target, file, resolution);
-      sync(result.images);
+      sync(images.map((image) => (image.id === result.image.id ? result.image : image)));
       setLastConversions([result.conversion]);
       toast.success(successMessage);
     } catch (cause) {
@@ -134,7 +150,14 @@ export default function ProductMediaManager({
     if (!window.confirm("Delete this image from the product?")) return;
     setBusyId(image.id);
     try {
-      sync(await deleteDashboardProductImage(image));
+      const result = await deleteDashboardProductImage(image);
+      const remaining = images
+        .filter((row) => row.id !== image.id)
+        .map((row) => ({
+          ...row,
+          isPrimary: result.promotedImageId ? row.id === result.promotedImageId : row.isPrimary,
+        }));
+      sync(remaining);
       toast.success("Image deleted.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image deletion failed.");
@@ -147,7 +170,8 @@ export default function ProductMediaManager({
     if (image.isPrimary) return;
     setBusyId(image.id);
     try {
-      sync(await setDashboardPrimaryProductImage(productId, image.id));
+      await setDashboardPrimaryProductImage(productId, image.id);
+      sync(images.map((row) => ({ ...row, isPrimary: row.id === image.id })));
       toast.success("Primary image updated.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Primary image update failed.");
@@ -162,11 +186,12 @@ export default function ProductMediaManager({
 
     const reordered = [...images];
     [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
-    setImages(reordered);
+    const normalized = reordered.map((image, position) => ({ ...image, sortOrder: position }));
+    sync(normalized);
     setBusyId(images[index].id);
 
     try {
-      sync(await reorderDashboardProductImages(productId, reordered.map((image) => image.id)));
+      await reorderDashboardProductImages(productId, normalized.map((image) => image.id));
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image order update failed.");
       await load();
