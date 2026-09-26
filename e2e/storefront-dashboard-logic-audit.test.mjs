@@ -198,6 +198,8 @@ test("product media mutations serialize on the parent product row", async () => 
     (mediaMigration.match(/from public\.store_products[\s\S]*?for update/g) ?? []).length,
     3,
   );
+  assert.match(mediaMigration, /store_product_images_one_primary_uidx/);
+  assert.match(mediaMigration, /where is_primary = true/);
 });
 
 test("brand and category metadata remain optional for route availability", () => {
