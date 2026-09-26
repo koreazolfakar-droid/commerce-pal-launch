@@ -48,7 +48,11 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(edge, /Accuracy is more important than completeness/);
   assert.match(edge, /Suggest only meaningful changes/);
   assert.match(edge, /Assign confidence independently for each field/);
-  assert.match(edge, /confidence \* 0\.65/);
+  assert.match(edge, /function confidenceScore/);
+  assert.match(edge, /fieldRisk/);
+  assert.match(edge, /function decisionFor/);
+  assert.match(edge, /async function databaseChecks/);
+  assert.match(edge, /No meaningful change from the current value/);
   assert.match(edge, /This fallback has no live web search/);
   assert.doesNotMatch(edge, /\n\s*prompt,\n/);
   assert.equal(
@@ -56,11 +60,11 @@ test("dashboard AI grounds research and validates structured output", () => {
     1,
   );
   assert.match(edge, /Live web grounding is unavailable for this retry/);
-  assert.equal((edge.match(/input: geminiRequest\.input/g) || []).length, 2);
+  assert.equal((edge.match(/input: geminiRequest\.input/g) || []).length, 3);
   assert.match(panel, /Nothing changes until Apply selected/);
   assert.match(panel, /Apply selected/);
   assert.match(panel, /Web research grounded/);
-  assert.match(panel, /suggestion\.verified/);
+  assert.match(panel, /suggestion\.decision/);
   assert.doesNotMatch(panel, /suggestion\.verified\s*\|\|\s*action\s*===\s*"seo"/);
   assert.match(panel, /role="dialog"/);
   assert.match(panel, /aria-modal="true"/);
@@ -70,7 +74,7 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(panel, /triggerRef\.current\?\.focus\(\)/);
   assert.match(panel, /requestIdRef/);
   assert.match(panel, /requestId !== requestIdRef\.current/);
-  assert.match(panel, /suggestion\.confidence >= 0\.5/);
+  assert.match(panel, /suggestion\.decision === "allow"/);
   assert.match(panel, /sameSuggestionValue/);
   assert.match(panel, /suggestionIssue/);
   assert.match(panel, /No change/);
@@ -84,7 +88,10 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(edge, /readJsonBody/);
   assert.match(edge, /RequestTooLargeError/);
   assert.doesNotMatch(edge, /body = await req\.json\(\)/);
-  assert.doesNotMatch(edge, /\.from\(["']store_(?:products|orders|inventory)/);
+  assert.match(edge, /\.from\("store_products"\)/);
+  assert.match(edge, /\.from\("store_product_variants"\)/);
+  assert.match(edge, /\.from\("store_categories"\)/);
+  assert.match(edge, /\.from\("cms_brands"\)/);
   assert.doesNotMatch(edge, /\.(?:insert|update|upsert|delete)\(/);
 });
 
@@ -96,4 +103,35 @@ test("phase one connects the reusable AI assistant to product, category and bran
   assert.match(category, /entity="category"/);
   assert.match(brand, /entity="brand"/);
   assert.match(product, /values\.barcode !== undefined && variantCount <= 1/);
+  assert.match(product, /officialDomains/);
+  assert.match(product, /entityId: id \?\? existing\?\.id \?\? ""/);
+  assert.match(category, /entityId: draft\.id/);
+  assert.match(brand, /officialDomains: draft\.website \? \[draft\.website\] : \[\]/);
+});
+
+test("phase two adds deterministic verification metadata", () => {
+  assert.match(edge, /entityMatch/);
+  assert.match(edge, /Exact entity or product variant was not verified/);
+  assert.match(edge, /Slug is already used by another category/);
+  assert.match(edge, /Barcode is already assigned to another product or variant/);
+  assert.match(edge, /function validGtin/);
+  assert.match(edge, /Barcode \/ GTIN checksum or length is invalid/);
+  assert.match(edge, /function calibrateEntityMatch/);
+  assert.match(edge, /function boundSources/);
+  assert.match(edge, /Conflicting AI values were returned for this field/);
+  assert.match(edge, /Verified claim had no matching grounded source/);
+  assert.match(edge, /Slug does not closely match the entity name/);
+  assert.match(edge, /suggestionFieldsForAction/);
+  assert.match(edge, /field\.key === "seoTitle" \|\| field\.key === "seoDescription"/);
+  assert.match(edge, /sourceQuality >= 0\.95/);
+  assert.match(panel, /Exact entity verified/);
+  assert.match(panel, /Safe to apply/);
+  assert.match(panel, /suggestion\.risk === "high"/);
+  assert.match(panel, /source\.official/);
+  assert.match(client, /item\.decision === "allow"/);
+  assert.match(client, /item\.risk === "low"/);
+  assert.match(client, /entityMatch/);
+  assert.match(client, /item\.sourceUrls/);
+  assert.match(panel, /evidenceSources/);
+  assert.match(panel, /Evidence/);
 });

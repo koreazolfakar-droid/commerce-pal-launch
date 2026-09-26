@@ -327,6 +327,7 @@ export default function CategoryForm({
               context={{
                 market: "Lebanon",
                 store: "Space Call",
+                entityId: draft.id,
                 existingCategories: categories.map((item) => ({
                   name: item.name,
                   slug: item.slug,

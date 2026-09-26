@@ -437,7 +437,15 @@ export default function ProductFormPage({ id }: { id?: string }) {
             context={{
               market: "Lebanon",
               store: "Space Call",
-              availableBrands: brands.map((brand) => ({ name: brand.name, slug: brand.slug })),
+              entityId: id ?? existing?.id ?? "",
+              officialDomains: [
+                brands.find((brand) => brand.id === form.brandId)?.website ?? "",
+              ].filter(Boolean),
+              availableBrands: brands.map((brand) => ({
+                name: brand.name,
+                slug: brand.slug,
+                website: brand.website ?? "",
+              })),
               availableCategories: categories.map((category) => ({
                 name: category.name,
                 slug: category.slug,
