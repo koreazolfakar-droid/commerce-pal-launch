@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 
 import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 import ProductVariantManager from "@/dashboard/components/products/ProductVariantManager";
 import {
@@ -80,7 +81,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [role, setRole] = useState<"admin" | "editor" | null>(null);
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
-  const [working, setWorking] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"duplicate" | "archive" | "delete" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"archive" | "delete" | null>(null);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState<ProductDraft>(EMPTY);
 
@@ -318,8 +320,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
 
   const duplicate = async () => {
-    if (!id || working) return;
-    setWorking(true);
+    if (!id || pendingAction || saving) return;
+    setPendingAction("duplicate");
     try {
       const newId = await duplicateDashboardProduct(id);
       toast.success("Draft copy created with zero stock and blank SKU/barcode.");
@@ -327,38 +329,39 @@ export default function ProductFormPage({ id }: { id?: string }) {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product duplicate failed.");
     } finally {
-      setWorking(false);
+      setPendingAction(null);
     }
   };
 
   const archive = async () => {
-    if (!id || working) return;
-    if (!window.confirm("Archive this product and remove it from the live storefront?")) return;
-    setWorking(true);
+    if (!id || pendingAction || saving) return;
+    setPendingAction("archive");
     try {
       await setDashboardProductsStatus([id], "Archived");
       setForm((current) => ({ ...current, status: "Archived" }));
       setExisting((current) => current ? { ...current, status: "Archived" } : current);
+      setSaved(true);
+      setConfirmAction(null);
       toast.success("Product archived safely.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product archive failed.");
     } finally {
-      setWorking(false);
+      setPendingAction(null);
     }
   };
 
   const remove = async () => {
-    if (!id || working || role !== "admin") return;
-    if (!window.confirm("Permanently delete this product? Products with stock, orders or inventory history cannot be deleted.")) return;
-    setWorking(true);
+    if (!id || pendingAction || saving || role !== "admin") return;
+    setPendingAction("delete");
     try {
       await deleteDashboardProductSafe(id);
+      setConfirmAction(null);
       toast.success("Product permanently deleted.");
       navigate("/dashboard/products");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product delete failed.");
     } finally {
-      setWorking(false);
+      setPendingAction(null);
     }
   };
 
@@ -412,22 +415,23 @@ export default function ProductFormPage({ id }: { id?: string }) {
             <>
               <button
                 onClick={() => void duplicate()}
-                disabled={working}
+                disabled={saving || pendingAction !== null}
                 className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-600 disabled:opacity-50"
               >
-                <Copy className="size-3.5" /> Duplicate
+                {pendingAction === "duplicate" ? <Loader2 className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
+                {pendingAction === "duplicate" ? "Duplicating..." : "Duplicate"}
               </button>
               <button
-                onClick={() => void archive()}
-                disabled={working || form.status === "Archived"}
+                onClick={() => setConfirmAction("archive")}
+                disabled={saving || pendingAction !== null || form.status === "Archived"}
                 className="flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-[10px] font-bold text-amber-700 disabled:opacity-40"
               >
                 <Archive className="size-3.5" /> Archive
               </button>
               {role === "admin" ? (
                 <button
-                  onClick={() => void remove()}
-                  disabled={working}
+                  onClick={() => setConfirmAction("delete")}
+                  disabled={saving || pendingAction !== null}
                   className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 text-[10px] font-bold text-rose-700 disabled:opacity-50"
                 >
                   <Trash2 className="size-3.5" /> Delete
@@ -518,7 +522,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           />
           <button
             onClick={() => void handleSave()}
-            disabled={saving}
+            disabled={saving || pendingAction !== null}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:opacity-60"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}
@@ -663,6 +667,33 @@ export default function ProductFormPage({ id }: { id?: string }) {
           ) : null}
         </div>
       </div>
+
+      <DashboardConfirmDialog
+        open={confirmAction === "archive"}
+        title="Archive this product?"
+        description="The product will be removed from the live storefront but kept in the dashboard, including its variants, media, inventory history and order references."
+        confirmLabel="Archive product"
+        pendingLabel="Archiving..."
+        pending={pendingAction === "archive"}
+        onClose={() => {
+          if (!pendingAction) setConfirmAction(null);
+        }}
+        onConfirm={() => void archive()}
+      />
+
+      <DashboardConfirmDialog
+        open={confirmAction === "delete"}
+        title="Permanently delete this product?"
+        description="Safe deletion is allowed only when the product has no protected stock, order references or inventory history. Otherwise the server will reject the deletion and the product will remain unchanged."
+        confirmLabel="Delete permanently"
+        pendingLabel="Deleting..."
+        pending={pendingAction === "delete"}
+        destructive
+        onClose={() => {
+          if (!pendingAction) setConfirmAction(null);
+        }}
+        onConfirm={() => void remove()}
+      />
     </div>
   );
 }
