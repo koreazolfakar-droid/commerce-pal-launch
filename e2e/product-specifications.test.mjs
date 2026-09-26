@@ -21,7 +21,7 @@ const [
   read("src/components/CatalogView.tsx"),
   read("src/routes/product.$handle.tsx"),
   read("src/routes/compare.tsx"),
-  read("supabase/migrations/20260926140000_product_specification_templates.sql"),
+  read("supabase/migrations/20260926153325_final_category_product_specifications.sql"),
 ]);
 
 test("legacy specification JSON survives dashboard normalization", () => {
