@@ -200,6 +200,13 @@ function CartPage() {
                   {items.map((item) => {
                     const image = item.product.node.images?.edges?.[0]?.node;
                     const lineTotal = Number(item.price.amount) * item.quantity;
+                    const variant = item.product.node.variants.edges.find(
+                      (edge) => edge.node.id === item.variantId,
+                    )?.node;
+                    const maxQuantity =
+                      variant?.trackInventory && !variant.allowBackorder
+                        ? Math.max(0, Math.min(99, Math.trunc(variant.stockQuantity ?? 0)))
+                        : 99;
 
                     return (
                       <li
@@ -278,7 +285,7 @@ function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 aria-label={t("increaseQuantity")}
-                                disabled={isLoading}
+                                disabled={isLoading || item.quantity >= maxQuantity}
                                 onClick={() =>
                                   void updateQuantity(item.variantId, item.quantity + 1)
                                 }
