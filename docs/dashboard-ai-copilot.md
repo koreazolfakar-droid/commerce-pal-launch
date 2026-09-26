@@ -13,12 +13,14 @@ The assistant supports:
 - Research & Fill
 - SEO improvement
 - Validation
-- per-field confidence
-- Verified / Review state
-- source links when Google Search grounding succeeds
+- exact / partial / uncertain entity resolution
+- server-owned field risk levels: low / medium / high
+- deterministic confidence scoring that combines model confidence, source quality, entity match and verification state
+- server decisions: Allow / Review / Block
+- read-only Supabase checks for duplicate slugs, existing brand/category mappings and barcode uniqueness
+- source links with official-domain recognition and source quality scoring
 - preview and explicit Apply Selected before the normal form save
-- unchanged suggestions shown as No change and blocked from application
-- field-specific confidence instead of flattening ungrounded suggestions to one repeated score
+- unchanged or non-meaningful suggestions blocked from application
 
 Research and SEO actions never mutate the form by themselves. Apply Selected changes local draft fields only, and the AI never persists form changes directly.
 
@@ -32,8 +34,13 @@ Dashboard form
   -> entity/field allowlist
   -> Gemini Interactions API
   -> structured response normalization
+  -> exact-entity assessment
+  -> source quality scoring
+  -> server-side field-risk policy
+  -> read-only Supabase validation
+  -> deterministic confidence + Allow/Review/Block decision
   -> preview in Dashboard
-  -> user selects suggestions
+  -> user selects eligible suggestions
   -> existing form save flow
 ```
 
@@ -121,15 +128,18 @@ Orders, customers and other personal/customer data are not part of the Phase 1 A
 
 ## Research trust rules
 
-The prompt and response normalizer enforce these rules:
+The prompt, response normalizer and verification engine enforce these rules:
 
 1. Accuracy is more important than completeness.
-2. Prefer manufacturer/brand primary sources, then official documentation, then reputable retailers.
-3. Do not invent product specifications, compatibility, identifiers, websites, warranty, stock or commercial values.
-4. If the exact model cannot be identified or sources disagree, lower confidence and require review.
-5. `verified=true` is accepted only when a grounded Search response also contains real HTTP(S) citation sources.
-6. Ungrounded results cannot be shown as Verified. Their model confidence is conservatively scaled to a maximum of 65% while preserving field-to-field differences.
-7. Suggestions identical to the current field value are treated as No change and cannot be applied.
+2. Resolve the exact entity before trusting factual fields. Product-family evidence is not enough for a specific model or variant.
+3. Prefer manufacturer/brand primary sources, then official documentation, then reputable retailers.
+4. Do not invent product specifications, compatibility, identifiers, websites, warranty, stock or commercial values.
+5. `verified=true` is accepted only when a grounded Search response contains real HTTP(S) citation sources.
+6. The final confidence shown in the Dashboard is server-computed; the model-provided confidence is only one input.
+7. High-risk fields such as barcode/GTIN and official website require exact entity resolution and stronger evidence.
+8. Category/brand slugs, product barcode uniqueness, and product brand/category mappings are checked against Supabase before a suggestion can be allowed.
+9. Suggestions that are identical or not meaningfully different from the current value are blocked.
+10. The Edge Function performs catalog validation reads only; it never writes AI results to Supabase.
 
 ## Failure behavior
 
@@ -144,10 +154,10 @@ Gemini is an enhancement, not a dependency.
 
 ## Next phases
 
-Once Phase 1 is validated in production, extend the same schema/preview system rather than creating separate AI implementations:
+The catalog assistant now uses the Phase 2 verification engine. Future extensions should reuse the same risk/decision contract rather than creating separate AI paths:
 
-1. Media, Hero/Banners and CMS/SEO.
-2. Inventory, Receiving and Purchase Orders — advisory/validation only for quantities.
-3. Orders, Customers and Sales — with stricter privacy rules and no Free Tier processing of personal customer data.
-4. Search aliases, internal linking and catalog-wide SEO audits.
-5. Optional request caching, quotas and durable AI audit telemetry.
+1. Per-suggestion citation binding so each factual value is tied to the exact source that supports it.
+2. Media, Hero/Banners and CMS/SEO.
+3. Inventory, Receiving and Purchase Orders — advisory/validation only for quantities.
+4. Orders, Customers and Sales — with stricter privacy rules and no Free Tier processing of personal customer data.
+5. Search aliases, internal linking, catalog-wide SEO audits, optional request caching, quotas and durable AI audit telemetry.
