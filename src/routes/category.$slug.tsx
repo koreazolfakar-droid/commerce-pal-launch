@@ -41,7 +41,10 @@ async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory 
     .eq("is_active", true)
     .maybeSingle();
 
-  if (error) throw new Error(`Loading storefront category failed: ${error.message}`);
+  if (error) {
+    console.warn("Loading optional storefront category metadata failed.", error);
+    return null;
+  }
   return (data as ManagedStoreCategory | null) ?? null;
 }
 
