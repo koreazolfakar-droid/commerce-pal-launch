@@ -52,9 +52,29 @@ const allowedFieldKeys: Record<string, Set<string>> = {
 };
 
 const allowedContextKeys: Record<string, Set<string>> = {
-  product: new Set(["market", "store", "availableBrands", "availableCategories"]),
-  category: new Set(["market", "store", "existingCategories", "allowedIcons"]),
-  brand: new Set(["market", "store", "existingBrands"]),
+  product: new Set([
+    "market",
+    "store",
+    "entityId",
+    "officialDomains",
+    "availableBrands",
+    "availableCategories",
+  ]),
+  category: new Set([
+    "market",
+    "store",
+    "entityId",
+    "officialDomains",
+    "existingCategories",
+    "allowedIcons",
+  ]),
+  brand: new Set([
+    "market",
+    "store",
+    "entityId",
+    "officialDomains",
+    "existingBrands",
+  ]),
 };
 
 type AiField = {
@@ -64,6 +84,67 @@ type AiField = {
   review?: boolean;
   maxLength?: number;
 };
+
+type AiRisk = "low" | "medium" | "high";
+type AiDecision = "allow" | "review" | "block";
+type EntityMatchStatus = "exact" | "partial" | "uncertain";
+
+type EntityMatch = {
+  status: EntityMatchStatus;
+  canonicalName: string;
+  reason: string;
+};
+
+type RawSuggestion = {
+  field: string;
+  value: string;
+  modelConfidence: number;
+  verified: boolean;
+  reason: string;
+};
+
+type ScoredSource = {
+  title: string;
+  url: string;
+  quality: number;
+  official: boolean;
+};
+
+const fieldRisk: Record<string, Record<string, AiRisk>> = {
+  product: {
+    title: "medium",
+    description: "low",
+    brandName: "medium",
+    categoryName: "medium",
+    barcode: "high",
+    seoTitle: "low",
+    seoDescription: "low",
+  },
+  category: {
+    name: "medium",
+    slug: "medium",
+    description: "low",
+    icon: "medium",
+    seoTitle: "low",
+    seoDescription: "low",
+  },
+  brand: {
+    name: "medium",
+    slug: "medium",
+    description: "low",
+    website: "high",
+    seoTitle: "low",
+    seoDescription: "low",
+  },
+};
+
+function clamp01(value: number) {
+  return Math.max(0, Math.min(1, value));
+}
+
+function riskFor(entity: string, field: string): AiRisk {
+  return fieldRisk[entity]?.[field] ?? "medium";
+}
 
 type AiBody = {
   entity?: unknown;
