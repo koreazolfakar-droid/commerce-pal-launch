@@ -34,7 +34,7 @@ begin
       add constraint store_categories_spec_template_shape
       check (
         jsonb_typeof(spec_template) = 'object'
-        and jsonb_typeof(spec_template->'sections') = 'array'
+        and coalesce(jsonb_typeof(spec_template->'sections'), '') = 'array'
       ) not valid;
   end if;
 
@@ -48,8 +48,8 @@ begin
       add constraint store_products_specs_shape
       check (
         jsonb_typeof(specifications) = 'object'
-        and jsonb_typeof(specifications->'values') = 'object'
-        and jsonb_typeof(specifications->'keySpecs') = 'array'
+        and coalesce(jsonb_typeof(specifications->'values'), '') = 'object'
+        and coalesce(jsonb_typeof(specifications->'keySpecs'), '') = 'array'
       ) not valid;
   end if;
 end
@@ -187,7 +187,7 @@ security definer
 set search_path = ''
 as $$
 begin
-  if new.spec_template = old.spec_template then
+  if tg_op = 'UPDATE' and new.spec_template = old.spec_template then
     return new;
   end if;
 
@@ -221,6 +221,10 @@ begin
       as spec_field(field_value)
   ) then
     raise exception 'Specification template keys must be unique';
+  end if;
+
+  if tg_op = 'INSERT' then
+    return new;
   end if;
 
   if exists (
@@ -273,7 +277,7 @@ $$;
 
 drop trigger if exists guard_store_category_spec_template on public.store_categories;
 create trigger guard_store_category_spec_template
-before update of spec_template on public.store_categories
+before insert or update of spec_template on public.store_categories
 for each row execute function private.guard_store_category_spec_template();
 
 create or replace function public.update_store_category_with_spec_template(
