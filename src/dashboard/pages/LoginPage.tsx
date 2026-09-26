@@ -717,15 +717,17 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div className="mb-8">
-                <div className="login-accent mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.065] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#c7ccff]">
+              <div className={view === "mfa" ? "mb-6" : "mb-8"}>
+                <div className={`login-accent inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.065] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#c7ccff] ${view === "mfa" ? "mb-3" : "mb-4"}`}>
                   <LockKeyhole className="size-3.5" />
                   {copy.authorizedOnly}
                 </div>
-                <h1 className="login-heading text-[34px] font-black leading-none tracking-[-.055em] text-white sm:text-[38px]">
+                <h1
+                  className={`login-heading font-black leading-[1.02] tracking-[-.05em] text-white ${view === "mfa" ? "text-[30px] sm:text-[34px]" : "text-[34px] sm:text-[38px]"}`}
+                >
                   {title}
                 </h1>
-                <p className="login-muted mt-3 max-w-md text-[12px] leading-5 text-slate-400">{description}</p>
+                <p className="login-muted mt-2.5 max-w-md text-[12px] leading-5 text-slate-400">{description}</p>
               </div>
 
               {view === "signin" ? (
@@ -933,7 +935,7 @@ export default function LoginPage() {
                 />
               ) : null}
 
-              <div className="login-footer mt-8 rounded-[16px] border border-white/[.055] bg-white/[.025] px-4 py-3.5">
+              <div className={`login-footer rounded-[16px] border border-white/[.055] bg-white/[.025] px-4 py-3.5 ${view === "mfa" ? "mt-6" : "mt-8"}`}>
                 <p className="login-muted text-center text-[9px] leading-4 text-slate-500">
                   {copy.antiPhishing}
                 </p>

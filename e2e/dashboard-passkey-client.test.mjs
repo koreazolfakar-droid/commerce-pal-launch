@@ -118,6 +118,17 @@ test("password is always completed before the second-factor choice", () => {
   assert.match(mfaStep, /setMode\(passkeySupported \? "choice" : "challenge"\)/);
 });
 
+test("MFA choice UI stays readable in light mode and compact on mobile", () => {
+  assert.match(mfaStep, /const isLightTheme = theme === "light"/);
+  assert.match(mfaStep, /bg-white shadow-\[0_10px_30px_rgba\(15,23,42,\.06\)\]/);
+  assert.match(mfaStep, /text-slate-950/);
+  assert.match(mfaStep, /text-slate-500/);
+  assert.match(mfaStep, /min-h-\[72px\]/);
+  assert.match(mfaStep, /text-start/);
+  assert.match(login, /view === "mfa" \? "mb-6" : "mb-8"/);
+  assert.match(login, /view === "mfa" \? "text-\[30px\] sm:text-\[34px\]"/);
+});
+
 test("security center supports complete passkey lifecycle management", () => {
   assert.match(catalog, /export async function listDashboardPasskeys/);
   assert.match(catalog, /auth\.passkey\.list\(\)/);

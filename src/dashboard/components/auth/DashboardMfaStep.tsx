@@ -141,6 +141,18 @@ export default function DashboardMfaStep({
   );
   const [challengeExpired, setChallengeExpired] = useState(false);
   const passkeySupported = useMemo(() => isDashboardPasskeySupported(), []);
+  const isLightTheme = theme === "light";
+  const choiceCardTheme = isLightTheme
+    ? "border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,.06)] hover:border-indigo-200 hover:bg-indigo-50/40"
+    : "border-white/10 bg-white/[.045] shadow-[0_10px_30px_rgba(0,0,0,.12)] hover:border-indigo-300/20 hover:bg-white/[.07]";
+  const choiceTitleTheme = isLightTheme ? "text-slate-950" : "text-white";
+  const choiceHintTheme = isLightTheme ? "text-slate-500" : "text-slate-400";
+  const authenticatorIconTheme = isLightTheme
+    ? "bg-indigo-50 text-indigo-600"
+    : "bg-indigo-300/10 text-indigo-200";
+  const passkeyIconTheme = isLightTheme
+    ? "bg-emerald-50 text-emerald-600"
+    : "bg-emerald-300/10 text-emerald-200";
 
   const initialize = useCallback(async () => {
     setError("");
@@ -349,7 +361,7 @@ export default function DashboardMfaStep({
 
   if (mode === "loading") {
     return (
-      <div className="grid min-h-[260px] place-items-center">
+      <div className="grid min-h-[190px] place-items-center">
         <div className="text-center">
           <Loader2 className="mx-auto size-6 animate-spin text-[#8d96ff]" />
           <div className="login-muted mt-3 text-[11px] font-semibold text-slate-400">
@@ -361,18 +373,18 @@ export default function DashboardMfaStep({
   }
 
   return (
-    <div data-testid="dashboard-mfa-step" data-theme={theme}>
-      <div className="mb-6">
-        <div className="login-badge mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-emerald-200">
+    <div data-testid="dashboard-mfa-step" data-theme={theme} className="login-mfa-step">
+      <div className="mb-5 sm:mb-6">
+        <div className="login-badge mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.16em] text-emerald-200">
           <ShieldCheck className="size-3.5" />
           {copy.badge}
         </div>
-        <h2 className="login-heading text-[28px] font-black tracking-[-.05em] text-white">{title}</h2>
-        <p className="login-muted mt-2 text-[12px] leading-5 text-slate-400">{description}</p>
+        <h2 className="login-heading text-[22px] font-black leading-[1.08] tracking-[-.035em] text-white sm:text-[24px]">{title}</h2>
+        <p className="login-muted mt-2 max-w-[38rem] text-[12px] leading-[1.65] text-slate-400">{description}</p>
       </div>
 
       {mode === "choice" ? (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <button
             type="button"
             onClick={() => {
@@ -380,14 +392,14 @@ export default function DashboardMfaStep({
               setMode("challenge");
             }}
             disabled={loading}
-            className="login-secondary flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-indigo-300/15 bg-indigo-300/[.07] px-4 text-left transition hover:bg-indigo-300/[.12] disabled:opacity-50"
+            className={`login-mfa-option group flex min-h-[72px] w-full items-center gap-3.5 rounded-[18px] border px-3.5 py-3 text-start transition duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 ${choiceCardTheme}`}
           >
-            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-300/10 text-indigo-200">
-              <KeyRound className="size-4" />
+            <div className={`grid size-11 shrink-0 place-items-center rounded-[14px] transition ${authenticatorIconTheme}`}>
+              <KeyRound className="size-[18px]" />
             </div>
-            <div className="min-w-0">
-              <div className="text-[12px] font-bold text-white">{copy.authenticatorOption}</div>
-              <div className="mt-1 text-[10px] leading-4 text-slate-400">{copy.authenticatorHint}</div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[13px] font-bold leading-5 ${choiceTitleTheme}`}>{copy.authenticatorOption}</div>
+              <div className={`mt-0.5 text-[11px] leading-[1.5] ${choiceHintTheme}`}>{copy.authenticatorHint}</div>
             </div>
           </button>
 
@@ -395,14 +407,14 @@ export default function DashboardMfaStep({
             type="button"
             onClick={() => void verifyPasskey()}
             disabled={loading || !passkeySupported || challengeExpired}
-            className="login-secondary flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-emerald-300/15 bg-emerald-300/[.06] px-4 text-left transition hover:bg-emerald-300/[.1] disabled:cursor-not-allowed disabled:opacity-50"
+            className={`login-mfa-option group flex min-h-[72px] w-full items-center gap-3.5 rounded-[18px] border px-3.5 py-3 text-start transition duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 ${choiceCardTheme}`}
           >
-            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-300/10 text-emerald-200">
-              {loading ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />}
+            <div className={`grid size-11 shrink-0 place-items-center rounded-[14px] transition ${passkeyIconTheme}`}>
+              {loading ? <Loader2 className="size-[18px] animate-spin" /> : <Fingerprint className="size-[18px]" />}
             </div>
-            <div className="min-w-0">
-              <div className="text-[12px] font-bold text-white">{copy.passkeyOption}</div>
-              <div className="mt-1 text-[10px] leading-4 text-slate-400">{copy.passkeyHint}</div>
+            <div className="min-w-0 flex-1">
+              <div className={`text-[13px] font-bold leading-5 ${choiceTitleTheme}`}>{copy.passkeyOption}</div>
+              <div className={`mt-0.5 text-[11px] leading-[1.5] ${choiceHintTheme}`}>{copy.passkeyHint}</div>
             </div>
           </button>
 
@@ -419,7 +431,7 @@ export default function DashboardMfaStep({
             type="button"
             onClick={() => void cancel()}
             disabled={loading}
-            className="login-muted flex h-10 w-full items-center justify-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
+            className="login-muted mt-1 flex h-10 w-full items-center justify-center gap-2 rounded-xl text-[11px] font-bold text-slate-500 transition hover:bg-black/[.025] hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 disabled:opacity-50 dark:hover:bg-white/[.04] dark:hover:text-slate-300"
           >
             <LogOut className="size-3.5" />
             {copy.signOut}
