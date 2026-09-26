@@ -12,8 +12,10 @@ for tool in node javac java gradle; do
 done
 
 GRADLE_VERSION="$(gradle --version | awk '/^Gradle / { print $2; exit }')"
-if [ "$GRADLE_VERSION" != "9.6.0" ]; then
-  echo "Gradle 9.6.0 is required by Android Gradle Plugin 9.4.0; found: ${GRADLE_VERSION:-unknown}" >&2
+IFS=. read -r GRADLE_MAJOR GRADLE_MINOR _ <<< "$GRADLE_VERSION"
+if [[ ! "$GRADLE_MAJOR" =~ ^[0-9]+$ || ! "$GRADLE_MINOR" =~ ^[0-9]+$ ]] \
+  || (( GRADLE_MAJOR < 9 || (GRADLE_MAJOR == 9 && GRADLE_MINOR < 6) )); then
+  echo "Gradle 9.6.0 or newer is required by Android Gradle Plugin 9.4.0; found: ${GRADLE_VERSION:-unknown}" >&2
   exit 2
 fi
 
