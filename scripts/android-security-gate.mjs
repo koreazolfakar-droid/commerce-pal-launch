@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-const read = (path) => fs.readFileSync(path, "utf8");
+const read = (path) => fs.readFileSync(path, "utf8").replace(/\r\n/g, "\n");
 
 const manifestPath = "android/app/src/main/AndroidManifest.xml";
 const gradlePath = "android/app/build.gradle";
@@ -223,9 +223,14 @@ requireText(launcher, "protected Uri getUrlForIntent(Intent intent)", "Raw VIEW 
 requireText(urlPolicy, 'CANONICAL_HOST = "www.spacecallapp.store"', "URL policy canonical host guard is missing.");
 requireText(urlPolicy, 'ALTERNATE_HOST = "spacecallapp.store"', "URL policy alternate host normalization is missing.");
 requireText(urlPolicy, '"https".equals(normalizedScheme) && !"http".equals(normalizedScheme)', "URL policy must reject non-web schemes.");
-requireText(urlPolicy, '"https",', "URL policy must force accepted links to HTTPS.");
+requireText(urlPolicy, 'new StringBuilder("https://")', "URL policy must force accepted links to HTTPS.");
 forbidText(urlPolicy, ".isBlank()", "URL policy must not use APIs unavailable on minSdk 24.");
-requireText(urlPolicy, "null,\n                    CANONICAL_HOST,\n                    -1,", "URL policy must strip user-info and explicit ports.");
+requireText(urlPolicy, ".append(CANONICAL_HOST)", "URL policy must rebuild links on the canonical host.");
+requireText(urlPolicy, "getRawPath()", "URL policy must preserve raw encoded path components.");
+requireText(urlPolicy, "getRawQuery()", "URL policy must preserve raw encoded query components.");
+requireText(urlPolicy, "getRawFragment()", "URL policy must preserve raw encoded fragment components.");
+requireText(urlPolicy, "canonical.getUserInfo() != null", "URL policy must reject rebuilt user-info.");
+requireText(urlPolicy, "canonical.getPort() != -1", "URL policy must reject rebuilt explicit ports.");
 requireText(launcher, "openSafeBrowserFallback()", "Crash-safe browser fallback is missing.");
 requireText(
   launcher,
@@ -262,6 +267,7 @@ for (const requiredTestCase of [
   "nonWebSchemeIsRejected",
   "explicitPortIsRemoved",
   "malformedUrlIsRejected",
+  "encodedComponentsArePreserved",
 ]) {
   requireText(urlPolicyTest, requiredTestCase, `Missing Android URL policy regression test: ${requiredTestCase}`);
 }
@@ -289,7 +295,6 @@ requireText(gradle, "shrinkResources true", "Release resource shrinking must sta
 requireText(gradle, "debuggable false", "Release build must remain non-debuggable.");
 requireText(gradle, "abortOnError true", "Android lint errors must fail the build.");
 requireText(gradle, "checkReleaseBuilds true", "Release lint must remain enabled.");
-requireText(gradle, "checkDependencies false", "App lint is temporarily isolated from dependency lint during diagnosis.");
 requireText(
   gradle,
   "Release APK/AAB generation is blocked",
@@ -297,9 +302,10 @@ requireText(
 );
 
 for (const secretPattern of [
-  /storePassword\s+["'][^"']+["']/,
-  /keyPassword\s+["'][^"']+["']/,
+  /(?:storePassword|releaseStorePassword)\s*(?:=\s*)?["'][^"']+["']/,
+  /(?:keyPassword|releaseKeyPassword)\s*(?:=\s*)?["'][^"']+["']/,
   /ANDROID_KEYSTORE_PASSWORD\s*=\s*["'][^"']+["']/,
+  /ANDROID_KEY_PASSWORD\s*=\s*["'][^"']+["']/,
 ]) {
   if (secretPattern.test(gradle)) {
     failures.push("Signing credentials must never be hardcoded in Gradle.");
