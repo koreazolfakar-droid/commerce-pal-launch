@@ -68,3 +68,43 @@ test("category mutations patch local dashboard state and guard duplicate deletes
   assert.match(page, /disabled=\{deleting\}/);
   assert.match(page, /deleting \? "Deleting\.\.\." : "Delete Category"/);
 });
+
+
+test("product save avoids redundant catalog reads and editor refreshes", async () => {
+  const [catalog, form] = await Promise.all([
+    read("src/dashboard/data/catalog.ts"),
+    read("src/dashboard/pages/ProductFormPage.tsx"),
+  ]);
+
+  const saveFlow = functionSlice(
+    catalog,
+    "export async function saveDashboardProduct",
+    "export type DashboardProductImage",
+  );
+
+  assert.doesNotMatch(saveFlow, /listDashboardBrands\(\)|listDashboardCategories\(\)/);
+  assert.equal(
+    (saveFlow.match(/\.from\("store_product_variants"\)/g) ?? []).length,
+    1,
+    "product save should read variants only once",
+  );
+  assert.match(saveFlow, /Promise\.all\(\[/);
+  assert.match(saveFlow, /categoryRequest/);
+  assert.match(saveFlow, /imageRequest/);
+  assert.match(saveFlow, /const variantRows = preexistingVariants/);
+
+  const editorSave = functionSlice(
+    form,
+    "const handleSave = async () =>",
+    "const duplicate = async",
+  );
+
+  assert.match(editorSave, /collectionsChanged/);
+  assert.match(editorSave, /if \(collectionsChanged\)/);
+  assert.match(editorSave, /shouldRefreshVariantManager/);
+  assert.match(editorSave, /if \(shouldRefreshVariantManager\)/);
+  assert.doesNotMatch(
+    editorSave,
+    /setDashboardProductCollections\(savedProduct\.id, collectionIds\)/,
+  );
+});
