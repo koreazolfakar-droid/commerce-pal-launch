@@ -160,9 +160,15 @@ export const useCartStore = create<CartStore>()(
             [...new Set(current.map((item) => item.product.node.id))],
           );
           const productById = new Map(products.map((product) => [product.node.id, product]));
+          const fetchedProductIds = new Set(current.map((item) => item.product.node.id));
           const next: CartItem[] = [];
 
-          for (const item of current) {
+          for (const item of get().items) {
+            if (!fetchedProductIds.has(item.product.node.id)) {
+              next.push(item);
+              continue;
+            }
+
             const product = productById.get(item.product.node.id);
             if (!product) continue;
             const variant = product.node.variants.edges.find(
