@@ -953,8 +953,7 @@ export async function fetchHomepageConfiguredProducts(config: {
     .from("store_collection_products")
     .select("product_id")
     .eq("collection_id", collection.id)
-    .order("sort_order", { ascending: true })
-    .limit(count);
+    .order("sort_order", { ascending: true });
   const links = assertResult(linkResult, "homepage collection products");
   return (await fetchProductsByIds(links.map((row) => row.product_id))).slice(0, count);
 }
