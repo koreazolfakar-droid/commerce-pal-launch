@@ -114,6 +114,16 @@ test("checkout keys are bound to the full payload and stale failures recover", (
   assert.match(checkout, /Promise\.all\(\[syncCart\(\), refetchCms\(\)\]\)/);
 });
 
+test("server idempotency fingerprint covers every persisted checkout dimension", () => {
+  assert.match(backorderMigration, /v_legacy_payload_fingerprint/);
+  assert.match(backorderMigration, /'reference', payload -> 'reference'/);
+  assert.match(backorderMigration, /'delivery_location', payload -> 'delivery_location'/);
+  assert.match(backorderMigration, /'expected_subtotal', payload -> 'expected_subtotal'/);
+  assert.match(backorderMigration, /'expected_delivery_fee', payload -> 'expected_delivery_fee'/);
+  assert.match(backorderMigration, /v_existing\.customer_reference/);
+  assert.match(backorderMigration, /v_existing\.delivery_location/);
+});
+
 test("backorders only decrement and release stock that physically existed", () => {
   assert.match(backorderMigration, /v_stock_decrement := least\(greatest\(v_stock, 0\), v_qty\)/);
   assert.match(backorderMigration, /stock_quantity = stock_quantity - v_stock_decrement/);
