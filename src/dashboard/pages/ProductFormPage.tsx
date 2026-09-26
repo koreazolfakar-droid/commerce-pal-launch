@@ -74,6 +74,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [categories, setCategories] = useState<Awaited<ReturnType<typeof listDashboardCategories>>>([]);
   const [collections, setCollections] = useState<Awaited<ReturnType<typeof listDashboardCollections>>>([]);
   const [collectionIds, setCollectionIds] = useState<string[]>([]);
+  const [persistedCollectionIds, setPersistedCollectionIds] = useState<string[]>([]);
   const [variantCount, setVariantCount] = useState(0);
   const [variantRevision, setVariantRevision] = useState(0);
   const [role, setRole] = useState<"admin" | "editor" | null>(null);
@@ -101,6 +102,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         setCategories(categoryRows);
         setCollections(collectionRows);
         setCollectionIds(productCollectionIds);
+        setPersistedCollectionIds(productCollectionIds);
         setRole(dashboardRole);
         setVariantCount(product?.variantCount ?? 0);
         setSaved(false);
@@ -219,6 +221,30 @@ export default function ProductFormPage({ id }: { id?: string }) {
       return;
     }
 
+    const nextPrice = Number(form.price) || 0;
+    const nextCompareAt = form.compareAt.trim() ? Number(form.compareAt) : null;
+    const nextStock = Number(form.stock) || 0;
+    const nextCollectionIds = [...new Set(collectionIds)].sort();
+    const previousCollectionIds = [...new Set(persistedCollectionIds)].sort();
+    const collectionsChanged =
+      nextCollectionIds.length !== previousCollectionIds.length ||
+      nextCollectionIds.some((collectionId, index) => collectionId !== previousCollectionIds[index]);
+    const variantFieldsChanged = Boolean(
+      id &&
+        existing &&
+        variantCount <= 1 &&
+        (
+          existing.price !== nextPrice ||
+          existing.compareAt !== nextCompareAt ||
+          existing.sku !== form.sku.trim() ||
+          existing.barcode !== form.barcode.trim() ||
+          existing.stock !== nextStock
+        ),
+    );
+    const shouldRefreshVariantManager = Boolean(
+      id && variantCount <= 1 && (variantCount === 0 || variantFieldsChanged),
+    );
+
     setSaving(true);
     try {
       const savedProduct = await saveDashboardProduct({
@@ -228,23 +254,60 @@ export default function ProductFormPage({ id }: { id?: string }) {
         brandId: form.brandId || null,
         categoryId: form.categoryId || null,
         status: form.status,
-        price: Number(form.price) || 0,
-        compareAt: form.compareAt.trim() ? Number(form.compareAt) : null,
+        price: nextPrice,
+        compareAt: nextCompareAt,
         sku: form.sku,
         barcode: form.barcode,
-        stock: Number(form.stock) || 0,
+        stock: nextStock,
         imageUrl: form.imageUrl,
         seoTitle: form.seoTitle,
         seoDescription: form.seoDescription,
         collectionId: null,
       });
-      await setDashboardProductCollections(savedProduct.id, collectionIds);
+      if (collectionsChanged) {
+        await setDashboardProductCollections(savedProduct.id, nextCollectionIds);
+        setPersistedCollectionIds(nextCollectionIds);
+      }
+
+      if (id) {
+        const selectedBrand = brands.find((brand) => brand.id === form.brandId);
+        const selectedCategory = categories.find((category) => category.id === form.categoryId);
+        setExisting((current) =>
+          current
+            ? {
+                ...current,
+                name: form.title.trim(),
+                description: form.description.trim(),
+                brandId: form.brandId || null,
+                brand: selectedBrand?.name ?? "",
+                categoryId: form.categoryId || null,
+                category: selectedCategory?.name ?? "",
+                status: form.status,
+                price: savedProduct.variantManagedSeparately ? current.price : nextPrice,
+                compareAt: savedProduct.variantManagedSeparately ? current.compareAt : nextCompareAt,
+                stock: savedProduct.variantManagedSeparately ? current.stock : nextStock,
+                sku: savedProduct.variantManagedSeparately ? current.sku : form.sku.trim(),
+                barcode: savedProduct.variantManagedSeparately ? current.barcode : form.barcode.trim(),
+                image: form.imageUrl.trim(),
+                seoTitle: form.seoTitle.trim(),
+                seoDescription: form.seoDescription.trim(),
+              }
+            : current,
+        );
+      }
+
       setSaved(true);
-      setVariantRevision((value) => value + 1);
+      if (shouldRefreshVariantManager) {
+        setVariantRevision((value) => value + 1);
+      }
       toast.success(
         savedProduct.variantManagedSeparately
-          ? "Product details and collections saved. Variant pricing and inventory stayed independent."
-          : "Product saved to Supabase.",
+          ? collectionsChanged
+            ? "Product details and collections saved. Variant pricing and inventory stayed independent."
+            : "Product details saved. Variant pricing and inventory stayed independent."
+          : collectionsChanged
+            ? "Product and collections saved to Supabase."
+            : "Product saved to Supabase.",
       );
       if (!id) navigate(`/dashboard/products/${savedProduct.id}`);
     } catch (cause) {
