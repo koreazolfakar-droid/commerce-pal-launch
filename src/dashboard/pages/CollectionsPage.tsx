@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import {
   createDashboardCollection,
   deleteDashboardCollection,
@@ -47,6 +48,8 @@ export default function CollectionsPage() {
   const [filter, setFilter] = useState<"all" | "active" | "draft" | "featured">("all");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DashboardCollectionListItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
 
@@ -107,8 +110,7 @@ export default function CollectionsPage() {
       toast.success("Collection created.");
       setShowCreate(false);
       setDraft(emptyDraft);
-      if (created) navigate(`/dashboard/collections/${created.id}`);
-      else void load();
+      navigate(`/dashboard/collections/${created.id}`);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Collection creation failed.");
     } finally {
@@ -116,14 +118,19 @@ export default function CollectionsPage() {
     }
   };
 
-  const remove = async (item: DashboardCollectionListItem) => {
-    if (!window.confirm(`Delete "${item.title}"? Products will not be deleted.`)) return;
+  const remove = async () => {
+    if (!deleteTarget || deleting) return;
+    const item = deleteTarget;
+    setDeleting(true);
     try {
       await deleteDashboardCollection(item.id);
       setCollections((current) => current.filter((collection) => collection.id !== item.id));
+      setDeleteTarget(null);
       toast.success("Collection deleted.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Collection deletion failed.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -197,7 +204,7 @@ export default function CollectionsPage() {
                   <button onClick={() => void move(item.id, -1)} className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"><ArrowUp className="size-3.5" /></button>
                   <button onClick={() => void move(item.id, 1)} className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"><ArrowDown className="size-3.5" /></button>
                   <button onClick={() => navigate(`/dashboard/collections/${item.id}`)} className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"><Pencil className="size-3.5" /></button>
-                  <button onClick={() => void remove(item)} className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500"><Trash2 className="size-3.5" /></button>
+                  <button onClick={() => setDeleteTarget(item)} disabled={deleting} className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="size-3.5" /></button>
                 </div>
               </div>
             ))}
@@ -231,6 +238,20 @@ export default function CollectionsPage() {
           </div>
         </div>
       ) : null}
+
+      <DashboardConfirmDialog
+        open={deleteTarget !== null}
+        title={deleteTarget ? `Delete "${deleteTarget.title}"?` : "Delete collection?"}
+        description="The collection will be removed, but its products stay in the catalog unchanged."
+        confirmLabel="Delete collection"
+        pendingLabel="Deleting..."
+        pending={deleting}
+        destructive
+        onClose={() => {
+          if (!deleting) setDeleteTarget(null);
+        }}
+        onConfirm={() => void remove()}
+      />
     </div>
   );
 }
