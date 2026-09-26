@@ -116,6 +116,13 @@ test("phase two adds deterministic verification metadata", () => {
   assert.match(edge, /Barcode is already assigned to another product or variant/);
   assert.match(edge, /function validGtin/);
   assert.match(edge, /Barcode \/ GTIN checksum or length is invalid/);
+  assert.match(edge, /function calibrateEntityMatch/);
+  assert.match(edge, /function boundSources/);
+  assert.match(edge, /Conflicting AI values were returned for this field/);
+  assert.match(edge, /Verified claim had no matching grounded source/);
+  assert.match(edge, /Slug does not closely match the entity name/);
+  assert.match(edge, /suggestionFieldsForAction/);
+  assert.match(edge, /field\.key === "seoTitle" \|\| field\.key === "seoDescription"/);
   assert.match(edge, /sourceQuality >= 0\.95/);
   assert.match(panel, /Exact entity verified/);
   assert.match(panel, /Safe to apply/);
@@ -124,4 +131,7 @@ test("phase two adds deterministic verification metadata", () => {
   assert.match(client, /item\.decision === "allow"/);
   assert.match(client, /item\.risk === "low"/);
   assert.match(client, /entityMatch/);
+  assert.match(client, /item\.sourceUrls/);
+  assert.match(panel, /evidenceSources/);
+  assert.match(panel, /Evidence/);
 });
