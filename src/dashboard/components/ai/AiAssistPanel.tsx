@@ -21,6 +21,92 @@ import type {
   DashboardAiResponse,
 } from "@/dashboard/ai/types";
 
+function comparableValue(value: string) {
+  return value.replace(/\r\n?/g, "\n").trim();
+}
+
+function sameSuggestionValue(current: string, suggested: string) {
+  return comparableValue(current) === comparableValue(suggested);
+}
+
+function contextStringList(context: Record<string, unknown> | undefined, key: string) {
+  const value = context?.[key];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function contextSlugs(context: Record<string, unknown> | undefined) {
+  const keys = ["existingCategories", "existingBrands"];
+  const slugs = new Set<string>();
+
+  for (const key of keys) {
+    const value = context?.[key];
+    if (!Array.isArray(value)) continue;
+    for (const item of value) {
+      if (!item || typeof item !== "object") continue;
+      const slug = (item as { slug?: unknown }).slug;
+      if (typeof slug === "string" && slug.trim()) slugs.add(slug.trim().toLowerCase());
+    }
+  }
+
+  return slugs;
+}
+
+function suggestionIssue({
+  field,
+  value,
+  currentData,
+  definition,
+  context,
+}: {
+  field: string;
+  value: string;
+  currentData: Record<string, string>;
+  definition: DashboardAiFieldDefinition;
+  context?: Record<string, unknown>;
+}) {
+  const current = currentData[field] ?? "";
+  if (sameSuggestionValue(current, value)) return "No change";
+
+  const trimmed = value.trim();
+  if (!trimmed) return "Empty suggestion";
+  if (definition.maxLength && trimmed.length > definition.maxLength) {
+    return `Exceeds the ${definition.maxLength}-character field limit`;
+  }
+
+  if (field === "slug") {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(trimmed)) {
+      return "Slug must use lowercase letters, numbers, and single hyphens";
+    }
+    const currentSlug = current.trim().toLowerCase();
+    const candidate = trimmed.toLowerCase();
+    if (candidate !== currentSlug && contextSlugs(context).has(candidate)) {
+      return "This slug is already used by another catalog entry";
+    }
+  }
+
+  if (field === "icon") {
+    const allowedIcons = contextStringList(context, "allowedIcons");
+    if (allowedIcons.length && !allowedIcons.includes(trimmed)) {
+      return "Unsupported dashboard icon";
+    }
+  }
+
+  if (field === "website") {
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        return "Website must use HTTP(S)";
+      }
+    } catch {
+      return "Website is not a valid URL";
+    }
+  }
+
+  return "";
+}
+
 export default function AiAssistPanel({
   entity,
   query,
@@ -137,21 +223,17 @@ export default function AiAssistPanel({
         return (
           definition &&
           !definition.review &&
-          suggestion.value.trim().length > 0 &&
+          !suggestionIssue({
+            field: suggestion.field,
+            value: suggestion.value,
+            currentData,
+            definition,
+            context,
+          }) &&
           suggestion.confidence >= 0.5
         );
       });
       setSelected(new Set(safeSuggestions.map((suggestion) => suggestion.field)));
-
-      if (action === "research_fill" && safeSuggestions.length) {
-        const patch = Object.fromEntries(
-          safeSuggestions.map((suggestion) => [suggestion.field, suggestion.value]),
-        );
-        onApply(patch);
-        toast.success(
-          `${safeSuggestions.length} safe AI field${safeSuggestions.length === 1 ? "" : "s"} filled. Review before saving.`,
-        );
-      }
     } catch (cause) {
       if (requestId !== requestIdRef.current) return;
       toast.error(cause instanceof Error ? cause.message : "AI assistant failed.");
@@ -164,7 +246,17 @@ export default function AiAssistPanel({
     if (!result) return;
     const patch: Record<string, string> = {};
     for (const suggestion of result.suggestions) {
-      if (selected.has(suggestion.field)) patch[suggestion.field] = suggestion.value;
+      if (!selected.has(suggestion.field)) continue;
+      const definition = fieldMap.get(suggestion.field);
+      if (!definition) continue;
+      const issue = suggestionIssue({
+        field: suggestion.field,
+        value: suggestion.value,
+        currentData,
+        definition,
+        context,
+      });
+      if (!issue) patch[suggestion.field] = suggestion.value;
     }
     if (!Object.keys(patch).length) {
       toast.info("Select at least one AI suggestion.");
@@ -220,7 +312,7 @@ export default function AiAssistPanel({
                       Research, fill and improve
                     </h2>
                     <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                      Research & Fill updates safe draft fields automatically. Nothing is saved until you save the form.
+                      Research & Fill prepares safe draft suggestions. Nothing changes until Apply selected, and nothing is saved until you save the form.
                     </p>
                   </div>
                   <button
@@ -314,22 +406,34 @@ export default function AiAssistPanel({
                         {result.suggestions.map((suggestion) => {
                           const definition = fieldMap.get(suggestion.field);
                           if (!definition) return null;
-                          const checked = selected.has(suggestion.field);
+                          const issue = suggestionIssue({
+                            field: suggestion.field,
+                            value: suggestion.value,
+                            currentData,
+                            definition,
+                            context,
+                          });
+                          const noChange = issue === "No change";
+                          const blocked = Boolean(issue);
+                          const checked = !blocked && selected.has(suggestion.field);
                           const current = currentData[suggestion.field] ?? "";
                           return (
                             <label
                               key={suggestion.field}
                               className={
-                                "block cursor-pointer rounded-xl border p-3 transition " +
-                                (checked
-                                  ? "border-indigo-200 bg-indigo-50/60"
-                                  : "border-slate-200 bg-white hover:border-slate-300")
+                                "block rounded-xl border p-3 transition " +
+                                (blocked
+                                  ? "cursor-default border-slate-200 bg-slate-50/70"
+                                  : checked
+                                    ? "cursor-pointer border-indigo-200 bg-indigo-50/60"
+                                    : "cursor-pointer border-slate-200 bg-white hover:border-slate-300")
                               }
                             >
                               <div className="flex items-start gap-3">
                                 <input
                                   type="checkbox"
                                   checked={checked}
+                                  disabled={blocked}
                                   onChange={() =>
                                     setSelected((before) => {
                                       const next = new Set(before);
@@ -338,7 +442,7 @@ export default function AiAssistPanel({
                                       return next;
                                     })
                                   }
-                                  className="mt-1"
+                                  className="mt-1 disabled:opacity-40"
                                 />
                                 <div className="min-w-0 flex-1">
                                   <div className="flex flex-wrap items-center gap-2">
@@ -348,16 +452,24 @@ export default function AiAssistPanel({
                                     <span
                                       className={
                                         "rounded-full px-2 py-0.5 text-[8px] font-black " +
-                                        (suggestion.verified
-                                          ? "bg-emerald-100 text-emerald-700"
-                                          : "bg-amber-100 text-amber-700")
+                                        (noChange
+                                          ? "bg-slate-200 text-slate-600"
+                                          : suggestion.verified
+                                            ? "bg-emerald-100 text-emerald-700"
+                                            : "bg-amber-100 text-amber-700")
                                       }
                                     >
-                                      {suggestion.verified ? "Verified" : "Review"}
+                                      {noChange
+                                        ? "No change"
+                                        : suggestion.verified
+                                          ? "Verified"
+                                          : "Review"}
                                     </span>
-                                    <span className="text-[9px] font-bold text-slate-400">
-                                      {Math.round(suggestion.confidence * 100)}%
-                                    </span>
+                                    {!noChange ? (
+                                      <span className="text-[9px] font-bold text-slate-400">
+                                        {Math.round(suggestion.confidence * 100)}%
+                                      </span>
+                                    ) : null}
                                   </div>
                                   {current ? (
                                     <div className="mt-1.5 text-[9px] text-slate-400">
@@ -370,6 +482,11 @@ export default function AiAssistPanel({
                                   {suggestion.reason ? (
                                     <div className="mt-1 text-[9px] leading-4 text-slate-400">
                                       {suggestion.reason}
+                                    </div>
+                                  ) : null}
+                                  {issue && !noChange ? (
+                                    <div className="mt-1 text-[9px] font-bold text-rose-600">
+                                      {issue}. This suggestion cannot be applied.
                                     </div>
                                   ) : null}
                                   {definition.review ? (
@@ -416,7 +533,7 @@ export default function AiAssistPanel({
 
                 <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-white px-5 py-4">
                   <div className="text-[9px] leading-4 text-slate-400">
-                    AI never changes stock, price, permissions, or order state.
+                    Apply selected changes draft fields only. Save remains manual; stock, price, permissions, and order state stay protected.
                   </div>
                   <button
                     type="button"
