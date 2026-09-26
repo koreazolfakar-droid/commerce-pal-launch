@@ -4,19 +4,16 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { isClientDisconnectError } from "./lib/client-disconnect";
 import { renderErrorPage } from "./lib/error-page";
 import { buildContentSecurityPolicy } from "./lib/contentSecurityPolicy";
+import { consumeSharedMutationRateLimit } from "./security/mutation-rate-limit.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
-type RateBucket = { count: number; resetAt: number };
-
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const MAX_REQUEST_BYTES = 128 * 1024;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_MUTATIONS = 24;
-const MAX_RATE_BUCKETS = 5_000;
-const mutationRateBuckets = new Map<string, RateBucket>();
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
@@ -132,50 +129,18 @@ function isTrustedMutationOrigin(request: Request) {
   return true;
 }
 
-function clientAddress(request: Request) {
-  const direct =
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("true-client-ip") ??
-    request.headers.get("x-real-ip");
-  if (direct) return direct.trim().slice(0, 128);
-
-  const forwarded = request.headers.get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim().slice(0, 128) || null;
-}
-
-function consumeMutationRateLimit(request: Request) {
-  if (!MUTATING_METHODS.has(request.method.toUpperCase())) return { allowed: true, retryAfter: 0 };
-  const address = clientAddress(request);
-  if (!address) return { allowed: true, retryAfter: 0 };
-
-  const now = Date.now();
-  const key = address;
-  const existing = mutationRateBuckets.get(key);
-
-  if (!existing || existing.resetAt <= now) {
-    mutationRateBuckets.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-  } else if (existing.count >= RATE_LIMIT_MAX_MUTATIONS) {
-    return {
-      allowed: false,
-      retryAfter: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
-    };
-  } else {
-    existing.count += 1;
+async function consumeMutationRateLimit(request: Request, env: unknown) {
+  if (!MUTATING_METHODS.has(request.method.toUpperCase())) {
+    return { allowed: true, retryAfter: 0 };
   }
 
-  if (mutationRateBuckets.size > MAX_RATE_BUCKETS) {
-    for (const [bucketKey, bucket] of mutationRateBuckets) {
-      if (bucket.resetAt <= now || mutationRateBuckets.size > MAX_RATE_BUCKETS) {
-        mutationRateBuckets.delete(bucketKey);
-      }
-      if (mutationRateBuckets.size <= MAX_RATE_BUCKETS) break;
-    }
-  }
-
-  return { allowed: true, retryAfter: 0 };
+  return consumeSharedMutationRateLimit(request, env, {
+    limit: RATE_LIMIT_MAX_MUTATIONS,
+    windowSeconds: Math.ceil(RATE_LIMIT_WINDOW_MS / 1000),
+  });
 }
 
-export function guardIncomingRequest(request: Request): Response | null {
+export async function guardIncomingRequest(request: Request, env: unknown): Promise<Response | null> {
   const length = requestContentLength(request);
   if (length !== null && length > MAX_REQUEST_BYTES) {
     return securityError(413, "Request body is too large");
@@ -185,7 +150,12 @@ export function guardIncomingRequest(request: Request): Response | null {
     return securityError(403, "Cross-site mutation blocked");
   }
 
-  const rate = consumeMutationRateLimit(request);
+  const rate = await consumeMutationRateLimit(request, env);
+  if (rate.unavailable) {
+    return securityError(503, "Request protection is temporarily unavailable", {
+      "retry-after": String(rate.retryAfter),
+    });
+  }
   if (!rate.allowed) {
     return securityError(429, "Too many requests", { "retry-after": String(rate.retryAfter) });
   }
@@ -197,7 +167,7 @@ export function guardIncomingRequest(request: Request): Response | null {
 // request flow while forcing deployment systems that watch src/** to rebuild.
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
-    const blocked = guardIncomingRequest(request);
+    const blocked = await guardIncomingRequest(request, env);
     if (blocked) return blocked;
 
     // Cloudflare/Lovable runtime bindings are passed through `env`; TanStack server

@@ -427,7 +427,7 @@ type DashboardThrottleDecision = {
 
 async function dashboardLoginThrottle(
   email: string,
-  outcome: "check" | "failure" | "success",
+  outcome: "attempt" | "success",
 ): Promise<DashboardThrottleDecision> {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return { allowed: true, retryAfter: 0 };
@@ -493,7 +493,7 @@ export async function signInDashboard(
     throw new Error("Complete the security verification before signing in.");
   }
 
-  const throttle = await dashboardLoginThrottle(email, "check");
+  const throttle = await dashboardLoginThrottle(email, "attempt");
   if (!throttle.allowed) {
     throw new Error(throttleMessage(throttle.retryAfter));
   }
@@ -505,15 +505,12 @@ export async function signInDashboard(
   });
 
   if (error) {
-    const failed = await dashboardLoginThrottle(email, "failure");
-    if (!failed.allowed) throw new Error(throttleMessage(failed.retryAfter));
     throw new Error(dashboardSignInErrorMessage(error));
   }
 
   clearDashboardRoleCache();
   const role = await getDashboardRole();
   if (!role) {
-    await dashboardLoginThrottle(email, "failure");
     await supabase.auth.signOut({ scope: "local" });
     throw new Error(DASHBOARD_SIGNIN_DENIED_MESSAGE);
   }

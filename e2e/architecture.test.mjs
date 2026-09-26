@@ -142,13 +142,20 @@ test("native cart keeps local totals and native checkout", async () => {
 });
 
 test("server blocks Shopify runtime secrets and applies hardened browser headers", async () => {
-  const [server, csp] = await Promise.all([
+  const [server, sharedRateLimit, csp] = await Promise.all([
     read("src/server.ts"),
+    read("src/security/mutation-rate-limit.server.ts"),
     read("src/lib/contentSecurityPolicy.ts"),
   ]);
   assert.doesNotMatch(server, /SHOPIFY_STOREFRONT/);
   assert.match(server, /MAX_REQUEST_BYTES/);
   assert.match(server, /RATE_LIMIT_MAX_MUTATIONS/);
+  assert.match(server, /consumeSharedMutationRateLimit/);
+  assert.match(server, /Request protection is temporarily unavailable/);
+  assert.match(sharedRateLimit, /consume_edge_rate_limit/);
+  assert.match(sharedRateLimit, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(sharedRateLimit, /sha256/);
+  assert.doesNotMatch(server, /new Map<string, RateBucket>/);
   assert.match(server, /Cross-site mutation blocked/);
   assert.doesNotMatch(csp, /connect-src[^\n]*myshopify|form-action[^\n]*myshopify|frame-src[^\n]*myshopify|checkout\.shopify\.com/);
   assert.match(csp, /frame-ancestors 'self'/);
