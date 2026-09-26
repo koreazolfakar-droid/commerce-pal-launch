@@ -44,6 +44,8 @@ type Bucket = {
   last_attempt_at: string;
 };
 
+type Outcome = "attempt" | "check" | "failure" | "success";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -61,10 +63,12 @@ Deno.serve(async (req) => {
 
   const requestedEmail =
     typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
-  const outcome = String(payload.outcome ?? "");
-  if (!["check", "failure", "success"].includes(outcome)) {
+  const requestedOutcome = String(payload.outcome ?? "");
+  if (!["attempt", "check", "failure", "success"].includes(requestedOutcome)) {
     return json({ error: "invalid_request" }, 400);
   }
+  const outcome = requestedOutcome as Outcome;
+
   if (
     outcome !== "success" &&
     (!requestedEmail || requestedEmail.length > 320 || !requestedEmail.includes("@"))
@@ -113,17 +117,11 @@ Deno.serve(async (req) => {
     return json({ error: "invalid_request" }, 400);
   }
 
-  // Unauthenticated "failure" reports must not be able to create throttle
-  // records for arbitrary emails — otherwise anyone could lock staff out of
-  // the dashboard. Only record failures for emails that belong to an actual
-  // dashboard staff account; ignore everything else silently.
+  // Compatibility for clients deployed before the attempt-based protocol.
+  // Failure reports no longer inspect account existence or mutate account-specific
+  // state. The pre-auth "check" request below already consumes the attempt.
   if (outcome === "failure") {
-    const { data: isStaff, error: staffError } = await supabase.rpc(
-      "dashboard_staff_email_exists",
-      { p_email: email },
-    );
-    if (staffError) return json({ error: "throttle_unavailable" }, 503);
-    if (!isStaff) return json({ allowed: true, retryAfter: 0 });
+    return json({ allowed: true, retryAfter: 0 });
   }
 
   const ip = clientIp(req);
@@ -147,7 +145,7 @@ Deno.serve(async (req) => {
     const start = new Date(bucket.window_started_at).getTime();
     if (Number.isFinite(start) && now - start < WINDOW_MS) return;
 
-    await supabase
+    const { error } = await supabase
       .from("dashboard_login_throttle")
       .update({
         failure_count: 0,
@@ -156,6 +154,7 @@ Deno.serve(async (req) => {
         last_attempt_at: new Date(now).toISOString(),
       })
       .eq("key_hash", keyHash);
+    if (error) throw error;
   }
 
   function retryAfter(bucket: Bucket | null, now: number) {
@@ -163,7 +162,7 @@ Deno.serve(async (req) => {
     return until > now ? Math.max(1, Math.ceil((until - now) / 1000)) : 0;
   }
 
-  async function recordFailure(
+  async function recordAttempt(
     keyHash: string,
     bucket: Bucket | null,
     softFailures: number,
@@ -190,20 +189,19 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     return {
-      retryAfter: blockMs ? Math.ceil(blockMs / 1000) : 0,
       remainingBeforeBlock: Math.max(0, softFailures - nextCount),
     };
   }
 
   try {
-    let [pairBucket, ipBucket] = await Promise.all([
+    const [pairBucket, ipBucket] = await Promise.all([
       readBucket(pairKeyHash),
       readBucket(ipKeyHash),
     ]);
 
     const now = Date.now();
 
-    if (outcome === "check") {
+    if (outcome === "attempt" || outcome === "check") {
       const pairRetry = retryAfter(pairBucket, now);
       const ipRetry = retryAfter(ipBucket, now);
       const retry = Math.max(pairRetry, ipRetry);
@@ -213,40 +211,38 @@ Deno.serve(async (req) => {
         resetExpired(pairKeyHash, pairBucket, now),
         resetExpired(ipKeyHash, ipBucket, now),
       ]);
-      return json({ allowed: true, retryAfter: 0 });
+
+      const [pairResult, ipResult] = await Promise.all([
+        recordAttempt(pairKeyHash, pairBucket, PAIR_SOFT_FAILURES, PAIR_HARD_FAILURES, now),
+        recordAttempt(ipKeyHash, ipBucket, IP_SOFT_FAILURES, IP_HARD_FAILURES, now),
+      ]);
+
+      // The attempt that reaches a threshold is still allowed to proceed. The
+      // newly-created block applies to the next attempt, matching the old UX.
+      return json({
+        allowed: true,
+        retryAfter: 0,
+        remainingBeforeBlock: Math.min(
+          pairResult.remainingBeforeBlock,
+          ipResult.remainingBeforeBlock,
+        ),
+      });
     }
 
-    if (outcome === "success") {
-      await supabase
-        .from("dashboard_login_throttle")
-        .delete()
-        .eq("key_hash", pairKeyHash);
+    await supabase
+      .from("dashboard_login_throttle")
+      .delete()
+      .eq("key_hash", pairKeyHash);
 
-      // Keep the IP-wide bucket so password-spraying attempts across multiple
-      // accounts still accumulate. Opportunistically prune stale rows only
-      // after successful authentication to keep request overhead low.
-      await supabase
-        .from("dashboard_login_throttle")
-        .delete()
-        .lt("last_attempt_at", new Date(now - 48 * 60 * 60 * 1000).toISOString());
+    // Keep the IP-wide bucket so password-spraying attempts across multiple
+    // accounts still accumulate. Opportunistically prune stale rows only after
+    // successful staff authentication to keep request overhead low.
+    await supabase
+      .from("dashboard_login_throttle")
+      .delete()
+      .lt("last_attempt_at", new Date(now - 48 * 60 * 60 * 1000).toISOString());
 
-      return json({ allowed: true, retryAfter: 0 });
-    }
-
-    const [pairResult, ipResult] = await Promise.all([
-      recordFailure(pairKeyHash, pairBucket, PAIR_SOFT_FAILURES, PAIR_HARD_FAILURES, now),
-      recordFailure(ipKeyHash, ipBucket, IP_SOFT_FAILURES, IP_HARD_FAILURES, now),
-    ]);
-
-    const retry = Math.max(pairResult.retryAfter, ipResult.retryAfter);
-    return json({
-      allowed: retry === 0,
-      retryAfter: retry,
-      remainingBeforeBlock: Math.min(
-        pairResult.remainingBeforeBlock,
-        ipResult.remainingBeforeBlock,
-      ),
-    });
+    return json({ allowed: true, retryAfter: 0 });
   } catch {
     return json({ error: "throttle_unavailable" }, 503);
   }
