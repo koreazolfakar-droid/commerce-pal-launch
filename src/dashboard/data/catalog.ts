@@ -1,6 +1,7 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { createEphemeralPasskeyClient, supabase } from "@/integrations/supabase/client";
 import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassword";
+import type { User } from "@supabase/supabase-js";
 import type { Tables } from "@/integrations/supabase/types";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 import { convertProductImageToWebp, type ProductImageConversionResult, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
@@ -187,6 +188,7 @@ function slugify(value: string) {
 }
 
 const DASHBOARD_ROLE_CACHE_TTL_MS = 15_000;
+const DASHBOARD_USER_VALIDATION_CACHE_TTL_MS = 5_000;
 const DASHBOARD_ACCESS_TOKEN_REFRESH_SKEW_MS = 5_000;
 
 export const DASHBOARD_AUTH_REQUIRED_EVENT = "spacecall:dashboard-auth-required";
@@ -197,11 +199,27 @@ let dashboardRoleCache:
 let dashboardRoleRequest:
   | { userId: string; promise: Promise<DashboardRole | null> }
   | null = null;
+let dashboardValidatedUserCache:
+  | { user: User; expiresAt: number }
+  | null = null;
+let dashboardUserValidationRequest:
+  | { userId: string; promise: Promise<User | null> }
+  | null = null;
 let dashboardSessionRefreshRequest: Promise<boolean> | null = null;
 
 function clearDashboardRoleCache() {
   dashboardRoleCache = null;
   dashboardRoleRequest = null;
+}
+
+function clearDashboardUserValidationCache() {
+  dashboardValidatedUserCache = null;
+  dashboardUserValidationRequest = null;
+}
+
+function clearDashboardAuthCaches() {
+  clearDashboardRoleCache();
+  clearDashboardUserValidationCache();
 }
 
 function notifyDashboardAuthRequired() {
@@ -227,7 +245,7 @@ async function refreshDashboardSessionOnce() {
         error,
       } = await supabase.auth.refreshSession();
       if (error || !session?.user) return false;
-      clearDashboardRoleCache();
+      clearDashboardAuthCaches();
       return true;
     } catch {
       return false;
@@ -240,6 +258,40 @@ async function refreshDashboardSessionOnce() {
   } finally {
     if (dashboardSessionRefreshRequest === request) {
       dashboardSessionRefreshRequest = null;
+    }
+  }
+}
+
+async function getServerValidatedDashboardUser(userId: string): Promise<User | null> {
+  if (
+    dashboardValidatedUserCache?.user.id === userId &&
+    dashboardValidatedUserCache.expiresAt > Date.now()
+  ) {
+    return dashboardValidatedUserCache.user;
+  }
+
+  if (dashboardUserValidationRequest?.userId === userId) {
+    return dashboardUserValidationRequest.promise;
+  }
+
+  const request = (async () => {
+    const userResult = await supabase.auth.getUser();
+    const user = userResult.data.user;
+    if (userResult.error || !user || user.id !== userId) return null;
+
+    dashboardValidatedUserCache = {
+      user,
+      expiresAt: Date.now() + DASHBOARD_USER_VALIDATION_CACHE_TTL_MS,
+    };
+    return user;
+  })();
+
+  dashboardUserValidationRequest = { userId, promise: request };
+  try {
+    return await request;
+  } finally {
+    if (dashboardUserValidationRequest?.promise === request) {
+      dashboardUserValidationRequest = null;
     }
   }
 }
@@ -257,7 +309,7 @@ async function getValidatedDashboardUser() {
 
   if (sessionResult.error || !session?.user || dashboardSessionNeedsRefresh(session)) {
     if (!(await refresh())) {
-      clearDashboardRoleCache();
+      clearDashboardAuthCaches();
       notifyDashboardAuthRequired();
       return null;
     }
@@ -266,18 +318,15 @@ async function getValidatedDashboardUser() {
   }
 
   if (sessionResult.error || !session?.user) {
-    clearDashboardRoleCache();
+    clearDashboardAuthCaches();
     notifyDashboardAuthRequired();
     return null;
   }
 
-  const expectedUserId = session.user.id;
-  let userResult = await supabase.auth.getUser();
-  let user = userResult.data.user;
-
-  if (userResult.error || !user || user.id !== expectedUserId) {
+  let user = await getServerValidatedDashboardUser(session.user.id);
+  if (!user) {
     if (!(await refresh())) {
-      clearDashboardRoleCache();
+      clearDashboardAuthCaches();
       notifyDashboardAuthRequired();
       return null;
     }
@@ -285,15 +334,14 @@ async function getValidatedDashboardUser() {
     sessionResult = await supabase.auth.getSession();
     session = sessionResult.data.session;
     if (sessionResult.error || !session?.user) {
-      clearDashboardRoleCache();
+      clearDashboardAuthCaches();
       notifyDashboardAuthRequired();
       return null;
     }
 
-    userResult = await supabase.auth.getUser();
-    user = userResult.data.user;
-    if (userResult.error || !user || user.id !== session.user.id) {
-      clearDashboardRoleCache();
+    user = await getServerValidatedDashboardUser(session.user.id);
+    if (!user) {
+      clearDashboardAuthCaches();
       notifyDashboardAuthRequired();
       return null;
     }
@@ -309,7 +357,7 @@ supabase.auth.onAuthStateChange((event) => {
     event === "TOKEN_REFRESHED" ||
     event === "USER_UPDATED"
   ) {
-    clearDashboardRoleCache();
+    clearDashboardAuthCaches();
   }
 });
 
