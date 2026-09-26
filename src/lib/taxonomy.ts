@@ -473,18 +473,27 @@ export function resolveBrand(
     );
     return known ? { slug: known.slug, label: known.label } : { slug, label: value.trim() };
   };
+  const vendor = product.node.vendor?.trim() ?? "";
+  const canonicalSlug = product.node.vendorSlug?.trim();
+  if (
+    vendor &&
+    canonicalSlug &&
+    !GENERIC_VENDORS.has(vendor.toLowerCase()) &&
+    !genericVendors.has(vendor.toLowerCase())
+  ) {
+    return { slug: canonicalSlug, label: vendor };
+  }
+
   for (const tag of product.node.tags ?? []) {
     const match = /^(?:brand|vendor|make):\s*(.+)$/i.exec(tag.trim());
     if (match?.[1] && identity(match[1])) return identity(match[1]);
   }
-  const vendor = product.node.vendor?.trim() ?? "";
+
   if (
     vendor &&
     !GENERIC_VENDORS.has(vendor.toLowerCase()) &&
     !genericVendors.has(vendor.toLowerCase())
   ) {
-    const canonicalSlug = product.node.vendorSlug?.trim();
-    if (canonicalSlug) return { slug: canonicalSlug, label: vendor };
     return identity(vendor);
   }
 
