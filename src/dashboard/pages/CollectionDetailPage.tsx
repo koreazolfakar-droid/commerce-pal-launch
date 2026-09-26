@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import {
   deleteDashboardCollection,
   getDashboardCollection,
@@ -25,7 +26,10 @@ export default function CollectionDetailPage({ id }: { id: string }) {
   const [, navigate] = useLocation();
   const [collection, setCollection] = useState<DashboardCollectionDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingProducts, setSavingProducts] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [form, setForm] = useState({
     title: "",
@@ -80,31 +84,76 @@ export default function CollectionDetailPage({ id }: { id: string }) {
   }, [collection, form]);
 
   const saveProfile = async () => {
-    if (!collection || form.title.trim().length < 2 || !form.handle.trim()) return;
-    setSaving(true);
+    if (
+      !collection ||
+      savingProfile ||
+      form.title.trim().length < 2 ||
+      !form.handle.trim()
+    ) {
+      return;
+    }
+
+    setSavingProfile(true);
     try {
       const next = await updateDashboardCollection(collection.id, form);
-      setCollection(next);
+      setCollection((current) =>
+        current
+          ? {
+              ...current,
+              ...next,
+              productCount: current.products.length,
+              products: current.products,
+              availableProducts: current.availableProducts,
+            }
+          : current,
+      );
       toast.success("Collection saved.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Save failed.");
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
     }
   };
 
   const saveProducts = async (products: DashboardCollectionProduct[]) => {
-    if (!collection) return;
-    setSaving(true);
+    if (!collection || savingProducts) return;
+
+    const normalized = products.map((product, index) => ({
+      ...product,
+      sortOrder: index,
+    }));
+    const productById = new Map(
+      [...collection.products, ...collection.availableProducts].map((product) => [
+        product.id,
+        product,
+      ]),
+    );
+    const memberIds = new Set(normalized.map((product) => product.id));
+    const nextAvailableProducts = [...productById.values()]
+      .filter((product) => !memberIds.has(product.id))
+      .map((product) => ({ ...product, sortOrder: 0 }));
+
+    setSavingProducts(true);
     try {
-      const next = await saveDashboardCollectionProducts(collection.id, products.map((product) => product.id));
-      setCollection(next);
+      await saveDashboardCollectionProducts(
+        collection.id,
+        normalized.map((product) => product.id),
+      );
+      setCollection((current) =>
+        current
+          ? {
+              ...current,
+              products: normalized,
+              availableProducts: nextAvailableProducts,
+              productCount: normalized.length,
+            }
+          : current,
+      );
       toast.success("Collection products saved.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Products update failed.");
-      void load();
     } finally {
-      setSaving(false);
+      setSavingProducts(false);
     }
   };
 
@@ -135,13 +184,17 @@ export default function CollectionDetailPage({ id }: { id: string }) {
   }, [collection, productSearch]);
 
   const removeCollection = async () => {
-    if (!collection || !window.confirm(`Delete "${collection.title}"? Products remain in the catalog.`)) return;
+    if (!collection || deleting) return;
+    setDeleting(true);
     try {
       await deleteDashboardCollection(collection.id);
+      setDeleteOpen(false);
       toast.success("Collection deleted.");
       navigate("/dashboard/collections");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Delete failed.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -158,8 +211,8 @@ export default function CollectionDetailPage({ id }: { id: string }) {
           <p className="mt-1.5 text-sm text-slate-500">{collection.products.length} products · {collection.isActive ? "Active" : "Draft"}</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => void removeCollection()} className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 text-[11px] font-bold text-rose-600"><Trash2 className="size-3.5" /> Delete</button>
-          <button onClick={() => void saveProfile()} disabled={!dirty || saving} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-40"><Save className="size-3.5" /> Save</button>
+          <button onClick={() => setDeleteOpen(true)} disabled={deleting || savingProfile || savingProducts} className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 text-[11px] font-bold text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="size-3.5" /> Delete</button>
+          <button onClick={() => void saveProfile()} disabled={!dirty || savingProfile || deleting} className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-40">{savingProfile ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />} {savingProfile ? "Saving..." : "Save"}</button>
         </div>
       </div>
 
@@ -199,9 +252,9 @@ export default function CollectionDetailPage({ id }: { id: string }) {
                     <div className="grid size-12 place-items-center overflow-hidden rounded-xl bg-slate-100">{product.imageUrl ? <img src={product.imageUrl} alt="" className="size-full object-contain p-1" /> : <Package className="size-4 text-slate-400" />}</div>
                     <div className="min-w-0"><div className="truncate text-[12px] font-bold text-slate-700">{product.title}</div><div className="mt-1 text-[10px] text-slate-400">{product.status} · Stock {product.stockQuantity} · #{index + 1}</div></div>
                     <div className="flex gap-1">
-                      <button onClick={() => moveProduct(product.id, -1)} className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"><ArrowUp className="size-3.5" /></button>
-                      <button onClick={() => moveProduct(product.id, 1)} className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"><ArrowDown className="size-3.5" /></button>
-                      <button onClick={() => removeProduct(product.id)} className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500"><Trash2 className="size-3.5" /></button>
+                      <button onClick={() => moveProduct(product.id, -1)} disabled={savingProducts} className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:cursor-not-allowed disabled:opacity-35"><ArrowUp className="size-3.5" /></button>
+                      <button onClick={() => moveProduct(product.id, 1)} disabled={savingProducts} className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:cursor-not-allowed disabled:opacity-35"><ArrowDown className="size-3.5" /></button>
+                      <button onClick={() => removeProduct(product.id)} disabled={savingProducts} className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500 disabled:cursor-not-allowed disabled:opacity-35"><Trash2 className="size-3.5" /></button>
                     </div>
                   </div>
                 ))}
@@ -220,7 +273,7 @@ export default function CollectionDetailPage({ id }: { id: string }) {
                   <div key={product.id} className="flex items-center gap-3 py-3">
                     <div className="grid size-10 place-items-center overflow-hidden rounded-lg bg-slate-100">{product.imageUrl ? <img src={product.imageUrl} alt="" className="size-full object-contain p-1" /> : <Package className="size-4 text-slate-400" />}</div>
                     <div className="min-w-0 flex-1"><div className="truncate text-[11px] font-bold text-slate-700">{product.title}</div><div className="mt-0.5 text-[9px] text-slate-400">{product.status} · {product.stockQuantity} stock</div></div>
-                    <button onClick={() => addProduct(product)} disabled={saving} className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600 disabled:opacity-40"><Plus className="size-4" /></button>
+                    <button onClick={() => addProduct(product)} disabled={savingProducts} className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600 disabled:opacity-40"><Plus className="size-4" /></button>
                   </div>
                 ))}
                 {!available.length ? <div className="py-10 text-center text-[11px] text-slate-400">No available products match.</div> : null}
@@ -232,7 +285,21 @@ export default function CollectionDetailPage({ id }: { id: string }) {
         </div>
       </div>
 
-      {dirty ? <div className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl"><span className="text-[11px] font-semibold text-slate-600">Unsaved collection changes</span><button onClick={() => void saveProfile()} className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white">Save</button></div> : null}
+      {dirty ? <div className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl"><span className="text-[11px] font-semibold text-slate-600">Unsaved collection changes</span><button onClick={() => void saveProfile()} disabled={savingProfile || deleting} className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white disabled:opacity-50">{savingProfile ? "Saving..." : "Save"}</button></div> : null}
+
+      <DashboardConfirmDialog
+        open={deleteOpen}
+        title={`Delete "${collection.title}"?`}
+        description="The collection will be permanently removed, but all products remain in the catalog unchanged."
+        confirmLabel="Delete collection"
+        pendingLabel="Deleting..."
+        pending={deleting}
+        destructive
+        onClose={() => {
+          if (!deleting) setDeleteOpen(false);
+        }}
+        onConfirm={() => void removeCollection()}
+      />
     </div>
   );
 }
