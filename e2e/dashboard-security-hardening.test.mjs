@@ -62,37 +62,38 @@ test("Turnstile widget uses explicit rendering, token expiry handling and CSP al
   assert.match(csp, /frame-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
 });
 
-test("pre-auth throttle uses opaque pair/IP buckets and authenticates success resets", () => {
+test("pre-auth throttle uses opaque pair/IP buckets without account enumeration", () => {
   assert.match(catalog, /dashboard-auth-throttle/);
-  assert.match(catalog, /outcome: "check" \| "failure" \| "success"/);
-  assert.match(catalog, /dashboardLoginThrottle\(email, "check"\)/);
-  assert.match(catalog, /dashboardLoginThrottle\(email, "failure"\)/);
-  assert.match(catalog, /dashboardLoginThrottle\(email, "success"\)/);
+  assert.match(catalog, /outcome: "attempt" \\| "success"/);
+  assert.match(catalog, /dashboardLoginThrottle\\(email, "attempt"\\)/);
+  assert.doesNotMatch(catalog, /dashboardLoginThrottle\\(email, "failure"\\)/);
+  assert.match(catalog, /dashboardLoginThrottle\\(email, "success"\\)/);
   assert.match(throttle, /PAIR_SOFT_FAILURES = 5/);
   assert.match(throttle, /PAIR_HARD_FAILURES = 10/);
   assert.match(throttle, /IP_SOFT_FAILURES = 25/);
   assert.match(throttle, /IP_HARD_FAILURES = 50/);
-  assert.match(throttle, /outcome === "success"/);
+  assert.match(throttle, /outcome === "attempt" \\|\\| outcome === "check"/);
+  assert.match(throttle, /outcome === "failure"/);
+  assert.doesNotMatch(throttle, /dashboard_staff_email_exists/);
   assert.match(throttle, /authorization.*bearer/is);
-  assert.match(throttle, /supabase\.auth\.getUser\(token\)/);
-  assert.match(throttle, /from\("user_roles"\)/);
-  assert.match(throttle, /roleRow\?\.role !== "admin"/);
-  assert.match(throttle, /roleRow\?\.role !== "editor"/);
-  assert.match(throttle, /email = user\.email\.trim\(\)\.toLowerCase\(\)/);
-  assert.match(throttle, /pair\|\$\{ip\}\|\$\{email\}/);
-  assert.match(throttle, /ip\|\$\{ip\}/);
-  assert.match(throttle, /eq\("key_hash", pairKeyHash\)/);
-  assert.match(throttle, /48 \* 60 \* 60 \* 1000/);
+  assert.match(throttle, /supabase\\.auth\\.getUser\\(token\\)/);
+  assert.match(throttle, /from\\("user_roles"\\)/);
+  assert.match(throttle, /roleRow\\?\\.role !== "admin"/);
+  assert.match(throttle, /roleRow\\?\\.role !== "editor"/);
+  assert.match(throttle, /email = user\\.email\\.trim\\(\\)\\.toLowerCase\\(\\)/);
+  assert.match(throttle, /pair\\|\\$\\{ip\\}\\|\\$\\{email\\}/);
+  assert.match(throttle, /ip\\|\\$\\{ip\\}/);
+  assert.match(throttle, /eq\\("key_hash", pairKeyHash\\)/);
+  assert.match(throttle, /48 \\* 60 \\* 60 \\* 1000/);
   assert.match(throttleMigration, /key_hash text primary key/);
   assert.doesNotMatch(throttleMigration, /email text|ip_address|raw_email|raw_ip/i);
 
   const authCheck = throttle.indexOf("await supabase.auth.getUser(token)");
-  const pairHash = throttle.indexOf("sha256(`pair|${ip}|${email}`)");
-  const successBranch = throttle.indexOf('if (outcome === "success")');
-  const successDelete = throttle.indexOf('.delete()\n        .eq("key_hash", pairKeyHash)', successBranch);
+  const pairHash = throttle.indexOf("sha256(\`pair|\${ip}|\${email}\`)");
+  const successDelete = throttle.indexOf('.delete()\\n      .eq("key_hash", pairKeyHash)');
   assert.ok(authCheck >= 0, "success reset must validate the session");
-  assert.ok(pairHash > authCheck, "pair bucket must be derived after authenticated identity");
-  assert.ok(successDelete > authCheck, "pair bucket reset must happen after authentication");
+  assert.ok(pairHash > authCheck, "success must bind the pair bucket after authenticated identity");
+  assert.ok(successDelete > pairHash, "pair bucket reset must happen after authentication");
 });
 test("throttle storage is denied to browser roles", () => {
   assert.match(hardenedPolicies, /dashboard_login_throttle_deny_clients/);
