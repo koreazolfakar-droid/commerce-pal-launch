@@ -291,7 +291,7 @@ export async function uploadDashboardCategoryImage(
     }
 
     invalidateNativeStoreCache();
-  broadcastStorefrontRefresh();
+    broadcastStorefrontRefresh();
     return {
       category: mapCategory(data as CategoryRow),
       conversion,
