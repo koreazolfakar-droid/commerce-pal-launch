@@ -12,6 +12,7 @@ export interface StoreProductNode {
   handle: string;
   vendor?: string;
   vendorSlug?: string;
+  vendorHidden?: boolean;
   productType?: string;
   seoTitle?: string;
   seoDescription?: string;
