@@ -16,7 +16,12 @@ import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialo
 import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 import ProductVariantManager from "@/dashboard/components/products/ProductVariantManager";
 import ProductSpecificationsEditor from "@/dashboard/components/products/ProductSpecificationsEditor";
-import { EMPTY_SPECS, EMPTY_TEMPLATE, validateSpecifications, type ProductSpecifications } from "@/lib/specifications";
+import {
+  EMPTY_SPECS,
+  EMPTY_TEMPLATE,
+  validateSpecifications,
+  type ProductSpecifications,
+} from "@/lib/specifications";
 import {
   getDashboardProduct,
   getDashboardRole,
@@ -562,17 +567,44 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   <option value="">No brand</option>
                   {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}{brand.active ? "" : " (Hidden)"}</option>)}
                 </SelectField>
-                <SelectField label="Category" value={form.categoryId} onChange={(value) => {
-                  if (value === form.categoryId) return;
-                  if (Object.keys(specifications.values).length &&
-                    !window.confirm("Changing category will clear specifications that do not belong to the new template. Continue?")) return;
-                  const keys = new Set(categories.find((category) => category.id === value)?.specTemplate.sections.flatMap((section) => section.fields.map((field) => field.key)) ?? []);
-                  const values = Object.fromEntries(Object.entries(specifications.values).filter(([key]) => keys.has(key)));
-                  setSpecifications({ values, keySpecs: specifications.keySpecs.filter((key) => Boolean(values[key])) });
-                  update("categoryId", value);
-                }}>
+                <SelectField
+                  label="Category"
+                  value={form.categoryId}
+                  onChange={(value) => {
+                    if (value === form.categoryId) return;
+                    if (
+                      Object.keys(specifications.values).length &&
+                      !window.confirm(
+                        "Changing category will clear specifications that do not belong to the new template. Continue?",
+                      )
+                    ) {
+                      return;
+                    }
+                    const keys = new Set(
+                      categories
+                        .find((category) => category.id === value)
+                        ?.specTemplate.sections.flatMap((section) =>
+                          section.fields.map((field) => field.key),
+                        ) ?? [],
+                    );
+                    const values = Object.fromEntries(
+                      Object.entries(specifications.values).filter(([key]) => keys.has(key)),
+                    );
+                    setSpecifications({
+                      ...specifications,
+                      values,
+                      keySpecs: specifications.keySpecs.filter((key) => Boolean(values[key])),
+                    });
+                    update("categoryId", value);
+                  }}
+                >
                   <option value="">No category</option>
-                  {categories.map((category) => <option key={category.id} value={category.id}>{category.name}{category.active ? "" : " (Hidden)"}</option>)}
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                      {category.active ? "" : " (Hidden)"}
+                    </option>
+                  ))}
                 </SelectField>
                 <SelectField label="Status" value={form.status} onChange={(value) => update("status", value as ProductStatus)}>
                   <option>Active</option><option>Draft</option><option>Archived</option>
@@ -585,9 +617,15 @@ export default function ProductFormPage({ id }: { id?: string }) {
             <div className="p-5">
               <ProductSpecificationsEditor
                 key={form.categoryId}
-                template={categories.find((category) => category.id === form.categoryId)?.specTemplate ?? EMPTY_TEMPLATE}
+                template={
+                  categories.find((category) => category.id === form.categoryId)?.specTemplate ??
+                  EMPTY_TEMPLATE
+                }
                 value={specifications}
-                onChange={(next) => { setSaved(false); setSpecifications(next); }}
+                onChange={(next) => {
+                  setSaved(false);
+                  setSpecifications(next);
+                }}
                 title={form.title}
                 description={form.description}
                 brand={brands.find((brand) => brand.id === form.brandId)?.name ?? ""}

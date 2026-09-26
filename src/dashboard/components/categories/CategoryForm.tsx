@@ -179,10 +179,21 @@ export default function CategoryForm({
   };
 
   const submit = async () => {
-    const sections = parseTemplate(draft.specTemplate).sections;
-    const allKeys = sections.flatMap((section) => section.fields.map((field) => field.key));
-    if (allKeys.length !== new Set(allKeys).size || sections.length !== (draft.specTemplate?.sections.length ?? 0)) {
-      toast.error("Check specification sections for duplicate keys or empty fields.");
+    const parsedTemplate = parseTemplate(draft.specTemplate);
+    const draftSections = draft.specTemplate?.sections ?? [];
+    const draftFieldCount = draftSections.reduce(
+      (count, section) => count + section.fields.length,
+      0,
+    );
+    const parsedFieldCount = parsedTemplate.sections.reduce(
+      (count, section) => count + section.fields.length,
+      0,
+    );
+    if (
+      parsedTemplate.sections.length !== draftSections.length ||
+      parsedFieldCount !== draftFieldCount
+    ) {
+      toast.error("Check specification sections for duplicate keys, invalid keys, or empty fields.");
       return;
     }
     const name = draft.name.trim();
@@ -222,6 +233,7 @@ export default function CategoryForm({
       await onSave(
         {
           ...draft,
+          specTemplate: parsedTemplate,
           name,
           slug,
           description: draft.description.trim(),

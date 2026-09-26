@@ -195,7 +195,7 @@ export async function createDashboardCategory(category: CatalogCategory) {
       is_featured: category.featured,
       seo_title: category.seoTitle?.trim() || null,
       seo_description: category.seoDescription?.trim() || null,
-      spec_template: (category.specTemplate ?? { sections: [] }) as unknown as Json,
+      spec_template: parseTemplate(category.specTemplate) as unknown as Json,
     })
     .select("*")
     .single();
@@ -218,7 +218,7 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   const previousImageUrl = existing?.image_url ?? null;
   const nextImageUrl = category.image?.trim() || "";
 
-  const { error } = await supabase.rpc("update_store_category", rpcArgs({
+  const { error } = await supabase.rpc("update_store_category_with_spec_template", rpcArgs({
     p_category_id: category.id,
     p_name: category.name.trim(),
     p_slug: normalizeCategorySlug(category.slug || category.name),
@@ -230,13 +230,9 @@ export async function updateDashboardCategory(category: CatalogCategory) {
     p_is_featured: category.featured,
     p_seo_title: category.seoTitle?.trim() || "",
     p_seo_description: category.seoDescription?.trim() || "",
+    p_spec_template: parseTemplate(category.specTemplate) as unknown as Json,
   }));
   throwIfError(error, "Updating category failed");
-
-  const { error: templateError } = await supabase.from("store_categories")
-    .update({ spec_template: (category.specTemplate ?? { sections: [] }) as unknown as Json })
-    .eq("id", category.id);
-  throwIfError(templateError, "Updating specification template failed");
 
   const { data, error: readError } = await supabase
     .from("store_categories")
