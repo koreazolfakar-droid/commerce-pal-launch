@@ -1464,28 +1464,33 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
 
   const variantRows = preexistingVariants;
   if (variantRows.length <= 1) {
+    const existingVariant = variantRows[0];
     const variantPayload = {
-      title: variantRows[0]?.title ?? "Default",
-      sku: input.sku.trim() || null,
-      barcode: input.barcode.trim() || null,
-      price: input.price,
-      compare_at_price: input.compareAt,
-      stock_quantity: Math.max(0, Math.trunc(input.stock)),
-      track_inventory: true,
-      options: variantRows[0]?.options ?? {},
-      is_active: true,
-      sort_order: 0,
+      p_title: existingVariant?.title ?? "Default",
+      p_sku: input.sku.trim(),
+      p_barcode: input.barcode.trim(),
+      p_price: input.price,
+      p_compare_at_price: input.compareAt,
+      p_stock: Math.max(0, Math.trunc(input.stock)),
+      p_track_inventory: true,
+      p_allow_backorder: existingVariant?.allow_backorder ?? false,
+      p_options: existingVariant?.options ?? {},
+      p_image_url: existingVariant?.image_url ?? "",
+      p_sort_order: existingVariant?.sort_order ?? 0,
+      p_is_active: true,
     };
-    if (variantRows[0]) {
-      const { error } = await supabase
-        .from("store_product_variants")
-        .update(variantPayload)
-        .eq("id", variantRows[0].id);
+
+    if (existingVariant) {
+      const { error } = await supabase.rpc("update_store_product_variant", rpcArgs({
+        p_variant_id: existingVariant.id,
+        ...variantPayload,
+      }));
       throwIfError(error, "Updating product variant failed");
     } else {
-      const { error } = await supabase
-        .from("store_product_variants")
-        .insert({ ...variantPayload, product_id: productId });
+      const { error } = await supabase.rpc("create_store_product_variant", rpcArgs({
+        p_product_id: productId,
+        ...variantPayload,
+      }));
       throwIfError(error, "Creating product variant failed");
     }
   }
@@ -1530,6 +1535,7 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   }
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return { id: productId, handle, variantManagedSeparately };
 }
 
