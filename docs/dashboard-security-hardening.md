@@ -24,7 +24,7 @@
 - CSP allowlisting for Cloudflare Turnstile.
 - CSP uses a cryptographically random per-request SSR nonce. TanStack `ScriptOnce`, `HeadContent`, and `Scripts` bind executable SSR scripts to that nonce; `script-src` no longer contains `'unsafe-inline'`.
 - `script-src-attr 'none'` blocks HTML inline event handlers such as `onclick=`. `style-src` still allows inline styles because the current component library emits dynamic `<style>`/style attributes; tightening style CSP is a separate refactor.
-- Production/non-preview Supabase sessions use `sessionStorage` rather than `localStorage`, so dashboard tokens do not survive closing the browser tab/window.
+- Production/non-preview Supabase sessions use `sessionStorage` rather than `localStorage`, so dashboard tokens do not survive closing the browser tab/window. Legacy persistent auth is migrated once into the current tab and deleted from `localStorage`; if browser storage is blocked, auth falls back to memory only.
 - Dashboard responses are explicitly marked `no-store` for browser/CDN/proxy caches.
 - CI runs dashboard security regression tests on every PR open/update and on pushes to `main`.
 
@@ -82,6 +82,16 @@ Never store any of these in `VITE_*`, source files, GitHub commits, or browser s
 
 The dashboard is still a browser-managed Supabase SPA session because MFA, refresh, and authenticated Edge Function calls currently run through the browser Supabase client. The production session is therefore intentionally stored in `sessionStorage`, not `localStorage`: this reduces persistence but does **not** make tokens inaccessible to JavaScript.
 
-Moving the Supabase session to a fully HttpOnly cookie would require a server-brokered auth architecture for MFA, token refresh, and every authenticated dashboard/Edge request. That is a separate architectural migration and should not be represented as completed by merely wrapping or encrypting browser storage.
+Moving the Supabase session to a fully HttpOnly cookie would require a server-brokered auth architecture for MFA, token refresh, and every authenticated dashboard/Edge request. Supabase's current SSR guidance uses cookie-backed sessions for rich client applications, but those browser auth cookies remain JavaScript-readable when client-side Supabase needs them. A truly HttpOnly dashboard therefore requires moving authenticated dashboard operations behind a server/BFF boundary; it should not be represented as completed by merely changing a cookie flag, wrapping storage, or encrypting browser storage.
 
 Auth0's additional dashboard token cache remains memory-only.
+
+
+## Final hardening follow-up — 2026-09-26
+
+- Corrected an implementation drift where production auth storage had regressed to `localStorage` despite tests/documentation requiring tab-scoped sessions.
+- Restored automatic `main` + pull-request CI triggers and the explicit dashboard security regression test.
+- Added a shared storefront URL allowlist and revalidation at CMS navigation / brand render boundaries.
+- Dashboard saves now reject executable, protocol-relative, credential-bearing, or otherwise invalid managed links.
+- Current CMS URL data was checked before this change and contained no unsafe navigation, brand, or canonical destinations.
+- Production Supabase logs for `dashboard-auth-throttle` showed successful requests and no observed function errors during the inspected window.
