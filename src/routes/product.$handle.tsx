@@ -234,9 +234,11 @@ function ProductPage() {
   );
 
   const specGroups = useMemo(() => {
-    const structured = specificationGroups(node.specifications ?? { values: {}, keySpecs: [] }, node.specTemplate ?? { sections: [] });
-    if (structured.length) return structured;
-    const rows: SpecRow[] = [
+    const structured = specificationGroups(
+      node.specifications ?? { values: {}, keySpecs: [] },
+      node.specTemplate ?? { sections: [] },
+    );
+    const supplementalRows: SpecRow[] = [
       ...content.specs,
       ...(selectedVariant?.selectedOptions ?? [])
         .filter((option) => option.value !== "Default Title")
@@ -251,8 +253,24 @@ function ProductPage() {
         ? [{ label: "Weight", value: `${selectedVariant.weight} ${selectedVariant.weightUnit}` }]
         : []),
     ];
-    return groupSpecs(rows);
-  }, [content.specs, selectedVariant, node.productType, node.vendor, node.specifications, node.specTemplate]);
+
+    if (!structured.length) return groupSpecs(supplementalRows);
+
+    const structuredLabels = new Set(
+      structured.flatMap((group) => group.rows.map((row) => row.label.toLocaleLowerCase())),
+    );
+    const supplemental = supplementalRows.filter(
+      (row) => !structuredLabels.has(row.label.toLocaleLowerCase()),
+    );
+    return supplemental.length ? [...structured, ...groupSpecs(supplemental)] : structured;
+  }, [
+    content.specs,
+    selectedVariant,
+    node.productType,
+    node.vendor,
+    node.specifications,
+    node.specTemplate,
+  ]);
   const keySpecs = useMemo(
     () => keySpecificationRows(node.specifications ?? { values: {}, keySpecs: [] }, node.specTemplate ?? { sections: [] }),
     [node.specifications, node.specTemplate],

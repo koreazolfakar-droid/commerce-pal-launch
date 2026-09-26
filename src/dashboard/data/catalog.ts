@@ -4,7 +4,13 @@ import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassw
 import type { User } from "@supabase/supabase-js";
 import type { Tables } from "@/integrations/supabase/types";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
-import { parseSpecifications, parseTemplate, validateSpecifications, type ProductSpecifications, type SpecTemplate } from "@/lib/specifications";
+import {
+  parseSpecifications,
+  parseTemplate,
+  validateSpecifications,
+  type ProductSpecifications,
+  type SpecTemplate,
+} from "@/lib/specifications";
 import { convertProductImageToWebp, type ProductImageConversionResult, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
 
 type ProductRow = Tables<"store_products">;
@@ -1387,7 +1393,7 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   const categoryRequest = input.categoryId
     ? supabase
         .from("store_categories")
-        .select("id,name")
+        .select("id,name,spec_template")
         .eq("id", input.categoryId)
         .maybeSingle()
     : Promise.resolve({ data: null, error: null });
@@ -1423,17 +1429,20 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   if (input.id && !existingProduct) throw new Error("Product not found.");
 
   const preexistingVariants = (variantResult.data ?? []) as VariantRow[];
-  const category = categoryResult.data as { id: string; name: string } | null;
+  const category = categoryResult.data as {
+    id: string;
+    name: string;
+    spec_template: unknown;
+  } | null;
   if (input.categoryId && !category) throw new Error("Selected category no longer exists.");
 
-  const templateResult = input.categoryId
-    ? await supabase.from("store_categories").select("spec_template").eq("id", input.categoryId).single()
-    : { data: null, error: null };
-  throwIfError(templateResult.error, "Loading specification template failed");
-  const errors = validateSpecifications(input.specifications, parseTemplate(templateResult.data?.spec_template));
+  const errors = validateSpecifications(
+    input.specifications,
+    parseTemplate(category?.spec_template),
+  );
   if (errors.length) throw new Error(errors[0]);
 
-  let variantManagedSeparately = preexistingVariants.length > 1;
+  const variantManagedSeparately = preexistingVariants.length > 1;
   const handle = existingProduct?.handle ?? (await uniqueHandle(input.title));
   const productPayload = {
     title: input.title.trim(),
