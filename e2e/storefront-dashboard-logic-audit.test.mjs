@@ -87,6 +87,7 @@ test("all shopper quantity controls respect tracked on-hand stock", () => {
   assert.match(quickView, /amount <= maxQuantity/);
   assert.match(cartRoute, /item\.quantity >= maxQuantity/);
   assert.match(cartRoute, /cartItemMaxQuantity\(item\)/);
+  assert.match(productRoute, /Math\.min\(99, Math\.trunc\(selectedVariant\.stockQuantity/);
 });
 
 test("checkout keys are bound to the full payload and stale failures recover", () => {
