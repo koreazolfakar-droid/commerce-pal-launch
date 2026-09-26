@@ -17,8 +17,10 @@ The assistant supports:
 - Verified / Review state
 - source links when Google Search grounding succeeds
 - preview and explicit Apply Selected before the normal form save
+- unchanged suggestions shown as No change and blocked from application
+- field-specific confidence instead of flattening ungrounded suggestions to one repeated score
 
-The AI never persists form changes directly.
+Research and SEO actions never mutate the form by themselves. Apply Selected changes local draft fields only, and the AI never persists form changes directly.
 
 ## Architecture
 
@@ -126,7 +128,8 @@ The prompt and response normalizer enforce these rules:
 3. Do not invent product specifications, compatibility, identifiers, websites, warranty, stock or commercial values.
 4. If the exact model cannot be identified or sources disagree, lower confidence and require review.
 5. `verified=true` is accepted only when a grounded Search response also contains real HTTP(S) citation sources.
-6. Ungrounded results are capped below the auto-select confidence threshold and cannot be shown as Verified.
+6. Ungrounded results cannot be shown as Verified. Their model confidence is conservatively scaled to a maximum of 65% while preserving field-to-field differences.
+7. Suggestions identical to the current field value are treated as No change and cannot be applied.
 
 ## Failure behavior
 
@@ -136,7 +139,8 @@ Gemini is an enhancement, not a dependency.
 - If Search grounding is unavailable, the assistant can still produce unverified SEO/copy suggestions.
 - If Gemini times out or fails, no catalog mutation occurs.
 - Closing the AI drawer discards its preview result.
-- Applying suggestions only changes local form state; the user must still use the existing Save action.
+- Running Research & Fill, Improve SEO or Validate only prepares a preview; it does not mutate form fields.
+- Apply Selected changes local form state only after client-side safety checks; the user must still use the existing Save action.
 
 ## Next phases
 
