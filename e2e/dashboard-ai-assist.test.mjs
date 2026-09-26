@@ -53,8 +53,9 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.doesNotMatch(edge, /\n\s*prompt,\n/);
   assert.equal(
     (edge.match(/systemInstruction: geminiRequest\.systemInstruction/g) || []).length,
-    2,
+    1,
   );
+  assert.match(edge, /Live web grounding is unavailable for this retry/);
   assert.equal((edge.match(/input: geminiRequest\.input/g) || []).length, 2);
   assert.match(panel, /Nothing changes until Apply selected/);
   assert.match(panel, /Apply selected/);
