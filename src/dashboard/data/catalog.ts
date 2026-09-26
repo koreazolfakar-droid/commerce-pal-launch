@@ -1439,11 +1439,15 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
     ...(variantManagedSeparately
       ? {}
       : {
-          base_price: input.price,
-          compare_at_price: input.compareAt,
           sku: input.sku.trim() || null,
           barcode: input.barcode.trim() || null,
-          stock_quantity: Math.max(0, Math.trunc(input.stock)),
+          ...(existingProduct
+            ? {}
+            : {
+                base_price: input.price,
+                compare_at_price: input.compareAt,
+                stock_quantity: Math.max(0, Math.trunc(input.stock)),
+              }),
         }),
   };
 
@@ -1464,28 +1468,39 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
 
   const variantRows = preexistingVariants;
   if (variantRows.length <= 1) {
+    const existingVariant = variantRows[0];
     const variantPayload = {
-      title: variantRows[0]?.title ?? "Default",
-      sku: input.sku.trim() || null,
-      barcode: input.barcode.trim() || null,
-      price: input.price,
-      compare_at_price: input.compareAt,
-      stock_quantity: Math.max(0, Math.trunc(input.stock)),
-      track_inventory: true,
-      options: variantRows[0]?.options ?? {},
-      is_active: true,
-      sort_order: 0,
+      p_title: existingVariant?.title ?? "Default",
+      p_sku: input.sku.trim(),
+      p_barcode: input.barcode.trim(),
+      p_price: input.price,
+      p_compare_at_price: input.compareAt,
+      p_stock: Math.max(0, Math.trunc(input.stock)),
+      p_track_inventory: true,
+      p_allow_backorder: existingVariant?.allow_backorder ?? false,
+      p_options: existingVariant?.options ?? {},
+      p_image_url: existingVariant?.image_url ?? "",
+      p_sort_order: existingVariant?.sort_order ?? 0,
+      p_is_active: true,
     };
-    if (variantRows[0]) {
-      const { error } = await supabase
-        .from("store_product_variants")
-        .update(variantPayload)
-        .eq("id", variantRows[0].id);
+
+    if (existingVariant) {
+      const { error } = await supabase.rpc(
+        "update_store_product_variant",
+        rpcArgs({
+          p_variant_id: existingVariant.id,
+          ...variantPayload,
+        }),
+      );
       throwIfError(error, "Updating product variant failed");
     } else {
-      const { error } = await supabase
-        .from("store_product_variants")
-        .insert({ ...variantPayload, product_id: productId });
+      const { error } = await supabase.rpc(
+        "create_store_product_variant",
+        rpcArgs({
+          p_product_id: productId,
+          ...variantPayload,
+        }),
+      );
       throwIfError(error, "Creating product variant failed");
     }
   }
@@ -1530,6 +1545,7 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   }
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return { id: productId, handle, variantManagedSeparately };
 }
 
@@ -1695,17 +1711,13 @@ export async function setDashboardPrimaryProductImage(
 ): Promise<void> {
   await requireDashboardRole();
 
-  const { error: resetError } = await supabase
-    .from("store_product_images")
-    .update({ is_primary: false })
-    .eq("product_id", productId);
-  throwIfError(resetError, "Resetting primary product image failed");
-
-  const { error } = await supabase
-    .from("store_product_images")
-    .update({ is_primary: true })
-    .eq("id", imageId)
-    .eq("product_id", productId);
+  const { error } = await supabase.rpc(
+    "set_store_product_primary_image",
+    rpcArgs({
+      p_product_id: productId,
+      p_image_id: imageId,
+    }),
+  );
   throwIfError(error, "Setting primary product image failed");
 
   invalidateNativeStoreCache();
@@ -1717,41 +1729,20 @@ export async function deleteDashboardProductImage(
 ): Promise<{ promotedImageId: string | null }> {
   await requireDashboardRole();
 
-  const { error } = await supabase
-    .from("store_product_images")
-    .delete()
-    .eq("id", image.id)
-    .eq("product_id", image.productId);
+  const { data: promotedImageId, error } = await supabase.rpc(
+    "delete_store_product_image",
+    rpcArgs({
+      p_product_id: image.productId,
+      p_image_id: image.id,
+    }),
+  );
   throwIfError(error, "Deleting product image failed");
 
   await removeOwnedProductImageFile(image.url).catch(() => undefined);
 
-  let promotedImageId: string | null = null;
-  if (image.isPrimary) {
-    const { data: nextImage, error: nextImageError } = await supabase
-      .from("store_product_images")
-      .select("id")
-      .eq("product_id", image.productId)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    throwIfError(nextImageError, "Loading replacement primary image failed");
-
-    if (nextImage?.id) {
-      const { error: promoteError } = await supabase
-        .from("store_product_images")
-        .update({ is_primary: true })
-        .eq("id", nextImage.id)
-        .eq("product_id", image.productId);
-      throwIfError(promoteError, "Promoting replacement primary image failed");
-      promotedImageId = nextImage.id;
-    }
-  }
-
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();
-  return { promotedImageId };
+  return { promotedImageId: promotedImageId ?? null };
 }
 
 export async function reorderDashboardProductImages(
@@ -1760,17 +1751,14 @@ export async function reorderDashboardProductImages(
 ): Promise<void> {
   await requireDashboardRole();
 
-  const updates = orderedIds.map((imageId, index) =>
-    supabase
-      .from("store_product_images")
-      .update({ sort_order: index })
-      .eq("id", imageId)
-      .eq("product_id", productId),
+  const { error } = await supabase.rpc(
+    "reorder_store_product_images",
+    rpcArgs({
+      p_product_id: productId,
+      p_image_ids: orderedIds,
+    }),
   );
-  const results = await Promise.all(updates);
-  for (const result of results) {
-    throwIfError(result.error, "Reordering product images failed");
-  }
+  throwIfError(error, "Reordering product images failed");
 
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();

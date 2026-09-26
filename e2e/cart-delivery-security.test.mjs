@@ -57,7 +57,7 @@ test("checkout blocks silent price changes before WhatsApp or stock completion",
   assert.match(migration, /v_expected_subtotal is distinct from v_subtotal/);
   assert.match(migration, /v_expected_delivery_fee is distinct from v_shipping_total/);
   assert.match(checkout, /code\.includes\("pricing_changed"\)/);
-  assert.match(checkout, /await refetchCms\(\)/);
+  assert.match(checkout, /Promise\.all\(\[syncCart\(\), refetchCms\(\)\]\)/);
 });
 
 test("delivery fee configuration fails closed instead of silently becoming free", () => {

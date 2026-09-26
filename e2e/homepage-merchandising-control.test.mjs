@@ -12,6 +12,7 @@ const [builder, preview, nativeStore, queries, storefront] = await Promise.all([
 
 test("homepage builder exposes simple automatic and manual merchandising modes", () => {
   assert.match(builder, /Automatic · Best sellers/);
+  assert.match(builder, /Automatic · Newest products/);
   assert.match(builder, /Manual · I choose and order products/);
   assert.match(builder, /function ManualProductPicker/);
   assert.match(builder, /Search product name, brand, category or SKU/);
@@ -39,13 +40,23 @@ test("storefront can fetch exact manually selected products by id in configured 
   assert.match(queries, /productsByIdsQueryOptions/);
 });
 
-test("live featured rail uses manual order when configured and automatic best sellers otherwise", () => {
-  assert.match(storefront, /cmsManualProductIds/);
-  assert.match(storefront, /manualFeaturedProductIds/);
-  assert.match(storefront, /productsByIdsQueryOptions\(manualFeaturedProductIds\)/);
-  assert.match(
-    storefront,
-    /manualFeaturedProductIds\.length > 0 \? manualFeaturedProducts : bestSellers/,
-  );
+test("configured manual homepage source preserves the CMS-selected order", () => {
+  const start = nativeStore.indexOf("export async function fetchHomepageConfiguredProducts");
+  const end = nativeStore.indexOf("export async function fetchNewestProducts", start);
+  const configured = nativeStore.slice(start, end);
+  assert.match(configured, /config\.source === "manual"/);
+  assert.match(configured, /fetchProductsByIds\(config\.manualProductIds \?\? \[\]\)/);
+  assert.match(configured, /\.slice\(0, count\)/);
+});
+
+test("live featured rail honors every dashboard product source", () => {
+  assert.match(storefront, /cmsFeaturedProductConfig/);
+  assert.match(storefront, /homepageConfiguredProductsQueryOptions\(featuredProductConfig\)/);
+  assert.match(nativeStore, /export async function fetchHomepageConfiguredProducts/);
+  for (const source of ["best_sellers", "newest", "manual", "collection", "brand", "category"]) {
+    assert.match(nativeStore, new RegExp(source));
+  }
+  assert.match(preview, /source === "newest"/);
+  assert.match(storefront, /configuredFeaturedProducts\.filter\(isHomepageMerchandise\)/);
   assert.match(storefront, /takeUniqueProducts/);
 });

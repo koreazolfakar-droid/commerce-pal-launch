@@ -3,6 +3,7 @@ import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import { CatalogView } from "@/components/CatalogView";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { StoreLayout } from "@/components/StoreLayout";
+import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { allVendorProductsQueryOptions, catalogQueryOptions } from "@/lib/queries";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
@@ -13,9 +14,21 @@ import type { StoreProduct } from "@/lib/storeTypes";
 export const Route = createFileRoute("/brand/$slug")({
   validateSearch: parseProductSearch,
   loader: async ({ context, params }) => {
-    const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
+    const [catalog, managedBrandResult] = await Promise.all([
+      context.queryClient.ensureQueryData(catalogQueryOptions()),
+      publicSupabase
+        .from("cms_brands")
+        .select("name,slug,description,seo_title,seo_description")
+        .eq("slug", params.slug)
+        .eq("is_visible", true)
+        .maybeSingle(),
+    ]);
     const brand = catalog.brands.find((entry) => entry.slug === params.slug);
     if (!brand) throw notFound();
+    if (managedBrandResult.error) {
+      console.warn("Loading optional storefront brand metadata failed.", managedBrandResult.error);
+    }
+    const managedBrand = managedBrandResult.error ? null : managedBrandResult.data;
 
     const indexedProducts = catalog.products.filter(
       (product) => catalog.brandOf.get(product.node.handle)?.slug === params.slug,
@@ -37,7 +50,10 @@ export const Route = createFileRoute("/brand/$slug")({
     const brandCatalog = buildCatalogIndex([...uniqueProducts.values()]);
 
     return {
-      label: brand.label,
+      label: managedBrand?.name?.trim() || brand.label,
+      description: managedBrand?.description?.trim() || null,
+      seoTitle: managedBrand?.seo_title?.trim() || null,
+      seoDescription: managedBrand?.seo_description?.trim() || null,
       catalog: brandCatalog,
     };
   },
@@ -51,8 +67,11 @@ export const Route = createFileRoute("/brand/$slug")({
       };
     }
     const label = loaderData.label ?? params.slug.replace(/-/g, " ");
-    const title = `${label} Products in Lebanon | ${STORE_NAME}`;
-    const description = `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and direct Space Call checkout.`;
+    const title = loaderData.seoTitle || `${label} Products in Lebanon | ${STORE_NAME}`;
+    const description =
+      loaderData.seoDescription ||
+      loaderData.description ||
+      `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and direct Space Call checkout.`;
     const path = `/brand/${params.slug}`;
     return {
       meta: [

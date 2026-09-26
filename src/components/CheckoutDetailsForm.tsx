@@ -165,6 +165,7 @@ export function CheckoutDetailsForm({
   const { user } = useCustomerAuth();
   const { profile, selectedAddress, openAddressBook } = useCustomerAccount();
   const clearCart = useCartStore((state) => state.clearCart);
+  const syncCart = useCartStore((state) => state.syncCart);
   const { data: cms, refetch: refetchCms } = useQuery(cmsQueryOptions());
   const cmsStoreName = cms?.settings["site_name"];
   const cmsWhatsApp = cms?.settings["whatsapp_number"];
@@ -571,13 +572,18 @@ export function CheckoutDetailsForm({
     } catch (cause) {
       const code = cause instanceof StoreOrderError ? cause.code : "order_failed";
       if (code.includes("insufficient_stock") || code.includes("product_or_variant_unavailable")) {
+        clearCheckoutAttempt();
+        await syncCart();
         setError(copy.stockUnavailable);
       } else if (code.includes("rate_limited")) {
         setError(copy.rateLimited);
       } else if (code.includes("idempotency_key_conflict")) {
+        clearCheckoutAttempt();
+        await syncCart();
         setError(copy.orderConflict);
       } else if (code.includes("pricing_changed")) {
-        await refetchCms();
+        clearCheckoutAttempt();
+        await Promise.all([syncCart(), refetchCms()]);
         setError(copy.pricingChanged);
       } else {
         setError(copy.orderFailed);

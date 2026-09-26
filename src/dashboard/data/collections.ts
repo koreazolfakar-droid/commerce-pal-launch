@@ -1,5 +1,6 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 
@@ -212,6 +213,8 @@ export async function createDashboardCollection(
   throwIfError(error, "Creating collection failed");
   const created = data as unknown as CollectionRow | null;
   if (!created?.id) throw new Error("Creating collection returned no row.");
+  invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapCollection(created);
 }
 
@@ -235,6 +238,8 @@ export async function updateDashboardCollection(
   throwIfError(error, "Updating collection failed");
   const updated = data as unknown as CollectionRow | null;
   if (!updated?.id) throw new Error("Updating collection returned no row.");
+  invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapCollection(updated);
 }
 
@@ -242,6 +247,8 @@ export async function deleteDashboardCollection(id: string): Promise<void> {
   await requireDashboardStaff();
   const { error } = await supabase.rpc("delete_store_collection", rpcArgs({ p_collection_id: id }));
   throwIfError(error, "Deleting collection failed");
+  invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function saveDashboardCollectionProducts(
@@ -254,6 +261,8 @@ export async function saveDashboardCollectionProducts(
     p_product_ids: productIds,
   }));
   throwIfError(error, "Saving collection products failed");
+  invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function reorderDashboardCollections(
@@ -264,4 +273,6 @@ export async function reorderDashboardCollections(
     p_items: collections.map((item) => ({ id: item.id, sort_order: item.sortOrder })),
   }));
   throwIfError(error, "Reordering collections failed");
+  invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }

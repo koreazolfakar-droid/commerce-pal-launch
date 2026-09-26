@@ -21,6 +21,9 @@ type StorefrontProductRow = Pick<
   | "brand_id"
   | "product_type"
   | "created_at"
+  | "updated_at"
+  | "seo_title"
+  | "seo_description"
   | "tags"
   | "base_price"
   | "compare_at_price"
@@ -54,29 +57,27 @@ type StorefrontImageRow = Pick<
 >;
 type StorefrontCollectionRow = Pick<
   CollectionRow,
-  "id" | "handle" | "title" | "description" | "image_url"
+  "id" | "handle" | "title" | "description" | "image_url" | "seo_title" | "seo_description"
 >;
 type StorefrontCollectionLinkRow = Pick<
   CollectionLinkRow,
   "collection_id" | "product_id" | "sort_order"
 >;
-type StorefrontBrandRow = Pick<BrandRow, "id" | "name">;
+type StorefrontBrandRow = Pick<BrandRow, "id" | "name" | "slug">;
 type NavigationProductRow = Pick<
   ProductRow,
   "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
 >;
 
 const STOREFRONT_PRODUCT_SELECT =
-  "id,title,description,description_html,handle,brand_id,product_type,created_at,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
-const STOREFRONT_IMAGE_SELECT =
-  "product_id,url,alt_text,is_primary,sort_order" as const;
+const STOREFRONT_IMAGE_SELECT = "product_id,url,alt_text,is_primary,sort_order" as const;
 const STOREFRONT_COLLECTION_SELECT =
-  "id,handle,title,description,image_url" as const;
-const STOREFRONT_COLLECTION_LINK_SELECT =
-  "collection_id,product_id,sort_order" as const;
-const STOREFRONT_BRAND_SELECT = "id,name" as const;
+  "id,handle,title,description,image_url,seo_title,seo_description" as const;
+const STOREFRONT_COLLECTION_LINK_SELECT = "collection_id,product_id,sort_order" as const;
+const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
   "id,title,handle,brand_id,product_type,tags" as const;
 
@@ -274,9 +275,14 @@ function buildProduct(
       descriptionHtml: row.description_html ?? undefined,
       handle: row.handle,
       vendor: brand?.name,
+      vendorSlug: brand?.slug,
+      vendorHidden: Boolean(row.brand_id && !brand),
       productType: row.product_type ?? undefined,
+      seoTitle: row.seo_title ?? undefined,
+      seoDescription: row.seo_description ?? undefined,
       availableForSale,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
       tags: row.tags,
       priceRange: { minVariantPrice: money(minPrice, row.currency) },
       compareAtPriceRange:
@@ -591,6 +597,8 @@ export async function fetchNavigationCatalogFacets() {
         description: "",
         handle: row.handle,
         vendor: row.brand_id ? brandsById.get(row.brand_id)?.name : undefined,
+        vendorSlug: row.brand_id ? brandsById.get(row.brand_id)?.slug : undefined,
+        vendorHidden: Boolean(row.brand_id && !brandsById.get(row.brand_id)),
         productType: row.product_type ?? undefined,
         tags: row.tags,
         availableForSale: true,
@@ -645,8 +653,12 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
       .eq("product_id", row.id)
       .order("sort_order", { ascending: true }),
     row.brand_id
-      ? publicSupabase.from("cms_brands")
-      .select(STOREFRONT_BRAND_SELECT).eq("id", row.brand_id).maybeSingle()
+      ? publicSupabase
+          .from("cms_brands")
+          .select(STOREFRONT_BRAND_SELECT)
+          .eq("id", row.brand_id)
+          .eq("is_visible", true)
+          .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -702,6 +714,8 @@ function mapCollection(row: StorefrontCollectionRow): StoreCollection {
     handle: row.handle,
     title: row.title,
     description: row.description,
+    seoTitle: row.seo_title ?? undefined,
+    seoDescription: row.seo_description ?? undefined,
     image: row.image_url ? { url: row.image_url, altText: row.title } : null,
   };
 }
@@ -855,6 +869,90 @@ export async function fetchCollectionByHandle(
     .slice(0, Math.max(0, pageSize));
 
   return { collection: mapCollection(row), products };
+}
+
+export type HomepageProductSource =
+  "best_sellers" | "newest" | "manual" | "collection" | "brand" | "category";
+
+export async function fetchHomepageConfiguredProducts(config: {
+  source: HomepageProductSource;
+  sourceValue?: string;
+  manualProductIds?: string[];
+  count?: number;
+}): Promise<StoreProduct[]> {
+  const count = Math.min(10, Math.max(1, Math.trunc(config.count ?? 5)));
+  const value = config.sourceValue?.trim() ?? "";
+
+  if (config.source === "best_sellers") return fetchBestSellingProducts(count);
+  if (config.source === "newest") return fetchNewestProducts(count);
+  if (config.source === "manual") {
+    return (await fetchProductsByIds(config.manualProductIds ?? [])).slice(0, count);
+  }
+
+  if (!value) return [];
+  const normalized = value.toLowerCase();
+
+  if (config.source === "brand") {
+    const brandResult = await publicSupabase
+      .from("cms_brands")
+      .select("id,name,slug")
+      .eq("is_visible", true);
+    const brands = assertResult(brandResult, "homepage brand source");
+    const brand = brands.find((row) =>
+      [row.id, row.name, row.slug].some((entry) => entry.toLowerCase() === normalized),
+    );
+    if (!brand) return [];
+
+    const productResult = await publicSupabase
+      .from("store_products")
+      .select(STOREFRONT_PRODUCT_SELECT)
+      .eq("status", "active")
+      .eq("brand_id", brand.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(count);
+    return hydrateProductRows(assertResult(productResult, "homepage brand products"));
+  }
+
+  if (config.source === "category") {
+    const categoryResult = await publicSupabase
+      .from("store_categories")
+      .select("id,name,slug")
+      .eq("is_active", true);
+    const categories = assertResult(categoryResult, "homepage category source");
+    const category = categories.find((row) =>
+      [row.id, row.name, row.slug].some((entry) => entry.toLowerCase() === normalized),
+    );
+    if (!category) return [];
+
+    const productResult = await publicSupabase
+      .from("store_products")
+      .select(STOREFRONT_PRODUCT_SELECT)
+      .eq("status", "active")
+      .eq("category_id", category.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(count);
+    return hydrateProductRows(assertResult(productResult, "homepage category products"));
+  }
+
+  const collectionResult = await publicSupabase
+    .from("store_collections")
+    .select("id,title,handle")
+    .eq("is_active", true);
+  const collections = assertResult(collectionResult, "homepage collection source");
+  const collection = collections.find((row) =>
+    [row.id, row.title, row.handle].some((entry) => entry.toLowerCase() === normalized),
+  );
+  if (!collection) return [];
+
+  const linkResult = await publicSupabase
+    .from("store_collection_products")
+    .select("product_id")
+    .eq("collection_id", collection.id)
+    .order("sort_order", { ascending: true });
+  const links = assertResult(linkResult, "homepage collection products");
+  return (await fetchProductsByIds(links.map((row) => row.product_id))).slice(0, count);
 }
 
 export async function fetchNewestProducts(first = 12) {

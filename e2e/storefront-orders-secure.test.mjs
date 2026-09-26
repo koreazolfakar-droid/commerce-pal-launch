@@ -29,11 +29,15 @@ test("checkout persists an order before WhatsApp is opened", () => {
   assert.match(checkout, /formatPrice\(order\.total, order\.currency\)/);
 });
 
-test("checkout retries reuse a cart-scoped idempotency key", () => {
+test("checkout retries reuse a full-payload idempotency key", () => {
   assert.match(client, /CHECKOUT_ATTEMPT_KEY/);
-  assert.match(client, /cartFingerprint/);
+  assert.match(client, /checkoutFingerprint/);
   assert.match(client, /crypto\.randomUUID/);
-  assert.match(client, /idempotency_key: checkoutIdempotencyKey\(input\.items\)/);
+  assert.match(
+    client,
+    /idempotency_key: await checkoutIdempotencyKey\(checkoutFingerprint\(input\)\)/,
+  );
+  assert.match(client, /fingerprintHash/);
 });
 
 test("create-order rejects unsafe or ambiguous order requests before RPC", () => {

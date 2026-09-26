@@ -2548,6 +2548,10 @@ export type Database = {
         Args: { p_collection_id: string }
         Returns: undefined
       }
+      delete_store_product_image: {
+        Args: { p_image_id: string; p_product_id: string }
+        Returns: string | null
+      }
       delete_store_product_safe: {
         Args: { p_product_id: string }
         Returns: undefined
@@ -2693,6 +2697,10 @@ export type Database = {
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_categories: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_collections: { Args: { p_items: Json }; Returns: undefined }
+      reorder_store_product_images: {
+        Args: { p_image_ids: string[]; p_product_id: string }
+        Returns: undefined
+      }
       reorder_store_product_variants: {
         Args: { p_items: Json }
         Returns: undefined
@@ -2801,6 +2809,10 @@ export type Database = {
           movement_id: string
           new_stock: number
         }[]
+      }
+      set_store_product_primary_image: {
+        Args: { p_image_id: string; p_product_id: string }
+        Returns: undefined
       }
       set_store_product_collections: {
         Args: { p_collection_ids: string[]; p_product_id: string }

@@ -463,6 +463,8 @@ export function resolveBrand(
   product: StoreProduct,
   genericVendors: Set<string> = new Set(),
 ): BrandRef | null {
+  if (product.node.vendorHidden) return null;
+
   const identity = (value: string): BrandRef | null => {
     const slug = slugify(value);
     if (!slug) return null;
@@ -471,17 +473,29 @@ export function resolveBrand(
     );
     return known ? { slug: known.slug, label: known.label } : { slug, label: value.trim() };
   };
+  const vendor = product.node.vendor?.trim() ?? "";
+  const canonicalSlug = product.node.vendorSlug?.trim();
+  if (
+    vendor &&
+    canonicalSlug &&
+    !GENERIC_VENDORS.has(vendor.toLowerCase()) &&
+    !genericVendors.has(vendor.toLowerCase())
+  ) {
+    return { slug: canonicalSlug, label: vendor };
+  }
+
   for (const tag of product.node.tags ?? []) {
     const match = /^(?:brand|vendor|make):\s*(.+)$/i.exec(tag.trim());
     if (match?.[1] && identity(match[1])) return identity(match[1]);
   }
-  const vendor = product.node.vendor?.trim() ?? "";
+
   if (
     vendor &&
     !GENERIC_VENDORS.has(vendor.toLowerCase()) &&
     !genericVendors.has(vendor.toLowerCase())
-  )
+  ) {
     return identity(vendor);
+  }
 
   // Only a leading brand/product family is evidence; "Case for iPhone" is not Apple.
   const title = product.node.title.trim().toLowerCase();

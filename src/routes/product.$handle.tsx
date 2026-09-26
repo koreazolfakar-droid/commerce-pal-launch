@@ -69,8 +69,8 @@ export const Route = createFileRoute("/product/$handle")({
     }
     const product = loaderData.product;
     const title = product.node.title || "Product";
-    const fullTitle = `${title} — ${STORE_NAME}`;
-    const description = productMetaDescription(product);
+    const fullTitle = product.node.seoTitle?.trim() || `${title} — ${STORE_NAME}`;
+    const description = product.node.seoDescription?.trim() || productMetaDescription(product);
     const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
     return {
@@ -274,7 +274,7 @@ function ProductPage() {
     .join(" · ");
   const maxQuantity =
     selectedVariant?.trackInventory && !selectedVariant.allowBackorder
-      ? Math.max(0, selectedVariant.stockQuantity ?? 0)
+      ? Math.max(0, Math.min(99, Math.trunc(selectedVariant.stockQuantity ?? 0)))
       : 99;
 
   useEffect(() => {

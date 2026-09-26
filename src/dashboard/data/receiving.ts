@@ -2,7 +2,7 @@ import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { getDashboardRole, type DashboardRole } from "@/dashboard/data/catalog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 
 type SupplierRow = Tables<"store_suppliers">;
 type LocationRow = Tables<"store_procurement_locations">;
@@ -1440,6 +1440,7 @@ export async function approveReceiving(receivingId: string) {
   const result = data?.[0];
   if (!result) throw new Error("Receiving approval returned no result.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return result;
 }
 

@@ -11,7 +11,11 @@ export interface StoreProductNode {
   descriptionHtml?: string;
   handle: string;
   vendor?: string;
+  vendorSlug?: string;
+  vendorHidden?: boolean;
   productType?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   availableForSale?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -52,5 +56,7 @@ export interface StoreCollection {
   handle: string;
   title: string;
   description: string;
+  seoTitle?: string;
+  seoDescription?: string;
   image: { url: string; altText: string | null } | null;
 }
