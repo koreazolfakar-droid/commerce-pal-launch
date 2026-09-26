@@ -585,16 +585,88 @@ function grounding(payload: Record<string, unknown>) {
   };
 }
 
-function normalizeAiResult(
-  raw: unknown,
-  fields: AiField[],
-  grounded: boolean,
-  extraWarning?: string,
-) {
+function hostname(value: string) {
+  const raw = value.trim();
+  if (!raw) return "";
+  try {
+    const parsed = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    return parsed.hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function officialHosts(context: Record<string, unknown>) {
+  const values = Array.isArray(context.officialDomains) ? context.officialDomains : [];
+  return values
+    .filter((value): value is string => typeof value === "string")
+    .map(hostname)
+    .filter(Boolean);
+}
+
+function scoreSources(
+  sources: Array<{ title: string; url: string }>,
+  context: Record<string, unknown>,
+): ScoredSource[] {
+  const official = officialHosts(context);
+
+  return sources.map((source) => {
+    const host = hostname(source.url);
+    const isOfficial = official.some(
+      (officialHost) => host === officialHost || host.endsWith(`.${officialHost}`),
+    );
+    return {
+      ...source,
+      official: isOfficial,
+      quality: isOfficial ? 1 : 0.78,
+    };
+  });
+}
+
+function normalizeComparable(field: string, value: string) {
+  const trimmed = value.normalize("NFKC").trim();
+  if (field === "slug") return trimmed.toLowerCase();
+  if (field === "barcode") return trimmed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (field === "website") {
+    try {
+      const url = new URL(trimmed);
+      return `${url.protocol}//${url.hostname.toLowerCase()}${url.pathname.replace(/\/$/, "")}`;
+    } catch {
+      return trimmed.toLowerCase();
+    }
+  }
+  return trimmed
+    .toLowerCase()
+    .replace(/[\s_-]+/g, " ")
+    .replace(/[.,:;!?'"()[\]{}]+/g, "")
+    .trim();
+}
+
+function meaningfullySame(field: string, current: string, suggested: string) {
+  return normalizeComparable(field, current) === normalizeComparable(field, suggested);
+}
+
+function parseEntityMatch(root: Record<string, unknown>): EntityMatch {
+  const raw =
+    root.entityMatch && typeof root.entityMatch === "object"
+      ? (root.entityMatch as Record<string, unknown>)
+      : {};
+  const status: EntityMatchStatus =
+    raw.status === "exact" || raw.status === "partial" ? raw.status : "uncertain";
+
+  return {
+    status,
+    canonicalName:
+      typeof raw.canonicalName === "string" ? raw.canonicalName.slice(0, 300).trim() : "",
+    reason: typeof raw.reason === "string" ? raw.reason.slice(0, 1000).trim() : "",
+  };
+}
+
+function normalizeAiResult(raw: unknown, fields: AiField[], grounded: boolean, extraWarning?: string) {
   const allowed = new Map(fields.map((field) => [field.key, field] as const));
   const root = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const suggestions = Array.isArray(root.suggestions) ? root.suggestions : [];
-  const normalized = [];
+  const normalized: RawSuggestion[] = [];
 
   for (const item of suggestions) {
     if (!item || typeof item !== "object") continue;
@@ -607,15 +679,11 @@ function normalizeAiResult(
     if (!value) continue;
     if (definition.maxLength) value = value.slice(0, definition.maxLength);
 
-    let confidence = Math.max(0, Math.min(1, Number(row.confidence) || 0));
-    const verified = grounded && row.verified === true;
-    if (!grounded) confidence = Math.min(0.65, confidence * 0.65);
-
     normalized.push({
       field,
       value,
-      confidence,
-      verified,
+      modelConfidence: clamp01(Number(row.confidence) || 0),
+      verified: grounded && row.verified === true,
       reason: typeof row.reason === "string" ? row.reason.slice(0, 1000) : "",
     });
   }
@@ -626,10 +694,303 @@ function normalizeAiResult(
   if (extraWarning) warnings.unshift(extraWarning);
 
   return {
+    entityMatch: parseEntityMatch(root),
     summary: typeof root.summary === "string" ? root.summary.slice(0, 2000) : "",
     suggestions: normalized,
     warnings,
   };
+}
+
+function contextId(context: Record<string, unknown>) {
+  return typeof context.entityId === "string" ? context.entityId.trim() : "";
+}
+
+function allowedIconNames(context: Record<string, unknown>) {
+  return Array.isArray(context.allowedIcons)
+    ? context.allowedIcons.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+async function databaseChecks(args: {
+  admin: ReturnType<typeof createClient>;
+  entity: string;
+  field: string;
+  value: string;
+  context: Record<string, unknown>;
+}) {
+  const blockers: string[] = [];
+  const reviews: string[] = [];
+  const passes: string[] = [];
+  const entityId = contextId(args.context);
+
+  try {
+    if (args.field === "slug" && args.entity === "category") {
+      let query = args.admin
+        .from("store_categories")
+        .select("id,slug")
+        .eq("slug", args.value)
+        .limit(5);
+      if (entityId) query = query.neq("id", entityId);
+      const { data, error } = await query;
+      if (error) reviews.push("Category slug availability could not be verified");
+      else if (data?.length) blockers.push("Slug is already used by another category");
+      else passes.push("Slug is available in Supabase");
+    }
+
+    if (args.field === "slug" && args.entity === "brand") {
+      let query = args.admin
+        .from("cms_brands")
+        .select("id,slug")
+        .eq("slug", args.value)
+        .limit(5);
+      if (entityId) query = query.neq("id", entityId);
+      const { data, error } = await query;
+      if (error) reviews.push("Brand slug availability could not be verified");
+      else if (data?.length) blockers.push("Slug is already used by another brand");
+      else passes.push("Slug is available in Supabase");
+    }
+
+    if (args.entity === "product" && args.field === "brandName") {
+      const { data, error } = await args.admin
+        .from("cms_brands")
+        .select("id,name")
+        .ilike("name", args.value)
+        .limit(5);
+      if (error) reviews.push("Brand mapping could not be verified");
+      else if (!data?.some((row) => row.name.trim().toLowerCase() === args.value.trim().toLowerCase())) {
+        blockers.push("Brand does not map to an existing dashboard brand");
+      } else {
+        passes.push("Brand maps to an existing dashboard brand");
+      }
+    }
+
+    if (args.entity === "product" && args.field === "categoryName") {
+      const { data, error } = await args.admin
+        .from("store_categories")
+        .select("id,name")
+        .ilike("name", args.value)
+        .limit(5);
+      if (error) reviews.push("Category mapping could not be verified");
+      else if (!data?.some((row) => row.name.trim().toLowerCase() === args.value.trim().toLowerCase())) {
+        blockers.push("Category does not map to an existing dashboard category");
+      } else {
+        passes.push("Category maps to an existing dashboard category");
+      }
+    }
+
+    if (args.entity === "product" && args.field === "barcode") {
+      const [products, variants] = await Promise.all([
+        args.admin.from("store_products").select("id,barcode").eq("barcode", args.value).limit(10),
+        args.admin
+          .from("store_product_variants")
+          .select("id,product_id,barcode")
+          .eq("barcode", args.value)
+          .limit(10),
+      ]);
+      if (products.error || variants.error) {
+        reviews.push("Barcode uniqueness could not be verified");
+      } else {
+        const productConflict = (products.data ?? []).some((row) => !entityId || row.id !== entityId);
+        const variantConflict = (variants.data ?? []).some(
+          (row) => !entityId || row.product_id !== entityId,
+        );
+        if (productConflict || variantConflict) {
+          blockers.push("Barcode is already assigned to another product or variant");
+        } else {
+          passes.push("Barcode is not used by another product or variant");
+        }
+      }
+    }
+  } catch {
+    reviews.push("Supabase validation was temporarily unavailable");
+  }
+
+  return { blockers, reviews, passes };
+}
+
+function localFieldChecks(args: {
+  entity: string;
+  field: string;
+  value: string;
+  current: string;
+  definition: AiField;
+  context: Record<string, unknown>;
+  entityMatch: EntityMatch;
+}) {
+  const blockers: string[] = [];
+  const reviews: string[] = [];
+  const passes: string[] = [];
+  const trimmed = args.value.trim();
+
+  if (meaningfullySame(args.field, args.current, trimmed)) {
+    blockers.push("No meaningful change from the current value");
+  }
+
+  if (args.definition.maxLength && trimmed.length > args.definition.maxLength) {
+    blockers.push(`Exceeds the ${args.definition.maxLength}-character field limit`);
+  }
+
+  if (args.field === "slug" && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(trimmed)) {
+    blockers.push("Slug format is invalid");
+  }
+
+  if (args.field === "website") {
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        blockers.push("Website must use HTTP(S)");
+      }
+    } catch {
+      blockers.push("Website is not a valid URL");
+    }
+  }
+
+  if (args.field === "icon") {
+    const allowed = allowedIconNames(args.context);
+    if (allowed.length && !allowed.includes(trimmed)) blockers.push("Icon is not in the allowed set");
+  }
+
+  const risk = riskFor(args.entity, args.field);
+  if (risk === "high" && args.entityMatch.status !== "exact") {
+    blockers.push("Exact entity or product variant was not verified");
+  } else if (risk === "medium" && args.entityMatch.status !== "exact") {
+    reviews.push("Entity match is not exact");
+  } else if (args.entityMatch.status === "exact") {
+    passes.push("Exact entity match reported");
+  }
+
+  return { blockers, reviews, passes };
+}
+
+function confidenceScore(args: {
+  modelConfidence: number;
+  verified: boolean;
+  grounded: boolean;
+  sourceQuality: number;
+  entityMatch: EntityMatchStatus;
+  risk: AiRisk;
+  hasReviewIssue: boolean;
+}) {
+  const evidence = args.grounded ? args.sourceQuality : 0.35;
+  const verification = args.verified ? 1 : 0.55;
+  const entityFactor =
+    args.entityMatch === "exact" ? 1 : args.entityMatch === "partial" ? 0.86 : 0.7;
+  const riskFactor = args.risk === "low" ? 1 : args.risk === "medium" ? 0.92 : 0.86;
+  const reviewFactor = args.hasReviewIssue ? 0.85 : 1;
+
+  return clamp01(
+    (args.modelConfidence * 0.55 + evidence * 0.3 + verification * 0.15) *
+      entityFactor *
+      riskFactor *
+      reviewFactor,
+  );
+}
+
+function decisionFor(args: {
+  risk: AiRisk;
+  definition: AiField;
+  confidence: number;
+  verified: boolean;
+  sourceQuality: number;
+  entityMatch: EntityMatchStatus;
+  blockers: string[];
+  reviews: string[];
+}): AiDecision {
+  if (args.blockers.length) return "block";
+  if (args.definition.review || args.reviews.length) return "review";
+
+  if (args.risk === "high") {
+    return args.entityMatch === "exact" &&
+      args.verified &&
+      args.sourceQuality >= 0.95 &&
+      args.confidence >= 0.8
+      ? "allow"
+      : "review";
+  }
+
+  if (args.risk === "medium") {
+    return args.entityMatch === "exact" && args.confidence >= 0.78 ? "allow" : "review";
+  }
+
+  return args.confidence >= 0.68 ? "allow" : "review";
+}
+
+async function verifySuggestions(args: {
+  admin: ReturnType<typeof createClient>;
+  entity: string;
+  fields: AiField[];
+  currentData: Record<string, string>;
+  context: Record<string, unknown>;
+  entityMatch: EntityMatch;
+  suggestions: RawSuggestion[];
+  grounded: boolean;
+  sources: ScoredSource[];
+}) {
+  const definitions = new Map(args.fields.map((field) => [field.key, field] as const));
+  const sourceQuality = args.sources.length
+    ? Math.max(...args.sources.map((source) => source.quality))
+    : args.grounded
+      ? 0.7
+      : 0.35;
+
+  return Promise.all(
+    args.suggestions.map(async (suggestion) => {
+      const definition = definitions.get(suggestion.field);
+      if (!definition) return null;
+
+      const risk = riskFor(args.entity, suggestion.field);
+      const local = localFieldChecks({
+        entity: args.entity,
+        field: suggestion.field,
+        value: suggestion.value,
+        current: args.currentData[suggestion.field] ?? "",
+        definition,
+        context: args.context,
+        entityMatch: args.entityMatch,
+      });
+      const database = await databaseChecks({
+        admin: args.admin,
+        entity: args.entity,
+        field: suggestion.field,
+        value: suggestion.value,
+        context: args.context,
+      });
+
+      const blockers = [...local.blockers, ...database.blockers];
+      const reviews = [...local.reviews, ...database.reviews];
+      const passes = [...local.passes, ...database.passes];
+      const confidence = confidenceScore({
+        modelConfidence: suggestion.modelConfidence,
+        verified: suggestion.verified,
+        grounded: args.grounded,
+        sourceQuality,
+        entityMatch: args.entityMatch.status,
+        risk,
+        hasReviewIssue: reviews.length > 0,
+      });
+      const decision = decisionFor({
+        risk,
+        definition,
+        confidence,
+        verified: suggestion.verified,
+        sourceQuality,
+        entityMatch: args.entityMatch.status,
+        blockers,
+        reviews,
+      });
+
+      return {
+        field: suggestion.field,
+        value: suggestion.value,
+        confidence,
+        verified: suggestion.verified,
+        reason: suggestion.reason,
+        risk,
+        decision,
+        checks: [...blockers, ...reviews, ...passes].slice(0, 8),
+      };
+    }),
+  ).then((items) => items.filter((item): item is NonNullable<typeof item> => Boolean(item)));
 }
 
 Deno.serve(async (req) => {
