@@ -450,6 +450,9 @@ export default function AiAssistPanel({
                           const blocked = Boolean(issue) || suggestion.decision === "block";
                           const checked = !blocked && selected.has(suggestion.field);
                           const current = currentData[suggestion.field] ?? "";
+                          const evidenceSources = result.sources.filter((source) =>
+                            suggestion.sourceUrls.includes(source.url),
+                          );
                           return (
                             <label
                               key={suggestion.field}
@@ -531,6 +534,24 @@ export default function AiAssistPanel({
                                   {suggestion.reason ? (
                                     <div className="mt-1 text-[9px] leading-4 text-slate-400">
                                       {suggestion.reason}
+                                    </div>
+                                  ) : null}
+                                  {evidenceSources.length ? (
+                                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                      {evidenceSources.map((source) => (
+                                        <a
+                                          key={source.url}
+                                          href={source.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          onClick={(event) => event.stopPropagation()}
+                                          className="inline-flex items-center gap-1 rounded-md border border-emerald-100 bg-emerald-50 px-1.5 py-1 text-[8px] font-bold text-emerald-700"
+                                        >
+                                          Evidence
+                                          {source.official ? " · Official" : ""}
+                                          <ExternalLink className="size-2.5" />
+                                        </a>
+                                      ))}
                                     </div>
                                   ) : null}
                                   {suggestion.checks.length ? (
