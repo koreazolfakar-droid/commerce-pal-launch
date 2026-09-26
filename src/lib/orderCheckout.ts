@@ -5,7 +5,7 @@ const CHECKOUT_ATTEMPT_KEY = "space-call-checkout-attempt-v2";
 const CHECKOUT_ATTEMPT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 type CheckoutAttempt = {
-  fingerprint: string;
+  fingerprintHash: string;
   idempotencyKey: string;
   createdAt: number;
 };
@@ -97,11 +97,29 @@ function checkoutFingerprint(input: {
   });
 }
 
-export function checkoutIdempotencyKey(fingerprint: string) {
+async function hashCheckoutFingerprint(fingerprint: string) {
+  const bytes = new TextEncoder().encode(fingerprint);
+  if (typeof crypto !== "undefined" && crypto.subtle) {
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  // Keep raw customer details out of localStorage even on older webviews.
+  let first = 2166136261;
+  let second = 2246822519;
+  for (const byte of bytes) {
+    first = Math.imul(first ^ byte, 16777619) >>> 0;
+    second = Math.imul(second ^ byte, 3266489917) >>> 0;
+  }
+  return `${first.toString(16).padStart(8, "0")}${second.toString(16).padStart(8, "0")}`;
+}
+
+export async function checkoutIdempotencyKey(fingerprint: string) {
+  const fingerprintHash = await hashCheckoutFingerprint(fingerprint);
   const now = Date.now();
 
   if (
-    volatileAttempt?.fingerprint === fingerprint &&
+    volatileAttempt?.fingerprintHash === fingerprintHash &&
     now - volatileAttempt.createdAt < CHECKOUT_ATTEMPT_MAX_AGE_MS
   ) {
     return volatileAttempt.idempotencyKey;
@@ -112,7 +130,7 @@ export function checkoutIdempotencyKey(fingerprint: string) {
     if (raw) {
       const existing = JSON.parse(raw) as Partial<CheckoutAttempt>;
       if (
-        existing.fingerprint === fingerprint &&
+        existing.fingerprintHash === fingerprintHash &&
         typeof existing.idempotencyKey === "string" &&
         existing.idempotencyKey.length >= 16 &&
         typeof existing.createdAt === "number" &&
@@ -127,7 +145,7 @@ export function checkoutIdempotencyKey(fingerprint: string) {
   }
 
   const idempotencyKey = randomIdempotencyKey();
-  const attempt = { fingerprint, idempotencyKey, createdAt: now } satisfies CheckoutAttempt;
+  const attempt = { fingerprintHash, idempotencyKey, createdAt: now } satisfies CheckoutAttempt;
   volatileAttempt = attempt;
   try {
     window.localStorage.setItem(CHECKOUT_ATTEMPT_KEY, JSON.stringify(attempt));
@@ -182,7 +200,7 @@ export async function createStorefrontOrder(input: {
   } | null;
 }): Promise<CreatedStoreOrder> {
   const body = {
-    idempotency_key: checkoutIdempotencyKey(checkoutFingerprint(input)),
+    idempotency_key: await checkoutIdempotencyKey(checkoutFingerprint(input)),
     customer: {
       name: input.customer.name,
       phone: input.customer.phone,
