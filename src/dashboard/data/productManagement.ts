@@ -143,6 +143,7 @@ export async function createDashboardProductVariant(
   throwIfError(error, "Creating variant failed");
   if (!data) throw new Error("Variant creation returned no row.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapVariant(data as VariantRow);
 }
 
@@ -158,6 +159,7 @@ export async function updateDashboardProductVariant(
   throwIfError(error, "Updating variant failed");
   if (!data) throw new Error("Variant update returned no row.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapVariant(data as VariantRow);
 }
 
@@ -170,6 +172,7 @@ export async function reorderDashboardProductVariants(
   }));
   throwIfError(error, "Reordering variants failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function deleteDashboardProductVariant(variantId: string): Promise<void> {
@@ -180,6 +183,7 @@ export async function deleteDashboardProductVariant(variantId: string): Promise<
   }));
   throwIfError(error, "Deleting variant failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function uploadDashboardVariantImage(
@@ -264,6 +268,7 @@ export async function setDashboardProductCollections(
   }));
   throwIfError(error, "Saving product collections failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function setDashboardProductsStatus(
@@ -278,6 +283,7 @@ export async function setDashboardProductsStatus(
   }));
   throwIfError(error, "Updating product status failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return Number(data ?? 0);
 }
 
@@ -289,6 +295,7 @@ export async function duplicateDashboardProduct(productId: string): Promise<stri
   throwIfError(error, "Duplicating product failed");
   if (!data) throw new Error("Product duplication returned no id.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return String(data);
 }
 
@@ -300,6 +307,7 @@ export async function deleteDashboardProductSafe(productId: string): Promise<voi
   }));
   throwIfError(error, "Deleting product failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function getProductManagementRole(): Promise<DashboardRole> {
