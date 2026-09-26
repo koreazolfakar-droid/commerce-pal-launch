@@ -61,6 +61,13 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
           confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)),
           verified: item.verified === true,
           reason: text(item.reason),
+          risk:
+            item.risk === "low" || item.risk === "high" ? item.risk : "medium",
+          decision:
+            item.decision === "allow" || item.decision === "block"
+              ? item.decision
+              : "review",
+          checks: Array.isArray(item.checks) ? item.checks.map(text).filter(Boolean) : [],
         }))
         .filter((item) => item.field)
     : [];
@@ -70,15 +77,31 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
         .filter(
           (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
         )
-        .map((item) => ({ title: text(item.title), url: safeHttpUrl(item.url) }))
+        .map((item) => ({
+          title: text(item.title),
+          url: safeHttpUrl(item.url),
+          quality: Math.max(0, Math.min(1, Number(item.quality) || 0)),
+          official: item.official === true,
+        }))
         .filter((item) => item.url)
     : [];
+
+  const match =
+    row.entityMatch && typeof row.entityMatch === "object"
+      ? (row.entityMatch as Record<string, unknown>)
+      : {};
 
   return {
     entity: row.entity === "category" || row.entity === "brand" ? row.entity : "product",
     action: row.action === "seo" || row.action === "validate" ? row.action : "research_fill",
     model: text(row.model),
     grounded: row.grounded === true,
+    entityMatch: {
+      status:
+        match.status === "exact" || match.status === "partial" ? match.status : "uncertain",
+      canonicalName: text(match.canonicalName),
+      reason: text(match.reason),
+    },
     summary: text(row.summary),
     suggestions,
     warnings: Array.isArray(row.warnings) ? row.warnings.map(text).filter(Boolean) : [],
