@@ -117,7 +117,7 @@ test("phase two adds deterministic verification metadata", () => {
   assert.match(edge, /sourceQuality >= 0\.95/);
   assert.match(panel, /Exact entity verified/);
   assert.match(panel, /Safe to apply/);
-  assert.match(panel, /high risk/);
+  assert.match(panel, /suggestion\.risk === "high"/);
   assert.match(panel, /source\.official/);
   assert.match(client, /item\.decision === "allow"/);
   assert.match(client, /item\.risk === "low"/);
