@@ -157,6 +157,7 @@ test("brand identity uses the persisted slug and hidden brands stay hidden", () 
   assert.match(storeTypes, /vendorHidden\?: boolean/);
   assert.match(nativeStore, /STOREFRONT_BRAND_SELECT = "id,name,slug"/);
   assert.match(nativeStore, /vendorHidden: Boolean\(row\.brand_id && !brand\)/);
+  assert.match(nativeStore, /\.eq\("is_visible", true\)[\s\S]*?\.maybeSingle\(\)/);
   assert.match(taxonomy, /if \(product\.node\.vendorHidden\) return null/);
   assert.match(taxonomy, /const canonicalSlug = product\.node\.vendorSlug/);
   assert.ok(
