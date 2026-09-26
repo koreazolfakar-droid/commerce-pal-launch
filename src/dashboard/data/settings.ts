@@ -1,5 +1,6 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
+import { broadcastStorefrontRefresh } from "@/lib/nativeStore";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 import { convertProductImageToWebp } from "@/dashboard/lib/imageProcessing";
@@ -211,6 +212,7 @@ export async function saveDashboardSiteSettings(
     .upsert(rows, { onConflict: "key" });
 
   throwIfError(error, "Saving store settings failed");
+  broadcastStorefrontRefresh();
   return normalized;
 }
 
