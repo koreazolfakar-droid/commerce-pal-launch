@@ -108,36 +108,36 @@ export default function ProductFormPage({ id }: { id?: string }) {
       .then(
         ([product, brandRows, categoryRows, collectionRows, productCollectionIds, dashboardRole]) => {
           if (cancelled) return;
-        setExisting(product);
-        setBrands(brandRows);
-        setCategories(categoryRows);
-        setCollections(collectionRows);
-        setCollectionIds(productCollectionIds);
-        setPersistedCollectionIds(productCollectionIds);
-        setRole(dashboardRole);
-        setVariantCount(product?.variantCount ?? 0);
-        setSaved(false);
-        if (product) {
-          setSpecifications(product.specifications);
-          setForm({
-            title: product.name,
-            description: product.description,
-            brandId: product.brandId ?? "",
-            categoryId: product.categoryId ?? "",
-            status: product.status,
-            price: String(product.price),
-            compareAt: product.compareAt == null ? "" : String(product.compareAt),
-            sku: product.sku,
-            barcode: product.barcode,
-            stock: String(product.stock),
-            imageUrl: product.image,
-            seoTitle: product.seoTitle,
-            seoDescription: product.seoDescription,
-          });
-        } else {
-          setForm(EMPTY);
-          setSpecifications(EMPTY_SPECS);
-        }
+          setExisting(product);
+          setBrands(brandRows);
+          setCategories(categoryRows);
+          setCollections(collectionRows);
+          setCollectionIds(productCollectionIds);
+          setPersistedCollectionIds(productCollectionIds);
+          setRole(dashboardRole);
+          setVariantCount(product?.variantCount ?? 0);
+          setSaved(false);
+          if (product) {
+            setSpecifications(product.specifications);
+            setForm({
+              title: product.name,
+              description: product.description,
+              brandId: product.brandId ?? "",
+              categoryId: product.categoryId ?? "",
+              status: product.status,
+              price: String(product.price),
+              compareAt: product.compareAt == null ? "" : String(product.compareAt),
+              sku: product.sku,
+              barcode: product.barcode,
+              stock: String(product.stock),
+              imageUrl: product.image,
+              seoTitle: product.seoTitle,
+              seoDescription: product.seoDescription,
+            });
+          } else {
+            setForm(EMPTY);
+            setSpecifications(EMPTY_SPECS);
+          }
         },
       )
       .catch((cause) => {
