@@ -32,6 +32,7 @@ export type DashboardAiSuggestion = {
   risk: DashboardAiRisk;
   decision: DashboardAiDecision;
   checks: string[];
+  sourceUrls: string[];
 };
 
 export type DashboardAiSource = {
