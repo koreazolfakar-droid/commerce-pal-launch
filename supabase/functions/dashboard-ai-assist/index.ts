@@ -298,7 +298,11 @@ function serverSecretKey() {
   }
 }
 
-function cleanFields(value: unknown, entity: string, specificationKeys: Set<string> = new Set()): AiField[] {
+function cleanFields(
+  value: unknown,
+  entity: string,
+  specificationKeys: Set<string> = new Set(),
+): AiField[] {
   if (!Array.isArray(value)) return [];
   const entityAllowlist = allowedFieldKeys[entity];
   if (!entityAllowlist) return [];
@@ -312,7 +316,16 @@ function cleanFields(value: unknown, entity: string, specificationKeys: Set<stri
     const key = typeof row.key === "string" ? row.key.trim() : "";
     const normalized = key.toLowerCase().replace(/[^a-z0-9_]/g, "");
     if (!key || !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(key)) continue;
-    if (!(entityAllowlist.has(key) || (entity === "product" && specificationKeys.has(key))) || forbiddenFields.has(normalized) || seen.has(key)) continue;
+    if (
+      !(
+        entityAllowlist.has(key) ||
+        (entity === "product" && specificationKeys.has(key))
+      ) ||
+      forbiddenFields.has(normalized) ||
+      seen.has(key)
+    ) {
+      continue;
+    }
 
     seen.add(key);
     fields.push({
@@ -1240,18 +1253,31 @@ Deno.serve(async (req) => {
   if (!allowedActions.has(action)) return json(req, { error: "invalid_action" }, 400);
   if (query.length < 2 || query.length > 500) return json(req, { error: "invalid_query" }, 400);
 
-  const rawContext = body.context && typeof body.context === "object" && !Array.isArray(body.context)
-    ? body.context as Record<string, unknown> : {};
+  const rawContext =
+    body.context && typeof body.context === "object" && !Array.isArray(body.context)
+      ? (body.context as Record<string, unknown>)
+      : {};
   const categoryId = typeof rawContext.categoryId === "string" ? rawContext.categoryId : "";
   const specificationKeys = new Set<string>();
   if (entity === "product" && /^[0-9a-f-]{36}$/i.test(categoryId)) {
-    const { data: category, error: categoryError } = await admin.from("store_categories")
-      .select("spec_template").eq("id", categoryId).maybeSingle();
+    const { data: category, error: categoryError } = await admin
+      .from("store_categories")
+      .select("spec_template")
+      .eq("id", categoryId)
+      .maybeSingle();
     if (categoryError) return json(req, { error: "specification_template_unavailable" }, 503);
     const sections = category?.spec_template?.sections;
-    if (Array.isArray(sections)) for (const section of sections) {
-      if (Array.isArray(section?.fields)) for (const field of section.fields) {
-        if (typeof field?.key === "string" && /^[a-z][a-z0-9_]{0,39}$/.test(field.key)) specificationKeys.add(`spec__${field.key}`);
+    if (Array.isArray(sections)) {
+      for (const section of sections) {
+        if (!Array.isArray(section?.fields)) continue;
+        for (const field of section.fields) {
+          if (
+            typeof field?.key === "string" &&
+            /^[a-z][a-z0-9_]{0,39}$/.test(field.key)
+          ) {
+            specificationKeys.add(`spec__${field.key}`);
+          }
+        }
       }
     }
   }

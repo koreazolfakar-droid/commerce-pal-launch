@@ -667,7 +667,11 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     row.category_id
-      ? publicSupabase.from("store_categories").select("spec_template").eq("id", row.category_id).maybeSingle()
+      ? publicSupabase
+          .from("store_categories")
+          .select("spec_template")
+          .eq("id", row.category_id)
+          .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -677,7 +681,9 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
   if (brandResult.error) {
     throw new Error(`Supabase product brand failed: ${brandResult.error.message}`);
   }
-  if (categoryResult.error) throw new Error(`Supabase product category failed: ${categoryResult.error.message}`);
+  if (categoryResult.error) {
+    throw new Error(`Supabase product category failed: ${categoryResult.error.message}`);
+  }
 
   const collectionIds = links.map((link) => link.collection_id);
   let collections: StorefrontCollectionRow[] = [];
@@ -690,7 +696,9 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
     collections = assertResult(collectionResult, "product collections");
     const order = new Map(links.map((link, index) => [link.collection_id, index]));
     collections.sort(
-      (a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+      (a, b) =>
+        (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+        (order.get(b.id) ?? Number.MAX_SAFE_INTEGER),
     );
   }
 

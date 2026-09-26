@@ -240,11 +240,16 @@ export function productJsonLd(product: StoreProduct) {
     ...gtinJsonLd(variant?.barcode),
     brand: brand ? { "@type": "Brand", name: brand } : undefined,
     category: node.productType?.trim() || undefined,
-    additionalProperty: Object.entries(node.specifications?.values ?? {}).slice(0, 30).map(([key, value]) => ({
-      "@type": "PropertyValue",
-      name: node.specTemplate?.sections.flatMap((section) => section.fields).find((field) => field.key === key)?.label ?? key,
-      value,
-    })),
+    additionalProperty: Object.entries(node.specifications?.values ?? {})
+      .slice(0, 30)
+      .map(([key, value]) => ({
+        "@type": "PropertyValue",
+        name:
+          node.specTemplate?.sections
+            .flatMap((section) => section.fields)
+            .find((field) => field.key === key)?.label ?? key,
+        value,
+      })),
     url: absoluteUrl(`/product/${node.handle}`),
     mainEntityOfPage: absoluteUrl(`/product/${node.handle}`),
     offers: {
