@@ -51,15 +51,53 @@ function randomIdempotencyKey() {
     .slice(2)}`;
 }
 
-function cartFingerprint(items: CartItem[]) {
-  return items
-    .map((item) => `${item.product.node.id}:${item.variantId}:${item.quantity}`)
-    .sort()
-    .join("|");
+function checkoutFingerprint(input: {
+  items: CartItem[];
+  customer: {
+    name: string;
+    phone: string;
+    address: string;
+    city: string;
+    email?: string;
+  };
+  paymentMethod: "cash" | "whish";
+  expectedSubtotal: number;
+  expectedDeliveryFee: number;
+  notes?: string;
+  reference?: string;
+  deliveryLocation?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  } | null;
+}) {
+  const items = input.items
+    .map((item) => ({
+      productId: item.product.node.id,
+      variantId: item.variantId,
+      quantity: item.quantity,
+    }))
+    .sort((a, b) => a.variantId.localeCompare(b.variantId));
+
+  return JSON.stringify({
+    items,
+    customer: {
+      name: input.customer.name.trim(),
+      phone: input.customer.phone.replace(/\s+/g, ""),
+      address: input.customer.address.trim(),
+      city: input.customer.city.trim(),
+      email: input.customer.email?.trim().toLowerCase() || "",
+    },
+    paymentMethod: input.paymentMethod,
+    expectedSubtotal: Number(input.expectedSubtotal.toFixed(2)),
+    expectedDeliveryFee: Number(input.expectedDeliveryFee.toFixed(2)),
+    notes: input.notes?.trim() || "",
+    reference: input.reference?.trim() || "",
+    deliveryLocation: input.deliveryLocation ?? null,
+  });
 }
 
-export function checkoutIdempotencyKey(items: CartItem[]) {
-  const fingerprint = cartFingerprint(items);
+export function checkoutIdempotencyKey(fingerprint: string) {
   const now = Date.now();
 
   if (
@@ -144,7 +182,7 @@ export async function createStorefrontOrder(input: {
   } | null;
 }): Promise<CreatedStoreOrder> {
   const body = {
-    idempotency_key: checkoutIdempotencyKey(input.items),
+    idempotency_key: checkoutIdempotencyKey(checkoutFingerprint(input)),
     customer: {
       name: input.customer.name,
       phone: input.customer.phone,
