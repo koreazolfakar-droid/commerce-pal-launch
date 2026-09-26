@@ -47,10 +47,7 @@ export default function QuickViewDialog({
       ? Math.max(0, Math.min(99, Math.trunc(variant.stockQuantity ?? 0)))
       : 99;
   const validQuantity =
-    /^\d+$/.test(quantity) &&
-    Number.isInteger(amount) &&
-    amount >= 1 &&
-    amount <= maxQuantity;
+    /^\d+$/.test(quantity) && Number.isInteger(amount) && amount >= 1 && amount <= maxQuantity;
   const images = node.images.edges.slice(0, 2).map(({ node: image }) => image);
 
   const add = async () => {
