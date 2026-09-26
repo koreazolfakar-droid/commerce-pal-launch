@@ -58,7 +58,7 @@ export async function loadHomepagePreviewProducts(
   if (!(await getDashboardRole())) throw new Error("Dashboard authentication is required.");
 
   const { source, value, limit } = previewSource(section);
-  if (!value && source !== "best_sellers") return [];
+  if (!value && source !== "best_sellers" && source !== "newest") return [];
 
   let requestedOrder: string[] = [];
   let query = supabase
@@ -70,6 +70,8 @@ export async function loadHomepagePreviewProducts(
 
   if (source === "best_sellers") {
     query = query.eq("best_seller", true).order("sort_order", { ascending: true });
+  } else if (source === "newest") {
+    query = query.order("created_at", { ascending: false }).order("sort_order", { ascending: true });
   } else if (source === "brand" || source === "category") {
     const result =
       source === "brand"
@@ -114,7 +116,7 @@ export async function loadHomepagePreviewProducts(
     return [];
   }
 
-  if (source !== "best_sellers") {
+  if (source !== "best_sellers" && source !== "newest") {
     query = query.order("updated_at", { ascending: false }).order("id");
   }
 
