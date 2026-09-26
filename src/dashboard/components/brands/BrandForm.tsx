@@ -273,6 +273,8 @@ export default function BrandForm({
               context={{
                 market: "Lebanon",
                 store: "Space Call",
+                entityId: draft.id,
+                officialDomains: draft.website ? [draft.website] : [],
                 existingBrands: brands.map((item) => ({ name: item.name, slug: item.slug })),
               }}
               onApply={applyAiPatch}
