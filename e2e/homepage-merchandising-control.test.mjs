@@ -40,6 +40,15 @@ test("storefront can fetch exact manually selected products by id in configured 
   assert.match(queries, /productsByIdsQueryOptions/);
 });
 
+test("configured manual homepage source preserves the CMS-selected order", () => {
+  const start = nativeStore.indexOf("export async function fetchHomepageConfiguredProducts");
+  const end = nativeStore.indexOf("export async function fetchNewestProducts", start);
+  const configured = nativeStore.slice(start, end);
+  assert.match(configured, /config\.source === "manual"/);
+  assert.match(configured, /fetchProductsByIds\(config\.manualProductIds \?\? \[\]\)/);
+  assert.match(configured, /\.slice\(0, count\)/);
+});
+
 test("live featured rail honors every dashboard product source", () => {
   assert.match(storefront, /cmsFeaturedProductConfig/);
   assert.match(storefront, /homepageConfiguredProductsQueryOptions\(featuredProductConfig\)/);
