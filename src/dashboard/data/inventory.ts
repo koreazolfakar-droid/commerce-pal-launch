@@ -286,7 +286,7 @@ export async function loadInventoryPage(input: {
   // The generated Supabase types lag behind the dashboard pagination functions,
   // so these two RPCs are called through a loosely typed view of the client and
   // narrowed to the row shapes the SQL functions return.
-  const rpc = supabase.rpc as unknown as (
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
     name: string,
     args: Record<string, unknown>,
   ) => Promise<{ data: InventoryPageRow[] | null; error: unknown }>;
@@ -335,7 +335,7 @@ export async function loadInventorySummary(
   threshold = 10,
 ): Promise<InventorySummary> {
   await requireDashboardStaff();
-  const rpc = supabase.rpc as unknown as (
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
     name: string,
     args: Record<string, unknown>,
   ) => Promise<{ data: InventorySummaryRow[] | null; error: unknown }>;
