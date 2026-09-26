@@ -208,7 +208,7 @@ begin
   if exists (
     select 1
     from pg_catalog.jsonb_array_elements(v_items) as duplicate_item
-    group by duplicate_item ->> 'variant_id'
+    group by (duplicate_item ->> 'variant_id')::uuid
     having pg_catalog.count(*) > 1
   ) then
     raise exception 'duplicate_variant';
