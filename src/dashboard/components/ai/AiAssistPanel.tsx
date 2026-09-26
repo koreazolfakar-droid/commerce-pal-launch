@@ -31,7 +31,9 @@ function sameSuggestionValue(current: string, suggested: string) {
 
 function contextStringList(context: Record<string, unknown> | undefined, key: string) {
   const value = context?.[key];
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 function contextSlugs(context: Record<string, unknown> | undefined) {
@@ -457,7 +459,11 @@ export default function AiAssistPanel({
                                             : "bg-amber-100 text-amber-700")
                                       }
                                     >
-                                      {noChange ? "No change" : suggestion.verified ? "Verified" : "Review"}
+                                      {noChange
+                                        ? "No change"
+                                        : suggestion.verified
+                                          ? "Verified"
+                                          : "Review"}
                                     </span>
                                     {!noChange ? (
                                       <span className="text-[9px] font-bold text-slate-400">
