@@ -99,6 +99,7 @@ export type DashboardBrand = {
   slug: string;
   active: boolean;
   logo: string | null;
+  website: string | null;
 };
 
 export type DashboardCategory = {
@@ -1047,7 +1048,7 @@ export async function listDashboardBrands(): Promise<DashboardBrand[]> {
   await requireDashboardRole();
   const { data, error } = await supabase
     .from("cms_brands")
-    .select("id,name,slug,is_visible,logo_url")
+    .select("id,name,slug,is_visible,logo_url,href")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
   throwIfError(error, "Loading brands failed");
@@ -1057,6 +1058,7 @@ export async function listDashboardBrands(): Promise<DashboardBrand[]> {
     slug: row.slug,
     active: row.is_visible,
     logo: row.logo_url,
+    website: row.href,
   }));
 }
 
