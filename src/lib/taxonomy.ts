@@ -480,8 +480,11 @@ export function resolveBrand(
     vendor &&
     !GENERIC_VENDORS.has(vendor.toLowerCase()) &&
     !genericVendors.has(vendor.toLowerCase())
-  )
+  ) {
+    const canonicalSlug = product.node.vendorSlug?.trim();
+    if (canonicalSlug) return { slug: canonicalSlug, label: vendor };
     return identity(vendor);
+  }
 
   // Only a leading brand/product family is evidence; "Case for iPhone" is not Apple.
   const title = product.node.title.trim().toLowerCase();
