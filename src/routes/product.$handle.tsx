@@ -29,6 +29,7 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
+import { keySpecificationRows, specificationGroups } from "@/lib/specifications";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
@@ -218,7 +219,6 @@ function ProductPage() {
     .slice(0, 8);
   const category = primaryCategory(product);
   const busy = pending !== null || cartLoading;
-  const isPhone = category?.slug === "smartphones";
   const whatsappOrderUrl = productWhatsAppUrl({
     title: node.title,
     url: absoluteUrl(`/product/${node.handle}`),
@@ -234,6 +234,8 @@ function ProductPage() {
   );
 
   const specGroups = useMemo(() => {
+    const structured = specificationGroups(node.specifications ?? { values: {}, keySpecs: [] }, node.specTemplate ?? { sections: [] });
+    if (structured.length) return structured;
     const rows: SpecRow[] = [
       ...content.specs,
       ...(selectedVariant?.selectedOptions ?? [])
@@ -250,7 +252,11 @@ function ProductPage() {
         : []),
     ];
     return groupSpecs(rows);
-  }, [content.specs, selectedVariant, node.productType, node.vendor]);
+  }, [content.specs, selectedVariant, node.productType, node.vendor, node.specifications, node.specTemplate]);
+  const keySpecs = useMemo(
+    () => keySpecificationRows(node.specifications ?? { values: {}, keySpecs: [] }, node.specTemplate ?? { sections: [] }),
+    [node.specifications, node.specTemplate],
+  );
 
   const similar = useMemo(() => {
     const fromRecommendations = (recommended ?? []).filter(
@@ -370,6 +376,22 @@ function ProductPage() {
               onSelect={handleOptionSelect}
             />
 
+            {keySpecs.length > 0 && (
+              <section aria-label="Key specifications" className="rounded-2xl border border-border/60 bg-card p-3 sm:p-4">
+                <h2 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  {language === "ar" ? "أهم المواصفات" : "Key specifications"}
+                </h2>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  {keySpecs.map((row) => (
+                    <div key={row.label} className="min-w-0">
+                      <dt className="text-[11px] text-muted-foreground">{row.label}</dt>
+                      <dd className="break-words text-sm font-medium text-foreground">{row.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
+
             <div className="flex items-end justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
@@ -485,7 +507,7 @@ function ProductPage() {
               </Button>
             </div>
 
-            {isPhone && <div className="-mt-2 flex justify-start"><CompareButton handle={node.handle} /></div>}
+            <div className="-mt-2 flex justify-start"><CompareButton handle={node.handle} /></div>
 
             <ul className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border/60 pb-5 text-xs text-muted-foreground">
               {PURCHASE_ASSURANCES.slice(0, 3).map((item) => (

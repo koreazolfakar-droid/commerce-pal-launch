@@ -223,6 +223,7 @@ export default function AiAssistPanel({
         return (
           definition &&
           suggestion.decision === "allow" &&
+          !currentData[suggestion.field]?.trim() &&
           !suggestionIssue({
             field: suggestion.field,
             value: suggestion.value,

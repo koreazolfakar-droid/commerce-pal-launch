@@ -1,4 +1,5 @@
 import { publicSupabase } from "@/integrations/supabase/publicClient";
+import { parseSpecifications, parseTemplate, type SpecTemplate } from "@/lib/specifications";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex } from "@/lib/taxonomy";
@@ -33,6 +34,8 @@ type StorefrontProductRow = Pick<
   | "stock_quantity"
   | "best_seller"
   | "sort_order"
+  | "category_id"
+  | "specifications"
 >;
 type StorefrontVariantRow = Pick<
   VariantRow,
@@ -70,7 +73,7 @@ type NavigationProductRow = Pick<
 >;
 
 const STOREFRONT_PRODUCT_SELECT =
-  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order,category_id,specifications" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
 const STOREFRONT_IMAGE_SELECT = "product_id,url,alt_text,is_primary,sort_order" as const;
@@ -212,6 +215,7 @@ function buildProduct(
   images: StorefrontImageRow[],
   collections: StorefrontCollectionRow[],
   brand?: StorefrontBrandRow,
+  specTemplate?: SpecTemplate,
 ): StoreProduct {
   const sortedVariants = [...variants].sort((a, b) => a.sort_order - b.sort_order);
   const sortedImages = [...images].sort(
@@ -273,6 +277,8 @@ function buildProduct(
       title: row.title,
       description: row.description,
       descriptionHtml: row.description_html ?? undefined,
+      specifications: parseSpecifications(row.specifications),
+      specTemplate,
       handle: row.handle,
       vendor: brand?.name,
       vendorSlug: brand?.slug,
@@ -635,7 +641,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
   const row = productResult.data as StorefrontProductRow | null;
   if (!row) return null;
 
-  const [variantResult, imageResult, linkResult, brandResult] = await Promise.all([
+  const [variantResult, imageResult, linkResult, brandResult, categoryResult] = await Promise.all([
     publicSupabase
       .from("store_product_variants")
       .select(STOREFRONT_VARIANT_SELECT)
@@ -660,6 +666,9 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
           .eq("is_visible", true)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    row.category_id
+      ? publicSupabase.from("store_categories").select("spec_template").eq("id", row.category_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   const variants = assertResult(variantResult, "product variants");
@@ -668,6 +677,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
   if (brandResult.error) {
     throw new Error(`Supabase product brand failed: ${brandResult.error.message}`);
   }
+  if (categoryResult.error) throw new Error(`Supabase product category failed: ${categoryResult.error.message}`);
 
   const collectionIds = links.map((link) => link.collection_id);
   let collections: StorefrontCollectionRow[] = [];
@@ -690,6 +700,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
     images,
     collections,
     (brandResult.data as StorefrontBrandRow | null) ?? undefined,
+    parseTemplate(categoryResult.data?.spec_template),
   );
 }
 

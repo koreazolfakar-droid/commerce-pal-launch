@@ -670,6 +670,7 @@ export type Database = {
       }
       store_categories: {
         Row: {
+          spec_template: Json
           created_at: string
           description: string | null
           icon: string | null
@@ -686,6 +687,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          spec_template?: Json
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -702,6 +704,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          spec_template?: Json
           created_at?: string
           description?: string | null
           icon?: string | null

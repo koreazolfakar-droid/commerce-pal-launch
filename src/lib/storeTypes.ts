@@ -5,6 +5,8 @@
  * They intentionally carry no external commerce runtime dependency.
  */
 export interface StoreProductNode {
+  specifications?: import("@/lib/specifications").ProductSpecifications;
+  specTemplate?: import("@/lib/specifications").SpecTemplate;
   id: string;
   title: string;
   description: string;

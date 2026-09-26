@@ -11,6 +11,7 @@ import {
   type CatalogCategory,
 } from "@/dashboard/data/categories";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
+import { parseTemplate } from "@/lib/specifications";
 import { categoryIconOptions } from "@/dashboard/components/categories/category-icons";
 import {
   inspectProductImageSource,
@@ -178,6 +179,12 @@ export default function CategoryForm({
   };
 
   const submit = async () => {
+    const sections = parseTemplate(draft.specTemplate).sections;
+    const allKeys = sections.flatMap((section) => section.fields.map((field) => field.key));
+    if (allKeys.length !== new Set(allKeys).size || sections.length !== (draft.specTemplate?.sections.length ?? 0)) {
+      toast.error("Check specification sections for duplicate keys or empty fields.");
+      return;
+    }
     const name = draft.name.trim();
     if (!name) {
       toast.error("Category name is required.");
@@ -384,6 +391,39 @@ export default function CategoryForm({
                 className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-[12px] leading-5 text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
               />
             </label>
+          </section>
+
+          <section>
+            <div className="mb-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">
+              Specification template
+            </div>
+            <p className="mb-3 text-xs text-slate-500">Fields appear automatically when a product uses this category. Keys stay stable when you rename labels.</p>
+            {(draft.specTemplate?.sections ?? []).map((section, sectionIndex) => (
+              <div key={sectionIndex} className="mb-3 rounded-xl border border-slate-200 p-3">
+                <div className="mb-2 flex gap-2">
+                  <input aria-label="Section title" value={section.title}
+                    onChange={(event) => patch({ specTemplate: { sections: draft.specTemplate!.sections.map((item, index) => index === sectionIndex ? { ...item, title: event.target.value } : item) } })}
+                    className="min-w-0 flex-1 rounded-lg border p-2 text-xs" placeholder="Section title" />
+                  <button type="button" onClick={() => patch({ specTemplate: { sections: draft.specTemplate!.sections.filter((_, index) => index !== sectionIndex) } })} className="text-xs text-rose-600">Remove</button>
+                </div>
+                {section.fields.map((field, fieldIndex) => (
+                  <div key={fieldIndex} className="mb-2 grid grid-cols-[1fr_1fr_80px_auto] gap-1">
+                    {(["key", "label", "unit"] as const).map((property) => (
+                      <input key={property} aria-label={property} placeholder={property} value={field[property] ?? ""}
+                        onChange={(event) => patch({ specTemplate: { sections: draft.specTemplate!.sections.map((item, index) =>
+                          index === sectionIndex ? { ...item, fields: item.fields.map((entry, fieldIdx) =>
+                            fieldIdx === fieldIndex ? { ...entry, [property]: event.target.value } : entry) } : item) } })}
+                        className="min-w-0 rounded-lg border p-2 text-xs" />
+                    ))}
+                    <button type="button" aria-label="Remove field" onClick={() => patch({ specTemplate: { sections: draft.specTemplate!.sections.map((item, index) =>
+                      index === sectionIndex ? { ...item, fields: item.fields.filter((_, idx) => idx !== fieldIndex) } : item) } })} className="text-rose-600">×</button>
+                  </div>
+                ))}
+                <button type="button" className="text-xs text-indigo-600" onClick={() => patch({ specTemplate: { sections: draft.specTemplate!.sections.map((item, index) =>
+                  index === sectionIndex ? { ...item, fields: [...item.fields, { key: "", label: "" }] } : item) } })}>+ Add field</button>
+              </div>
+            ))}
+            <button type="button" className="text-xs font-semibold text-indigo-600" onClick={() => patch({ specTemplate: { sections: [...(draft.specTemplate?.sections ?? []), { title: "Details", fields: [{ key: "", label: "" }] }] } })}>+ Add section</button>
           </section>
 
           <section>

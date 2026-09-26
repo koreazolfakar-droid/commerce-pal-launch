@@ -213,6 +213,7 @@ export function productSearchScore(product: StoreProduct, term: string) {
     { value: node.productType ?? "", weight: 95 },
     ...(node.tags ?? []).map((value) => ({ value, weight: 80 })),
     ...variants.map((value) => ({ value, weight: 115 })),
+    ...Object.values(node.specifications?.values ?? {}).map((value) => ({ value, weight: 65 })),
     ...(node.collections?.edges ?? []).flatMap((edge) => [
       { value: edge.node.title, weight: 55 },
       { value: edge.node.handle, weight: 45 },

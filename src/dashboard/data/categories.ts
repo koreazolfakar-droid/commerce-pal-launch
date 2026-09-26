@@ -1,6 +1,7 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
+import { parseTemplate, type SpecTemplate } from "@/lib/specifications";
 import {
   getDashboardRole,
   listDashboardProducts,
@@ -58,6 +59,7 @@ export type CatalogCategory = {
   seoDescription?: string;
   createdAt?: string;
   updatedAt?: string;
+  specTemplate?: SpecTemplate;
 };
 
 function throwIfError(error: { message: string } | null, label: string) {
@@ -85,6 +87,7 @@ function mapCategory(row: CategoryRow): CatalogCategory {
     ...(row.seo_description ? { seoDescription: row.seo_description } : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    specTemplate: parseTemplate(row.spec_template),
   };
 }
 
@@ -192,6 +195,7 @@ export async function createDashboardCategory(category: CatalogCategory) {
       is_featured: category.featured,
       seo_title: category.seoTitle?.trim() || null,
       seo_description: category.seoDescription?.trim() || null,
+      spec_template: (category.specTemplate ?? { sections: [] }) as unknown as Json,
     })
     .select("*")
     .single();
@@ -228,6 +232,11 @@ export async function updateDashboardCategory(category: CatalogCategory) {
     p_seo_description: category.seoDescription?.trim() || "",
   }));
   throwIfError(error, "Updating category failed");
+
+  const { error: templateError } = await supabase.from("store_categories")
+    .update({ spec_template: (category.specTemplate ?? { sections: [] }) as unknown as Json })
+    .eq("id", category.id);
+  throwIfError(templateError, "Updating specification template failed");
 
   const { data, error: readError } = await supabase
     .from("store_categories")

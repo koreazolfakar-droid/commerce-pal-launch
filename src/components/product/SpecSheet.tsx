@@ -8,19 +8,18 @@ import type { SpecGroup } from "@/lib/productContent";
 export function SpecSheet({ groups }: { groups: SpecGroup[] }) {
   if (groups.length === 0) return null;
   return (
-    <div className="gap-4 space-y-4 md:columns-2 md:space-y-0 [&>section]:mb-4 [&>section]:break-inside-avoid">
+    <div className="space-y-2">
       {groups.map((group) => (
-        <section
+        <details
           key={group.title}
-          className="overflow-hidden rounded-lg border bg-card shadow-card"
-          aria-labelledby={`spec-${group.title.replace(/\s+/g, "-").toLowerCase()}`}
+          className="group overflow-hidden rounded-xl border bg-card"
+          open={groups.length === 1 ? true : undefined}
         >
-          <h3
-            id={`spec-${group.title.replace(/\s+/g, "-").toLowerCase()}`}
-            className="border-b bg-surface px-4 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground"
+          <summary
+            className="flex min-h-12 cursor-pointer items-center justify-between px-4 text-sm font-semibold text-foreground marker:hidden"
           >
-            {group.title}
-          </h3>
+            {group.title}<span aria-hidden className="text-muted-foreground group-open:rotate-180">⌄</span>
+          </summary>
           <dl className="divide-y">
             {group.rows.map((row) => (
               <div
@@ -32,7 +31,7 @@ export function SpecSheet({ groups }: { groups: SpecGroup[] }) {
               </div>
             ))}
           </dl>
-        </section>
+        </details>
       ))}
     </div>
   );

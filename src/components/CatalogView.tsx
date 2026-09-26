@@ -24,6 +24,7 @@ export interface FacetGroups {
   categories?: CatalogFacet[];
   brands?: CatalogFacet[];
   collections?: StoreCollection[];
+  specifications?: Array<{ key: string; label: string; values: string[] }>;
 }
 
 type Patch = Partial<ProductFilters>;
@@ -135,6 +136,12 @@ function FilterControls({
         selected={filters.collection}
         onToggle={(slug) => onChange({ collection: toggleValue(filters.collection, slug) })}
       />
+      {(facets.specifications ?? []).map((facet) => (
+        <FacetList key={facet.key} title={facet.label}
+          items={facet.values.map((value) => ({ slug: `${facet.key}=${value}`, label: value }))}
+          selected={filters.spec}
+          onToggle={(token) => onChange({ spec: toggleValue(filters.spec, token) })} />
+      ))}
 
       <div className="border-b pb-5">
         <h3 className="mb-3 text-[11px] font-semibold tracking-[0.02em] text-muted-foreground">
@@ -230,6 +237,16 @@ export function CatalogView({
 }) {
   const { t, direction, language } = useLanguage();
   const activeCount = activeFilterCount(filters);
+  const specFacets = new Map<string, Set<string>>();
+  for (const product of products) for (const [key, value] of Object.entries(product.node.specifications?.values ?? {})) {
+    if (!specFacets.has(key)) specFacets.set(key, new Set());
+    specFacets.get(key)!.add(value);
+  }
+  const derivedFacets: FacetGroups = {
+    ...facets,
+    specifications: [...specFacets].filter(([, values]) => values.size > 1 && values.size <= 20)
+      .slice(0, 8).map(([key, values]) => ({ key, label: key.replace(/_/g, " "), values: [...values].sort() })),
+  };
   const [viewMode, setViewMode] = useProductViewMode("grid", "space-call-catalog-view-mode");
 
   return (
@@ -263,7 +280,7 @@ export function CatalogView({
             </div>
             <FilterControls
               filters={filters}
-              facets={facets}
+              facets={derivedFacets}
               priceMin={priceMin}
               priceMax={priceMax}
               currency={currency}
@@ -325,7 +342,7 @@ export function CatalogView({
                   <div className="mt-6 pb-10">
                     <FilterControls
                       filters={filters}
-                      facets={facets}
+                      facets={derivedFacets}
                       priceMin={priceMin}
                       priceMax={priceMax}
                       currency={currency}
@@ -393,6 +410,11 @@ export function CatalogView({
                     facets.collections?.find((collection) => collection.handle === handle)?.title ??
                     handle,
                   clear: () => onChange({ collection: toggleValue(filters.collection, handle) }),
+                })),
+                ...(filters.spec ?? []).map((token) => ({
+                  key: `spec-${token}`,
+                  label: token.replace("=", ": ").replace(/_/g, " "),
+                  clear: () => onChange({ spec: toggleValue(filters.spec, token) }),
                 })),
                 ...(filters.availability
                   ? [

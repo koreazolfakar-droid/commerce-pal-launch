@@ -19,6 +19,7 @@ export interface ProductFilters {
   category?: string[] | undefined;
   brand?: string[] | undefined;
   collection?: string[] | undefined;
+  spec?: string[] | undefined;
   min?: number | undefined;
   max?: number | undefined;
   availability?: "in-stock" | "on-sale" | undefined;
@@ -70,6 +71,7 @@ export function parseProductSearch(search: Record<string, unknown>): ProductFilt
     category: toStringArray(search["category"]),
     brand: toStringArray(search["brand"]),
     collection: toStringArray(search["collection"]),
+    spec: toStringArray(search["spec"])?.filter((token) => /^[a-z][a-z0-9_]{0,39}=.{1,80}$/.test(token)),
     min: min !== undefined && max !== undefined ? Math.min(min, max) : min,
     max: min !== undefined && max !== undefined ? Math.max(min, max) : max,
     availability: ["in-stock", "on-sale"].includes(availability)
@@ -110,6 +112,15 @@ export function applyFilters(
       const handles = (product.node.collections?.edges ?? []).map((edge) => edge.node.handle);
       return filters.collection!.some((handle) => handles.includes(handle));
     });
+  }
+
+  if (filters.spec?.length) {
+    result = result.filter((product) => filters.spec!.every((token) => {
+      const delimiter = token.indexOf("=");
+      const key = token.slice(0, delimiter);
+      const value = token.slice(delimiter + 1);
+      return product.node.specifications?.values[key]?.toLocaleLowerCase() === value.toLocaleLowerCase();
+    }));
   }
 
   if (filters.min !== undefined)
@@ -172,6 +183,7 @@ export function activeFilterCount(filters: ProductFilters) {
     (filters.category?.length ?? 0) +
     (filters.brand?.length ?? 0) +
     (filters.collection?.length ?? 0) +
+    (filters.spec?.length ?? 0) +
     (filters.min !== undefined ? 1 : 0) +
     (filters.max !== undefined ? 1 : 0) +
     (filters.availability ? 1 : 0)
