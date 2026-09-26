@@ -42,6 +42,7 @@ declare
   v_reference text;
   v_idempotency_key text;
   v_payload_fingerprint text;
+  v_legacy_payload_fingerprint text;
   v_location jsonb;
   v_expected_subtotal numeric(12,2);
   v_expected_delivery_fee numeric(12,2);
@@ -71,12 +72,25 @@ begin
     raise exception 'idempotency_key_required';
   end if;
 
-  v_payload_fingerprint := pg_catalog.md5(
+  v_legacy_payload_fingerprint := pg_catalog.md5(
     pg_catalog.jsonb_build_object(
       'customer', payload -> 'customer',
       'items', payload -> 'items',
       'payment_method', payload -> 'payment_method',
       'notes', payload -> 'notes'
+    )::text
+  );
+
+  v_payload_fingerprint := pg_catalog.md5(
+    pg_catalog.jsonb_build_object(
+      'customer', payload -> 'customer',
+      'items', payload -> 'items',
+      'payment_method', payload -> 'payment_method',
+      'notes', payload -> 'notes',
+      'reference', payload -> 'reference',
+      'delivery_location', payload -> 'delivery_location',
+      'expected_subtotal', payload -> 'expected_subtotal',
+      'expected_delivery_fee', payload -> 'expected_delivery_fee'
     )::text
   );
 
@@ -94,7 +108,21 @@ begin
 
   if found then
     if v_existing.idempotency_fingerprint is distinct from v_payload_fingerprint then
-      raise exception 'idempotency_key_conflict';
+      -- Orders created before this migration used the narrower legacy
+      -- fingerprint. Permit replay only when every newly-covered persisted
+      -- field still matches the existing order.
+      if v_existing.idempotency_fingerprint is distinct from v_legacy_payload_fingerprint
+        or coalesce(v_existing.customer_reference, '') is distinct from
+          coalesce(pg_catalog.left(pg_catalog.btrim(coalesce(payload ->> 'reference', '')), 120), '')
+        or coalesce(v_existing.delivery_location, 'null'::jsonb) is distinct from
+          coalesce(payload -> 'delivery_location', 'null'::jsonb)
+        or v_existing.subtotal is distinct from
+          coalesce((payload ->> 'expected_subtotal')::numeric(12,2), -1)
+        or v_existing.shipping_total is distinct from
+          coalesce((payload ->> 'expected_delivery_fee')::numeric(12,2), -1)
+      then
+        raise exception 'idempotency_key_conflict';
+      end if;
     end if;
 
     return pg_catalog.jsonb_build_object(
