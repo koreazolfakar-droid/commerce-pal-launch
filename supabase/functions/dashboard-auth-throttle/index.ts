@@ -12,6 +12,7 @@ const HARD_BLOCK_MS = 60 * 60 * 1000;
 const allowedOrigins = new Set([
   "https://spacecallapp.store",
   "https://www.spacecallapp.store",
+  "https://app.spacecallapp.store",
   "http://localhost:3000",
   "http://localhost:5173",
 ]);
