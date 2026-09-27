@@ -45,7 +45,7 @@ for (const [name, source] of [
 
 test("edge JWT modes are explicit so deploy defaults cannot break browser flows", () => {
   assert.match(config, /\[functions\.public-cms\][\s\S]*?verify_jwt\s*=\s*false/);
-  assert.match(config, /\[functions\.create-order\][\s\S]*?verify_jwt\s*=\s*false/);
+  assert.match(config, /\[functions\.create-order\][\s\S]*?verify_jwt\s*=\s*true/);
   assert.match(config, /\[functions\.customer-orders\][\s\S]*?verify_jwt\s*=\s*true/);
   assert.match(config, /\[functions\.dashboard-auth-throttle\][\s\S]*?verify_jwt\s*=\s*false/);
   assert.match(config, /\[functions\.dashboard-passkey-stepup\][\s\S]*?verify_jwt\s*=\s*true/);
