@@ -39,6 +39,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import { useHydrated } from "@/hooks/useHydrated";
 import { collectionsQueryOptions, navigationCatalogQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
@@ -47,7 +48,9 @@ import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
 const LazySearchOverlay = lazy(() =>
-  import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({ default: SearchOverlay })),
+  importWithChunkRecovery("search-overlay", () =>
+    import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({ default: SearchOverlay })),
+  ),
 );
 
 const UTILITY = [

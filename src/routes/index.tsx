@@ -10,6 +10,7 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, cmsText, EMPTY_CMS, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import {
   newestQueryOptions,
   homepageCatalogQueryOptions,
@@ -32,29 +33,43 @@ import {
 } from "@/lib/seo";
 
 const LazyDealSpotlight = lazy(() =>
-  import("@/components/DealSpotlight").then((module) => ({ default: module.DealSpotlight })),
+  importWithChunkRecovery("deal-spotlight", () =>
+    import("@/components/DealSpotlight").then((module) => ({ default: module.DealSpotlight })),
+  ),
 );
 const LazyProductRail = lazy(() =>
-  import("@/components/ProductRail").then((module) => ({ default: module.ProductRail })),
+  importWithChunkRecovery("product-rail", () =>
+    import("@/components/ProductRail").then((module) => ({ default: module.ProductRail })),
+  ),
 );
 const LazyRecentlyViewed = lazy(() =>
-  import("@/components/HomeSections").then((module) => ({ default: module.RecentlyViewed })),
+  importWithChunkRecovery("recently-viewed", () =>
+    import("@/components/HomeSections").then((module) => ({ default: module.RecentlyViewed })),
+  ),
 );
 const LazyTopBrands = lazy(() =>
-  import("@/components/TopBrands").then((module) => ({ default: module.TopBrands })),
+  importWithChunkRecovery("top-brands", () =>
+    import("@/components/TopBrands").then((module) => ({ default: module.TopBrands })),
+  ),
 );
 const LazyWhyShop = lazy(() =>
-  import("@/components/WhyShop").then((module) => ({ default: module.WhyShop })),
+  importWithChunkRecovery("why-shop", () =>
+    import("@/components/WhyShop").then((module) => ({ default: module.WhyShop })),
+  ),
 );
 const LazyBundleSection = lazy(() =>
-  import("@/components/BrandShowcaseSections").then((module) => ({
-    default: module.BundleSection,
-  })),
+  importWithChunkRecovery("bundle-section", () =>
+    import("@/components/BrandShowcaseSections").then((module) => ({
+      default: module.BundleSection,
+    })),
+  ),
 );
 const LazyBrandShowcase = lazy(() =>
-  import("@/components/BrandShowcaseSections").then((module) => ({
-    default: module.BrandShowcase,
-  })),
+  importWithChunkRecovery("brand-showcase", () =>
+    import("@/components/BrandShowcaseSections").then((module) => ({
+      default: module.BrandShowcase,
+    })),
+  ),
 );
 
 const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";

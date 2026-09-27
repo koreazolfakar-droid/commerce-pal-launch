@@ -1,7 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
+
 const LazyToaster = lazy(() =>
-  import("@/components/ui/sonner").then(({ Toaster }) => ({ default: Toaster })),
+  importWithChunkRecovery("toaster", () =>
+    import("@/components/ui/sonner").then(({ Toaster }) => ({ default: Toaster })),
+  ),
 );
 
 const TOASTER_START_DELAY_MS = 5500;

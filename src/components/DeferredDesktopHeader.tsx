@@ -1,7 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
+
 const LazySiteHeader = lazy(() =>
-  import("@/components/SiteHeader").then(({ SiteHeader }) => ({ default: SiteHeader })),
+  importWithChunkRecovery("site-header", () =>
+    import("@/components/SiteHeader").then(({ SiteHeader }) => ({ default: SiteHeader })),
+  ),
 );
 
 function DesktopHeaderSpace() {
