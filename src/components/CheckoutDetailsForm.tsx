@@ -361,6 +361,11 @@ export function CheckoutDetailsForm({
   }, []);
 
   useEffect(() => {
+    if (!user) return;
+    setError((current) => (current === copy.signInRequired ? "" : current));
+  }, [copy.signInRequired, user]);
+
+  useEffect(() => {
     if (!selectedAddress) return;
 
     setDetails((current) => ({
