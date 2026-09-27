@@ -108,6 +108,7 @@ function BrandPage() {
     (product: StoreProduct) => catalog.brandOf.get(product.node.handle)?.slug === slug,
   );
   const products = applyFilters(inBrand, catalog, filters);
+  const facetProducts = applyFilters(inBrand, catalog, { ...filters, spec: undefined });
 
   const categories = catalog.categories.filter((category: CatalogIndex["categories"][number]) =>
     inBrand.some((product: StoreProduct) =>
@@ -157,6 +158,7 @@ function BrandPage() {
         title={`${brandLabel} products`}
         description={`${inBrand.length} product${inBrand.length === 1 ? "" : "s"} from ${brandLabel} available in the live catalogue.`}
         products={products}
+        facetProducts={facetProducts}
         total={inBrand.length}
         filters={filters}
         facets={{ categories }}

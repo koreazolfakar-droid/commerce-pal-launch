@@ -52,6 +52,7 @@ function ShopPage() {
   const navigate = useNavigate({ from: Route.fullPath });
 
   const products = applyFilters(catalog.products, catalog, filters);
+  const facetProducts = applyFilters(catalog.products, catalog, { ...filters, spec: undefined });
 
   const update = (patch: Partial<ProductFilters>) =>
     navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) });
@@ -62,6 +63,7 @@ function ShopPage() {
         title="Shop all products"
         description="Browse Space Call phones, tablets, audio, wearables and accessories available for shoppers in Lebanon."
         products={products}
+        facetProducts={facetProducts}
         total={catalog.products.length}
         filters={filters}
         facets={{

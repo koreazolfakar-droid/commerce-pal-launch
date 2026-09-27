@@ -1,6 +1,7 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
+import { parseTemplate, type SpecTemplate } from "@/lib/specifications";
 import {
   getDashboardRole,
   listDashboardProducts,
@@ -58,6 +59,7 @@ export type CatalogCategory = {
   seoDescription?: string;
   createdAt?: string;
   updatedAt?: string;
+  specTemplate?: SpecTemplate;
 };
 
 function throwIfError(error: { message: string } | null, label: string) {
@@ -85,6 +87,7 @@ function mapCategory(row: CategoryRow): CatalogCategory {
     ...(row.seo_description ? { seoDescription: row.seo_description } : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    specTemplate: parseTemplate(row.spec_template),
   };
 }
 
@@ -192,6 +195,7 @@ export async function createDashboardCategory(category: CatalogCategory) {
       is_featured: category.featured,
       seo_title: category.seoTitle?.trim() || null,
       seo_description: category.seoDescription?.trim() || null,
+      spec_template: parseTemplate(category.specTemplate) as unknown as Json,
     })
     .select("*")
     .single();
@@ -214,19 +218,23 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   const previousImageUrl = existing?.image_url ?? null;
   const nextImageUrl = category.image?.trim() || "";
 
-  const { error } = await supabase.rpc("update_store_category", rpcArgs({
-    p_category_id: category.id,
-    p_name: category.name.trim(),
-    p_slug: normalizeCategorySlug(category.slug || category.name),
-    p_description: category.description.trim(),
-    p_image_url: category.image?.trim() || "",
-    p_icon: category.icon?.trim() || "",
-    p_sort_order: Math.max(0, Math.trunc(category.order)),
-    p_is_active: category.active,
-    p_is_featured: category.featured,
-    p_seo_title: category.seoTitle?.trim() || "",
-    p_seo_description: category.seoDescription?.trim() || "",
-  }));
+  const { error } = await supabase.rpc(
+    "update_store_category_with_spec_template",
+    rpcArgs({
+      p_category_id: category.id,
+      p_name: category.name.trim(),
+      p_slug: normalizeCategorySlug(category.slug || category.name),
+      p_description: category.description.trim(),
+      p_image_url: category.image?.trim() || "",
+      p_icon: category.icon?.trim() || "",
+      p_sort_order: Math.max(0, Math.trunc(category.order)),
+      p_is_active: category.active,
+      p_is_featured: category.featured,
+      p_seo_title: category.seoTitle?.trim() || "",
+      p_seo_description: category.seoDescription?.trim() || "",
+      p_spec_template: parseTemplate(category.specTemplate) as unknown as Json,
+    }),
+  );
   throwIfError(error, "Updating category failed");
 
   const { data, error: readError } = await supabase

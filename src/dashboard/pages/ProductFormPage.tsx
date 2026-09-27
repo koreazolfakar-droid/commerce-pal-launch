@@ -15,6 +15,13 @@ import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 import ProductVariantManager from "@/dashboard/components/products/ProductVariantManager";
+import ProductSpecificationsEditor from "@/dashboard/components/products/ProductSpecificationsEditor";
+import {
+  EMPTY_SPECS,
+  EMPTY_TEMPLATE,
+  validateSpecifications,
+  type ProductSpecifications,
+} from "@/lib/specifications";
 import {
   getDashboardProduct,
   getDashboardRole,
@@ -85,6 +92,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [confirmAction, setConfirmAction] = useState<"archive" | "delete" | null>(null);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState<ProductDraft>(EMPTY);
+  const [specifications, setSpecifications] = useState<ProductSpecifications>(EMPTY_SPECS);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,37 +105,41 @@ export default function ProductFormPage({ id }: { id?: string }) {
       id ? loadDashboardProductCollectionIds(id) : Promise.resolve([]),
       getDashboardRole(),
     ])
-      .then(([product, brandRows, categoryRows, collectionRows, productCollectionIds, dashboardRole]) => {
-        if (cancelled) return;
-        setExisting(product);
-        setBrands(brandRows);
-        setCategories(categoryRows);
-        setCollections(collectionRows);
-        setCollectionIds(productCollectionIds);
-        setPersistedCollectionIds(productCollectionIds);
-        setRole(dashboardRole);
-        setVariantCount(product?.variantCount ?? 0);
-        setSaved(false);
-        if (product) {
-          setForm({
-            title: product.name,
-            description: product.description,
-            brandId: product.brandId ?? "",
-            categoryId: product.categoryId ?? "",
-            status: product.status,
-            price: String(product.price),
-            compareAt: product.compareAt == null ? "" : String(product.compareAt),
-            sku: product.sku,
-            barcode: product.barcode,
-            stock: String(product.stock),
-            imageUrl: product.image,
-            seoTitle: product.seoTitle,
-            seoDescription: product.seoDescription,
-          });
-        } else {
-          setForm(EMPTY);
-        }
-      })
+      .then(
+        ([product, brandRows, categoryRows, collectionRows, productCollectionIds, dashboardRole]) => {
+          if (cancelled) return;
+          setExisting(product);
+          setBrands(brandRows);
+          setCategories(categoryRows);
+          setCollections(collectionRows);
+          setCollectionIds(productCollectionIds);
+          setPersistedCollectionIds(productCollectionIds);
+          setRole(dashboardRole);
+          setVariantCount(product?.variantCount ?? 0);
+          setSaved(false);
+          if (product) {
+            setSpecifications(product.specifications);
+            setForm({
+              title: product.name,
+              description: product.description,
+              brandId: product.brandId ?? "",
+              categoryId: product.categoryId ?? "",
+              status: product.status,
+              price: String(product.price),
+              compareAt: product.compareAt == null ? "" : String(product.compareAt),
+              sku: product.sku,
+              barcode: product.barcode,
+              stock: String(product.stock),
+              imageUrl: product.image,
+              seoTitle: product.seoTitle,
+              seoDescription: product.seoDescription,
+            });
+          } else {
+            setForm(EMPTY);
+            setSpecifications(EMPTY_SPECS);
+          }
+        },
+      )
       .catch((cause) => {
         toast.error(cause instanceof Error ? cause.message : "Unable to load product.");
       })
@@ -212,6 +224,12 @@ export default function ProductFormPage({ id }: { id?: string }) {
   }, []);
 
   const handleSave = async () => {
+    const template = categories.find((category) => category.id === form.categoryId)?.specTemplate ?? EMPTY_TEMPLATE;
+    const specErrors = validateSpecifications(specifications, template);
+    if (specErrors.length) {
+      toast.error(specErrors[0]);
+      return;
+    }
     const validation = validateProductDraft({
       title: form.title,
       price: form.price,
@@ -265,6 +283,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         seoTitle: form.seoTitle,
         seoDescription: form.seoDescription,
         collectionId: null,
+        specifications,
       });
       if (collectionsChanged) {
         await setDashboardProductCollections(savedProduct.id, nextCollectionIds);
@@ -293,6 +312,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 image: form.imageUrl.trim(),
                 seoTitle: form.seoTitle.trim(),
                 seoDescription: form.seoDescription.trim(),
+                specifications,
               }
             : current,
         );
@@ -549,14 +569,70 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   <option value="">No brand</option>
                   {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}{brand.active ? "" : " (Hidden)"}</option>)}
                 </SelectField>
-                <SelectField label="Category" value={form.categoryId} onChange={(value) => update("categoryId", value)}>
+                <SelectField
+                  label="Category"
+                  value={form.categoryId}
+                  onChange={(value) => {
+                    if (value === form.categoryId) return;
+                    if (
+                      Object.keys(specifications.values).length &&
+                      !window.confirm(
+                        "Changing category will clear specifications that do not belong to the new template. Continue?",
+                      )
+                    ) {
+                      return;
+                    }
+                    const keys = new Set(
+                      categories
+                        .find((category) => category.id === value)
+                        ?.specTemplate.sections.flatMap((section) =>
+                          section.fields.map((field) => field.key),
+                        ) ?? [],
+                    );
+                    const values = Object.fromEntries(
+                      Object.entries(specifications.values).filter(([key]) => keys.has(key)),
+                    );
+                    setSpecifications({
+                      ...specifications,
+                      values,
+                      keySpecs: specifications.keySpecs.filter((key) => Boolean(values[key])),
+                    });
+                    update("categoryId", value);
+                  }}
+                >
                   <option value="">No category</option>
-                  {categories.map((category) => <option key={category.id} value={category.id}>{category.name}{category.active ? "" : " (Hidden)"}</option>)}
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                      {category.active ? "" : " (Hidden)"}
+                    </option>
+                  ))}
                 </SelectField>
                 <SelectField label="Status" value={form.status} onChange={(value) => update("status", value as ProductStatus)}>
                   <option>Active</option><option>Draft</option><option>Archived</option>
                 </SelectField>
               </div>
+            </div>
+          </Panel>
+
+          <Panel title="Specifications" subtitle="Category fields · key highlights · AI review">
+            <div className="p-5">
+              <ProductSpecificationsEditor
+                key={form.categoryId}
+                template={
+                  categories.find((category) => category.id === form.categoryId)?.specTemplate ??
+                  EMPTY_TEMPLATE
+                }
+                value={specifications}
+                onChange={(next) => {
+                  setSaved(false);
+                  setSpecifications(next);
+                }}
+                title={form.title}
+                description={form.description}
+                brand={brands.find((brand) => brand.id === form.brandId)?.name ?? ""}
+                categoryId={form.categoryId}
+              />
             </div>
           </Panel>
 

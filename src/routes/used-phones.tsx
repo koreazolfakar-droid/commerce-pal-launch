@@ -47,6 +47,7 @@ function UsedPhonesPage() {
   const { t, language } = useLanguage();
   const used = usedPhoneProducts(catalog.products);
   const products = applyFilters(used, catalog, filters);
+  const facetProducts = applyFilters(used, catalog, { ...filters, spec: undefined });
   const heroProduct = used[0];
 
   return (
@@ -55,6 +56,7 @@ function UsedPhonesPage() {
         title={t("usedPhonesTitle")}
         description={`${used.length} ${used.length === 1 ? t("product") : t("products")} • ${t("usedPhonesDescription")}`}
         products={products}
+        facetProducts={facetProducts}
         total={used.length}
         filters={filters}
         facets={{ brands: catalog.brands, collections: displayCollections(collections ?? []) }}

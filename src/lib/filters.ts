@@ -19,6 +19,7 @@ export interface ProductFilters {
   category?: string[] | undefined;
   brand?: string[] | undefined;
   collection?: string[] | undefined;
+  spec?: string[] | undefined;
   min?: number | undefined;
   max?: number | undefined;
   availability?: "in-stock" | "on-sale" | undefined;
@@ -39,6 +40,7 @@ function toStringArray(value: unknown): string[] | undefined {
     ];
     return list.length > 0 ? list : undefined;
   }
+
   if (typeof value === "string" && value.length > 0) {
     const list = [
       ...new Set(
@@ -50,13 +52,30 @@ function toStringArray(value: unknown): string[] | undefined {
     ];
     return list.length > 0 ? list : undefined;
   }
+
   return undefined;
 }
 
 function toNumber(value: unknown): number | undefined {
-  if (typeof value !== "number" && (typeof value !== "string" || !value.trim())) return undefined;
+  if (typeof value !== "number" && (typeof value !== "string" || !value.trim())) {
+    return undefined;
+  }
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+function specificationSelections(tokens: string[]) {
+  const grouped = new Map<string, string[]>();
+  for (const token of tokens) {
+    const delimiter = token.indexOf("=");
+    if (delimiter <= 0) continue;
+    const key = token.slice(0, delimiter);
+    const value = token.slice(delimiter + 1);
+    const values = grouped.get(key) ?? [];
+    values.push(value);
+    grouped.set(key, values);
+  }
+  return grouped;
 }
 
 /** Validates the filter/sort search params so they can live in the URL. */
@@ -65,11 +84,15 @@ export function parseProductSearch(search: Record<string, unknown>): ProductFilt
   const sort = String(search["sort"] ?? "");
   const min = toNumber(search["min"]);
   const max = toNumber(search["max"]);
+
   return {
     q: typeof search["q"] === "string" && search["q"].trim() ? String(search["q"]) : undefined,
     category: toStringArray(search["category"]),
     brand: toStringArray(search["brand"]),
     collection: toStringArray(search["collection"]),
+    spec: toStringArray(search["spec"])?.filter((token) =>
+      /^[a-z][a-z0-9_]{0,39}=.{1,240}$/.test(token),
+    ),
     min: min !== undefined && max !== undefined ? Math.min(min, max) : min,
     max: min !== undefined && max !== undefined ? Math.max(min, max) : max,
     availability: ["in-stock", "on-sale"].includes(availability)
@@ -112,16 +135,33 @@ export function applyFilters(
     });
   }
 
-  if (filters.min !== undefined)
-    result = result.filter((product) => productPrice(product) >= filters.min!);
-  if (filters.max !== undefined)
-    result = result.filter((product) => productPrice(product) <= filters.max!);
+  if (filters.spec?.length) {
+    const selections = specificationSelections(filters.spec);
+    result = result.filter((product) =>
+      [...selections].every(([key, values]) => {
+        const productValue = product.node.specifications?.values[key]?.toLocaleLowerCase();
+        return Boolean(
+          productValue &&
+            values.some((value) => productValue === value.toLocaleLowerCase()),
+        );
+      }),
+    );
+  }
 
-  if (filters.availability === "in-stock") result = result.filter(productInStock);
+  if (filters.min !== undefined) {
+    result = result.filter((product) => productPrice(product) >= filters.min!);
+  }
+
+  if (filters.max !== undefined) {
+    result = result.filter((product) => productPrice(product) <= filters.max!);
+  }
+
+  if (filters.availability === "in-stock") {
+    result = result.filter(productInStock);
+  }
+
   if (filters.availability === "on-sale") {
-    result = result.filter((product) => {
-      return productDiscountPercent(product) !== null;
-    });
+    result = result.filter((product) => productDiscountPercent(product) !== null);
   }
 
   const sorted = [...result];
@@ -172,6 +212,7 @@ export function activeFilterCount(filters: ProductFilters) {
     (filters.category?.length ?? 0) +
     (filters.brand?.length ?? 0) +
     (filters.collection?.length ?? 0) +
+    (filters.spec?.length ?? 0) +
     (filters.min !== undefined ? 1 : 0) +
     (filters.max !== undefined ? 1 : 0) +
     (filters.availability ? 1 : 0)

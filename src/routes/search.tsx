@@ -47,6 +47,11 @@ function SearchPage() {
   const { data: nativeSearch } = useQuery(storefrontSearchQueryOptions(filters.q ?? ""));
   const sourceProducts = filters.q?.trim() ? (nativeSearch?.products ?? []) : catalog.products;
   const products = applyFilters(sourceProducts, catalog, { ...filters, q: undefined });
+  const facetProducts = applyFilters(sourceProducts, catalog, {
+    ...filters,
+    q: undefined,
+    spec: undefined,
+  });
 
   return (
     <StoreLayout>
@@ -54,6 +59,7 @@ function SearchPage() {
         title={filters.q ? `Results for “${filters.q}”` : "Search products"}
         description={`${products.length} matching product${products.length === 1 ? "" : "s"} from the live Space Call catalogue.`}
         products={products}
+        facetProducts={facetProducts}
         total={catalog.products.length}
         filters={filters}
         facets={{ categories: catalog.categories, brands: catalog.brands }}

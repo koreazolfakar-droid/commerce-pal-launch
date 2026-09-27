@@ -172,6 +172,7 @@ function CategoryPage() {
     ? productsInManagedCategory(catalog, loaderData.managedCategoryName)
     : productsInCategory(catalog, slug);
   const products = applyFilters(inCategory, catalog, filters);
+  const facetProducts = applyFilters(inCategory, catalog, { ...filters, spec: undefined });
 
   const update = (patch: Partial<ProductFilters>) =>
     navigate({ search: (prev: ProductFilters) => ({ ...prev, ...patch }) });
@@ -186,6 +187,7 @@ function CategoryPage() {
         title={label}
         description={loaderData.description?.trim() || undefined}
         products={products}
+        facetProducts={facetProducts}
         total={inCategory.length}
         filters={filters}
         facets={{
