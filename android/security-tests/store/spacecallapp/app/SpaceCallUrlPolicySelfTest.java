@@ -19,27 +19,27 @@ public final class SpaceCallUrlPolicySelfTest {
 
         expect(
                 "canonicalHttpsPathAndQueryArePreserved",
-                "https://www.spacecallapp.store/shop?q=iphone#top",
+                "https://app.spacecallapp.store/shop?q=iphone#top",
                 SpaceCallUrlPolicy.sanitize(
-                        "https://www.spacecallapp.store/shop?q=iphone#top"));
+                        "https://app.spacecallapp.store/shop?q=iphone#top"));
 
         expect(
                 "encodedComponentsArePreserved",
-                "https://www.spacecallapp.store/search/a%20b?q=a%20b%26c#x%20y",
+                "https://app.spacecallapp.store/search/a%20b?q=a%20b%26c#x%20y",
                 SpaceCallUrlPolicy.sanitize(
-                        "https://spacecallapp.store/search/a%20b?q=a%20b%26c#x%20y"));
+                        "https://app.spacecallapp.store/search/a%20b?q=a%20b%26c#x%20y"));
 
         expect(
                 "httpIsUpgradedToHttps",
-                "https://www.spacecallapp.store/my-orders?id=123",
+                "https://app.spacecallapp.store/my-orders?id=123",
                 SpaceCallUrlPolicy.sanitize(
-                        "http://www.spacecallapp.store/my-orders?id=123"));
+                        "http://app.spacecallapp.store/my-orders?id=123"));
 
         expect(
-                "bareDomainIsCanonicalizedToWww",
-                "https://www.spacecallapp.store/product/42",
+                "publicWebsiteIsRejected",
+                SpaceCallUrlPolicy.CANONICAL_URL,
                 SpaceCallUrlPolicy.sanitize(
-                        "https://spacecallapp.store/product/42"));
+                        "https://www.spacecallapp.store/product/42"));
 
         expect(
                 "foreignHostIsRejected",
@@ -51,13 +51,13 @@ public final class SpaceCallUrlPolicySelfTest {
                 "lookalikeSubdomainIsRejected",
                 SpaceCallUrlPolicy.CANONICAL_URL,
                 SpaceCallUrlPolicy.sanitize(
-                        "https://www.spacecallapp.store.evil.example/shop"));
+                        "https://app.spacecallapp.store.evil.example/shop"));
 
         expect(
                 "userInfoHostSpoofIsRejected",
                 SpaceCallUrlPolicy.CANONICAL_URL,
                 SpaceCallUrlPolicy.sanitize(
-                        "https://www.spacecallapp.store@evil.example/shop"));
+                        "https://app.spacecallapp.store@evil.example/shop"));
 
         expect(
                 "nonWebSchemeIsRejected",
@@ -66,10 +66,10 @@ public final class SpaceCallUrlPolicySelfTest {
                         "javascript:alert(1)"));
 
         expect(
-                "explicitPortIsRemoved",
-                "https://www.spacecallapp.store/shop",
+                "explicitPortIsRejected",
+                SpaceCallUrlPolicy.CANONICAL_URL,
                 SpaceCallUrlPolicy.sanitize(
-                        "https://www.spacecallapp.store:8443/shop"));
+                        "https://app.spacecallapp.store:8443/shop"));
 
         expect(
                 "malformedUrlIsRejected",

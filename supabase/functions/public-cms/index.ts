@@ -1,9 +1,20 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
-function headers(_req: Request) {
+const ALLOWED_ORIGINS = new Set([
+  "https://spacecallapp.store",
+  "https://www.spacecallapp.store",
+  "https://app.spacecallapp.store",
+  "http://localhost:3000",
+  "http://localhost:5173",
+]);
+
+function headers(req: Request) {
+  const origin = req.headers.get("origin")?.trim() || "";
   return {
-    "Access-Control-Allow-Origin": "*",
+    ...(origin && ALLOWED_ORIGINS.has(origin)
+      ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" }
+      : {}),
     "Access-Control-Allow-Headers": "content-type, apikey, authorization",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Content-Type": "application/json; charset=utf-8",
@@ -27,6 +38,13 @@ function serviceKey() {
 }
 
 Deno.serve(async (req: Request) => {
+  const origin = req.headers.get("origin")?.trim() || "";
+  if (origin && !ALLOWED_ORIGINS.has(origin)) {
+    return new Response(JSON.stringify({ error: "origin_not_allowed" }), {
+      status: 403,
+      headers: headers(req),
+    });
+  }
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: headers(req) });
   if (req.method !== "GET") {
     return new Response(JSON.stringify({ error: "method_not_allowed" }), {

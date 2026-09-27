@@ -197,6 +197,17 @@ function RootComponent() {
   usePersistedStoreHydration();
   useCartSync();
 
+  useEffect(() => {
+    if (
+      window.location.origin !== "https://app.spacecallapp.store" ||
+      !("serviceWorker" in navigator)
+    ) return;
+    void navigator.serviceWorker.register("/android-app-sw.js", {
+      scope: "/",
+      type: "module",
+    });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <CustomerAuthProvider>

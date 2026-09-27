@@ -11,10 +11,9 @@ import java.util.Locale;
  * rules can be unit-tested on the JVM.
  */
 final class SpaceCallUrlPolicy {
-    static final String CANONICAL_HOST = "www.spacecallapp.store";
-    static final String ALTERNATE_HOST = "spacecallapp.store";
+    static final String CANONICAL_HOST = "app.spacecallapp.store";
     static final String CANONICAL_URL =
-            "https://www.spacecallapp.store/?source=android-app";
+            "https://app.spacecallapp.store/?source=android-app";
 
     private SpaceCallUrlPolicy() {}
 
@@ -38,7 +37,11 @@ final class SpaceCallUrlPolicy {
             }
 
             String normalizedHost = host.toLowerCase(Locale.ROOT);
-            if (!CANONICAL_HOST.equals(normalizedHost) && !ALTERNATE_HOST.equals(normalizedHost)) {
+            if (!CANONICAL_HOST.equals(normalizedHost)) {
+                return CANONICAL_URL;
+            }
+
+            if (requested.getUserInfo() != null || requested.getPort() != -1) {
                 return CANONICAL_URL;
             }
 

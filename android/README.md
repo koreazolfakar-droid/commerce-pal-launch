@@ -1,7 +1,7 @@
 # Space Call Android
 
 This directory contains the hardened Android Trusted Web Activity (TWA) shell for
-`https://www.spacecallapp.store`.
+`https://app.spacecallapp.store`.
 
 ## Identity
 
@@ -62,7 +62,7 @@ failures so a broken or missing provider cannot crash the app.
 
 The production site must return HTTP 200 with `Content-Type: application/json` at:
 
-`https://www.spacecallapp.store/.well-known/assetlinks.json`
+`https://app.spacecallapp.store/.well-known/assetlinks.json`
 
 No 301/302 redirect is allowed for that path.
 

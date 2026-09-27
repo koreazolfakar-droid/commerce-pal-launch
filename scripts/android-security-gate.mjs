@@ -199,8 +199,8 @@ for (const [variantName, variantManifest] of [
   ["debug", debugManifest],
   ["release", releaseManifest],
 ]) {
-  requireText(variantManifest, 'android:host="www.spacecallapp.store"', `${variantName} App Links must use the canonical www host.`);
-  forbidText(variantManifest, 'android:host="spacecallapp.store"', `${variantName} App Links must not verify the redirecting bare host.`);
+  requireText(variantManifest, 'android:host="app.spacecallapp.store"', `${variantName} App Links must use the isolated app host.`);
+  forbidText(variantManifest, 'android:host="www.spacecallapp.store"', `${variantName} App Links must not claim the public website host.`);
   requireText(variantManifest, 'android:scheme="http"', `${variantName} App Links must accept HTTP for safe HTTPS upgrade.`);
   requireText(variantManifest, 'android:scheme="https"', `${variantName} App Links must accept HTTPS.`);
 }
@@ -209,19 +209,19 @@ requireText(releaseManifest, 'android:autoVerify="true"', "Release builds must v
 
 requireText(
   strings,
-  '<string name="launch_url">https://www.spacecallapp.store/?source=android-app</string>',
+  '<string name="launch_url">https://app.spacecallapp.store/?source=android-app</string>',
   "Launch URL must stay on the canonical HTTPS origin.",
 );
 requireText(
   strings,
-  '"site":"https://www.spacecallapp.store"',
+  '"site":"https://app.spacecallapp.store"',
   "The app-side Digital Asset Link must point to the canonical site.",
 );
 
 requireText(launcher, "SpaceCallUrlPolicy.sanitize(rawUrl)", "Launcher must delegate URL validation to SpaceCallUrlPolicy.");
 requireText(launcher, "protected Uri getUrlForIntent(Intent intent)", "Raw VIEW intents must pass through the URL sanitizer.");
-requireText(urlPolicy, 'CANONICAL_HOST = "www.spacecallapp.store"', "URL policy canonical host guard is missing.");
-requireText(urlPolicy, 'ALTERNATE_HOST = "spacecallapp.store"', "URL policy alternate host normalization is missing.");
+requireText(urlPolicy, 'CANONICAL_HOST = "app.spacecallapp.store"', "URL policy app host guard is missing.");
+forbidText(urlPolicy, "ALTERNATE_HOST", "URL policy must not accept the public website as an app origin.");
 requireText(urlPolicy, '"https".equals(normalizedScheme) && !"http".equals(normalizedScheme)', "URL policy must reject non-web schemes.");
 requireText(urlPolicy, 'new StringBuilder("https://")', "URL policy must force accepted links to HTTPS.");
 forbidText(urlPolicy, ".isBlank()", "URL policy must not use APIs unavailable on minSdk 24.");
@@ -231,6 +231,8 @@ requireText(urlPolicy, "getRawQuery()", "URL policy must preserve raw encoded qu
 requireText(urlPolicy, "getRawFragment()", "URL policy must preserve raw encoded fragment components.");
 requireText(urlPolicy, "canonical.getUserInfo() != null", "URL policy must reject rebuilt user-info.");
 requireText(urlPolicy, "canonical.getPort() != -1", "URL policy must reject rebuilt explicit ports.");
+requireText(urlPolicy, "requested.getUserInfo() != null", "URL policy must reject input user-info.");
+requireText(urlPolicy, "requested.getPort() != -1", "URL policy must reject input custom ports.");
 requireText(launcher, "openSafeBrowserFallback()", "Crash-safe browser fallback is missing.");
 requireText(
   launcher,
@@ -265,7 +267,8 @@ for (const requiredTestCase of [
   "lookalikeSubdomainIsRejected",
   "userInfoHostSpoofIsRejected",
   "nonWebSchemeIsRejected",
-  "explicitPortIsRemoved",
+  "explicitPortIsRejected",
+  "publicWebsiteIsRejected",
   "malformedUrlIsRejected",
   "encodedComponentsArePreserved",
 ]) {
