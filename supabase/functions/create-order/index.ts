@@ -262,6 +262,7 @@ function publicError(message: string | undefined) {
     "insufficient_stock",
     "mixed_currency_order",
     "pricing_changed",
+    "order_account_conflict",
     "invalid_delivery_fee_config",
   ];
   return known.find((code) => message?.includes(code)) ?? "order_failed";
@@ -296,17 +297,18 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  let accountUserId = "";
-  let accountEmail = "";
   const userToken = authenticatedBearerToken(req);
-  if (userToken) {
-    const { data: authData, error: authError } = await db.auth.getUser(userToken);
-    if (authError || !authData.user) {
-      return json(req, 401, { error: "invalid_session" });
-    }
-    accountUserId = authData.user.id;
-    accountEmail = authData.user.email?.trim() || "";
+  if (!userToken) {
+    return json(req, 401, { error: "authentication_required" });
   }
+
+  const { data: authData, error: authError } = await db.auth.getUser(userToken);
+  if (authError || !authData.user) {
+    return json(req, 401, { error: "invalid_session" });
+  }
+
+  const accountUserId = authData.user.id;
+  const accountEmail = authData.user.email?.trim() || "";
 
   const enforceRateLimit = async (key: string, limit: number) => {
     const { data: rateRows, error: rateError } = await db.rpc("consume_edge_rate_limit", {
@@ -364,7 +366,7 @@ Deno.serve(async (req: Request) => {
   const validationError = validatePayload(body);
   if (validationError) return json(req, 400, { error: validationError });
 
-  if (accountEmail && body && typeof body === "object" && !Array.isArray(body)) {
+  if (body && typeof body === "object" && !Array.isArray(body)) {
     const payload = body as Record<string, unknown>;
     const customer =
       payload.customer && typeof payload.customer === "object" && !Array.isArray(payload.customer)
@@ -374,7 +376,7 @@ Deno.serve(async (req: Request) => {
       ...payload,
       customer: {
         ...customer,
-        email: accountEmail,
+        ...(accountEmail ? { email: accountEmail } : {}),
       },
     };
   }
@@ -393,7 +395,10 @@ Deno.serve(async (req: Request) => {
   );
   if (phoneRateLimit) return phoneRateLimit;
 
-  const { data, error } = await db.rpc("create_store_order_internal", { payload: body });
+  const { data, error } = await db.rpc("create_store_order_for_customer_internal", {
+    payload: body,
+    p_customer_user_id: accountUserId,
+  });
   if (error) {
     const code = publicError(error.message);
     console.warn("create-order rejected", code);
@@ -401,7 +406,8 @@ Deno.serve(async (req: Request) => {
       code === "insufficient_stock" ||
       code === "product_or_variant_unavailable" ||
       code === "idempotency_key_conflict" ||
-      code === "pricing_changed"
+      code === "pricing_changed" ||
+      code === "order_account_conflict"
         ? 409
         : code === "invalid_delivery_fee_config"
           ? 503
@@ -417,23 +423,6 @@ Deno.serve(async (req: Request) => {
     isUuid((data as Record<string, unknown>).order_id)
   ) {
     const orderId = (data as Record<string, unknown>).order_id as string;
-
-    if (accountUserId) {
-      const accountPatch: Record<string, unknown> = {
-        customer_user_id: accountUserId,
-      };
-      if (accountEmail) accountPatch.customer_email = accountEmail;
-
-      const { error: accountLinkError } = await db
-        .from("store_orders")
-        .update(accountPatch)
-        .eq("id", orderId)
-        .is("customer_user_id", null);
-
-      if (accountLinkError) {
-        console.error("create-order account link failed", accountLinkError.message);
-      }
-    }
 
     const { data: publicNumberRow, error: publicNumberError } = await db
       .from("store_orders")
