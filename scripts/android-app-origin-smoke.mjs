@@ -21,7 +21,17 @@ assert.match(await robots.text(), /^User-agent: \*\nDisallow: \/$/m);
 
 const dashboard = await fetchOrigin("https://app.spacecallapp.store/dashboard/orders?view=open");
 assert.equal(dashboard.status, 308);
-assert.equal(dashboard.headers.get("location"), "https://www.spacecallapp.store/dashboard/orders?view=open");
+assert.equal(
+  dashboard.headers.get("location"),
+  "https://www.spacecallapp.store/dashboard/orders?view=open",
+);
+
+for (const path of ["/admin", "/admin/orders?view=open"]) {
+  const admin = await fetchOrigin(`https://app.spacecallapp.store${path}`);
+  assert.equal(admin.status, 308);
+  assert.equal(admin.headers.get("location"), `https://www.spacecallapp.store${path}`);
+  assert.equal(admin.headers.get("cache-control"), "no-store");
+}
 
 const assetLinks = await fetchOrigin("https://app.spacecallapp.store/.well-known/assetlinks.json");
 assert.equal(assetLinks.status, 200);

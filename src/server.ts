@@ -251,7 +251,10 @@ function handleAppOriginRequest(request: Request): Response | null {
   if (!isAppOrigin(request)) return null;
   const url = new URL(request.url);
 
-  if (url.pathname === "/dashboard" || url.pathname.startsWith("/dashboard/")) {
+  if (
+    url.pathname === "/dashboard" || url.pathname.startsWith("/dashboard/") ||
+    url.pathname === "/admin" || url.pathname.startsWith("/admin/")
+  ) {
     url.protocol = "https:";
     url.host = new URL(PUBLIC_ORIGIN).host;
     return new Response(null, { status: 308, headers: { location: url.toString(), "cache-control": "no-store" } });
