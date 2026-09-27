@@ -6,6 +6,7 @@ import { renderErrorPage } from "./lib/error-page";
 import { buildContentSecurityPolicy } from "./lib/contentSecurityPolicy";
 import { consumeSharedMutationRateLimit } from "./security/mutation-rate-limit.server";
 import assetLinks from "../public/.well-known/assetlinks.json";
+import { isApprovedMediaUrl, SUPABASE_ORIGIN } from "../public/android-app-cache-policy.js";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -170,6 +171,9 @@ export async function guardIncomingRequest(request: Request, env: unknown): Prom
 // request flow while forcing deployment systems that watch src/** to rebuild.
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    if (isAppOrigin(request) && new URL(request.url).pathname.startsWith("/android-media/")) {
+      return withAppOriginHeaders(request, withSecurityHeaders(await appMediaResponse(request)));
+    }
     const appOriginResponse = handleAppOriginRequest(request);
     if (appOriginResponse) return withSecurityHeaders(withAppOriginHeaders(request, appOriginResponse));
 
@@ -214,6 +218,30 @@ export default {
     }
   },
 };
+
+export async function appMediaResponse(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  if (request.method !== "GET" || request.headers.has("authorization") || request.headers.has("cookie")) {
+    return securityError(403, "Media request not allowed");
+  }
+  const source = new URL(url.pathname.slice("/android-media".length) + url.search, SUPABASE_ORIGIN);
+  if (!isApprovedMediaUrl(source) || url.hash || source.pathname.includes("%")) {
+    return securityError(404, "Media not found");
+  }
+  try {
+    const upstream = await fetch(source, { credentials: "omit", redirect: "error", headers: { Accept: "image/avif,image/webp,image/png,image/jpeg" } });
+    const type = upstream.headers.get("content-type")?.split(";")[0].trim().toLowerCase() ?? "";
+    const length = Number(upstream.headers.get("content-length") ?? 0);
+    if (!upstream.ok || !["image/avif", "image/webp", "image/png", "image/jpeg"].includes(type) || length > 10 * 1024 * 1024) {
+      return securityError(502, "Media source rejected");
+    }
+    const bytes = await upstream.arrayBuffer();
+    if (bytes.byteLength > 10 * 1024 * 1024) return securityError(502, "Media source too large");
+    return new Response(bytes, { headers: { "content-type": type, "cache-control": "public, max-age=300", "x-space-call-cache-safe": "1", "x-content-type-options": "nosniff", "cross-origin-resource-policy": "same-origin" } });
+  } catch {
+    return securityError(502, "Media unavailable");
+  }
+}
 
 function isAppOrigin(request: Request) {
   return new URL(request.url).origin === APP_ORIGIN;

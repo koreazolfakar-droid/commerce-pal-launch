@@ -56,7 +56,7 @@ failures so a broken or missing provider cannot crash the app.
 - release builds are non-debuggable and R8/resource shrinking is enabled
 - release APK/AAB generation is blocked without the persistent release signing key
 - test and release signing identities are kept separate
-- Digital Asset Links are required on the canonical `www` origin with no redirect
+- Digital Asset Links are required on the dedicated `app` origin with no redirect
 
 ## Digital Asset Links
 
@@ -91,6 +91,27 @@ and are intentionally not trusted by the production Digital Asset Links file.
 
 Never commit a production keystore or signing password. The Play/release identity
 must be persistent and must never reuse a disposable debug signing key.
+
+The local release/upload certificate and Google Play App Signing certificate are
+different identities when Play App Signing is enabled. Before creating a key,
+choose its long-term owner, secure backup, and password custody. Create it only
+in a private location with a password prompt (never command-line password
+arguments or shell history), then set the four variables above in a private
+process environment. Do not publish its SHA-256 as a production Digital Asset
+Links fingerprint until it is independently verified to be the certificate
+that signs the APK installed on users' devices. For Play distribution, obtain
+the **App signing key certificate** SHA-256 from Play Console > App integrity;
+the upload-key SHA-256 is not a substitute. Keep `assetlinks.json` as `[]`
+until that fingerprint is available and verified. No release artifact should
+be built from an improvised or disposable key.
+
+Hosted Supabase Auth configuration must retain Site URL
+`https://www.spacecallapp.store` and add the exact Redirect URL
+`https://app.spacecallapp.store/` (also retain the exact www redirect URL).
+The Google provider callback remains
+`https://rtwyankpxtffqqrasyzw.supabase.co/auth/v1/callback`; never replace it
+with the app origin or a wildcard. The app origin is not a Dashboard WebAuthn
+origin.
 
 ## Validation
 

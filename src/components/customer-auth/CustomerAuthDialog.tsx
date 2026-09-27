@@ -219,7 +219,9 @@ export function CustomerAuthDialog() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: window.location.origin === "https://app.spacecallapp.store"
+            ? "https://app.spacecallapp.store/"
+            : "https://www.spacecallapp.store/",
         },
       });
       if (error) throw error;

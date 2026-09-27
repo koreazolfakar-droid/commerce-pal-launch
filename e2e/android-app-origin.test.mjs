@@ -7,16 +7,16 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const request = (url, init = {}) => new Request(url, init);
 
 test("cache policy uses narrow public allowlists", () => {
-  assert.equal(classifyCacheRequest(request(`${APP_ORIGIN}/assets/styles-Cj5kLGkq.css`)), "static");
-  assert.equal(classifyCacheRequest(request(`${APP_ORIGIN}/assets/index-CU_UFWXR.js`)), "static");
+  assert.equal(classifyCacheRequest(request(`${APP_ORIGIN}/assets/styles-Cj5kLGkq.css`)), null);
+  assert.equal(classifyCacheRequest(request(`${APP_ORIGIN}/assets/index-CU_UFWXR.js`)), null);
   assert.equal(classifyCacheRequest(request(`${APP_ORIGIN}/assets/app.js`)), null);
   assert.equal(classifyCacheRequest(request(`${APP_ORIGIN}/assets/dashboard.index-Bmuey0hE.js`)), null);
   assert.equal(classifyCacheRequest(request(`${APP_ORIGIN}/assets/App-XX3PHkxc.js`)), null);
-  assert.equal(classifyCacheRequest(request(`${APP_ORIGIN}/brand-logos/apple.webp`)), "images");
-  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/public-cms")), "catalog");
-  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/variants/p/v.webp?v=2")), "images");
-  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/products/p/550e8400-e29b-41d4-a716-446655440000.webp")), "images");
-  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/categories/c/550e8400-e29b-41d4-a716-446655440000.webp")), "images");
+  assert.equal(classifyCacheRequest(request(`${APP_ORIGIN}/brand-logos/apple.webp`)), null);
+  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/public-cms")), null);
+  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/hero/2026-09-25/0c341bc7-20db-46be-b5c8-2350b9d82460.webp")), "images");
+  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/optimized/product/2026-09-21/0143db94-2db6-464a-8e85-765ab9a02cd0.webp")), "images");
+  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/categories/550e8400-e29b-41d4-a716-446655440000/550e8400-e29b-41d4-a716-446655440001.webp")), "images");
   assert.ok(CACHE_CONFIG.images.maxEntries <= 120);
   assert.ok(CACHE_CONFIG.images.maxAgeSeconds <= 7 * 86400);
 });
@@ -26,6 +26,8 @@ test("only public cacheable MIME types and responses are stored", () => {
   assert.equal(isCacheableResponse(response({ "content-type": "text/javascript" }), "static"), true);
   assert.equal(isCacheableResponse(response({ "content-type": "text/javascript", "cache-control": "private, no-store" }), "static"), false);
   assert.equal(isCacheableResponse(response({ "content-type": "text/html" }), "static"), false);
+  assert.equal(isCacheableResponse(response({ "content-type": "image/webp" }), "images"), false);
+  assert.equal(isCacheableResponse(response({ "content-type": "image/webp", "x-space-call-cache-safe": "1" }), "images"), true);
 });
 
 test("cache policy rejects private, credentialed, mutating and foreign traffic", () => {
@@ -39,6 +41,9 @@ test("cache policy rejects private, credentialed, mutating and foreign traffic",
   assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/rest/v1/customer_orders")), null);
   assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/variants/p/v.webp")), null);
   assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/procurement/document.webp?v=2")), null);
+  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/hero/2026-09-25/private.webp")), null);
+  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/other/hero/2026-09-25/0c341bc7-20db-46be-b5c8-2350b9d82460.webp")), null);
+  assert.equal(classifyCacheRequest(request("https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/hero/2026-09-25/0c341bc7-20db-46be-b5c8-2350b9d82460.webp?token=bad")), null);
 });
 
 test("service worker registration and backend origins remain isolated", async () => {
@@ -70,4 +75,27 @@ test("app host is noindex, canonicalized, and dashboard-isolated", async () => {
   assert.match(server, /const PUBLIC_ORIGIN = "https:\/\/www\.spacecallapp\.store"/);
   assert.match(server, /Disallow: \/\\n/);
   assert.match(server, /rel="canonical"/);
+});
+
+test("customer OAuth uses exact storefront callbacks and rejects external return paths", async () => {
+  const [dialog, provider] = await Promise.all([
+    read("src/components/customer-auth/CustomerAuthDialog.tsx"),
+    read("src/components/customer-auth/CustomerAuthProvider.tsx"),
+  ]);
+  assert.match(dialog, /redirectTo: window\.location\.origin === "https:\/\/app\.spacecallapp\.store"/);
+  assert.match(dialog, /"https:\/\/app\.spacecallapp\.store\/"/);
+  assert.match(dialog, /"https:\/\/www\.spacecallapp\.store\/"/);
+  assert.doesNotMatch(dialog, /redirectTo: window\.location\.origin,/);
+  assert.match(provider, /target\.startsWith\("\/\/"\)/);
+  assert.match(provider, /window\.location\.replace\(target\)/);
+});
+
+test("only storefront functions admit app origin and reject unknown origins", async () => {
+  for (const name of ["create-order", "customer-orders", "public-cms"]) {
+    const source = await read(`supabase/functions/${name}/index.ts`);
+    assert.match(source, /"https:\/\/app\.spacecallapp\.store"/);
+    assert.match(source, /origin_not_allowed/);
+    assert.match(source, /ALLOWED_ORIGINS\.has\(origin\)/);
+    assert.doesNotMatch(source, /"Access-Control-Allow-Origin": "\*"/);
+  }
 });
