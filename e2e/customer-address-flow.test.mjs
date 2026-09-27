@@ -130,13 +130,20 @@ test("customer order history is isolated behind the JWT-verified edge function",
 });
 
 
-test("authenticated checkouts are linked server-side and guest checkout remains supported", async () => {
-  const edge = await read("supabase/functions/create-order/index.ts");
+test("checkout requires authentication and links every new order atomically", async () => {
+  const [edge, checkout, migration] = await Promise.all([
+    read("supabase/functions/create-order/index.ts"),
+    read("src/components/CheckoutDetailsForm.tsx"),
+    read("supabase/migrations/20260927190000_require_customer_login_for_checkout.sql"),
+  ]);
 
-  assert.match(edge, /authenticatedBearerToken/);
-  assert.match(edge, /db\.auth\.getUser\(userToken\)/);
-  assert.match(edge, /customer_user_id: accountUserId/);
-  assert.match(edge, /\.is\("customer_user_id", null\)/);
-  assert.match(edge, /if \(userToken\)/);
   assert.match(edge, /const userToken = authenticatedBearerToken\(req\)/);
+  assert.match(edge, /if \(!userToken\)/);
+  assert.match(edge, /db\.auth\.getUser\(userToken\)/);
+  assert.match(edge, /create_store_order_for_customer_internal/);
+  assert.match(edge, /p_customer_user_id: accountUserId/);
+  assert.match(checkout, /if \(!user\)/);
+  assert.match(checkout, /openAuth\(\)/);
+  assert.match(checkout, /signInToOrder/);
+  assert.match(migration, /customer_user_id = p_customer_user_id/);
 });
