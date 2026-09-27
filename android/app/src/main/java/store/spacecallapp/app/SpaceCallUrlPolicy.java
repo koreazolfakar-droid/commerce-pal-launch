@@ -11,10 +11,9 @@ import java.util.Locale;
  * rules can be unit-tested on the JVM.
  */
 final class SpaceCallUrlPolicy {
-    static final String CANONICAL_HOST = "www.spacecallapp.store";
-    static final String ALTERNATE_HOST = "spacecallapp.store";
+    static final String CANONICAL_HOST = "app.spacecallapp.store";
     static final String CANONICAL_URL =
-            "https://www.spacecallapp.store/?source=android-app";
+            "https://app.spacecallapp.store/?source=android-app";
 
     private SpaceCallUrlPolicy() {}
 
@@ -38,23 +37,41 @@ final class SpaceCallUrlPolicy {
             }
 
             String normalizedHost = host.toLowerCase(Locale.ROOT);
-            if (!CANONICAL_HOST.equals(normalizedHost) && !ALTERNATE_HOST.equals(normalizedHost)) {
+            if (!CANONICAL_HOST.equals(normalizedHost)) {
                 return CANONICAL_URL;
             }
 
-            String path = requested.getRawPath();
-            if (path == null || path.isEmpty()) {
-                path = "/";
+            if (requested.getUserInfo() != null || requested.getPort() != -1) {
+                return CANONICAL_URL;
             }
 
-            URI canonical = new URI(
-                    "https",
-                    null,
-                    CANONICAL_HOST,
-                    -1,
-                    path,
-                    requested.getRawQuery(),
-                    requested.getRawFragment());
+            String rawPath = requested.getRawPath();
+            if (rawPath == null || rawPath.isEmpty()) {
+                rawPath = "/";
+            }
+
+            StringBuilder rebuilt = new StringBuilder("https://")
+                    .append(CANONICAL_HOST)
+                    .append(rawPath);
+
+            String rawQuery = requested.getRawQuery();
+            if (rawQuery != null) {
+                rebuilt.append('?').append(rawQuery);
+            }
+
+            String rawFragment = requested.getRawFragment();
+            if (rawFragment != null) {
+                rebuilt.append('#').append(rawFragment);
+            }
+
+            URI canonical = new URI(rebuilt.toString());
+            if (!"https".equalsIgnoreCase(canonical.getScheme())
+                    || !CANONICAL_HOST.equalsIgnoreCase(canonical.getHost())
+                    || canonical.getUserInfo() != null
+                    || canonical.getPort() != -1) {
+                return CANONICAL_URL;
+            }
+
             return canonical.toASCIIString();
         } catch (IllegalArgumentException | URISyntaxException invalidUrl) {
             return CANONICAL_URL;

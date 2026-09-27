@@ -22,7 +22,7 @@ export const STORE_CONFIG = Object.freeze({
   socialYoutube: value("VITE_SOCIAL_YOUTUBE", ""),
   name: defaultStoreName,
   version: generatedVersion,
-  siteUrl: normalizedOrigin(value("VITE_SITE_URL", "https://spacecallapp.store")),
+  siteUrl: normalizedOrigin(value("VITE_SITE_URL", "https://www.spacecallapp.store")),
   whatsappNumber: defaultWhatsappNumber.replace(/\D/g, ""),
   invoiceLegalName: value("VITE_INVOICE_LEGAL_NAME", defaultStoreName),
   invoiceAddress: value("VITE_INVOICE_ADDRESS", "Lebanon"),

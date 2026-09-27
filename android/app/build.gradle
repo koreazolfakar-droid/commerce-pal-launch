@@ -11,6 +11,12 @@ def releaseSigningConfigured = releaseKeystorePath &&
         releaseKeyAlias &&
         releaseKeyPassword
 
+if (releaseSigningConfigured &&
+        (releaseKeyAlias.equalsIgnoreCase("androiddebugkey") ||
+         file(releaseKeystorePath).name.equalsIgnoreCase("debug.keystore"))) {
+    throw new GradleException("Android debug signing material cannot be used for a release build.")
+}
+
 android {
     namespace "store.spacecallapp.app"
     compileSdk 36

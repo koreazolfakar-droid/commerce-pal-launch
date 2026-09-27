@@ -36,7 +36,7 @@ function restorePostAuthPath() {
   window.sessionStorage.removeItem(RETURN_PATH_KEY);
 
   // Only restore same-origin relative paths. Never trust storage as an external redirect target.
-  if (!target.startsWith("/") || target.startsWith("//")) return;
+  if (!target.startsWith("/") || target.startsWith("//") || /[\\\u0000-\u001f]/.test(target)) return;
   const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   if (target !== current) window.location.replace(target);
 }

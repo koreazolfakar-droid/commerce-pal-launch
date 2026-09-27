@@ -4,6 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 const ALLOWED_ORIGINS = new Set([
   "https://spacecallapp.store",
   "https://www.spacecallapp.store",
+  "https://app.spacecallapp.store",
   "http://localhost:3000",
   "http://localhost:5173",
 ]);

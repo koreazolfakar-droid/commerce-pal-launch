@@ -5,6 +5,8 @@ import { isClientDisconnectError } from "./lib/client-disconnect";
 import { renderErrorPage } from "./lib/error-page";
 import { buildContentSecurityPolicy } from "./lib/contentSecurityPolicy";
 import { consumeSharedMutationRateLimit } from "./security/mutation-rate-limit.server";
+import assetLinks from "../public/.well-known/assetlinks.json";
+import { isApprovedMediaUrl, SUPABASE_ORIGIN } from "../public/android-app-cache-policy.js";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -14,6 +16,8 @@ const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const MAX_REQUEST_BYTES = 128 * 1024;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_MUTATIONS = 24;
+const APP_ORIGIN = "https://app.spacecallapp.store";
+const PUBLIC_ORIGIN = "https://www.spacecallapp.store";
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
@@ -167,8 +171,14 @@ export async function guardIncomingRequest(request: Request, env: unknown): Prom
 // request flow while forcing deployment systems that watch src/** to rebuild.
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    if (isAppOrigin(request) && new URL(request.url).pathname.startsWith("/android-media/")) {
+      return withAppOriginHeaders(request, withSecurityHeaders(await appMediaResponse(request)));
+    }
+    const appOriginResponse = handleAppOriginRequest(request);
+    if (appOriginResponse) return withSecurityHeaders(withAppOriginHeaders(request, appOriginResponse));
+
     const blocked = await guardIncomingRequest(request, env);
-    if (blocked) return blocked;
+    if (blocked) return withAppOriginHeaders(request, blocked);
 
     // Cloudflare/Lovable runtime bindings are passed through `env`; TanStack server
     // functions in this app read server-only secrets from process.env. Mirror only
@@ -178,13 +188,16 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return withDashboardNoStore(
+      return withAppOriginHeaders(
         request,
-        withDocumentCache(
+        withDashboardNoStore(
           request,
-          withStaticAssetCache(
+          withDocumentCache(
             request,
-            withSecurityHeaders(await normalizeCatastrophicSsrResponse(request, response)),
+            withStaticAssetCache(
+              request,
+              withSecurityHeaders(await normalizeCatastrophicSsrResponse(request, response)),
+            ),
           ),
         ),
       );
@@ -193,15 +206,81 @@ export default {
         return new Response(null, { status: 499, statusText: "Client Closed Request" });
       }
       console.error(error);
-      return withSecurityHeaders(
-        new Response(renderErrorPage(), {
-          status: 500,
-          headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
-        }),
+      return withAppOriginHeaders(
+        request,
+        withSecurityHeaders(
+          new Response(renderErrorPage(), {
+            status: 500,
+            headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
+          }),
+        ),
       );
     }
   },
 };
+
+export async function appMediaResponse(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  if (request.method !== "GET" || request.headers.has("authorization") || request.headers.has("cookie")) {
+    return securityError(403, "Media request not allowed");
+  }
+  const source = new URL(url.pathname.slice("/android-media".length) + url.search, SUPABASE_ORIGIN);
+  if (!isApprovedMediaUrl(source) || url.hash || source.pathname.includes("%")) {
+    return securityError(404, "Media not found");
+  }
+  try {
+    const upstream = await fetch(source, { credentials: "omit", redirect: "error", headers: { Accept: "image/avif,image/webp,image/png,image/jpeg" } });
+    const type = upstream.headers.get("content-type")?.split(";")[0].trim().toLowerCase() ?? "";
+    const length = Number(upstream.headers.get("content-length") ?? 0);
+    if (!upstream.ok || !["image/avif", "image/webp", "image/png", "image/jpeg"].includes(type) || length > 10 * 1024 * 1024) {
+      return securityError(502, "Media source rejected");
+    }
+    const bytes = await upstream.arrayBuffer();
+    if (bytes.byteLength > 10 * 1024 * 1024) return securityError(502, "Media source too large");
+    return new Response(bytes, { headers: { "content-type": type, "cache-control": "public, max-age=300", "x-space-call-cache-safe": "1", "x-content-type-options": "nosniff", "cross-origin-resource-policy": "same-origin" } });
+  } catch {
+    return securityError(502, "Media unavailable");
+  }
+}
+
+function isAppOrigin(request: Request) {
+  return new URL(request.url).origin === APP_ORIGIN;
+}
+
+function handleAppOriginRequest(request: Request): Response | null {
+  if (!isAppOrigin(request)) return null;
+  const url = new URL(request.url);
+
+  if (url.pathname === "/dashboard" || url.pathname.startsWith("/dashboard/")) {
+    url.protocol = "https:";
+    url.host = new URL(PUBLIC_ORIGIN).host;
+    return new Response(null, { status: 308, headers: { location: url.toString(), "cache-control": "no-store" } });
+  }
+
+  if (url.pathname === "/robots.txt") {
+    return new Response("User-agent: *\nDisallow: /\n", {
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
+    });
+  }
+
+  if (url.pathname === "/.well-known/assetlinks.json") {
+    return new Response(JSON.stringify(assetLinks), {
+      headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=300" },
+    });
+  }
+  return null;
+}
+
+function withAppOriginHeaders(request: Request, response: Response): Response {
+  if (!isAppOrigin(request)) return response;
+  const headers = new Headers(response.headers);
+  headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  if (request.method === "GET" && response.headers.get("content-type")?.includes("text/html")) {
+    const url = new URL(request.url);
+    headers.set("Link", `<${PUBLIC_ORIGIN}${url.pathname}${url.search}>; rel="canonical"`);
+  }
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
 
 /**
  * HTML is dynamic storefront state and must never survive a deploy at the CDN.

@@ -1,0 +1,99 @@
+name: Android CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "android/**"
+      - "public/.well-known/assetlinks.json"
+      - "public/manifest.webmanifest"
+      - "scripts/android-security-gate.mjs"
+      - "scripts/android-local-debug-build.sh"
+      - ".github/workflows/android-ci.yml"
+      - ".github/scripts/android-emulator-smoke-test.sh"
+      - "e2e/android-ci-config.test.mjs"
+  push:
+    branches:
+      - main
+    paths:
+      - "android/**"
+      - "public/.well-known/assetlinks.json"
+      - "public/manifest.webmanifest"
+      - "scripts/android-security-gate.mjs"
+      - "scripts/android-local-debug-build.sh"
+      - ".github/workflows/android-ci.yml"
+      - ".github/scripts/android-emulator-smoke-test.sh"
+      - "e2e/android-ci-config.test.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug-apk:
+    name: Build and smoke-test debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || test "${PIPESTATUS[1]}" -eq 0
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.6.0"
+
+      - name: Build and validate debug APK
+        run: bash scripts/android-local-debug-build.sh
+
+      - name: Emulator cold-launch smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash .github/scripts/android-emulator-smoke-test.sh
+
+      - name: Upload APK and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: space-call-android-debug
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            dist/android/Space-Call-1.0.2-debug.apk
+            dist/android/Space-Call-1.0.2-debug.apk.sha256
+            dist/android/RUNTIME-VALIDATED.txt
+            android/app/build/reports/lint-results-debug.html
+            /tmp/spacecall-apk-badging.txt
+            /tmp/spacecall-apksigner.txt
+            /tmp/spacecall-zipalign.txt
+            /tmp/spacecall-launch.txt
+            /tmp/spacecall-crash.txt
+            /tmp/spacecall-logcat.txt
