@@ -106,7 +106,7 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
       reason: text(match.reason),
     },
     summary: text(row.summary),
-    suggestions,
+    suggestions: suggestions as DashboardAiResponse["suggestions"],
     warnings: Array.isArray(row.warnings) ? row.warnings.map(text).filter(Boolean) : [],
     sources,
   };

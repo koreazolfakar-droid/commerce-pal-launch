@@ -1708,7 +1708,7 @@ export async function setDashboardPrimaryProductImage(
 ): Promise<void> {
   await requireDashboardRole();
 
-  const { error } = await supabase.rpc(
+  const { error } = await (supabase.rpc as unknown as LooseRpc)(
     "set_store_product_primary_image",
     rpcArgs({
       p_product_id: productId,
@@ -1726,7 +1726,7 @@ export async function deleteDashboardProductImage(
 ): Promise<{ promotedImageId: string | null }> {
   await requireDashboardRole();
 
-  const { data: promotedImageId, error } = await supabase.rpc(
+  const { data: promotedImageId, error } = await (supabase.rpc as unknown as LooseRpc)(
     "delete_store_product_image",
     rpcArgs({
       p_product_id: image.productId,
@@ -1739,7 +1739,7 @@ export async function deleteDashboardProductImage(
 
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();
-  return { promotedImageId: promotedImageId ?? null };
+  return { promotedImageId: typeof promotedImageId === "string" ? promotedImageId : null };
 }
 
 export async function reorderDashboardProductImages(
@@ -1748,7 +1748,7 @@ export async function reorderDashboardProductImages(
 ): Promise<void> {
   await requireDashboardRole();
 
-  const { error } = await supabase.rpc(
+  const { error } = await (supabase.rpc as unknown as LooseRpc)(
     "reorder_store_product_images",
     rpcArgs({
       p_product_id: productId,
@@ -1760,3 +1760,5 @@ export async function reorderDashboardProductImages(
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();
 }
+
+type LooseRpc = (fn: string, args: never) => Promise<{ data: unknown; error: { message: string } | null }>;
