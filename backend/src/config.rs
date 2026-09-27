@@ -50,7 +50,7 @@ impl AppConfig {
 }
 
 fn parse_positive_u32(name: &'static str, default: u32) -> Result<u32, ConfigError> {
-    let Some(raw) = env::var(name).ok() else {
+    let Ok(raw) = env::var(name) else {
         return Ok(default);
     };
 
