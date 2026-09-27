@@ -9,6 +9,7 @@ const MAX_PASSWORD_LENGTH = 256;
 const allowedOrigins = new Set([
   "https://spacecallapp.store",
   "https://www.spacecallapp.store",
+  "https://app.spacecallapp.store",
   "http://localhost:3000",
   "http://localhost:5173",
 ]);
