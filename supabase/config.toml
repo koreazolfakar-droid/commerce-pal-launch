@@ -9,4 +9,7 @@ rp_id = "spacecallapp.store"
 rp_origins = ["https://spacecallapp.store", "https://www.spacecallapp.store"]
 
 [functions.ci-debug-log]
-verify_jwt = false
+verify_jwt = true
+
+[functions.space-call-cms-admin]
+verify_jwt = true
