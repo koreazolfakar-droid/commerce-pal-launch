@@ -96,13 +96,18 @@ fn validate_database_url(database_url: &str) -> Result<(), ConfigError> {
         return Err(ConfigError::InvalidDatabaseUrlScheme);
     }
 
-    let secure_ssl_mode = [
-        "sslmode=require",
-        "sslmode=verify-ca",
-        "sslmode=verify-full",
-    ]
-    .iter()
-    .any(|mode| normalized.contains(mode));
+    let secure_ssl_mode = normalized
+        .split_once('?')
+        .map(|(_, query)| {
+            query.split('&').any(|parameter| {
+                let Some((key, value)) = parameter.split_once('=') else {
+                    return false;
+                };
+
+                key == "sslmode" && matches!(value, "require" | "verify-ca" | "verify-full")
+            })
+        })
+        .unwrap_or(false);
 
     if !secure_ssl_mode {
         return Err(ConfigError::DatabaseTlsRequired);
@@ -139,4 +144,40 @@ pub enum ConfigError {
 
     #[error("DATABASE_URL must explicitly require TLS with sslmode=require, verify-ca, or verify-full")]
     DatabaseTlsRequired,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{validate_database_url, ConfigError};
+
+    #[test]
+    fn accepts_explicit_secure_postgres_ssl_modes() {
+        for mode in ["require", "verify-ca", "verify-full"] {
+            let url = format!("postgresql://user:password@db.example.com:5432/postgres?sslmode={mode}");
+            assert!(validate_database_url(&url).is_ok());
+        }
+    }
+
+    #[test]
+    fn rejects_missing_or_insecure_ssl_modes() {
+        for url in [
+            "postgresql://user:password@db.example.com:5432/postgres",
+            "postgresql://user:password@db.example.com:5432/postgres?sslmode=disable",
+            "postgresql://user:password@db.example.com:5432/postgres?sslmode=prefer",
+            "postgresql://user:password@db.example.com:5432/postgres?sslmode=requirement",
+        ] {
+            assert!(matches!(
+                validate_database_url(url),
+                Err(ConfigError::DatabaseTlsRequired)
+            ));
+        }
+    }
+
+    #[test]
+    fn rejects_non_postgres_schemes() {
+        assert!(matches!(
+            validate_database_url("https://example.com?sslmode=require"),
+            Err(ConfigError::InvalidDatabaseUrlScheme)
+        ));
+    }
 }
