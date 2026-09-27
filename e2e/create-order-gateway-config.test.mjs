@@ -18,7 +18,14 @@ test("guest checkout can reach create-order through the Supabase gateway", () =>
 
 test("create-order keeps its own public endpoint protections when gateway JWT is disabled", () => {
   assert.match(createOrder, /const ALLOWED_ORIGINS = new Set/);
+  assert.match(createOrder, /https:\/\/app\.spacecallapp\.store/);
+  assert.match(createOrder, /TRUSTED_PREVIEW_SUFFIXES/);
+  assert.match(createOrder, /\.lovable\.app/);
+  assert.match(createOrder, /\.lovableproject\.com/);
+  assert.match(createOrder, /function isAllowedOrigin/);
+  assert.match(createOrder, /url\.protocol === "https:"/);
   assert.match(createOrder, /origin_not_allowed/);
+  assert.match(createOrder, /create-order rejected origin/);
   assert.match(createOrder, /consume_edge_rate_limit/);
   assert.match(createOrder, /idempotency_key/);
   assert.match(createOrder, /validatePayload\(body\)/);

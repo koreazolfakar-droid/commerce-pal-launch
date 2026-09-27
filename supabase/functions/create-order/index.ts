@@ -4,9 +4,33 @@ import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 const ALLOWED_ORIGINS = new Set([
   "https://spacecallapp.store",
   "https://www.spacecallapp.store",
+  "https://app.spacecallapp.store",
   "http://localhost:3000",
   "http://localhost:5173",
 ]);
+
+const TRUSTED_PREVIEW_SUFFIXES = [
+  ".lovable.app",
+  ".lovableproject.com",
+  ".lovableproject-dev.com",
+  ".gpt-eng.com",
+  ".gptengineer.run",
+];
+
+function isAllowedOrigin(origin: string) {
+  if (!origin) return true;
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "https:" &&
+      TRUSTED_PREVIEW_SUFFIXES.some((suffix) => url.hostname.endsWith(suffix))
+    );
+  } catch {
+    return false;
+  }
+}
 const MAX_BODY_BYTES = 64 * 1024;
 const RATE_WINDOW_SECONDS = 10 * 60;
 const RATE_LIMIT_PER_IP = 30;
@@ -15,7 +39,7 @@ const RATE_LIMIT_PER_PHONE = 5;
 function responseHeaders(req: Request) {
   const origin = req.headers.get("origin")?.trim() || "";
   return {
-    ...(origin && ALLOWED_ORIGINS.has(origin)
+    ...(origin && isAllowedOrigin(origin)
       ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" }
       : {}),
     "Access-Control-Allow-Headers": "content-type, apikey, authorization, x-client-info",
@@ -245,7 +269,8 @@ function publicError(message: string | undefined) {
 
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin")?.trim() || "";
-  if (origin && !ALLOWED_ORIGINS.has(origin)) {
+  if (!isAllowedOrigin(origin)) {
+    console.warn("create-order rejected origin", origin);
     return json(req, 403, { error: "origin_not_allowed" });
   }
   if (req.method === "OPTIONS") {
