@@ -27,6 +27,8 @@ async function putSafe(cache, request, response, kind, config) {
   if (!isCacheableResponse(response, kind)) return;
   const body = await response.clone().blob();
   const headers = new Headers(response.headers);
+  headers.delete("content-encoding");
+  headers.delete("content-length");
   headers.set(CACHED_AT, String(Date.now()));
   await cache.put(request, new Response(body, { status: response.status, statusText: response.statusText, headers }));
   const keys = await cache.keys();

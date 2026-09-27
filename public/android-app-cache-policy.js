@@ -1,6 +1,6 @@
 export const APP_ORIGIN = "https://app.spacecallapp.store";
 export const SUPABASE_ORIGIN = "https://rtwyankpxtffqqrasyzw.supabase.co";
-export const CACHE_VERSION = "v1";
+export const CACHE_VERSION = "v2";
 export const CACHE_PREFIX = "space-call-android-";
 export const CACHE_CONFIG = Object.freeze({
   static: { name: `${CACHE_PREFIX}static-${CACHE_VERSION}`, maxEntries: 80, maxAgeSeconds: 30 * 86400 },
@@ -10,7 +10,8 @@ export const CACHE_CONFIG = Object.freeze({
 
 const PRIVATE_PATHS = /^\/(?:dashboard|auth|login|logout|checkout|cart|orders|my-orders|profile|account|addresses|payment|payments|api|functions|rest)(?:\/|$)/i;
 const SECRET_PARAMS = /^(?:token|access_token|refresh_token|code|state|session|password|email)$/i;
-const VERSIONED_ASSET = /^\/assets\/.+\.[a-z0-9_-]{8,}\.(?:js|css|woff2?|png|jpe?g|webp|avif|svg)$/i;
+const VERSIONED_ASSET = /^\/assets\/[^/]+-[a-z0-9_-]{8,}\.(?:js|css|woff2?|png|jpe?g|webp|avif|svg)$/i;
+const DASHBOARD_ASSET = /^\/assets\/(?:dashboard[.-]|App[-.]|AppMount[-.])/i;
 const PUBLIC_IMAGE = /^\/(?:brand-logos|category-icons|product-images|hero-images|category-images|icons|images)\/.+\.(?:png|jpe?g|webp|avif|svg)$/i;
 
 function hasSecretQuery(url) {
@@ -27,7 +28,7 @@ export function classifyCacheRequest(request) {
 
   if (url.origin === APP_ORIGIN) {
     if (PRIVATE_PATHS.test(url.pathname)) return null;
-    if (VERSIONED_ASSET.test(url.pathname)) return "static";
+    if (VERSIONED_ASSET.test(url.pathname) && !DASHBOARD_ASSET.test(url.pathname)) return "static";
     if (PUBLIC_IMAGE.test(url.pathname)) return "images";
     if (/^\/(?:logo|favicon)(?:[-.][^/]+)?\.(?:png|svg|ico)$/i.test(url.pathname)) return "images";
     return null;
@@ -36,8 +37,9 @@ export function classifyCacheRequest(request) {
   if (url.origin === SUPABASE_ORIGIN) {
     if (url.pathname === "/functions/v1/public-cms" && !url.search) return "catalog";
     if (url.pathname.startsWith("/storage/v1/object/public/cms-media/")) {
-      const uniqueObject = /^\/storage\/v1\/object\/public\/cms-media\/(?:library|products|brands|hero|settings|optimized)\/(?:.+\/)?[a-z0-9-]{16,}\.(?:png|jpe?g|webp|avif|svg)$/i.test(url.pathname);
-      const versionedObject = url.searchParams.has("v") || url.searchParams.has("version");
+      const uniqueObject = /^\/storage\/v1\/object\/public\/cms-media\/(?:library|products|categories|brands|hero|settings|optimized)\/(?:.+\/)?[a-z0-9-]{16,}\.(?:png|jpe?g|webp|avif|svg)$/i.test(url.pathname);
+      const versionedObject = /^\/storage\/v1\/object\/public\/cms-media\/variants\/[a-z0-9-]+\/[a-z0-9-]+\.webp$/i.test(url.pathname) &&
+        (url.searchParams.has("v") || url.searchParams.has("version"));
       return uniqueObject || versionedObject ? "images" : null;
     }
   }
@@ -53,5 +55,5 @@ export function isCacheableResponse(response, expectedKind) {
   const type = response.headers.get("content-type") ?? "";
   if (expectedKind === "images") return /^image\//i.test(type);
   if (expectedKind === "catalog") return /^application\/json\b/i.test(type);
-  return /^(?:text\/css|application\/(?:javascript|font-woff)|font\/|image\/)/i.test(type);
+  return /^(?:text\/(?:css|javascript)|application\/(?:javascript|font-woff)|font\/|image\/)/i.test(type);
 }
