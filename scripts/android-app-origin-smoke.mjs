@@ -25,7 +25,19 @@ assert.equal(dashboard.headers.get("location"), "https://www.spacecallapp.store/
 
 const assetLinks = await fetchOrigin("https://app.spacecallapp.store/.well-known/assetlinks.json");
 assert.equal(assetLinks.status, 200);
-assert.deepEqual(await assetLinks.json(), []);
+assert.equal(assetLinks.headers.get("content-type"), "application/json; charset=utf-8");
+assert.deepEqual(await assetLinks.json(), [
+  {
+    relation: ["delegate_permission/common.handle_all_urls"],
+    target: {
+      namespace: "android_app",
+      package_name: "store.spacecallapp.app",
+      sha256_cert_fingerprints: [
+        "2C:E4:68:6F:BE:A8:83:70:69:A4:A8:C6:24:A2:2C:7B:1A:FE:DB:71:BA:C0:4B:A2:CA:E7:87:09:CA:AB:08:5F",
+      ],
+    },
+  },
+]);
 
 await Promise.allSettled(pending);
 console.log("Android app origin SSR isolation passed.");

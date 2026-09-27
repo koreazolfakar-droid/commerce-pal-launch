@@ -71,10 +71,11 @@ Debug builds use `store.spacecallapp.app.debug` and do not request production Ap
 Link verification. This prevents a disposable test signing key from ever becoming
 trusted by the production domain.
 
-Before Play Store release, add the persistent Play App Signing certificate
-fingerprint for `store.spacecallapp.app`. The release build requests App Link
-verification and the security gate rejects a signed production build unless the
-active release certificate is present in `assetlinks.json`.
+The current direct-distribution build uses the persistent local release
+certificate for `store.spacecallapp.app`. Its independently verified SHA-256
+fingerprint must be the only certificate in `assetlinks.json`. If distribution
+later moves to a service that re-signs the APK, DAL must be updated to the
+certificate that actually signs the user-installed application.
 
 ## Signing
 
@@ -89,21 +90,16 @@ Debug APKs use the build environment's debug signing identity and the separate
 `store.spacecallapp.app.debug` package. They are for install/runtime testing only
 and are intentionally not trusted by the production Digital Asset Links file.
 
-Never commit a production keystore or signing password. The Play/release identity
+Never commit a production keystore or signing password. The release identity
 must be persistent and must never reuse a disposable debug signing key.
 
-The local release/upload certificate and Google Play App Signing certificate are
-different identities when Play App Signing is enabled. Before creating a key,
-choose its long-term owner, secure backup, and password custody. Create it only
-in a private location with a password prompt (never command-line password
-arguments or shell history), then set the four variables above in a private
-process environment. Do not publish its SHA-256 as a production Digital Asset
-Links fingerprint until it is independently verified to be the certificate
-that signs the APK installed on users' devices. For Play distribution, obtain
-the **App signing key certificate** SHA-256 from Play Console > App integrity;
-the upload-key SHA-256 is not a substitute. Keep `assetlinks.json` as `[]`
-until that fingerprint is available and verified. No release artifact should
-be built from an improvised or disposable key.
+Before creating a key, choose its long-term owner, secure backup, and password
+custody. Create it only in a private location with a masked password prompt
+(never command-line password arguments or shell history), then set the four
+variables above in a private process environment. Publish its SHA-256 as a
+production Digital Asset Links fingerprint only after independently verifying
+it against the signed APK users will install. No release artifact should be
+built from an improvised or disposable key.
 
 Hosted Supabase Auth configuration must retain Site URL
 `https://www.spacecallapp.store` and add the exact Redirect URL

@@ -18,8 +18,9 @@ canonical website remains `https://www.spacecallapp.store`.
   selected from the exact app and public origins, never copied from an arbitrary host.
 - Deploy `create-order`, `customer-orders`, and `public-cms` after their exact CORS allowlists are
   updated. Do not add the app origin to dashboard/admin functions or WebAuthn origins.
-- Replace `public/.well-known/assetlinks.json` only after obtaining and independently verifying
-  the real release or Play App Signing SHA-256 fingerprint. Never publish the debug fingerprint.
+- Populate `public/.well-known/assetlinks.json` only with the independently verified SHA-256
+  fingerprint extracted from the signed APK users will install. The current direct-distribution
+  build uses the persistent local release certificate; never publish the debug fingerprint.
 
 The service worker registers only on the exact app origin. It does not register on `www`, so the
 normal website retains its existing browser behavior.

@@ -77,6 +77,22 @@ test("app host is noindex, canonicalized, and dashboard-isolated", async () => {
   assert.match(server, /rel="canonical"/);
 });
 
+test("production Digital Asset Links trusts only the local release certificate", async () => {
+  const assetLinks = JSON.parse(await read("public/.well-known/assetlinks.json"));
+  assert.deepEqual(assetLinks, [
+    {
+      relation: ["delegate_permission/common.handle_all_urls"],
+      target: {
+        namespace: "android_app",
+        package_name: "store.spacecallapp.app",
+        sha256_cert_fingerprints: [
+          "2C:E4:68:6F:BE:A8:83:70:69:A4:A8:C6:24:A2:2C:7B:1A:FE:DB:71:BA:C0:4B:A2:CA:E7:87:09:CA:AB:08:5F",
+        ],
+      },
+    },
+  ]);
+});
+
 test("customer OAuth uses exact storefront callbacks and rejects external return paths", async () => {
   const [dialog, provider] = await Promise.all([
     read("src/components/customer-auth/CustomerAuthDialog.tsx"),
