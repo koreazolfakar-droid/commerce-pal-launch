@@ -8,22 +8,29 @@ import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccoun
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 const LazySearchOverlay = lazy(() =>
-  import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({
-    default: SearchOverlay,
-  })),
+  importWithChunkRecovery("search-overlay", () =>
+    import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({
+      default: SearchOverlay,
+    })),
+  ),
 );
 const LazyMobileMenu = lazy(() =>
-  import("@/components/MobileMenu").then(({ MobileMenu }) => ({
-    default: MobileMenu,
-  })),
+  importWithChunkRecovery("mobile-menu", () =>
+    import("@/components/MobileMenu").then(({ MobileMenu }) => ({
+      default: MobileMenu,
+    })),
+  ),
 );
 const LazyMobileCategoryRail = lazy(() =>
-  import("@/components/MobileCategoryRail").then(({ MobileCategoryRail }) => ({
-    default: MobileCategoryRail,
-  })),
+  importWithChunkRecovery("mobile-category-rail", () =>
+    import("@/components/MobileCategoryRail").then(({ MobileCategoryRail }) => ({
+      default: MobileCategoryRail,
+    })),
+  ),
 );
 
 /** Mobile app style top bar: brand, quick actions, search field and category strip. */

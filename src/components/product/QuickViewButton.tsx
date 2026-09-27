@@ -2,9 +2,12 @@ import { lazy, Suspense, useState } from "react";
 import { Eye } from "lucide-react";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { useLanguage } from "@/lib/i18n";
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import type { StoreProduct } from "@/lib/storeTypes";
 
-const QuickViewDialog = lazy(() => import("./QuickViewDialog"));
+const QuickViewDialog = lazy(() =>
+  importWithChunkRecovery("quick-view-dialog", () => import("./QuickViewDialog")),
+);
 
 export function QuickViewButton({ product }: { product: StoreProduct }) {
   const [open, setOpen] = useState(false);
