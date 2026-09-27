@@ -8,16 +8,20 @@ import {
   ScriptOnce,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n";
 
 import { absoluteUrl } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
-import { CustomerAddressHub } from "@/components/customer-account/CustomerAddressHub";
-import { CustomerAccountProvider } from "@/components/customer-account/CustomerAccountProvider";
-import { CustomerAuthDialog } from "@/components/customer-auth/CustomerAuthDialog";
-import { CustomerAuthProvider } from "@/components/customer-auth/CustomerAuthProvider";
+import {
+  CustomerAccountProvider,
+  useCustomerAccount,
+} from "@/components/customer-account/CustomerAccountProvider";
+import {
+  CustomerAuthProvider,
+  useCustomerAuth,
+} from "@/components/customer-auth/CustomerAuthProvider";
 import { DeferredToaster } from "@/components/DeferredToaster";
 import { useCartSync } from "@/hooks/useCartSync";
 import { usePersistedStoreHydration } from "@/hooks/usePersistedStoreHydration";
@@ -28,6 +32,17 @@ import { buildContentSecurityPolicy } from "@/lib/contentSecurityPolicy";
 
 const FONT_STYLESHEET_URL =
   "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap";
+
+const CustomerAuthDialog = lazy(() =>
+  import("@/components/customer-auth/CustomerAuthDialog").then(({ CustomerAuthDialog }) => ({
+    default: CustomerAuthDialog,
+  })),
+);
+const CustomerAddressHub = lazy(() =>
+  import("@/components/customer-account/CustomerAddressHub").then(({ CustomerAddressHub }) => ({
+    default: CustomerAddressHub,
+  })),
+);
 
 const FONT_LOAD_SCRIPT = `(function(){
   var href=${JSON.stringify(FONT_STYLESHEET_URL)};
@@ -215,12 +230,30 @@ function RootComponent() {
         <CustomerAccountProvider>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
-          <CustomerAuthDialog />
-          <CustomerAddressHub />
+          <CustomerOverlays />
         </CustomerAccountProvider>
       </CustomerAuthProvider>
       <DeferredToaster />
     </QueryClientProvider>
+  );
+}
+
+function CustomerOverlays() {
+  const { authOpen } = useCustomerAuth();
+  const { addressBookOpen } = useCustomerAccount();
+  return (
+    <>
+      {authOpen ? (
+        <Suspense fallback={null}>
+          <CustomerAuthDialog />
+        </Suspense>
+      ) : null}
+      {addressBookOpen ? (
+        <Suspense fallback={null}>
+          <CustomerAddressHub />
+        </Suspense>
+      ) : null}
+    </>
   );
 }
 
