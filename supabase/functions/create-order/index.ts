@@ -1,10 +1,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
-const ALLOWED_ORIGINS = new Set([
+const PRODUCTION_ORIGINS = new Set([
   "https://spacecallapp.store",
   "https://www.spacecallapp.store",
   "https://app.spacecallapp.store",
+]);
+
+const NON_PRODUCTION_ORIGINS = new Set([
   "http://localhost:3000",
   "http://localhost:5173",
 ]);
@@ -17,9 +20,15 @@ const TRUSTED_PREVIEW_SUFFIXES = [
   ".gptengineer.run",
 ];
 
+function allowNonProductionOrigins() {
+  return Deno.env.get("ALLOW_NON_PRODUCTION_ORIGINS")?.trim().toLowerCase() === "true";
+}
+
 function isAllowedOrigin(origin: string) {
   if (!origin) return true;
-  if (ALLOWED_ORIGINS.has(origin)) return true;
+  if (PRODUCTION_ORIGINS.has(origin)) return true;
+  if (!allowNonProductionOrigins()) return false;
+  if (NON_PRODUCTION_ORIGINS.has(origin)) return true;
 
   try {
     const url = new URL(origin);
@@ -34,6 +43,7 @@ function isAllowedOrigin(origin: string) {
 const MAX_BODY_BYTES = 64 * 1024;
 const RATE_WINDOW_SECONDS = 10 * 60;
 const RATE_LIMIT_PER_IP = 30;
+const RATE_LIMIT_PER_USER = 10;
 const RATE_LIMIT_PER_PHONE = 5;
 
 function responseHeaders(req: Request) {
@@ -336,6 +346,13 @@ Deno.serve(async (req: Request) => {
       { "Retry-After": String(retryAfter) },
     );
   };
+
+  const userFingerprint = await sha256(accountUserId);
+  const userRateLimit = await enforceRateLimit(
+    `create-order:user:${userFingerprint}`,
+    RATE_LIMIT_PER_USER,
+  );
+  if (userRateLimit) return userRateLimit;
 
   const forwarded =
     req.headers.get("cf-connecting-ip")?.trim() ||

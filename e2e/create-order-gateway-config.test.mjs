@@ -29,13 +29,17 @@ test("create-order validates the signed-in customer again before order creation"
 });
 
 test("authenticated checkout keeps origin, validation, rate-limit and idempotency protections", () => {
-  assert.match(createOrder, /const ALLOWED_ORIGINS = new Set/);
+  assert.match(createOrder, /const PRODUCTION_ORIGINS = new Set/);
   assert.match(createOrder, /https:\/\/app\.spacecallapp\.store/);
+  assert.match(createOrder, /ALLOW_NON_PRODUCTION_ORIGINS/);
+  assert.match(createOrder, /if \(!allowNonProductionOrigins\(\)\) return false/);
   assert.match(createOrder, /TRUSTED_PREVIEW_SUFFIXES/);
   assert.match(createOrder, /function isAllowedOrigin/);
   assert.match(createOrder, /url\.protocol === "https:"/);
   assert.match(createOrder, /origin_not_allowed/);
   assert.match(createOrder, /consume_edge_rate_limit/);
+  assert.match(createOrder, /RATE_LIMIT_PER_USER = 10/);
+  assert.match(createOrder, /create-order:user:\$\{userFingerprint\}/);
   assert.match(createOrder, /idempotency_key/);
   assert.match(createOrder, /validatePayload\(body\)/);
 });
