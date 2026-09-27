@@ -165,8 +165,29 @@ export async function guardIncomingRequest(request: Request, env: unknown): Prom
 
 // Production recovery marker: this file intentionally preserves the last known-good
 // request flow while forcing deployment systems that watch src/** to rebuild.
+/**
+ * The Android app host (app.spacecallapp.store) exists for the APK deep links
+ * and assetlinks verification only. Dashboard/admin pages are served from the
+ * canonical www host, so redirect them there before any other handling.
+ * 308 preserves the method; path and query string are carried over unchanged.
+ */
+function redirectAppHostDashboard(request: Request): Response | null {
+  const url = new URL(request.url);
+  if (url.hostname !== "app.spacecallapp.store") return null;
+  if (!url.pathname.startsWith("/dashboard")) return null;
+
+  const target = `https://www.spacecallapp.store${url.pathname}${url.search}`;
+  return new Response(null, {
+    status: 308,
+    headers: { location: target, "cache-control": "no-store" },
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const hostRedirect = redirectAppHostDashboard(request);
+    if (hostRedirect) return hostRedirect;
+
     const blocked = await guardIncomingRequest(request, env);
     if (blocked) return blocked;
 
