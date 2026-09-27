@@ -52,6 +52,7 @@ function randomIdempotencyKey() {
 }
 
 function checkoutFingerprint(input: {
+  customerUserId: string;
   items: CartItem[];
   customer: {
     name: string;
@@ -80,6 +81,7 @@ function checkoutFingerprint(input: {
     .sort((a, b) => a.variantId.localeCompare(b.variantId));
 
   return JSON.stringify({
+    customerUserId: input.customerUserId,
     items,
     customer: {
       name: input.customer.name.trim(),
@@ -201,8 +203,22 @@ export async function createStorefrontOrder(input: {
     accuracy?: number;
   } | null;
 }): Promise<CreatedStoreOrder> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const customerUserId = session?.user?.id ?? "";
+  if (!session?.access_token || !customerUserId) {
+    throw new StoreOrderError("authentication_required");
+  }
+
+  const fingerprint = checkoutFingerprint({
+    ...input,
+    customerUserId,
+  });
+
   const body = {
-    idempotency_key: await checkoutIdempotencyKey(checkoutFingerprint(input)),
+    idempotency_key: await checkoutIdempotencyKey(fingerprint),
     customer: {
       name: input.customer.name,
       phone: input.customer.phone,
