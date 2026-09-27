@@ -17,6 +17,23 @@ verify_jwt = false
 # Order history is private and must always require an authenticated customer JWT.
 verify_jwt = true
 
+[functions.public-cms]
+# Public storefront read gateway.
+verify_jwt = false
+
+[functions.dashboard-auth-throttle]
+# Login throttling must run before authentication.
+verify_jwt = false
+
+[functions.dashboard-passkey-stepup]
+verify_jwt = true
+
+[functions.dashboard-update-password]
+verify_jwt = true
+
+[functions.dashboard-ai-assist]
+verify_jwt = true
+
 [functions.ci-debug-log]
 verify_jwt = true
 
