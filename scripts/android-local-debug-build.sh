@@ -32,16 +32,25 @@ if [ ! -f "$PLATFORM_JAR" ]; then
 fi
 
 BUILD_TOOLS="$SDK_ROOT/build-tools/36.0.0"
-AAPT="$BUILD_TOOLS/aapt"
-APKSIGNER="$BUILD_TOOLS/apksigner"
-ZIPALIGN="$BUILD_TOOLS/zipalign"
 
-for tool in "$AAPT" "$APKSIGNER" "$ZIPALIGN"; do
-  if [ ! -x "$tool" ]; then
-    echo "Missing Android Build Tools 36.0.0 executable: $tool" >&2
-    exit 2
-  fi
-done
+resolve_android_tool() {
+  local tool="$1"
+  local candidate
+
+  for candidate in "$tool" "$tool.exe" "$tool.bat"; do
+    if [ -f "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  echo "Missing Android Build Tools 36.0.0 executable: $tool" >&2
+  return 1
+}
+
+AAPT="$(resolve_android_tool "$BUILD_TOOLS/aapt")"
+APKSIGNER="$(resolve_android_tool "$BUILD_TOOLS/apksigner")"
+ZIPALIGN="$(resolve_android_tool "$BUILD_TOOLS/zipalign")"
 
 echo "== Toolchain =="
 java -version
