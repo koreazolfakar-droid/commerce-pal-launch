@@ -13,6 +13,10 @@ rp_origins = ["https://spacecallapp.store", "https://www.spacecallapp.store"]
 # payload validation, rate limiting, idempotency, and privileged RPC isolation.
 verify_jwt = false
 
+[functions.customer-orders]
+# Order history is private and must always require an authenticated customer JWT.
+verify_jwt = true
+
 [functions.ci-debug-log]
 verify_jwt = true
 
