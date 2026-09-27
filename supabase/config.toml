@@ -9,9 +9,9 @@ rp_id = "spacecallapp.store"
 rp_origins = ["https://spacecallapp.store", "https://www.spacecallapp.store"]
 
 [functions.create-order]
-# Guest checkout is intentional. The function performs its own origin checks,
-# payload validation, rate limiting, idempotency, and privileged RPC isolation.
-verify_jwt = false
+# Checkout requires an authenticated customer session. The function also
+# validates the user server-side before creating or linking an order.
+verify_jwt = true
 
 [functions.customer-orders]
 # Order history is private and must always require an authenticated customer JWT.
