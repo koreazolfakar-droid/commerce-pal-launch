@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { createRoot, type Root } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 
 type ConfirmOptions = {
