@@ -31,7 +31,11 @@ const migration = await readFile(
   "utf8",
 );
 const performanceMigration = await readFile(
-  new URL("../supabase/migrations/20260928090000_dashboard_performance_realtime_hardening.sql", import.meta.url),
+  new URL("../supabase/migrations/20260928085807_dashboard_performance_realtime_hardening_20260928.sql", import.meta.url),
+  "utf8",
+);
+const realtimeHook = await readFile(
+  new URL("../src/dashboard/hooks/useDashboardRealtimeRefresh.ts", import.meta.url),
   "utf8",
 );
 
@@ -139,10 +143,12 @@ test("orders UI has truthful empty state", () => {
 });
 
 test("orders queue refreshes from targeted Realtime changes", () => {
-  assert.match(listPage, /channel\("dashboard-orders-live"\)/);
-  assert.match(listPage, /table: "store_orders"/);
-  assert.match(listPage, /table: "store_order_items"/);
-  assert.match(listPage, /supabase\.removeChannel\(channel\)/);
+  assert.match(
+    listPage,
+    /useDashboardRealtimeRefresh\(\["store_orders", "store_order_items"\]/,
+  );
+  assert.match(realtimeHook, /postgres_changes/);
+  assert.match(realtimeHook, /supabase\.removeChannel\(channel\)/);
   assert.match(performanceMigration, /alter publication supabase_realtime add table public\.store_orders/);
   assert.match(performanceMigration, /alter publication supabase_realtime add table public\.store_order_items/);
   assert.match(performanceMigration, /create or replace function public\.get_dashboard_order_stats/);
