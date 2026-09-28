@@ -33,7 +33,7 @@ test("migrated catalog pages do not import dashboard mock data", () => {
 });
 
 test("products page and global product search are Supabase-backed", () => {
-  assert.match(files.app, /listDashboardProductSearchIndex\(\)/);
+  assert.match(files.app, /searchDashboardProducts\(normalizedQuery, 5\)/);
   assert.doesNotMatch(files.app, /listDashboardProducts\(\)/);
   assert.match(
     files.routes,
@@ -49,7 +49,9 @@ test("products page and global product search are Supabase-backed", () => {
 
 test("dashboard catalog avoids eager heavy payloads", () => {
   assert.match(files.catalogData, /DASHBOARD_ROLE_CACHE_TTL_MS/);
-  assert.match(files.catalogData, /listDashboardProductSearchIndex/);
+  assert.match(files.catalogData, /searchDashboardProducts/);
+  assert.match(files.catalogData, /search_dashboard_products/);
+  assert.doesNotMatch(files.catalogData, /listDashboardProductSearchIndex/);
   assert.match(
     files.catalogData,
     /id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description/,
