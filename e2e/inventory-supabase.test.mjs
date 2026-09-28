@@ -22,6 +22,10 @@ const concurrencyMigration = await readFile(
   new URL("../supabase/migrations/20260928053000_inventory_procurement_optimistic_concurrency.sql", import.meta.url),
   "utf8",
 );
+const performanceMigration = await readFile(
+  new URL("../supabase/migrations/20260928090000_dashboard_performance_realtime_hardening.sql", import.meta.url),
+  "utf8",
+);
 
 test("inventory dashboard uses Supabase instead of mock storage", () => {
   assert.match(inventoryPage, /@\/dashboard\/data\/inventory/);
@@ -111,4 +115,14 @@ test("inventory movement search sanitizes raw PostgREST OR input", () => {
   assert.match(inventoryData, /reference_id\.ilike\.%\$\{search\}%,note\.ilike\.%\$\{search\}%/);
   assert.doesNotMatch(inventoryData, /reference_id\.ilike\.[^\n]*input\.search/);
   assert.doesNotMatch(inventoryData, /note\.ilike\.[^\n]*input\.search/);
+});
+
+
+test("inventory refreshes from targeted Realtime changes", () => {
+  assert.match(inventoryPage, /channel\("dashboard-inventory-live"\)/);
+  assert.match(inventoryPage, /table: "store_product_variants"/);
+  assert.match(inventoryPage, /table: "store_inventory_movements"/);
+  assert.match(inventoryPage, /supabase\.removeChannel\(channel\)/);
+  assert.match(performanceMigration, /alter publication supabase_realtime add table public\.store_product_variants/);
+  assert.match(performanceMigration, /alter publication supabase_realtime add table public\.store_inventory_movements/);
 });
