@@ -11,7 +11,7 @@ const [app, routes, catalog, data, variants, products, form, migration, atomicSa
   readFile(new URL("../src/dashboard/pages/ProductsPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProductFormPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919082451_product_management_step5.sql", import.meta.url), "utf8"),
-  readFile(new URL("../supabase/migrations/20260928050000_atomic_product_editor_save.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260928084456_atomic_product_editor_save_20260928.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/integrations/supabase/types.ts", import.meta.url), "utf8"),
 ]);
 
