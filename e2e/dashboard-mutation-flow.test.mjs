@@ -70,7 +70,7 @@ test("category mutations patch local dashboard state and guard duplicate deletes
 });
 
 
-test("product save avoids redundant catalog reads and editor refreshes", async () => {
+test("product save is one atomic editor mutation and avoids redundant catalog reads", async () => {
   const [catalog, form] = await Promise.all([
     read("src/dashboard/data/catalog.ts"),
     read("src/dashboard/pages/ProductFormPage.tsx"),
@@ -82,16 +82,12 @@ test("product save avoids redundant catalog reads and editor refreshes", async (
     "export type DashboardProductImage",
   );
 
-  assert.doesNotMatch(saveFlow, /listDashboardBrands\(\)|listDashboardCategories\(\)/);
-  assert.equal(
-    (saveFlow.match(/\.from\("store_product_variants"\)[\s\S]*?\.select\("\*"\)/g) ?? []).length,
-    1,
-    "product save should read the variant set only once",
-  );
-  assert.match(saveFlow, /Promise\.all\(\[/);
-  assert.match(saveFlow, /categoryRequest/);
-  assert.match(saveFlow, /imageRequest/);
-  assert.match(saveFlow, /const variantRows = preexistingVariants/);
+  assert.match(saveFlow, /looseSupabase\.rpc\(\s*"save_store_product_editor"/);
+  assert.match(saveFlow, /p_collection_ids: \[\.\.\.new Set\(input\.collectionIds\)\]/);
+  assert.doesNotMatch(saveFlow, /from\("store_products"\)\.(?:insert|update)/);
+  assert.doesNotMatch(saveFlow, /create_store_product_variant|update_store_product_variant/);
+  assert.doesNotMatch(saveFlow, /set_store_product_collections/);
+  assert.match(saveFlow, /broadcastStorefrontRefresh\(\)/);
 
   const editorSave = functionSlice(
     form,
@@ -99,16 +95,14 @@ test("product save avoids redundant catalog reads and editor refreshes", async (
     "const duplicate = async",
   );
 
+  assert.match(editorSave, /compareAt: form\.compareAt/);
+  assert.match(editorSave, /collectionIds: nextCollectionIds/);
+  assert.match(editorSave, /setPersistedCollectionIds\(nextCollectionIds\)/);
   assert.match(editorSave, /collectionsChanged/);
-  assert.match(editorSave, /if \(collectionsChanged\)/);
   assert.match(editorSave, /shouldRefreshVariantManager/);
   assert.match(editorSave, /if \(shouldRefreshVariantManager\)/);
-  assert.doesNotMatch(
-    editorSave,
-    /setDashboardProductCollections\(savedProduct\.id, collectionIds\)/,
-  );
+  assert.doesNotMatch(editorSave, /setDashboardProductCollections/);
 });
-
 
 test("product destructive actions use dashboard confirmation and scoped pending state", async () => {
   const [form, dialog] = await Promise.all([

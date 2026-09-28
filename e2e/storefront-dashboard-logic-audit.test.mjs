@@ -29,6 +29,7 @@ const [
   collectionRoute,
   backorderMigration,
   ledgerReconciliation,
+  atomicProductEditor,
   retiredCiDebug,
 ] = await Promise.all([
   read("src/stores/cartStore.ts"),
@@ -55,19 +56,25 @@ const [
   read("src/routes/collections.$handle.tsx"),
   read("supabase/migrations/20260926115500_fix_backorder_inventory_release.sql"),
   read("supabase/migrations/20260926115700_reconcile_inventory_movement_ledger.sql"),
+  read("supabase/migrations/20260928050000_atomic_product_editor_save.sql"),
   read("supabase/functions/ci-debug-log/index.ts"),
 ]);
 
-test("single-variant product stock edits use the audited variant RPC", () => {
+test("single-variant product stock edits stay atomic and audited", () => {
   const start = catalog.indexOf("export async function saveDashboardProduct");
   const end = catalog.indexOf("export type DashboardProductImage", start);
   assert.ok(start >= 0 && end > start);
   const save = catalog.slice(start, end);
 
-  assert.match(save, /rpc\("update_store_product_variant"/);
-  assert.match(save, /rpc\("create_store_product_variant"/);
-  assert.doesNotMatch(save, /from\("store_product_variants"\)\s*\.update\(variantPayload\)/);
+  assert.match(save, /save_store_product_editor/);
+  assert.doesNotMatch(save, /create_store_product_variant|update_store_product_variant/);
+  assert.doesNotMatch(save, /from\("store_product_variants"\)\s*\.update/);
   assert.match(save, /broadcastStorefrontRefresh\(\)/);
+
+  assert.match(atomicProductEditor, /insert into public\.store_product_variants/);
+  assert.match(atomicProductEditor, /update public\.store_product_variants/);
+  assert.match(atomicProductEditor, /insert into public\.store_inventory_movements/);
+  assert.match(atomicProductEditor, /'product_editor'/);
 });
 
 test("native cart synchronizes price, availability and quantity from live products", () => {

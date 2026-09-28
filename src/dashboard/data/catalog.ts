@@ -1,5 +1,6 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { createEphemeralPasskeyClient, supabase } from "@/integrations/supabase/client";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassword";
 import type { User } from "@supabase/supabase-js";
 import type { Tables } from "@/integrations/supabase/types";
@@ -161,7 +162,7 @@ export type DashboardProductInput = {
   imageUrl: string;
   seoTitle: string;
   seoDescription: string;
-  collectionId: string | null;
+  collectionIds: string[];
 };
 
 function throwIfError(error: { message: string } | null, label: string) {
@@ -176,15 +177,6 @@ function statusFromDb(status: string): DashboardProduct["status"] {
 
 function statusToDb(status: DashboardProduct["status"]) {
   return status.toLowerCase() as "active" | "draft" | "archived";
-}
-
-function slugify(value: string) {
-  return value
-    .normalize("NFKD")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "product";
 }
 
 const DASHBOARD_ROLE_CACHE_TTL_MS = 15_000;
@@ -1357,195 +1349,50 @@ async function uniqueHandle(title: string, existingId?: string) {
 export async function saveDashboardProduct(input: DashboardProductInput) {
   await requireDashboardRole();
 
-  const existingProductRequest = input.id
-    ? supabase
-        .from("store_products")
-        .select("id,handle,published_at")
-        .eq("id", input.id)
-        .maybeSingle()
-    : Promise.resolve({ data: null, error: null });
-
-  const variantRequest = input.id
-    ? supabase
-        .from("store_product_variants")
-        .select("*")
-        .eq("product_id", input.id)
-        .order("sort_order", { ascending: true })
-    : Promise.resolve({ data: [] as VariantRow[], error: null });
-
-  const categoryRequest = input.categoryId
-    ? supabase
-        .from("store_categories")
-        .select("id,name")
-        .eq("id", input.categoryId)
-        .maybeSingle()
-    : Promise.resolve({ data: null, error: null });
-
-  const imageRequest =
-    input.id && input.imageUrl.trim()
-      ? supabase
-          .from("store_product_images")
-          .select("id,url,alt_text")
-          .eq("product_id", input.id)
-          .order("is_primary", { ascending: false })
-          .order("sort_order", { ascending: true })
-          .limit(1)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null });
-
-  const [existingProductResult, variantResult, categoryResult, imageResult] =
-    await Promise.all([
-      existingProductRequest,
-      variantRequest,
-      categoryRequest,
-      imageRequest,
-    ]);
-
-  throwIfError(existingProductResult.error, "Loading product before save failed");
-  throwIfError(variantResult.error, "Loading product variants before save failed");
-  throwIfError(categoryResult.error, "Loading product category before save failed");
-  throwIfError(imageResult.error, "Loading product image before save failed");
-
-  const existingProduct = existingProductResult.data as
-    | Pick<ProductRow, "id" | "handle" | "published_at">
-    | null;
-  if (input.id && !existingProduct) throw new Error("Product not found.");
-
-  const preexistingVariants = (variantResult.data ?? []) as VariantRow[];
-  const category = categoryResult.data as { id: string; name: string } | null;
-  if (input.categoryId && !category) throw new Error("Selected category no longer exists.");
-
-  let variantManagedSeparately = preexistingVariants.length > 1;
-  const handle = existingProduct?.handle ?? (await uniqueHandle(input.title));
-  const productPayload = {
-    title: input.title.trim(),
-    handle,
-    description: input.description.trim(),
-    brand_id: input.brandId,
-    category_id: input.categoryId,
-    product_type: category?.name ?? null,
-    status: statusToDb(input.status),
-    currency: "USD",
-    track_inventory: true,
-    seo_title: input.seoTitle.trim() || null,
-    seo_description: input.seoDescription.trim() || null,
-    published_at:
-      input.status === "Active"
-        ? existingProduct?.published_at ?? new Date().toISOString()
-        : null,
-    ...(variantManagedSeparately
-      ? {}
-      : {
-          sku: input.sku.trim() || null,
-          barcode: input.barcode.trim() || null,
-          ...(existingProduct
-            ? {}
-            : {
-                base_price: input.price,
-                compare_at_price: input.compareAt,
-                stock_quantity: Math.max(0, Math.trunc(input.stock)),
-              }),
-        }),
-  };
-
-  let productId = input.id;
-  if (input.id) {
-    const { error } = await supabase.from("store_products").update(productPayload).eq("id", input.id);
-    throwIfError(error, "Updating product failed");
-  } else {
-    const { data, error } = await supabase
-      .from("store_products")
-      .insert(productPayload)
-      .select("id")
-      .single();
-    throwIfError(error, "Creating product failed");
-    productId = data?.id;
-  }
-  if (!productId) throw new Error("Product save completed without an id.");
-
-  const variantRows = preexistingVariants;
-  if (variantRows.length <= 1) {
-    const existingVariant = variantRows[0];
-    const variantPayload = {
-      p_title: existingVariant?.title ?? "Default",
-      p_sku: input.sku.trim(),
-      p_barcode: input.barcode.trim(),
+  const { data, error } = await looseSupabase.rpc(
+    "save_store_product_editor",
+    rpcArgs({
+      p_product_id: input.id ?? null,
+      p_title: input.title.trim(),
+      p_description: input.description.trim(),
+      p_brand_id: input.brandId,
+      p_category_id: input.categoryId,
+      p_status: statusToDb(input.status),
       p_price: input.price,
       p_compare_at_price: input.compareAt,
-      p_stock: Math.max(0, Math.trunc(input.stock)),
-      p_track_inventory: true,
-      p_allow_backorder: existingVariant?.allow_backorder ?? false,
-      p_options: existingVariant?.options ?? {},
-      p_image_url: existingVariant?.image_url ?? "",
-      p_sort_order: existingVariant?.sort_order ?? 0,
-      p_is_active: true,
-    };
+      p_sku: input.sku.trim(),
+      p_barcode: input.barcode.trim(),
+      p_stock: input.stock,
+      p_image_url: input.imageUrl.trim(),
+      p_seo_title: input.seoTitle.trim(),
+      p_seo_description: input.seoDescription.trim(),
+      p_collection_ids: [...new Set(input.collectionIds)],
+    }),
+  );
+  throwIfError(error, "Saving product failed");
 
-    if (existingVariant) {
-      const { error } = await supabase.rpc(
-        "update_store_product_variant",
-        rpcArgs({
-          p_variant_id: existingVariant.id,
-          ...variantPayload,
-        }),
-      );
-      throwIfError(error, "Updating product variant failed");
-    } else {
-      const { error } = await supabase.rpc(
-        "create_store_product_variant",
-        rpcArgs({
-          p_product_id: productId,
-          ...variantPayload,
-        }),
-      );
-      throwIfError(error, "Creating product variant failed");
-    }
-  }
-
-  if (input.imageUrl.trim()) {
-    const existingImage = imageResult.data as
-      | { id: string; url: string; alt_text: string | null }
-      | null;
-    const nextImageUrl = input.imageUrl.trim();
-    const nextAltText = input.title.trim();
-
-    if (existingImage) {
-      if (existingImage.url !== nextImageUrl || existingImage.alt_text !== nextAltText) {
-        const { error } = await supabase
-          .from("store_product_images")
-          .update({ url: nextImageUrl, alt_text: nextAltText, is_primary: true })
-          .eq("id", existingImage.id);
-        throwIfError(error, "Updating product image failed");
+  const result = data as
+    | {
+        id?: unknown;
+        handle?: unknown;
+        variant_managed_separately?: unknown;
       }
-    } else {
-      const { error } = await supabase.from("store_product_images").insert({
-        product_id: productId,
-        url: nextImageUrl,
-        alt_text: nextAltText,
-        is_primary: true,
-        sort_order: 0,
-      });
-      throwIfError(error, "Creating product image failed");
-    }
-  }
+    | null;
 
-  if (input.collectionId) {
-    const { error } = await supabase.from("store_collection_products").upsert(
-      {
-        collection_id: input.collectionId,
-        product_id: productId,
-        sort_order: 0,
-      },
-      { onConflict: "collection_id,product_id" },
-    );
-    throwIfError(error, "Assigning collection failed");
+  const productId = typeof result?.id === "string" ? result.id : "";
+  const handle = typeof result?.handle === "string" ? result.handle : "";
+  if (!productId || !handle) {
+    throw new Error("Product save completed without a valid result.");
   }
 
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();
-  return { id: productId, handle, variantManagedSeparately };
+  return {
+    id: productId,
+    handle,
+    variantManagedSeparately: result?.variant_managed_separately === true,
+  };
 }
-
 
 export type DashboardProductImage = {
   id: string;

@@ -28,7 +28,6 @@ import {
   deleteDashboardProductSafe,
   duplicateDashboardProduct,
   loadDashboardProductCollectionIds,
-  setDashboardProductCollections,
   setDashboardProductsStatus,
   type DashboardProductVariant,
 } from "@/dashboard/data/productManagement";
@@ -215,6 +214,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
     const validation = validateProductDraft({
       title: form.title,
       price: form.price,
+      compareAt: form.compareAt,
       sku: form.sku,
       stock: form.stock,
     });
@@ -264,12 +264,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
         imageUrl: form.imageUrl,
         seoTitle: form.seoTitle,
         seoDescription: form.seoDescription,
-        collectionId: null,
+        collectionIds: nextCollectionIds,
       });
-      if (collectionsChanged) {
-        await setDashboardProductCollections(savedProduct.id, nextCollectionIds);
-        setPersistedCollectionIds(nextCollectionIds);
-      }
+      setPersistedCollectionIds(nextCollectionIds);
 
       if (id) {
         const selectedBrand = brands.find((brand) => brand.id === form.brandId);
