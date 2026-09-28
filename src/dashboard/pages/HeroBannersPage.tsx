@@ -1,3 +1,4 @@
+import { confirmDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import { HeroVisualEditor } from "@/dashboard/components/HeroVisualEditor";
 import {
   ArrowDown,
@@ -344,12 +345,15 @@ export default function HeroBannersPage() {
     return () => window.removeEventListener("beforeunload", protect);
   }, [dirty]);
 
-  const newSlide = () => {
+  const newSlide = async () => {
     if (busy) {
       toast.info("Wait for the current Hero action to finish first.");
       return;
     }
-    if (dirty && !window.confirm("Discard unsaved Hero changes?")) return;
+    if (dirty && !(await confirmDashboardAction(
+      "Discard unsaved Hero changes?",
+      { title: "Discard Hero changes", confirmLabel: "Discard" },
+    ))) return;
     clearPendingHeroImages();
     setSelectedId(null);
     setForm(EMPTY_FORM);
@@ -362,7 +366,10 @@ export default function HeroBannersPage() {
       toast.info("Wait for the current Hero action to finish first.");
       return;
     }
-    if (dirty && !window.confirm("Refresh and discard unsaved Hero changes?")) return;
+    if (dirty && !(await confirmDashboardAction(
+      "Refresh and discard unsaved Hero changes?",
+      { title: "Refresh Hero editor", confirmLabel: "Refresh" },
+    ))) return;
     clearPendingHeroImages();
     setLastOptimizations({});
     await load();
@@ -484,7 +491,10 @@ export default function HeroBannersPage() {
     const message = dirty
       ? "Delete this Hero slide? Unsaved changes will be discarded. Uploaded media stays in Media Library."
       : "Delete this Hero slide? Uploaded media stays in Media Library.";
-    if (!window.confirm(message)) return;
+    if (!(await confirmDashboardAction(message, {
+      title: "Delete Hero slide",
+      confirmLabel: "Delete",
+    }))) return;
     try {
       await deleteDashboardHeroSlide(selected.id);
       clearPendingHeroImages();
@@ -730,12 +740,15 @@ export default function HeroBannersPage() {
               return (
                 <button
                   key={slide.id}
-                  onClick={() => {
+                  onClick={async () => {
                     if (busy) {
                       toast.info("Wait for the current Hero action to finish first.");
                       return;
                     }
-                    if (dirty && !window.confirm("Discard unsaved Hero changes?")) return;
+                    if (dirty && !(await confirmDashboardAction(
+                      "Discard unsaved Hero changes?",
+                      { title: "Switch Hero slide", confirmLabel: "Discard" },
+                    ))) return;
                     clearPendingHeroImages();
                     setLastOptimizations({});
                     setSelectedId(slide.id);
