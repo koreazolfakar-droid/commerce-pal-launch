@@ -16,6 +16,7 @@ const [
   productRoute,
   migration,
   atomicSpecificationMigration,
+  bilingualSpecificationMigration,
 ] = await Promise.all([
   readFile(new URL("../src/lib/productSpecifications.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/categories.ts", import.meta.url), "utf8"),
@@ -40,6 +41,10 @@ const [
   ),
   readFile(
     new URL("../supabase/migrations/20260928061000_atomic_product_editor_specifications.sql", import.meta.url),
+    "utf8",
+  ),
+  readFile(
+    new URL("../supabase/migrations/20260928091000_bilingual_product_specification_labels.sql", import.meta.url),
     "utf8",
   ),
 ]);
@@ -125,4 +130,20 @@ test("database migration preserves existing values and constrains specification 
   );
   assert.doesNotMatch(migration, /delete from public\.store_products/);
   assert.doesNotMatch(migration, /update public\.store_categories\s+set spec_template =/);
+});
+
+
+test("specification templates preserve Arabic labels end to end", () => {
+  assert.match(specificationModel, /labelAr\?: string/);
+  assert.match(specificationModel, /titleAr\?: string/);
+  assert.match(categoryEditor, /Specification section title in Arabic/);
+  assert.match(categoryEditor, /Specification field label in Arabic/);
+  assert.match(storeTypes, /titleAr\?: string/);
+  assert.match(storeTypes, /labelAr\?: string/);
+  assert.match(productRoute, /language === "ar" \? group\.titleAr/);
+  assert.match(productRoute, /language === "ar" \? row\.labelAr/);
+  assert.match(bilingualSpecificationMigration, /private\.spacecall_spec_section_ar/);
+  assert.match(bilingualSpecificationMigration, /private\.spacecall_spec_field_ar/);
+  assert.match(bilingualSpecificationMigration, /labelAr/);
+  assert.match(bilingualSpecificationMigration, /titleAr/);
 });
