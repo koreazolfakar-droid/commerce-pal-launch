@@ -110,20 +110,24 @@ fn validate_database_url(database_url: &str) -> Result<(), ConfigError> {
         return Err(ConfigError::InvalidDatabaseUrlScheme);
     }
 
-    let secure_ssl_mode = normalized
+    let ssl_modes: Vec<&str> = normalized
         .split_once('?')
         .map(|(_, query)| {
-            query.split('&').any(|parameter| {
-                let Some((key, value)) = parameter.split_once('=') else {
-                    return false;
-                };
-
-                key == "sslmode" && matches!(value, "require" | "verify-ca" | "verify-full")
-            })
+            query
+                .split('&')
+                .filter_map(|parameter| {
+                    let (key, value) = parameter.split_once('=')?;
+                    (key == "sslmode").then_some(value)
+                })
+                .collect()
         })
-        .unwrap_or(false);
+        .unwrap_or_default();
 
-    if !secure_ssl_mode {
+    if ssl_modes.len() != 1 {
+        return Err(ConfigError::DatabaseTlsRequired);
+    }
+
+    if !matches!(ssl_modes[0], "require" | "verify-ca" | "verify-full") {
         return Err(ConfigError::DatabaseTlsRequired);
     }
 
@@ -193,6 +197,8 @@ mod tests {
             "postgresql://user:password@db.example.com:5432/postgres?sslmode=disable",
             "postgresql://user:password@db.example.com:5432/postgres?sslmode=prefer",
             "postgresql://user:password@db.example.com:5432/postgres?sslmode=requirement",
+            "postgresql://user:password@db.example.com:5432/postgres?sslmode=require&sslmode=disable",
+            "postgresql://user:password@db.example.com:5432/postgres?sslmode=disable&sslmode=require",
         ] {
             assert!(matches!(
                 validate_database_url(url),
