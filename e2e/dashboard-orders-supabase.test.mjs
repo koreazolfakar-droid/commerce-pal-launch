@@ -30,6 +30,10 @@ const migration = await readFile(
   new URL("../supabase/migrations/20260921053341_secure_order_workflow.sql", import.meta.url),
   "utf8",
 );
+const performanceMigration = await readFile(
+  new URL("../supabase/migrations/20260928090000_dashboard_performance_realtime_hardening.sql", import.meta.url),
+  "utf8",
+);
 
 test("active orders routes lazy-load Supabase-backed pages", () => {
   assert.match(routes, /const ordersPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/OrdersPage"\)\)/);
@@ -54,6 +58,8 @@ test("orders data layer reads Supabase and mutates only through guarded RPCs", (
   assert.match(data, /rpc\("update_store_order_status"/);
   assert.match(data, /rpc\("update_store_order_payment_status"/);
   assert.match(data, /rpc\("update_store_order_delivery"/);
+  assert.match(data, /rpc\("get_dashboard_order_stats"/);
+  assert.doesNotMatch(data, /countOrders\(/);
   assert.match(data, /p_expected_version/);
 });
 
@@ -130,4 +136,14 @@ test("orders queue opens an on-demand quick drawer before full detail navigation
 test("orders UI has truthful empty state", () => {
   assert.match(listPage, /No orders yet\./);
   assert.match(listPage, /first successful storefront order will appear here automatically/i);
+});
+
+test("orders queue refreshes from targeted Realtime changes", () => {
+  assert.match(listPage, /channel\("dashboard-orders-live"\)/);
+  assert.match(listPage, /table: "store_orders"/);
+  assert.match(listPage, /table: "store_order_items"/);
+  assert.match(listPage, /supabase\.removeChannel\(channel\)/);
+  assert.match(performanceMigration, /alter publication supabase_realtime add table public\.store_orders/);
+  assert.match(performanceMigration, /alter publication supabase_realtime add table public\.store_order_items/);
+  assert.match(performanceMigration, /create or replace function public\.get_dashboard_order_stats/);
 });
