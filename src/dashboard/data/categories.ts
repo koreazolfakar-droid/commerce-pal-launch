@@ -1,6 +1,12 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
+import {
+  normalizeSpecificationTemplate,
+  specificationTemplateToJson,
+  type ProductSpecificationTemplate,
+} from "@/lib/productSpecifications";
 import {
   getDashboardRole,
   listDashboardProducts,
@@ -58,6 +64,7 @@ export type CatalogCategory = {
   seoDescription?: string;
   createdAt?: string;
   updatedAt?: string;
+  specTemplate: ProductSpecificationTemplate;
 };
 
 function throwIfError(error: { message: string } | null, label: string) {
@@ -85,6 +92,7 @@ function mapCategory(row: CategoryRow): CatalogCategory {
     ...(row.seo_description ? { seoDescription: row.seo_description } : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    specTemplate: normalizeSpecificationTemplate(row.spec_template),
   };
 }
 
@@ -192,6 +200,7 @@ export async function createDashboardCategory(category: CatalogCategory) {
       is_featured: category.featured,
       seo_title: category.seoTitle?.trim() || null,
       seo_description: category.seoDescription?.trim() || null,
+      spec_template: specificationTemplateToJson(category.specTemplate),
     })
     .select("*")
     .single();
@@ -214,7 +223,7 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   const previousImageUrl = existing?.image_url ?? null;
   const nextImageUrl = category.image?.trim() || "";
 
-  const { error } = await supabase.rpc("update_store_category", rpcArgs({
+  const { error } = await looseSupabase.rpc("update_store_category_with_spec_template", rpcArgs({
     p_category_id: category.id,
     p_name: category.name.trim(),
     p_slug: normalizeCategorySlug(category.slug || category.name),
@@ -226,6 +235,7 @@ export async function updateDashboardCategory(category: CatalogCategory) {
     p_is_featured: category.featured,
     p_seo_title: category.seoTitle?.trim() || "",
     p_seo_description: category.seoDescription?.trim() || "",
+    p_spec_template: specificationTemplateToJson(category.specTemplate),
   }));
   throwIfError(error, "Updating category failed");
 
