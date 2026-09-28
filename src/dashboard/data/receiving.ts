@@ -1,6 +1,7 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { getDashboardRole, type DashboardRole } from "@/dashboard/data/catalog";
 import { supabase } from "@/integrations/supabase/client";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 
@@ -1363,7 +1364,7 @@ export async function createPurchaseOrder(input: CreatePurchaseOrderInput) {
 
 export async function submitPurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("submit_store_purchase_order_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("submit_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_expected_updated_at: expectedUpdatedAt,
   }));
@@ -1438,7 +1439,7 @@ export async function updateReceivingDraft(input: UpdateReceivingDraftInput) {
     overage_reason: line.overageReason?.trim() || null,
   }));
 
-  const { data, error } = await supabase.rpc("update_store_receiving_draft_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("update_store_receiving_draft_v2", rpcArgs({
     p_receiving_id: input.receivingId,
     p_expected_updated_at: input.expectedUpdatedAt,
     p_invoice_number: input.invoiceNumber.trim(),
@@ -1452,7 +1453,7 @@ export async function updateReceivingDraft(input: UpdateReceivingDraftInput) {
 
 export async function approveReceiving(receivingId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("approve_store_receiving_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("approve_store_receiving_v2", rpcArgs({
     p_receiving_id: receivingId,
     p_expected_updated_at: expectedUpdatedAt,
   }));
@@ -1482,7 +1483,7 @@ function poItemsPayload(items: CreatePurchaseOrderInput["items"]): Json {
 export async function updatePurchaseOrderDraft(input: UpdatePurchaseOrderDraftInput) {
   await requireDashboardStaff();
   if (!input.items.length) throw new Error("Add at least one PO item.");
-  const { data, error } = await supabase.rpc("update_store_purchase_order_draft_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("update_store_purchase_order_draft_v2", rpcArgs({
     p_purchase_order_id: input.purchaseOrderId,
     p_expected_updated_at: input.expectedUpdatedAt,
     p_supplier_id: input.supplierId,
@@ -1503,7 +1504,7 @@ export async function updatePurchaseOrderDraft(input: UpdatePurchaseOrderDraftIn
 
 export async function deletePurchaseOrderDraft(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("delete_store_purchase_order_draft_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("delete_store_purchase_order_draft_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_expected_updated_at: expectedUpdatedAt,
   }));
@@ -1513,7 +1514,7 @@ export async function deletePurchaseOrderDraft(purchaseOrderId: string, expected
 
 export async function approvePurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("approve_store_purchase_order_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("approve_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_expected_updated_at: expectedUpdatedAt,
   }));
@@ -1523,7 +1524,7 @@ export async function approvePurchaseOrder(purchaseOrderId: string, expectedUpda
 
 export async function issuePurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("issue_store_purchase_order_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("issue_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_expected_updated_at: expectedUpdatedAt,
   }));
@@ -1533,7 +1534,7 @@ export async function issuePurchaseOrder(purchaseOrderId: string, expectedUpdate
 
 export async function closePurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("close_store_purchase_order_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("close_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_expected_updated_at: expectedUpdatedAt,
   }));
@@ -1549,7 +1550,7 @@ export async function rejectPurchaseOrder(
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Rejection reason is required.");
-  const { data, error } = await supabase.rpc("reject_store_purchase_order_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("reject_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_expected_updated_at: expectedUpdatedAt,
     p_reason: cleanReason,
@@ -1560,7 +1561,7 @@ export async function rejectPurchaseOrder(
 
 export async function reopenPurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("reopen_store_purchase_order_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("reopen_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_expected_updated_at: expectedUpdatedAt,
   }));
@@ -1576,7 +1577,7 @@ export async function cancelPurchaseOrder(
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Cancellation reason is required.");
-  const { data, error } = await supabase.rpc("cancel_store_purchase_order_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("cancel_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
     p_expected_updated_at: expectedUpdatedAt,
     p_reason: cleanReason,
@@ -1593,7 +1594,7 @@ export async function voidReceiving(
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Void reason is required.");
-  const { data, error } = await supabase.rpc("void_store_receiving_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("void_store_receiving_v2", rpcArgs({
     p_receiving_id: receivingId,
     p_expected_updated_at: expectedUpdatedAt,
     p_reason: cleanReason,
