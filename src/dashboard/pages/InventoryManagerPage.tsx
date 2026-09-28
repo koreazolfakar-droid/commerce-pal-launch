@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useDashboardRealtimeRefresh } from "@/dashboard/hooks/useDashboardRealtimeRefresh";
 import InventoryMovementHistoryDrawer from "@/dashboard/components/inventory/InventoryMovementHistoryDrawer";
 import {
   adjustInventoryDelta,
@@ -159,6 +160,8 @@ export default function InventoryManagerPage() {
   useEffect(() => {
     void load(false);
   }, [load]);
+
+  useDashboardRealtimeRefresh(["store_product_variants"], () => void load(false));
 
   useEffect(() => {
     let active = true;
