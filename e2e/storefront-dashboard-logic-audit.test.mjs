@@ -56,7 +56,7 @@ const [
   read("src/routes/collections.$handle.tsx"),
   read("supabase/migrations/20260926115500_fix_backorder_inventory_release.sql"),
   read("supabase/migrations/20260926115700_reconcile_inventory_movement_ledger.sql"),
-  read("supabase/migrations/20260928050000_atomic_product_editor_save.sql"),
+  read("supabase/migrations/20260928084456_atomic_product_editor_save_20260928.sql"),
   read("supabase/functions/ci-debug-log/index.ts"),
 ]);
 
