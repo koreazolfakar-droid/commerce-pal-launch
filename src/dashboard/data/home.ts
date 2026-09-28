@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 
@@ -6,6 +7,12 @@ type OrderRow = Pick<
   Tables<"store_orders">,
   "id" | "order_number" | "public_order_number" | "status" | "payment_status" | "customer_name" | "total" | "currency" | "created_at"
 >;
+type SaleRow = {
+  order_id: string;
+  payment_status: "paid" | "partially_refunded";
+  total: number | string;
+  completed_at: string;
+};
 type OrderItemRow = Pick<
   Tables<"store_order_items">,
   "order_id" | "product_id" | "title" | "quantity" | "line_total"
@@ -84,16 +91,24 @@ function dayKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-function buildTrend(start: Date, orders: OrderRow[]): DashboardHomeTrendPoint[] {
+function buildTrend(
+  start: Date,
+  orders: OrderRow[],
+  sales: SaleRow[],
+): DashboardHomeTrendPoint[] {
   const byDay = new Map<string, { revenue: number; orders: number }>();
 
   for (const order of orders) {
     const key = dayKey(new Date(order.created_at));
     const current = byDay.get(key) ?? { revenue: 0, orders: 0 };
-    const cancelled = order.status.toLowerCase() === "cancelled";
-    const refunded = order.payment_status.toLowerCase() === "refunded";
     current.orders += 1;
-    if (!cancelled && !refunded) current.revenue += Number(order.total) || 0;
+    byDay.set(key, current);
+  }
+
+  for (const sale of sales) {
+    const key = dayKey(new Date(sale.completed_at));
+    const current = byDay.get(key) ?? { revenue: 0, orders: 0 };
+    current.revenue += Number(sale.total) || 0;
     byDay.set(key, current);
   }
 
@@ -127,6 +142,7 @@ export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot
     brandResult,
     customerCountResult,
     periodOrdersResult,
+    periodSalesResult,
     recentOrdersResult,
   ] = await Promise.all([
     supabase
@@ -147,6 +163,13 @@ export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot
       .gte("created_at", start.toISOString())
       .lte("created_at", end.toISOString())
       .order("created_at", { ascending: true }),
+    looseSupabase
+      .from("store_sales")
+      .select("order_id,payment_status,total,completed_at")
+      .gte("completed_at", start.toISOString())
+      .lte("completed_at", end.toISOString())
+      .in("payment_status", ["paid", "partially_refunded"])
+      .order("completed_at", { ascending: true }),
     supabase
       .from("store_orders")
       .select("id,order_number,public_order_number,status,payment_status,customer_name,total,currency,created_at")
@@ -159,21 +182,23 @@ export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot
   throwIfError(brandResult.error, "Loading dashboard brands failed");
   throwIfError(customerCountResult.error, "Loading dashboard customers failed");
   throwIfError(periodOrdersResult.error, "Loading dashboard orders failed");
+  throwIfError(periodSalesResult.error, "Loading dashboard sales failed");
   throwIfError(recentOrdersResult.error, "Loading recent orders failed");
 
   const products = (productResult.data ?? []) as ProductRow[];
   const variants = (variantResult.data ?? []) as VariantRow[];
   const brands = (brandResult.data ?? []) as BrandRow[];
   const periodOrders = (periodOrdersResult.data ?? []) as OrderRow[];
+  const periodSales = (periodSalesResult.data ?? []) as SaleRow[];
   const recentOrders = (recentOrdersResult.data ?? []) as OrderRow[];
 
-  const orderIds = periodOrders.map((order) => order.id);
+  const saleOrderIds = periodSales.map((sale) => sale.order_id);
   let orderItems: OrderItemRow[] = [];
-  if (orderIds.length) {
+  if (saleOrderIds.length) {
     const { data, error } = await supabase
       .from("store_order_items")
       .select("order_id,product_id,title,quantity,line_total")
-      .in("order_id", orderIds);
+      .in("order_id", saleOrderIds);
     throwIfError(error, "Loading dashboard order items failed");
     orderItems = (data ?? []) as OrderItemRow[];
   }
@@ -224,11 +249,7 @@ export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot
     .slice(0, 5);
 
   const trackedVariants = variants.filter((variant) => variant.track_inventory && variant.is_active);
-  const totalSales = periodOrders.reduce((sum, order) => {
-    const cancelled = order.status.toLowerCase() === "cancelled";
-    const refunded = order.payment_status.toLowerCase() === "refunded";
-    return cancelled || refunded ? sum : sum + (Number(order.total) || 0);
-  }, 0);
+  const totalSales = periodSales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0);
 
   return {
     periodStart: start.toISOString(),
@@ -254,7 +275,7 @@ export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot
       paymentStatus: order.payment_status,
       createdAt: order.created_at,
     })),
-    trend: buildTrend(start, periodOrders),
+    trend: buildTrend(start, periodOrders, periodSales),
     topProducts,
     topBrands,
   };

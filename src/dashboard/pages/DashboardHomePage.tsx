@@ -189,9 +189,9 @@ export default function DashboardHomePage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           icon={BarChart3}
-          label="Order value"
+          label="Gross sales"
           value={money(snapshot.totalSales)}
-          detail="Non-cancelled / non-refunded · last 30 days"
+          detail="Completed paid sales · full refunds excluded"
         />
         <KpiCard
           icon={ShoppingBag}
@@ -241,7 +241,7 @@ export default function DashboardHomePage() {
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <Panel title="Revenue trend" subtitle="Last 30 days from store_orders">
+        <Panel title="Revenue trend" subtitle="Completed sales from store_sales · last 30 days">
           <div className="h-[280px] p-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={snapshot.trend} margin={{ top: 10, right: 8, left: -10, bottom: 0 }}>
@@ -313,7 +313,7 @@ export default function DashboardHomePage() {
         </Panel>
 
         <div className="grid gap-4">
-          <Panel title="Top selling products" subtitle="Last 30 days">
+          <Panel title="Top selling products" subtitle="Completed sales · last 30 days">
             {snapshot.topProducts.length ? (
               <div className="divide-y divide-slate-100 px-5">
                 {snapshot.topProducts.map((product, index) => (
@@ -332,7 +332,7 @@ export default function DashboardHomePage() {
             )}
           </Panel>
 
-          <Panel title="Top brands" subtitle="By order value · last 30 days">
+          <Panel title="Top brands" subtitle="By completed sale value · last 30 days">
             {snapshot.topBrands.length ? (
               <div className="space-y-3 px-5 py-4">
                 {snapshot.topBrands.map((brand) => (

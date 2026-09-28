@@ -28,11 +28,24 @@ test("live dashboard home does not import mock business data", () => {
 
 test("dashboard home reads truthful metrics from Supabase", () => {
   assert.match(data, /from\("store_orders"\)/);
+  assert.match(data, /from\("store_sales"\)/);
   assert.match(data, /from\("store_order_items"\)/);
   assert.match(data, /from\("store_customers"\)/);
   assert.match(data, /from\("store_products"\)/);
   assert.match(data, /from\("store_product_variants"\)/);
   assert.match(data, /from\("cms_brands"\)/);
+});
+
+test("dashboard home sales metrics only use completed eligible sales", () => {
+  assert.match(data, /\.in\("payment_status", \["paid", "partially_refunded"\]\)/);
+  assert.match(data, /const saleOrderIds = periodSales\.map\(\(sale\) => sale\.order_id\)/);
+  assert.match(data, /\.in\("order_id", saleOrderIds\)/);
+  assert.match(
+    data,
+    /const totalSales = periodSales\.reduce\(\(sum, sale\) => sum \+ \(Number\(sale\.total\) \|\| 0\), 0\)/,
+  );
+  assert.match(page, /Gross sales/);
+  assert.match(page, /Completed paid sales · full refunds excluded/);
 });
 
 test("dashboard home has truthful empty states", () => {
