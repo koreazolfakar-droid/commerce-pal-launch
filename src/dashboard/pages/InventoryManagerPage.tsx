@@ -161,7 +161,7 @@ export default function InventoryManagerPage() {
     void load(false);
   }, [load]);
 
-  useDashboardRealtimeRefresh(["store_product_variants"], () => void load(false));
+  useDashboardRealtimeRefresh(["store_product_variants", "store_inventory_movements"], () => void load(false));
 
   useEffect(() => {
     let active = true;
