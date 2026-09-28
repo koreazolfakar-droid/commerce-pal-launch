@@ -237,32 +237,53 @@ function ProductPage() {
     const structuredGroups = node.specificationGroups ?? [];
     const structuredLabels = new Set(
       structuredGroups.flatMap((group) =>
-        group.rows.map((row) => row.label.trim().toLocaleLowerCase()),
+        group.rows.flatMap((row) =>
+          [row.label, row.labelAr]
+            .filter((label): label is string => Boolean(label?.trim()))
+            .map((label) => label.trim().toLocaleLowerCase()),
+        ),
       ),
     );
+    const localizedStructuredGroups = structuredGroups.map((group) => ({
+      title: language === "ar" ? group.titleAr?.trim() || group.title : group.title,
+      rows: group.rows.map((row) => ({
+        label: language === "ar" ? row.labelAr?.trim() || row.label : row.label,
+        value: row.value,
+      })),
+    }));
     const fallbackRows: SpecRow[] = [
       ...content.specs,
       ...(selectedVariant?.selectedOptions ?? [])
         .filter((option) => option.value !== "Default Title")
         .map((option) => ({ label: option.name, value: option.value })),
-      ...(node.productType ? [{ label: "Product type", value: node.productType }] : []),
-      ...(node.vendor ? [{ label: "Brand", value: node.vendor }] : []),
+      ...(node.productType
+        ? [{ label: language === "ar" ? "نوع المنتج" : "Product type", value: node.productType }]
+        : []),
+      ...(node.vendor
+        ? [{ label: language === "ar" ? "العلامة التجارية" : "Brand", value: node.vendor }]
+        : []),
       ...(selectedVariant?.sku ? [{ label: "SKU", value: selectedVariant.sku }] : []),
-      ...(selectedVariant?.barcode ? [{ label: "Barcode", value: selectedVariant.barcode }] : []),
+      ...(selectedVariant?.barcode
+        ? [{ label: language === "ar" ? "الباركود" : "Barcode", value: selectedVariant.barcode }]
+        : []),
       ...(selectedVariant?.weight != null &&
       selectedVariant.weight > 0 &&
       selectedVariant.weightUnit
-        ? [{ label: "Weight", value: `${selectedVariant.weight} ${selectedVariant.weightUnit}` }]
+        ? [{
+            label: language === "ar" ? "الوزن" : "Weight",
+            value: `${selectedVariant.weight} ${selectedVariant.weightUnit}`,
+          }]
         : []),
     ].filter((row) => !structuredLabels.has(row.label.trim().toLocaleLowerCase()));
 
-    return [...structuredGroups, ...groupSpecs(fallbackRows)];
+    return [...localizedStructuredGroups, ...groupSpecs(fallbackRows)];
   }, [
     content.specs,
     selectedVariant,
     node.productType,
     node.vendor,
     node.specificationGroups,
+    language,
   ]);
 
   const similar = useMemo(() => {
@@ -520,7 +541,7 @@ function ProductPage() {
                     value="overview"
                     className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
                   >
-                    Description
+                    {language === "ar" ? "الوصف" : "Description"}
                   </TabsTrigger>
                 )}
                 {hasSpecs && (
@@ -528,7 +549,7 @@ function ProductPage() {
                     value="specifications"
                     className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
                   >
-                    Specifications
+                    {language === "ar" ? "المواصفات" : "Specifications"}
                   </TabsTrigger>
                 )}
               </TabsList>
@@ -558,7 +579,7 @@ function ProductPage() {
             {hasBox && (
               <section aria-labelledby="product-box-heading">
                 <h2 id="product-box-heading" className="mb-3 text-base font-semibold">
-                  In the box
+                  {language === "ar" ? "محتويات العلبة" : "In the box"}
                 </h2>
                 <ProseSections sections={content.box} />
               </section>
@@ -567,7 +588,7 @@ function ProductPage() {
             {hasShipping && (
               <section className={cn(hasBox && "border-t border-border/60 pt-6")} aria-labelledby="product-shipping-heading">
                 <h2 id="product-shipping-heading" className="mb-3 text-base font-semibold">
-                  Shipping &amp; returns
+                  {language === "ar" ? "الشحن والإرجاع" : "Shipping & returns"}
                 </h2>
                 <ProseSections sections={content.shipping} />
               </section>
