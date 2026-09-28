@@ -5,6 +5,13 @@ import type { User } from "@supabase/supabase-js";
 import type { Tables } from "@/integrations/supabase/types";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 import { convertProductImageToWebp, type ProductImageConversionResult, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
+import {
+  normalizeProductSpecifications,
+  normalizeSpecificationTemplate,
+  productSpecificationsToJson,
+  type ProductSpecificationTemplate,
+  type ProductSpecificationValues,
+} from "@/lib/productSpecifications";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -27,6 +34,7 @@ type ProductListRow = Pick<
   | "barcode"
   | "seo_title"
   | "seo_description"
+  | "specifications"
 >;
 type VariantListRow = Pick<
   VariantRow,
@@ -108,6 +116,7 @@ export type DashboardCategory = {
   name: string;
   slug: string;
   active: boolean;
+  specTemplate: ProductSpecificationTemplate;
 };
 
 export type DashboardCollection = {
@@ -135,6 +144,7 @@ export type DashboardProduct = {
   image: string;
   seoTitle: string;
   seoDescription: string;
+  specifications: ProductSpecificationValues;
   variantCount: number;
 };
 
@@ -161,6 +171,7 @@ export type DashboardProductInput = {
   imageUrl: string;
   seoTitle: string;
   seoDescription: string;
+  specifications: ProductSpecificationValues;
   collectionId: string | null;
 };
 
@@ -1111,7 +1122,7 @@ export async function listDashboardCategories(): Promise<DashboardCategory[]> {
   await requireDashboardRole();
   const { data, error } = await supabase
     .from("store_categories")
-    .select("id,name,slug,is_active")
+    .select("id,name,slug,is_active,spec_template")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
   throwIfError(error, "Loading categories failed");
@@ -1120,6 +1131,7 @@ export async function listDashboardCategories(): Promise<DashboardCategory[]> {
     name: row.name,
     slug: row.slug,
     active: row.is_active,
+    specTemplate: normalizeSpecificationTemplate(row.spec_template),
   }));
 }
 
@@ -1151,7 +1163,7 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
     supabase
       .from("store_products")
       .select(
-        "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description",
+        "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description,specifications",
       )
       .order("updated_at", { ascending: false }),
     supabase
@@ -1217,6 +1229,7 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
       image: image?.url ?? "",
       seoTitle: row.seo_title ?? "",
       seoDescription: row.seo_description ?? "",
+      specifications: normalizeProductSpecifications(row.specifications),
       variantCount: productVariants.length,
     };
   });
@@ -1270,7 +1283,7 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
   const productResult = await supabase
     .from("store_products")
     .select(
-      "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description",
+      "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description,specifications",
     )
     .eq("id", id)
     .maybeSingle();
@@ -1333,6 +1346,7 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
     image: image?.url ?? "",
     seoTitle: row.seo_title ?? "",
     seoDescription: row.seo_description ?? "",
+    specifications: normalizeProductSpecifications(row.specifications),
     variantCount: variants.length,
   };
 }
@@ -1376,7 +1390,7 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   const categoryRequest = input.categoryId
     ? supabase
         .from("store_categories")
-        .select("id,name")
+        .select("id,name,spec_template")
         .eq("id", input.categoryId)
         .maybeSingle()
     : Promise.resolve({ data: null, error: null });
@@ -1412,7 +1426,9 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
   if (input.id && !existingProduct) throw new Error("Product not found.");
 
   const preexistingVariants = (variantResult.data ?? []) as VariantRow[];
-  const category = categoryResult.data as { id: string; name: string } | null;
+  const category = categoryResult.data as
+    | { id: string; name: string; spec_template: unknown }
+    | null;
   if (input.categoryId && !category) throw new Error("Selected category no longer exists.");
 
   let variantManagedSeparately = preexistingVariants.length > 1;
@@ -1429,6 +1445,12 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
     track_inventory: true,
     seo_title: input.seoTitle.trim() || null,
     seo_description: input.seoDescription.trim() || null,
+    specifications: productSpecificationsToJson(
+      normalizeProductSpecifications(
+        input.specifications,
+        normalizeSpecificationTemplate(category?.spec_template),
+      ),
+    ),
     published_at:
       input.status === "Active"
         ? existingProduct?.published_at ?? new Date().toISOString()
