@@ -234,7 +234,13 @@ function ProductPage() {
   );
 
   const specGroups = useMemo(() => {
-    const rows: SpecRow[] = [
+    const structuredGroups = node.specificationGroups ?? [];
+    const structuredLabels = new Set(
+      structuredGroups.flatMap((group) =>
+        group.rows.map((row) => row.label.trim().toLocaleLowerCase()),
+      ),
+    );
+    const fallbackRows: SpecRow[] = [
       ...content.specs,
       ...(selectedVariant?.selectedOptions ?? [])
         .filter((option) => option.value !== "Default Title")
@@ -248,9 +254,16 @@ function ProductPage() {
       selectedVariant.weightUnit
         ? [{ label: "Weight", value: `${selectedVariant.weight} ${selectedVariant.weightUnit}` }]
         : []),
-    ];
-    return groupSpecs(rows);
-  }, [content.specs, selectedVariant, node.productType, node.vendor]);
+    ].filter((row) => !structuredLabels.has(row.label.trim().toLocaleLowerCase()));
+
+    return [...structuredGroups, ...groupSpecs(fallbackRows)];
+  }, [
+    content.specs,
+    selectedVariant,
+    node.productType,
+    node.vendor,
+    node.specificationGroups,
+  ]);
 
   const similar = useMemo(() => {
     const fromRecommendations = (recommended ?? []).filter(

@@ -11,7 +11,9 @@ import {
   type CatalogCategory,
 } from "@/dashboard/data/categories";
 import { CategoryIcon } from "@/dashboard/components/categories/CategoryIcon";
+import CategorySpecificationTemplateEditor from "@/dashboard/components/categories/CategorySpecificationTemplateEditor";
 import { categoryIconOptions } from "@/dashboard/components/categories/category-icons";
+import { normalizeSpecificationTemplate } from "@/lib/productSpecifications";
 import {
   inspectProductImageSource,
   type ProductImageSourceInfo,
@@ -225,6 +227,7 @@ export default function CategoryForm({
           image: draft.image?.trim() || undefined,
           seoTitle: draft.seoTitle?.trim() || undefined,
           seoDescription: draft.seoDescription?.trim() || undefined,
+          specTemplate: normalizeSpecificationTemplate(draft.specTemplate),
           createdAt: draft.createdAt || now,
           updatedAt: now,
         },
@@ -268,7 +271,7 @@ export default function CategoryForm({
                 {mode === "create" ? "Create Category" : draft.name || "Category"}
               </h2>
               <p className="mt-1 truncate text-[10px] text-slate-400">
-                Configure browsing, storefront visibility, identity, order, and SEO.
+                Configure browsing, product specification fields, storefront visibility, order, and SEO.
               </p>
             </div>
           </div>
@@ -584,6 +587,16 @@ export default function CategoryForm({
                 active again.
               </div>
             )}
+          </section>
+
+          <section>
+            <div className="mb-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">
+              Product specifications
+            </div>
+            <CategorySpecificationTemplateEditor
+              value={draft.specTemplate}
+              onChange={(specTemplate) => patch({ specTemplate })}
+            />
           </section>
 
           <section>

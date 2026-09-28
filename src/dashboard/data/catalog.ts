@@ -6,6 +6,13 @@ import type { User } from "@supabase/supabase-js";
 import type { Tables } from "@/integrations/supabase/types";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 import { convertProductImageToWebp, type ProductImageConversionResult, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
+import {
+  normalizeProductSpecifications,
+  normalizeSpecificationTemplate,
+  productSpecificationsToJson,
+  type ProductSpecificationTemplate,
+  type ProductSpecificationValues,
+} from "@/lib/productSpecifications";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -29,6 +36,7 @@ type ProductListRow = Pick<
   | "seo_title"
   | "seo_description"
 >;
+type ProductDetailRow = ProductListRow & Pick<ProductRow, "specifications">;
 type VariantListRow = Pick<
   VariantRow,
   "product_id" | "price" | "compare_at_price" | "sku" | "barcode" | "sort_order"
@@ -109,6 +117,7 @@ export type DashboardCategory = {
   name: string;
   slug: string;
   active: boolean;
+  specTemplate: ProductSpecificationTemplate;
 };
 
 export type DashboardCollection = {
@@ -136,6 +145,7 @@ export type DashboardProduct = {
   image: string;
   seoTitle: string;
   seoDescription: string;
+  specifications: ProductSpecificationValues;
   variantCount: number;
 };
 
@@ -162,6 +172,7 @@ export type DashboardProductInput = {
   imageUrl: string;
   seoTitle: string;
   seoDescription: string;
+  specifications: ProductSpecificationValues;
   collectionIds: string[];
 };
 
@@ -1103,7 +1114,7 @@ export async function listDashboardCategories(): Promise<DashboardCategory[]> {
   await requireDashboardRole();
   const { data, error } = await supabase
     .from("store_categories")
-    .select("id,name,slug,is_active")
+    .select("id,name,slug,is_active,spec_template")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
   throwIfError(error, "Loading categories failed");
@@ -1112,6 +1123,7 @@ export async function listDashboardCategories(): Promise<DashboardCategory[]> {
     name: row.name,
     slug: row.slug,
     active: row.is_active,
+    specTemplate: normalizeSpecificationTemplate(row.spec_template),
   }));
 }
 
@@ -1209,6 +1221,7 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
       image: image?.url ?? "",
       seoTitle: row.seo_title ?? "",
       seoDescription: row.seo_description ?? "",
+      specifications: {},
       variantCount: productVariants.length,
     };
   });
@@ -1262,7 +1275,7 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
   const productResult = await supabase
     .from("store_products")
     .select(
-      "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description",
+      "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description,specifications",
     )
     .eq("id", id)
     .maybeSingle();
@@ -1270,7 +1283,7 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
   throwIfError(productResult.error, "Loading product failed");
   if (!productResult.data) return null;
 
-  const row = productResult.data as ProductListRow;
+  const row = productResult.data as ProductDetailRow;
   const [variantResult, imageResult, brandResult, categoryResult] = await Promise.all([
     supabase
       .from("store_product_variants")
@@ -1325,6 +1338,7 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
     image: image?.url ?? "",
     seoTitle: row.seo_title ?? "",
     seoDescription: row.seo_description ?? "",
+    specifications: normalizeProductSpecifications(row.specifications),
     variantCount: variants.length,
   };
 }
@@ -1366,6 +1380,9 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
       p_image_url: input.imageUrl.trim(),
       p_seo_title: input.seoTitle.trim(),
       p_seo_description: input.seoDescription.trim(),
+      p_specifications: productSpecificationsToJson(
+        normalizeProductSpecifications(input.specifications),
+      ),
       p_collection_ids: [...new Set(input.collectionIds)],
     }),
   );

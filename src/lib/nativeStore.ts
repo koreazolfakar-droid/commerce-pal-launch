@@ -3,6 +3,7 @@ import type { Json, Tables } from "@/integrations/supabase/types";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 import { productSearchScore, textSearchScore } from "@/lib/searchRanking";
+import { specificationGroups } from "@/lib/productSpecifications";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -10,6 +11,7 @@ type ImageRow = Tables<"store_product_images">;
 type CollectionRow = Tables<"store_collections">;
 type CollectionLinkRow = Tables<"store_collection_products">;
 type BrandRow = Tables<"cms_brands">;
+type CategoryRow = Tables<"store_categories">;
 
 type StorefrontProductRow = Pick<
   ProductRow,
@@ -19,7 +21,9 @@ type StorefrontProductRow = Pick<
   | "description_html"
   | "handle"
   | "brand_id"
+  | "category_id"
   | "product_type"
+  | "specifications"
   | "created_at"
   | "updated_at"
   | "seo_title"
@@ -64,13 +68,14 @@ type StorefrontCollectionLinkRow = Pick<
   "collection_id" | "product_id" | "sort_order"
 >;
 type StorefrontBrandRow = Pick<BrandRow, "id" | "name" | "slug">;
+type StorefrontCategoryRow = Pick<CategoryRow, "id" | "spec_template">;
 type NavigationProductRow = Pick<
   ProductRow,
   "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
 >;
 
 const STOREFRONT_PRODUCT_SELECT =
-  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+  "id,title,description,description_html,handle,brand_id,category_id,product_type,specifications,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
 const STOREFRONT_IMAGE_SELECT = "product_id,url,alt_text,is_primary,sort_order" as const;
@@ -78,6 +83,7 @@ const STOREFRONT_COLLECTION_SELECT =
   "id,handle,title,description,image_url,seo_title,seo_description" as const;
 const STOREFRONT_COLLECTION_LINK_SELECT = "collection_id,product_id,sort_order" as const;
 const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
+const STOREFRONT_CATEGORY_SELECT = "id,spec_template" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
   "id,title,handle,brand_id,product_type,tags" as const;
 
@@ -91,6 +97,7 @@ type NativeSnapshot = {
   collections: StorefrontCollectionRow[];
   links: StorefrontCollectionLinkRow[];
   brands: StorefrontBrandRow[];
+  categories: StorefrontCategoryRow[];
 };
 
 const CACHE_TTL_MS = 30_000;
@@ -212,6 +219,7 @@ function buildProduct(
   images: StorefrontImageRow[],
   collections: StorefrontCollectionRow[],
   brand?: StorefrontBrandRow,
+  category?: StorefrontCategoryRow,
 ): StoreProduct {
   const sortedVariants = [...variants].sort((a, b) => a.sort_order - b.sort_order);
   const sortedImages = [...images].sort(
@@ -284,6 +292,7 @@ function buildProduct(
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       tags: row.tags,
+      specificationGroups: specificationGroups(category?.spec_template, row.specifications),
       priceRange: { minVariantPrice: money(minPrice, row.currency) },
       compareAtPriceRange:
         minCompare == null ? undefined : { minVariantPrice: money(minCompare, row.currency) },
@@ -322,7 +331,14 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
 
   if (missingRows.length) {
     const productIds = missingRows.map((row) => row.id);
-    const [variantResult, imageResult, linkResult] = await Promise.all([
+    const categoryIds = [
+      ...new Set(
+        missingRows
+          .map((row) => row.category_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const [variantResult, imageResult, linkResult, categoryResult] = await Promise.all([
       publicSupabase
         .from("store_product_variants")
         .select(STOREFRONT_VARIANT_SELECT)
@@ -339,11 +355,18 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
         .select(STOREFRONT_COLLECTION_LINK_SELECT)
         .in("product_id", productIds)
         .order("sort_order", { ascending: true }),
+      categoryIds.length
+        ? publicSupabase
+            .from("store_categories")
+            .select(STOREFRONT_CATEGORY_SELECT)
+            .in("id", categoryIds)
+        : Promise.resolve({ data: [] as StorefrontCategoryRow[], error: null }),
     ]);
 
     const variants = assertResult(variantResult, "bounded product variants");
     const images = assertResult(imageResult, "bounded product images");
     const links = assertResult(linkResult, "bounded product collection links");
+    const categoryRows = assertResult(categoryResult, "bounded product categories");
     const variantsByProduct = groupByProduct(variants);
     const imagesByProduct = groupByProduct(images);
     const linksByProduct = groupByProduct(links);
@@ -374,6 +397,7 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
 
     const collectionsById = new Map(collections.map((row) => [row.id, row]));
     const brandsById = new Map(brands.map((row) => [row.id, row]));
+    const categoriesById = new Map(categoryRows.map((row) => [row.id, row]));
     const expiresAt = Date.now() + HYDRATED_PRODUCT_CACHE_TTL_MS;
 
     for (const row of missingRows) {
@@ -386,6 +410,7 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
         imagesByProduct.get(row.id) ?? [],
         productCollections,
         row.brand_id ? brandsById.get(row.brand_id) : undefined,
+        row.category_id ? categoriesById.get(row.category_id) : undefined,
       );
       hydratedProductCache.set(row.id, { expiresAt, product });
       cachedProducts.set(row.id, product);
@@ -398,7 +423,7 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
 }
 
 async function fetchSnapshot(): Promise<NativeSnapshot> {
-  const [productResult, variantResult, imageResult, collectionResult, linkResult, brandResult] =
+  const [productResult, variantResult, imageResult, collectionResult, linkResult, brandResult, categoryResult] =
       await Promise.all([
         publicSupabase
           .from("store_products")
@@ -428,6 +453,9 @@ async function fetchSnapshot(): Promise<NativeSnapshot> {
       .select(STOREFRONT_BRAND_SELECT)
           .eq("is_visible", true)
           .order("sort_order", { ascending: true }),
+        publicSupabase
+          .from("store_categories")
+          .select(STOREFRONT_CATEGORY_SELECT),
       ]);
 
     const productRows = assertResult(productResult, "products");
@@ -436,12 +464,14 @@ async function fetchSnapshot(): Promise<NativeSnapshot> {
     const collectionRows = assertResult(collectionResult, "collections");
     const links = assertResult(linkResult, "collection links");
     const brands = assertResult(brandResult, "brands");
+    const categories = assertResult(categoryResult, "categories");
 
     const variantsByProduct = groupByProduct(variantRows);
     const imagesByProduct = groupByProduct(imageRows);
     const linksByProduct = groupByProduct(links);
     const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
     const brandsById = new Map(brands.map((row) => [row.id, row]));
+    const categoriesById = new Map(categories.map((row) => [row.id, row]));
 
     const products: NativeProduct[] = productRows.map((row) => {
       const productCollections = (linksByProduct.get(row.id) ?? [])
@@ -455,11 +485,12 @@ async function fetchSnapshot(): Promise<NativeSnapshot> {
           imagesByProduct.get(row.id) ?? [],
           productCollections,
           row.brand_id ? brandsById.get(row.brand_id) : undefined,
+          row.category_id ? categoriesById.get(row.category_id) : undefined,
         ),
       };
     });
 
-    const value = { products, collections: collectionRows, links, brands };
+    const value = { products, collections: collectionRows, links, brands, categories };
     const fetchedAt = Date.now();
     cachedSnapshot = {
       expiresAt: fetchedAt + CACHE_TTL_MS,
@@ -635,7 +666,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
   const row = productResult.data as StorefrontProductRow | null;
   if (!row) return null;
 
-  const [variantResult, imageResult, linkResult, brandResult] = await Promise.all([
+  const [variantResult, imageResult, linkResult, brandResult, categoryResult] = await Promise.all([
     publicSupabase
       .from("store_product_variants")
       .select(STOREFRONT_VARIANT_SELECT)
@@ -660,6 +691,13 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
           .eq("is_visible", true)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    row.category_id
+      ? publicSupabase
+          .from("store_categories")
+          .select(STOREFRONT_CATEGORY_SELECT)
+          .eq("id", row.category_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   const variants = assertResult(variantResult, "product variants");
@@ -667,6 +705,9 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
   const links = assertResult(linkResult, "product collection links");
   if (brandResult.error) {
     throw new Error(`Supabase product brand failed: ${brandResult.error.message}`);
+  }
+  if (categoryResult.error) {
+    throw new Error(`Supabase product category failed: ${categoryResult.error.message}`);
   }
 
   const collectionIds = links.map((link) => link.collection_id);
@@ -690,6 +731,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
     images,
     collections,
     (brandResult.data as StorefrontBrandRow | null) ?? undefined,
+    (categoryResult.data as StorefrontCategoryRow | null) ?? undefined,
   );
 }
 
@@ -767,7 +809,14 @@ async function fetchSmallCollectionByHandle(
   if (!selectedRows.length) return { collection, products: [] };
 
   const activeProductIds = selectedRows.map((product) => product.id);
-  const [variantResult, imageResult, productLinkResult] = await Promise.all([
+  const categoryIds = [
+    ...new Set(
+      selectedRows
+        .map((product) => product.category_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const [variantResult, imageResult, productLinkResult, categoryResult] = await Promise.all([
     publicSupabase
       .from("store_product_variants")
       .select(STOREFRONT_VARIANT_SELECT)
@@ -784,11 +833,18 @@ async function fetchSmallCollectionByHandle(
       .select(STOREFRONT_COLLECTION_LINK_SELECT)
       .in("product_id", activeProductIds)
       .order("sort_order", { ascending: true }),
+    categoryIds.length
+      ? publicSupabase
+          .from("store_categories")
+          .select(STOREFRONT_CATEGORY_SELECT)
+          .in("id", categoryIds)
+      : Promise.resolve({ data: [] as StorefrontCategoryRow[], error: null }),
   ]);
 
   const variants = assertResult(variantResult, "collection product variants");
   const images = assertResult(imageResult, "collection product images");
   const productLinks = assertResult(productLinkResult, "collection product links");
+  const categoryRows = assertResult(categoryResult, "collection product categories");
   const variantsByProduct = groupByProduct(variants);
   const imagesByProduct = groupByProduct(images);
   const linksByProduct = groupByProduct(productLinks);
@@ -827,6 +883,7 @@ async function fetchSmallCollectionByHandle(
     brands = assertResult(brandResult, "collection product brands");
   }
   const brandsById = new Map(brands.map((brand) => [brand.id, brand]));
+  const categoriesById = new Map(categoryRows.map((category) => [category.id, category]));
 
   const products = selectedRows.map((productRow) => {
     const productCollections = (linksByProduct.get(productRow.id) ?? [])
@@ -838,6 +895,7 @@ async function fetchSmallCollectionByHandle(
       imagesByProduct.get(productRow.id) ?? [],
       productCollections,
       productRow.brand_id ? brandsById.get(productRow.brand_id) : undefined,
+      productRow.category_id ? categoriesById.get(productRow.category_id) : undefined,
     );
   });
 
