@@ -1,31 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
 import { looseSupabase } from "@/integrations/supabase/looseClient";
-import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
-
-type OrderRow = Pick<
-  Tables<"store_orders">,
-  "id" | "order_number" | "public_order_number" | "status" | "payment_status" | "customer_name" | "total" | "currency" | "created_at"
->;
-type SaleRow = {
-  order_id: string;
-  payment_status: "paid" | "partially_refunded";
-  total: number | string;
-  completed_at: string;
-};
-type OrderItemRow = Pick<
-  Tables<"store_order_items">,
-  "order_id" | "product_id" | "title" | "quantity" | "line_total"
->;
-type ProductRow = Pick<
-  Tables<"store_products">,
-  "id" | "title" | "status" | "brand_id"
->;
-type VariantRow = Pick<
-  Tables<"store_product_variants">,
-  "product_id" | "stock_quantity" | "track_inventory" | "is_active"
->;
-type BrandRow = Pick<Tables<"cms_brands">, "id" | "name" | "is_visible">;
 
 export type DashboardHomeOrder = {
   id: string;
@@ -87,45 +61,73 @@ async function requireDashboardStaff() {
   return role;
 }
 
-function dayKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+function object(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
-function buildTrend(
-  start: Date,
-  orders: OrderRow[],
-  sales: SaleRow[],
-): DashboardHomeTrendPoint[] {
-  const byDay = new Map<string, { revenue: number; orders: number }>();
+function array(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value) ? value.map(object) : [];
+}
 
-  for (const order of orders) {
-    const key = dayKey(new Date(order.created_at));
-    const current = byDay.get(key) ?? { revenue: 0, orders: 0 };
-    current.orders += 1;
-    byDay.set(key, current);
-  }
+function text(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
 
-  for (const sale of sales) {
-    const key = dayKey(new Date(sale.completed_at));
-    const current = byDay.get(key) ?? { revenue: 0, orders: 0 };
-    current.revenue += Number(sale.total) || 0;
-    byDay.set(key, current);
-  }
+function number(value: unknown) {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
-  const points: DashboardHomeTrendPoint[] = [];
-  for (let offset = 0; offset < 30; offset += 1) {
-    const date = new Date(start);
-    date.setUTCDate(start.getUTCDate() + offset);
-    const key = dayKey(date);
-    const value = byDay.get(key) ?? { revenue: 0, orders: 0 };
-    points.push({
-      date: key,
-      label: date.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
-      revenue: Number(value.revenue.toFixed(2)),
-      orders: value.orders,
-    });
-  }
-  return points;
+function nullableText(value: unknown) {
+  return typeof value === "string" && value ? value : null;
+}
+
+function normalizeSnapshot(value: unknown): DashboardHomeSnapshot {
+  const row = object(value);
+
+  return {
+    periodStart: text(row.periodStart),
+    periodEnd: text(row.periodEnd),
+    totalSales: number(row.totalSales),
+    ordersLast30Days: number(row.ordersLast30Days),
+    customerCount: number(row.customerCount),
+    productCount: number(row.productCount),
+    activeProductCount: number(row.activeProductCount),
+    totalUnits: number(row.totalUnits),
+    lowStockVariants: number(row.lowStockVariants),
+    outOfStockVariants: number(row.outOfStockVariants),
+    visibleBrandCount: number(row.visibleBrandCount),
+    recentOrders: array(row.recentOrders).map((item) => ({
+      id: text(item.id),
+      orderNumber: text(item.orderNumber),
+      customer: text(item.customer),
+      total: number(item.total),
+      currency: text(item.currency) || "USD",
+      status: text(item.status),
+      paymentStatus: text(item.paymentStatus),
+      createdAt: text(item.createdAt),
+    })),
+    trend: array(row.trend).map((item) => ({
+      date: text(item.date),
+      label: text(item.label),
+      revenue: number(item.revenue),
+      orders: number(item.orders),
+    })),
+    topProducts: array(row.topProducts).map((item) => ({
+      productId: nullableText(item.productId),
+      title: text(item.title),
+      quantity: number(item.quantity),
+      revenue: number(item.revenue),
+    })),
+    topBrands: array(row.topBrands).map((item) => ({
+      brandId: text(item.brandId),
+      name: text(item.name),
+      revenue: number(item.revenue),
+      share: number(item.share),
+    })),
+  };
 }
 
 export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot> {
@@ -136,147 +138,16 @@ export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot
   start.setUTCDate(start.getUTCDate() - 29);
   start.setUTCHours(0, 0, 0, 0);
 
-  const [
-    productResult,
-    variantResult,
-    brandResult,
-    customerCountResult,
-    periodOrdersResult,
-    periodSalesResult,
-    recentOrdersResult,
-  ] = await Promise.all([
-    supabase
-      .from("store_products")
-      .select("id,title,status,brand_id"),
-    supabase
-      .from("store_product_variants")
-      .select("product_id,stock_quantity,track_inventory,is_active"),
-    supabase
-      .from("cms_brands")
-      .select("id,name,is_visible"),
-    supabase
-      .from("store_customers")
-      .select("id", { count: "exact", head: true }),
-    supabase
-      .from("store_orders")
-      .select("id,order_number,public_order_number,status,payment_status,customer_name,total,currency,created_at")
-      .gte("created_at", start.toISOString())
-      .lte("created_at", end.toISOString())
-      .order("created_at", { ascending: true }),
-    looseSupabase
-      .from("store_sales")
-      .select("order_id,payment_status,total,completed_at")
-      .gte("completed_at", start.toISOString())
-      .lte("completed_at", end.toISOString())
-      .in("payment_status", ["paid", "partially_refunded"])
-      .order("completed_at", { ascending: true }),
-    supabase
-      .from("store_orders")
-      .select("id,order_number,public_order_number,status,payment_status,customer_name,total,currency,created_at")
-      .order("created_at", { ascending: false })
-      .limit(6),
-  ]);
+  const { data, error } = await looseSupabase.rpc("get_dashboard_home_snapshot", {
+    p_start: start.toISOString(),
+    p_end: end.toISOString(),
+  });
+  throwIfError(error, "Loading dashboard home snapshot failed");
 
-  throwIfError(productResult.error, "Loading dashboard products failed");
-  throwIfError(variantResult.error, "Loading dashboard inventory failed");
-  throwIfError(brandResult.error, "Loading dashboard brands failed");
-  throwIfError(customerCountResult.error, "Loading dashboard customers failed");
-  throwIfError(periodOrdersResult.error, "Loading dashboard orders failed");
-  throwIfError(periodSalesResult.error, "Loading dashboard sales failed");
-  throwIfError(recentOrdersResult.error, "Loading recent orders failed");
-
-  const products = (productResult.data ?? []) as ProductRow[];
-  const variants = (variantResult.data ?? []) as VariantRow[];
-  const brands = (brandResult.data ?? []) as BrandRow[];
-  const periodOrders = (periodOrdersResult.data ?? []) as OrderRow[];
-  const periodSales = (periodSalesResult.data ?? []) as SaleRow[];
-  const recentOrders = (recentOrdersResult.data ?? []) as OrderRow[];
-
-  const saleOrderIds = periodSales.map((sale) => sale.order_id);
-  let orderItems: OrderItemRow[] = [];
-  if (saleOrderIds.length) {
-    const { data, error } = await supabase
-      .from("store_order_items")
-      .select("order_id,product_id,title,quantity,line_total")
-      .in("order_id", saleOrderIds);
-    throwIfError(error, "Loading dashboard order items failed");
-    orderItems = (data ?? []) as OrderItemRow[];
+  const snapshot = normalizeSnapshot(data);
+  if (!snapshot.periodStart || !snapshot.periodEnd) {
+    throw new Error("Loading dashboard home snapshot failed: invalid server response.");
   }
 
-  const brandById = new Map(brands.map((brand) => [brand.id, brand]));
-  const productById = new Map(products.map((product) => [product.id, product]));
-
-  const topProductsByKey = new Map<string, DashboardHomeTopProduct>();
-  const brandRevenue = new Map<string, number>();
-
-  for (const item of orderItems) {
-    const key = item.product_id ?? `title:${item.title}`;
-    const current = topProductsByKey.get(key) ?? {
-      productId: item.product_id,
-      title: item.title,
-      quantity: 0,
-      revenue: 0,
-    };
-    current.quantity += item.quantity;
-    current.revenue += Number(item.line_total) || 0;
-    topProductsByKey.set(key, current);
-
-    if (item.product_id) {
-      const product = productById.get(item.product_id);
-      if (product?.brand_id) {
-        brandRevenue.set(
-          product.brand_id,
-          (brandRevenue.get(product.brand_id) ?? 0) + (Number(item.line_total) || 0),
-        );
-      }
-    }
-  }
-
-  const topProducts = [...topProductsByKey.values()]
-    .sort((a, b) => b.quantity - a.quantity || b.revenue - a.revenue)
-    .slice(0, 5)
-    .map((item) => ({ ...item, revenue: Number(item.revenue.toFixed(2)) }));
-
-  const brandRevenueTotal = [...brandRevenue.values()].reduce((sum, value) => sum + value, 0);
-  const topBrands = [...brandRevenue.entries()]
-    .map(([brandId, revenue]) => ({
-      brandId,
-      name: brandById.get(brandId)?.name ?? "Unknown brand",
-      revenue: Number(revenue.toFixed(2)),
-      share: brandRevenueTotal > 0 ? Number(((revenue / brandRevenueTotal) * 100).toFixed(1)) : 0,
-    }))
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5);
-
-  const trackedVariants = variants.filter((variant) => variant.track_inventory && variant.is_active);
-  const totalSales = periodSales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0);
-
-  return {
-    periodStart: start.toISOString(),
-    periodEnd: end.toISOString(),
-    totalSales: Number(totalSales.toFixed(2)),
-    ordersLast30Days: periodOrders.length,
-    customerCount: customerCountResult.count ?? 0,
-    productCount: products.length,
-    activeProductCount: products.filter((product) => product.status === "active").length,
-    totalUnits: trackedVariants.reduce((sum, variant) => sum + variant.stock_quantity, 0),
-    lowStockVariants: trackedVariants.filter(
-      (variant) => variant.stock_quantity > 0 && variant.stock_quantity <= 10,
-    ).length,
-    outOfStockVariants: trackedVariants.filter((variant) => variant.stock_quantity <= 0).length,
-    visibleBrandCount: brands.filter((brand) => brand.is_visible).length,
-    recentOrders: recentOrders.map((order) => ({
-      id: order.id,
-      orderNumber: order.public_order_number,
-      customer: order.customer_name,
-      total: Number(order.total) || 0,
-      currency: order.currency,
-      status: order.status,
-      paymentStatus: order.payment_status,
-      createdAt: order.created_at,
-    })),
-    trend: buildTrend(start, periodOrders, periodSales),
-    topProducts,
-    topBrands,
-  };
+  return snapshot;
 }
