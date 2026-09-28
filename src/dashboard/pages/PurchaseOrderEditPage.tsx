@@ -139,6 +139,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
     try {
       await updatePurchaseOrderDraft({
         purchaseOrderId: po.id,
+        expectedUpdatedAt: po.updatedAt,
         supplierId,
         locationId,
         poNumber,
@@ -297,7 +298,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
             onClick={() => {
               if (!window.confirm(`Delete draft ${po.poNumber}? This cannot be undone.`)) return;
               setSaving(true);
-              void deletePurchaseOrderDraft(po.id)
+              void deletePurchaseOrderDraft(po.id, po.updatedAt)
                 .then(() => {
                   toast.success("Purchase order draft deleted.");
                   navigate("/dashboard/purchase-orders");
