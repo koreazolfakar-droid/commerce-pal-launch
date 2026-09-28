@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const [app, page, data, header, footer, publicCms] = await Promise.all([
-  readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
+const [routes, page, data, header, footer, publicCms] = await Promise.all([
+  readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/SettingsPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/settings.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/components/SiteHeader.tsx", import.meta.url), "utf8"),
@@ -26,10 +26,9 @@ test("dashboard settings support real CMS logo upload", () => {
   assert.match(page, /Save changes/);
 });
 
-test("settings route uses the live SettingsPage module", () => {
-  assert.match(app, /import SettingsPage from "@\/dashboard\/pages\/SettingsPage"/);
-  assert.match(app, /route === "\/dashboard\/settings"\) content = <SettingsPage \/>/);
-  assert.doesNotMatch(app, /function SettingsPage\(\)/);
+test("settings route lazy-loads the live SettingsPage module", () => {
+  assert.match(routes, /const settingsPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/SettingsPage"\)\)/);
+  assert.match(routes, /id: "settings"[\s\S]*path: "\/dashboard\/settings"[\s\S]*page: settingsPage/);
 });
 
 test("storefront consumes CMS identity, logo, WhatsApp and social settings", () => {
