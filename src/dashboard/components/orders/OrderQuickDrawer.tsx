@@ -8,7 +8,8 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDashboardDialogFocus } from "@/dashboard/hooks/useDashboardDialogFocus";
 import { toast } from "sonner";
 
 import {
@@ -59,6 +60,8 @@ export default function OrderQuickDrawer({
   const [order, setOrder] = useState<DashboardOrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const drawerRef = useRef<HTMLElement>(null);
+  useDashboardDialogFocus(Boolean(orderId), drawerRef, onClose);
 
   const load = useCallback(async () => {
     if (!orderId) return;
@@ -94,14 +97,8 @@ export default function OrderQuickDrawer({
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-
     return () => {
       document.body.style.overflow = previous;
-      window.removeEventListener("keydown", onKeyDown);
     };
   }, [onClose, orderId]);
 
@@ -132,7 +129,9 @@ export default function OrderQuickDrawer({
       />
 
       <aside
+        ref={drawerRef}
         role="dialog"
+        tabIndex={-1}
         aria-modal="true"
         aria-label={order ? `Quick view for order #${order.publicOrderNumber}` : "Order quick view"}
         className="absolute inset-y-0 end-0 flex w-full max-w-[560px] flex-col bg-white shadow-[-18px_0_48px_rgba(15,23,42,.16)]"
