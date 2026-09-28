@@ -1,3 +1,4 @@
+import { confirmDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -153,7 +154,10 @@ export default function SecurityPage() {
   };
 
   const signOutOthers = async () => {
-    if (!window.confirm("Sign out every other Space Call dashboard session and keep this device signed in?")) return;
+    if (!(await confirmDashboardAction(
+      "Sign out every other Space Call dashboard session and keep this device signed in?",
+      { title: "Revoke other sessions", confirmLabel: "Sign out others" },
+    ))) return;
     setAction("others");
     try {
       await signOutOtherDashboardSessions();
@@ -167,7 +171,10 @@ export default function SecurityPage() {
   };
 
   const signOutAll = async () => {
-    if (!window.confirm("Sign out every Space Call dashboard session on every device?")) return;
+    if (!(await confirmDashboardAction(
+      "Sign out every Space Call dashboard session on every device, including this one?",
+      { title: "Revoke all sessions", confirmLabel: "Sign out all" },
+    ))) return;
     setAction("global");
     try {
       await signOutAllDashboardSessions();
@@ -264,8 +271,11 @@ export default function SecurityPage() {
     }
   };
 
-  const removePasskey = (passkey: DashboardPasskey) => {
-    if (!window.confirm(`Remove ${passkey.friendlyName || "this passkey"}? You will no longer be able to use it to sign in.`)) return;
+  const removePasskey = async (passkey: DashboardPasskey) => {
+    if (!(await confirmDashboardAction(
+      `Remove ${passkey.friendlyName || "this passkey"}? You will no longer be able to use it to sign in.`,
+      { title: "Remove passkey", confirmLabel: "Remove" },
+    ))) return;
     openPasskeyStepUp({ type: "delete", passkey });
   };
 
