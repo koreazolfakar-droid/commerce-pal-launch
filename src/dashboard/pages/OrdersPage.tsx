@@ -16,6 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { supabase } from "@/integrations/supabase/client";
 import OrderQuickDrawer from "@/dashboard/components/orders/OrderQuickDrawer";
 import {
   listDashboardOrders,
@@ -221,6 +222,33 @@ export default function OrdersPage() {
     const timer = window.setTimeout(() => void load(false), search ? 300 : 0);
     return () => window.clearTimeout(timer);
   }, [load, search]);
+
+  useEffect(() => {
+    let refreshTimer: number | undefined;
+    const scheduleRefresh = () => {
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => void load(false), 250);
+    };
+
+    const channel = supabase
+      .channel("dashboard-orders-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "store_orders" },
+        scheduleRefresh,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "store_order_items" },
+        scheduleRefresh,
+      )
+      .subscribe();
+
+    return () => {
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      void supabase.removeChannel(channel);
+    };
+  }, [load]);
 
   const stats = result?.stats;
   const inProgress = useMemo(
