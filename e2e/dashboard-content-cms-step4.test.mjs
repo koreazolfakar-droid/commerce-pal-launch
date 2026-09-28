@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const [
-  app,
+  routes,
   navigationData,
   navigationPage,
   mediaData,
@@ -16,7 +16,7 @@ const [
   storeLayout,
   publicCms,
 ] = await Promise.all([
-  readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/navigation.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/NavigationPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/media.ts", import.meta.url), "utf8"),
@@ -30,10 +30,10 @@ const [
   readFile(new URL("../supabase/functions/public-cms/index.ts", import.meta.url), "utf8"),
 ]);
 
-test("step 4 dashboard routes no longer fall through to GenericPage", () => {
-  assert.match(app, /route === "\/dashboard\/navigation"\) content = <NavigationPage \/>/);
-  assert.match(app, /route === "\/dashboard\/media"\) content = <MediaLibraryPage \/>/);
-  assert.match(app, /route === "\/dashboard\/seo"\) content = <SeoPage \/>/);
+test("step 4 dashboard routes resolve through the lazy route registry", () => {
+  assert.match(routes, /id: "navigation"[\s\S]*path: "\/dashboard\/navigation"[\s\S]*page: navigationPage/);
+  assert.match(routes, /id: "media"[\s\S]*path: "\/dashboard\/media"[\s\S]*page: mediaPage/);
+  assert.match(routes, /id: "seo"[\s\S]*path: "\/dashboard\/seo"[\s\S]*page: seoPage/);
 });
 
 test("navigation manager is Supabase-backed and storefront consumes it", () => {
