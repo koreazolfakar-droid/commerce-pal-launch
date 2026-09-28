@@ -14,7 +14,7 @@ const [ordersData, catalogData, homeData, ordersPage, inventoryPage, realtimeHoo
       "utf8",
     ),
     readFile(
-      new URL("../supabase/migrations/20260928113000_dashboard_scale_hardening.sql", import.meta.url),
+      new URL("../supabase/migrations/20260928085807_dashboard_performance_realtime_hardening_20260928.sql", import.meta.url),
       "utf8",
     ),
   ]);
@@ -31,8 +31,8 @@ test("global dashboard product search is bounded and server-side", () => {
   assert.match(catalogData, /search_dashboard_products/);
   assert.doesNotMatch(catalogData, /listDashboardProductSearchIndex/);
   assert.match(migration, /create or replace function public\.search_dashboard_products/);
-  assert.match(migration, /v_limit integer := least\(25/);
-  assert.match(migration, /pg_trgm/);
+  assert.match(migration, /v_limit integer := greatest\(1, least\(coalesce\(p_limit, 8\), 20\)\)/);
+  assert.match(migration, /position\(v_query in lower\(coalesce\(p\.title, ''\)\)\) > 0/);
 });
 
 test("dashboard home uses a single aggregate RPC", () => {
@@ -52,9 +52,12 @@ test("orders and inventory refresh from Supabase Realtime", () => {
   assert.match(inventoryPage, /useDashboardRealtimeRefresh\(\["store_product_variants"\]/);
 });
 
-test("new performance RPCs keep dashboard authorization at the database boundary", () => {
+test("performance migration also closes advisor and realtime gaps", () => {
   const staffGuards = migration.match(/not private\.is_dashboard_staff\(\)/g) ?? [];
   assert.ok(staffGuards.length >= 3);
   assert.doesNotMatch(migration, /security definer/i);
-  assert.match(migration, /grant execute on function public\.get_dashboard_order_stats\(\) to authenticated/);
+  assert.match(migration, /store_order_items_product_fk_idx/);
+  assert.match(migration, /cms_brands_authenticated_read/);
+  assert.match(migration, /alter publication supabase_realtime add table public\.store_orders/);
+  assert.match(migration, /alter publication supabase_realtime add table public\.store_product_variants/);
 });
