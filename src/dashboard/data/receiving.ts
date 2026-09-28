@@ -17,7 +17,14 @@ type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
 
 function throwIfError(error: { message: string } | null, label: string) {
-  if (error) throw new Error(`${label}: ${error.message}`);
+  if (!error) return;
+  if (error.message.includes("procurement_version_conflict")) {
+    throw new Error("This procurement record changed in another session. Refresh and try again.");
+  }
+  if (error.message.includes("procurement_version_required")) {
+    throw new Error("This procurement record needs to be refreshed before it can be changed.");
+  }
+  throw new Error(`${label}: ${error.message}`);
 }
 
 async function requireDashboardStaff() {
