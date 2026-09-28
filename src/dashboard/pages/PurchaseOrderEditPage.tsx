@@ -1,3 +1,4 @@
+import { confirmDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import { ArrowLeft, Loader2, Plus, Save, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
@@ -295,8 +296,11 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
 
         <div className="flex flex-wrap justify-between gap-2">
           <button
-            onClick={() => {
-              if (!window.confirm(`Delete draft ${po.poNumber}? This cannot be undone.`)) return;
+            onClick={async () => {
+              if (!(await confirmDashboardAction(
+                `Delete draft ${po.poNumber}? This cannot be undone.`,
+                { title: "Delete purchase order draft", confirmLabel: "Delete" },
+              ))) return;
               setSaving(true);
               void deletePurchaseOrderDraft(po.id, po.updatedAt)
                 .then(() => {
