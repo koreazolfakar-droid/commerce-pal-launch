@@ -3,6 +3,10 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
+const routes = await readFile(
+  new URL("../src/dashboard/config/routes.tsx", import.meta.url),
+  "utf8",
+);
 const login = await readFile(
   new URL("../src/dashboard/pages/LoginPage.tsx", import.meta.url),
   "utf8",
@@ -12,9 +16,12 @@ const catalog = await readFile(
   "utf8",
 );
 
-test("dashboard login route uses the dedicated redesigned page", () => {
-  assert.match(app, /import LoginPage from "@\/dashboard\/pages\/LoginPage"/);
-  assert.match(app, /<Route path="\/dashboard\/login" component=\{LoginPage\}/);
+test("dashboard login route uses the dedicated lazy-loaded page", () => {
+  assert.match(routes, /const loginPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/LoginPage"\)\)/);
+  assert.match(routes, /export const DashboardLoginPage = loginPage\.Component/);
+  assert.match(app, /<Route path="\/dashboard\/login">/);
+  assert.match(app, /<DashboardLoginPage \/>/);
+  assert.doesNotMatch(app, /import LoginPage from "@\/dashboard\/pages\/LoginPage"/);
   assert.doesNotMatch(app, /function LoginPage\(\)/);
 });
 
