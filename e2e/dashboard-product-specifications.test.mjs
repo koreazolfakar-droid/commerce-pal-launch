@@ -15,6 +15,7 @@ const [
   storeTypes,
   productRoute,
   migration,
+  atomicSpecificationMigration,
 ] = await Promise.all([
   readFile(new URL("../src/lib/productSpecifications.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/categories.ts", import.meta.url), "utf8"),
@@ -35,6 +36,10 @@ const [
   readFile(new URL("../src/routes/product.$handle.tsx", import.meta.url), "utf8"),
   readFile(
     new URL("../supabase/migrations/20260928060000_product_specifications_end_to_end.sql", import.meta.url),
+    "utf8",
+  ),
+  readFile(
+    new URL("../supabase/migrations/20260928061000_atomic_product_editor_specifications.sql", import.meta.url),
     "utf8",
   ),
 ]);
@@ -58,7 +63,8 @@ test("product editor reads, validates and saves only category-defined specificat
   assert.match(productData, /spec_template/);
   assert.match(productData, /normalizeProductSpecifications\(row\.specifications\)/);
   assert.match(productData, /productSpecificationsToJson/);
-  assert.match(productData, /normalizeSpecificationTemplate\(category\?\.spec_template\)/);
+  assert.match(productData, /p_specifications: productSpecificationsToJson/);
+  assert.match(productData, /p_collection_ids: \[\.\.\.new Set\(input\.collectionIds\)\]/);
   assert.match(productForm, /ProductSpecificationEditor/);
   assert.match(productForm, /const specificationTemplate = selectedCategory\?\.specTemplate/);
   assert.match(productForm, /normalizeProductSpecifications\(current, nextTemplate\)/);
@@ -106,6 +112,17 @@ test("database migration preserves existing values and constrains specification 
   assert.match(migration, /private\.is_dashboard_staff\(\)/);
   assert.match(migration, /grant select \(spec_template\)/);
   assert.match(migration, /grant select \(specifications\)/);
+  assert.match(atomicSpecificationMigration, /p_specifications jsonb/);
+  assert.match(atomicSpecificationMigration, /specifications = v_specifications/);
+  assert.match(
+    atomicSpecificationMigration,
+    /product specification field is not allowed for this category/,
+  );
+  assert.match(atomicSpecificationMigration, /perform public\.set_store_product_collections/);
+  assert.match(
+    atomicSpecificationMigration,
+    /grant execute on function public\.save_store_product_editor/,
+  );
   assert.doesNotMatch(migration, /delete from public\.store_products/);
   assert.doesNotMatch(migration, /update public\.store_categories\s+set spec_template =/);
 });
