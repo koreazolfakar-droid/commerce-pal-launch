@@ -15,6 +15,9 @@ import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import ProductMediaManager from "@/dashboard/components/products/ProductMediaManager";
 import ProductVariantManager from "@/dashboard/components/products/ProductVariantManager";
+import ProductSpecificationEditor, {
+  extractSpecificationAiPatch,
+} from "@/dashboard/components/products/ProductSpecificationEditor";
 import {
   getDashboardProduct,
   getDashboardRole,
@@ -33,6 +36,13 @@ import {
   type DashboardProductVariant,
 } from "@/dashboard/data/productManagement";
 import { validateProductDraft } from "@/dashboard/lib/validation";
+import {
+  aiSpecificationFieldKey,
+  normalizeProductSpecifications,
+  specificationKeys,
+  validateSpecificationValue,
+  type ProductSpecificationValues,
+} from "@/lib/productSpecifications";
 
 type ProductStatus = "Active" | "Draft" | "Archived";
 
@@ -85,6 +95,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [confirmAction, setConfirmAction] = useState<"archive" | "delete" | null>(null);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState<ProductDraft>(EMPTY);
+  const [specifications, setSpecifications] = useState<ProductSpecificationValues>({});
+  const [aiSpecificationKeys, setAiSpecificationKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -108,6 +120,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
         setRole(dashboardRole);
         setVariantCount(product?.variantCount ?? 0);
         setSaved(false);
+        setSpecifications(product?.specifications ?? {});
+        setAiSpecificationKeys(new Set());
         if (product) {
           setForm({
             title: product.name,
@@ -145,6 +159,38 @@ export default function ProductFormPage({ id }: { id?: string }) {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
+  const selectedCategory = useMemo(
+    () => categories.find((category) => category.id === form.categoryId) ?? null,
+    [categories, form.categoryId],
+  );
+  const specificationTemplate = selectedCategory?.specTemplate ?? { sections: [] };
+  const allowedSpecificationKeys = useMemo(
+    () => new Set(specificationKeys(specificationTemplate)),
+    [specificationTemplate],
+  );
+
+  const changeCategory = (categoryId: string) => {
+    setSaved(false);
+    setForm((current) => ({ ...current, categoryId }));
+    const nextCategory = categories.find((category) => category.id === categoryId);
+    const nextTemplate = nextCategory?.specTemplate ?? { sections: [] };
+    setSpecifications((current) => normalizeProductSpecifications(current, nextTemplate));
+    const nextKeys = new Set(specificationKeys(nextTemplate));
+    setAiSpecificationKeys((current) => new Set([...current].filter((key) => nextKeys.has(key))));
+  };
+
+  const changeSpecification = (key: string, value: string) => {
+    if (!allowedSpecificationKeys.has(key)) return;
+    setSaved(false);
+    setSpecifications((current) => ({ ...current, [key]: value }));
+    setAiSpecificationKeys((current) => {
+      if (!current.has(key)) return current;
+      const next = new Set(current);
+      next.delete(key);
+      return next;
+    });
+  };
+
   const applyAiPatch = useCallback(
     (values: Record<string, string>) => {
       const brandName = values.brandName?.trim();
@@ -160,6 +206,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
           )
         : undefined;
 
+      const specPatch = extractSpecificationAiPatch(values);
+      const effectiveTemplate = categoryMatch?.specTemplate ?? specificationTemplate;
+      const normalizedSpecPatch = normalizeProductSpecifications(specPatch, effectiveTemplate);
+      const effectiveKeys = new Set(specificationKeys(effectiveTemplate));
+
       setSaved(false);
       setForm((current) => ({
         ...current,
@@ -171,6 +222,15 @@ export default function ProductFormPage({ id }: { id?: string }) {
         ...(brandMatch ? { brandId: brandMatch.id } : {}),
         ...(categoryMatch ? { categoryId: categoryMatch.id } : {}),
       }));
+      setSpecifications((current) => ({
+        ...normalizeProductSpecifications(current, effectiveTemplate),
+        ...normalizedSpecPatch,
+      }));
+      setAiSpecificationKeys((current) => {
+        const next = new Set([...current].filter((key) => effectiveKeys.has(key)));
+        Object.keys(normalizedSpecPatch).forEach((key) => next.add(key));
+        return next;
+      });
 
       if (brandName && !brandMatch) {
         toast.info(`AI suggested brand "${brandName}". Create or select that brand before saving.`);
@@ -181,7 +241,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         );
       }
     },
-    [brands, categories, variantCount],
+    [brands, categories, specificationTemplate, variantCount],
   );
 
   const variantLocked = variantCount > 1;
@@ -223,6 +283,20 @@ export default function ProductFormPage({ id }: { id?: string }) {
       return;
     }
 
+    for (const section of specificationTemplate.sections) {
+      for (const field of section.fields) {
+        const issue = validateSpecificationValue(field, specifications[field.key] ?? "");
+        if (issue) {
+          toast.error(issue);
+          return;
+        }
+      }
+    }
+
+    const cleanSpecifications = normalizeProductSpecifications(
+      specifications,
+      specificationTemplate,
+    );
     const nextPrice = Number(form.price) || 0;
     const nextCompareAt = form.compareAt.trim() ? Number(form.compareAt) : null;
     const nextStock = Number(form.stock) || 0;
@@ -264,6 +338,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         imageUrl: form.imageUrl,
         seoTitle: form.seoTitle,
         seoDescription: form.seoDescription,
+        specifications: cleanSpecifications,
         collectionId: null,
       });
       if (collectionsChanged) {
@@ -293,11 +368,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 image: form.imageUrl.trim(),
                 seoTitle: form.seoTitle.trim(),
                 seoDescription: form.seoDescription.trim(),
+                specifications: cleanSpecifications,
               }
             : current,
         );
       }
 
+      setSpecifications(cleanSpecifications);
+      setAiSpecificationKeys(new Set());
       setSaved(true);
       if (shouldRefreshVariantManager) {
         setVariantRevision((value) => value + 1);
@@ -450,6 +528,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
               barcode: form.barcode,
               seoTitle: form.seoTitle,
               seoDescription: form.seoDescription,
+              ...Object.fromEntries(
+                specificationTemplate.sections.flatMap((section) =>
+                  section.fields.map((field) => [
+                    aiSpecificationFieldKey(field.key),
+                    specifications[field.key] ?? "",
+                  ]),
+                ),
+              ),
             }}
             fields={[
               {
@@ -499,6 +585,15 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 description: "Useful natural search description without keyword stuffing.",
                 maxLength: 180,
               },
+              ...specificationTemplate.sections.flatMap((section) =>
+                section.fields.map((field) => ({
+                  key: aiSpecificationFieldKey(field.key),
+                  label: field.label,
+                  description: `Exact factual specification. ${field.unit ? `Expected unit: ${field.unit}. ` : ""}Do not infer uncertain values.`,
+                  review: true,
+                  maxLength: 500,
+                })),
+              ),
             ]}
             context={{
               market: "Lebanon",
@@ -516,6 +611,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 name: category.name,
                 slug: category.slug,
               })),
+              specKeys: specificationKeys(specificationTemplate),
             }}
             onApply={applyAiPatch}
           />
@@ -549,7 +645,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   <option value="">No brand</option>
                   {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}{brand.active ? "" : " (Hidden)"}</option>)}
                 </SelectField>
-                <SelectField label="Category" value={form.categoryId} onChange={(value) => update("categoryId", value)}>
+                <SelectField label="Category" value={form.categoryId} onChange={changeCategory}>
                   <option value="">No category</option>
                   {categories.map((category) => <option key={category.id} value={category.id}>{category.name}{category.active ? "" : " (Hidden)"}</option>)}
                 </SelectField>
@@ -557,6 +653,30 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   <option>Active</option><option>Draft</option><option>Archived</option>
                 </SelectField>
               </div>
+            </div>
+          </Panel>
+
+          <Panel
+            title="Specifications"
+            subtitle={selectedCategory ? `${selectedCategory.name} template` : "Select a category"}
+          >
+            <div className="p-5">
+              <ProductSpecificationEditor
+                template={specificationTemplate}
+                values={specifications}
+                query={form.title}
+                aiContext={{
+                  market: "Lebanon",
+                  store: "Space Call",
+                  entityId: id ?? existing?.id ?? "",
+                  officialDomains: [
+                    brands.find((brand) => brand.id === form.brandId)?.website ?? "",
+                  ].filter(Boolean),
+                }}
+                aiGeneratedKeys={aiSpecificationKeys}
+                onChange={changeSpecification}
+                onAiApply={applyAiPatch}
+              />
             </div>
           </Panel>
 
