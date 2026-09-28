@@ -1240,7 +1240,7 @@ export async function searchDashboardProducts(
     "search_dashboard_products",
     rpcArgs({
       p_query: normalizedQuery,
-      p_limit: Math.min(25, Math.max(1, Math.trunc(limit))),
+      p_limit: Math.min(20, Math.max(1, Math.trunc(limit))),
     }),
   );
   throwIfError(error, "Searching dashboard products failed");
