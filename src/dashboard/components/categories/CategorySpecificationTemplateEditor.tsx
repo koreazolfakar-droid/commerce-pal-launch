@@ -1,7 +1,6 @@
 import { Plus, Trash2 } from "lucide-react";
 import {
   normalizeSpecificationKey,
-  normalizeSpecificationTemplate,
   type ProductSpecificationTemplate,
 } from "@/lib/productSpecifications";
 
@@ -20,10 +19,10 @@ export default function CategorySpecificationTemplateEditor({
   value: ProductSpecificationTemplate;
   onChange: (value: ProductSpecificationTemplate) => void;
 }) {
-  const template = normalizeSpecificationTemplate(value);
+  const template = value;
 
   const commit = (next: ProductSpecificationTemplate) => {
-    onChange(normalizeSpecificationTemplate(next));
+    onChange(next);
   };
 
   const addSection = () => {
