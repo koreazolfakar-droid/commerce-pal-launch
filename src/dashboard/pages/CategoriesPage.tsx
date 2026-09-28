@@ -284,6 +284,7 @@ export default function CategoriesPage() {
         active: true,
         order: nextOrder,
         featured: false,
+        specTemplate: { sections: [] },
       },
     });
   };
