@@ -666,7 +666,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
   const row = productResult.data as StorefrontProductRow | null;
   if (!row) return null;
 
-  const [variantResult, imageResult, linkResult, brandResult] = await Promise.all([
+  const [variantResult, imageResult, linkResult, brandResult, categoryResult] = await Promise.all([
     publicSupabase
       .from("store_product_variants")
       .select(STOREFRONT_VARIANT_SELECT)
@@ -691,6 +691,13 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
           .eq("is_visible", true)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    row.category_id
+      ? publicSupabase
+          .from("store_categories")
+          .select(STOREFRONT_CATEGORY_SELECT)
+          .eq("id", row.category_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   const variants = assertResult(variantResult, "product variants");
@@ -698,6 +705,9 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
   const links = assertResult(linkResult, "product collection links");
   if (brandResult.error) {
     throw new Error(`Supabase product brand failed: ${brandResult.error.message}`);
+  }
+  if (categoryResult.error) {
+    throw new Error(`Supabase product category failed: ${categoryResult.error.message}`);
   }
 
   const collectionIds = links.map((link) => link.collection_id);
@@ -721,6 +731,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
     images,
     collections,
     (brandResult.data as StorefrontBrandRow | null) ?? undefined,
+    (categoryResult.data as StorefrontCategoryRow | null) ?? undefined,
   );
 }
 
@@ -798,7 +809,14 @@ async function fetchSmallCollectionByHandle(
   if (!selectedRows.length) return { collection, products: [] };
 
   const activeProductIds = selectedRows.map((product) => product.id);
-  const [variantResult, imageResult, productLinkResult] = await Promise.all([
+  const categoryIds = [
+    ...new Set(
+      selectedRows
+        .map((product) => product.category_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const [variantResult, imageResult, productLinkResult, categoryResult] = await Promise.all([
     publicSupabase
       .from("store_product_variants")
       .select(STOREFRONT_VARIANT_SELECT)
@@ -815,11 +833,18 @@ async function fetchSmallCollectionByHandle(
       .select(STOREFRONT_COLLECTION_LINK_SELECT)
       .in("product_id", activeProductIds)
       .order("sort_order", { ascending: true }),
+    categoryIds.length
+      ? publicSupabase
+          .from("store_categories")
+          .select(STOREFRONT_CATEGORY_SELECT)
+          .in("id", categoryIds)
+      : Promise.resolve({ data: [] as StorefrontCategoryRow[], error: null }),
   ]);
 
   const variants = assertResult(variantResult, "collection product variants");
   const images = assertResult(imageResult, "collection product images");
   const productLinks = assertResult(productLinkResult, "collection product links");
+  const categoryRows = assertResult(categoryResult, "collection product categories");
   const variantsByProduct = groupByProduct(variants);
   const imagesByProduct = groupByProduct(images);
   const linksByProduct = groupByProduct(productLinks);
@@ -858,6 +883,7 @@ async function fetchSmallCollectionByHandle(
     brands = assertResult(brandResult, "collection product brands");
   }
   const brandsById = new Map(brands.map((brand) => [brand.id, brand]));
+  const categoriesById = new Map(categoryRows.map((category) => [category.id, category]));
 
   const products = selectedRows.map((productRow) => {
     const productCollections = (linksByProduct.get(productRow.id) ?? [])
@@ -869,6 +895,7 @@ async function fetchSmallCollectionByHandle(
       imagesByProduct.get(productRow.id) ?? [],
       productCollections,
       productRow.brand_id ? brandsById.get(productRow.brand_id) : undefined,
+      productRow.category_id ? categoriesById.get(productRow.category_id) : undefined,
     );
   });
 
