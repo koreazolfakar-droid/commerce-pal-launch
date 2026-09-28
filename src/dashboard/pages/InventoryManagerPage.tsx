@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import InventoryMovementHistoryDrawer from "@/dashboard/components/inventory/InventoryMovementHistoryDrawer";
 import {
   adjustInventoryDelta,
@@ -158,6 +159,33 @@ export default function InventoryManagerPage() {
 
   useEffect(() => {
     void load(false);
+  }, [load]);
+
+  useEffect(() => {
+    let refreshTimer: number | undefined;
+    const scheduleRefresh = () => {
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => void load(false), 250);
+    };
+
+    const channel = supabase
+      .channel("dashboard-inventory-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "store_product_variants" },
+        scheduleRefresh,
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "store_inventory_movements" },
+        scheduleRefresh,
+      )
+      .subscribe();
+
+    return () => {
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      void supabase.removeChannel(channel);
+    };
   }, [load]);
 
   useEffect(() => {
