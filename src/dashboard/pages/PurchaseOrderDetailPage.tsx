@@ -1,3 +1,4 @@
+import { confirmDashboardAction, promptDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import {
   ArrowLeft,
   Boxes,
@@ -102,7 +103,10 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
 
   const submit = async () => {
     if (!po || po.status !== "draft") return;
-    if (!window.confirm(`Submit PO ${po.poNumber}? Draft lines will become locked for receiving.`)) return;
+    if (!(await confirmDashboardAction(
+      `Submit PO ${po.poNumber}? Draft lines will become locked for receiving.`,
+      { title: "Submit purchase order", confirmLabel: "Submit", destructive: false },
+    ))) return;
 
     setSaving(true);
     try {
@@ -132,7 +136,15 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         await reopenPurchaseOrder(po.id, po.updatedAt);
         toast.success(`PO ${po.poNumber} reopened as draft.`);
       } else if (action === "reject") {
-        const reason = window.prompt("Reason for rejecting this purchase order?")?.trim();
+        const reason = await promptDashboardAction(
+          "Explain why this purchase order is being rejected.",
+          {
+            title: "Reject purchase order",
+            placeholder: "Required reason",
+            confirmLabel: "Reject",
+            destructive: true,
+          },
+        );
         if (!reason) return;
         await rejectPurchaseOrder(po.id, po.updatedAt, reason);
         toast.success(`PO ${po.poNumber} rejected.`);
@@ -140,7 +152,15 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         await closePurchaseOrder(po.id, po.updatedAt);
         toast.success(`PO ${po.poNumber} closed.`);
       } else {
-        const reason = window.prompt("Reason for cancelling this purchase order?")?.trim();
+        const reason = await promptDashboardAction(
+          "Explain why this purchase order is being cancelled.",
+          {
+            title: "Cancel purchase order",
+            placeholder: "Required reason",
+            confirmLabel: "Cancel PO",
+            destructive: true,
+          },
+        );
         if (!reason) return;
         await cancelPurchaseOrder(po.id, po.updatedAt, reason);
         toast.success(`PO ${po.poNumber} cancelled.`);
@@ -538,8 +558,11 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                 </div>
                 {isAdmin ? (
                   <button
-                    onClick={() => {
-                      if (!window.confirm("Delete this attachment?")) return;
+                    onClick={async () => {
+                      if (!(await confirmDashboardAction(
+                        "Delete this purchase-order attachment? This cannot be undone.",
+                        { title: "Delete attachment", confirmLabel: "Delete" },
+                      ))) return;
                       setSaving(true);
                       void deleteProcurementAttachment(attachment)
                         .then(() => load(false))
