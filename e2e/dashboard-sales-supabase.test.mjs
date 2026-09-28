@@ -2,9 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const [app, nav, page, data, migration] = await Promise.all([
-  readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../src/dashboard/config/navigation.ts", import.meta.url), "utf8"),
+const [routes, page, data, migration] = await Promise.all([
+  readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/SalesPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/sales.ts", import.meta.url), "utf8"),
   readFile(
@@ -13,10 +12,10 @@ const [app, nav, page, data, migration] = await Promise.all([
   ),
 ]);
 
-test("Sales is a real dashboard route backed by Supabase", () => {
-  assert.match(app, /import SalesPage from "@\/dashboard\/pages\/SalesPage"/);
-  assert.match(app, /route === "\/dashboard\/sales"\) content = <SalesPage \/>/);
-  assert.match(nav, /label: "Sales", href: "\/dashboard\/sales"/);
+test("Sales is a real lazy dashboard route backed by Supabase", () => {
+  assert.match(routes, /const salesPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/SalesPage"\)\)/);
+  assert.match(routes, /id: "sales"[\s\S]*path: "\/dashboard\/sales"[\s\S]*page: salesPage/);
+  assert.match(routes, /label: "Sales"/);
   assert.match(data, /from\("store_sales"\)/);
 });
 
