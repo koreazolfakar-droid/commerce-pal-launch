@@ -1,3 +1,4 @@
+import { confirmDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import {
   Eye,
   EyeOff,
@@ -125,7 +126,10 @@ export default function NavigationPage() {
 
   const remove = async (item: DashboardNavigationItem) => {
     if (!canDelete) return toast.error("Only admins can delete navigation items.");
-    if (!window.confirm(`Delete "${item.label}" from managed navigation?`)) return;
+    if (!(await confirmDashboardAction(
+      `Delete "${item.label}" from managed navigation? This cannot be undone.`,
+      { title: "Delete navigation item", confirmLabel: "Delete" },
+    ))) return;
     try {
       await deleteDashboardNavigationItem(item.id);
       setItems((current) => current.filter((row) => row.id !== item.id));
