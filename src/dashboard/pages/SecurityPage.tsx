@@ -12,7 +12,8 @@ import {
   Smartphone,
   Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDashboardDialogFocus } from "@/dashboard/hooks/useDashboardDialogFocus";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import {
@@ -101,6 +102,7 @@ export default function SecurityPage() {
   const [passkeyStepUpError, setPasskeyStepUpError] = useState("");
   const [passkeyStepUpBusy, setPasskeyStepUpBusy] = useState(false);
   const passkeySupported = useMemo(() => isDashboardPasskeySupported(), []);
+  const passkeyDialogRef = useRef<HTMLDivElement>(null);
 
   const loadPasskeys = useCallback(async () => {
     if (!passkeySupported) {
@@ -193,6 +195,12 @@ export default function SecurityPage() {
     setPasskeyTotpCode("");
     setPasskeyStepUpError("");
   };
+
+  useDashboardDialogFocus(
+    Boolean(passkeyStepUp),
+    passkeyDialogRef,
+    passkeyStepUpBusy ? undefined : closePasskeyStepUp,
+  );
 
   const addPasskey = () => {
     openPasskeyStepUp({ type: "register" });
@@ -517,7 +525,11 @@ export default function SecurityPage() {
             if (event.target === event.currentTarget) closePasskeyStepUp();
           }}
         >
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+          <div
+            ref={passkeyDialogRef}
+            tabIndex={-1}
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
+          >
             <div className="flex items-start gap-3">
               <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
                 <ShieldCheck className="size-4" />
