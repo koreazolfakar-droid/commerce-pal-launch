@@ -142,7 +142,7 @@ function Sidebar({
     <>
       {mobileOpen && (
         <button
-          aria-label="Close menu"
+          aria-label={t("Close menu")}
           onClick={() => setMobileOpen(false)}
           className="fixed inset-0 z-40 touch-none bg-slate-950/45 backdrop-blur-[2px] lg:hidden"
         />
@@ -217,7 +217,7 @@ function Sidebar({
           <button
             onClick={() => setCollapsed(!collapsed)}
             className={`hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[12px] text-slate-500 hover:bg-white/[.06] hover:text-white lg:flex ${collapsed ? "justify-center" : ""}`}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? t("Expand sidebar") : t("Collapse sidebar")}
           >
             {collapsed ? (
               <PanelLeftOpen className="size-4" />
@@ -352,14 +352,14 @@ function Header({ onMenu }: { onMenu: () => void }) {
                         {item.name}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
-                        {`${item.brand || "No brand"} · ${item.category || "Uncategorized"}`}
+                        {`${item.brand || t("No brand")} · ${item.category || t("Uncategorized")}`}
                       </div>
                     </div>
                   </button>
                 ))
               ) : (
                 <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  {searchIndexLoading ? "Loading products…" : "No matching Supabase products"}
+                  {searchIndexLoading ? t("Loading products…") : t("No matching Supabase products")}
                 </div>
               )}
             </div>
@@ -406,9 +406,9 @@ function Header({ onMenu }: { onMenu: () => void }) {
               SC
             </div>
             <div className="hidden text-start sm:block">
-              <div className="text-[12px] font-bold text-foreground">Space Call Staff</div>
+              <div className="text-[12px] font-bold text-foreground">{t("Space Call Staff")}</div>
               <div className="text-[10px] font-medium text-muted-foreground">
-                {lang === "ar" ? "فريق المتجر" : "Store staff"}
+                {t("Store staff")}
               </div>
             </div>
             <ChevronDown className="hidden size-4 text-muted-foreground sm:block" />
@@ -452,7 +452,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-rose-600 transition hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30"
                 role="menuitem"
               >
-                <LogOut className="size-3.5" /> Sign out
+                <LogOut className="size-3.5" /> {t("Sign out")}
               </button>
             </div>
           )}
@@ -476,7 +476,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
                 type="button"
                 onClick={() => setQuery("")}
                 className="absolute end-2 top-[22px] grid size-8 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground active:bg-muted"
-                aria-label="Clear search"
+                aria-label={t("Clear search")}
               >
                 <X className="size-4" />
               </button>
@@ -502,13 +502,13 @@ function Header({ onMenu }: { onMenu: () => void }) {
                       <div className="truncate text-[12px] font-semibold text-foreground">
                         {item.name}
                       </div>
-                      <div className="truncate text-[11px] text-muted-foreground">{`${item.brand || "No brand"} · ${item.sku || "No SKU"}`}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">{`${item.brand || t("No brand")} · ${item.sku || t("No SKU")}`}</div>
                     </div>
                   </button>
                 ))
               ) : (
                 <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  {searchIndexLoading ? "Loading products…" : "No matching products"}
+                  {searchIndexLoading ? t("Loading products…") : t("No matching products")}
                 </div>
               )}
             </div>

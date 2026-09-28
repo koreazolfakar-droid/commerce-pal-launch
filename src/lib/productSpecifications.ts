@@ -3,11 +3,13 @@ import type { Json } from "@/integrations/supabase/types";
 export type ProductSpecificationField = {
   key: string;
   label: string;
+  labelAr?: string;
   unit?: string;
 };
 
 export type ProductSpecificationSection = {
   title: string;
+  titleAr?: string;
   fields: ProductSpecificationField[];
 };
 
@@ -19,7 +21,8 @@ export type ProductSpecificationValues = Record<string, string>;
 
 export type ProductSpecificationGroup = {
   title: string;
-  rows: Array<{ label: string; value: string }>;
+  titleAr?: string;
+  rows: Array<{ label: string; labelAr?: string; value: string }>;
 };
 
 const MAX_SECTIONS = 16;
@@ -52,6 +55,7 @@ export function normalizeSpecificationTemplate(value: unknown): ProductSpecifica
     if (!rawSection || typeof rawSection !== "object" || Array.isArray(rawSection)) continue;
     const section = rawSection as Record<string, unknown>;
     const title = cleanText(section.title, 80) || "Specifications";
+    const titleAr = cleanText(section.titleAr, 80);
     const rawFields = Array.isArray(section.fields) ? section.fields : [];
     const fields: ProductSpecificationField[] = [];
 
@@ -60,14 +64,26 @@ export function normalizeSpecificationTemplate(value: unknown): ProductSpecifica
       const field = rawField as Record<string, unknown>;
       const key = normalizeSpecificationKey(cleanText(field.key, 80));
       const label = cleanText(field.label, 100);
+      const labelAr = cleanText(field.labelAr, 100);
       const unit = cleanText(field.unit, 30);
 
       if (!key || !label || seen.has(key)) continue;
       seen.add(key);
-      fields.push({ key, label, ...(unit ? { unit } : {}) });
+      fields.push({
+        key,
+        label,
+        ...(labelAr ? { labelAr } : {}),
+        ...(unit ? { unit } : {}),
+      });
     }
 
-    if (fields.length) sections.push({ title, fields });
+    if (fields.length) {
+      sections.push({
+        title,
+        ...(titleAr ? { titleAr } : {}),
+        fields,
+      });
+    }
   }
 
   return { sections };
@@ -134,9 +150,11 @@ export function specificationGroups(
   return template.sections
     .map((section) => ({
       title: section.title,
+      ...(section.titleAr ? { titleAr: section.titleAr } : {}),
       rows: section.fields
         .map((field) => ({
           label: field.label,
+          ...(field.labelAr ? { labelAr: field.labelAr } : {}),
           value: displaySpecificationValue(values[field.key] ?? "", field.unit),
         }))
         .filter((row) => row.value),

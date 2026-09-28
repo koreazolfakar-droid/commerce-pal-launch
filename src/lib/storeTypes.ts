@@ -22,7 +22,8 @@ export interface StoreProductNode {
   tags?: string[];
   specificationGroups?: Array<{
     title: string;
-    rows: Array<{ label: string; value: string }>;
+    titleAr?: string;
+    rows: Array<{ label: string; labelAr?: string; value: string }>;
   }>;
   priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
   compareAtPriceRange?: { minVariantPrice: { amount: string; currencyCode: string } };

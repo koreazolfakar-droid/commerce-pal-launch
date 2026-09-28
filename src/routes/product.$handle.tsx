@@ -218,7 +218,7 @@ function ProductPage() {
     .slice(0, 8);
   const category = primaryCategory(product);
   const busy = pending !== null || cartLoading;
-  const isPhone = category?.slug === "smartphones";
+  const isPhone = category?.slug === "smartphone" || category?.slug === "smartphones";
   const whatsappOrderUrl = productWhatsAppUrl({
     title: node.title,
     url: absoluteUrl(`/product/${node.handle}`),
@@ -234,7 +234,13 @@ function ProductPage() {
   );
 
   const specGroups = useMemo(() => {
-    const structuredGroups = node.specificationGroups ?? [];
+    const structuredGroups = (node.specificationGroups ?? []).map((group) => ({
+      title: language === "ar" ? group.titleAr || group.title : group.title,
+      rows: group.rows.map((row) => ({
+        label: language === "ar" ? row.labelAr || row.label : row.label,
+        value: row.value,
+      })),
+    }));
     const structuredLabels = new Set(
       structuredGroups.flatMap((group) =>
         group.rows.map((row) => row.label.trim().toLocaleLowerCase()),
@@ -263,6 +269,7 @@ function ProductPage() {
     node.productType,
     node.vendor,
     node.specificationGroups,
+    language,
   ]);
 
   const similar = useMemo(() => {

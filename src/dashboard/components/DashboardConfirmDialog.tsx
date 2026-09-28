@@ -1,5 +1,6 @@
 import { Loader2, X } from "lucide-react";
-import { useEffect } from "react";
+import { useRef } from "react";
+import { useDashboardDialogFocus } from "@/dashboard/hooks/useDashboardDialogFocus";
 
 type DashboardConfirmDialogProps = {
   open: boolean;
@@ -24,16 +25,8 @@ export default function DashboardConfirmDialog({
   onClose,
   onConfirm,
 }: DashboardConfirmDialogProps) {
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !pending) onClose();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open, pending]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDashboardDialogFocus(open, dialogRef, pending ? undefined : onClose);
 
   if (!open) return null;
 
@@ -46,7 +39,9 @@ export default function DashboardConfirmDialog({
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
+        tabIndex={-1}
         aria-modal="true"
         aria-labelledby="dashboard-confirm-title"
         aria-describedby="dashboard-confirm-description"

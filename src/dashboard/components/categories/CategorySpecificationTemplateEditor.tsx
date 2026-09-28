@@ -1,4 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
+import { useLanguage } from "@/dashboard/i18n";
 import {
   normalizeSpecificationKey,
   type ProductSpecificationTemplate,
@@ -19,6 +20,8 @@ export default function CategorySpecificationTemplateEditor({
   value: ProductSpecificationTemplate;
   onChange: (value: ProductSpecificationTemplate) => void;
 }) {
+  const { lang } = useLanguage();
+  const ar = lang === "ar";
   const template = value;
 
   const commit = (next: ProductSpecificationTemplate) => {
@@ -36,7 +39,8 @@ export default function CategorySpecificationTemplateEditor({
         ...template.sections,
         {
           title: `Specifications ${index}`,
-          fields: [{ key, label: "New field" }],
+          titleAr: `المواصفات ${index}`,
+          fields: [{ key, label: "New field", labelAr: "حقل جديد" }],
         },
       ],
     });
@@ -46,9 +50,13 @@ export default function CategorySpecificationTemplateEditor({
     <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-black text-slate-700">Specification template</div>
+          <div className="text-[11px] font-black text-slate-700">
+            {ar ? "قالب المواصفات" : "Specification template"}
+          </div>
           <p className="mt-1 max-w-xl text-[10px] leading-4 text-slate-400">
-            These fields appear automatically in products assigned to this category and define the storefront specification sections.
+            {ar
+              ? "تظهر هذه الحقول تلقائيًا في المنتجات التابعة لهذا التصنيف وتحدد أقسام المواصفات في المتجر."
+              : "These fields appear automatically in products assigned to this category and define the storefront specification sections."}
           </p>
         </div>
         <button
@@ -57,14 +65,14 @@ export default function CategorySpecificationTemplateEditor({
           className="inline-flex h-9 items-center gap-2 rounded-xl border border-indigo-200 bg-white px-3 text-[10px] font-bold text-indigo-600"
         >
           <Plus className="size-3.5" />
-          Add section
+          {ar ? "إضافة قسم" : "Add section"}
         </button>
       </div>
 
       <div className="mt-4 space-y-3">
         {template.sections.map((section, sectionIndex) => (
           <section key={sectionIndex} className="rounded-xl border border-slate-200 bg-white p-3">
-            <div className="flex items-center gap-2">
+            <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
               <input
                 value={section.title}
                 onChange={(event) => {
@@ -72,8 +80,24 @@ export default function CategorySpecificationTemplateEditor({
                   sections[sectionIndex] = { ...section, title: event.target.value };
                   commit({ sections });
                 }}
+                placeholder="Section title"
                 aria-label="Specification section title"
-                className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                className="h-9 min-w-0 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+              />
+              <input
+                value={section.titleAr ?? ""}
+                dir="rtl"
+                onChange={(event) => {
+                  const sections = [...template.sections];
+                  sections[sectionIndex] = {
+                    ...section,
+                    titleAr: event.target.value || undefined,
+                  };
+                  commit({ sections });
+                }}
+                placeholder="عنوان القسم"
+                aria-label="Arabic specification section title"
+                className="h-9 min-w-0 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
               />
               <button
                 type="button"
@@ -93,7 +117,7 @@ export default function CategorySpecificationTemplateEditor({
               {section.fields.map((field, fieldIndex) => (
                 <div
                   key={field.key + fieldIndex}
-                  className="grid gap-2 rounded-lg border border-slate-100 bg-slate-50/60 p-2 sm:grid-cols-[1.15fr_1fr_.65fr_auto]"
+                  className="grid gap-2 rounded-lg border border-slate-100 bg-slate-50/60 p-2 sm:grid-cols-[1fr_1fr_.85fr_.55fr_auto]"
                 >
                   <input
                     value={field.label}
@@ -106,6 +130,23 @@ export default function CategorySpecificationTemplateEditor({
                     }}
                     placeholder="Label"
                     aria-label="Specification field label"
+                    className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold outline-none focus:border-indigo-400"
+                  />
+                  <input
+                    value={field.labelAr ?? ""}
+                    dir="rtl"
+                    onChange={(event) => {
+                      const sections = [...template.sections];
+                      const fields = [...section.fields];
+                      fields[fieldIndex] = {
+                        ...field,
+                        labelAr: event.target.value || undefined,
+                      };
+                      sections[sectionIndex] = { ...section, fields };
+                      commit({ sections });
+                    }}
+                    placeholder="الاسم بالعربية"
+                    aria-label="Arabic specification field label"
                     className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold outline-none focus:border-indigo-400"
                   />
                   <input
@@ -170,14 +211,14 @@ export default function CategorySpecificationTemplateEditor({
                   const sections = [...template.sections];
                   sections[sectionIndex] = {
                     ...section,
-                    fields: [...section.fields, { key, label: "New field" }],
+                    fields: [...section.fields, { key, label: "New field", labelAr: "حقل جديد" }],
                   };
                   commit({ sections });
                 }}
                 className="inline-flex h-9 items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 text-[10px] font-bold text-slate-500"
               >
                 <Plus className="size-3.5" />
-                Add field
+                {ar ? "إضافة حقل" : "Add field"}
               </button>
             </div>
           </section>
@@ -185,7 +226,9 @@ export default function CategorySpecificationTemplateEditor({
 
         {!template.sections.length ? (
           <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-[10px] text-slate-400">
-            No specification fields yet. Add a section to make this category specification-aware.
+            {ar
+              ? "لا توجد حقول مواصفات بعد. أضف قسمًا لربط هذا التصنيف بالمواصفات."
+              : "No specification fields yet. Add a section to make this category specification-aware."}
           </div>
         ) : null}
       </div>
