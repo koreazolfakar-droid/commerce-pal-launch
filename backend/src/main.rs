@@ -27,11 +27,12 @@ async fn main() -> Result<(), StartupError> {
     db::ping(&pool).await?;
     info!("database connection established");
 
-    let state = AppState::new(pool);
+    let state = AppState::new(pool, &config);
 
     let app = Router::new()
         .route("/health", get(routes::health::liveness))
         .route("/ready", get(routes::health::readiness))
+        .route("/api/me", get(routes::auth::me))
         .with_state(state)
         .layer(CatchPanicLayer::new())
         .layer(TraceLayer::new_for_http());
