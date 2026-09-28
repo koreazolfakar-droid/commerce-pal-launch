@@ -6,7 +6,7 @@ const [workflow, hardening, upgrade, concurrency, data, page, purchaseOrdersPage
   readFile(new URL("../supabase/migrations/20260919123000_procurement_receiving_workflows.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919124500_harden_procurement_rpc_exposure.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919152000_procurement_management_upgrade.sql", import.meta.url), "utf8"),
-  readFile(new URL("../supabase/migrations/20260928053000_inventory_procurement_optimistic_concurrency.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260928084508_inventory_procurement_optimistic_concurrency_20260928.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/receiving.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ReceivingPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/PurchaseOrdersPage.tsx", import.meta.url), "utf8"),
