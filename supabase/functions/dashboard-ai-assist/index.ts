@@ -146,7 +146,7 @@ function clamp01(value: number) {
 }
 
 function riskFor(entity: string, field: string): AiRisk {
-  if (entity === "product" && field.startsWith("spec__")) return "medium";
+  if (entity === "product" && field.startsWith("spec__")) return "high";
   return fieldRisk[entity]?.[field] ?? "medium";
 }
 
@@ -1174,6 +1174,10 @@ async function verifySuggestions(args: {
           ? 0.55
           : 0.35;
       const verified = suggestion.verified && args.grounded && evidenceSources.length > 0;
+
+      if (args.entity === "product" && suggestion.field.startsWith("spec__") && !verified) {
+        blockers.push("Specification requires direct grounded evidence for the exact product");
+      }
 
       if (suggestion.verified && !verified) {
         reviews.push("Verified claim had no matching grounded source");
