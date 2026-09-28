@@ -371,6 +371,12 @@ export default function CategoryForm({
                 placeholder="e.g. Smartphones"
               />
               <TextField
+                label="Arabic Name"
+                value={draft.nameAr ?? ""}
+                onChange={(value) => patch({ nameAr: value || undefined })}
+                placeholder="مثال: هواتف ذكية"
+              />
+              <TextField
                 label="Slug"
                 value={draft.slug}
                 onChange={(value) => patch({ slug: normalizeCategorySlug(value) })}
