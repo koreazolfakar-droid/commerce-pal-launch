@@ -34,8 +34,8 @@ type ProductListRow = Pick<
   | "barcode"
   | "seo_title"
   | "seo_description"
-  | "specifications"
 >;
+type ProductDetailRow = ProductListRow & Pick<ProductRow, "specifications">;
 type VariantListRow = Pick<
   VariantRow,
   "product_id" | "price" | "compare_at_price" | "sku" | "barcode" | "sort_order"
@@ -1163,7 +1163,7 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
     supabase
       .from("store_products")
       .select(
-        "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description,specifications",
+        "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description",
       )
       .order("updated_at", { ascending: false }),
     supabase
@@ -1229,7 +1229,7 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
       image: image?.url ?? "",
       seoTitle: row.seo_title ?? "",
       seoDescription: row.seo_description ?? "",
-      specifications: normalizeProductSpecifications(row.specifications),
+      specifications: {},
       variantCount: productVariants.length,
     };
   });
@@ -1291,7 +1291,7 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
   throwIfError(productResult.error, "Loading product failed");
   if (!productResult.data) return null;
 
-  const row = productResult.data as ProductListRow;
+  const row = productResult.data as ProductDetailRow;
   const [variantResult, imageResult, brandResult, categoryResult] = await Promise.all([
     supabase
       .from("store_product_variants")
