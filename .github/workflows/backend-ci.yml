@@ -1,0 +1,68 @@
+name: Rust backend foundation
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: health_test
+          POSTGRES_PASSWORD: local_test_only
+          POSTGRES_DB: space_call_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd 'pg_isready -U health_test -d space_call_test'
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - run: cargo fmt --check
+      - run: cargo check --locked
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo test --locked
+      - name: Verify healthy and unavailable database responses
+        env:
+          APP_ENV: development
+          HOST: 127.0.0.1
+          PORT: '39171'
+          DATABASE_URL: postgresql://health_test:local_test_only@127.0.0.1:5432/space_call_test?sslmode=disable
+          DATABASE_MAX_CONNECTIONS: '1'
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_ANON_KEY: ci_placeholder_only
+          ALLOWED_ORIGINS: http://localhost:5173
+          RUST_LOG: info,sqlx=warn
+        run: |
+          cargo run --locked > /tmp/space-call-api-ci.log 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 90); do
+            if curl -fs http://127.0.0.1:39171/health > /tmp/health-healthy.json; then break; fi
+            sleep 2
+          done
+          python3 -c 'import json; assert json.load(open("/tmp/health-healthy.json")) == {"status":"ok","service":"space-call-api","database":"healthy"}'
+          docker stop "$(docker ps --filter ancestor=postgres:16 --format '{{.ID}}' | head -n 1)"
+          curl -sS -o /tmp/health-degraded.json -w '%{http_code}' http://127.0.0.1:39171/health | grep -qx 503
+          python3 -c 'import json; assert json.load(open("/tmp/health-degraded.json")) == {"status":"degraded","service":"space-call-api","database":"unhealthy"}'
