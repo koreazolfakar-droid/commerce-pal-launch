@@ -104,8 +104,11 @@ enum StartupError {
     #[error(transparent)]
     Config(#[from] ConfigError),
 
-    #[error("database startup check failed")]
+    #[error("database connection failed")]
     Database(#[from] sqlx::Error),
+
+    #[error("database startup readiness check failed")]
+    Readiness(#[from] db::PingError),
 
     #[error("failed to bind backend listener at {address}")]
     Bind {
