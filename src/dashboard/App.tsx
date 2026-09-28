@@ -8,36 +8,11 @@ import {
 } from "@/dashboard/data/catalog";
 import { LanguageContext, useLanguage } from "@/dashboard/i18n";
 import { useTheme } from "@/dashboard/contexts/ThemeContext";
-import BrandsPage from "@/dashboard/pages/BrandsPage";
-import CategoriesPage from "@/dashboard/pages/CategoriesPage";
-import CollectionDetailPageLive from "@/dashboard/pages/CollectionDetailPage";
-import CollectionsPageLive from "@/dashboard/pages/CollectionsPage";
-import CustomerDetailPageLive from "@/dashboard/pages/CustomerDetailPage";
-import CustomersPageLive from "@/dashboard/pages/CustomersPage";
-import DashboardHomePage from "@/dashboard/pages/DashboardHomePage";
-import HeroBannersPageLive from "@/dashboard/pages/HeroBannersPage";
-import HomepageBuilderPage from "@/dashboard/pages/HomepageBuilder";
-import InventoryManagerPage from "@/dashboard/pages/InventoryManagerPage";
-import LoginPage from "@/dashboard/pages/LoginPage";
-import MediaLibraryPage from "@/dashboard/pages/MediaLibraryPage";
-import NavigationPage from "@/dashboard/pages/NavigationPage";
-import OrderDetailPageLive from "@/dashboard/pages/OrderDetailPage";
-import OrdersPageLive from "@/dashboard/pages/OrdersPage";
-import ProcurementAnalyticsPage from "@/dashboard/pages/ProcurementAnalyticsPage";
-import ProductFormPageLive from "@/dashboard/pages/ProductFormPage";
-import ProductsPageLive from "@/dashboard/pages/ProductsPage";
-import PurchaseOrderCreatePage from "@/dashboard/pages/PurchaseOrderCreatePage";
-import PurchaseOrderDetailPage from "@/dashboard/pages/PurchaseOrderDetailPage";
-import PurchaseOrderEditPage from "@/dashboard/pages/PurchaseOrderEditPage";
-import PurchaseOrdersPage from "@/dashboard/pages/PurchaseOrdersPage";
-import ReceivingDetailPage from "@/dashboard/pages/ReceivingDetailPage";
-import ReceivingPage from "@/dashboard/pages/ReceivingPage";
-import SalesPage from "@/dashboard/pages/SalesPage";
-import SecurityPage from "@/dashboard/pages/SecurityPage";
-import SeoPage from "@/dashboard/pages/SeoPage";
-import SettingsPage from "@/dashboard/pages/SettingsPage";
-import SuppliersPage from "@/dashboard/pages/SuppliersPage";
-import WorkspacePage from "@/dashboard/pages/WorkspacePage";
+import {
+  DashboardLoginPage,
+  preloadDashboardRoute,
+  resolveDashboardRoute,
+} from "@/dashboard/config/routes";
 import { useDashboardAuth0 } from "@/dashboard/security/Auth0DashboardSecurity";
 import { SITE_URL } from "@/lib/storeConfig";
 import {
@@ -77,7 +52,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Route, Switch, useLocation } from "wouter";
 
@@ -196,7 +171,11 @@ function Sidebar({
                     <button
                       key={item.href}
                       title={collapsed ? t(item.label) : undefined}
+                      onMouseEnter={() => void preloadDashboardRoute(item.href)}
+                      onFocus={() => void preloadDashboardRoute(item.href)}
+                      onTouchStart={() => void preloadDashboardRoute(item.href)}
                       onClick={() => {
+                        void preloadDashboardRoute(item.href);
                         navigate(item.href);
                         setMobileOpen(false);
                       }}
@@ -560,7 +539,11 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
             <button
               key={href}
               type="button"
-              onClick={() => navigate(href)}
+              onTouchStart={() => void preloadDashboardRoute(href)}
+              onClick={() => {
+                void preloadDashboardRoute(href);
+                navigate(href);
+              }}
               className={`flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold transition active:scale-95 ${active ? "text-primary" : "text-muted-foreground"}`}
               aria-current={active ? "page" : undefined}
             >
@@ -585,6 +568,19 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
         </button>
       </div>
     </nav>
+  );
+}
+
+function DashboardRouteFallback() {
+  return (
+    <div
+      className="grid min-h-[360px] place-items-center rounded-2xl border border-border/60 bg-card/40"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading dashboard page"
+    >
+      <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+    </div>
   );
 }
 
@@ -721,48 +717,7 @@ function DashboardLayout() {
     localStorage.setItem("spacecall-sidebar", collapsed ? "collapsed" : "expanded");
   }, [collapsed]);
   const route = location.replace(/\/$/, "") || "/dashboard";
-  const productDetail = route.match(/^\/dashboard\/products\/([^/]+)$/);
-  const orderDetail = route.match(/^\/dashboard\/orders\/([^/]+)$/);
-  const customerDetail = route.match(/^\/dashboard\/customers\/([^/]+)$/);
-  const collectionDetail = route.match(/^\/dashboard\/collections\/([^/]+)$/);
-  const purchaseOrderEdit = route.match(/^\/dashboard\/purchase-orders\/([^/]+)\/edit$/);
-  const purchaseOrderDetail = route.match(/^\/dashboard\/purchase-orders\/([^/]+)$/);
-  const receivingPoDetail = route.match(/^\/dashboard\/receiving\/([^/]+)$/);
-  const receivingDetail = route.match(/^\/dashboard\/receivings\/([^/]+)$/);
-  let content: React.ReactNode;
-  if (route === "/dashboard" || route === "/dashboard/") content = <DashboardHomePage />;
-  else if (route === "/dashboard/analytics") content = <DashboardHomePage />;
-  else if (route === "/dashboard/orders") content = <OrdersPageLive />;
-  else if (route === "/dashboard/sales") content = <SalesPage />;
-  else if (orderDetail) content = <OrderDetailPageLive id={orderDetail[1]} />;
-  else if (route === "/dashboard/collections") content = <CollectionsPageLive />;
-  else if (collectionDetail) content = <CollectionDetailPageLive id={collectionDetail[1]} />;
-  else if (route === "/dashboard/products") content = <ProductsPageLive />;
-  else if (route === "/dashboard/products/new") content = <ProductFormPageLive />;
-  else if (productDetail) content = <ProductFormPageLive id={productDetail[1]} />;
-  else if (route === "/dashboard/customers") content = <CustomersPageLive />;
-  else if (customerDetail) content = <CustomerDetailPageLive id={customerDetail[1]} />;
-  else if (route === "/dashboard/inventory") content = <InventoryManagerPage />;
-  else if (route === "/dashboard/procurement") content = <ProcurementAnalyticsPage />;
-  else if (route === "/dashboard/suppliers") content = <SuppliersPage />;
-  else if (route === "/dashboard/purchase-orders") content = <PurchaseOrdersPage />;
-  else if (route === "/dashboard/purchase-orders/new") content = <PurchaseOrderCreatePage />;
-  else if (purchaseOrderEdit) content = <PurchaseOrderEditPage id={purchaseOrderEdit[1]} />;
-  else if (purchaseOrderDetail) content = <PurchaseOrderDetailPage id={purchaseOrderDetail[1]} />;
-  else if (route === "/dashboard/receiving") content = <ReceivingPage />;
-  else if (receivingPoDetail) content = <ReceivingPage purchaseOrderId={receivingPoDetail[1]} />;
-  else if (receivingDetail) content = <ReceivingDetailPage id={receivingDetail[1]} />;
-  else if (route === "/dashboard/categories") content = <CategoriesPage />;
-  else if (route === "/dashboard/brands") content = <BrandsPage />;
-  else if (route === "/dashboard/security") content = <SecurityPage />;
-  else if (route === "/dashboard/settings") content = <SettingsPage />;
-  else if (route === "/dashboard/navigation") content = <NavigationPage />;
-  else if (route === "/dashboard/media") content = <MediaLibraryPage />;
-  else if (route === "/dashboard/seo") content = <SeoPage />;
-  else if (route === "/dashboard/homepage/hero") content = <HeroBannersPageLive />;
-  else if (route === "/dashboard/homepage" || route === "/dashboard/homepage/sections")
-    content = <HomepageBuilderPage />;
-  else content = <WorkspacePage key={route} path={route} />;
+  const content = resolveDashboardRoute(route);
   return (
     <div className="dashboard-theme-scope min-h-screen min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
       <Sidebar
@@ -776,7 +731,9 @@ function DashboardLayout() {
       >
         <Header onMenu={() => setMobileOpen(true)} />
         <main className="dashboard-main mx-auto min-w-0 max-w-[1600px] p-3 pb-24 sm:p-6 sm:pb-24 lg:p-9">
-          {content}
+          <Suspense fallback={<DashboardRouteFallback />}>
+            {content}
+          </Suspense>
         </main>
         <MobileBottomNav onMore={() => setMobileOpen(true)} />
       </div>
@@ -851,7 +808,13 @@ export default function App() {
     <LanguageContext.Provider value={{ lang, setLang, t }}>
       <>
         <Switch>
-          <Route path="/dashboard/login" component={LoginPage} />
+          <Route path="/dashboard/login">
+            {() => (
+              <Suspense fallback={<div className="min-h-screen bg-background" />}>
+                <DashboardLoginPage />
+              </Suspense>
+            )}
+          </Route>
           <Route component={DashboardGate} />
         </Switch>
         <Toaster position="bottom-right" richColors theme={theme} />
