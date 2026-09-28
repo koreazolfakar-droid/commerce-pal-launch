@@ -1,5 +1,6 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
@@ -528,7 +529,7 @@ export async function setInventoryStock(
     throw new Error("Stock must be a non-negative whole number.");
   }
 
-  const { data, error } = await supabase.rpc("set_store_inventory_stock_v2", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("set_store_inventory_stock_v2", rpcArgs({
     p_product_id: row.productId,
     p_variant_id: row.variantId,
     p_stock: stock,
