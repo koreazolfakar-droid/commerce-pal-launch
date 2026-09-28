@@ -245,8 +245,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const [, navigate] = useLocation();
   const [headerProducts, setHeaderProducts] = useState<DashboardProductSearchItem[]>([]);
   const [searchIndexLoading, setSearchIndexLoading] = useState(false);
-  const searchIndexRequested = useRef(false);
-  const headerMounted = useRef(true);
+  const searchRequestId = useRef(0);
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
@@ -260,37 +259,33 @@ function Header({ onMenu }: { onMenu: () => void }) {
   }, []);
 
   useEffect(() => {
-    return () => {
-      headerMounted.current = false;
-    };
-  }, []);
+    const normalizedQuery = query.trim();
+    const requestId = ++searchRequestId.current;
 
-  useEffect(() => {
-    if (!query.trim() || searchIndexRequested.current) return;
+    if (!normalizedQuery) {
+      setHeaderProducts([]);
+      setSearchIndexLoading(false);
+      return;
+    }
 
-    searchIndexRequested.current = true;
-    setSearchIndexLoading(true);
-    listDashboardProductSearchIndex()
-      .then((rows) => {
-        if (headerMounted.current) setHeaderProducts(rows);
-      })
-      .catch(() => {
-        searchIndexRequested.current = false;
-      })
-      .finally(() => {
-        if (headerMounted.current) setSearchIndexLoading(false);
-      });
+    const timer = window.setTimeout(() => {
+      setSearchIndexLoading(true);
+      void listDashboardProductSearchIndex(normalizedQuery, 5)
+        .then((rows) => {
+          if (requestId === searchRequestId.current) setHeaderProducts(rows);
+        })
+        .catch(() => {
+          if (requestId === searchRequestId.current) setHeaderProducts([]);
+        })
+        .finally(() => {
+          if (requestId === searchRequestId.current) setSearchIndexLoading(false);
+        });
+    }, 180);
+
+    return () => window.clearTimeout(timer);
   }, [query]);
 
-  const results: DashboardProductSearchItem[] = query
-    ? headerProducts
-        .filter((product) =>
-          `${product.name} ${product.brand} ${product.sku}`
-            .toLowerCase()
-            .includes(query.toLowerCase()),
-        )
-        .slice(0, 5)
-    : [];
+  const results: DashboardProductSearchItem[] = query.trim() ? headerProducts : [];
 
   return (
     <header className="dashboard-header sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
