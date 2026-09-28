@@ -15,6 +15,10 @@ const data = await readFile(
   new URL("../src/dashboard/data/home.ts", import.meta.url),
   "utf8",
 );
+const performanceMigration = await readFile(
+  new URL("../supabase/migrations/20260928090000_dashboard_performance_realtime_hardening.sql", import.meta.url),
+  "utf8",
+);
 
 test("dashboard root uses the lazy Supabase-backed home page", () => {
   assert.match(routes, /const homePage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/DashboardHomePage"\)\)/);
@@ -29,24 +33,19 @@ test("live dashboard home does not import mock business data", () => {
   assert.doesNotMatch(page, /124,892|1,842|1,206|January 31, 2026/);
 });
 
-test("dashboard home reads truthful metrics from Supabase", () => {
-  assert.match(data, /from\("store_orders"\)/);
-  assert.match(data, /from\("store_sales"\)/);
-  assert.match(data, /from\("store_order_items"\)/);
-  assert.match(data, /from\("store_customers"\)/);
-  assert.match(data, /from\("store_products"\)/);
-  assert.match(data, /from\("store_product_variants"\)/);
-  assert.match(data, /from\("cms_brands"\)/);
+test("dashboard home reads one bounded server-side aggregate snapshot", () => {
+  assert.match(data, /looseSupabase\.rpc\("get_dashboard_home_snapshot"/);
+  assert.match(data, /p_start: start\.toISOString\(\)/);
+  assert.match(data, /p_end: end\.toISOString\(\)/);
+  assert.doesNotMatch(data, /\.from\("store_products"\)|\.from\("store_product_variants"\)|\.from\("store_order_items"\)/);
+  assert.match(performanceMigration, /create or replace function public\.get_dashboard_home_snapshot/);
+  assert.match(performanceMigration, /p_end - p_start > interval '90 days'/);
 });
 
 test("dashboard home sales metrics only use completed eligible sales", () => {
-  assert.match(data, /\.in\("payment_status", \["paid", "partially_refunded"\]\)/);
-  assert.match(data, /const saleOrderIds = periodSales\.map\(\(sale\) => sale\.order_id\)/);
-  assert.match(data, /\.in\("order_id", saleOrderIds\)/);
-  assert.match(
-    data,
-    /const totalSales = periodSales\.reduce\(\(sum, sale\) => sum \+ \(Number\(sale\.total\) \|\| 0\), 0\)/,
-  );
+  assert.match(performanceMigration, /payment_status in \('paid', 'partially_refunded'\)/);
+  assert.match(performanceMigration, /from public\.store_sales/);
+  assert.match(performanceMigration, /join public\.store_order_items oi on oi\.order_id = ps\.order_id/);
   assert.match(page, /Gross sales/);
   assert.match(page, /Completed paid sales · full refunds excluded/);
 });
