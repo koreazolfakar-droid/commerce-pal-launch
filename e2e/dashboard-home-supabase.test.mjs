@@ -3,6 +3,10 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
+const routes = await readFile(
+  new URL("../src/dashboard/config/routes.tsx", import.meta.url),
+  "utf8",
+);
 const page = await readFile(
   new URL("../src/dashboard/pages/DashboardHomePage.tsx", import.meta.url),
   "utf8",
@@ -12,12 +16,11 @@ const data = await readFile(
   "utf8",
 );
 
-test("dashboard root uses the Supabase-backed home page", () => {
-  assert.match(app, /DashboardHomePage/);
-  assert.match(
-    app,
-    /route === "\/dashboard"[\s\S]+content = <DashboardHomePage \/>/,
-  );
+test("dashboard root uses the lazy Supabase-backed home page", () => {
+  assert.match(routes, /const homePage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/DashboardHomePage"\)\)/);
+  assert.match(routes, /id: "home"[\s\S]*path: "\/dashboard"[\s\S]*page: homePage/);
+  assert.match(app, /resolveDashboardRoute\(route\)/);
+  assert.doesNotMatch(app, /import DashboardHomePage from/);
 });
 
 test("live dashboard home does not import mock business data", () => {
