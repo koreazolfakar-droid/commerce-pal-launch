@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import OrderQuickDrawer from "@/dashboard/components/orders/OrderQuickDrawer";
+import { useDashboardRealtimeRefresh } from "@/dashboard/hooks/useDashboardRealtimeRefresh";
 import {
   listDashboardOrders,
   orderStatusLabel,
@@ -221,6 +222,8 @@ export default function OrdersPage() {
     const timer = window.setTimeout(() => void load(false), search ? 300 : 0);
     return () => window.clearTimeout(timer);
   }, [load, search]);
+
+  useDashboardRealtimeRefresh(["store_orders"], () => void load(false));
 
   const stats = result?.stats;
   const inProgress = useMemo(
