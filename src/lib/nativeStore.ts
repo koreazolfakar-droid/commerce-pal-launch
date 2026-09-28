@@ -3,6 +3,7 @@ import type { Json, Tables } from "@/integrations/supabase/types";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 import { productSearchScore, textSearchScore } from "@/lib/searchRanking";
+import { specificationGroups } from "@/lib/productSpecifications";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -10,6 +11,7 @@ type ImageRow = Tables<"store_product_images">;
 type CollectionRow = Tables<"store_collections">;
 type CollectionLinkRow = Tables<"store_collection_products">;
 type BrandRow = Tables<"cms_brands">;
+type CategoryRow = Tables<"store_categories">;
 
 type StorefrontProductRow = Pick<
   ProductRow,
@@ -19,7 +21,9 @@ type StorefrontProductRow = Pick<
   | "description_html"
   | "handle"
   | "brand_id"
+  | "category_id"
   | "product_type"
+  | "specifications"
   | "created_at"
   | "updated_at"
   | "seo_title"
@@ -64,13 +68,14 @@ type StorefrontCollectionLinkRow = Pick<
   "collection_id" | "product_id" | "sort_order"
 >;
 type StorefrontBrandRow = Pick<BrandRow, "id" | "name" | "slug">;
+type StorefrontCategoryRow = Pick<CategoryRow, "id" | "spec_template">;
 type NavigationProductRow = Pick<
   ProductRow,
   "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
 >;
 
 const STOREFRONT_PRODUCT_SELECT =
-  "id,title,description,description_html,handle,brand_id,product_type,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+  "id,title,description,description_html,handle,brand_id,category_id,product_type,specifications,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
 const STOREFRONT_IMAGE_SELECT = "product_id,url,alt_text,is_primary,sort_order" as const;
@@ -78,6 +83,7 @@ const STOREFRONT_COLLECTION_SELECT =
   "id,handle,title,description,image_url,seo_title,seo_description" as const;
 const STOREFRONT_COLLECTION_LINK_SELECT = "collection_id,product_id,sort_order" as const;
 const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
+const STOREFRONT_CATEGORY_SELECT = "id,spec_template" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
   "id,title,handle,brand_id,product_type,tags" as const;
 
@@ -91,6 +97,7 @@ type NativeSnapshot = {
   collections: StorefrontCollectionRow[];
   links: StorefrontCollectionLinkRow[];
   brands: StorefrontBrandRow[];
+  categories: StorefrontCategoryRow[];
 };
 
 const CACHE_TTL_MS = 30_000;
@@ -212,6 +219,7 @@ function buildProduct(
   images: StorefrontImageRow[],
   collections: StorefrontCollectionRow[],
   brand?: StorefrontBrandRow,
+  category?: StorefrontCategoryRow,
 ): StoreProduct {
   const sortedVariants = [...variants].sort((a, b) => a.sort_order - b.sort_order);
   const sortedImages = [...images].sort(
@@ -284,6 +292,7 @@ function buildProduct(
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       tags: row.tags,
+      specificationGroups: specificationGroups(category?.spec_template, row.specifications),
       priceRange: { minVariantPrice: money(minPrice, row.currency) },
       compareAtPriceRange:
         minCompare == null ? undefined : { minVariantPrice: money(minCompare, row.currency) },
