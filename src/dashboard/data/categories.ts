@@ -52,6 +52,7 @@ function formatCategoryImagePath(categoryId: string) {
 export type CatalogCategory = {
   id: string;
   name: string;
+  nameAr?: string;
   slug: string;
   icon: string;
   description: string;
@@ -80,6 +81,7 @@ function mapCategory(row: CategoryRow): CatalogCategory {
   return {
     id: row.id,
     name: row.name,
+    ...(row.name_ar ? { nameAr: row.name_ar } : {}),
     slug: row.slug,
     icon: row.icon || "LayoutGrid",
     description: row.description || "",
@@ -190,6 +192,7 @@ export async function createDashboardCategory(category: CatalogCategory) {
     .from("store_categories")
     .insert({
       name: category.name.trim(),
+      name_ar: category.nameAr?.trim() || null,
       slug: normalizeCategorySlug(category.slug || category.name),
       description: category.description.trim() || null,
       image_url: category.image?.trim() || null,
@@ -222,9 +225,10 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   const previousImageUrl = existing?.image_url ?? null;
   const nextImageUrl = category.image?.trim() || "";
 
-  const { error } = await supabase.rpc("update_store_category_with_spec_template", rpcArgs({
+  const { error } = await supabase.rpc("update_store_category_with_spec_template_v2", rpcArgs({
     p_category_id: category.id,
     p_name: category.name.trim(),
+    p_name_ar: category.nameAr?.trim() || "",
     p_slug: normalizeCategorySlug(category.slug || category.name),
     p_description: category.description.trim(),
     p_image_url: category.image?.trim() || "",
