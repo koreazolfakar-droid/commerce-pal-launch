@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
+const routes = await readFile(
+  new URL("../src/dashboard/config/routes.tsx", import.meta.url),
+  "utf8",
+);
 const page = await readFile(
   new URL("../src/dashboard/pages/CustomersPage.tsx", import.meta.url),
   "utf8",
@@ -20,11 +23,11 @@ const migration = await readFile(
   "utf8",
 );
 
-test("active customers routes use the Supabase CRM pages", () => {
-  assert.match(app, /CustomersPageLive/);
-  assert.match(app, /CustomerDetailPageLive/);
-  assert.match(app, /route === "\/dashboard\/customers"[\s\S]+<CustomersPageLive \/>/);
-  assert.match(app, /customerDetail[\s\S]+<CustomerDetailPageLive id=\{customerDetail\[1\]\} \/>/);
+test("active customers routes lazy-load the Supabase CRM pages", () => {
+  assert.match(routes, /const customersPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/CustomersPage"\)\)/);
+  assert.match(routes, /const customerDetailPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/CustomerDetailPage"\)\)/);
+  assert.match(routes, /id: "customers"[\s\S]*path: "\/dashboard\/customers"[\s\S]*page: customersPage/);
+  assert.match(routes, /id: "customer-detail"[\s\S]*page: customerDetailPage[\s\S]*params\.id/);
 });
 
 test("customers CRM contains no mock business data", () => {
