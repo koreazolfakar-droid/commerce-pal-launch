@@ -16,6 +16,9 @@ const [
   productRoute,
   migration,
   atomicSpecificationMigration,
+  categoryEditor,
+  bilingualSpecificationMigration,
+  requiredCategoriesMigration,
 ] = await Promise.all([
   readFile(new URL("../src/lib/productSpecifications.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/categories.ts", import.meta.url), "utf8"),
@@ -40,6 +43,18 @@ const [
   ),
   readFile(
     new URL("../supabase/migrations/20260928084532_atomic_product_editor_specifications_20260928.sql", import.meta.url),
+    "utf8",
+  ),
+  readFile(
+    new URL("../src/dashboard/components/categories/CategorySpecificationTemplateEditor.tsx", import.meta.url),
+    "utf8",
+  ),
+  readFile(
+    new URL("../supabase/migrations/20260928090356_bilingual_product_specification_labels_20260928.sql", import.meta.url),
+    "utf8",
+  ),
+  readFile(
+    new URL("../supabase/migrations/20260928091233_complete_required_product_categories_20260928.sql", import.meta.url),
     "utf8",
   ),
 ]);
@@ -125,4 +140,30 @@ test("database migration preserves existing values and constrains specification 
   );
   assert.doesNotMatch(migration, /delete from public\.store_products/);
   assert.doesNotMatch(migration, /update public\.store_categories\s+set spec_template =/);
+});
+
+
+test("specification templates preserve Arabic labels end to end", () => {
+  assert.match(model, /labelAr\?: string/);
+  assert.match(model, /titleAr\?: string/);
+  assert.match(categoryEditor, /Specification section title in Arabic/);
+  assert.match(categoryEditor, /Specification field label in Arabic/);
+  assert.match(storeTypes, /titleAr\?: string/);
+  assert.match(storeTypes, /labelAr\?: string/);
+  assert.match(productRoute, /language === "ar" \? group\.titleAr/);
+  assert.match(productRoute, /language === "ar" \? row\.labelAr/);
+  assert.match(bilingualSpecificationMigration, /private\.spacecall_spec_section_ar/);
+  assert.match(bilingualSpecificationMigration, /private\.spacecall_spec_field_ar/);
+  assert.match(bilingualSpecificationMigration, /labelAr/);
+  assert.match(bilingualSpecificationMigration, /titleAr/);
+});
+
+test("required Headphones and Bags categories are specification-aware", () => {
+  assert.match(requiredCategoriesMigration, /'Headphones'/);
+  assert.match(requiredCategoriesMigration, /'headphones'/);
+  assert.match(requiredCategoriesMigration, /'Bags'/);
+  assert.match(requiredCategoriesMigration, /'bags'/);
+  assert.match(requiredCategoriesMigration, /'titleAr'/);
+  assert.match(requiredCategoriesMigration, /'labelAr'/);
+  assert.match(requiredCategoriesMigration, /is_active,[\s\S]*false/);
 });
