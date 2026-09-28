@@ -20,6 +20,10 @@ export interface StoreProductNode {
   createdAt?: string;
   updatedAt?: string;
   tags?: string[];
+  specificationGroups?: Array<{
+    title: string;
+    rows: Array<{ label: string; value: string }>;
+  }>;
   priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
   compareAtPriceRange?: { minVariantPrice: { amount: string; currencyCode: string } };
   images: { edges: Array<{ node: { url: string; altText: string | null } }> };
