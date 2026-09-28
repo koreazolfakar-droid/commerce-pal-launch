@@ -18,8 +18,10 @@ const securityPage = await readFile(
   new URL("../src/dashboard/pages/SecurityPage.tsx", import.meta.url),
   "utf8",
 );
-const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
-const nav = await readFile(new URL("../src/dashboard/config/navigation.ts", import.meta.url), "utf8");
+const routes = await readFile(
+  new URL("../src/dashboard/config/routes.tsx", import.meta.url),
+  "utf8",
+);
 const server = await readFile(new URL("../src/server.ts", import.meta.url), "utf8");
 const csp = await readFile(new URL("../src/lib/contentSecurityPolicy.ts", import.meta.url), "utf8");
 const env = await readFile(new URL("../.env.example", import.meta.url), "utf8");
@@ -125,11 +127,10 @@ test("security events are sanitized, user-bound and visible in the Security Cent
   assert.match(securityPage, /Recent security activity/);
 });
 
-test("Security Center is a real route and reports security state precisely", () => {
-  assert.match(app, /import SecurityPage from "@\/dashboard\/pages\/SecurityPage"/);
-  assert.match(app, /route === "\/dashboard\/security"[\s\S]+<SecurityPage \/>/);
-  assert.match(nav, /href: "\/dashboard\/security"/);
-  assert.match(nav, /label: "Security"/);
+test("Security Center is a real lazy route and reports security state precisely", () => {
+  assert.match(routes, /const securityPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/SecurityPage"\)\)/);
+  assert.match(routes, /id: "security"[\s\S]*path: "\/dashboard\/security"[\s\S]*page: securityPage/);
+  assert.match(routes, /label: "Security"/);
   assert.match(securityPage, /AAL2 active/);
   assert.match(securityPage, /Client configured/);
   assert.match(securityPage, /Supabase Auth must also have Cloudflare Turnstile enabled/);
