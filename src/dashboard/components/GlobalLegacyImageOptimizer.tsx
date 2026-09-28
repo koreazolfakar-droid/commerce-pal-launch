@@ -1,3 +1,4 @@
+import { confirmDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import {
   Check,
   CheckCircle2,
@@ -199,8 +200,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
 
   const cleanOldOriginals = async () => {
     if (!cleanupScan?.candidates.length || cleaning || optimizing) return;
-    const confirmed = window.confirm(
+    const confirmed = await confirmDashboardAction(
       `Permanently delete ${cleanupScan.candidates.length} unreferenced old original${cleanupScan.candidates.length === 1 ? "" : "s"} and reclaim about ${formatImageBytes(cleanupScan.reclaimableBytes)}? References will be checked again immediately before deletion. This cannot be undone.`,
+      { title: "Delete old originals", confirmLabel: "Delete" },
     );
     if (!confirmed) return;
 
@@ -227,8 +229,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
   const optimize = async () => {
     const ready = rows.filter((row) => row.status === "ready" && row.conversion);
     if (!ready.length || optimizing) return;
-    const confirmed = window.confirm(
+    const confirmed = await confirmDashboardAction(
       `Convert ${ready.length} analyzed image reference${ready.length === 1 ? "" : "s"} to WebP and update their database references? Existing source files are kept for safety.`,
+      { title: "Optimize legacy images", confirmLabel: "Convert", destructive: false },
     );
     if (!confirmed) return;
 
