@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
+const routes = await readFile(
+  new URL("../src/dashboard/config/routes.tsx", import.meta.url),
+  "utf8",
+);
 const page = await readFile(
   new URL("../src/dashboard/pages/HeroBannersPage.tsx", import.meta.url),
   "utf8",
@@ -36,12 +39,9 @@ const atomicVisualMigration = await readFile(
   "utf8",
 );
 
-test("dedicated hero dashboard route uses the real CMS page", () => {
-  assert.match(app, /HeroBannersPageLive/);
-  assert.match(
-    app,
-    /route === "\/dashboard\/homepage\/hero"[\s\S]+<HeroBannersPageLive \/>/,
-  );
+test("dedicated hero dashboard route lazy-loads the real CMS page", () => {
+  assert.match(routes, /const heroBannersPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/HeroBannersPage"\)\)/);
+  assert.match(routes, /id: "hero-banners"[\s\S]*path: "\/dashboard\/homepage\/hero"[\s\S]*page: heroBannersPage/);
   assert.doesNotMatch(page, /@\/dashboard\/mock\//);
   assert.doesNotMatch(data, /@\/dashboard\/mock\//);
 });
