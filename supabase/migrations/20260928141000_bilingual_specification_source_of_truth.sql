@@ -259,3 +259,64 @@ set
 where
   jsonb_typeof(category.spec_template) = 'object'
   and jsonb_typeof(category.spec_template -> 'sections') = 'array';
+
+
+create or replace function public.update_store_category_with_spec_template_v2(
+  p_category_id uuid,
+  p_name text,
+  p_name_ar text,
+  p_slug text,
+  p_description text,
+  p_image_url text,
+  p_icon text,
+  p_sort_order integer,
+  p_is_active boolean,
+  p_is_featured boolean,
+  p_seo_title text,
+  p_seo_description text,
+  p_spec_template jsonb
+)
+returns void
+language plpgsql
+security invoker
+set search_path = public, private, pg_temp
+as $$
+begin
+  if auth.uid() is null or not private.is_dashboard_staff() then
+    raise exception 'dashboard staff required';
+  end if;
+
+  perform public.update_store_category_with_spec_template(
+    p_category_id,
+    p_name,
+    p_slug,
+    p_description,
+    p_image_url,
+    p_icon,
+    p_sort_order,
+    p_is_active,
+    p_is_featured,
+    p_seo_title,
+    p_seo_description,
+    p_spec_template
+  );
+
+  update public.store_categories
+  set
+    name_ar = nullif(btrim(coalesce(p_name_ar, '')), ''),
+    updated_at = now()
+  where id = p_category_id;
+
+  if not found then
+    raise exception 'category not found';
+  end if;
+end;
+$$;
+
+revoke all on function public.update_store_category_with_spec_template_v2(
+  uuid,text,text,text,text,text,text,integer,boolean,boolean,text,text,jsonb
+) from public, anon;
+
+grant execute on function public.update_store_category_with_spec_template_v2(
+  uuid,text,text,text,text,text,text,integer,boolean,boolean,text,text,jsonb
+) to authenticated;
