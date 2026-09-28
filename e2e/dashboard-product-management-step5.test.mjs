@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const [app, catalog, data, variants, products, form, migration, types] = await Promise.all([
+const [app, catalog, data, variants, products, form, migration, atomicSave, types] = await Promise.all([
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/catalog.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/productManagement.ts", import.meta.url), "utf8"),
@@ -10,6 +10,7 @@ const [app, catalog, data, variants, products, form, migration, types] = await P
   readFile(new URL("../src/dashboard/pages/ProductsPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProductFormPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919082451_product_management_step5.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260928050000_atomic_product_editor_save.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/integrations/supabase/types.ts", import.meta.url), "utf8"),
 ]);
 
@@ -20,10 +21,35 @@ test("dashboard routes use the Step 5 product pages", () => {
 });
 
 test("multi-variant product save cannot overwrite variant-derived summaries", () => {
-  assert.match(catalog, /preexistingVariants\.length > 1/);
-  assert.match(catalog, /variantManagedSeparately\s*\? \{\}/);
-  assert.match(catalog, /base_price: input\.price/);
-  assert.match(catalog, /stock_quantity: Math\.max/);
+  assert.match(catalog, /save_store_product_editor/);
+  assert.match(atomicSave, /select count\(\*\)[\s\S]*into v_variant_count/);
+  assert.match(atomicSave, /if v_variant_count <= 1 then/);
+  assert.match(
+    atomicSave,
+    /sku = case[\s\S]*when v_variant_count <= 1[\s\S]*else v_product\.sku/,
+  );
+  assert.match(
+    atomicSave,
+    /barcode = case[\s\S]*when v_variant_count <= 1[\s\S]*else v_product\.barcode/,
+  );
+});
+
+test("product editor core persists in one PostgreSQL transaction", () => {
+  assert.match(catalog, /looseSupabase\.rpc\([\s\S]*"save_store_product_editor"/);
+  assert.match(atomicSave, /create or replace function public\.save_store_product_editor/);
+  assert.match(atomicSave, /security invoker/);
+  assert.match(atomicSave, /perform public\.set_store_product_collections/);
+  assert.match(atomicSave, /insert into public\.store_product_variants/);
+  assert.match(atomicSave, /update public\.store_product_variants/);
+  assert.match(atomicSave, /insert into public\.store_inventory_movements/);
+  assert.match(atomicSave, /reference_type,[\s\S]*'product_editor'/);
+  assert.match(atomicSave, /store_product_images/);
+  assert.match(atomicSave, /pg_advisory_xact_lock/);
+  assert.match(
+    atomicSave,
+    /grant execute on function public\.save_store_product_editor[\s\S]*to authenticated/,
+  );
+  assert.doesNotMatch(catalog, /set_store_product_collections/);
 });
 
 test("variant manager uses atomic RPCs and inventory-aware stock updates", () => {
