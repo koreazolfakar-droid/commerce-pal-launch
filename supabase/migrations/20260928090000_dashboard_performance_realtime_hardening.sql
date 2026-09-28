@@ -552,6 +552,16 @@ begin
     select 1 from pg_publication_tables
     where pubname = 'supabase_realtime'
       and schemaname = 'public'
+      and tablename = 'store_order_items'
+  ) then
+    alter publication supabase_realtime add table public.store_order_items;
+  end if;
+
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
       and tablename = 'store_inventory_movements'
   ) then
     alter publication supabase_realtime add table public.store_inventory_movements;
