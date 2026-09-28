@@ -12,6 +12,8 @@ pub struct AppConfig {
     pub database_url: String,
     pub database_max_connections: u32,
     pub database_acquire_timeout_seconds: u64,
+    pub supabase_url: String,
+    pub supabase_publishable_key: String,
 }
 
 impl AppConfig {
@@ -19,6 +21,16 @@ impl AppConfig {
         let database_url =
             env::var("DATABASE_URL").map_err(|_| ConfigError::Missing("DATABASE_URL"))?;
         validate_database_url(&database_url)?;
+
+        let supabase_url =
+            env::var("SUPABASE_URL").map_err(|_| ConfigError::Missing("SUPABASE_URL"))?;
+        validate_supabase_url(&supabase_url)?;
+
+        let supabase_publishable_key = env::var("SUPABASE_PUBLISHABLE_KEY")
+            .map_err(|_| ConfigError::Missing("SUPABASE_PUBLISHABLE_KEY"))?;
+        if supabase_publishable_key.trim().is_empty() {
+            return Err(ConfigError::Empty("SUPABASE_PUBLISHABLE_KEY"));
+        }
 
         let bind_addr_value =
             env::var("BIND_ADDR").unwrap_or_else(|_| DEFAULT_BIND_ADDR.to_owned());
@@ -45,6 +57,8 @@ impl AppConfig {
             database_url,
             database_max_connections,
             database_acquire_timeout_seconds,
+            supabase_url: supabase_url.trim_end_matches('/').to_owned(),
+            supabase_publishable_key,
         })
     }
 }
@@ -116,10 +130,24 @@ fn validate_database_url(database_url: &str) -> Result<(), ConfigError> {
     Ok(())
 }
 
+fn validate_supabase_url(value: &str) -> Result<(), ConfigError> {
+    let normalized = value.to_ascii_lowercase();
+    if !normalized.starts_with("https://") || normalized.contains('@') {
+        return Err(ConfigError::InvalidSupabaseUrl);
+    }
+    Ok(())
+}
+
 #[derive(Debug, Error)]
 pub enum ConfigError {
     #[error("missing required environment variable {0}")]
     Missing(&'static str),
+
+    #[error("{0} must not be empty")]
+    Empty(&'static str),
+
+    #[error("SUPABASE_URL must be an HTTPS origin without embedded credentials")]
+    InvalidSupabaseUrl,
 
     #[error("BIND_ADDR is invalid: {value}")]
     InvalidBindAddress {
