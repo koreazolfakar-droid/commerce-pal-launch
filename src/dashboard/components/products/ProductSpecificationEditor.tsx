@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import { useLanguage } from "@/dashboard/i18n";
 import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import {
   aiSpecificationFieldKey,
@@ -41,11 +42,15 @@ export default function ProductSpecificationEditor({
   onChange: (key: string, value: string) => void;
   onAiApply: (values: Record<string, string>) => void;
 }) {
+  const { lang } = useLanguage();
+  const ar = lang === "ar";
   const fields = template.sections.flatMap((section) => section.fields);
   if (!fields.length) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 p-5 text-center text-[10px] text-slate-400">
-        Select a category with a specification template to manage structured product specifications.
+        {ar
+          ? "اختر تصنيفًا يحتوي على قالب مواصفات لإدارة المواصفات المنظمة."
+          : "Select a category with a specification template to manage structured product specifications."}
       </div>
     );
   }
@@ -62,9 +67,13 @@ export default function ProductSpecificationEditor({
     <div>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-bold text-slate-700">Category-aware specifications</div>
+          <div className="text-[11px] font-bold text-slate-700">
+            {ar ? "مواصفات مرتبطة بالتصنيف" : "Category-aware specifications"}
+          </div>
           <p className="mt-1 max-w-xl text-[10px] leading-4 text-slate-400">
-            Only fields defined by the selected category are saved. AI values are suggestions and remain marked for review until you save.
+            {ar
+              ? "يتم حفظ الحقول المعرفة ضمن التصنيف فقط. تبقى قيم الذكاء الاصطناعي مقترحات للمراجعة حتى الحفظ."
+              : "Only fields defined by the selected category are saved. AI values are suggestions and remain marked for review until you save."}
           </p>
         </div>
         <AiAssistPanel
@@ -74,7 +83,7 @@ export default function ProductSpecificationEditor({
           fields={fields.map(aiField)}
           context={context}
           onApply={onAiApply}
-          triggerLabel="AI Fill Specifications"
+          triggerLabel={ar ? "تعبئة المواصفات بالذكاء الاصطناعي" : "AI Fill Specifications"}
           showSeoAction={false}
           compact
         />
@@ -93,7 +102,7 @@ export default function ProductSpecificationEditor({
             <section key={section.title} className="overflow-hidden rounded-xl border border-slate-200">
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-3.5 py-3">
                 <div className="text-[10px] font-black uppercase tracking-[.1em] text-slate-500">
-                  {section.title}
+                  {ar ? section.titleAr || section.title : section.title}
                 </div>
                 <AiAssistPanel
                   entity="product"
@@ -105,7 +114,7 @@ export default function ProductSpecificationEditor({
                     specKeys: section.fields.map((field) => field.key),
                   }}
                   onApply={onAiApply}
-                  triggerLabel="AI Section"
+                  triggerLabel={ar ? "AI للقسم" : "AI Section"}
                   showSeoAction={false}
                   compact
                 />
@@ -119,7 +128,7 @@ export default function ProductSpecificationEditor({
                     <label key={field.key} className="block min-w-0">
                       <span className="mb-1.5 flex min-h-5 items-center justify-between gap-2">
                         <span className="text-[10px] font-bold text-slate-600">
-                          {field.label}
+                          {ar ? field.labelAr || field.label : field.label}
                           {field.unit ? (
                             <span className="ms-1 font-medium text-slate-400">({field.unit})</span>
                           ) : null}
@@ -128,7 +137,7 @@ export default function ProductSpecificationEditor({
                           {generated ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[8px] font-black text-amber-700">
                               <Sparkles className="size-2.5" />
-                              AI · review
+                              {ar ? "AI · مراجعة" : "AI · review"}
                             </span>
                           ) : null}
                           <AiAssistPanel
@@ -147,7 +156,13 @@ export default function ProductSpecificationEditor({
                       <input
                         value={values[field.key] ?? ""}
                         onChange={(event) => onChange(field.key, event.target.value)}
-                        placeholder={field.unit ? `e.g. ${field.unit}` : "Enter verified value"}
+                        placeholder={
+                          field.unit
+                            ? `${ar ? "مثال" : "e.g."} ${field.unit}`
+                            : ar
+                              ? "أدخل قيمة مؤكدة"
+                              : "Enter verified value"
+                        }
                         className={
                           "h-10 w-full rounded-xl border bg-white px-3 text-[11px] text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 " +
                           (generated ? "border-amber-200" : "border-slate-200")
