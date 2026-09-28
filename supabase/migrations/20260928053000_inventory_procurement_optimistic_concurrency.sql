@@ -338,22 +338,31 @@ create or replace function public.update_store_receiving_draft_v2(
   p_notes text,
   p_lines jsonb
 )
-returns uuid
+returns timestamptz
 language plpgsql
 security invoker
 set search_path = public, private, pg_temp
-as $$
+as $
+declare
+  v_updated_at timestamptz;
 begin
   perform private.assert_store_receiving_fresh(p_receiving_id, p_expected_updated_at);
-  return private.update_store_receiving_draft_internal(
+  perform private.update_store_receiving_draft_internal(
     p_receiving_id,
     p_invoice_number,
     p_receiving_employee_label,
     p_notes,
     p_lines
   );
+
+  select updated_at
+    into v_updated_at
+  from public.store_receivings
+  where id = p_receiving_id;
+
+  return v_updated_at;
 end;
-$$;
+$;
 
 create or replace function public.approve_store_receiving_v2(
   p_receiving_id uuid,
