@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
+const routes = await readFile(
+  new URL("../src/dashboard/config/routes.tsx", import.meta.url),
+  "utf8",
+);
 const listPage = await readFile(
   new URL("../src/dashboard/pages/CollectionsPage.tsx", import.meta.url),
   "utf8",
@@ -20,11 +23,11 @@ const migration = await readFile(
   "utf8",
 );
 
-test("collections routes use real Supabase pages", () => {
-  assert.match(app, /CollectionsPageLive/);
-  assert.match(app, /CollectionDetailPageLive/);
-  assert.match(app, /route === "\/dashboard\/collections"[\s\S]+<CollectionsPageLive \/>/);
-  assert.match(app, /collectionDetail[\s\S]+<CollectionDetailPageLive id=\{collectionDetail\[1\]\} \/>/);
+test("collections routes lazy-load real Supabase pages", () => {
+  assert.match(routes, /const collectionsPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/CollectionsPage"\)\)/);
+  assert.match(routes, /const collectionDetailPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/CollectionDetailPage"\)\)/);
+  assert.match(routes, /id: "collections"[\s\S]*path: "\/dashboard\/collections"[\s\S]*page: collectionsPage/);
+  assert.match(routes, /id: "collection-detail"[\s\S]*page: collectionDetailPage[\s\S]*params\.id/);
 });
 
 test("collections pages contain no mock data source", () => {
