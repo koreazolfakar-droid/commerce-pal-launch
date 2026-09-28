@@ -27,12 +27,16 @@ export default function CategorySpecificationTemplateEditor({
 
   const addSection = () => {
     const index = template.sections.length + 1;
+    const used = new Set(
+      template.sections.flatMap((section) => section.fields.map((field) => field.key)),
+    );
+    const key = nextFieldKey(`field ${index}`, used);
     commit({
       sections: [
         ...template.sections,
         {
           title: `Specifications ${index}`,
-          fields: [{ key: `field_${index}`, label: "New field" }],
+          fields: [{ key, label: "New field" }],
         },
       ],
     });
