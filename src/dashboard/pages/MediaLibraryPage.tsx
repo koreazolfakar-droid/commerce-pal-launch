@@ -1,3 +1,4 @@
+import { confirmDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import {
   Copy,
   Image as ImageIcon,
@@ -118,7 +119,10 @@ export default function MediaLibraryPage() {
 
   const remove = async (asset: DashboardMediaAsset) => {
     if (!canDelete) return toast.error("Only admins can delete media.");
-    if (!window.confirm(`Permanently delete "${asset.fileName}"?`)) return;
+    if (!(await confirmDashboardAction(
+      `Permanently delete "${asset.fileName}"? This cannot be undone.`,
+      { title: "Delete media asset", confirmLabel: "Delete" },
+    ))) return;
     try {
       await deleteDashboardMediaAsset(asset);
       setAssets((current) => current.filter((row) => row.id !== asset.id));
