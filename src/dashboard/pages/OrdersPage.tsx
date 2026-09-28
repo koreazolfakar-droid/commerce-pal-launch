@@ -223,7 +223,7 @@ export default function OrdersPage() {
     return () => window.clearTimeout(timer);
   }, [load, search]);
 
-  useDashboardRealtimeRefresh(["store_orders"], () => void load(false));
+  useDashboardRealtimeRefresh(["store_orders", "store_order_items"], () => void load(false));
 
   const stats = result?.stats;
   const inProgress = useMemo(
