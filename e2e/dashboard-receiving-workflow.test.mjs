@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [workflow, hardening, upgrade, concurrency, data, page, purchaseOrdersPage, purchaseOrderCreatePage, purchaseOrderDetailPage, purchaseOrderEditPage, receivingDetailPage, suppliersPage, analyticsPage, app, nav, inventory, drawer, types] = await Promise.all([
+const [workflow, hardening, upgrade, concurrency, data, page, purchaseOrdersPage, purchaseOrderCreatePage, purchaseOrderDetailPage, purchaseOrderEditPage, receivingDetailPage, suppliersPage, analyticsPage, routes, inventory, drawer, types] = await Promise.all([
   readFile(new URL("../supabase/migrations/20260919123000_procurement_receiving_workflows.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919124500_harden_procurement_rpc_exposure.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919152000_procurement_management_upgrade.sql", import.meta.url), "utf8"),
-  readFile(new URL("../supabase/migrations/20260928084508_inventory_procurement_optimistic_concurrency_20260928.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260928053000_inventory_procurement_optimistic_concurrency.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/receiving.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ReceivingPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/PurchaseOrdersPage.tsx", import.meta.url), "utf8"),
@@ -16,8 +16,7 @@ const [workflow, hardening, upgrade, concurrency, data, page, purchaseOrdersPage
   readFile(new URL("../src/dashboard/pages/ReceivingDetailPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/SuppliersPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProcurementAnalyticsPage.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../src/dashboard/config/navigation.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/inventory.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/components/inventory/InventoryMovementHistoryDrawer.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/integrations/supabase/types.ts", import.meta.url), "utf8"),
@@ -87,6 +86,11 @@ test("procurement mutations reject stale dashboard snapshots", () => {
   assert.match(concurrency, /for update/);
   assert.match(concurrency, /v_updated_at is distinct from p_expected_updated_at/);
   assert.match(concurrency, /raise exception 'procurement_version_conflict'/);
+  assert.match(
+    concurrency,
+    /update_store_receiving_draft_v2[\s\S]*set search_path = public, private, pg_temp[\s\S]*as \$\$[\s\S]*end;[\s\S]*\$\$;/,
+  );
+  assert.doesNotMatch(concurrency, /\nas \$\n[\s\S]*\n\$;/);
   assert.match(purchaseOrderEditPage, /expectedUpdatedAt: po\.updatedAt/);
   assert.match(purchaseOrderDetailPage, /po\.updatedAt/);
   assert.match(receivingDetailPage, /expectedUpdatedAt: receipt\.updatedAt/);
@@ -154,8 +158,8 @@ test("purchase orders expose Toters-style operational filters and actions", () =
 });
 
 test("purchase order creation uses its own dedicated route", () => {
-  assert.match(app, /import PurchaseOrderCreatePage from/);
-  assert.match(app, /route === "\/dashboard\/purchase-orders\/new"/);
+  assert.match(routes, /const purchaseOrderCreatePage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/PurchaseOrderCreatePage"\)\)/);
+  assert.match(routes, /id: "purchase-orders-new"[\s\S]*path: "\/dashboard\/purchase-orders\/new"[\s\S]*page: purchaseOrderCreatePage/);
   assert.match(purchaseOrderCreatePage, /mode="purchase-order-create"/);
   assert.match(page, /purchaseOrderCreateMode/);
   assert.match(page, /navigate\("\/dashboard\/purchase-orders\/new"\)/);
@@ -166,9 +170,8 @@ test("purchase order creation uses its own dedicated route", () => {
 });
 
 test("PO number opens a dedicated detail page and receiving stays separate", () => {
-  assert.match(app, /import PurchaseOrderDetailPage from/);
-  assert.match(app, /purchaseOrderDetail/);
-  assert.match(app, /PurchaseOrderDetailPage id=/);
+  assert.match(routes, /const purchaseOrderDetailPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/PurchaseOrderDetailPage"\)\)/);
+  assert.match(routes, /id: "purchase-order-detail"[\s\S]*page: purchaseOrderDetailPage[\s\S]*params\.id/);
   assert.match(page, /dashboard\/purchase-orders\/\$\{po\.id\}/);
   assert.match(purchaseOrderDetailPage, /Purchase order details and ordered items/);
   assert.match(purchaseOrderDetailPage, /Purchase order items/);
@@ -195,13 +198,13 @@ test("purchase order detail loads only the requested PO dataset", () => {
 });
 
 test("purchase orders and receiving are separate routed workspaces", () => {
-  assert.match(app, /import PurchaseOrdersPage from/);
-  assert.match(app, /import ReceivingPage from/);
-  assert.match(app, /route === "\/dashboard\/purchase-orders"/);
-  assert.match(app, /route === "\/dashboard\/receiving"/);
-  assert.match(app, /receivingPoDetail/);
-  assert.match(nav, /label: "Purchase Orders",\s+href: "\/dashboard\/purchase-orders"/);
-  assert.match(nav, /label: "Receiving",\s+href: "\/dashboard\/receiving"/);
+  assert.match(routes, /const purchaseOrdersPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/PurchaseOrdersPage"\)\)/);
+  assert.match(routes, /const receivingPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/ReceivingPage"\)\)/);
+  assert.match(routes, /id: "purchase-orders"[\s\S]*path: "\/dashboard\/purchase-orders"[\s\S]*page: purchaseOrdersPage/);
+  assert.match(routes, /id: "receiving"[\s\S]*path: "\/dashboard\/receiving"[\s\S]*page: receivingPage/);
+  assert.match(routes, /id: "receiving-po-detail"[\s\S]*page: receivingPage[\s\S]*purchaseOrderId/);
+  assert.match(routes, /label: "Purchase Orders"/);
+  assert.match(routes, /label: "Receiving"/);
   assert.match(purchaseOrdersPage, /mode="purchase-orders"/);
   assert.match(page, /mode = "receiving"/);
   assert.match(page, /navigate\(\`\/dashboard\/receiving\/\$\{po\.id\}\`\)/);
@@ -255,8 +258,8 @@ test("PO lifecycle requires approval before issue and admin protects privileged 
 });
 
 test("draft PO editing, deletion and expected delivery are routed separately", () => {
-  assert.match(app, /PurchaseOrderEditPage/);
-  assert.match(app, /purchaseOrderEdit/);
+  assert.match(routes, /const purchaseOrderEditPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/PurchaseOrderEditPage"\)\)/);
+  assert.match(routes, /id: "purchase-order-edit"[\s\S]*page: purchaseOrderEditPage[\s\S]*params\.id/);
   assert.match(purchaseOrderEditPage, /Edit Purchase Order/);
   assert.match(purchaseOrderEditPage, /Save draft changes/);
   assert.match(purchaseOrderEditPage, /Delete draft/);
@@ -274,8 +277,8 @@ test("PO edit uses targeted form data instead of the full procurement workspace"
 });
 
 test("receiving review supports editable drafts, invoice matching, serials and void", () => {
-  assert.match(app, /ReceivingDetailPage/);
-  assert.match(app, /receivingDetail/);
+  assert.match(routes, /const receivingDetailPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/ReceivingDetailPage"\)\)/);
+  assert.match(routes, /id: "receiving-detail"[\s\S]*page: receivingDetailPage[\s\S]*params\.id/);
   assert.match(receivingDetailPage, /Draft receiving details/);
   assert.match(receivingDetailPage, /Save draft/);
   assert.match(receivingDetailPage, /updateReceivingDraft/);
@@ -328,10 +331,12 @@ test("procurement documents are private and audit timelines are exposed", () => 
 });
 
 test("supplier management, analytics and reorder suggestions are live modules", () => {
-  assert.match(app, /SuppliersPage/);
-  assert.match(app, /ProcurementAnalyticsPage/);
-  assert.match(nav, /label: "Suppliers",\s+href: "\/dashboard\/suppliers"/);
-  assert.match(nav, /label: "Procurement",\s+href: "\/dashboard\/procurement"/);
+  assert.match(routes, /const suppliersPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/SuppliersPage"\)\)/);
+  assert.match(routes, /const procurementPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/ProcurementAnalyticsPage"\)\)/);
+  assert.match(routes, /id: "suppliers"[\s\S]*path: "\/dashboard\/suppliers"[\s\S]*page: suppliersPage/);
+  assert.match(routes, /id: "procurement"[\s\S]*path: "\/dashboard\/procurement"[\s\S]*page: procurementPage/);
+  assert.match(routes, /label: "Suppliers"/);
+  assert.match(routes, /label: "Procurement"/);
   assert.match(suppliersPage, /Suppliers & Locations/);
   assert.match(suppliersPage, /Phone/);
   assert.match(suppliersPage, /Email/);
