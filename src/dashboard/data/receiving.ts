@@ -113,6 +113,7 @@ export type PurchaseOrderSummary = {
   cancelledAt: string | null;
   cancellationReason: string | null;
   createdAt: string;
+  updatedAt: string;
   notes: string | null;
   discountAmount: number;
   taxAmount: number;
@@ -156,6 +157,7 @@ export type ReceivingSummary = {
   employee: string;
   receivedAt: string;
   approvedAt: string | null;
+  updatedAt: string;
   notes: string | null;
   stockUnits: number;
   damagedUnits: number;
@@ -217,14 +219,14 @@ export async function loadReceivingWorkspace(
     includePurchaseOrders
       ? supabase
           .from("store_purchase_orders")
-          .select("id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes")
+          .select("id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,updated_at,notes")
           .order("created_at", { ascending: false })
           .limit(100)
       : Promise.resolve({ data: [], error: null }),
     includeReceivings
       ? supabase
           .from("store_receivings")
-          .select("id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes")
+          .select("id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,updated_at,notes")
           .order("received_at", { ascending: false })
           .limit(100)
       : Promise.resolve({ data: [], error: null }),
@@ -290,11 +292,12 @@ export async function loadReceivingWorkspace(
     | "shipping_amount"
     | "exchange_rate"
     | "created_at"
+    | "updated_at"
     | "notes"
   >[];
   const receivings = (receivingResult.data ?? []) as Pick<
     ReceivingRow,
-    "id" | "receipt_number" | "purchase_order_id" | "invoice_number" | "status" | "receiving_employee_label" | "received_at" | "approved_at" | "notes"
+    "id" | "receipt_number" | "purchase_order_id" | "invoice_number" | "status" | "receiving_employee_label" | "received_at" | "approved_at" | "updated_at" | "notes"
   >[];
   const products = (productResult.data ?? []) as Pick<
     ProductRow,
@@ -530,6 +533,7 @@ export async function loadReceivingWorkspace(
         cancelledAt: po.cancelled_at,
         cancellationReason: po.cancellation_reason,
         createdAt: po.created_at,
+        updatedAt: po.updated_at,
         notes: po.notes,
         discountAmount: toNumber(po.discount_amount),
         taxAmount: toNumber(po.tax_amount),
@@ -558,6 +562,7 @@ export async function loadReceivingWorkspace(
         employee: receipt.receiving_employee_label?.trim() || "Authenticated staff",
         receivedAt: receipt.received_at,
         approvedAt: receipt.approved_at,
+        updatedAt: receipt.updated_at,
         notes: receipt.notes,
         stockUnits: lines.reduce((sum, line) => sum + line.receivedQuantity, 0),
         damagedUnits: lines.reduce((sum, line) => sum + line.damagedQuantity, 0),
@@ -612,7 +617,7 @@ export async function loadPurchaseOrderDetail(
   const { data: poData, error: poError } = await supabase
     .from("store_purchase_orders")
     .select(
-      "id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes",
+      "id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,updated_at,notes",
     )
     .eq("id", purchaseOrderId)
     .maybeSingle();
@@ -648,6 +653,7 @@ export async function loadPurchaseOrderDetail(
     | "shipping_amount"
     | "exchange_rate"
     | "created_at"
+    | "updated_at"
     | "notes"
   >;
 
@@ -837,6 +843,7 @@ export async function loadPurchaseOrderDetail(
     cancelledAt: po.cancelled_at,
     cancellationReason: po.cancellation_reason,
     createdAt: po.created_at,
+    updatedAt: po.updated_at,
     notes: po.notes,
     discountAmount: toNumber(po.discount_amount),
     taxAmount: toNumber(po.tax_amount),
@@ -1018,7 +1025,7 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
   const { data: receiptData, error: receiptError } = await supabase
     .from("store_receivings")
     .select(
-      "id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes",
+      "id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,updated_at,notes",
     )
     .eq("id", receivingId)
     .maybeSingle();
@@ -1044,6 +1051,7 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
     | "receiving_employee_label"
     | "received_at"
     | "approved_at"
+    | "updated_at"
     | "notes"
   >;
 
@@ -1244,6 +1252,7 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
     employee: receiptRow.receiving_employee_label?.trim() || "Authenticated staff",
     receivedAt: receiptRow.received_at,
     approvedAt: receiptRow.approved_at,
+    updatedAt: receiptRow.updated_at,
     notes: receiptRow.notes,
     stockUnits: lines.reduce((sum, line) => sum + line.receivedQuantity, 0),
     damagedUnits: lines.reduce((sum, line) => sum + line.damagedQuantity, 0),
@@ -1352,10 +1361,11 @@ export async function createPurchaseOrder(input: CreatePurchaseOrderInput) {
   return data;
 }
 
-export async function submitPurchaseOrder(purchaseOrderId: string) {
+export async function submitPurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("submit_store_purchase_order", rpcArgs({
+  const { data, error } = await supabase.rpc("submit_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
+    p_expected_updated_at: expectedUpdatedAt,
   }));
   throwIfError(error, "Submitting purchase order failed");
   return data;
@@ -1403,6 +1413,7 @@ export async function createReceiving(input: CreateReceivingInput) {
 
 export type UpdateReceivingDraftInput = {
   receivingId: string;
+  expectedUpdatedAt: string;
   invoiceNumber: string;
   employeeLabel?: string;
   notes?: string;
@@ -1427,8 +1438,9 @@ export async function updateReceivingDraft(input: UpdateReceivingDraftInput) {
     overage_reason: line.overageReason?.trim() || null,
   }));
 
-  const { data, error } = await supabase.rpc("update_store_receiving_draft", rpcArgs({
+  const { data, error } = await supabase.rpc("update_store_receiving_draft_v2", rpcArgs({
     p_receiving_id: input.receivingId,
+    p_expected_updated_at: input.expectedUpdatedAt,
     p_invoice_number: input.invoiceNumber.trim(),
     p_receiving_employee_label: input.employeeLabel?.trim() || null,
     p_notes: input.notes?.trim() || null,
@@ -1438,10 +1450,11 @@ export async function updateReceivingDraft(input: UpdateReceivingDraftInput) {
   return data;
 }
 
-export async function approveReceiving(receivingId: string) {
+export async function approveReceiving(receivingId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("approve_store_receiving", rpcArgs({
+  const { data, error } = await supabase.rpc("approve_store_receiving_v2", rpcArgs({
     p_receiving_id: receivingId,
+    p_expected_updated_at: expectedUpdatedAt,
   }));
   throwIfError(error, "Approving receiving failed");
   const result = data?.[0];
@@ -1454,6 +1467,7 @@ export async function approveReceiving(receivingId: string) {
 
 export type UpdatePurchaseOrderDraftInput = CreatePurchaseOrderInput & {
   purchaseOrderId: string;
+  expectedUpdatedAt: string;
 };
 
 function poItemsPayload(items: CreatePurchaseOrderInput["items"]): Json {
@@ -1468,8 +1482,9 @@ function poItemsPayload(items: CreatePurchaseOrderInput["items"]): Json {
 export async function updatePurchaseOrderDraft(input: UpdatePurchaseOrderDraftInput) {
   await requireDashboardStaff();
   if (!input.items.length) throw new Error("Add at least one PO item.");
-  const { data, error } = await supabase.rpc("update_store_purchase_order_draft", rpcArgs({
+  const { data, error } = await supabase.rpc("update_store_purchase_order_draft_v2", rpcArgs({
     p_purchase_order_id: input.purchaseOrderId,
+    p_expected_updated_at: input.expectedUpdatedAt,
     p_supplier_id: input.supplierId,
     p_location_id: input.locationId ?? null,
     p_po_number: input.poNumber.trim(),
@@ -1486,81 +1501,101 @@ export async function updatePurchaseOrderDraft(input: UpdatePurchaseOrderDraftIn
   return data;
 }
 
-export async function deletePurchaseOrderDraft(purchaseOrderId: string) {
+export async function deletePurchaseOrderDraft(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("delete_store_purchase_order_draft", rpcArgs({
+  const { data, error } = await supabase.rpc("delete_store_purchase_order_draft_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
+    p_expected_updated_at: expectedUpdatedAt,
   }));
   throwIfError(error, "Deleting purchase order draft failed");
   return data;
 }
 
-export async function approvePurchaseOrder(purchaseOrderId: string) {
+export async function approvePurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("approve_store_purchase_order", rpcArgs({
+  const { data, error } = await supabase.rpc("approve_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
+    p_expected_updated_at: expectedUpdatedAt,
   }));
   throwIfError(error, "Approving purchase order failed");
   return data;
 }
 
-export async function issuePurchaseOrder(purchaseOrderId: string) {
+export async function issuePurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("issue_store_purchase_order", rpcArgs({
+  const { data, error } = await supabase.rpc("issue_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
+    p_expected_updated_at: expectedUpdatedAt,
   }));
   throwIfError(error, "Issuing purchase order failed");
   return data;
 }
 
-export async function closePurchaseOrder(purchaseOrderId: string) {
+export async function closePurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("close_store_purchase_order", rpcArgs({
+  const { data, error } = await supabase.rpc("close_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
+    p_expected_updated_at: expectedUpdatedAt,
   }));
   throwIfError(error, "Closing purchase order failed");
   return data;
 }
 
-export async function rejectPurchaseOrder(purchaseOrderId: string, reason: string) {
+export async function rejectPurchaseOrder(
+  purchaseOrderId: string,
+  expectedUpdatedAt: string,
+  reason: string,
+) {
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Rejection reason is required.");
-  const { data, error } = await supabase.rpc("reject_store_purchase_order", rpcArgs({
+  const { data, error } = await supabase.rpc("reject_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
+    p_expected_updated_at: expectedUpdatedAt,
     p_reason: cleanReason,
   }));
   throwIfError(error, "Rejecting purchase order failed");
   return data;
 }
 
-export async function reopenPurchaseOrder(purchaseOrderId: string) {
+export async function reopenPurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("reopen_store_purchase_order", rpcArgs({
+  const { data, error } = await supabase.rpc("reopen_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
+    p_expected_updated_at: expectedUpdatedAt,
   }));
   throwIfError(error, "Reopening purchase order failed");
   return data;
 }
 
-export async function cancelPurchaseOrder(purchaseOrderId: string, reason: string) {
+export async function cancelPurchaseOrder(
+  purchaseOrderId: string,
+  expectedUpdatedAt: string,
+  reason: string,
+) {
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Cancellation reason is required.");
-  const { data, error } = await supabase.rpc("cancel_store_purchase_order", rpcArgs({
+  const { data, error } = await supabase.rpc("cancel_store_purchase_order_v2", rpcArgs({
     p_purchase_order_id: purchaseOrderId,
+    p_expected_updated_at: expectedUpdatedAt,
     p_reason: cleanReason,
   }));
   throwIfError(error, "Cancelling purchase order failed");
   return data;
 }
 
-export async function voidReceiving(receivingId: string, reason: string) {
+export async function voidReceiving(
+  receivingId: string,
+  expectedUpdatedAt: string,
+  reason: string,
+) {
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Void reason is required.");
-  const { data, error } = await supabase.rpc("void_store_receiving", rpcArgs({
+  const { data, error } = await supabase.rpc("void_store_receiving_v2", rpcArgs({
     p_receiving_id: receivingId,
+    p_expected_updated_at: expectedUpdatedAt,
     p_reason: cleanReason,
   }));
   throwIfError(error, "Voiding receiving failed");
