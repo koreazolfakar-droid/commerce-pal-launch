@@ -35,11 +35,11 @@ const [
   readFile(new URL("../src/lib/storeTypes.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/routes/product.$handle.tsx", import.meta.url), "utf8"),
   readFile(
-    new URL("../supabase/migrations/20260928060000_product_specifications_end_to_end.sql", import.meta.url),
+    new URL("../supabase/migrations/20260928084519_product_specifications_end_to_end_20260928.sql", import.meta.url),
     "utf8",
   ),
   readFile(
-    new URL("../supabase/migrations/20260928061000_atomic_product_editor_specifications.sql", import.meta.url),
+    new URL("../supabase/migrations/20260928084532_atomic_product_editor_specifications_20260928.sql", import.meta.url),
     "utf8",
   ),
 ]);
