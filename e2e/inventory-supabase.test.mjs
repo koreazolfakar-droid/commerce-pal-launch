@@ -18,6 +18,10 @@ const inventoryMigration = await readFile(
   new URL("../supabase/migrations/20260918203000_inventory_management.sql", import.meta.url),
   "utf8",
 );
+const concurrencyMigration = await readFile(
+  new URL("../supabase/migrations/20260928053000_inventory_procurement_optimistic_concurrency.sql", import.meta.url),
+  "utf8",
+);
 
 test("inventory dashboard uses Supabase instead of mock storage", () => {
   assert.match(inventoryPage, /@\/dashboard\/data\/inventory/);
@@ -28,9 +32,20 @@ test("inventory dashboard uses Supabase instead of mock storage", () => {
 
 test("inventory writes go through atomic Supabase RPCs", () => {
   assert.match(inventoryData, /rpc\("adjust_store_inventory"/);
-  assert.match(inventoryData, /rpc\("set_store_inventory_stock"/);
+  assert.match(inventoryData, /rpc\("set_store_inventory_stock_v2"/);
   assert.match(inventoryData, /invalidateNativeStoreCache\(\)/);
   assert.doesNotMatch(inventoryData, /@\/dashboard\/mock\//);
+});
+
+test("absolute inventory sets reject stale stock snapshots", () => {
+  assert.match(inventoryData, /p_expected_stock: row\.stock/);
+  assert.match(inventoryData, /inventory_stock_conflict/);
+  assert.match(concurrencyMigration, /create or replace function public\.set_store_inventory_stock_v2/);
+  assert.match(concurrencyMigration, /for update/);
+  assert.match(concurrencyMigration, /v_current_stock <> p_expected_stock/);
+  assert.match(concurrencyMigration, /raise exception 'inventory_stock_conflict'/);
+  assert.match(concurrencyMigration, /insert into public\.store_inventory_movements/);
+  assert.match(concurrencyMigration, /security invoker/);
 });
 
 test("inventory pagination RPCs keep the Supabase client binding", () => {

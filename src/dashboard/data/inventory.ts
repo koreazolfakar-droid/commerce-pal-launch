@@ -1,5 +1,6 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
@@ -528,12 +529,16 @@ export async function setInventoryStock(
     throw new Error("Stock must be a non-negative whole number.");
   }
 
-  const { data, error } = await supabase.rpc("set_store_inventory_stock", rpcArgs({
+  const { data, error } = await looseSupabase.rpc("set_store_inventory_stock_v2", rpcArgs({
     p_product_id: row.productId,
     p_variant_id: row.variantId,
     p_stock: stock,
+    p_expected_stock: row.stock,
     p_note: note,
   }));
+  if (error?.message?.includes("inventory_stock_conflict")) {
+    throw new Error("Inventory changed in another session. Refresh and try again.");
+  }
   throwIfError(error, "Setting inventory failed");
   const result = data?.[0];
   if (!result) throw new Error("Inventory update returned no result.");

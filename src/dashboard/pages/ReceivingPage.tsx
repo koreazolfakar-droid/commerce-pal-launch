@@ -490,7 +490,7 @@ export default function ReceivingPage({
     }
     setSaving(true);
     try {
-      const result = await approveReceiving(receipt.id);
+      const result = await approveReceiving(receipt.id, receipt.updatedAt);
       toast.success(
         `Receiving approved: +${result.stock_units_added} stock unit(s), ${result.damaged_units_recorded} damaged recorded.`,
       );
