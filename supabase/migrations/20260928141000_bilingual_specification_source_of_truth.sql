@@ -10,8 +10,8 @@ insert into public.store_categories (
   is_active,
   is_featured,
   spec_template
-) values
-(
+)
+select
   'Headphones',
   'سماعات رأس',
   'headphones',
@@ -51,8 +51,20 @@ insert into public.store_categories (
       }
     ]
   }'::jsonb
-),
-(
+where not exists (
+  select 1 from public.store_categories where slug = 'headphones'
+);
+
+insert into public.store_categories (
+  name,
+  name_ar,
+  slug,
+  sort_order,
+  is_active,
+  is_featured,
+  spec_template
+)
+select
   'Bags',
   'حقائب',
   'bags',
@@ -75,16 +87,9 @@ insert into public.store_categories (
       }
     ]
   }'::jsonb
-)
-on conflict (slug) do update
-set
-  name_ar = coalesce(public.store_categories.name_ar, excluded.name_ar),
-  spec_template = case
-    when jsonb_typeof(public.store_categories.spec_template) <> 'object'
-      or jsonb_array_length(coalesce(public.store_categories.spec_template -> 'sections', '[]'::jsonb)) = 0
-    then excluded.spec_template
-    else public.store_categories.spec_template
-  end;
+where not exists (
+  select 1 from public.store_categories where slug = 'bags'
+);
 
 update public.store_categories
 set name_ar = coalesce(
