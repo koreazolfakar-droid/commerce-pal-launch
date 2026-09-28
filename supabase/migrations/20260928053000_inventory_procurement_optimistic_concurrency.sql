@@ -342,7 +342,7 @@ returns timestamptz
 language plpgsql
 security invoker
 set search_path = public, private, pg_temp
-as $
+as $$
 declare
   v_updated_at timestamptz;
 begin
@@ -362,7 +362,7 @@ begin
 
   return v_updated_at;
 end;
-$;
+$$;
 
 create or replace function public.approve_store_receiving_v2(
   p_receiving_id uuid,

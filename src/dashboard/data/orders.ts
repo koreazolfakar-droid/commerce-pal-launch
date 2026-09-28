@@ -156,28 +156,36 @@ function paymentFromRow(value: string): DashboardPaymentStatus {
   return "unpaid";
 }
 
-async function countOrders(status?: DashboardOrderStatus) {
-  let query = supabase.from("store_orders").select("id", { count: "exact", head: true });
-  if (status) query = query.eq("status", status);
-  const { count, error } = await query;
-  throwIfError(error, `Counting ${status ?? "all"} orders failed`);
-  return count ?? 0;
-}
+type DashboardOrderStatsRpcRow = {
+  all_count: number | string;
+  new_count: number | string;
+  confirmed_count: number | string;
+  processing_count: number | string;
+  ready_count: number | string;
+  out_for_delivery_count: number | string;
+  delivered_count: number | string;
+  done_count: number | string;
+  cancelled_count: number | string;
+};
 
 async function loadOrderStats(): Promise<DashboardOrderStats> {
-  const [all, fresh, confirmed, processing, ready, outForDelivery, delivered, done, cancelled] =
-    await Promise.all([
-      countOrders(),
-      countOrders("new"),
-      countOrders("confirmed"),
-      countOrders("processing"),
-      countOrders("ready"),
-      countOrders("out_for_delivery"),
-      countOrders("delivered"),
-      countOrders("done"),
-      countOrders("cancelled"),
-    ]);
-  return { all, new: fresh, confirmed, processing, ready, outForDelivery, delivered, done, cancelled };
+  const { data, error } = await looseSupabase.rpc("get_dashboard_order_stats");
+  throwIfError(error, "Loading order stats failed");
+
+  const row = (Array.isArray(data) ? data[0] : data) as DashboardOrderStatsRpcRow | null;
+  const count = (value: number | string | undefined) => Number(value ?? 0) || 0;
+
+  return {
+    all: count(row?.all_count),
+    new: count(row?.new_count),
+    confirmed: count(row?.confirmed_count),
+    processing: count(row?.processing_count),
+    ready: count(row?.ready_count),
+    outForDelivery: count(row?.out_for_delivery_count),
+    delivered: count(row?.delivered_count),
+    done: count(row?.done_count),
+    cancelled: count(row?.cancelled_count),
+  };
 }
 
 export async function listDashboardOrders(input?: {

@@ -29,24 +29,15 @@ test("live dashboard home does not import mock business data", () => {
   assert.doesNotMatch(page, /124,892|1,842|1,206|January 31, 2026/);
 });
 
-test("dashboard home reads truthful metrics from Supabase", () => {
-  assert.match(data, /from\("store_orders"\)/);
-  assert.match(data, /from\("store_sales"\)/);
-  assert.match(data, /from\("store_order_items"\)/);
-  assert.match(data, /from\("store_customers"\)/);
-  assert.match(data, /from\("store_products"\)/);
-  assert.match(data, /from\("store_product_variants"\)/);
-  assert.match(data, /from\("cms_brands"\)/);
+test("dashboard home reads one server-side aggregate snapshot", () => {
+  assert.match(data, /get_dashboard_home_snapshot/);
+  assert.match(data, /normalizeSnapshot/);
+  assert.doesNotMatch(data, /from\("store_orders"\)/);
+  assert.doesNotMatch(data, /from\("store_sales"\)/);
+  assert.doesNotMatch(data, /from\("store_product_variants"\)/);
 });
 
-test("dashboard home sales metrics only use completed eligible sales", () => {
-  assert.match(data, /\.in\("payment_status", \["paid", "partially_refunded"\]\)/);
-  assert.match(data, /const saleOrderIds = periodSales\.map\(\(sale\) => sale\.order_id\)/);
-  assert.match(data, /\.in\("order_id", saleOrderIds\)/);
-  assert.match(
-    data,
-    /const totalSales = periodSales\.reduce\(\(sum, sale\) => sum \+ \(Number\(sale\.total\) \|\| 0\), 0\)/,
-  );
+test("dashboard home labels gross completed sales accurately", () => {
   assert.match(page, /Gross sales/);
   assert.match(page, /Completed paid sales · full refunds excluded/);
 });

@@ -2,7 +2,7 @@ import { navSections } from "@/dashboard/config/navigation";
 import {
   DASHBOARD_AUTH_REQUIRED_EVENT,
   getDashboardMfaStatus,
-  listDashboardProductSearchIndex,
+  searchDashboardProducts,
   signOutDashboard,
   type DashboardProductSearchItem,
 } from "@/dashboard/data/catalog";
@@ -245,7 +245,6 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const [, navigate] = useLocation();
   const [headerProducts, setHeaderProducts] = useState<DashboardProductSearchItem[]>([]);
   const [searchIndexLoading, setSearchIndexLoading] = useState(false);
-  const searchIndexRequested = useRef(false);
   const headerMounted = useRef(true);
 
   useEffect(() => {
@@ -266,30 +265,36 @@ function Header({ onMenu }: { onMenu: () => void }) {
   }, []);
 
   useEffect(() => {
-    if (!query.trim() || searchIndexRequested.current) return;
+    const normalizedQuery = query.trim();
+    if (normalizedQuery.length < 2) {
+      setHeaderProducts([]);
+      setSearchIndexLoading(false);
+      return;
+    }
 
-    searchIndexRequested.current = true;
+    let cancelled = false;
     setSearchIndexLoading(true);
-    listDashboardProductSearchIndex()
-      .then((rows) => {
-        if (headerMounted.current) setHeaderProducts(rows);
-      })
-      .catch(() => {
-        searchIndexRequested.current = false;
-      })
-      .finally(() => {
-        if (headerMounted.current) setSearchIndexLoading(false);
-      });
+    const timer = window.setTimeout(() => {
+      void searchDashboardProducts(normalizedQuery, 5)
+        .then((rows) => {
+          if (!cancelled && headerMounted.current) setHeaderProducts(rows);
+        })
+        .catch(() => {
+          if (!cancelled && headerMounted.current) setHeaderProducts([]);
+        })
+        .finally(() => {
+          if (!cancelled && headerMounted.current) setSearchIndexLoading(false);
+        });
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [query]);
 
-  const results: DashboardProductSearchItem[] = query
+  const results: DashboardProductSearchItem[] = query.trim().length >= 2
     ? headerProducts
-        .filter((product) =>
-          `${product.name} ${product.brand} ${product.sku}`
-            .toLowerCase()
-            .includes(query.toLowerCase()),
-        )
-        .slice(0, 5)
     : [];
 
   return (
