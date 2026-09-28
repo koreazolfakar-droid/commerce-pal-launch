@@ -268,6 +268,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
       return;
     }
 
+    setHeaderProducts([]);
     const timer = window.setTimeout(() => {
       setSearchIndexLoading(true);
       void listDashboardProductSearchIndex(normalizedQuery, 5)
