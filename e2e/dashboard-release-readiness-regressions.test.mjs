@@ -9,7 +9,7 @@ const [storage, procurementMigration] = await Promise.all([
   ),
   readFile(
     new URL(
-      "../supabase/migrations/20260928053000_inventory_procurement_optimistic_concurrency.sql",
+      "../supabase/migrations/20260928084508_inventory_procurement_optimistic_concurrency_20260928.sql",
       import.meta.url,
     ),
     "utf8",
