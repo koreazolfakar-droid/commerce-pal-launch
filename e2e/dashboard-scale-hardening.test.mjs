@@ -48,8 +48,14 @@ test("orders and inventory refresh from Supabase Realtime", () => {
   assert.match(realtimeHook, /postgres_changes/);
   assert.match(realtimeHook, /REALTIME_DEBOUNCE_MS = 350/);
   assert.match(realtimeHook, /supabase\.removeChannel\(channel\)/);
-  assert.match(ordersPage, /useDashboardRealtimeRefresh\(\["store_orders"\]/);
-  assert.match(inventoryPage, /useDashboardRealtimeRefresh\(\["store_product_variants"\]/);
+  assert.match(
+    ordersPage,
+    /useDashboardRealtimeRefresh\(\["store_orders", "store_order_items"\]/,
+  );
+  assert.match(
+    inventoryPage,
+    /useDashboardRealtimeRefresh\(\["store_product_variants", "store_inventory_movements"\]/,
+  );
 });
 
 test("performance migration also closes advisor and realtime gaps", () => {
