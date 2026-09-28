@@ -156,28 +156,36 @@ function paymentFromRow(value: string): DashboardPaymentStatus {
   return "unpaid";
 }
 
-async function countOrders(status?: DashboardOrderStatus) {
-  let query = supabase.from("store_orders").select("id", { count: "exact", head: true });
-  if (status) query = query.eq("status", status);
-  const { count, error } = await query;
-  throwIfError(error, `Counting ${status ?? "all"} orders failed`);
-  return count ?? 0;
-}
-
 async function loadOrderStats(): Promise<DashboardOrderStats> {
-  const [all, fresh, confirmed, processing, ready, outForDelivery, delivered, done, cancelled] =
-    await Promise.all([
-      countOrders(),
-      countOrders("new"),
-      countOrders("confirmed"),
-      countOrders("processing"),
-      countOrders("ready"),
-      countOrders("out_for_delivery"),
-      countOrders("delivered"),
-      countOrders("done"),
-      countOrders("cancelled"),
-    ]);
-  return { all, new: fresh, confirmed, processing, ready, outForDelivery, delivered, done, cancelled };
+  const { data, error } = await looseSupabase.rpc("get_dashboard_order_stats");
+  throwIfError(error, "Loading order counters failed");
+
+  const row = (Array.isArray(data) ? data[0] : null) as
+    | {
+        all_count?: unknown;
+        new_count?: unknown;
+        confirmed_count?: unknown;
+        processing_count?: unknown;
+        ready_count?: unknown;
+        out_for_delivery_count?: unknown;
+        delivered_count?: unknown;
+        done_count?: unknown;
+        cancelled_count?: unknown;
+      }
+    | null;
+
+  const number = (value: unknown) => Number(value) || 0;
+  return {
+    all: number(row?.all_count),
+    new: number(row?.new_count),
+    confirmed: number(row?.confirmed_count),
+    processing: number(row?.processing_count),
+    ready: number(row?.ready_count),
+    outForDelivery: number(row?.out_for_delivery_count),
+    delivered: number(row?.delivered_count),
+    done: number(row?.done_count),
+    cancelled: number(row?.cancelled_count),
+  };
 }
 
 export async function listDashboardOrders(input?: {
