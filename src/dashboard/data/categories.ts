@@ -1,6 +1,5 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
-import { looseSupabase } from "@/integrations/supabase/looseClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import {
   normalizeSpecificationTemplate,
@@ -223,7 +222,7 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   const previousImageUrl = existing?.image_url ?? null;
   const nextImageUrl = category.image?.trim() || "";
 
-  const { error } = await looseSupabase.rpc("update_store_category_with_spec_template", rpcArgs({
+  const { error } = await supabase.rpc("update_store_category_with_spec_template", rpcArgs({
     p_category_id: category.id,
     p_name: category.name.trim(),
     p_slug: normalizeCategorySlug(category.slug || category.name),
