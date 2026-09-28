@@ -179,15 +179,20 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
     if (!invoiceNumber.trim()) throw new Error("Invoice number is required.");
 
     const lines = buildReceivingDraftLines();
-    await updateReceivingDraft({
+    const nextUpdatedAt = await updateReceivingDraft({
       receivingId: receipt.id,
+      expectedUpdatedAt: receipt.updatedAt,
       invoiceNumber,
       employeeLabel,
       notes: receivingNotes,
       lines,
     });
 
-    if (reloadAfter) await load();
+    if (reloadAfter) {
+      await load();
+      return null;
+    }
+    return typeof nextUpdatedAt === "string" ? nextUpdatedAt : receipt.updatedAt;
   };
 
   const saveReceivingDraft = async () => {
@@ -220,13 +225,14 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
     if (!window.confirm(`Approve receiving #${receipt.receiptNumber}? Latest draft fields and serials will be saved first, then stock will update.`)) return;
     setSaving(true);
     try {
+      let expectedUpdatedAt = receipt.updatedAt;
       if (receipt.status === "draft") {
-        await persistReceivingDraft(false);
+        expectedUpdatedAt = (await persistReceivingDraft(false)) ?? expectedUpdatedAt;
         for (const line of receipt.items) {
           await replaceReceivingSerials(line.id, serialDrafts[line.id] ?? []);
         }
       }
-      await approveReceiving(receipt.id);
+      await approveReceiving(receipt.id, expectedUpdatedAt);
       toast.success("Receiving approved and stock updated.");
       await load();
     } catch (cause) {
@@ -242,7 +248,7 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
     if (!reason) return;
     setSaving(true);
     try {
-      await voidReceiving(receipt.id, reason);
+      await voidReceiving(receipt.id, receipt.updatedAt, reason);
       toast.success("Receiving draft voided.");
       await load();
     } catch (cause) {
