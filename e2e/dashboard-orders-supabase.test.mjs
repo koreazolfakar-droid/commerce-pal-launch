@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
+const routes = await readFile(
+  new URL("../src/dashboard/config/routes.tsx", import.meta.url),
+  "utf8",
+);
 const listPage = await readFile(
   new URL("../src/dashboard/pages/OrdersPage.tsx", import.meta.url),
   "utf8",
@@ -28,11 +31,11 @@ const migration = await readFile(
   "utf8",
 );
 
-test("active orders routes use Supabase-backed pages", () => {
-  assert.match(app, /OrdersPageLive/);
-  assert.match(app, /OrderDetailPageLive/);
-  assert.match(app, /route === "\/dashboard\/orders"[\s\S]+<OrdersPageLive \/>/);
-  assert.match(app, /orderDetail[\s\S]+<OrderDetailPageLive id=\{orderDetail\[1\]\} \/>/);
+test("active orders routes lazy-load Supabase-backed pages", () => {
+  assert.match(routes, /const ordersPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/OrdersPage"\)\)/);
+  assert.match(routes, /const orderDetailPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/OrderDetailPage"\)\)/);
+  assert.match(routes, /id: "orders"[\s\S]*path: "\/dashboard\/orders"[\s\S]*page: ordersPage/);
+  assert.match(routes, /id: "order-detail"[\s\S]*page: orderDetailPage[\s\S]*params\.id/);
 });
 
 test("orders pages contain no mock business data", () => {
