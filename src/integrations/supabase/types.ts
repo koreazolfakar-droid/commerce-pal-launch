@@ -69,6 +69,7 @@ export type Database = {
           seo_title: string | null
           slug: string
           sort_order: number
+          spec_template: Json
           updated_at: string
         }
         Insert: {
@@ -86,6 +87,7 @@ export type Database = {
           seo_title?: string | null
           slug: string
           sort_order?: number
+          spec_template?: Json
           updated_at?: string
         }
         Update: {
@@ -699,6 +701,7 @@ export type Database = {
           seo_title?: string | null
           slug: string
           sort_order?: number
+          spec_template?: Json
           updated_at?: string
         }
         Update: {
@@ -3100,6 +3103,23 @@ export type Database = {
           p_seo_title: string
           p_slug: string
           p_sort_order: number
+        }
+        Returns: undefined
+      }
+      update_store_category_with_spec_template: {
+        Args: {
+          p_category_id: string
+          p_description: string
+          p_icon: string
+          p_image_url: string
+          p_is_active: boolean
+          p_is_featured: boolean
+          p_name: string
+          p_seo_description: string
+          p_seo_title: string
+          p_slug: string
+          p_sort_order: number
+          p_spec_template: Json
         }
         Returns: undefined
       }
