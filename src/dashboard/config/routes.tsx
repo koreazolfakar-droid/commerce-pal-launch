@@ -57,18 +57,83 @@ const SECTION_ORDER = [
   "System",
 ] as const;
 
+const DASHBOARD_ROUTE_CHUNK_RELOAD_KEY = "space-call:dashboard-route-chunk-reload";
+
+function isRouteChunkLoadError(error: unknown) {
+  const message =
+    error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+
+  return /failed to fetch dynamically imported module|importing a module script failed|chunkloaderror|loading chunk|error loading dynamically imported module/i.test(
+    message,
+  );
+}
+
+async function recoverRouteChunk(error: unknown): Promise<never> {
+  if (typeof window === "undefined" || !isRouteChunkLoadError(error)) {
+    throw error;
+  }
+
+  let alreadyReloaded = false;
+  try {
+    alreadyReloaded =
+      window.sessionStorage.getItem(DASHBOARD_ROUTE_CHUNK_RELOAD_KEY) === "1";
+  } catch {
+    throw error;
+  }
+
+  if (alreadyReloaded) throw error;
+
+  try {
+    window.sessionStorage.setItem(DASHBOARD_ROUTE_CHUNK_RELOAD_KEY, "1");
+  } catch {
+    throw error;
+  }
+
+  window.location.reload();
+  return await new Promise<never>(() => undefined);
+}
+
 function lazyPage<T extends ComponentType<any>>(
   loader: () => Promise<{ default: T }>,
 ): LazyPage {
   let request: Promise<{ default: T }> | null = null;
-  const load = () => {
+
+  const load = async () => {
     request ??= loader();
-    return request;
+    try {
+      const module = await request;
+      if (typeof window !== "undefined") {
+        try {
+          window.sessionStorage.removeItem(DASHBOARD_ROUTE_CHUNK_RELOAD_KEY);
+        } catch {
+          // Session storage is optional after a successful chunk load.
+        }
+      }
+      return module;
+    } catch (error) {
+      request = null;
+      throw error;
+    }
   };
 
+  const Component = lazy(async () => {
+    try {
+      return await load();
+    } catch (error) {
+      return recoverRouteChunk(error);
+    }
+  });
+
   return {
-    Component: lazy(load),
-    preload: load,
+    Component,
+    preload: async () => {
+      try {
+        await load();
+      } catch {
+        // Preloading must never navigate or reload the dashboard. Rendering the
+        // route retries the import and performs guarded stale-chunk recovery.
+      }
+    },
   };
 }
 
