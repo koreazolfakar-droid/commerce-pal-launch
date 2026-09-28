@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const [app, catalog, data, variants, products, form, migration, atomicSave, types] = await Promise.all([
+const [app, routes, catalog, data, variants, products, form, migration, atomicSave, types] = await Promise.all([
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/catalog.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/productManagement.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/components/products/ProductVariantManager.tsx", import.meta.url), "utf8"),
@@ -14,10 +15,15 @@ const [app, catalog, data, variants, products, form, migration, atomicSave, type
   readFile(new URL("../src/integrations/supabase/types.ts", import.meta.url), "utf8"),
 ]);
 
-test("dashboard routes use the Step 5 product pages", () => {
-  assert.match(app, /route === "\/dashboard\/products"\)\s+content = <ProductsPageLive \/>/);
-  assert.match(app, /route === "\/dashboard\/products\/new"\)\s+content = <ProductFormPageLive \/>/);
-  assert.match(app, /productDetail\)\s+content = <ProductFormPageLive id=\{productDetail\[1\]\} \/>/);
+test("dashboard routes lazy-load the Step 5 product pages", () => {
+  assert.match(routes, /const productsPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/ProductsPage"\)\)/);
+  assert.match(routes, /const productFormPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/ProductFormPage"\)\)/);
+  assert.match(routes, /id: "products"[\s\S]*path: "\/dashboard\/products"[\s\S]*page: productsPage/);
+  assert.match(routes, /id: "products-new"[\s\S]*path: "\/dashboard\/products\/new"[\s\S]*page: productFormPage/);
+  assert.match(routes, /id: "product-detail"[\s\S]*productFormPage[\s\S]*params\.id/);
+  assert.match(app, /resolveDashboardRoute\(route\)/);
+  assert.doesNotMatch(app, /import ProductsPageLive from/);
+  assert.doesNotMatch(app, /import ProductFormPageLive from/);
 });
 
 test("multi-variant product save cannot overwrite variant-derived summaries", () => {
