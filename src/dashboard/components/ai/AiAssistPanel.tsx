@@ -115,6 +115,8 @@ export default function AiAssistPanel({
   context,
   onApply,
   compact = false,
+  triggerLabel = "AI Assist",
+  showSeoAction = true,
 }: {
   entity: DashboardAiEntity;
   query: string;
@@ -123,6 +125,8 @@ export default function AiAssistPanel({
   context?: Record<string, unknown>;
   onApply: (patch: Record<string, string>) => void;
   compact?: boolean;
+  triggerLabel?: string;
+  showSeoAction?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [researchQuery, setResearchQuery] = useState(query);
@@ -281,7 +285,7 @@ export default function AiAssistPanel({
         }
       >
         <Sparkles className="size-3.5" />
-        AI Assist
+        {triggerLabel}
       </button>
 
       {open && typeof document !== "undefined"
@@ -347,7 +351,7 @@ export default function AiAssistPanel({
                     />
                   </label>
 
-                  <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-3" : "grid-cols-2"}`}>
                     <ActionButton
                       label="Research & Fill"
                       icon={<Search className="size-3.5" />}
@@ -355,13 +359,15 @@ export default function AiAssistPanel({
                       disabled={Boolean(loadingAction)}
                       onClick={() => void run("research_fill")}
                     />
-                    <ActionButton
-                      label="Improve SEO"
-                      icon={<WandSparkles className="size-3.5" />}
-                      active={loadingAction === "seo"}
-                      disabled={Boolean(loadingAction)}
-                      onClick={() => void run("seo")}
-                    />
+                    {showSeoAction ? (
+                      <ActionButton
+                        label="Improve SEO"
+                        icon={<WandSparkles className="size-3.5" />}
+                        active={loadingAction === "seo"}
+                        disabled={Boolean(loadingAction)}
+                        onClick={() => void run("seo")}
+                      />
+                    ) : null}
                     <ActionButton
                       label="Validate"
                       icon={<ShieldCheck className="size-3.5" />}
