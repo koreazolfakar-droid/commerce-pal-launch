@@ -1,3 +1,4 @@
+import { confirmDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import {
   Check,
   CheckCircle2,
@@ -130,8 +131,9 @@ export default function BulkMediaOptimizer({
     const ready = rows.filter((row) => row.status === "ready" && row.conversion);
     if (!ready.length || optimizing) return;
 
-    const confirmed = window.confirm(
+    const confirmed = await confirmDashboardAction(
       `Convert ${ready.length} selected image${ready.length === 1 ? "" : "s"} to WebP? Existing media URLs will be preserved.`,
+      { title: "Bulk WebP conversion", confirmLabel: "Convert", destructive: false },
     );
     if (!confirmed) return;
 
