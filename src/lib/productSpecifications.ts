@@ -117,7 +117,10 @@ export function displaySpecificationValue(value: string, unit?: string) {
 
   const normalizedUnit = unit.toLowerCase();
   if (normalizedUnit === "bluetooth") return `Bluetooth ${trimmed}`;
-  if (normalizedUnit === "inches" || normalizedUnit === "inch") return `${trimmed} in`;
+  if (normalizedUnit === "inches" || normalizedUnit === "inch") {
+    if (/["″]$/.test(trimmed) || /\b(?:in|inch|inches)\b/i.test(trimmed)) return trimmed;
+    return `${trimmed} in`;
+  }
   return `${trimmed} ${unit}`;
 }
 
