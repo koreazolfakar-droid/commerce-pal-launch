@@ -42,11 +42,6 @@ type VariantListRow = Pick<
   "product_id" | "price" | "compare_at_price" | "sku" | "barcode" | "sort_order"
 >;
 type ImageListRow = Pick<ImageRow, "product_id" | "url" | "is_primary" | "sort_order">;
-type ProductSearchRow = Pick<
-  ProductRow,
-  "id" | "title" | "brand_id" | "category_id" | "product_type" | "sku"
->;
-type VariantSearchRow = Pick<VariantRow, "product_id" | "sku" | "sort_order">;
 
 export type DashboardRole = "admin" | "editor";
 
@@ -1227,46 +1222,42 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
   });
 }
 
-export async function listDashboardProductSearchIndex(): Promise<DashboardProductSearchItem[]> {
+export async function listDashboardProductSearchIndex(
+  query: string,
+  limit = 5,
+): Promise<DashboardProductSearchItem[]> {
   await requireDashboardRole();
-  const [productResult, variantResult, brandResult, categoryResult] = await Promise.all([
-    supabase
-      .from("store_products")
-      .select("id,title,brand_id,category_id,product_type,sku")
-      .order("updated_at", { ascending: false }),
-    supabase
-      .from("store_product_variants")
-      .select("product_id,sku,sort_order")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true }),
-    supabase.from("cms_brands").select("id,name"),
-    supabase.from("store_categories").select("id,name"),
-  ]);
-  throwIfError(productResult.error, "Loading product search index failed");
-  throwIfError(variantResult.error, "Loading product search variants failed");
-  throwIfError(brandResult.error, "Loading product search brands failed");
-  throwIfError(categoryResult.error, "Loading product search categories failed");
 
-  const variants = (variantResult.data ?? []) as VariantSearchRow[];
-  const firstVariantSku = new Map<string, string>();
-  for (const variant of variants) {
-    if (!firstVariantSku.has(variant.product_id) && variant.sku) {
-      firstVariantSku.set(variant.product_id, variant.sku);
-    }
-  }
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return [];
 
-  const brands = new Map((brandResult.data ?? []).map((row) => [row.id, row.name]));
-  const categories = new Map((categoryResult.data ?? []).map((row) => [row.id, row.name]));
+  const { data, error } = await looseSupabase.rpc(
+    "search_dashboard_products",
+    rpcArgs({
+      p_query: normalizedQuery,
+      p_limit: Math.max(1, Math.min(Math.trunc(limit) || 5, 20)),
+    }),
+  );
+  throwIfError(error, "Searching dashboard products failed");
 
-  return ((productResult.data ?? []) as ProductSearchRow[]).map((row) => ({
-    id: row.id,
-    name: row.title,
-    brand: row.brand_id ? brands.get(row.brand_id) ?? "" : "",
-    category: row.category_id
-      ? categories.get(row.category_id) ?? row.product_type ?? ""
-      : row.product_type ?? "",
-    sku: firstVariantSku.get(row.id) ?? row.sku ?? "",
-  }));
+  const rows = (data ?? []) as Array<{
+    id?: unknown;
+    name?: unknown;
+    brand?: unknown;
+    category?: unknown;
+    sku?: unknown;
+  }>;
+
+  return rows.flatMap((row) => {
+    if (typeof row.id !== "string" || typeof row.name !== "string") return [];
+    return [{
+      id: row.id,
+      name: row.name,
+      brand: typeof row.brand === "string" ? row.brand : "",
+      category: typeof row.category === "string" ? row.category : "",
+      sku: typeof row.sku === "string" ? row.sku : "",
+    }];
+  });
 }
 
 export async function getDashboardProduct(id: string): Promise<DashboardProduct | null> {
