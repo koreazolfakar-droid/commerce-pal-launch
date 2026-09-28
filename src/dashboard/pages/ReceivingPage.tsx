@@ -1,3 +1,4 @@
+import { confirmDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import {
   AlertTriangle,
   Boxes,
@@ -402,7 +403,10 @@ export default function ReceivingPage({
   };
 
   const submitPo = async (po: PurchaseOrderSummary) => {
-    if (!window.confirm(`Submit PO ${po.poNumber} for approval? Draft lines will be locked until review.`)) return;
+    if (!(await confirmDashboardAction(
+      `Submit PO ${po.poNumber} for approval? Draft lines will be locked until review.`,
+      { title: "Submit purchase order", confirmLabel: "Submit", destructive: false },
+    ))) return;
     setSaving(true);
     try {
       await submitPurchaseOrder(po.id);
@@ -481,13 +485,10 @@ export default function ReceivingPage({
   };
 
   const approve = async (receipt: ReceivingSummary) => {
-    if (
-      !window.confirm(
-        `Approve receipt #${receipt.receiptNumber} for PO ${receipt.poNumber}? This will add ${receipt.stockUnits} usable unit(s) to stock and record purchase movements.`,
-      )
-    ) {
-      return;
-    }
+    if (!(await confirmDashboardAction(
+      `Approve receipt #${receipt.receiptNumber} for PO ${receipt.poNumber}? This will add ${receipt.stockUnits} usable unit(s) to stock and record purchase movements.`,
+      { title: "Approve receiving", confirmLabel: "Approve", destructive: false },
+    ))) return;
     setSaving(true);
     try {
       const result = await approveReceiving(receipt.id, receipt.updatedAt);
