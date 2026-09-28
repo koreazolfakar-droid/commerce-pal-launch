@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const files = {
   app: await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
+  routes: await readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   brands: await readFile(new URL("../src/dashboard/pages/BrandsPage.tsx", import.meta.url), "utf8"),
   categories: await readFile(new URL("../src/dashboard/pages/CategoriesPage.tsx", import.meta.url), "utf8"),
   inventory: await readFile(new URL("../src/dashboard/pages/InventoryManagerPage.tsx", import.meta.url), "utf8"),
@@ -34,7 +35,11 @@ test("migrated catalog pages do not import dashboard mock data", () => {
 test("products page and global product search are Supabase-backed", () => {
   assert.match(files.app, /listDashboardProductSearchIndex\(\)/);
   assert.doesNotMatch(files.app, /listDashboardProducts\(\)/);
-  assert.match(files.app, /import ProductsPageLive from "@\/dashboard\/pages\/ProductsPage"/);
+  assert.match(
+    files.routes,
+    /lazyPage\(\(\) => import\("@\/dashboard\/pages\/ProductsPage"\)\)/,
+  );
+  assert.doesNotMatch(files.app, /@\/dashboard\/pages\/ProductsPage/);
   assert.doesNotMatch(
     files.app,
     /pageMeta\["\/dashboard\/products"\]/,
