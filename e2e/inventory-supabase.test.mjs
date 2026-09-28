@@ -19,7 +19,7 @@ const inventoryMigration = await readFile(
   "utf8",
 );
 const concurrencyMigration = await readFile(
-  new URL("../supabase/migrations/20260928053000_inventory_procurement_optimistic_concurrency.sql", import.meta.url),
+  new URL("../supabase/migrations/20260928084508_inventory_procurement_optimistic_concurrency_20260928.sql", import.meta.url),
   "utf8",
 );
 
