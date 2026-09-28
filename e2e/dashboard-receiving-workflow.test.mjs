@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [workflow, hardening, upgrade, data, page, purchaseOrdersPage, purchaseOrderCreatePage, purchaseOrderDetailPage, purchaseOrderEditPage, receivingDetailPage, suppliersPage, analyticsPage, app, nav, inventory, drawer, types] = await Promise.all([
+const [workflow, hardening, upgrade, concurrency, data, page, purchaseOrdersPage, purchaseOrderCreatePage, purchaseOrderDetailPage, purchaseOrderEditPage, receivingDetailPage, suppliersPage, analyticsPage, app, nav, inventory, drawer, types] = await Promise.all([
   readFile(new URL("../supabase/migrations/20260919123000_procurement_receiving_workflows.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919124500_harden_procurement_rpc_exposure.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919152000_procurement_management_upgrade.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260928053000_inventory_procurement_optimistic_concurrency.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/receiving.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ReceivingPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/PurchaseOrdersPage.tsx", import.meta.url), "utf8"),
@@ -66,10 +67,31 @@ test("dashboard data layer uses real procurement tables and RPCs", () => {
     assert.match(data, new RegExp(`from\\("${table}"\\)`));
   }
   assert.match(data, /rpc\("create_store_purchase_order_v2"/);
-  assert.match(data, /rpc\("submit_store_purchase_order"/);
+  assert.match(data, /rpc\("submit_store_purchase_order_v2"/);
   assert.match(data, /rpc\("create_store_receiving"/);
-  assert.match(data, /rpc\("approve_store_receiving"/);
+  assert.match(data, /rpc\("approve_store_receiving_v2"/);
   assert.match(data, /invalidateNativeStoreCache\(\)/);
+});
+
+test("procurement mutations reject stale dashboard snapshots", () => {
+  assert.match(data, /updatedAt: string/);
+  assert.match(data, /updated_at/);
+  assert.match(data, /p_expected_updated_at/);
+  assert.match(data, /procurement_version_conflict/);
+  assert.match(data, /update_store_purchase_order_draft_v2/);
+  assert.match(data, /update_store_receiving_draft_v2/);
+  assert.match(data, /approve_store_purchase_order_v2/);
+  assert.match(data, /approve_store_receiving_v2/);
+  assert.match(concurrency, /assert_store_purchase_order_fresh/);
+  assert.match(concurrency, /assert_store_receiving_fresh/);
+  assert.match(concurrency, /for update/);
+  assert.match(concurrency, /v_updated_at is distinct from p_expected_updated_at/);
+  assert.match(concurrency, /raise exception 'procurement_version_conflict'/);
+  assert.match(purchaseOrderEditPage, /expectedUpdatedAt: po\.updatedAt/);
+  assert.match(purchaseOrderDetailPage, /po\.updatedAt/);
+  assert.match(receivingDetailPage, /expectedUpdatedAt: receipt\.updatedAt/);
+  assert.match(receivingDetailPage, /approveReceiving\(receipt\.id, expectedUpdatedAt\)/);
+  assert.match(page, /approveReceiving\(receipt\.id, receipt\.updatedAt\)/);
 });
 
 test("procurement list pages skip unused heavy workspace payloads", () => {
