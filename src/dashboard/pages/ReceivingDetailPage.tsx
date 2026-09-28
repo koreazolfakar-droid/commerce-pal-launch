@@ -1,3 +1,4 @@
+import { confirmDashboardAction, promptDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -222,7 +223,10 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
 
   const approve = async () => {
     if (!receipt) return;
-    if (!window.confirm(`Approve receiving #${receipt.receiptNumber}? Latest draft fields and serials will be saved first, then stock will update.`)) return;
+    if (!(await confirmDashboardAction(
+      `Approve receiving #${receipt.receiptNumber}? Latest draft fields and serials will be saved first, then stock will update.`,
+      { title: "Approve receiving", confirmLabel: "Approve", destructive: false },
+    ))) return;
     setSaving(true);
     try {
       let expectedUpdatedAt = receipt.updatedAt;
@@ -244,7 +248,15 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
 
   const voidDraft = async () => {
     if (!receipt) return;
-    const reason = window.prompt("Reason for voiding this receiving draft?")?.trim();
+    const reason = await promptDashboardAction(
+      "Explain why this receiving draft should be voided.",
+      {
+        title: "Void receiving draft",
+        placeholder: "Required reason",
+        confirmLabel: "Void draft",
+        destructive: true,
+      },
+    );
     if (!reason) return;
     setSaving(true);
     try {
@@ -710,8 +722,11 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
                 </a>
                 {isAdmin ? (
                   <button
-                    onClick={() => {
-                      if (!window.confirm("Delete this attachment?")) return;
+                    onClick={async () => {
+                      if (!(await confirmDashboardAction(
+                        "Delete this receiving attachment? This cannot be undone.",
+                        { title: "Delete attachment", confirmLabel: "Delete" },
+                      ))) return;
                       setSaving(true);
                       void deleteProcurementAttachment(attachment)
                         .then(() => load())
