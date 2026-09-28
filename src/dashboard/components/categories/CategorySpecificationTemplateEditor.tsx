@@ -64,7 +64,7 @@ export default function CategorySpecificationTemplateEditor({
       <div className="mt-4 space-y-3">
         {template.sections.map((section, sectionIndex) => (
           <section key={sectionIndex} className="rounded-xl border border-slate-200 bg-white p-3">
-            <div className="flex items-center gap-2">
+            <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
               <input
                 value={section.title}
                 onChange={(event) => {
@@ -72,8 +72,24 @@ export default function CategorySpecificationTemplateEditor({
                   sections[sectionIndex] = { ...section, title: event.target.value };
                   commit({ sections });
                 }}
-                aria-label="Specification section title"
-                className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                placeholder="Section title (English)"
+                aria-label="Specification section title in English"
+                className="h-9 min-w-0 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+              />
+              <input
+                value={section.titleAr ?? ""}
+                dir="rtl"
+                onChange={(event) => {
+                  const sections = [...template.sections];
+                  sections[sectionIndex] = {
+                    ...section,
+                    titleAr: event.target.value || undefined,
+                  };
+                  commit({ sections });
+                }}
+                placeholder="عنوان القسم بالعربية"
+                aria-label="Specification section title in Arabic"
+                className="h-9 min-w-0 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
               />
               <button
                 type="button"
@@ -93,7 +109,7 @@ export default function CategorySpecificationTemplateEditor({
               {section.fields.map((field, fieldIndex) => (
                 <div
                   key={field.key + fieldIndex}
-                  className="grid gap-2 rounded-lg border border-slate-100 bg-slate-50/60 p-2 sm:grid-cols-[1.15fr_1fr_.65fr_auto]"
+                  className="grid gap-2 rounded-lg border border-slate-100 bg-slate-50/60 p-2 sm:grid-cols-[1fr_1fr_.9fr_.6fr_auto]"
                 >
                   <input
                     value={field.label}
@@ -104,8 +120,25 @@ export default function CategorySpecificationTemplateEditor({
                       sections[sectionIndex] = { ...section, fields };
                       commit({ sections });
                     }}
-                    placeholder="Label"
-                    aria-label="Specification field label"
+                    placeholder="Label (English)"
+                    aria-label="Specification field label in English"
+                    className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold outline-none focus:border-indigo-400"
+                  />
+                  <input
+                    value={field.labelAr ?? ""}
+                    dir="rtl"
+                    onChange={(event) => {
+                      const sections = [...template.sections];
+                      const fields = [...section.fields];
+                      fields[fieldIndex] = {
+                        ...field,
+                        labelAr: event.target.value || undefined,
+                      };
+                      sections[sectionIndex] = { ...section, fields };
+                      commit({ sections });
+                    }}
+                    placeholder="التسمية بالعربية"
+                    aria-label="Specification field label in Arabic"
                     className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold outline-none focus:border-indigo-400"
                   />
                   <input
