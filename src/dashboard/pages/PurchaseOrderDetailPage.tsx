@@ -106,7 +106,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
 
     setSaving(true);
     try {
-      await submitPurchaseOrder(po.id);
+      await submitPurchaseOrder(po.id, po.updatedAt);
       toast.success(`PO ${po.poNumber} submitted for approval.`);
       await load(false);
     } catch (cause) {
@@ -123,26 +123,26 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
     setSaving(true);
     try {
       if (action === "approve") {
-        await approvePurchaseOrder(po.id);
+        await approvePurchaseOrder(po.id, po.updatedAt);
         toast.success(`PO ${po.poNumber} approved.`);
       } else if (action === "issue") {
-        await issuePurchaseOrder(po.id);
+        await issuePurchaseOrder(po.id, po.updatedAt);
         toast.success(`PO ${po.poNumber} issued and ready for receiving.`);
       } else if (action === "reopen") {
-        await reopenPurchaseOrder(po.id);
+        await reopenPurchaseOrder(po.id, po.updatedAt);
         toast.success(`PO ${po.poNumber} reopened as draft.`);
       } else if (action === "reject") {
         const reason = window.prompt("Reason for rejecting this purchase order?")?.trim();
         if (!reason) return;
-        await rejectPurchaseOrder(po.id, reason);
+        await rejectPurchaseOrder(po.id, po.updatedAt, reason);
         toast.success(`PO ${po.poNumber} rejected.`);
       } else if (action === "close") {
-        await closePurchaseOrder(po.id);
+        await closePurchaseOrder(po.id, po.updatedAt);
         toast.success(`PO ${po.poNumber} closed.`);
       } else {
         const reason = window.prompt("Reason for cancelling this purchase order?")?.trim();
         if (!reason) return;
-        await cancelPurchaseOrder(po.id, reason);
+        await cancelPurchaseOrder(po.id, po.updatedAt, reason);
         toast.success(`PO ${po.poNumber} cancelled.`);
       }
       await load(false);
