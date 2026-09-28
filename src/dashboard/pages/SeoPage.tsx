@@ -1,3 +1,4 @@
+import { confirmDashboardAction } from "@/dashboard/lib/dashboardDialogs";
 import {
   Eye,
   EyeOff,
@@ -111,7 +112,10 @@ export default function SeoPage() {
 
   const remove=async(page:DashboardSeoPage)=>{
     if(!canDelete)return toast.error("Only admins can delete SEO pages.");
-    if(!window.confirm(`Delete SEO configuration for "${page.pageSlug}"?`))return;
+    if (!(await confirmDashboardAction(
+      `Delete SEO configuration for "${page.pageSlug}"? This cannot be undone.`,
+      { title: "Delete SEO configuration", confirmLabel: "Delete" },
+    ))) return;
     try{
       await deleteDashboardSeoPage(page.pageSlug);
       setPages((current)=>current.filter((row)=>row.pageSlug!==page.pageSlug));
