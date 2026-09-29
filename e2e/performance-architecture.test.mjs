@@ -228,7 +228,7 @@ test("homepage renders the real CMS hero in the first HTML without a logo placeh
   assert.doesNotMatch(loaderSource, /ensureQueryData\(cmsQueryOptions\(\)\)/);
   assert.match(home, /const \{ heroSlides: loaderHeroSlides \} = Route\.useLoaderData\(\)/);
   assert.match(home, /const \{ data: cms = EMPTY_CMS \} = useQuery\(cmsQueryOptions\(\)\)/);
-  assert.match(home, /<HomeHero cmsHeroSlides=\{loaderHeroSlides\}/);
+  assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\.length \? cms\.heroSlides : loaderHeroSlides\}/);
 
   assert.doesNotMatch(hero, /<img src="\/logo\.svg"/);
   assert.doesNotMatch(hero, /__SPACE_CALL_EARLY_HERO__/);
