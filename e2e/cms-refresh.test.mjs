@@ -5,6 +5,7 @@ import test from "node:test";
 const cms = fs.readFileSync("src/lib/cms.ts", "utf8");
 const cmsQuery = fs.readFileSync("src/lib/cmsQuery.ts", "utf8");
 const publicClient = fs.readFileSync("src/integrations/supabase/publicClient.ts", "utf8");
+const publicCmsEdge = fs.readFileSync("supabase/functions/public-cms/index.ts", "utf8");
 
 test("public storefront CMS reads only through the resilient public edge gateway", () => {
   assert.match(cms, /functions\/v1\/public-cms/);
@@ -26,4 +27,13 @@ test("storefront CMS query refreshes safely without pinning stale dashboard cont
   assert.match(cmsQuery, /retry: 1/);
   assert.doesNotMatch(cmsQuery, /dashboard-disconnected/);
   assert.doesNotMatch(cmsQuery, /Number\.POSITIVE_INFINITY/);
+});
+
+
+test("public CMS edge caches public reads and exposes a tiny hero-only discovery path", () => {
+  assert.match(publicCmsEdge, /Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300"/);
+  assert.doesNotMatch(publicCmsEdge, /Cache-Control": "no-store/);
+  assert.match(publicCmsEdge, /scope === "hero"/);
+  assert.match(publicCmsEdge, /select\("id,image_url,mobile_image_url,sort_order"\)/);
+  assert.match(publicCmsEdge, /\.limit\(1\)/);
 });
