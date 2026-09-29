@@ -171,6 +171,7 @@ export function HomeCategorySection({
                       src={imageUrl}
                       alt=""
                       loading="lazy"
+                      fetchPriority="low"
                       decoding="async"
                       width={128}
                       height={128}
