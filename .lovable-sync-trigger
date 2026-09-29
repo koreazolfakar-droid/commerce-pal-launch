@@ -105,3 +105,16 @@ Includes:
 - no blocking Rust CMS lookup in SSR
 Keep all /shop Rust catalog performance improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Mobile performance critical-path republish request: 2026-09-29T10:08:00+03:00
+Action: rebuild the Space Call production storefront from current main with the mobile-first startup performance changes.
+Required runtime snapshot: 3c34ce2e0557478d3e873d7093a1d502d423c8a7 or newer.
+Includes:
+- customer auth and address overlays loaded only when opened
+- Top Brands interactive bundle loaded only near viewport
+- SiteFooter and footer CMS navigation loaded only near viewport
+- non-LCP category, brand and product images explicitly low priority
+- secondary homepage catalog/collection work no longer forced after 160ms; idle timeout raised to 2500ms with 900ms fallback
+- existing early hero discovery and Rust catalog improvements preserved
+Do not deploy the separate "Deploy. Done." Lovable project.
