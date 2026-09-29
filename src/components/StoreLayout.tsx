@@ -9,7 +9,7 @@ import {
 import { DeferredCartDrawer } from "@/components/DeferredCartDrawer";
 import { DeferredDesktopHeader } from "@/components/DeferredDesktopHeader";
 import { MobileTopBar } from "@/components/MobileTopBar";
-import { SiteFooter } from "@/components/SiteFooter";
+import { DeferredSiteFooter } from "@/components/DeferredSiteFooter";
 import "../dark-black.css";
 import "../ui-overhaul.css";
 import "../design-consistency.css";
@@ -51,7 +51,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
       <CmsNavigationStrip area="footer" />
-      {onHomePage ? <SiteFooter /> : null}
+      {onHomePage ? <DeferredSiteFooter /> : null}
       <BottomNav />
       <DeferredCartDrawer />
     </div>
