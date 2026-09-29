@@ -244,7 +244,7 @@ export async function replaceGlobalLegacyImageWithWebp(
   if (assetRow.source === "product") {
     ({ error } = await supabase
       .from("store_product_images")
-      .update({ url: uploaded.url })
+      .update({ url: uploaded.url, thumbnail_url: null })
       .eq("id", assetRow.recordId));
   } else if (assetRow.source === "brand") {
     const payload =
@@ -342,7 +342,7 @@ async function loadAllKnownReferencedObjectPaths(): Promise<Set<string>> {
     settingsResult,
   ] = await Promise.all([
     supabase.from("cms_media_assets").select("bucket_id,object_path").eq("bucket_id", OUTPUT_BUCKET).limit(5000),
-    supabase.from("store_product_images").select("url").limit(5000),
+    supabase.from("store_product_images").select("url,thumbnail_url").limit(5000),
     supabase.from("store_product_variants").select("image_url").limit(5000),
     supabase.from("cms_brands").select("logo_url,cover_image_url").limit(5000),
     supabase.from("store_categories").select("image_url").limit(5000),
@@ -363,7 +363,10 @@ async function loadAllKnownReferencedObjectPaths(): Promise<Set<string>> {
   for (const row of mediaResult.data ?? []) {
     if (row.object_path) referenced.add(row.object_path);
   }
-  for (const row of productImagesResult.data ?? []) addReferencedUrl(referenced, row.url);
+  for (const row of productImagesResult.data ?? []) {
+    addReferencedUrl(referenced, row.url);
+    addReferencedUrl(referenced, row.thumbnail_url);
+  }
   for (const row of variantsResult.data ?? []) addReferencedUrl(referenced, row.image_url);
   for (const row of brandsResult.data ?? []) {
     addReferencedUrl(referenced, row.logo_url);
