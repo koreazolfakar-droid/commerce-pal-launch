@@ -7,7 +7,13 @@ import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { cdnImage } from "@/lib/image";
 import { catalogQueryOptions } from "@/lib/queries";
-import { absoluteUrl, canonicalLink } from "@/lib/seo";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  canonicalLink,
+  jsonLd,
+  socialMeta,
+} from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import type { CatalogFacet } from "@/lib/taxonomy";
 
@@ -47,19 +53,60 @@ export const Route = createFileRoute("/categories")({
 
     return { catalog, managedCategories };
   },
-  head: () => ({
-    meta: [
-      { title: `Categories — ${STORE_NAME}` },
-      {
-        name: "description",
-        content: `Browse all product categories available at ${STORE_NAME}.`,
-      },
-      { property: "og:title", content: `Categories — ${STORE_NAME}` },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/categories") },
-    ],
-    links: [canonicalLink("/categories")],
-  }),
+  head: ({ loaderData }) => {
+    const title = `Electronics Categories in Lebanon | ${STORE_NAME}`;
+    const description = `Browse phones, tablets, laptops, audio, wearables, chargers and accessories by category at ${STORE_NAME} in Lebanon.`;
+    const categories = loaderData
+      ? loaderData.managedCategories !== null
+        ? loaderData.managedCategories.map((category) => ({
+            name: category.name,
+            slug: category.slug,
+          }))
+        : loaderData.catalog.categories.map((category) => ({
+            name: category.label,
+            slug: category.slug,
+          }))
+      : [];
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        {
+          name: "robots",
+          content: categories.length
+            ? "index, follow, max-image-preview:large, max-snippet:-1"
+            : "noindex, follow",
+        },
+        ...socialMeta({ title, description, path: "/categories" }),
+      ],
+      links: [canonicalLink("/categories")],
+      scripts: [
+        jsonLd(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Categories", path: "/categories" },
+          ]),
+        ),
+        ...(categories.length
+          ? [
+              jsonLd({
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                name: `${STORE_NAME} categories`,
+                numberOfItems: categories.length,
+                itemListElement: categories.map((category, index) => ({
+                  "@type": "ListItem",
+                  position: index + 1,
+                  name: category.name,
+                  url: absoluteUrl(`/category/${encodeURIComponent(category.slug)}`),
+                })),
+              }),
+            ]
+          : []),
+      ],
+    };
+  },
   component: CategoriesPage,
 });
 

@@ -35,8 +35,13 @@ export const Route = createFileRoute("/ar")({
       { title },
       { name: "description", content: description },
       { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1" },
-      ...socialMeta({ title, description, path: "/ar" }),
-      { property: "og:locale", content: "ar_LB" },
+      ...socialMeta({
+        title,
+        description,
+        path: "/ar",
+        locale: "ar_LB",
+        alternateLocale: "en_LB",
+      }),
     ],
     links: [canonicalLink("/ar"), ...languageAlternateLinks({ path: "/", arabicPath: "/ar" })],
     scripts: [

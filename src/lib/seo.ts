@@ -1,6 +1,7 @@
 import { cdnImage } from "@/lib/image";
-import { productInStock } from "@/lib/productPricing";
+import { productInStock, productPrimaryVariant } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
+import { isUsedPhone } from "@/lib/usedPhones";
 import { SITE_URL as CONFIG_SITE_URL, STORE_CONFIG, STORE_NAME, storeUrl } from "@/lib/storeConfig";
 
 export const SITE_URL = CONFIG_SITE_URL;
@@ -12,8 +13,27 @@ export function absoluteUrl(path = "/") {
   return storeUrl(path);
 }
 
-export function canonicalLink(path: string) {
-  return { rel: "canonical", href: absoluteUrl(path) };
+export function canonicalUrl(path: string, override?: string | null) {
+  const fallback = absoluteUrl(path);
+  const candidate = override?.trim();
+  if (!candidate) return fallback;
+
+  try {
+    const site = new URL(SITE_URL);
+    const resolved = new URL(candidate, `${SITE_URL}/`);
+    if (resolved.origin !== site.origin) return fallback;
+
+    resolved.search = "";
+    resolved.hash = "";
+    resolved.pathname = resolved.pathname === "/" ? "/" : resolved.pathname.replace(/\/+$/, "");
+    return resolved.toString();
+  } catch {
+    return fallback;
+  }
+}
+
+export function canonicalLink(path: string, override?: string | null) {
+  return { rel: "canonical", href: canonicalUrl(path, override) };
 }
 
 export function languageAlternateLinks({
@@ -79,6 +99,9 @@ export function socialMeta({
   type = "website",
   imageWidth,
   imageHeight,
+  locale = "en_LB",
+  alternateLocale = "ar_LB",
+  url,
 }: {
   title: string;
   description: string;
@@ -87,19 +110,24 @@ export function socialMeta({
   type?: "website" | "product";
   imageWidth?: number;
   imageHeight?: number;
+  locale?: "en_LB" | "ar_LB";
+  alternateLocale?: "en_LB" | "ar_LB";
+  url?: string;
 }) {
   return [
     { property: "og:title", content: title },
     { property: "og:description", content: description },
     { property: "og:type", content: type },
-    { property: "og:url", content: absoluteUrl(path) },
+    { property: "og:url", content: url ?? absoluteUrl(path) },
     { property: "og:image", content: image },
     ...(imageWidth ? [{ property: "og:image:width", content: String(imageWidth) }] : []),
     ...(imageHeight ? [{ property: "og:image:height", content: String(imageHeight) }] : []),
     { property: "og:image:alt", content: title },
     { property: "og:site_name", content: SITE_NAME },
-    { property: "og:locale", content: "en_LB" },
-    { property: "og:locale:alternate", content: "ar_LB" },
+    { property: "og:locale", content: locale },
+    ...(alternateLocale !== locale
+      ? [{ property: "og:locale:alternate", content: alternateLocale }]
+      : []),
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
@@ -118,6 +146,25 @@ export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
       item: absoluteUrl(item.path),
     })),
   };
+}
+
+function productItemCondition(product: StoreProduct) {
+  const node = product.node;
+  const text = [
+    node.title,
+    node.productType,
+    ...(node.tags ?? []),
+    ...(node.collections?.edges ?? []).flatMap((edge) => [edge.node.handle, edge.node.title]),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/refurbished|renewed|مجدد|مجددة/.test(text)) {
+    return "https://schema.org/RefurbishedCondition";
+  }
+  if (isUsedPhone(product)) return "https://schema.org/UsedCondition";
+  return "https://schema.org/NewCondition";
 }
 
 export function organizationJsonLd() {
@@ -183,11 +230,6 @@ export function websiteJsonLd() {
     url: SITE_URL,
     publisher: { "@id": `${SITE_URL}/#organization` },
     inLanguage: ["en-LB", "ar-LB"],
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${SITE_URL}/search?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
   };
 }
 
@@ -222,11 +264,24 @@ function gtinJsonLd(barcode?: string | null): Record<string, string> {
 
 export function productJsonLd(product: StoreProduct) {
   const node = product.node;
-  const variant = node.variants.edges[0]?.node;
+  const variant = productPrimaryVariant(product) ?? node.variants.edges[0]?.node;
   const price = variant?.price ?? node.priceRange.minVariantPrice;
   const images = node.images.edges.slice(0, 10).map((entry) => cdnImage(entry.node.url, 1200));
   const sku = variant?.sku || undefined;
   const brand = node.vendor?.trim() || undefined;
+  const activePrice = Number(price.amount);
+  const hasValidMerchantPrice =
+    Number.isFinite(activePrice) &&
+    activePrice > 0 &&
+    /^[A-Z]{3}$/.test(price.currencyCode);
+  const compareAt = variant?.compareAtPrice;
+  const compareAtPrice = compareAt ? Number(compareAt.amount) : NaN;
+  const compareAtCurrency = compareAt?.currencyCode ?? price.currencyCode;
+  const hasStrikethroughPrice =
+    Number.isFinite(activePrice) &&
+    Number.isFinite(compareAtPrice) &&
+    compareAtPrice > activePrice &&
+    compareAt?.currencyCode === price.currencyCode;
 
   return {
     "@context": "https://schema.org",
@@ -236,26 +291,46 @@ export function productJsonLd(product: StoreProduct) {
     description: productMetaDescription(product),
     image: images.length ? images : undefined,
     sku,
-    mpn: sku,
     ...gtinJsonLd(variant?.barcode),
     brand: brand ? { "@type": "Brand", name: brand } : undefined,
     category: node.productType?.trim() || undefined,
+    ...(variant?.selectedOptions?.length
+      ? {
+          additionalProperty: variant.selectedOptions.map((option) => ({
+            "@type": "PropertyValue",
+            name: option.name,
+            value: option.value,
+          })),
+        }
+      : {}),
     url: absoluteUrl(`/product/${node.handle}`),
     mainEntityOfPage: absoluteUrl(`/product/${node.handle}`),
-    offers: {
-      "@type": "Offer",
-      url: absoluteUrl(`/product/${node.handle}`),
-      priceCurrency: price.currencyCode,
-      price: price.amount,
-      availability: productInStock(product)
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
-      areaServed: {
-        "@type": "Country",
-        name: "Lebanon",
-      },
-      seller: { "@id": `${SITE_URL}/#organization` },
-    },
+    offers: hasValidMerchantPrice
+      ? {
+          "@type": "Offer",
+          url: absoluteUrl(`/product/${node.handle}`),
+          priceCurrency: price.currencyCode,
+          price: activePrice,
+          ...(hasStrikethroughPrice
+            ? {
+                priceSpecification: {
+                  "@type": "UnitPriceSpecification",
+                  priceType: "https://schema.org/StrikethroughPrice",
+                  price: compareAtPrice,
+                  priceCurrency: compareAtCurrency,
+                },
+              }
+            : {}),
+          availability: productInStock(product)
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+          itemCondition: productItemCondition(product),
+          areaServed: {
+            "@type": "Country",
+            name: "Lebanon",
+          },
+          seller: { "@id": `${SITE_URL}/#organization` },
+        }
+      : undefined,
   };
 }
