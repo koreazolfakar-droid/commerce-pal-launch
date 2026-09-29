@@ -9,7 +9,7 @@ import { HomeHero } from "@/components/HomeHero";
 import { DeferredTopBrands } from "@/components/DeferredTopBrands";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
-import { cmsSeoPage, cmsText, fetchCriticalHeroSlide, localizeSection, type CmsSection } from "@/lib/cms";
+import { cmsSeoPage, cmsText, EMPTY_CMS, fetchCriticalHeroSlide, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import {
@@ -134,38 +134,24 @@ export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
     // The CMS hero is the storefront's only visual hero source. Keep legacy
     // merchandising reads out of the SSR/LCP critical path.
-    const [cms, criticalHero] = await Promise.all([
-      context.queryClient.ensureQueryData(cmsQueryOptions()),
-      fetchCriticalHeroSlide(),
-    ]);
-    const firstCmsHero = criticalHero ?? cms.heroSlides[0];
-    const heroSlides = criticalHero
-      ? [criticalHero, ...cms.heroSlides.filter((slide) => slide.id !== criticalHero.id)]
-      : cms.heroSlides;
-    const desktopHeroPreload = firstCmsHero?.image_url?.trim() || undefined;
+    const criticalHero = await fetchCriticalHeroSlide();
+    const desktopHeroPreload = criticalHero?.image_url?.trim() || undefined;
     const mobileHeroPreload =
-      firstCmsHero?.mobile_image_url?.trim() || desktopHeroPreload;
+      criticalHero?.mobile_image_url?.trim() || desktopHeroPreload;
 
     return {
-      cms,
-      heroSlides,
+      heroSlides: criticalHero ? [criticalHero] : [],
       heroPreload:
         desktopHeroPreload && mobileHeroPreload
           ? { desktop: desktopHeroPreload, mobile: mobileHeroPreload }
           : undefined,
-      cmsSeo: cmsSeoPage(cms, "home"),
     };
   },
   head: ({ loaderData }) => {
-    const cmsSeo = loaderData?.cmsSeo;
-    const title =
-      cmsSeo?.title?.trim() || `${SITE_NAME} Lebanon | Official Online Electronics Store`;
+    const title = `${SITE_NAME} Lebanon | Official Online Electronics Store`;
     const description =
-      cmsSeo?.description?.trim() ||
       `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
-    const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroPreload?.desktop;
-    const canonicalUrl = cmsSeo?.canonical_url?.trim();
-    const customJsonLd = cmsSeo?.json_ld;
+    const image = loaderData?.heroPreload?.desktop;
     const heroPreload = loaderData?.heroPreload;
     const heroPreloadLinks = heroPreload
       ? heroPreload.mobile === heroPreload.desktop
@@ -195,7 +181,6 @@ export const Route = createFileRoute("/")({
         {
           name: "robots",
           content:
-            cmsSeo?.robots?.trim() ||
             "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
         },
         ...socialMeta({
@@ -207,13 +192,13 @@ export const Route = createFileRoute("/")({
       ],
       links: [
         ...heroPreloadLinks,
-        canonicalUrl ? { rel: "canonical", href: canonicalUrl } : canonicalLink("/"),
+        canonicalLink("/"),
         ...languageAlternateLinks({ path: "/", arabicPath: "/ar" }),
       ],
       scripts: [
         jsonLd(websiteJsonLd()),
         jsonLd(organizationJsonLd()),
-        ...(customJsonLd && Object.keys(customJsonLd).length ? [jsonLd(customJsonLd)] : []),
+
       ],
     };
   },
@@ -559,11 +544,8 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
 function Index() {
   const { t, language } = useLanguage();
   const deferredWorkReady = useDeferredHomepageWork();
-  const { cms: loaderCms, heroSlides: loaderHeroSlides } = Route.useLoaderData();
-  const { data: cms = loaderCms } = useQuery({
-    ...cmsQueryOptions(),
-    initialData: loaderCms,
-  });
+  const { heroSlides: loaderHeroSlides } = Route.useLoaderData();
+  const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
   const homeSections = cms.sections.filter((section) => section.page_slug === "home");
   const featuredMerchSection = homeSections.find(
     (section) => section.section_key === "featured_products",
