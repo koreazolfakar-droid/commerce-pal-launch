@@ -34,3 +34,20 @@ test("native store reads public commerce tables only", () => {
     "cms_brands",
   ]) assert.match(nativeStore, new RegExp(`from\\("${table}"\\)`));
 });
+
+
+test("public storefront refuses Supabase runtime drift and degrades category template schema drift safely", () => {
+  assert.match(publicClient, /CANONICAL_SUPABASE_HOST/);
+  assert.match(publicClient, /isCanonicalSupabaseUrl/);
+  assert.match(publicClient, /DEFAULT_SUPABASE_URL/);
+  assert.match(publicClient, /createSupabaseFetch/);
+  assert.doesNotMatch(
+    publicClient,
+    /viteEnv\["VITE_SUPABASE_URL"\]\s*\|\|\s*nodeEnv\?\.\["SUPABASE_URL"\]/,
+  );
+
+  assert.match(nativeStore, /isMissingCategorySpecTemplate/);
+  assert.match(nativeStore, /categoryRowsOrEmpty/);
+  assert.match(nativeStore, /categoryRowOrUndefined/);
+  assert.match(nativeStore, /continuing without category templates/);
+});
