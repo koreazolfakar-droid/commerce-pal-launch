@@ -153,32 +153,77 @@ function normalizeCmsSnapshot(value: unknown): CmsSnapshot {
  * commerce data can continue rendering without a fatal error.
  */
 export async function fetchCriticalHeroSlide(): Promise<CmsHeroSlide | null> {
-  const { url } = getPublicSupabaseConfig();
-  if (!url) return null;
+  const { url, key } = getPublicSupabaseConfig();
+  if (!url || !key) return null;
 
   const controller = new AbortController();
-  const timeout = globalThis.setTimeout(() => controller.abort(), 2_500);
+  const timeout = globalThis.setTimeout(() => controller.abort(), 1_500);
+  const select = [
+    "id",
+    "title",
+    "title_en",
+    "title_ar",
+    "subtitle",
+    "subtitle_en",
+    "subtitle_ar",
+    "eyebrow_en",
+    "eyebrow_ar",
+    "image_url",
+    "mobile_image_url",
+    "image_alt_en",
+    "image_alt_ar",
+    "mobile_image_alt_en",
+    "mobile_image_alt_ar",
+    "button_label",
+    "button_label_en",
+    "button_label_ar",
+    "target_type",
+    "target_value",
+    "secondary_button_label_en",
+    "secondary_button_label_ar",
+    "secondary_target_type",
+    "secondary_target_value",
+    "sort_order",
+    "content_alignment",
+    "overlay_opacity",
+    "button_style",
+    "secondary_button_style",
+    "content_theme",
+    "open_in_new_tab",
+    "secondary_open_in_new_tab",
+    "visual_config",
+  ].join(",");
 
   try {
-    const response = await fetch(`${url}/functions/v1/public-cms?scope=hero`, {
+    const endpoint = new URL(`${url}/rest/v1/cms_hero_slides`);
+    endpoint.searchParams.set("select", select);
+    endpoint.searchParams.set("order", "sort_order.asc");
+    endpoint.searchParams.set("limit", "1");
+
+    const response = await fetch(endpoint, {
       method: "GET",
       cache: "default",
-      headers: { Accept: "application/json" },
+      headers: {
+        apikey: key,
+        Accept: "application/json",
+      },
       signal: controller.signal,
     });
 
     if (!response.ok) {
-      console.warn(`[CMS] critical hero returned HTTP ${response.status}`);
+      console.warn(`[CMS] direct critical hero returned HTTP ${response.status}`);
       return null;
     }
 
-    const payload = await response.json();
-    if (!isObject(payload) || !isObject(payload.hero)) return null;
+    const payload: unknown = await response.json();
+    const hero = Array.isArray(payload) && payload.length ? payload[0] : null;
+    if (!isObject(hero)) return null;
 
-    const hero = payload.hero as unknown as CmsHeroSlide;
-    return typeof hero.image_url === "string" && hero.image_url.trim() ? hero : null;
+    return typeof hero.image_url === "string" && hero.image_url.trim()
+      ? (hero as unknown as CmsHeroSlide)
+      : null;
   } catch (error) {
-    console.warn("[CMS] critical hero unavailable.", error);
+    console.warn("[CMS] direct critical hero unavailable.", error);
     return null;
   } finally {
     globalThis.clearTimeout(timeout);
