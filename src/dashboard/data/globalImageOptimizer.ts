@@ -227,7 +227,7 @@ export async function backfillStorefrontProductThumbnails(
   const pending = (imageRows ?? []).filter((row) => !row.thumbnail_url && Boolean(row.url));
   const total = pending.length;
   let processed = 0;
-  let skipped = (imageRows ?? []).length - pending.length;
+  const skipped = (imageRows ?? []).length - pending.length;
   let sourceBytes = 0;
   let thumbnailBytes = 0;
   const failed: Array<{ imageId: string; error: string }> = [];
