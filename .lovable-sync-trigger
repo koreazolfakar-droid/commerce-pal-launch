@@ -131,3 +131,17 @@ Fixes:
 - regression coverage verifies /categories, /category/:slug, /brands and homepage hero/brand data resolve authoritative managed sources before visual fallback
 Keep all previous mobile performance and Rust catalog improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Immediate hero SSR republish request: 2026-09-29T12:04:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 34dbd8064c4141c1f96f8b492e2ce3178d837203 or newer.
+Fixes:
+- homepage loader returns the already-resolved CMS snapshot to the route component
+- HomeHero renders cms.heroSlides from the first SSR render
+- the large logo hero placeholder is removed entirely
+- obsolete early hero discovery client script removed to avoid duplicate CMS work
+- route preload for the actual hero image remains in the document head
+Expected visual sequence: real hero immediately; never logo-placeholder -> hero.
+Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
