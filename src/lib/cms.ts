@@ -152,6 +152,39 @@ function normalizeCmsSnapshot(value: unknown): CmsSnapshot {
  * deployment issue or malformed response returns EMPTY_CMS so storefront
  * commerce data can continue rendering without a fatal error.
  */
+export async function fetchCriticalHeroSlide(): Promise<CmsHeroSlide | null> {
+  const { url } = getPublicSupabaseConfig();
+  if (!url) return null;
+
+  const controller = new AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), 2_500);
+
+  try {
+    const response = await fetch(`${url}/functions/v1/public-cms?scope=hero`, {
+      method: "GET",
+      cache: "default",
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      console.warn(`[CMS] critical hero returned HTTP ${response.status}`);
+      return null;
+    }
+
+    const payload = await response.json();
+    if (!isObject(payload) || !isObject(payload.hero)) return null;
+
+    const hero = payload.hero as unknown as CmsHeroSlide;
+    return typeof hero.image_url === "string" && hero.image_url.trim() ? hero : null;
+  } catch (error) {
+    console.warn("[CMS] critical hero unavailable.", error);
+    return null;
+  } finally {
+    globalThis.clearTimeout(timeout);
+  }
+}
+
 export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
   const { url, key } = getPublicSupabaseConfig();
   if (!url || !key) return EMPTY_CMS;
