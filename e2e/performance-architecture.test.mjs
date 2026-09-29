@@ -233,3 +233,35 @@ test("homepage discovers the LCP hero before React hydration without blocking SS
   assert.match(publicCms, /Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300"/);
   assert.doesNotMatch(publicCms, /Cache-Control": "no-store/);
 });
+
+
+test("mobile startup keeps overlays, footer, and interactive brand rail out of the critical bundle", async () => {
+  const [root, layout, deferredBrands, deferredFooter, categories, brandLogo, productImage] =
+    await Promise.all([
+      read("src/routes/__root.tsx"),
+      read("src/components/StoreLayout.tsx"),
+      read("src/components/DeferredTopBrands.tsx"),
+      read("src/components/DeferredSiteFooter.tsx"),
+      read("src/components/HomeCategorySection.tsx"),
+      read("src/components/BrandLogo.tsx"),
+      read("src/components/ProductImage.tsx"),
+    ]);
+
+  assert.match(root, /LazyCustomerAuthDialog/);
+  assert.match(root, /LazyCustomerAddressHub/);
+  assert.match(root, /if \(!authOpen && !addressBookOpen\) return null/);
+  assert.doesNotMatch(root, /^import \{ CustomerAuthDialog \}/m);
+  assert.doesNotMatch(root, /^import \{ CustomerAddressHub \}/m);
+
+  assert.match(layout, /DeferredSiteFooter/);
+  assert.doesNotMatch(layout, /^import \{ SiteFooter \}/m);
+
+  assert.match(deferredBrands, /IntersectionObserver/);
+  assert.match(deferredBrands, /import\("@\/components\/TopBrands"\)/);
+  assert.match(deferredFooter, /IntersectionObserver/);
+  assert.match(deferredFooter, /import\("@\/components\/SiteFooter"\)/);
+
+  assert.match(categories, /fetchPriority="low"/);
+  assert.match(brandLogo, /fetchPriority="low"/);
+  assert.match(productImage, /fetchPriority=\{eager \? "high" : "low"\}/);
+});
