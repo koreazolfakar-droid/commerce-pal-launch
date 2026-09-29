@@ -121,12 +121,8 @@ export function HomeHero({
           <div
             data-testid="home-hero-media"
             aria-hidden="true"
-            className="absolute inset-0 z-[1] grid place-items-center bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-8"
-          >
-            <div className="grid place-items-center rounded-3xl bg-white/95 p-5 shadow-xl">
-              <img src="/logo.svg" alt="" className="h-14 w-auto max-w-[15rem] object-contain" />
-            </div>
-          </div>
+            className="absolute inset-0 z-[1] bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950"
+          />
         )}
 
         {slideCount > 1 && (
