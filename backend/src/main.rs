@@ -2,6 +2,7 @@ mod config;
 mod db;
 mod routes;
 mod state;
+mod thumbnail_backfill;
 
 use std::io;
 
@@ -41,6 +42,7 @@ async fn main() -> Result<(), StartupError> {
     }
 
     let state = AppState::new(pool, &config);
+    thumbnail_backfill::spawn_if_enabled(state.clone());
 
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
