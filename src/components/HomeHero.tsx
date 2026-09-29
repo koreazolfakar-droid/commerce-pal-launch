@@ -5,6 +5,16 @@ import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
 import { localizeHeroSlide, type CmsHeroSlide } from "@/lib/cms";
 import { useLanguage } from "@/lib/i18n";
 
+type EarlyHero = {
+  id: string;
+  image_url: string;
+  mobile_image_url: string | null;
+};
+
+type EarlyHeroWindow = Window & {
+  __SPACE_CALL_EARLY_HERO__?: EarlyHero;
+};
+
 export function HomeHero({
   cmsHeroSlides = [],
 }: {
@@ -12,6 +22,18 @@ export function HomeHero({
 }) {
   const { t, language } = useLanguage();
   const [failedCmsSlideIds, setFailedCmsSlideIds] = useState<string[]>([]);
+  const [earlyHero, setEarlyHero] = useState<EarlyHero | null>(null);
+
+  useEffect(() => {
+    const readEarlyHero = () => {
+      const hero = (window as EarlyHeroWindow).__SPACE_CALL_EARLY_HERO__;
+      if (hero?.image_url) setEarlyHero(hero);
+    };
+
+    readEarlyHero();
+    window.addEventListener("spacecall:hero-discovered", readEarlyHero);
+    return () => window.removeEventListener("spacecall:hero-discovered", readEarlyHero);
+  }, []);
   const localizedCmsSlides = useMemo(
     () =>
       cmsHeroSlides
@@ -20,7 +42,28 @@ export function HomeHero({
     [cmsHeroSlides, failedCmsSlideIds, language],
   );
 
-  const slideCount = localizedCmsSlides.length;
+  const earlyHeroSlide = useMemo<CmsHeroSlide | null>(() => {
+    if (!earlyHero?.image_url || localizedCmsSlides.length) return null;
+    return {
+      id: earlyHero.id || "early-hero",
+      title: null,
+      subtitle: null,
+      image_url: earlyHero.image_url,
+      mobile_image_url: earlyHero.mobile_image_url,
+      button_label: null,
+      target_type: "none",
+      target_value: null,
+      sort_order: 0,
+    };
+  }, [earlyHero, localizedCmsSlides.length]);
+
+  const renderedSlides = localizedCmsSlides.length
+    ? localizedCmsSlides
+    : earlyHeroSlide
+      ? [earlyHeroSlide]
+      : [];
+
+  const slideCount = renderedSlides.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const swipe = useRef<{ x: number; y: number } | null>(null);
 
@@ -29,8 +72,12 @@ export function HomeHero({
   }, [slideCount]);
 
 
-  const cmsSlide = localizedCmsSlides[activeIndex] ?? localizedCmsSlides[0];
-  const heroSource = cmsSlide ? "supabase-cms" : "placeholder";
+  const cmsSlide = renderedSlides[activeIndex] ?? renderedSlides[0];
+  const heroSource = localizedCmsSlides.length
+    ? "supabase-cms"
+    : earlyHeroSlide
+      ? "early-cms"
+      : "placeholder";
 
   return (
     <>
