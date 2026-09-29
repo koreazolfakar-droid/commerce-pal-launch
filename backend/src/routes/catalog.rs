@@ -12,7 +12,7 @@ use crate::state::AppState;
 const DEFAULT_LIMIT: i64 = 24;
 const MAX_LIMIT: i64 = 500;
 const PUBLIC_PRODUCT_SELECT: &str = "id,title,title_ar,handle,description,description_ar,description_html,brand_id,category_id,product_type,currency,base_price,compare_at_price,stock_quantity,track_inventory,allow_backorder,featured,best_seller,specifications,created_at,updated_at,seo_title,seo_description,tags,sort_order";
-const PUBLIC_CARD_SELECT: &str = "id,title,handle,brand_id,product_type,currency,base_price,compare_at_price,stock_quantity,track_inventory,allow_backorder,created_at,updated_at,tags,brand:cms_brands!store_products_brand_id_fkey(id,name,slug),variants:store_product_variants(id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order),images:store_product_images(url,alt_text,is_primary,sort_order)";
+const PUBLIC_CARD_SELECT: &str = "id,title,handle,brand_id,product_type,currency,base_price,compare_at_price,stock_quantity,track_inventory,allow_backorder,created_at,updated_at,tags,brand:cms_brands!store_products_brand_id_fkey(id,name,slug),variants:store_product_variants(id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order),images:store_product_images(url,thumbnail_url,alt_text,is_primary,sort_order)";
 
 #[derive(Debug, Deserialize)]
 pub struct ProductListQuery {
@@ -97,6 +97,7 @@ pub struct PublicCatalogVariant {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PublicCatalogImage {
     url: String,
+    thumbnail_url: Option<String>,
     alt_text: Option<String>,
     is_primary: bool,
     sort_order: i32,
