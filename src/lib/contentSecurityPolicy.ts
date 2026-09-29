@@ -1,8 +1,12 @@
 export function buildContentSecurityPolicy(nonce?: string) {
-  const backendHttpOrigins = new Set(["https://rtwyankpxtffqqrasyzw.supabase.co"]);
+  const backendHttpOrigins = new Set([
+    "https://rtwyankpxtffqqrasyzw.supabase.co",
+    "https://space-call-rust-backend-production.up.railway.app",
+  ]);
   const backendWebSocketOrigins = new Set(["wss://rtwyankpxtffqqrasyzw.supabase.co"]);
-  const configuredBackendUrl = import.meta.env.VITE_SUPABASE_URL;
-  if (configuredBackendUrl) {
+  const configuredBackendUrls = [import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_RUST_API_URL];
+  for (const configuredBackendUrl of configuredBackendUrls) {
+    if (!configuredBackendUrl) continue;
     try {
       const backendUrl = new URL(configuredBackendUrl);
       if (backendUrl.protocol === "https:") {
