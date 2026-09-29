@@ -130,7 +130,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                             <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-image-stage">
                               {image && (
                                 <img
-                                  src={cdnImage(image.url, 96)}
+                                  src={cdnImage(image.thumbnailUrl ?? image.url, 96)}
                                   alt={image.altText ?? node.title}
                                   loading="lazy"
                                   decoding="async"
