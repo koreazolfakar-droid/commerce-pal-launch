@@ -151,3 +151,32 @@ test("native storefront data path avoids wildcard payloads", async () => {
   const collectionsSource = nativeStore.slice(collectionsStart, collectionsEnd);
   assert.doesNotMatch(collectionsSource, /loadSnapshot\(\)/);
 });
+
+
+test("shop bounds initial SSR catalog work and progressively renders the full catalog", async () => {
+  const [shop, queries, catalogView] = await Promise.all([
+    read("src/routes/shop.tsx"),
+    read("src/lib/queries.ts"),
+    read("src/components/CatalogView.tsx"),
+  ]);
+
+  assert.match(queries, /CATALOG_INITIAL_PAGE_SIZE\s*=\s*24/);
+  assert.match(queries, /catalogPreviewQueryOptions/);
+  assert.match(
+    queries,
+    /queryFn:\s*\(\) => fetchCatalogIndexSafely\(CATALOG_INITIAL_PAGE_SIZE, false\)/,
+  );
+
+  const loaderStart = shop.indexOf("loader: async");
+  const loaderEnd = shop.indexOf("head:", loaderStart);
+  assert.ok(loaderStart >= 0 && loaderEnd > loaderStart);
+  const loaderSource = shop.slice(loaderStart, loaderEnd);
+  assert.match(loaderSource, /ensureQueryData\(catalogPreviewQueryOptions\(\)\)/);
+  assert.doesNotMatch(loaderSource, /ensureQueryData\(catalogQueryOptions\(\)\)/);
+
+  assert.match(shop, /setTimeout\(\(\) => setFullCatalogEnabled\(true\), 700\)/);
+  assert.match(shop, /fullCatalog \?\? previewCatalog/);
+  assert.match(catalogView, /CATALOG_RENDER_PAGE_SIZE\s*=\s*24/);
+  assert.match(catalogView, /products=\{visibleProducts\}/);
+  assert.match(catalogView, /loadMoreProducts/);
+});
