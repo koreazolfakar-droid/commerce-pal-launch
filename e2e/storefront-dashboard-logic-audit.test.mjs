@@ -81,7 +81,7 @@ test("native cart synchronizes price, availability and quantity from live produc
   assert.match(cart, /fetchProductsByIds/);
   assert.match(cart, /export function cartItemMaxQuantity/);
   assert.match(cart, /variant\.stockQuantity/);
-  assert.match(cart, /variant\.availableForSale/);
+  assert.match(cart, /variant\?\.availableForSale/);
   assert.match(cart, /price: variant\.price/);
   assert.match(cart, /quantity: Math\.min\(Math\.max\(1, item\.quantity\), maxQuantity\)/);
   assert.match(cartSync, /subscribeStorefrontRefresh/);
@@ -114,7 +114,7 @@ test("checkout keys are bound to the full payload and stale failures recover", (
   }
   assert.match(
     checkoutClient,
-    /idempotency_key: await checkoutIdempotencyKey\(checkoutFingerprint\(input\)\)/,
+    /const fingerprint = checkoutFingerprint\([\s\S]*customerUserId[\s\S]*idempotency_key: await checkoutIdempotencyKey\(fingerprint\)/,
   );
   assert.match(checkout, /clearCheckoutAttempt\(\)/);
   assert.match(checkout, /await syncCart\(\)/);
@@ -202,7 +202,8 @@ test("homepage collection source filters active products before applying its dis
   const end = nativeStore.indexOf("export async function fetchNewestProducts", start);
   const configured = nativeStore.slice(start, end);
   assert.match(configured, /store_collection_products/);
-  assert.doesNotMatch(configured, /\.limit\(count\)[\s\S]*fetchProductsByIds/);
+  const collectionBranch = configured.slice(configured.indexOf("const collectionResult"));
+  assert.doesNotMatch(collectionBranch, /\.limit\(count\)/);
   assert.match(configured, /fetchProductsByIds\(links\.map/);
   assert.match(configured, /\.slice\(0, count\)/);
 });

@@ -105,3 +105,4 @@ test("critical custom dashboard dialogs trap and restore keyboard focus", () => 
   assert.match(orderDrawer, /useDashboardDialogFocus\(Boolean\(orderId\), drawerRef, onClose\)/);
   assert.match(securityPage, /useDashboardDialogFocus\([\s\S]*passkeyDialogRef/);
 });
+

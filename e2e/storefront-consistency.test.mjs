@@ -45,7 +45,7 @@ test("homepage catalog preserves the last successful Supabase snapshot during tr
 
 test("full storefront footer renders only on the home page", async () => {
   const layout = await source("src/components/StoreLayout.tsx");
-  assert.match(layout, /onHomePage \? <SiteFooter \/> : null/);
+  assert.match(layout, /onHomePage \? <DeferredSiteFooter \/> : null/);
   assert.doesNotMatch(layout, /<SiteFooter compactTopSpacing=\{onCartPage\} \/>/);
 });
 
@@ -88,12 +88,12 @@ test("homepage hero remains CMS-first", async () => {
   assert.doesNotMatch(home, /ensureQueryData\(newestQueryOptions\(\)\)/);
   assert.match(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
-  assert.match(home, /const firstCmsHero = cms\.heroSlides\[0\]/);
-  assert.match(home, /rel: "preload"(?: as const)?, as: "image"(?: as const)?/);
+  assert.match(hero, /const renderedSlides = localizedCmsSlides/);
+  assert.match(home, /rel: "preload" as const,[\s\S]*?as: "image" as const/);
   assert.match(home, /media: "\(max-width: 639px\)"/);
   assert.match(home, /media: "\(min-width: 640px\)"/);
   assert.match(hero, /localizeHeroSlide/);
-  assert.match(hero, /const usingCms = localizedCmsSlides\.length > 0/);
+  assert.match(hero, /const heroSource = localizedCmsSlides\.length \? "supabase-cms" : "placeholder"/);
   assert.match(hero, /"supabase-cms"/);
 });
 

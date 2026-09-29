@@ -58,7 +58,8 @@ test("hero dashboard exposes real before and after optimization metadata", () =>
   assert.match(heroPage, />After</);
   assert.match(heroPage, /formatBytes\(optimization\.source\.bytes\)/);
   assert.match(heroPage, /formatBytes\(optimization\.output\.bytes\)/);
-  assert.match(heroPage, /max \{isDesktop \? "1920" : "1080"\}px/);
+  assert.match(heroPage, /formatImageDimensions\(optimization\.source\)/);
+  assert.match(heroPage, /formatImageDimensions\(optimization\.output\)/);
 });
 
 test("hero dashboard media preview matches the 16:9 storefront shape on both devices", () => {
@@ -198,8 +199,8 @@ test("Hero page exposes one clear create-or-edit workspace mode", () => {
 });
 
 test("Hero slide selector is compact on mobile and remains a desktop sidebar", () => {
-  assert.match(heroPage, /flex gap-2 overflow-x-auto p-3 xl:block/);
-  assert.match(heroPage, /min-w-\[230px\][\s\S]*xl:min-w-0/);
+  assert.match(heroPage, /flex gap-2 overflow-x-auto p-2\.5 sm:p-3 xl:block/);
+  assert.match(heroPage, /min-w-\[196px\][\s\S]*sm:min-w-\[230px\][\s\S]*xl:min-w-0/);
 });
 
 

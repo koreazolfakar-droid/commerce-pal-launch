@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { loadDashboardRoutes } from "./helpers/dashboardRoutes.mjs";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
@@ -28,11 +29,10 @@ const migration = await readFile(
   "utf8",
 );
 
-test("active orders routes use Supabase-backed pages", () => {
-  assert.match(app, /OrdersPageLive/);
-  assert.match(app, /OrderDetailPageLive/);
-  assert.match(app, /route === "\/dashboard\/orders"[\s\S]+<OrdersPageLive \/>/);
-  assert.match(app, /orderDetail[\s\S]+<OrderDetailPageLive id=\{orderDetail\[1\]\} \/>/);
+test("active orders routes use Supabase-backed pages", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "orders" && route.path === "/dashboard/orders"));
+  assert.ok(routes.some((route) => route.id === "order-detail" && route.dynamic));
 });
 
 test("orders pages contain no mock business data", () => {
@@ -119,7 +119,7 @@ test("orders queue opens an on-demand quick drawer before full detail navigation
   assert.match(quickDrawer, /Order quick view/);
   assert.match(quickDrawer, /Open full order/);
   assert.match(quickDrawer, /Copy order #/);
-  assert.match(quickDrawer, /event\.key === "Escape"/);
+  assert.match(quickDrawer, /useDashboardDialogFocus\(Boolean\(orderId\), drawerRef, onClose\)/);
   assert.match(quickDrawer, /href=\{\`tel:\$\{order\.customerPhone\}\`\}/);
   assert.doesNotMatch(quickDrawer, /updateDashboardOrderStatus|updateDashboardOrderPaymentStatus|updateDashboardOrderDelivery/);
 });

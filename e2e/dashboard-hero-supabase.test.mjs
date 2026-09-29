@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { loadDashboardRoutes } from "./helpers/dashboardRoutes.mjs";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
@@ -38,12 +39,9 @@ const atomicVisualMigration = await readFile(
   "utf8",
 );
 
-test("dedicated hero dashboard route uses the real CMS page", () => {
-  assert.match(app, /HeroBannersPageLive/);
-  assert.match(
-    app,
-    /route === "\/dashboard\/homepage\/hero"[\s\S]+<HeroBannersPageLive \/>/,
-  );
+test("dedicated hero dashboard route uses the real CMS page", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "hero-banners" && route.path === "/dashboard/homepage/hero"));
   assert.doesNotMatch(page, /@\/dashboard\/mock\//);
   assert.doesNotMatch(data, /@\/dashboard\/mock\//);
 });
@@ -163,4 +161,3 @@ test("hero changes are auditable", async () => {
     /cms_audit_log|log_cms_action/,
   );
 });
-

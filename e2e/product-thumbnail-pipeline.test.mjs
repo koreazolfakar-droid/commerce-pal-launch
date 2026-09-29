@@ -92,6 +92,6 @@ test("existing product thumbnails are backfilled safely from the dashboard", asy
   assert.match(ui, /backfillStorefrontProductThumbnails\(250, setThumbnailProgress\)/);
   assert.match(ui, /all active primary product images still missing them/);
   assert.match(ui, /Still pending/);
-  assert.match(ui, /Original product images stay unchanged/);
+  assert.match(ui, /original product images remain unchanged/);
   assert.match(ui, /Runs one image at a time to stay phone-friendly/);
 });

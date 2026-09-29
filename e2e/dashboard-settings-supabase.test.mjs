@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
+import { loadDashboardRoutes } from "./helpers/dashboardRoutes.mjs";
 
 const [app, page, data, header, footer, publicCms] = await Promise.all([
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
@@ -26,9 +27,9 @@ test("dashboard settings support real CMS logo upload", () => {
   assert.match(page, /Save changes/);
 });
 
-test("settings route uses the live SettingsPage module", () => {
-  assert.match(app, /import SettingsPage from "@\/dashboard\/pages\/SettingsPage"/);
-  assert.match(app, /route === "\/dashboard\/settings"\) content = <SettingsPage \/>/);
+test("settings route uses the live SettingsPage module", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "settings" && route.path === "/dashboard/settings"));
   assert.doesNotMatch(app, /function SettingsPage\(\)/);
 });
 

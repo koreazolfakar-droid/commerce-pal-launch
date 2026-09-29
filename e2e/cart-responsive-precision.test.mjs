@@ -30,7 +30,7 @@ test("mobile cart uses a clean full-width sticky checkout action without a repea
 });
 
 test("cart quantity controls are locked while a cart mutation is in progress", () => {
-  const disabledMatches = cart.match(/disabled=\{isLoading\}/g) ?? [];
+  const disabledMatches = cart.match(/disabled=\{isLoading(?: \|\| item\.quantity >= maxQuantity)?\}/g) ?? [];
   assert.ok(disabledMatches.length >= 3);
 });
 

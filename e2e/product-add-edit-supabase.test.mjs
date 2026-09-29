@@ -15,10 +15,19 @@ const productRoute = await readFile(
   "utf8",
 );
 
-test("product edits preserve the existing public handle", () => {
-  assert.match(catalog, /select\("id,handle,published_at"\)/);
-  assert.match(catalog, /existingProduct\?\.handle \?\? \(await uniqueHandle\(input\.title\)\)/);
-  assert.doesNotMatch(catalog, /uniqueHandle\(input\.title, input\.id\)/);
+test("product edits preserve the existing public handle", async () => {
+  const migration = await readFile(
+    new URL("../supabase/migrations/20260928050000_atomic_product_editor_save.sql", import.meta.url),
+    "utf8",
+  );
+  const update = migration.slice(
+    migration.indexOf("update public.store_products"),
+    migration.indexOf("where id = v_product_id"),
+  );
+  assert.match(catalog, /"save_store_product_editor"/);
+  assert.match(update, /title = btrim\(p_title\)/);
+  assert.doesNotMatch(update, /^\s*handle\s*=/m);
+  assert.match(migration, /'handle', v_product\.handle/);
 });
 
 test("product saves invalidate the storefront catalog cache", () => {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { loadDashboardRoutes } from "./helpers/dashboardRoutes.mjs";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
@@ -20,11 +21,10 @@ const migration = await readFile(
   "utf8",
 );
 
-test("collections routes use real Supabase pages", () => {
-  assert.match(app, /CollectionsPageLive/);
-  assert.match(app, /CollectionDetailPageLive/);
-  assert.match(app, /route === "\/dashboard\/collections"[\s\S]+<CollectionsPageLive \/>/);
-  assert.match(app, /collectionDetail[\s\S]+<CollectionDetailPageLive id=\{collectionDetail\[1\]\} \/>/);
+test("collections routes use real Supabase pages", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "collections" && route.path === "/dashboard/collections"));
+  assert.ok(routes.some((route) => route.id === "collection-detail" && route.dynamic));
 });
 
 test("collections pages contain no mock data source", () => {

@@ -123,7 +123,9 @@ test("product destructive actions use dashboard confirmation and scoped pending 
   assert.match(dialog, /role="dialog"/);
   assert.match(dialog, /aria-modal="true"/);
   assert.match(dialog, /aria-busy=\{pending\}/);
-  assert.match(dialog, /event\.key === "Escape"/);
+  assert.match(dialog, /useDashboardDialogFocus\(open, dialogRef/);
+  const focus = await read("src/dashboard/hooks/useDashboardDialogFocus.ts");
+  assert.match(focus, /event\.key === "Escape"/);
 });
 
 
@@ -141,9 +143,9 @@ test("product media mutations return targeted results without success-path list 
   assert.doesNotMatch(mediaMutations, /return listDashboardProductImages/);
   assert.match(mediaMutations, /image: mapProductImage/);
   assert.match(mediaMutations, /promotedImageId/);
-  assert.match(mediaMutations, /rpc\("set_store_product_primary_image"/);
-  assert.match(mediaMutations, /rpc\("delete_store_product_image"/);
-  assert.match(mediaMutations, /rpc\("reorder_store_product_images"/);
+  for (const rpc of ["set_store_product_primary_image", "delete_store_product_image", "reorder_store_product_images"]) {
+    assert.ok(mediaMutations.includes(`"${rpc}"`), rpc);
+  }
 
   assert.doesNotMatch(media, /sync\(await (?:delete|set|reorder)DashboardProductImage/);
   assert.match(media, /result\.image/);

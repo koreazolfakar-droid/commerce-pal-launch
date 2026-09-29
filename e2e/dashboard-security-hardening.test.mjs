@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { loadDashboardRoutes } from "./helpers/dashboardRoutes.mjs";
 import { readFile } from "node:fs/promises";
 
 const login = await readFile(
@@ -125,13 +126,12 @@ test("security events are sanitized, user-bound and visible in the Security Cent
   assert.match(securityPage, /Recent security activity/);
 });
 
-test("Security Center is a real route and reports security state precisely", () => {
-  assert.match(app, /import SecurityPage from "@\/dashboard\/pages\/SecurityPage"/);
-  assert.match(app, /route === "\/dashboard\/security"[\s\S]+<SecurityPage \/>/);
-  assert.match(nav, /href: "\/dashboard\/security"/);
-  assert.match(nav, /label: "Security"/);
+test("Security Center is a real route and reports security state precisely", async () => {
+  const routes = await loadDashboardRoutes();
+  const security = routes.find((route) => route.id === "security");
+  assert.equal(security?.path, "/dashboard/security");
+  assert.equal(security?.navigation?.label, "Security");
   assert.match(securityPage, /AAL2 active/);
   assert.match(securityPage, /Client configured/);
   assert.match(securityPage, /Supabase Auth must also have Cloudflare Turnstile enabled/);
 });
-
