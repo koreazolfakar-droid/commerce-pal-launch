@@ -118,3 +118,16 @@ Includes:
 - secondary homepage catalog/collection work no longer forced after 160ms; idle timeout raised to 2500ms with 900ms fallback
 - existing early hero discovery and Rust catalog improvements preserved
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Managed category artwork consistency republish request: 2026-09-29T10:25:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 801890f0ed54ecb24444aa85f191cb75a40bed25 or newer.
+Fixes:
+- homepage category rail no longer renders legacy catalog/collection artwork while dashboard categories are loading
+- loading state now reserves layout with skeletons
+- managed category rows never fall back to legacy collection artwork; dashboard image is authoritative
+- legacy artwork fallback is used only when the managed category request actually fails
+- regression coverage verifies /categories, /category/:slug, /brands and homepage hero/brand data resolve authoritative managed sources before visual fallback
+Keep all previous mobile performance and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
