@@ -9,7 +9,7 @@ import { HomeHero } from "@/components/HomeHero";
 import { DeferredTopBrands } from "@/components/DeferredTopBrands";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
-import { cmsSeoPage, cmsText, EMPTY_CMS, localizeSection, type CmsSection } from "@/lib/cms";
+import { cmsSeoPage, cmsText, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import {
