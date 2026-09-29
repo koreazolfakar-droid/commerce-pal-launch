@@ -295,6 +295,7 @@ test("server injects the critical hero on the guaranteed document path", async (
   assert.match(server, /pathname === "\/" \|\| pathname === "\/ar"/);
   assert.match(server, /\/rest\/v1\/cms_hero_slides/);
   assert.match(server, /endpoint\.searchParams\.set\("limit", "1"\)/);
+  assert.match(server, /getPublicSupabaseConfig\(\)/);
   assert.match(server, /apikey: publishableKey/);
   assert.match(server, /CRITICAL_HERO_CACHE_MS\s*=\s*10_000/);
   assert.match(server, /data-space-call-critical-hero/);
@@ -305,4 +306,14 @@ test("server injects the critical hero on the guaranteed document path", async (
   assert.match(server, /new Promise<null>\(\(resolve\) => globalThis\.setTimeout\(\(\) => resolve\(null\), 50\)\)/);
   assert.match(server, /headers\.delete\("content-length"\)/);
   assert.match(server, /headers\.delete\("etag"\)/);
+});
+
+
+test("global logo preload does not compete with the mobile hero", async () => {
+  const root = await read("src/routes/__root.tsx");
+
+  assert.doesNotMatch(
+    root,
+    /rel:\s*"preload",\s*href:\s*"\/logo\.svg",\s*as:\s*"image"/,
+  );
 });
