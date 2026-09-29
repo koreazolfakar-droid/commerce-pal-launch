@@ -85,3 +85,10 @@ Includes:
 - existing dynamic hero preload now receives the real image URL in initial HTML
 Goal: eliminate Lighthouse hero resource-load discovery delay caused by SSR placeholder rendering.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Homepage performance rollback republish request: 2026-09-29T09:26:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after removing the blocking Rust CMS lookup from homepage SSR.
+Required runtime snapshot: 913a7fe56af4d24de55790117720c93372a268aa or newer.
+Keep all proven /shop catalog performance improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
