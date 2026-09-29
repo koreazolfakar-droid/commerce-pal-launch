@@ -248,3 +248,16 @@ Image-performance changes:
 - Supabase migration 20260929114340_product_image_card_thumbnails is already applied
 Do not deploy the separate "Deploy. Done." Lovable project.
 Keep all previous hero, category consistency, mobile performance, auth, dashboard, inventory and Rust functionality unchanged.
+
+
+Product thumbnail backfill completion republish request: 2026-09-29T15:31:00+03:00
+Action: rebuild the Space Call production storefront/dashboard from current main.
+Required runtime snapshot: 0dcf2e56718ba29b8e23c21273509b64671998c5 or newer.
+Changes:
+- existing thumbnail backfill now selects rows missing thumbnail_url directly, so it cannot stall on the first product batch
+- one dashboard action can process all current missing active primary product thumbnails sequentially (up to 250)
+- original full-quality product images remain unchanged
+- progress reports remaining thumbnails
+- regression test prevents returning to first-24-product behavior
+Keep all prior image-thumbnail, hero, category consistency, mobile performance, auth, dashboard, inventory and Rust functionality unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
