@@ -194,6 +194,7 @@ function LogoImage({
           width={Math.round(frameWidth)}
           height={size}
           loading="lazy"
+          fetchPriority="low"
           decoding="async"
           draggable={false}
           style={{
