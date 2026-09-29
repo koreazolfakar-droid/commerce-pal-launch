@@ -9,7 +9,7 @@ import { HomeHero } from "@/components/HomeHero";
 import { DeferredTopBrands } from "@/components/DeferredTopBrands";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
-import { cmsSeoPage, cmsText, EMPTY_CMS, fetchCriticalHeroSlide, localizeSection, type CmsSection } from "@/lib/cms";
+import { cmsText, EMPTY_CMS, fetchCriticalHeroSlide, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import {
@@ -131,7 +131,7 @@ function takeUniqueProducts<T extends { node: { id: string } }>(
 }
 
 export const Route = createFileRoute("/")({
-  loader: async ({ context }) => {
+  loader: async () => {
     // The CMS hero is the storefront's only visual hero source. Keep legacy
     // merchandising reads out of the SSR/LCP critical path.
     const criticalHero = await fetchCriticalHeroSlide();
