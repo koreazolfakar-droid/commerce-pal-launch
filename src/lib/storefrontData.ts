@@ -16,6 +16,10 @@ export function fetchCatalogProducts(first = 500): Promise<StoreProduct[]> {
   return nativeStore.fetchCatalogProducts(first);
 }
 
+export function fetchCatalogPreviewProducts(first = 24): Promise<StoreProduct[]> {
+  return nativeStore.fetchCatalogPreviewProducts(first);
+}
+
 export function fetchHomepageProducts(first = 48): Promise<StoreProduct[]> {
   return nativeStore.fetchHomepageProducts(first);
 }
