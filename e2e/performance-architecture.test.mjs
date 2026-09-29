@@ -193,17 +193,15 @@ test("shop bounds initial SSR catalog work and progressively renders the full ca
   assert.doesNotMatch(mobileCategoryRail, /catalogQueryOptions\(\)/);
 });
 
-test("homepage SSR resolves CMS through Rust so the hero image is discoverable in initial HTML", async () => {
+
+test("homepage hero preload remains non-blocking and route-driven", async () => {
   const [cms, home] = await Promise.all([
     read("src/lib/cms.ts"),
     read("src/routes/index.tsx"),
   ]);
 
-  assert.match(cms, /RUST_PUBLIC_CMS_URL/);
-  assert.match(cms, /typeof window === "undefined"/);
-  assert.match(cms, /CMS_SSR_RUST_TIMEOUT_MS\s*=\s*1_800/);
-  assert.match(cms, /Rust SSR gateway unavailable; falling back to public-cms/);
-
+  assert.doesNotMatch(cms, /RUST_PUBLIC_CMS_URL/);
+  assert.doesNotMatch(cms, /CMS_SSR_RUST_TIMEOUT_MS/);
   assert.match(home, /desktopHeroPreload/);
   assert.match(home, /mobileHeroPreload/);
   assert.match(home, /rel:\s*"preload"/);
