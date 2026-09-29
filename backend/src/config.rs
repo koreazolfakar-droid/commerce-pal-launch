@@ -9,7 +9,7 @@ const DEFAULT_DATABASE_ACQUIRE_TIMEOUT_SECONDS: u64 = 5;
 #[derive(Clone)]
 pub struct AppConfig {
     pub bind_addr: SocketAddr,
-    pub database_url: String,
+    pub database_url: Option<String>,
     pub database_max_connections: u32,
     pub database_acquire_timeout_seconds: u64,
     pub supabase_url: String,
@@ -18,9 +18,13 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn from_env() -> Result<Self, ConfigError> {
-        let database_url =
-            env::var("DATABASE_URL").map_err(|_| ConfigError::Missing("DATABASE_URL"))?;
-        validate_database_url(&database_url)?;
+        let database_url = env::var("DATABASE_URL")
+            .ok()
+            .filter(|value| !value.trim().is_empty());
+
+        if let Some(database_url) = database_url.as_deref() {
+            validate_database_url(database_url)?;
+        }
 
         let supabase_url =
             env::var("SUPABASE_URL").map_err(|_| ConfigError::Missing("SUPABASE_URL"))?;
@@ -32,8 +36,11 @@ impl AppConfig {
             return Err(ConfigError::Empty("SUPABASE_PUBLISHABLE_KEY"));
         }
 
-        let bind_addr_value =
-            env::var("BIND_ADDR").unwrap_or_else(|_| DEFAULT_BIND_ADDR.to_owned());
+        let bind_addr_value = env::var("BIND_ADDR").unwrap_or_else(|_| {
+            env::var("PORT")
+                .map(|port| format!("0.0.0.0:{port}"))
+                .unwrap_or_else(|_| DEFAULT_BIND_ADDR.to_owned())
+        });
         let bind_addr =
             bind_addr_value
                 .parse()
@@ -153,7 +160,7 @@ pub enum ConfigError {
     #[error("SUPABASE_URL must be an HTTPS origin without embedded credentials")]
     InvalidSupabaseUrl,
 
-    #[error("BIND_ADDR is invalid: {value}")]
+    #[error("BIND_ADDR/PORT is invalid: {value}")]
     InvalidBindAddress {
         value: String,
         #[source]
