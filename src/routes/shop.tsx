@@ -1,10 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 import { CatalogView } from "@/components/CatalogView";
 import { StoreLayout } from "@/components/StoreLayout";
-import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
-import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import {
+  activeFilterCount,
+  applyFilters,
+  parseProductSearch,
+  type ProductFilters,
+} from "@/lib/filters";
+import {
+  catalogPreviewQueryOptions,
+  catalogQueryOptions,
+  collectionsQueryOptions,
+} from "@/lib/queries";
 import { displayCollections } from "@/lib/taxonomy";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
@@ -12,7 +22,7 @@ import { STORE_NAME } from "@/lib/storeConfig";
 export const Route = createFileRoute("/shop")({
   validateSearch: parseProductSearch,
   loader: async ({ context }) => {
-    const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
+    const catalog = await context.queryClient.ensureQueryData(catalogPreviewQueryOptions());
     void context.queryClient.prefetchQuery(collectionsQueryOptions());
     return { products: catalog.products };
   },
@@ -46,11 +56,31 @@ export const Route = createFileRoute("/shop")({
 });
 
 function ShopPage() {
-  const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
+  const { data: previewCatalog } = useSuspenseQuery(catalogPreviewQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const [fullCatalogEnabled, setFullCatalogEnabled] = useState(false);
+  const hasImmediateCatalogIntent =
+    Boolean(filters.q || filters.sort) || activeFilterCount(filters) > 0;
 
+  useEffect(() => {
+    if (hasImmediateCatalogIntent) {
+      setFullCatalogEnabled(true);
+      return;
+    }
+
+    // Keep the first paint and first product images ahead of the full-catalog
+    // hydration request. The complete catalogue still arrives automatically.
+    const timer = window.setTimeout(() => setFullCatalogEnabled(true), 700);
+    return () => window.clearTimeout(timer);
+  }, [hasImmediateCatalogIntent]);
+
+  const { data: fullCatalog } = useQuery({
+    ...catalogQueryOptions(),
+    enabled: fullCatalogEnabled || hasImmediateCatalogIntent,
+  });
+  const catalog = fullCatalog ?? previewCatalog;
   const products = applyFilters(catalog.products, catalog, filters);
 
   const update = (patch: Partial<ProductFilters>) =>
