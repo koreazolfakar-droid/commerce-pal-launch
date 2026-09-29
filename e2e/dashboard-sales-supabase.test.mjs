@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
+import { loadDashboardRoutes } from "./helpers/dashboardRoutes.mjs";
 
 const [app, nav, page, data, migration] = await Promise.all([
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
@@ -13,10 +14,11 @@ const [app, nav, page, data, migration] = await Promise.all([
   ),
 ]);
 
-test("Sales is a real dashboard route backed by Supabase", () => {
-  assert.match(app, /import SalesPage from "@\/dashboard\/pages\/SalesPage"/);
-  assert.match(app, /route === "\/dashboard\/sales"\) content = <SalesPage \/>/);
-  assert.match(nav, /label: "Sales", href: "\/dashboard\/sales"/);
+test("Sales is a real dashboard route backed by Supabase", async () => {
+  const routes = await loadDashboardRoutes();
+  const sales = routes.find((route) => route.id === "sales");
+  assert.equal(sales?.path, "/dashboard/sales");
+  assert.equal(sales?.navigation?.label, "Sales");
   assert.match(data, /from\("store_sales"\)/);
 });
 

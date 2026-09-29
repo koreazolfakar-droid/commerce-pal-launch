@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { loadDashboardRoutes } from "./helpers/dashboardRoutes.mjs";
 import { readFile } from "node:fs/promises";
 
 const [
@@ -14,6 +15,7 @@ const [
   mediaPicker,
   bottomNav,
   storeLayout,
+  deferredFooter,
   publicCms,
 ] = await Promise.all([
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
@@ -27,13 +29,15 @@ const [
   readFile(new URL("../src/dashboard/components/DashboardMediaPicker.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/components/BottomNav.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/components/StoreLayout.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/components/DeferredSiteFooter.tsx", import.meta.url), "utf8"),
   readFile(new URL("../supabase/functions/public-cms/index.ts", import.meta.url), "utf8"),
 ]);
 
-test("step 4 dashboard routes no longer fall through to GenericPage", () => {
-  assert.match(app, /route === "\/dashboard\/navigation"\) content = <NavigationPage \/>/);
-  assert.match(app, /route === "\/dashboard\/media"\) content = <MediaLibraryPage \/>/);
-  assert.match(app, /route === "\/dashboard\/seo"\) content = <SeoPage \/>/);
+test("step 4 dashboard routes no longer fall through to GenericPage", async () => {
+  const routes = await loadDashboardRoutes();
+  for (const [id, path] of [["navigation", "/dashboard/navigation"], ["media", "/dashboard/media"], ["seo", "/dashboard/seo"]]) {
+    assert.ok(routes.some((route) => route.id === id && route.path === path), path);
+  }
 });
 
 test("navigation manager is Supabase-backed and storefront consumes it", () => {
@@ -45,7 +49,8 @@ test("navigation manager is Supabase-backed and storefront consumes it", () => {
   assert.match(publicCms, /from\("cms_navigation_items"\)/);
   assert.match(storeLayout, /<CmsNavigationStrip area="header"/);
   assert.match(storeLayout, /<CmsNavigationStrip area="mobile_menu"/);
-  assert.match(storeLayout, /<CmsNavigationStrip area="footer"/);
+  assert.match(storeLayout, /<DeferredSiteFooter \/>/);
+  assert.match(deferredFooter, /<CmsNavigationStrip area="footer"/);
   assert.match(storeLayout, /<BottomNav \/>/);
   assert.match(bottomNav, /localizeNavigationItem\(item, language\)/);
 });

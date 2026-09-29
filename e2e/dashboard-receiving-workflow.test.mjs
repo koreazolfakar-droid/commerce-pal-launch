@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { loadDashboardRoutes } from "./helpers/dashboardRoutes.mjs";
 
-const [workflow, hardening, upgrade, concurrency, data, page, purchaseOrdersPage, purchaseOrderCreatePage, purchaseOrderDetailPage, purchaseOrderEditPage, receivingDetailPage, suppliersPage, analyticsPage, app, nav, inventory, drawer, types] = await Promise.all([
+const [workflow, hardening, upgrade, concurrency, data, page, purchaseOrdersPage, purchaseOrderCreatePage, purchaseOrderDetailPage, purchaseOrderEditPage, receivingDetailPage, suppliersPage, analyticsPage, inventory, drawer, types] = await Promise.all([
   readFile(new URL("../supabase/migrations/20260919123000_procurement_receiving_workflows.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919124500_harden_procurement_rpc_exposure.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919152000_procurement_management_upgrade.sql", import.meta.url), "utf8"),
@@ -16,8 +17,6 @@ const [workflow, hardening, upgrade, concurrency, data, page, purchaseOrdersPage
   readFile(new URL("../src/dashboard/pages/ReceivingDetailPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/SuppliersPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProcurementAnalyticsPage.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../src/dashboard/config/navigation.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/inventory.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/components/inventory/InventoryMovementHistoryDrawer.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/integrations/supabase/types.ts", import.meta.url), "utf8"),
@@ -153,9 +152,9 @@ test("purchase orders expose Toters-style operational filters and actions", () =
   assert.match(page, /Receive PO/);
 });
 
-test("purchase order creation uses its own dedicated route", () => {
-  assert.match(app, /import PurchaseOrderCreatePage from/);
-  assert.match(app, /route === "\/dashboard\/purchase-orders\/new"/);
+test("purchase order creation uses its own dedicated route", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "purchase-orders-new" && route.path === "/dashboard/purchase-orders/new"));
   assert.match(purchaseOrderCreatePage, /mode="purchase-order-create"/);
   assert.match(page, /purchaseOrderCreateMode/);
   assert.match(page, /navigate\("\/dashboard\/purchase-orders\/new"\)/);
@@ -165,10 +164,9 @@ test("purchase order creation uses its own dedicated route", () => {
   assert.match(page, /navigate\("\/dashboard\/purchase-orders"\)/);
 });
 
-test("PO number opens a dedicated detail page and receiving stays separate", () => {
-  assert.match(app, /import PurchaseOrderDetailPage from/);
-  assert.match(app, /purchaseOrderDetail/);
-  assert.match(app, /PurchaseOrderDetailPage id=/);
+test("PO number opens a dedicated detail page and receiving stays separate", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "purchase-order-detail" && route.dynamic));
   assert.match(page, /dashboard\/purchase-orders\/\$\{po\.id\}/);
   assert.match(purchaseOrderDetailPage, /Purchase order details and ordered items/);
   assert.match(purchaseOrderDetailPage, /Purchase order items/);
@@ -194,14 +192,13 @@ test("purchase order detail loads only the requested PO dataset", () => {
   assert.match(purchaseOrderDetailPage, /loadPurchaseOrderDetail\(id\)/);
 });
 
-test("purchase orders and receiving are separate routed workspaces", () => {
-  assert.match(app, /import PurchaseOrdersPage from/);
-  assert.match(app, /import ReceivingPage from/);
-  assert.match(app, /route === "\/dashboard\/purchase-orders"/);
-  assert.match(app, /route === "\/dashboard\/receiving"/);
-  assert.match(app, /receivingPoDetail/);
-  assert.match(nav, /label: "Purchase Orders",\s+href: "\/dashboard\/purchase-orders"/);
-  assert.match(nav, /label: "Receiving",\s+href: "\/dashboard\/receiving"/);
+test("purchase orders and receiving are separate routed workspaces", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "purchase-orders" && route.path === "/dashboard/purchase-orders"));
+  assert.ok(routes.some((route) => route.id === "receiving" && route.path === "/dashboard/receiving"));
+  assert.ok(routes.some((route) => route.id === "receiving-po-detail" && route.dynamic));
+  assert.equal(routes.find((route) => route.id === "purchase-orders")?.navigation?.label, "Purchase Orders");
+  assert.equal(routes.find((route) => route.id === "receiving")?.navigation?.label, "Receiving");
   assert.match(purchaseOrdersPage, /mode="purchase-orders"/);
   assert.match(page, /mode = "receiving"/);
   assert.match(page, /navigate\(\`\/dashboard\/receiving\/\$\{po\.id\}\`\)/);
@@ -254,9 +251,9 @@ test("PO lifecycle requires approval before issue and admin protects privileged 
   assert.match(purchaseOrderDetailPage, /Cancel PO/);
 });
 
-test("draft PO editing, deletion and expected delivery are routed separately", () => {
-  assert.match(app, /PurchaseOrderEditPage/);
-  assert.match(app, /purchaseOrderEdit/);
+test("draft PO editing, deletion and expected delivery are routed separately", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "purchase-order-edit" && route.dynamic));
   assert.match(purchaseOrderEditPage, /Edit Purchase Order/);
   assert.match(purchaseOrderEditPage, /Save draft changes/);
   assert.match(purchaseOrderEditPage, /Delete draft/);
@@ -273,9 +270,9 @@ test("PO edit uses targeted form data instead of the full procurement workspace"
   assert.match(purchaseOrderEditPage, /loadPurchaseOrderEditData\(id\)/);
 });
 
-test("receiving review supports editable drafts, invoice matching, serials and void", () => {
-  assert.match(app, /ReceivingDetailPage/);
-  assert.match(app, /receivingDetail/);
+test("receiving review supports editable drafts, invoice matching, serials and void", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "receiving-detail" && route.dynamic));
   assert.match(receivingDetailPage, /Draft receiving details/);
   assert.match(receivingDetailPage, /Save draft/);
   assert.match(receivingDetailPage, /updateReceivingDraft/);
@@ -327,11 +324,12 @@ test("procurement documents are private and audit timelines are exposed", () => 
   assert.match(purchaseOrderDetailPage, /Print \/ PDF/);
 });
 
-test("supplier management, analytics and reorder suggestions are live modules", () => {
-  assert.match(app, /SuppliersPage/);
-  assert.match(app, /ProcurementAnalyticsPage/);
-  assert.match(nav, /label: "Suppliers",\s+href: "\/dashboard\/suppliers"/);
-  assert.match(nav, /label: "Procurement",\s+href: "\/dashboard\/procurement"/);
+test("supplier management, analytics and reorder suggestions are live modules", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "suppliers" && route.path === "/dashboard/suppliers"));
+  assert.ok(routes.some((route) => route.id === "procurement" && route.path === "/dashboard/procurement"));
+  assert.equal(routes.find((route) => route.id === "suppliers")?.navigation?.label, "Suppliers");
+  assert.equal(routes.find((route) => route.id === "procurement")?.navigation?.label, "Procurement");
   assert.match(suppliersPage, /Suppliers & Locations/);
   assert.match(suppliersPage, /Phone/);
   assert.match(suppliersPage, /Email/);
@@ -379,4 +377,3 @@ test("generated Supabase types include procurement tables and functions", () => 
     assert.match(types, new RegExp(name));
   }
 });
-

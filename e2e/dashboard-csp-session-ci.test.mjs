@@ -77,7 +77,7 @@ test("production Supabase sessions are tab-scoped, migrate legacy auth, and surv
   assert.match(storage, /safeBrowserStorage\('session'\)/);
   assert.match(storage, /safeBrowserStorage\('local'\)/);
   assert.match(storage, /tabStorage\.setItem\(SPACE_CALL_SUPABASE_AUTH_KEY, legacySession\)/);
-  assert.match(storage, /legacyStorage\.removeItem\(SPACE_CALL_SUPABASE_AUTH_KEY\)/);
+  assert.match(storage, /legacyStorage\?\.removeItem\(SPACE_CALL_SUPABASE_AUTH_KEY\)/);
   assert.match(storage, /return createMemoryStorage\(\)/);
   assert.match(storage, /window\.sessionStorage/);
   assert.match(storage, /window\.localStorage/);

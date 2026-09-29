@@ -301,7 +301,7 @@ function groupByProduct<T extends { product_id: string }>(rows: T[]) {
   return grouped;
 }
 
-function money(amount: number, currencyCode: string) {
+function money(amount: number | string, currencyCode: string) {
   return { amount: String(amount), currencyCode };
 }
 

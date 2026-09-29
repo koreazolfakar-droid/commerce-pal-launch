@@ -11,6 +11,7 @@ const detail = await readFile(
   new URL("../src/dashboard/pages/OrderDetailPage.tsx", import.meta.url),
   "utf8",
 );
+const ordersPage = await readFile(new URL("../src/dashboard/pages/OrdersPage.tsx", import.meta.url), "utf8");
 const storefront = await readFile(new URL("../src/routes/my-orders.tsx", import.meta.url), "utf8");
 
 test("ready is a real guarded order state between processing and delivery", () => {
@@ -24,7 +25,7 @@ test("ready is a real guarded order state between processing and delivery", () =
 
 test("dashboard exposes ready in types, counts, and next-state progression", () => {
   assert.match(data, /\| "ready"/);
-  assert.match(data, /countOrders\("ready"\)/);
+  assert.match(ordersPage, /stats\.confirmed \+ stats\.processing \+ stats\.ready/);
   assert.match(data, /status === "processing"\) return "ready"/);
   assert.match(data, /status === "ready"\) return "out_for_delivery"/);
   assert.match(detail, /nextStatus === "ready"/);

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { loadDashboardRoutes } from "./helpers/dashboardRoutes.mjs";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
@@ -20,11 +21,10 @@ const migration = await readFile(
   "utf8",
 );
 
-test("active customers routes use the Supabase CRM pages", () => {
-  assert.match(app, /CustomersPageLive/);
-  assert.match(app, /CustomerDetailPageLive/);
-  assert.match(app, /route === "\/dashboard\/customers"[\s\S]+<CustomersPageLive \/>/);
-  assert.match(app, /customerDetail[\s\S]+<CustomerDetailPageLive id=\{customerDetail\[1\]\} \/>/);
+test("active customers routes use the Supabase CRM pages", async () => {
+  const routes = await loadDashboardRoutes();
+  assert.ok(routes.some((route) => route.id === "customers" && route.path === "/dashboard/customers"));
+  assert.ok(routes.some((route) => route.id === "customer-detail" && route.dynamic));
 });
 
 test("customers CRM contains no mock business data", () => {

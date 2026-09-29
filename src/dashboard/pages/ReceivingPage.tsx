@@ -405,7 +405,7 @@ export default function ReceivingPage({
     if (!window.confirm(`Submit PO ${po.poNumber} for approval? Draft lines will be locked until review.`)) return;
     setSaving(true);
     try {
-      await submitPurchaseOrder(po.id);
+      await submitPurchaseOrder(po.id, po.updatedAt);
       toast.success(`PO ${po.poNumber} submitted for approval.`);
       await load(false);
     } catch (cause) {

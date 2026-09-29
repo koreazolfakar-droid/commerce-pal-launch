@@ -57,7 +57,8 @@ test("other managed visual sections resolve authoritative data before rendering 
   assert.match(categoriesPage, /Promise\.all\([\s\S]*?fetchManagedStoreCategories\(\)/);
   assert.match(categoryRoute, /Promise\.all\([\s\S]*?fetchManagedCategory\(params\.slug\)/);
   assert.match(brandsRoute, /Promise\.all\([\s\S]*?fetchCmsSnapshot\(\)/);
-  assert.match(homeRoute, /ensureQueryData\(cmsQueryOptions\(\)\)/);
+  assert.match(homeRoute, /useQuery\(cmsQueryOptions\(\)\)/);
+  assert.match(homeRoute, /cms = EMPTY_CMS/);
 
   assert.doesNotMatch(categoriesPage, /findCategoryArtworkCollection/);
 });

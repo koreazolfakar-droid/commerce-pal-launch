@@ -101,7 +101,7 @@ test("HIBP outages fail closed in both browser and server layers", () => {
     helper,
     /Security check is temporarily unavailable\. Your password was not changed\./,
   );
-  assert.match(passwordEdge, /return json\(\{ error: "breach_screening_unavailable" \}, 503\)/);
+  assert.match(passwordEdge, /return json\(req, \{ error: "breach_screening_unavailable" \}, 503\)/);
 });
 
 test("browser CSP still allows only the HIBP range endpoint used for UX screening", () => {

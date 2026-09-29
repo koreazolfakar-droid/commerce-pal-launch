@@ -1,12 +1,8 @@
 name: Storefront CI
 
+# Semaphore runs the automatic validation pipeline. Keep this workflow for
+# manual diagnostics without scheduling failing GitHub-hosted runners on PRs.
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
