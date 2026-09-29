@@ -93,7 +93,7 @@ export const ProductCard = memo(function ProductCard({
           className="block"
         >
           <ProductImage
-            url={image?.url}
+            url={image?.thumbnailUrl ?? image?.url}
             alt={image?.altText ?? node.title}
             size={480}
             sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
