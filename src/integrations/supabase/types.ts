@@ -1377,6 +1377,7 @@ export type Database = {
           is_primary: boolean
           product_id: string
           sort_order: number
+          thumbnail_url: string | null
           url: string
         }
         Insert: {
@@ -1386,6 +1387,7 @@ export type Database = {
           is_primary?: boolean
           product_id: string
           sort_order?: number
+          thumbnail_url?: string | null
           url: string
         }
         Update: {
@@ -1395,6 +1397,7 @@ export type Database = {
           is_primary?: boolean
           product_id?: string
           sort_order?: number
+          thumbnail_url?: string | null
           url?: string
         }
         Relationships: [
