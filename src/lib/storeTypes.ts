@@ -27,7 +27,11 @@ export interface StoreProductNode {
   }>;
   priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
   compareAtPriceRange?: { minVariantPrice: { amount: string; currencyCode: string } };
-  images: { edges: Array<{ node: { url: string; altText: string | null } }> };
+  images: {
+    edges: Array<{
+      node: { url: string; thumbnailUrl?: string; altText: string | null };
+    }>;
+  };
   collections?: { edges: Array<{ node: { handle: string; title: string } }> };
   variants: {
     edges: Array<{
