@@ -9,8 +9,9 @@ import { HomeHero } from "@/components/HomeHero";
 import { DeferredTopBrands } from "@/components/DeferredTopBrands";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
-import { cmsText, EMPTY_CMS, fetchCriticalHeroSlide, localizeSection, type CmsSection } from "@/lib/cms";
+import { cmsText, EMPTY_CMS, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import { CRITICAL_HERO_DESKTOP_URL, CRITICAL_HERO_MOBILE_URL } from "@/lib/criticalHero";
 import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import {
   newestQueryOptions,
@@ -131,46 +132,10 @@ function takeUniqueProducts<T extends { node: { id: string } }>(
 }
 
 export const Route = createFileRoute("/")({
-  loader: async () => {
-    // The CMS hero is the storefront's only visual hero source. Keep legacy
-    // merchandising reads out of the SSR/LCP critical path.
-    const criticalHero = await fetchCriticalHeroSlide();
-    const desktopHeroPreload = criticalHero?.image_url?.trim() || undefined;
-    const mobileHeroPreload =
-      criticalHero?.mobile_image_url?.trim() || desktopHeroPreload;
-
-    return {
-      heroSlides: criticalHero ? [criticalHero] : [],
-      heroPreload:
-        desktopHeroPreload && mobileHeroPreload
-          ? { desktop: desktopHeroPreload, mobile: mobileHeroPreload }
-          : undefined,
-    };
-  },
-  head: ({ loaderData }) => {
+  head: () => {
     const title = `${SITE_NAME} Lebanon | Official Online Electronics Store`;
     const description =
       `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
-    const image = loaderData?.heroPreload?.desktop;
-    const heroPreload = loaderData?.heroPreload;
-    const heroPreloadLinks = heroPreload
-      ? heroPreload.mobile === heroPreload.desktop
-        ? [{ rel: "preload" as const, as: "image" as const, href: heroPreload.desktop }]
-        : [
-            {
-              rel: "preload" as const,
-              as: "image" as const,
-              href: heroPreload.mobile,
-              media: "(max-width: 639px)",
-            },
-            {
-              rel: "preload" as const,
-              as: "image" as const,
-              href: heroPreload.desktop,
-              media: "(min-width: 640px)",
-            },
-          ]
-      : [];
 
     return {
       meta: [
@@ -187,18 +152,30 @@ export const Route = createFileRoute("/")({
           title,
           description,
           path: "/",
-          ...(image ? { image } : {}),
+          image: CRITICAL_HERO_DESKTOP_URL,
         }),
       ],
       links: [
-        ...heroPreloadLinks,
+        {
+          rel: "preload" as const,
+          as: "image" as const,
+          href: CRITICAL_HERO_MOBILE_URL,
+          media: "(max-width: 639px)",
+          fetchPriority: "high" as const,
+        },
+        {
+          rel: "preload" as const,
+          as: "image" as const,
+          href: CRITICAL_HERO_DESKTOP_URL,
+          media: "(min-width: 640px)",
+          fetchPriority: "high" as const,
+        },
         canonicalLink("/"),
         ...languageAlternateLinks({ path: "/", arabicPath: "/ar" }),
       ],
       scripts: [
         jsonLd(websiteJsonLd()),
         jsonLd(organizationJsonLd()),
-
       ],
     };
   },
@@ -544,7 +521,6 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
 function Index() {
   const { t, language } = useLanguage();
   const deferredWorkReady = useDeferredHomepageWork();
-  const { heroSlides: loaderHeroSlides } = Route.useLoaderData();
   const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
   const homeSections = cms.sections.filter((section) => section.page_slug === "home");
   const featuredMerchSection = homeSections.find(
@@ -667,9 +643,7 @@ function Index() {
       section: coreSection("hero"),
       visible: isLive(coreSection("hero")),
       node: (
-        <HomeHero
-          cmsHeroSlides={cms.heroSlides.length ? cms.heroSlides : loaderHeroSlides}
-        />
+        <HomeHero cmsHeroSlides={cms.heroSlides} />
       ),
     },
     {
