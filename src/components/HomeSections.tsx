@@ -35,7 +35,7 @@ export function RecentlyViewed() {
           >
             {product.node.images.edges[0]?.node && (
               <img
-                src={cdnImage(product.node.images.edges[0].node.url, 320)}
+                src={cdnImage(product.node.images.edges[0].node.thumbnailUrl ?? product.node.images.edges[0].node.url, 320)}
                 alt={product.node.images.edges[0].node.altText ?? product.node.title}
                 loading="lazy"
                 width={220}
