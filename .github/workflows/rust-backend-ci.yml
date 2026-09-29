@@ -1,6 +1,12 @@
 name: Rust Backend CI
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/rust-backend-ci.yml"
   pull_request:
     branches:
       - main
