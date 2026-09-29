@@ -28,6 +28,29 @@ function rustCatalogConfig() {
   };
 }
 
+function isStorefrontProductRow(value: unknown): value is StorefrontProductRow {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+
+  return (
+    typeof row["id"] === "string" &&
+    typeof row["title"] === "string" &&
+    typeof row["description"] === "string" &&
+    typeof row["handle"] === "string" &&
+    typeof row["created_at"] === "string" &&
+    typeof row["updated_at"] === "string" &&
+    typeof row["currency"] === "string" &&
+    typeof row["stock_quantity"] === "number" &&
+    typeof row["track_inventory"] === "boolean" &&
+    typeof row["allow_backorder"] === "boolean" &&
+    typeof row["best_seller"] === "boolean" &&
+    typeof row["sort_order"] === "number" &&
+    Array.isArray(row["tags"]) &&
+    "specifications" in row &&
+    "base_price" in row
+  );
+}
+
 async function fetchRustHomepageProducts(first: number): Promise<StoreProduct[]> {
   const { apiUrl } = rustCatalogConfig();
   const limit = Math.min(100, Math.max(1, Math.trunc(first)));
@@ -48,11 +71,11 @@ async function fetchRustHomepageProducts(first: number): Promise<StoreProduct[]>
     }
 
     const rows = (await response.json()) as unknown;
-    if (!Array.isArray(rows)) {
-      throw new Error("Rust catalog returned an invalid payload");
+    if (!Array.isArray(rows) || !rows.every(isStorefrontProductRow)) {
+      throw new Error("Rust catalog returned an invalid product-row contract");
     }
 
-    return nativeStore.hydrateProductRows(rows as StorefrontProductRow[]);
+    return nativeStore.hydrateProductRows(rows);
   } finally {
     globalThis.clearTimeout(timeout);
   }
