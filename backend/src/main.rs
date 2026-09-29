@@ -11,7 +11,7 @@ use state::AppState;
 use thiserror::Error;
 use tokio::net::TcpListener;
 use tower_http::{catch_panic::CatchPanicLayer, trace::TraceLayer};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -24,8 +24,13 @@ async fn main() -> Result<(), StartupError> {
     info!(%bind_addr, "starting Space Call backend");
 
     let pool = db::connect(&config).await?;
-    db::ping(&pool).await?;
-    info!("database connection established");
+
+    if let Some(pool) = pool.as_ref() {
+        db::ping(pool).await?;
+        info!("database connection established");
+    } else {
+        warn!("DATABASE_URL is not configured; using Supabase REST fallback for read-only catalog access");
+    }
 
     let state = AppState::new(pool, &config);
 
