@@ -79,7 +79,8 @@ test("homepage LCP uses CMS data without legacy hero work on the critical path",
   assert.ok(loaderStart >= 0 && loaderEnd > loaderStart);
   const loaderSource = home.slice(loaderStart, loaderEnd);
 
-  assert.match(loaderSource, /ensureQueryData\(cmsQueryOptions\(\)\)/);
+  assert.match(loaderSource, /fetchCriticalHeroSlide\(\)/);
+  assert.doesNotMatch(loaderSource, /ensureQueryData\(cmsQueryOptions\(\)\)/);
   assert.doesNotMatch(loaderSource, /HOME_HERO_COLLECTION_HANDLE|collectionQueryOptions/);
   assert.match(
     home,
@@ -221,12 +222,12 @@ test("homepage renders the real CMS hero in the first HTML without a logo placeh
   assert.ok(loaderStart >= 0 && loaderEnd > loaderStart);
   const loaderSource = home.slice(loaderStart, loaderEnd);
 
-  assert.match(loaderSource, /fetchCriticalHeroSlide\(\)/);
-  assert.match(loaderSource, /criticalHero \?\? cms\.heroSlides\[0\]/);
-  assert.match(loaderSource, /heroSlides = criticalHero/);
-  assert.match(loaderSource, /return \{[\s\S]*?cms,[\s\S]*?heroSlides,[\s\S]*?heroPreload:/);
-  assert.match(home, /const \{ cms: loaderCms, heroSlides: loaderHeroSlides \} = Route\.useLoaderData\(\)/);
-  assert.match(home, /initialData: loaderCms/);
+  assert.match(loaderSource, /const criticalHero = await fetchCriticalHeroSlide\(\)/);
+  assert.match(loaderSource, /heroSlides: criticalHero \? \[criticalHero\] : \[\]/);
+  assert.match(loaderSource, /heroPreload:/);
+  assert.doesNotMatch(loaderSource, /ensureQueryData\(cmsQueryOptions\(\)\)/);
+  assert.match(home, /const \{ heroSlides: loaderHeroSlides \} = Route\.useLoaderData\(\)/);
+  assert.match(home, /const \{ data: cms = EMPTY_CMS \} = useQuery\(cmsQueryOptions\(\)\)/);
   assert.match(home, /<HomeHero cmsHeroSlides=\{loaderHeroSlides\}/);
 
   assert.doesNotMatch(hero, /<img src="\/logo\.svg"/);
@@ -278,9 +279,10 @@ test("critical hero remains independent from the full CMS snapshot", async () =>
   ]);
 
   assert.match(cms, /export async function fetchCriticalHeroSlide/);
-  assert.match(cms, /public-cms\?scope=hero/);
-  assert.match(cms, /return typeof hero\.image_url === "string"/);
-  assert.match(home, /Promise\.all\([\s\S]*?ensureQueryData\(cmsQueryOptions\(\)\)[\s\S]*?fetchCriticalHeroSlide\(\)/);
-  assert.match(home, /const firstCmsHero = criticalHero \?\? cms\.heroSlides\[0\]/);
-  assert.match(home, /const heroSlides = criticalHero/);
+  assert.match(cms, /\/rest\/v1\/cms_hero_slides/);
+  assert.match(cms, /endpoint\.searchParams\.set\("limit", "1"\)/);
+  assert.match(cms, /apikey: key/);
+  assert.doesNotMatch(cms, /public-cms\?scope=hero/);
+  assert.match(home, /const criticalHero = await fetchCriticalHeroSlide\(\)/);
+  assert.doesNotMatch(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
 });
