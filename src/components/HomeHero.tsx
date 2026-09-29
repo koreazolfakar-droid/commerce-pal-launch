@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
 import { localizeHeroSlide, type CmsHeroSlide } from "@/lib/cms";
+import { CRITICAL_HERO_DESKTOP_URL, CRITICAL_HERO_MOBILE_URL } from "@/lib/criticalHero";
 import { useLanguage } from "@/lib/i18n";
 
 export function HomeHero({
@@ -72,11 +73,21 @@ export function HomeHero({
             }
           />
         ) : (
-          <div
+          <picture
             data-testid="home-hero-media"
             aria-hidden="true"
-            className="absolute inset-0 z-[1] bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950"
-          />
+            className="absolute inset-0 z-[1] block overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950"
+          >
+            <source media="(max-width: 639px)" srcSet={CRITICAL_HERO_MOBILE_URL} />
+            <img
+              src={CRITICAL_HERO_DESKTOP_URL}
+              alt=""
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </picture>
         )}
 
         {slideCount > 1 && (
