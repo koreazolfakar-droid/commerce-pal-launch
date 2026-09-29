@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
+import { CmsNavigationStrip } from "@/components/CmsStoreControls";
 
 const LazySiteFooter = lazy(() =>
   importWithChunkRecovery("site-footer", () =>
@@ -37,9 +38,12 @@ export function DeferredSiteFooter() {
   return (
     <div ref={markerRef} data-deferred-site-footer>
       {enabled ? (
-        <Suspense fallback={<div className="min-h-64" aria-hidden="true" />}>
-          <LazySiteFooter />
-        </Suspense>
+        <>
+          <CmsNavigationStrip area="footer" />
+          <Suspense fallback={<div className="min-h-64" aria-hidden="true" />}>
+            <LazySiteFooter />
+          </Suspense>
+        </>
       ) : (
         <div className="min-h-64" aria-hidden="true" />
       )}
