@@ -10,8 +10,8 @@ use tracing::warn;
 use crate::state::AppState;
 
 const DEFAULT_LIMIT: i64 = 24;
-const MAX_LIMIT: i64 = 100;
-const PUBLIC_PRODUCT_SELECT: &str = "id,title,title_ar,handle,description,description_ar,brand_id,category_id,product_type,currency,base_price,compare_at_price,stock_quantity,track_inventory,allow_backorder,featured,best_seller,specifications";
+const MAX_LIMIT: i64 = 500;
+const PUBLIC_PRODUCT_SELECT: &str = "id,title,title_ar,handle,description,description_ar,description_html,brand_id,category_id,product_type,currency,base_price,compare_at_price,stock_quantity,track_inventory,allow_backorder,featured,best_seller,specifications,created_at,updated_at,seo_title,seo_description,tags,sort_order";
 
 #[derive(Debug, Deserialize)]
 pub struct ProductListQuery {
@@ -26,6 +26,7 @@ pub struct PublicProduct {
     handle: String,
     description: String,
     description_ar: Option<String>,
+    description_html: Option<String>,
     brand_id: Option<String>,
     category_id: Option<String>,
     product_type: Option<String>,
@@ -38,6 +39,12 @@ pub struct PublicProduct {
     featured: bool,
     best_seller: bool,
     specifications: serde_json::Value,
+    created_at: String,
+    updated_at: String,
+    seo_title: Option<String>,
+    seo_description: Option<String>,
+    tags: Vec<String>,
+    sort_order: i32,
 }
 
 pub async fn list_products(
@@ -68,6 +75,7 @@ async fn query_postgres(
             handle,
             description,
             description_ar,
+            description_html,
             brand_id::text AS brand_id,
             category_id::text AS category_id,
             product_type,
@@ -82,7 +90,13 @@ async fn query_postgres(
             allow_backorder,
             featured,
             best_seller,
-            specifications
+            specifications,
+            created_at::text AS created_at,
+            updated_at::text AS updated_at,
+            seo_title,
+            seo_description,
+            tags,
+            sort_order
         FROM public.store_products
         WHERE status = 'active'
           AND (published_at IS NULL OR published_at <= now())
