@@ -6,6 +6,7 @@ import { ArrowRight, Timer } from "lucide-react";
 
 import { HomeCategorySection } from "@/components/HomeCategorySection";
 import { HomeHero } from "@/components/HomeHero";
+import { DeferredTopBrands } from "@/components/DeferredTopBrands";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
 import { cmsSeoPage, cmsText, EMPTY_CMS, localizeSection, type CmsSection } from "@/lib/cms";
@@ -45,11 +46,6 @@ const LazyProductRail = lazy(() =>
 const LazyRecentlyViewed = lazy(() =>
   importWithChunkRecovery("recently-viewed", () =>
     import("@/components/HomeSections").then((module) => ({ default: module.RecentlyViewed })),
-  ),
-);
-const LazyTopBrands = lazy(() =>
-  importWithChunkRecovery("top-brands", () =>
-    import("@/components/TopBrands").then((module) => ({ default: module.TopBrands })),
   ),
 );
 const LazyWhyShop = lazy(() =>
@@ -695,9 +691,7 @@ function Index() {
       section: coreSection("brands"),
       visible: isLive(coreSection("brands")),
       node: navigationReady ? (
-        <Suspense fallback={<SectionFallback className="h-24" />}>
-          <LazyTopBrands brands={brands} />
-        </Suspense>
+        <DeferredTopBrands brands={brands} />
       ) : (
         <div className="h-24 rounded-lg bg-surface" aria-hidden="true" />
       ),
