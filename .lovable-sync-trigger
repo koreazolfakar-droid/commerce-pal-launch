@@ -230,3 +230,21 @@ Final hero architecture:
 - direct anon cms_hero_slides access restored to gateway-only security model
 Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Mobile product-image thumbnail pipeline republish request: 2026-09-29T15:11:00+03:00
+Action: rebuild the Space Call production storefront/dashboard from current main.
+Required runtime snapshot: 006142fe4f9b234ebd37568f3e7cb31f4bcd60ac or newer.
+Image-performance changes:
+- store_product_images now supports nullable thumbnail_url
+- new uploads generate a dedicated 480px WebP card thumbnail while preserving the full-quality original
+- product cards, compact cards, search, recently viewed, cart and deal surfaces prefer thumbnailUrl with original fallback
+- product detail/gallery/SEO keep the original high-quality image
+- Dashboard Media Library -> Global old-image WebP optimizer now includes “Mobile product-card thumbnails”
+- Admin button “Generate first 24 thumbnails” backfills current primary product images one-by-one in the browser
+- backfill only writes thumbnail_url; it never changes the original url
+- cleanup logic treats thumbnail files as referenced managed assets
+- temporary server-side thumbnail backfill experiments are removed/disabled
+- Supabase migration 20260929114340_product_image_card_thumbnails is already applied
+Do not deploy the separate "Deploy. Done." Lovable project.
+Keep all previous hero, category consistency, mobile performance, auth, dashboard, inventory and Rust functionality unchanged.
