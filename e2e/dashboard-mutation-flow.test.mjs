@@ -143,8 +143,12 @@ test("product media mutations return targeted results without success-path list 
   assert.doesNotMatch(mediaMutations, /return listDashboardProductImages/);
   assert.match(mediaMutations, /image: mapProductImage/);
   assert.match(mediaMutations, /promotedImageId/);
-  for (const rpc of ["set_store_product_primary_image", "delete_store_product_image", "reorder_store_product_images"]) {
-    assert.ok(mediaMutations.includes(`"${rpc}"`), rpc);
+  for (const rpc of [
+    "set_store_product_primary_image",
+    "delete_store_product_image",
+    "reorder_store_product_images",
+  ]) {
+    assert.match(mediaMutations, new RegExp(`\\(supabase\\.rpc as unknown as LooseRpc\\)\\(\\s*"${rpc}"`), rpc);
   }
 
   assert.doesNotMatch(media, /sync\(await (?:delete|set|reorder)DashboardProductImage/);
