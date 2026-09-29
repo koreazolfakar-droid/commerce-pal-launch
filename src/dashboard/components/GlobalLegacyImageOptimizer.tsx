@@ -245,7 +245,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
     }
 
     const confirmed = window.confirm(
-      "Generate lightweight 480px WebP thumbnails for the primary images of the first 24 active products? Original product images stay unchanged.",
+      "Generate lightweight 480px WebP thumbnails for the next 24 active product images still missing them? Original product images stay unchanged.",
     );
     if (!confirmed) return;
 
@@ -263,7 +263,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
           `Generated ${result.processed} product card thumbnail${result.processed === 1 ? "" : "s"} · about ${formatImageBytes(saved)} lighter for card requests.`,
         );
       } else if (!result.failed.length) {
-        toast.success("The first 24 active products already have card thumbnails.");
+        toast.success("All active primary product images already have card thumbnails.");
       }
 
       if (result.failed.length) {
@@ -381,7 +381,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                 ) : (
                   <WandSparkles className="size-3.5" />
                 )}
-                {thumbnailBackfilling ? "Generating…" : "Generate first 24 thumbnails"}
+                {thumbnailBackfilling ? "Generating…" : "Generate next 24 thumbnails"}
               </button>
             </div>
 
@@ -418,7 +418,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
               <div className="mt-3 grid gap-2 sm:grid-cols-4">
                 {[
                   ["Generated", String(thumbnailResult.processed)],
-                  ["Already ready", String(thumbnailResult.skipped)],
+                  ["Still pending", String(thumbnailResult.remaining)],
                   ["Source bytes", formatImageBytes(thumbnailResult.sourceBytes)],
                   [
                     "Card thumbnails",
