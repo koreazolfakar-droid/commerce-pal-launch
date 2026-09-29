@@ -17,19 +17,36 @@ blocks:
   - name: Bun validation
     task:
       jobs:
-        - name: Install → TypeScript → ESLint → Security → Tests → Build → SSR
+        - name: Install → TypeScript → ESLint → Security → Tests → UI → Build → SSR
           commands:
             - checkout
-            - curl -fsSL https://bun.sh/install | bash
-            - export BUN_INSTALL="$HOME/.bun"
-            - export PATH="$BUN_INSTALL/bin:$PATH"
-            - bun --version
-            - bun install --frozen-lockfile
-            - bun run typecheck
-            - bun run lint
-            - node scripts/security-gate.mjs
-            - node scripts/android-security-gate.mjs
-            - bun audit --audit-level=high
-            - bun run test:unit
-            - bun run build
-            - bun run test:ssr
+            - |
+              set -euo pipefail
+              curl -fsSL https://bun.sh/install | bash
+              export BUN_INSTALL="$HOME/.bun"
+              export PATH="$BUN_INSTALL/bin:$PATH"
+              bun --version
+              bun install --frozen-lockfile
+              bun run typecheck
+              bun run lint
+              node scripts/security-gate.mjs
+              node scripts/android-security-gate.mjs
+              bun audit --audit-level=high
+              bun run test:unit
+
+              ./node_modules/.bin/playwright install --with-deps chromium
+              bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/ui-polish-vite.log 2>&1 &
+              UI_SERVER_PID=$!
+              trap 'kill "$UI_SERVER_PID" 2>/dev/null || true' EXIT
+              for attempt in {1..60}; do
+                if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+                  break
+                fi
+                sleep 1
+              done
+              E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ui-polish-responsive-check.mjs
+              E2E_BASE_URL=http://127.0.0.1:4173 node e2e/hero-responsive-check.mjs
+              E2E_BASE_URL=http://127.0.0.1:4173 node e2e/bottom-nav-responsive-check.mjs
+
+              bun run build
+              bun run test:ssr
