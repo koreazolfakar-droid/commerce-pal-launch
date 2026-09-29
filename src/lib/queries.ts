@@ -8,6 +8,7 @@ import {
   fetchBestSellingProducts,
   fetchBrandVendors,
   fetchCatalogProducts,
+  fetchCatalogPreviewProducts,
   fetchCollectionByHandle,
   fetchCollections,
   fetchHomepageProducts,
@@ -92,6 +93,11 @@ async function fetchHomepageCatalogIndex() {
   return buildCatalogIndex(products);
 }
 
+async function fetchCatalogPreviewIndex() {
+  const products = await fetchCatalogPreviewProducts(CATALOG_INITIAL_PAGE_SIZE);
+  return buildCatalogIndex(products);
+}
+
 async function fetchCatalogIndexSafely(first = 500, useSessionFallback = true) {
   try {
     const [products, vendors] = await Promise.all([
@@ -120,7 +126,7 @@ async function fetchCatalogIndexSafely(first = 500, useSessionFallback = true) {
 export const catalogPreviewQueryOptions = () =>
   queryOptions({
     queryKey: ["supabase", "catalog-preview", CATALOG_INITIAL_PAGE_SIZE],
-    queryFn: () => fetchCatalogIndexSafely(CATALOG_INITIAL_PAGE_SIZE, false),
+    queryFn: fetchCatalogPreviewIndex,
     staleTime: CATALOG_STALE_TIME,
     retry: QUERY_RETRY_COUNT,
     retryDelay,
