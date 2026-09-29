@@ -8,16 +8,14 @@ import {
   ScriptOnce,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, type ReactNode } from "react";
 import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n";
 
 import { absoluteUrl } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
-import { CustomerAddressHub } from "@/components/customer-account/CustomerAddressHub";
-import { CustomerAccountProvider } from "@/components/customer-account/CustomerAccountProvider";
-import { CustomerAuthDialog } from "@/components/customer-auth/CustomerAuthDialog";
-import { CustomerAuthProvider } from "@/components/customer-auth/CustomerAuthProvider";
+import { CustomerAccountProvider, useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
+import { CustomerAuthProvider, useCustomerAuth } from "@/components/customer-auth/CustomerAuthProvider";
 import { DeferredToaster } from "@/components/DeferredToaster";
 import { useCartSync } from "@/hooks/useCartSync";
 import { usePersistedStoreHydration } from "@/hooks/usePersistedStoreHydration";
@@ -25,6 +23,7 @@ import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { buildContentSecurityPolicy } from "@/lib/contentSecurityPolicy";
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 
 const FONT_STYLESHEET_URL =
   "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap";
@@ -252,6 +251,36 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const LazyCustomerAuthDialog = lazy(() =>
+  importWithChunkRecovery("customer-auth-dialog", () =>
+    import("@/components/customer-auth/CustomerAuthDialog").then(({ CustomerAuthDialog }) => ({
+      default: CustomerAuthDialog,
+    })),
+  ),
+);
+
+const LazyCustomerAddressHub = lazy(() =>
+  importWithChunkRecovery("customer-address-hub", () =>
+    import("@/components/customer-account/CustomerAddressHub").then(({ CustomerAddressHub }) => ({
+      default: CustomerAddressHub,
+    })),
+  ),
+);
+
+function DeferredCustomerOverlays() {
+  const { authOpen } = useCustomerAuth();
+  const { addressBookOpen } = useCustomerAccount();
+
+  if (!authOpen && !addressBookOpen) return null;
+
+  return (
+    <Suspense fallback={null}>
+      {authOpen ? <LazyCustomerAuthDialog /> : null}
+      {addressBookOpen ? <LazyCustomerAddressHub /> : null}
+    </Suspense>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   usePersistedStoreHydration();
@@ -263,8 +292,7 @@ function RootComponent() {
         <CustomerAccountProvider>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
-          <CustomerAuthDialog />
-          <CustomerAddressHub />
+          <DeferredCustomerOverlays />
         </CustomerAccountProvider>
       </CustomerAuthProvider>
       <DeferredToaster />
