@@ -245,7 +245,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
     }
 
     const confirmed = window.confirm(
-      "Generate lightweight 480px WebP thumbnails for the next 24 active product images still missing them? Original product images stay unchanged.",
+      "Generate lightweight 480px WebP thumbnails for all active primary product images still missing them? Processing stays sequential and original product images remain unchanged.",
     );
     if (!confirmed) return;
 
@@ -254,7 +254,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
     setThumbnailResult(null);
 
     try {
-      const result = await backfillStorefrontProductThumbnails(24, setThumbnailProgress);
+      const result = await backfillStorefrontProductThumbnails(250, setThumbnailProgress);
       setThumbnailResult(result);
 
       if (result.processed) {
@@ -381,7 +381,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                 ) : (
                   <WandSparkles className="size-3.5" />
                 )}
-                {thumbnailBackfilling ? "Generating…" : "Generate next 24 thumbnails"}
+                {thumbnailBackfilling ? "Generating…" : "Generate all missing thumbnails"}
               </button>
             </div>
 
