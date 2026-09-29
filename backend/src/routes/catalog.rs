@@ -11,7 +11,7 @@ use crate::state::AppState;
 
 const DEFAULT_LIMIT: i64 = 24;
 const MAX_LIMIT: i64 = 100;
-const PUBLIC_PRODUCT_SELECT: &str = "id,title,title_ar,handle,description,description_ar,brand_id,category_id,product_type,currency,base_price,compare_at_price,stock_quantity,track_inventory,allow_backorder,featured,best_seller,specifications";
+const PUBLIC_PRODUCT_SELECT: &str = "id,title,description,description_html,handle,brand_id,category_id,product_type,specifications,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order";
 
 #[derive(Debug, Deserialize)]
 pub struct ProductListQuery {
@@ -22,22 +22,26 @@ pub struct ProductListQuery {
 pub struct PublicProduct {
     id: String,
     title: String,
-    title_ar: Option<String>,
-    handle: String,
     description: String,
-    description_ar: Option<String>,
+    description_html: Option<String>,
+    handle: String,
     brand_id: Option<String>,
     category_id: Option<String>,
     product_type: Option<String>,
-    currency: String,
+    specifications: serde_json::Value,
+    created_at: String,
+    updated_at: String,
+    seo_title: Option<String>,
+    seo_description: Option<String>,
+    tags: Vec<String>,
     base_price: serde_json::Value,
     compare_at_price: Option<serde_json::Value>,
-    stock_quantity: i32,
+    currency: String,
     track_inventory: bool,
     allow_backorder: bool,
-    featured: bool,
+    stock_quantity: i32,
     best_seller: bool,
-    specifications: serde_json::Value,
+    sort_order: i32,
 }
 
 pub async fn list_products(
@@ -64,25 +68,29 @@ async fn query_postgres(
         SELECT
             id::text AS id,
             title,
-            title_ar,
-            handle,
             description,
-            description_ar,
+            description_html,
+            handle,
             brand_id::text AS brand_id,
             category_id::text AS category_id,
             product_type,
-            currency,
+            specifications,
+            created_at::text AS created_at,
+            updated_at::text AS updated_at,
+            seo_title,
+            seo_description,
+            tags,
             to_jsonb(base_price) AS base_price,
             CASE
                 WHEN compare_at_price IS NULL THEN NULL
                 ELSE to_jsonb(compare_at_price)
             END AS compare_at_price,
-            stock_quantity,
+            currency,
             track_inventory,
             allow_backorder,
-            featured,
+            stock_quantity,
             best_seller,
-            specifications
+            sort_order
         FROM public.store_products
         WHERE status = 'active'
           AND (published_at IS NULL OR published_at <= now())
