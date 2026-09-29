@@ -159,3 +159,18 @@ Fixes:
 - public-cms v16 returns a complete CmsHeroSlide-compatible critical payload
 Keep all category consistency, mobile performance, and Rust catalog improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Direct PostgREST hero performance republish request: 2026-09-29T12:26:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: dccfaa1f4b84269ac1dd001efce04873c3cd0921 or newer.
+Fixes:
+- critical homepage hero now reads directly from Supabase PostgREST instead of Edge Function
+- anon access is limited by RLS to active published hero rows and explicit presentation columns only
+- full CMS snapshot no longer blocks first hero SSR
+- first HTML renders the actual hero and emits its preload
+- full CMS hero slider replaces the critical first slide after CMS hydration so multi-slide behavior remains intact
+- logo hero placeholder remains removed
+Supabase migration: public_active_hero_read_path
+Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
