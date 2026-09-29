@@ -53,7 +53,7 @@ test("CSP uses a per-request nonce and removes script unsafe-inline", () => {
   assert.match(root, /buildContentSecurityPolicy\(nonce\)/);
   assert.match(root, /<ScriptOnce>\{THEME_INIT_SCRIPT\}<\/ScriptOnce>/);
   assert.match(root, /<ScriptOnce>\{LANGUAGE_INIT_SCRIPT\}<\/ScriptOnce>/);
-  assert.match(root, /<ScriptOnce>\{HOME_HERO_DISCOVERY_SCRIPT\}<\/ScriptOnce>/);
+  assert.doesNotMatch(root, /HOME_HERO_DISCOVERY_SCRIPT/);
   assert.match(root, /<ScriptOnce>\{FONT_LOAD_SCRIPT\}<\/ScriptOnce>/);
   assert.doesNotMatch(root, /dangerouslySetInnerHTML/);
 
