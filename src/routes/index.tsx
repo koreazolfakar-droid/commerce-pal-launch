@@ -666,7 +666,11 @@ function Index() {
       order: orderOf("hero", 10),
       section: coreSection("hero"),
       visible: isLive(coreSection("hero")),
-      node: <HomeHero cmsHeroSlides={loaderHeroSlides} />,
+      node: (
+        <HomeHero
+          cmsHeroSlides={cms.heroSlides.length ? cms.heroSlides : loaderHeroSlides}
+        />
+      ),
     },
     {
       key: "categories",
