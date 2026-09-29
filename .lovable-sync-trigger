@@ -145,3 +145,17 @@ Fixes:
 Expected visual sequence: real hero immediately; never logo-placeholder -> hero.
 Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Critical hero recovery republish request: 2026-09-29T12:12:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: bc993bed0cc9cad4d849da500a3efc8863287bdd or newer.
+Fixes:
+- critical homepage hero is fetched independently through public-cms?scope=hero
+- critical hero fetch does not depend on the full CMS snapshot or publishable apikey header
+- homepage loader merges criticalHero with full CMS hero slides
+- actual hero image drives preload and first SSR render even when full CMS snapshot is empty
+- large logo hero placeholder remains removed
+- public-cms v16 returns a complete CmsHeroSlide-compatible critical payload
+Keep all category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
