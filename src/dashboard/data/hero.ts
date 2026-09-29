@@ -153,6 +153,15 @@ export async function ensureDashboardHeroSessionReady() {
   await requireFreshHeroWriteVerification();
 }
 
+async function syncStorefrontCriticalHero() {
+  const { error } = await supabase.functions.invoke("sync-current-hero", {
+    body: {},
+  });
+  if (error) {
+    console.warn("Hero saved, but critical storefront hero sync failed.", error);
+  }
+}
+
 function cleanText(value: string) {
   const trimmed = value.trim();
   return trimmed || null;
@@ -262,6 +271,7 @@ export async function createDashboardHeroSlide(
   await requireFreshHeroWriteVerification();
   const { data, error } = await supabase.rpc("create_cms_hero_slide_v3", rpcArgs(heroRpcPayload(input)));
   throwIfError(error, "Creating hero slide failed");
+  await syncStorefrontCriticalHero();
   return data ? mapHero(data as HeroRow) : null;
 }
 
@@ -276,6 +286,7 @@ export async function updateDashboardHeroSlide(
     ...heroRpcPayload(input),
   }));
   throwIfError(error, "Updating hero slide failed");
+  await syncStorefrontCriticalHero();
   return data ? mapHero(data as HeroRow) : null;
 }
 
@@ -284,6 +295,7 @@ export async function deleteDashboardHeroSlide(id: string): Promise<void> {
   await requireFreshHeroWriteVerification();
   const { error } = await supabase.rpc("delete_cms_hero_slide", rpcArgs({ p_slide_id: id }));
   throwIfError(error, "Deleting hero slide failed");
+  await syncStorefrontCriticalHero();
 }
 
 export async function reorderDashboardHeroSlides(
@@ -295,6 +307,7 @@ export async function reorderDashboardHeroSlides(
     p_items: slides.map((slide) => ({ id: slide.id, sort_order: slide.sortOrder })),
   }));
   throwIfError(error, "Reordering hero slides failed");
+  await syncStorefrontCriticalHero();
 }
 
 export async function listDashboardHeroLinkOptions(): Promise<{
