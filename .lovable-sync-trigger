@@ -41,3 +41,14 @@ Required runtime snapshot: the merge commit containing branch security/session-c
 Includes: tab-scoped production Supabase auth storage, legacy localStorage cleanup, shared URL allowlist, restored automatic security CI.
 Do not deploy the separate "Deploy. Done." Lovable project.
 Runtime behavior changed by this marker: none; marker exists only to force the correct connected deployment to sync after merge.
+
+
+Storefront SSR recovery republish request: 2026-09-29T07:13:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after fixing /shop SSR failure.
+Required runtime snapshot: d798ea0e69f5814beec1d9e9b66b4d56f6994898 or newer.
+Includes:
+- canonical public Supabase project guard for storefront SSR
+- resilient category spec_template schema-drift fallback
+- Rust-first catalog integration already present on main
+Do not deploy the separate "Deploy. Done." Lovable project.
+Runtime behavior changed by this marker: none; marker exists only to force the correct connected deployment to sync after merge.
