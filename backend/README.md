@@ -17,6 +17,7 @@ Only infrastructure is included in this first step:
 - panic-to-500 middleware
 - protected identity endpoint: `GET /api/me`
 - Supabase access-token verification through the Auth server
+- first read-only catalog endpoint: `GET /api/catalog/products`
 
 No storefront, checkout, order, inventory, RLS, or dashboard behavior is moved to Rust yet. The new auth endpoint only verifies an existing Supabase session; it does not replace the current frontend authentication flow.
 
@@ -58,6 +59,12 @@ Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the server environment. The
 
 This deliberately avoids copying the legacy JWT shared secret into the Rust service. When the project uses asymmetric signing keys end-to-end, local JWKS verification can replace the network verification path with a short bounded key cache.
 
+## Read-only catalog contract
+
+`GET /api/catalog/products` reads directly from PostgreSQL but deliberately exposes only storefront-safe fields. Because a direct server database connection does not inherit the browser's `anon` RLS context, the query explicitly mirrors the current public product visibility rule: `status = 'active'` and `published_at` is null or not in the future. Internal fields such as average cost, barcode, SKU, SEO administration fields, and audit data are not returned.
+
+The optional `limit` query parameter defaults to 24 and is clamped to 1–100.
+
 ## Next step
 
-Verify `/api/me` end-to-end against a real signed-in Space Call session in the deployment environment. Only after that should a first read-only business endpoint move behind Rust. Order and inventory writes remain on the existing path until authentication and authorization are proven end-to-end.
+Verify `/api/me` and `/api/catalog/products` end-to-end in a real backend runtime. Do not route the storefront to Rust yet. After runtime validation, compare Rust catalog responses against the current storefront data contract before switching one read path behind a reversible feature flag. Order and inventory writes remain on the existing path.
