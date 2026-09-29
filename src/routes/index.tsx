@@ -787,6 +787,9 @@ function Index() {
   return (
     <StoreLayout>
       <div className="home-page">
+        <h1 className="sr-only">
+          {language === "ar" ? "سبيس كول | متجر إلكترونيات في لبنان" : "Space Call | Electronics Store in Lebanon"}
+        </h1>
         {orderedBlocks.map((block) => (
           <div key={block.key} className={cmsSectionDeviceClass(block.section)}>
             {block.node}
