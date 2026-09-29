@@ -214,3 +214,19 @@ Fixes:
 - hero fetch remains parallel with SSR, cached 10s, and capped to 50ms post-SSR wait
 Keep all previous category, mobile performance, and Rust catalog improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Stable first-paint hero republish request: 2026-09-29T13:18:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 36dc51238ac615fdce8206537a8e45c4632a4b89 or newer.
+Final hero architecture:
+- homepage first HTML renders fixed Storage aliases hero/current-mobile and hero/current-desktop directly
+- homepage head preloads those aliases with mobile/desktop media queries
+- no route-loader, server-injection, Edge Function, Rust, or PostgREST request is required before first hero pixels
+- mobile header logo uses low fetch priority
+- full CMS hero slider still replaces the stable first-paint image after CMS hydration
+- authenticated sync-current-hero Edge Function refreshes stable aliases after dashboard create/update/delete/reorder
+- temporary seed-current-hero endpoint is disabled and JWT-protected
+- direct anon cms_hero_slides access restored to gateway-only security model
+Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
