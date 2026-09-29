@@ -179,6 +179,7 @@ export type ProductThumbnailBackfillProgress = {
 export type ProductThumbnailBackfillResult = {
   processed: number;
   skipped: number;
+  remaining: number;
   failed: Array<{ imageId: string; error: string }>;
   sourceBytes: number;
   thumbnailBytes: number;
@@ -191,43 +192,44 @@ export async function backfillStorefrontProductThumbnails(
   await requireDashboardAdmin();
 
   const safeLimit = Math.min(48, Math.max(1, Math.trunc(limit)));
-  const { data: products, error: productError } = await supabase
-    .from("store_products")
-    .select("id,title")
-    .eq("status", "active")
-    .order("sort_order", { ascending: true })
+  const { data: imageRows, error: imageError } = await supabase
+    .from("store_product_images")
+    .select("id,product_id,url,thumbnail_url,is_primary,sort_order,created_at")
+    .eq("is_primary", true)
+    .is("thumbnail_url", null)
     .order("created_at", { ascending: false })
-    .limit(safeLimit);
-  throwIfError(productError, "Loading active products for thumbnail backfill failed");
+    .limit(500);
+  throwIfError(imageError, "Loading missing primary product thumbnails failed");
 
-  const productRows = products ?? [];
-  const productIds = productRows.map((row) => row.id);
+  const candidateRows = (imageRows ?? []).filter((row) => Boolean(row.url));
+  const productIds = [...new Set(candidateRows.map((row) => row.product_id))];
+
   if (!productIds.length) {
     return {
       processed: 0,
       skipped: 0,
+      remaining: 0,
       failed: [],
       sourceBytes: 0,
       thumbnailBytes: 0,
     };
   }
 
+  const { data: products, error: productError } = await supabase
+    .from("store_products")
+    .select("id,title")
+    .in("id", productIds)
+    .eq("status", "active");
+  throwIfError(productError, "Loading active products for thumbnail backfill failed");
+
   const productNames = new Map(
-    productRows.map((row) => [row.id, row.title || "Product"]),
+    (products ?? []).map((row) => [row.id, row.title || "Product"]),
   );
-
-  const { data: imageRows, error: imageError } = await supabase
-    .from("store_product_images")
-    .select("id,product_id,url,thumbnail_url,is_primary")
-    .in("product_id", productIds)
-    .eq("is_primary", true)
-    .order("sort_order", { ascending: true });
-  throwIfError(imageError, "Loading primary product images for thumbnail backfill failed");
-
-  const pending = (imageRows ?? []).filter((row) => !row.thumbnail_url && Boolean(row.url));
+  const eligibleRows = candidateRows.filter((row) => productNames.has(row.product_id));
+  const pending = eligibleRows.slice(0, safeLimit);
   const total = pending.length;
   let processed = 0;
-  const skipped = (imageRows ?? []).length - pending.length;
+  const skipped = candidateRows.length - eligibleRows.length;
   let sourceBytes = 0;
   let thumbnailBytes = 0;
   const failed: Array<{ imageId: string; error: string }> = [];
@@ -313,6 +315,7 @@ export async function backfillStorefrontProductThumbnails(
   return {
     processed,
     skipped,
+    remaining: Math.max(0, eligibleRows.length - processed),
     failed,
     sourceBytes,
     thumbnailBytes,
