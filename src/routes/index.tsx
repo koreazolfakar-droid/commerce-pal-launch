@@ -161,7 +161,6 @@ export const Route = createFileRoute("/")({
           as: "image" as const,
           href: CRITICAL_HERO_MOBILE_URL,
           media: "(max-width: 639px)",
-          fetchPriority: "high" as const,
         },
         {
           rel: "preload" as const,
