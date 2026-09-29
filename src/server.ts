@@ -5,6 +5,7 @@ import { isClientDisconnectError } from "./lib/client-disconnect";
 import { renderErrorPage } from "./lib/error-page";
 import { buildContentSecurityPolicy } from "./lib/contentSecurityPolicy";
 import { consumeSharedMutationRateLimit } from "./security/mutation-rate-limit.server";
+import { getPublicSupabaseConfig } from "./integrations/supabase/publicClient";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -46,8 +47,7 @@ function safeCmsMediaUrl(value: unknown): string | null {
 }
 
 async function fetchCriticalHeroForDocument(): Promise<CriticalHero | null> {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const { url: supabaseUrl, key: publishableKey } = getPublicSupabaseConfig();
   if (!supabaseUrl || !publishableKey) return null;
 
   try {
