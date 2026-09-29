@@ -86,7 +86,7 @@ export function MobileTopBar({
               width={54}
               height={40}
               loading="eager"
-              fetchPriority="high"
+              fetchPriority="low"
               decoding="async"
               className="h-9 w-auto max-w-[3.4rem] shrink-0 object-contain sm:h-10 sm:max-w-[3.8rem]"
             />
