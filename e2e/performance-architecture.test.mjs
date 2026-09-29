@@ -162,10 +162,8 @@ test("shop bounds initial SSR catalog work and progressively renders the full ca
 
   assert.match(queries, /CATALOG_INITIAL_PAGE_SIZE\s*=\s*24/);
   assert.match(queries, /catalogPreviewQueryOptions/);
-  assert.match(
-    queries,
-    /queryFn:\s*\(\) => fetchCatalogIndexSafely\(CATALOG_INITIAL_PAGE_SIZE, false\)/,
-  );
+  assert.match(queries, /queryFn:\s*fetchCatalogPreviewIndex/);
+  assert.match(queries, /fetchCatalogPreviewProducts\(CATALOG_INITIAL_PAGE_SIZE\)/);
 
   const loaderStart = shop.indexOf("loader: async");
   const loaderEnd = shop.indexOf("head:", loaderStart);
@@ -179,6 +177,16 @@ test("shop bounds initial SSR catalog work and progressively renders the full ca
   assert.match(catalogView, /CATALOG_RENDER_PAGE_SIZE\s*=\s*24/);
   assert.match(catalogView, /products=\{visibleProducts\}/);
   assert.match(catalogView, /loadMoreProducts/);
+
+  const nativeStore = await read("src/lib/nativeStore.ts");
+  assert.match(nativeStore, /\/api\/catalog\/cards\?limit=/);
+  assert.match(nativeStore, /fetchRustCatalogCards/);
+  assert.match(nativeStore, /buildPreviewProduct/);
+  const previewStart = nativeStore.indexOf("export async function fetchCatalogPreviewProducts");
+  const previewEnd = nativeStore.indexOf("export async function fetchCatalogProducts", previewStart);
+  assert.ok(previewStart >= 0 && previewEnd > previewStart);
+  const previewSource = nativeStore.slice(previewStart, previewEnd);
+  assert.doesNotMatch(previewSource, /hydrateProductRows\(/);
 
   const mobileCategoryRail = await read("src/components/MobileCategoryRail.tsx");
   assert.match(mobileCategoryRail, /navigationCatalogQueryOptions/);
