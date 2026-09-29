@@ -68,6 +68,7 @@ type StorefrontCollectionLinkRow = Pick<
   "collection_id" | "product_id" | "sort_order"
 >;
 type StorefrontBrandRow = Pick<BrandRow, "id" | "name" | "slug">;
+type StorefrontBrandUsageRow = Pick<ProductRow, "brand_id">;
 type StorefrontCategoryRow = Pick<CategoryRow, "id" | "spec_template">;
 type NavigationProductRow = Pick<
   ProductRow,
@@ -86,6 +87,8 @@ const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
 const STOREFRONT_CATEGORY_SELECT = "id,spec_template" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
   "id,title,handle,brand_id,product_type,tags" as const;
+const RUST_CATALOG_BASE_URL = "https://space-call-rust-backend-production.up.railway.app";
+const RUST_CATALOG_TIMEOUT_MS = 1_800;
 
 type NativeProduct = {
   product: StoreProduct;
@@ -550,9 +553,64 @@ function publicProducts(snapshot: NativeSnapshot) {
   return snapshot.products.map((entry) => entry.product);
 }
 
+function isRustCatalogRow(value: unknown): value is StorefrontProductRow {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.title === "string" &&
+    typeof row.description === "string" &&
+    typeof row.handle === "string" &&
+    typeof row.currency === "string" &&
+    typeof row.stock_quantity === "number" &&
+    typeof row.track_inventory === "boolean" &&
+    typeof row.allow_backorder === "boolean" &&
+    typeof row.best_seller === "boolean" &&
+    typeof row.created_at === "string" &&
+    typeof row.updated_at === "string" &&
+    typeof row.sort_order === "number" &&
+    Array.isArray(row.tags)
+  );
+}
+
+async function fetchRustCatalogRows(first: number): Promise<StorefrontProductRow[]> {
+  const limit = Math.min(500, Math.max(1, Math.trunc(first)));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), RUST_CATALOG_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${RUST_CATALOG_BASE_URL}/api/catalog/products?limit=${limit}`, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Rust catalog returned HTTP ${response.status}`);
+    }
+
+    const payload: unknown = await response.json();
+    if (!Array.isArray(payload) || !payload.every(isRustCatalogRow)) {
+      throw new Error("Rust catalog returned an incompatible product contract");
+    }
+
+    return payload;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function fetchCatalogProducts(first = 500): Promise<StoreProduct[]> {
-  const products = publicProducts(await loadSnapshot());
-  return products.slice(0, Math.max(0, first));
+  if (first <= 0) return [];
+
+  try {
+    const rows = await fetchRustCatalogRows(first);
+    return hydrateProductRows(rows);
+  } catch (error) {
+    console.warn("Rust catalog read failed; falling back to Supabase.", error);
+    const products = publicProducts(await loadSnapshot());
+    return products.slice(0, Math.max(0, first));
+  }
 }
 
 export async function fetchHomepageProducts(first = 48): Promise<StoreProduct[]> {
@@ -569,13 +627,26 @@ export async function fetchHomepageProducts(first = 48): Promise<StoreProduct[]>
 }
 
 export async function fetchBrandVendors(): Promise<string[]> {
-  const snapshot = await loadSnapshot();
-  const used = new Set(
-    snapshot.products
-      .map((entry) => entry.product.node.vendor?.trim())
-      .filter((value): value is string => Boolean(value)),
+  const [brandResult, productResult] = await Promise.all([
+    publicSupabase
+      .from("cms_brands")
+      .select(STOREFRONT_BRAND_SELECT)
+      .eq("is_visible", true)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_products")
+      .select("brand_id")
+      .eq("status", "active")
+      .not("brand_id", "is", null),
+  ]);
+
+  const brands = assertResult(brandResult, "catalog brands");
+  const productRows = assertResult(productResult, "catalog brand usage") as StorefrontBrandUsageRow[];
+  const usedBrandIds = new Set(
+    productRows.map((row) => row.brand_id).filter((id): id is string => Boolean(id)),
   );
-  return snapshot.brands.map((brand) => brand.name).filter((name) => used.has(name));
+
+  return brands.filter((brand) => usedBrandIds.has(brand.id)).map((brand) => brand.name);
 }
 
 /**
