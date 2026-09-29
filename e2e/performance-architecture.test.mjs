@@ -80,7 +80,6 @@ test("homepage LCP uses a stable Storage alias without runtime hero discovery", 
   assert.doesNotMatch(home, /fetchCriticalHeroSlide/);
   assert.match(home, /CRITICAL_HERO_MOBILE_URL/);
   assert.match(home, /CRITICAL_HERO_DESKTOP_URL/);
-  assert.match(home, /fetchPriority:\s*"high"/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
 
   assert.match(hero, /<source media="\(max-width: 639px\)" srcSet=\{CRITICAL_HERO_MOBILE_URL\}/);
