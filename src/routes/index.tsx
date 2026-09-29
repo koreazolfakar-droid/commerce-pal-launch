@@ -9,7 +9,7 @@ import { HomeHero } from "@/components/HomeHero";
 import { DeferredTopBrands } from "@/components/DeferredTopBrands";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
-import { cmsSeoPage, cmsText, localizeSection, type CmsSection } from "@/lib/cms";
+import { cmsSeoPage, cmsText, fetchCriticalHeroSlide, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import {
@@ -134,14 +134,21 @@ export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
     // The CMS hero is the storefront's only visual hero source. Keep legacy
     // merchandising reads out of the SSR/LCP critical path.
-    const cms = await context.queryClient.ensureQueryData(cmsQueryOptions());
-    const firstCmsHero = cms.heroSlides[0];
+    const [cms, criticalHero] = await Promise.all([
+      context.queryClient.ensureQueryData(cmsQueryOptions()),
+      fetchCriticalHeroSlide(),
+    ]);
+    const firstCmsHero = criticalHero ?? cms.heroSlides[0];
+    const heroSlides = criticalHero
+      ? [criticalHero, ...cms.heroSlides.filter((slide) => slide.id !== criticalHero.id)]
+      : cms.heroSlides;
     const desktopHeroPreload = firstCmsHero?.image_url?.trim() || undefined;
     const mobileHeroPreload =
       firstCmsHero?.mobile_image_url?.trim() || desktopHeroPreload;
 
     return {
       cms,
+      heroSlides,
       heroPreload:
         desktopHeroPreload && mobileHeroPreload
           ? { desktop: desktopHeroPreload, mobile: mobileHeroPreload }
@@ -552,7 +559,7 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
 function Index() {
   const { t, language } = useLanguage();
   const deferredWorkReady = useDeferredHomepageWork();
-  const { cms: loaderCms } = Route.useLoaderData();
+  const { cms: loaderCms, heroSlides: loaderHeroSlides } = Route.useLoaderData();
   const { data: cms = loaderCms } = useQuery({
     ...cmsQueryOptions(),
     initialData: loaderCms,
@@ -677,7 +684,7 @@ function Index() {
       order: orderOf("hero", 10),
       section: coreSection("hero"),
       visible: isLive(coreSection("hero")),
-      node: <HomeHero cmsHeroSlides={cms.heroSlides} />,
+      node: <HomeHero cmsHeroSlides={loaderHeroSlides} />,
     },
     {
       key: "categories",
