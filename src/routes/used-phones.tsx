@@ -85,7 +85,7 @@ function UsedPhonesPage() {
               >
                 {heroProduct?.node.images.edges[0]?.node.url ? (
                   <img
-                    src={cdnImage(heroProduct.node.images.edges[0].node.url, 240)}
+                    src={cdnImage(heroProduct.node.images.edges[0].node.thumbnailUrl ?? heroProduct.node.images.edges[0].node.url, 240)}
                     alt=""
                     className="h-full w-full object-contain"
                     width="240"
