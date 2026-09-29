@@ -57,7 +57,7 @@ type StorefrontVariantRow = Pick<
 >;
 type StorefrontImageRow = Pick<
   ImageRow,
-  "product_id" | "url" | "alt_text" | "is_primary" | "sort_order"
+  "product_id" | "url" | "thumbnail_url" | "alt_text" | "is_primary" | "sort_order"
 >;
 type StorefrontCollectionRow = Pick<
   CollectionRow,
@@ -100,6 +100,7 @@ type RustCatalogCardVariant = {
 
 type RustCatalogCardImage = {
   url: string;
+  thumbnail_url: string | null;
   alt_text: string | null;
   is_primary: boolean;
   sort_order: number;
@@ -129,7 +130,7 @@ const STOREFRONT_PRODUCT_SELECT =
   "id,title,description,description_html,handle,brand_id,category_id,product_type,specifications,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
-const STOREFRONT_IMAGE_SELECT = "product_id,url,alt_text,is_primary,sort_order" as const;
+const STOREFRONT_IMAGE_SELECT = "product_id,url,thumbnail_url,alt_text,is_primary,sort_order" as const;
 const STOREFRONT_COLLECTION_SELECT =
   "id,handle,title,description,image_url,seo_title,seo_description" as const;
 const STOREFRONT_COLLECTION_LINK_SELECT = "collection_id,product_id,sort_order" as const;
@@ -389,7 +390,11 @@ function buildProduct(
         minCompare == null ? undefined : { minVariantPrice: money(minCompare, row.currency) },
       images: {
         edges: sortedImages.map((image) => ({
-          node: { url: image.url, altText: image.alt_text },
+          node: {
+            url: image.url,
+            ...(image.thumbnail_url ? { thumbnailUrl: image.thumbnail_url } : {}),
+            altText: image.alt_text,
+          },
         })),
       },
       collections: {
@@ -791,7 +796,11 @@ function buildPreviewProduct(row: RustCatalogCardRow): StoreProduct {
           : { minVariantPrice: money(minCompare, row.currency) },
       images: {
         edges: images.map((image) => ({
-          node: { url: image.url, altText: image.alt_text },
+          node: {
+            url: image.url,
+            ...(image.thumbnail_url ? { thumbnailUrl: image.thumbnail_url } : {}),
+            altText: image.alt_text,
+          },
         })),
       },
       collections: { edges: [] },
