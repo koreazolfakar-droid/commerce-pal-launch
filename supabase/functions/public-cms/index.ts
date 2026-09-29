@@ -48,6 +48,43 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const nowIso = new Date().toISOString();
+  const scope = new URL(req.url).searchParams.get("scope");
+
+  if (scope === "hero") {
+    const heroResult = await db
+      .from("cms_hero_slides")
+      .select("id,image_url,mobile_image_url,sort_order")
+      .eq("is_published", true)
+      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+      .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
+      .order("sort_order")
+      .limit(1)
+      .maybeSingle();
+
+    if (heroResult.error) {
+      console.error("public-cms hero query failed", heroResult.error.message);
+      return new Response(JSON.stringify({ error: "cms_hero_query_failed" }), {
+        status: 500,
+        headers: headers(req),
+      });
+    }
+
+    const hero =
+      heroResult.data &&
+      typeof heroResult.data.image_url === "string" &&
+      heroResult.data.image_url.trim()
+        ? {
+            id: heroResult.data.id,
+            image_url: heroResult.data.image_url,
+            mobile_image_url: heroResult.data.mobile_image_url ?? null,
+          }
+        : null;
+
+    return new Response(JSON.stringify({ hero }), {
+      status: 200,
+      headers: headers(req),
+    });
+  }
 
   // Use select("*") for the localized content tables so this function stays
   // deploy-safe both immediately before and after the bilingual migration runs.
