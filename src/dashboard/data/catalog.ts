@@ -1505,7 +1505,7 @@ async function uploadProductImageFile(
   };
 }
 
-async function removeOwnedProductImageFile(url: string) {
+async function removeOwnedProductImageFile(url?: string) {
   const objectPath = productStoragePathFromUrl(url);
   if (!objectPath) return;
   const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([objectPath]);
