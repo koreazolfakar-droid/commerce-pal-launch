@@ -209,29 +209,31 @@ test("homepage hero preload remains non-blocking and route-driven", async () => 
 });
 
 
-test("homepage discovers the LCP hero before React hydration without blocking SSR", async () => {
-  const [root, hero, publicCms] = await Promise.all([
-    read("src/routes/__root.tsx"),
+test("homepage renders the real CMS hero in the first HTML without a logo placeholder", async () => {
+  const [home, hero, root] = await Promise.all([
+    read("src/routes/index.tsx"),
     read("src/components/HomeHero.tsx"),
-    read("supabase/functions/public-cms/index.ts"),
+    read("src/routes/__root.tsx"),
   ]);
 
-  assert.match(root, /HOME_HERO_DISCOVERY_SCRIPT/);
-  assert.match(root, /public-cms\?scope=hero/);
-  assert.match(root, /data-space-call-hero-preload/);
-  assert.match(root, /fetchPriority = "high"/);
-  assert.match(root, /spacecall:hero-discovered/);
-  assert.match(root, /<ScriptOnce>\{HOME_HERO_DISCOVERY_SCRIPT\}<\/ScriptOnce>/);
+  const loaderStart = home.indexOf("loader: async");
+  const loaderEnd = home.indexOf("head:", loaderStart);
+  assert.ok(loaderStart >= 0 && loaderEnd > loaderStart);
+  const loaderSource = home.slice(loaderStart, loaderEnd);
 
-  assert.match(hero, /__SPACE_CALL_EARLY_HERO__/);
-  assert.match(hero, /early-cms/);
-  assert.match(hero, /spacecall:hero-discovered/);
-  assert.match(hero, /earlyHeroSlide/);
+  assert.match(loaderSource, /const cms = await context\.queryClient\.ensureQueryData\(cmsQueryOptions\(\)\)/);
+  assert.match(loaderSource, /return \{[\s\S]*?cms,[\s\S]*?heroPreload:/);
+  assert.match(home, /const \{ cms: loaderCms \} = Route\.useLoaderData\(\)/);
+  assert.match(home, /initialData: loaderCms/);
+  assert.match(home, /<HomeHero cmsHeroSlides=\{cms\.heroSlides\}/);
 
-  assert.match(publicCms, /scope === "hero"/);
-  assert.match(publicCms, /\.limit\(1\)/);
-  assert.match(publicCms, /Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300"/);
-  assert.doesNotMatch(publicCms, /Cache-Control": "no-store/);
+  assert.doesNotMatch(hero, /<img src="\/logo\.svg"/);
+  assert.doesNotMatch(hero, /__SPACE_CALL_EARLY_HERO__/);
+  assert.doesNotMatch(hero, /early-cms|earlyHeroSlide|spacecall:hero-discovered/);
+  assert.match(hero, /data-hero-source=\{heroSource\}/);
+
+  assert.doesNotMatch(root, /HOME_HERO_DISCOVERY_SCRIPT/);
+  assert.doesNotMatch(root, /public-cms\?scope=hero/);
 });
 
 
