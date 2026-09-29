@@ -30,10 +30,14 @@ test("storefront CMS query refreshes safely without pinning stale dashboard cont
 });
 
 
-test("public CMS edge caches public reads and exposes a tiny hero-only discovery path", () => {
+test("public CMS edge caches public reads while the homepage hero uses direct PostgREST", () => {
   assert.match(publicCmsEdge, /Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300"/);
   assert.doesNotMatch(publicCmsEdge, /Cache-Control": "no-store/);
   assert.match(publicCmsEdge, /scope === "hero"/);
-  assert.match(publicCmsEdge, /select\("id,image_url,mobile_image_url,sort_order"\)/);
   assert.match(publicCmsEdge, /\.limit\(1\)/);
+
+  assert.match(cmsData, /\/rest\/v1\/cms_hero_slides/);
+  assert.match(cmsData, /endpoint\.searchParams\.set\("limit", "1"\)/);
+  assert.match(cmsData, /apikey: key/);
+  assert.match(cmsData, /controller\.abort\(\), 1_500/);
 });
