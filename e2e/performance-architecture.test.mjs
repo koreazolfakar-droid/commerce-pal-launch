@@ -68,25 +68,28 @@ test("root warms the primary storefront backend connection", async () => {
   assert.doesNotMatch(root, /preconnect"[\s\S]*?cdn\.shopify\.com/);
 });
 
-test("homepage LCP uses CMS data without legacy hero work on the critical path", async () => {
-  const [home, heroScene] = await Promise.all([
+test("homepage LCP uses a stable Storage alias without runtime hero discovery", async () => {
+  const [home, hero, heroScene, criticalHero] = await Promise.all([
     read("src/routes/index.tsx"),
+    read("src/components/HomeHero.tsx"),
     read("src/components/HeroScene.tsx"),
+    read("src/lib/criticalHero.ts"),
   ]);
 
-  const loaderStart = home.indexOf("loader: async");
-  const loaderEnd = home.indexOf("head:", loaderStart);
-  assert.ok(loaderStart >= 0 && loaderEnd > loaderStart);
-  const loaderSource = home.slice(loaderStart, loaderEnd);
+  assert.doesNotMatch(home, /loader:\s*async/);
+  assert.doesNotMatch(home, /fetchCriticalHeroSlide/);
+  assert.match(home, /CRITICAL_HERO_MOBILE_URL/);
+  assert.match(home, /CRITICAL_HERO_DESKTOP_URL/);
+  assert.match(home, /fetchPriority:\s*"high"/);
+  assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
 
-  assert.match(loaderSource, /fetchCriticalHeroSlide\(\)/);
-  assert.doesNotMatch(loaderSource, /ensureQueryData\(cmsQueryOptions\(\)\)/);
-  assert.doesNotMatch(loaderSource, /HOME_HERO_COLLECTION_HANDLE|collectionQueryOptions/);
-  assert.match(
-    home,
-    /\.\.\.collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\),\s*enabled:\s*deferredWorkReady/s,
-  );
-  assert.match(heroScene, /loading="eager"/);
+  assert.match(hero, /<source media="\(max-width: 639px\)" srcSet=\{CRITICAL_HERO_MOBILE_URL\}/);
+  assert.match(hero, /src=\{CRITICAL_HERO_DESKTOP_URL\}/);
+  assert.match(hero, /loading="eager"/);
+  assert.match(hero, /fetchPriority="high"/);
+
+  assert.match(criticalHero, /hero\/current-desktop/);
+  assert.match(criticalHero, /hero\/current-mobile/);
   assert.match(heroScene, /fetchPriority=\{priority \? "high" : "auto"\}/);
 });
 
@@ -195,48 +198,42 @@ test("shop bounds initial SSR catalog work and progressively renders the full ca
 });
 
 
-test("homepage hero preload remains non-blocking and route-driven", async () => {
+test("homepage hero preload is static, immediate and route-driven", async () => {
   const [cms, home] = await Promise.all([
     read("src/lib/cms.ts"),
     read("src/routes/index.tsx"),
   ]);
 
-  assert.doesNotMatch(cms, /RUST_PUBLIC_CMS_URL/);
-  assert.doesNotMatch(cms, /CMS_SSR_RUST_TIMEOUT_MS/);
-  assert.match(home, /desktopHeroPreload/);
-  assert.match(home, /mobileHeroPreload/);
+  assert.doesNotMatch(cms, /RUST_PUBLIC_CMS_URL|fetchCriticalHeroSlide/);
+  assert.match(home, /CRITICAL_HERO_MOBILE_URL/);
+  assert.match(home, /CRITICAL_HERO_DESKTOP_URL/);
   assert.match(home, /rel:\s*"preload"/);
   assert.match(home, /as:\s*"image"/);
+  assert.match(home, /media:\s*"\(max-width: 639px\)"/);
+  assert.match(home, /media:\s*"\(min-width: 640px\)"/);
 });
 
 
-test("homepage renders the real CMS hero in the first HTML without a logo placeholder", async () => {
+test("homepage renders the stable hero image in first HTML without a logo placeholder", async () => {
   const [home, hero, root] = await Promise.all([
     read("src/routes/index.tsx"),
     read("src/components/HomeHero.tsx"),
     read("src/routes/__root.tsx"),
   ]);
 
-  const loaderStart = home.indexOf("loader: async");
-  const loaderEnd = home.indexOf("head:", loaderStart);
-  assert.ok(loaderStart >= 0 && loaderEnd > loaderStart);
-  const loaderSource = home.slice(loaderStart, loaderEnd);
-
-  assert.match(loaderSource, /const criticalHero = await fetchCriticalHeroSlide\(\)/);
-  assert.match(loaderSource, /heroSlides: criticalHero \? \[criticalHero\] : \[\]/);
-  assert.match(loaderSource, /heroPreload:/);
-  assert.doesNotMatch(loaderSource, /ensureQueryData\(cmsQueryOptions\(\)\)/);
-  assert.match(home, /const \{ heroSlides: loaderHeroSlides \} = Route\.useLoaderData\(\)/);
+  assert.doesNotMatch(home, /loader:\s*async/);
+  assert.doesNotMatch(home, /Route\.useLoaderData\(\)/);
   assert.match(home, /const \{ data: cms = EMPTY_CMS \} = useQuery\(cmsQueryOptions\(\)\)/);
-  assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\.length \? cms\.heroSlides : loaderHeroSlides\}/);
+  assert.match(home, /<HomeHero cmsHeroSlides=\{cms\.heroSlides\} \/>/);
 
   assert.doesNotMatch(hero, /<img src="\/logo\.svg"/);
-  assert.doesNotMatch(hero, /__SPACE_CALL_EARLY_HERO__/);
-  assert.doesNotMatch(hero, /early-cms|earlyHeroSlide|spacecall:hero-discovered/);
-  assert.match(hero, /data-hero-source=\{heroSource\}/);
+  assert.match(hero, /CRITICAL_HERO_MOBILE_URL/);
+  assert.match(hero, /CRITICAL_HERO_DESKTOP_URL/);
+  assert.match(hero, /data-testid="home-hero-media"/);
+  assert.match(hero, /<picture/);
+  assert.match(hero, /fetchPriority="high"/);
 
   assert.doesNotMatch(root, /HOME_HERO_DISCOVERY_SCRIPT/);
-  assert.doesNotMatch(root, /public-cms\?scope=hero/);
 });
 
 
@@ -273,47 +270,38 @@ test("mobile startup keeps overlays, footer, and interactive brand rail out of t
 
 
 test("critical hero remains independent from the full CMS snapshot", async () => {
-  const [cms, home] = await Promise.all([
+  const [cms, criticalHero, home] = await Promise.all([
     read("src/lib/cms.ts"),
+    read("src/lib/criticalHero.ts"),
     read("src/routes/index.tsx"),
   ]);
 
-  assert.match(cms, /export async function fetchCriticalHeroSlide/);
-  assert.match(cms, /\/rest\/v1\/cms_hero_slides/);
-  assert.match(cms, /endpoint\.searchParams\.set\("limit", "1"\)/);
-  assert.match(cms, /apikey: key/);
-  assert.doesNotMatch(cms, /public-cms\?scope=hero/);
-  assert.match(home, /const criticalHero = await fetchCriticalHeroSlide\(\)/);
-  assert.doesNotMatch(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
+  assert.doesNotMatch(cms, /fetchCriticalHeroSlide|\/rest\/v1\/cms_hero_slides/);
+  assert.match(criticalHero, /CRITICAL_HERO_DESKTOP_OBJECT_PATH/);
+  assert.match(criticalHero, /CRITICAL_HERO_MOBILE_OBJECT_PATH/);
+  assert.match(home, /CRITICAL_HERO_DESKTOP_URL/);
+  assert.match(home, /CRITICAL_HERO_MOBILE_URL/);
 });
 
 
-test("server injects the critical hero on the guaranteed document path", async () => {
+test("server no longer performs critical hero discovery work", async () => {
   const server = await read("src/server.ts");
 
-  assert.match(server, /function isHomeDocumentRequest/);
-  assert.match(server, /pathname === "\/" \|\| pathname === "\/ar"/);
-  assert.match(server, /\/rest\/v1\/cms_hero_slides/);
-  assert.match(server, /endpoint\.searchParams\.set\("limit", "1"\)/);
-  assert.match(server, /getPublicSupabaseConfig\(\)/);
-  assert.match(server, /apikey: publishableKey/);
-  assert.match(server, /CRITICAL_HERO_CACHE_MS\s*=\s*10_000/);
-  assert.match(server, /data-space-call-critical-hero/);
-  assert.match(server, /rel="preload" as="image"/);
-  assert.match(server, /fetchpriority="high"/);
-  assert.match(server, /data-hero-source="placeholder"/);
-  assert.match(server, /data-testid="home-hero-media"/);
-  assert.match(server, /new Promise<null>\(\(resolve\) => globalThis\.setTimeout\(\(\) => resolve\(null\), 50\)\)/);
-  assert.match(server, /headers\.delete\("content-length"\)/);
-  assert.match(server, /headers\.delete\("etag"\)/);
+  assert.doesNotMatch(server, /fetchCriticalHeroForDocument|getCriticalHeroForDocument/);
+  assert.doesNotMatch(server, /data-space-call-critical-hero/);
+  assert.doesNotMatch(server, /cms_hero_slides/);
 });
 
 
-test("global logo preload does not compete with the mobile hero", async () => {
-  const root = await read("src/routes/__root.tsx");
+test("global and mobile header logo do not compete with the hero", async () => {
+  const [root, mobileTopBar] = await Promise.all([
+    read("src/routes/__root.tsx"),
+    read("src/components/MobileTopBar.tsx"),
+  ]);
 
   assert.doesNotMatch(
     root,
     /rel:\s*"preload",\s*href:\s*"\/logo\.svg",\s*as:\s*"image"/,
   );
+  assert.match(mobileTopBar, /fetchPriority="low"/);
 });
