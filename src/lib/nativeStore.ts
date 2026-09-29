@@ -153,6 +153,44 @@ function assertResult<T>(
   return result.data;
 }
 
+type PublicReadError = { message: string; code?: string };
+
+function isMissingCategorySpecTemplate(error: PublicReadError | null | undefined) {
+  if (!error) return false;
+  return (
+    error.code === "42703" ||
+    /store_categories\.spec_template.*does not exist/i.test(error.message) ||
+    /spec_template.*does not exist/i.test(error.message)
+  );
+}
+
+function categoryRowsOrEmpty(
+  result: { data: StorefrontCategoryRow[] | null; error: PublicReadError | null },
+  label: string,
+): StorefrontCategoryRow[] {
+  if (isMissingCategorySpecTemplate(result.error)) {
+    console.warn(
+      `Supabase ${label} is temporarily missing spec_template; continuing without category templates.`,
+    );
+    return [];
+  }
+  return assertResult(result, label);
+}
+
+function categoryRowOrUndefined(
+  result: { data: StorefrontCategoryRow | null; error: PublicReadError | null },
+  label: string,
+): StorefrontCategoryRow | undefined {
+  if (isMissingCategorySpecTemplate(result.error)) {
+    console.warn(
+      `Supabase ${label} is temporarily missing spec_template; continuing without the category template.`,
+    );
+    return undefined;
+  }
+  if (result.error) throw new Error(`Supabase ${label} failed: ${result.error.message}`);
+  return result.data ?? undefined;
+}
+
 function normalizeOptionName(name: string) {
   return name.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
@@ -369,7 +407,7 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
     const variants = assertResult(variantResult, "bounded product variants");
     const images = assertResult(imageResult, "bounded product images");
     const links = assertResult(linkResult, "bounded product collection links");
-    const categoryRows = assertResult(categoryResult, "bounded product categories");
+    const categoryRows = categoryRowsOrEmpty(categoryResult, "bounded product categories");
     const variantsByProduct = groupByProduct(variants);
     const imagesByProduct = groupByProduct(images);
     const linksByProduct = groupByProduct(links);
@@ -467,7 +505,7 @@ async function fetchSnapshot(): Promise<NativeSnapshot> {
     const collectionRows = assertResult(collectionResult, "collections");
     const links = assertResult(linkResult, "collection links");
     const brands = assertResult(brandResult, "brands");
-    const categories = assertResult(categoryResult, "categories");
+    const categories = categoryRowsOrEmpty(categoryResult, "categories");
 
     const variantsByProduct = groupByProduct(variantRows);
     const imagesByProduct = groupByProduct(imageRows);
@@ -777,9 +815,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
   if (brandResult.error) {
     throw new Error(`Supabase product brand failed: ${brandResult.error.message}`);
   }
-  if (categoryResult.error) {
-    throw new Error(`Supabase product category failed: ${categoryResult.error.message}`);
-  }
+  const category = categoryRowOrUndefined(categoryResult, "product category");
 
   const collectionIds = links.map((link) => link.collection_id);
   let collections: StorefrontCollectionRow[] = [];
@@ -802,7 +838,7 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
     images,
     collections,
     (brandResult.data as StorefrontBrandRow | null) ?? undefined,
-    (categoryResult.data as StorefrontCategoryRow | null) ?? undefined,
+    category,
   );
 }
 
@@ -915,7 +951,7 @@ async function fetchSmallCollectionByHandle(
   const variants = assertResult(variantResult, "collection product variants");
   const images = assertResult(imageResult, "collection product images");
   const productLinks = assertResult(productLinkResult, "collection product links");
-  const categoryRows = assertResult(categoryResult, "collection product categories");
+  const categoryRows = categoryRowsOrEmpty(categoryResult, "collection product categories");
   const variantsByProduct = groupByProduct(variants);
   const imagesByProduct = groupByProduct(images);
   const linksByProduct = groupByProduct(productLinks);
