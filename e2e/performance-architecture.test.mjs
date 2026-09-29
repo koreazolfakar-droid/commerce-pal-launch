@@ -221,11 +221,13 @@ test("homepage renders the real CMS hero in the first HTML without a logo placeh
   assert.ok(loaderStart >= 0 && loaderEnd > loaderStart);
   const loaderSource = home.slice(loaderStart, loaderEnd);
 
-  assert.match(loaderSource, /const cms = await context\.queryClient\.ensureQueryData\(cmsQueryOptions\(\)\)/);
-  assert.match(loaderSource, /return \{[\s\S]*?cms,[\s\S]*?heroPreload:/);
-  assert.match(home, /const \{ cms: loaderCms \} = Route\.useLoaderData\(\)/);
+  assert.match(loaderSource, /fetchCriticalHeroSlide\(\)/);
+  assert.match(loaderSource, /criticalHero \?\? cms\.heroSlides\[0\]/);
+  assert.match(loaderSource, /heroSlides = criticalHero/);
+  assert.match(loaderSource, /return \{[\s\S]*?cms,[\s\S]*?heroSlides,[\s\S]*?heroPreload:/);
+  assert.match(home, /const \{ cms: loaderCms, heroSlides: loaderHeroSlides \} = Route\.useLoaderData\(\)/);
   assert.match(home, /initialData: loaderCms/);
-  assert.match(home, /<HomeHero cmsHeroSlides=\{cms\.heroSlides\}/);
+  assert.match(home, /<HomeHero cmsHeroSlides=\{loaderHeroSlides\}/);
 
   assert.doesNotMatch(hero, /<img src="\/logo\.svg"/);
   assert.doesNotMatch(hero, /__SPACE_CALL_EARLY_HERO__/);
@@ -266,4 +268,19 @@ test("mobile startup keeps overlays, footer, and interactive brand rail out of t
   assert.match(categories, /fetchPriority="low"/);
   assert.match(brandLogo, /fetchPriority="low"/);
   assert.match(productImage, /fetchPriority=\{eager \? "high" : "low"\}/);
+});
+
+
+test("critical hero remains independent from the full CMS snapshot", async () => {
+  const [cms, home] = await Promise.all([
+    read("src/lib/cms.ts"),
+    read("src/routes/index.tsx"),
+  ]);
+
+  assert.match(cms, /export async function fetchCriticalHeroSlide/);
+  assert.match(cms, /public-cms\?scope=hero/);
+  assert.match(cms, /return typeof hero\.image_url === "string"/);
+  assert.match(home, /Promise\.all\([\s\S]*?ensureQueryData\(cmsQueryOptions\(\)\)[\s\S]*?fetchCriticalHeroSlide\(\)/);
+  assert.match(home, /const firstCmsHero = criticalHero \?\? cms\.heroSlides\[0\]/);
+  assert.match(home, /const heroSlides = criticalHero/);
 });
