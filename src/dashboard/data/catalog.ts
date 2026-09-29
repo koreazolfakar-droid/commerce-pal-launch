@@ -5,7 +5,12 @@ import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassw
 import type { User } from "@supabase/supabase-js";
 import type { Tables } from "@/integrations/supabase/types";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
-import { convertProductImageToWebp, type ProductImageConversionResult, type ProductImageResolution } from "@/dashboard/lib/imageProcessing";
+import {
+  convertProductImageToWebp,
+  convertProductThumbnailToWebp,
+  type ProductImageConversionResult,
+  type ProductImageResolution,
+} from "@/dashboard/lib/imageProcessing";
 import {
   normalizeProductSpecifications,
   normalizeSpecificationTemplate,
@@ -1400,6 +1405,7 @@ export type DashboardProductImage = {
   id: string;
   productId: string;
   url: string;
+  thumbnailUrl?: string;
   altText: string;
   sortOrder: number;
   isPrimary: boolean;
@@ -1415,6 +1421,7 @@ function mapProductImage(row: ImageRow): DashboardProductImage {
     id: row.id,
     productId: row.product_id,
     url: row.url,
+    ...(row.thumbnail_url ? { thumbnailUrl: row.thumbnail_url } : {}),
     altText: row.alt_text ?? "",
     sortOrder: row.sort_order,
     isPrimary: row.is_primary,
@@ -1448,9 +1455,13 @@ async function uploadProductImageFile(
   source: File,
   resolution: ProductImageResolution,
 ) {
-  const conversion = await convertProductImageToWebp(source, resolution);
+  const [conversion, thumbnailConversion] = await Promise.all([
+    convertProductImageToWebp(source, resolution),
+    convertProductThumbnailToWebp(source),
+  ]);
   const file = conversion.file;
-  if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
+  const thumbnailFile = thumbnailConversion.file;
+  if (file.size > MAX_PRODUCT_IMAGE_BYTES || thumbnailFile.size > MAX_PRODUCT_IMAGE_BYTES) {
     throw new Error("Converted product image must be 10 MB or smaller.");
   }
 
@@ -1459,6 +1470,8 @@ async function uploadProductImageFile(
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const objectPath = `${PRODUCT_IMAGE_PREFIX}/${productId}/${unique}.webp`;
+  const thumbnailObjectPath =
+    `${PRODUCT_IMAGE_PREFIX}/${productId}/thumbnails/${unique}.webp`;
 
   const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).upload(objectPath, file, {
     cacheControl: "31536000",
@@ -1467,8 +1480,29 @@ async function uploadProductImageFile(
   });
   throwIfError(error, "Uploading product image failed");
 
+  const { error: thumbnailError } = await supabase.storage
+    .from(PRODUCT_IMAGE_BUCKET)
+    .upload(thumbnailObjectPath, thumbnailFile, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: "image/webp",
+    });
+  if (thumbnailError) {
+    await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([objectPath]).catch(() => undefined);
+    throw new Error(`Uploading product thumbnail failed: ${thumbnailError.message}`);
+  }
+
   const { data } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(objectPath);
-  return { url: data.publicUrl, objectPath, conversion };
+  const { data: thumbnailData } = supabase.storage
+    .from(PRODUCT_IMAGE_BUCKET)
+    .getPublicUrl(thumbnailObjectPath);
+  return {
+    url: data.publicUrl,
+    thumbnailUrl: thumbnailData.publicUrl,
+    objectPath,
+    thumbnailObjectPath,
+    conversion,
+  };
 }
 
 async function removeOwnedProductImageFile(url: string) {
@@ -1495,6 +1529,7 @@ export async function uploadDashboardProductImage(
       .insert({
         product_id: productId,
         url: uploaded.url,
+        thumbnail_url: uploaded.thumbnailUrl,
         alt_text: altText.trim() || source.name.replace(/\.[^.]+$/, ""),
         sort_order: Math.max(0, Math.trunc(sortOrder)),
         is_primary: isPrimary,
@@ -1511,7 +1546,9 @@ export async function uploadDashboardProductImage(
       conversion: uploaded.conversion,
     };
   } catch (error) {
-    await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([uploaded.objectPath]);
+    await supabase.storage
+      .from(PRODUCT_IMAGE_BUCKET)
+      .remove([uploaded.objectPath, uploaded.thumbnailObjectPath]);
     throw error;
   }
 }
@@ -1529,6 +1566,7 @@ export async function replaceDashboardProductImage(
       .from("store_product_images")
       .update({
         url: uploaded.url,
+        thumbnail_url: uploaded.thumbnailUrl,
         alt_text: source.name.replace(/\.[^.]+$/, ""),
       })
       .eq("id", image.id)
@@ -1538,7 +1576,10 @@ export async function replaceDashboardProductImage(
     throwIfError(error, "Replacing product image failed");
     if (!data) throw new Error("Replacing product image returned no row.");
 
-    await removeOwnedProductImageFile(image.url).catch(() => undefined);
+    await Promise.all([
+      removeOwnedProductImageFile(image.url).catch(() => undefined),
+      removeOwnedProductImageFile(image.thumbnailUrl).catch(() => undefined),
+    ]);
     invalidateNativeStoreCache();
     broadcastStorefrontRefresh();
     return {
@@ -1546,7 +1587,9 @@ export async function replaceDashboardProductImage(
       conversion: uploaded.conversion,
     };
   } catch (error) {
-    await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([uploaded.objectPath]);
+    await supabase.storage
+      .from(PRODUCT_IMAGE_BUCKET)
+      .remove([uploaded.objectPath, uploaded.thumbnailObjectPath]);
     throw error;
   }
 }
@@ -1584,7 +1627,10 @@ export async function deleteDashboardProductImage(
   );
   throwIfError(error, "Deleting product image failed");
 
-  await removeOwnedProductImageFile(image.url).catch(() => undefined);
+  await Promise.all([
+    removeOwnedProductImageFile(image.url).catch(() => undefined),
+    removeOwnedProductImageFile(image.thumbnailUrl).catch(() => undefined),
+  ]);
 
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();
