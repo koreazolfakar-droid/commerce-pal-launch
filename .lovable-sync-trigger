@@ -64,3 +64,13 @@ Includes:
 - mobile category rail switched to lightweight navigation facets
 - bilingual Load more products control
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Shop SSR single-request preview republish request: 2026-09-29T08:43:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after moving the initial /shop card hydration behind one Rust endpoint.
+Required runtime snapshot: e31d9c9d751ff39c792224640522e2292b068290 or newer.
+Includes:
+- /api/catalog/cards single PostgREST embedded read
+- first /shop SSR maps card-ready products without Supabase hydration round trips
+- existing hydrated catalog remains the fallback and post-paint full-catalog path
+Do not deploy the separate "Deploy. Done." Lovable project.
