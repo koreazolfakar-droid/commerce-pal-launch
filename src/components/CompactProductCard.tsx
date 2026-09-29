@@ -172,7 +172,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             className="block"
           >
             <ProductImage
-              url={image?.url}
+              url={image?.thumbnailUrl ?? image?.url}
               alt={image?.altText ?? node.title}
               size={320}
               sizes="(min-width: 1024px) 220px, (min-width: 640px) 24vw, 31vw"
@@ -320,7 +320,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             className="block"
           >
             <ProductImage
-              url={image?.url}
+              url={image?.thumbnailUrl ?? image?.url}
               alt={image?.altText ?? node.title}
               size={320}
               sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 31vw"
@@ -477,7 +477,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           className="block"
         >
           <ProductImage
-            url={image?.url}
+            url={image?.thumbnailUrl ?? image?.url}
             alt={image?.altText ?? node.title}
             size={280}
             sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 44vw"
