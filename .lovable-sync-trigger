@@ -92,3 +92,16 @@ Action: force the Lovable-connected Space Call production project to rebuild cur
 Required runtime snapshot: 913a7fe56af4d24de55790117720c93372a268aa or newer.
 Keep all proven /shop catalog performance improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Homepage LCP non-blocking recovery republish request: 2026-09-29T09:32:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after fixing LCP discovery without blocking SSR.
+Required runtime snapshot: 861c5f12c09795abf7f30ad5bdd8f079b4d687d9 or newer.
+Includes:
+- public-cms v15 with cached public responses
+- lightweight ?scope=hero endpoint
+- early <head> hero discovery + fetchpriority=high preload
+- early hero rendering after hydration before full CMS settles
+- no blocking Rust CMS lookup in SSR
+Keep all /shop Rust catalog performance improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
