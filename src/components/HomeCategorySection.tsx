@@ -27,6 +27,7 @@ type HomeCategoryItem = {
   image?: string;
   glyphSlug: string;
   count: number;
+  managed: boolean;
 };
 
 async function fetchManagedHomeCategories(): Promise<ManagedHomeCategory[]> {
@@ -65,10 +66,15 @@ export function HomeCategorySection({
 }) {
   const { t, language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
-  const { data: managedCategories } = useQuery({
+  const {
+    data: managedCategories,
+    isPending: managedCategoriesPending,
+    isError: managedCategoriesFailed,
+  } = useQuery({
     queryKey: ["storefront", "home-categories"],
     queryFn: fetchManagedHomeCategories,
     staleTime: 30_000,
+    retry: 1,
   });
 
   const facetsBySlug = new Map(catalogCategories.map((category) => [category.slug, category]));
@@ -89,6 +95,7 @@ export function HomeCategorySection({
         image: category.image_url || undefined,
         glyphSlug: facet?.slug ?? category.slug,
         count: facet?.count ?? 0,
+        managed: true,
       };
     }) ?? [];
 
@@ -97,11 +104,12 @@ export function HomeCategorySection({
     label: category.label,
     glyphSlug: category.slug,
     count: category.count,
+    managed: false,
   }));
 
-  const categories = managedCategories !== undefined ? managedItems : fallbackItems;
+  const categories = managedCategoriesFailed ? fallbackItems : managedItems;
 
-  if (!categories.length) return null;
+  if (!managedCategoriesPending && !categories.length) return null;
 
   const cmsSection = cms?.sections.find(
     (section) => section.page_slug === "home" && section.section_key === "categories",
@@ -137,18 +145,31 @@ export function HomeCategorySection({
           role="list"
           aria-label={title}
         >
-          {categories.map((category) => {
+          {managedCategoriesPending
+            ? Array.from({ length: 5 }).map((_, index) => (
+                <div
+                  key={index}
+                  aria-hidden="true"
+                  className="flex w-[5.9rem] shrink-0 snap-start flex-col items-center gap-2 px-0.5 py-1 sm:w-[6.65rem] sm:gap-2.5 lg:w-[7.15rem]"
+                >
+                  <span className="shimmer h-[5.25rem] w-[5.25rem] rounded-xl bg-surface sm:h-[5.65rem] sm:w-[5.65rem] lg:h-[6rem] lg:w-[6rem]" />
+                  <span className="shimmer h-7 w-16 rounded bg-surface" />
+                </div>
+              ))
+            : categories.map((category) => {
             const label =
               language === "ar" && category.labelAr?.trim()
                 ? category.labelAr.trim()
                 : managedCategories !== undefined
                   ? category.label
                   : categoryLabel(category, language);
-            const artwork = findCategoryArtworkCollection(
-              collections,
-              category.glyphSlug,
-              category.label,
-            );
+            const artwork = category.managed
+              ? undefined
+              : findCategoryArtworkCollection(
+                  collections,
+                  category.glyphSlug,
+                  category.label,
+                );
             const imageUrl = cdnImage(category.image || artwork?.image?.url, 192);
 
             return (
