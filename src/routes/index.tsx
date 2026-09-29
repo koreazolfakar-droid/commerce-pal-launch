@@ -141,6 +141,7 @@ export const Route = createFileRoute("/")({
       firstCmsHero?.mobile_image_url?.trim() || desktopHeroPreload;
 
     return {
+      cms,
       heroPreload:
         desktopHeroPreload && mobileHeroPreload
           ? { desktop: desktopHeroPreload, mobile: mobileHeroPreload }
@@ -551,7 +552,11 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
 function Index() {
   const { t, language } = useLanguage();
   const deferredWorkReady = useDeferredHomepageWork();
-  const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
+  const { cms: loaderCms } = Route.useLoaderData();
+  const { data: cms = loaderCms } = useQuery({
+    ...cmsQueryOptions(),
+    initialData: loaderCms,
+  });
   const homeSections = cms.sections.filter((section) => section.page_slug === "home");
   const featuredMerchSection = homeSections.find(
     (section) => section.section_key === "featured_products",
