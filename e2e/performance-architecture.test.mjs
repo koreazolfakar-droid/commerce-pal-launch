@@ -179,4 +179,8 @@ test("shop bounds initial SSR catalog work and progressively renders the full ca
   assert.match(catalogView, /CATALOG_RENDER_PAGE_SIZE\s*=\s*24/);
   assert.match(catalogView, /products=\{visibleProducts\}/);
   assert.match(catalogView, /loadMoreProducts/);
+
+  const mobileCategoryRail = await read("src/components/MobileCategoryRail.tsx");
+  assert.match(mobileCategoryRail, /navigationCatalogQueryOptions/);
+  assert.doesNotMatch(mobileCategoryRail, /catalogQueryOptions\(\)/);
 });
