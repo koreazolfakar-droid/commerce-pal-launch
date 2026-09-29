@@ -41,63 +41,6 @@ const FONT_LOAD_SCRIPT = `(function(){
 })();`;
 
 
-const HOME_HERO_DISCOVERY_SCRIPT = `(function(){
-  try {
-    if (location.pathname !== "/" && location.pathname !== "/ar") return;
-
-    var EVENT_NAME = "spacecall:hero-discovered";
-    var STORAGE_KEY = "sc:hero:discovery:v1";
-    var MAX_AGE = 60000;
-
-    function apply(hero) {
-      if (!hero || !hero.image_url) return;
-      window.__SPACE_CALL_EARLY_HERO__ = hero;
-
-      var mobile = window.matchMedia && window.matchMedia("(max-width: 639px)").matches;
-      var href = mobile && hero.mobile_image_url ? hero.mobile_image_url : hero.image_url;
-      if (href && !document.querySelector('link[data-space-call-hero-preload="true"]')) {
-        var link = document.createElement("link");
-        link.rel = "preload";
-        link.as = "image";
-        link.href = href;
-        link.fetchPriority = "high";
-        link.dataset.spaceCallHeroPreload = "true";
-        document.head.appendChild(link);
-      }
-
-      window.dispatchEvent(new CustomEvent(EVENT_NAME));
-    }
-
-    try {
-      var cached = sessionStorage.getItem(STORAGE_KEY);
-      if (cached) {
-        var parsed = JSON.parse(cached);
-        if (parsed && parsed.hero && Date.now() - parsed.ts < MAX_AGE) {
-          apply(parsed.hero);
-          return;
-        }
-      }
-    } catch (_) {}
-
-    fetch(
-      "https://rtwyankpxtffqqrasyzw.supabase.co/functions/v1/public-cms?scope=hero",
-      { method: "GET", cache: "force-cache", headers: { Accept: "application/json" } }
-    )
-      .then(function(response) {
-        if (!response.ok) throw new Error("hero discovery failed");
-        return response.json();
-      })
-      .then(function(payload) {
-        var hero = payload && payload.hero;
-        if (!hero) return;
-        try {
-          sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ts: Date.now(), hero: hero }));
-        } catch (_) {}
-        apply(hero);
-      })
-      .catch(function() {});
-  } catch (_) {}
-})();`;
 
 function NotFoundComponent() {
   const { t } = useLanguage();
@@ -233,7 +176,6 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <ScriptOnce>{THEME_INIT_SCRIPT}</ScriptOnce>
         <ScriptOnce>{LANGUAGE_INIT_SCRIPT}</ScriptOnce>
-        <ScriptOnce>{HOME_HERO_DISCOVERY_SCRIPT}</ScriptOnce>
         <HeadContent />
         <ScriptOnce>{FONT_LOAD_SCRIPT}</ScriptOnce>
         <noscript>
