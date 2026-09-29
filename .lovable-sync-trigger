@@ -188,3 +188,17 @@ Final hero path:
 - no client-side hero discovery script
 Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Guaranteed server hero injection republish request: 2026-09-29T12:48:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: b28118779ba4a8d857174f69b123549375362644 or newer.
+Fixes:
+- src/server.ts now fetches the active published hero in parallel with SSR on / and /ar
+- direct PostgREST read is protected by the existing active-hero RLS/column grants
+- the server injects hero preload and a temporary background image into the first HTML before it leaves the server
+- the hero fetch is cached for 10 seconds and may delay a completed SSR response by at most 50ms
+- this path does not depend on TanStack route loader execution
+- React/CMS still replaces the temporary background with the normal full hero slider after hydration
+Keep all prior category, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
