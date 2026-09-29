@@ -1,14 +1,24 @@
 export function buildContentSecurityPolicy(nonce?: string) {
-  const backendHttpOrigins = new Set(["https://rtwyankpxtffqqrasyzw.supabase.co"]);
+  const backendHttpOrigins = new Set([
+    "https://rtwyankpxtffqqrasyzw.supabase.co",
+    "https://space-call-rust-backend-production.up.railway.app",
+  ]);
   const backendWebSocketOrigins = new Set(["wss://rtwyankpxtffqqrasyzw.supabase.co"]);
-  const configuredBackendUrl = import.meta.env.VITE_SUPABASE_URL;
-  if (configuredBackendUrl) {
+  const configuredBackendUrls = [
+    { url: import.meta.env.VITE_SUPABASE_URL, websocket: true },
+    { url: import.meta.env.VITE_RUST_API_URL, websocket: false },
+  ];
+
+  for (const configuredBackend of configuredBackendUrls) {
+    if (!configuredBackend.url) continue;
     try {
-      const backendUrl = new URL(configuredBackendUrl);
+      const backendUrl = new URL(configuredBackend.url);
       if (backendUrl.protocol === "https:") {
         backendHttpOrigins.add(backendUrl.origin);
-        backendUrl.protocol = "wss:";
-        backendWebSocketOrigins.add(backendUrl.origin);
+        if (configuredBackend.websocket) {
+          backendUrl.protocol = "wss:";
+          backendWebSocketOrigins.add(backendUrl.origin);
+        }
       }
     } catch {
       // Ignore malformed build-time configuration and retain the safe fallback.

@@ -5,12 +5,16 @@ mod state;
 
 use std::io;
 
-use axum::{routing::get, Router};
+use axum::{
+    http::{header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE}, HeaderValue, Method},
+    routing::get,
+    Router,
+};
 use config::{AppConfig, ConfigError};
 use state::AppState;
 use thiserror::Error;
 use tokio::net::TcpListener;
-use tower_http::{catch_panic::CatchPanicLayer, trace::TraceLayer};
+use tower_http::{catch_panic::CatchPanicLayer, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info, warn};
 use tracing_subscriber::EnvFilter;
 
@@ -34,12 +38,22 @@ async fn main() -> Result<(), StartupError> {
 
     let state = AppState::new(pool, &config);
 
+    let cors = CorsLayer::new()
+        .allow_origin([
+            HeaderValue::from_static("https://www.spacecallapp.store"),
+            HeaderValue::from_static("https://spacecallapp.store"),
+            HeaderValue::from_static("https://app.spacecallapp.store"),
+        ])
+        .allow_methods([Method::GET])
+        .allow_headers([ACCEPT, AUTHORIZATION, CONTENT_TYPE]);
+
     let app = Router::new()
         .route("/health", get(routes::health::liveness))
         .route("/ready", get(routes::health::readiness))
         .route("/api/me", get(routes::auth::me))
         .route("/api/catalog/products", get(routes::catalog::list_products))
         .with_state(state)
+        .layer(cors)
         .layer(CatchPanicLayer::new())
         .layer(TraceLayer::new_for_http());
 
