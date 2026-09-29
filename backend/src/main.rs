@@ -55,6 +55,7 @@ async fn main() -> Result<(), StartupError> {
         .route("/ready", get(routes::health::readiness))
         .route("/api/me", get(routes::auth::me))
         .route("/api/catalog/products", get(routes::catalog::list_products))
+        .route("/api/catalog/cards", get(routes::catalog::list_cards))
         .with_state(state)
         .layer(cors)
         .layer(CatchPanicLayer::new())
