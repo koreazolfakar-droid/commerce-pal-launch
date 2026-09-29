@@ -17,6 +17,131 @@ const RATE_LIMIT_MAX_MUTATIONS = 24;
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
+type CriticalHero = {
+  imageUrl: string;
+  mobileImageUrl: string | null;
+};
+
+const CANONICAL_SUPABASE_ORIGIN = "https://rtwyankpxtffqqrasyzw.supabase.co";
+const CRITICAL_HERO_CACHE_MS = 10_000;
+let criticalHeroCache: { value: CriticalHero | null; expiresAt: number } | undefined;
+let criticalHeroInFlight: Promise<CriticalHero | null> | undefined;
+
+function isHomeDocumentRequest(request: Request) {
+  if (request.method !== "GET") return false;
+  const pathname = new URL(request.url).pathname;
+  return pathname === "/" || pathname === "/ar";
+}
+
+function safeCmsMediaUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const url = new URL(value);
+    if (url.origin !== CANONICAL_SUPABASE_ORIGIN) return null;
+    if (!url.pathname.startsWith("/storage/v1/object/public/cms-media/")) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchCriticalHeroForDocument(): Promise<CriticalHero | null> {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !publishableKey) return null;
+
+  try {
+    const endpoint = new URL("/rest/v1/cms_hero_slides", supabaseUrl);
+    endpoint.searchParams.set("select", "image_url,mobile_image_url,sort_order");
+    endpoint.searchParams.set("order", "sort_order.asc");
+    endpoint.searchParams.set("limit", "1");
+
+    const response = await fetch(endpoint, {
+      headers: {
+        apikey: publishableKey,
+        Accept: "application/json",
+      },
+    });
+    if (!response.ok) return null;
+
+    const payload: unknown = await response.json();
+    const row =
+      Array.isArray(payload) && payload.length && payload[0] && typeof payload[0] === "object"
+        ? (payload[0] as Record<string, unknown>)
+        : null;
+    if (!row) return null;
+
+    const imageUrl = safeCmsMediaUrl(row.image_url);
+    if (!imageUrl) return null;
+    return {
+      imageUrl,
+      mobileImageUrl: safeCmsMediaUrl(row.mobile_image_url),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getCriticalHeroForDocument() {
+  const now = Date.now();
+  if (criticalHeroCache && criticalHeroCache.expiresAt > now) {
+    return Promise.resolve(criticalHeroCache.value);
+  }
+  if (criticalHeroInFlight) return criticalHeroInFlight;
+
+  criticalHeroInFlight = fetchCriticalHeroForDocument()
+    .then((value) => {
+      criticalHeroCache = {
+        value,
+        expiresAt: Date.now() + CRITICAL_HERO_CACHE_MS,
+      };
+      return value;
+    })
+    .finally(() => {
+      criticalHeroInFlight = undefined;
+    });
+
+  return criticalHeroInFlight;
+}
+
+function cssQuotedUrl(url: string) {
+  return url.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, "");
+}
+
+async function injectCriticalHeroIntoDocument(
+  response: Response,
+  hero: CriticalHero | null,
+): Promise<Response> {
+  if (
+    !hero ||
+    !response.ok ||
+    !response.headers.get("content-type")?.toLowerCase().includes("text/html")
+  ) {
+    return response;
+  }
+
+  const desktop = cssQuotedUrl(hero.imageUrl);
+  const mobile = cssQuotedUrl(hero.mobileImageUrl ?? hero.imageUrl);
+  const sameImage = mobile === desktop;
+  const preload = sameImage
+    ? `<link rel="preload" as="image" href="${desktop}" fetchpriority="high">`
+    : `<link rel="preload" as="image" href="${mobile}" media="(max-width: 639px)" fetchpriority="high"><link rel="preload" as="image" href="${desktop}" media="(min-width: 640px)" fetchpriority="high">`;
+  const style = `<style data-space-call-critical-hero>[data-hero-source="placeholder"] [data-testid="home-hero-media"]{background-image:url("${desktop}")!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}@media(max-width:639px){[data-hero-source="placeholder"] [data-testid="home-hero-media"]{background-image:url("${mobile}")!important}}</style>`;
+
+  const html = await response.text();
+  if (!html.includes("</head>")) return response;
+
+  const headers = new Headers(response.headers);
+  headers.delete("content-length");
+  headers.delete("etag");
+
+  return new Response(html.replace("</head>", `${preload}${style}</head>`), {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
@@ -197,15 +322,26 @@ export default {
     syncRuntimeEnv(env);
 
     try {
+      const criticalHeroPromise = isHomeDocumentRequest(request)
+        ? getCriticalHeroForDocument()
+        : Promise.resolve(null);
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
+      const normalized = await normalizeCatastrophicSsrResponse(request, response);
+      const criticalHero = await Promise.race([
+        criticalHeroPromise,
+        new Promise<null>((resolve) => globalThis.setTimeout(() => resolve(null), 50)),
+      ]);
+      const withCriticalHero = await injectCriticalHeroIntoDocument(normalized, criticalHero);
+
       return withDashboardNoStore(
         request,
         withDocumentCache(
           request,
           withStaticAssetCache(
             request,
-            withSecurityHeaders(await normalizeCatastrophicSsrResponse(request, response)),
+            withSecurityHeaders(withCriticalHero),
           ),
         ),
       );
