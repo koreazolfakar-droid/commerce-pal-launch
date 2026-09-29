@@ -52,3 +52,15 @@ Includes:
 - Rust-first catalog integration already present on main
 Do not deploy the separate "Deploy. Done." Lovable project.
 Runtime behavior changed by this marker: none; marker exists only to force the correct connected deployment to sync after merge.
+
+
+Shop SSR performance republish request: 2026-09-29T08:24:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after bounding /shop SSR payload.
+Required runtime snapshot: 7e67f6ff406eda20fdc389d2ec7031b3ef9562af or newer.
+Includes:
+- initial /shop SSR catalog limited to 24 hydrated products
+- full catalog deferred until after first paint or immediate filter/search intent
+- product grid rendered progressively in batches of 24
+- mobile category rail switched to lightweight navigation facets
+- bilingual Load more products control
+Do not deploy the separate "Deploy. Done." Lovable project.
