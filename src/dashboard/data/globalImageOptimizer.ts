@@ -3,6 +3,7 @@ import {
   replaceDashboardMediaAssetWithWebp,
   type DashboardMediaAsset,
 } from "@/dashboard/data/media";
+import { convertProductThumbnailToWebp } from "@/dashboard/lib/imageProcessing";
 import { supabase } from "@/integrations/supabase/client";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
 
@@ -165,6 +166,157 @@ export async function loadGlobalLegacyImageAssets(): Promise<GlobalLegacyImageAs
   }
 
   return rows;
+}
+
+export type ProductThumbnailBackfillProgress = {
+  completed: number;
+  total: number;
+  sourceBytes: number;
+  thumbnailBytes: number;
+  currentLabel: string;
+};
+
+export type ProductThumbnailBackfillResult = {
+  processed: number;
+  skipped: number;
+  failed: Array<{ imageId: string; error: string }>;
+  sourceBytes: number;
+  thumbnailBytes: number;
+};
+
+export async function backfillStorefrontProductThumbnails(
+  limit = 24,
+  onProgress?: (progress: ProductThumbnailBackfillProgress) => void,
+): Promise<ProductThumbnailBackfillResult> {
+  await requireDashboardAdmin();
+
+  const safeLimit = Math.min(48, Math.max(1, Math.trunc(limit)));
+  const { data: products, error: productError } = await supabase
+    .from("store_products")
+    .select("id,title")
+    .eq("status", "active")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(safeLimit);
+  throwIfError(productError, "Loading active products for thumbnail backfill failed");
+
+  const productRows = products ?? [];
+  const productIds = productRows.map((row) => row.id);
+  if (!productIds.length) {
+    return {
+      processed: 0,
+      skipped: 0,
+      failed: [],
+      sourceBytes: 0,
+      thumbnailBytes: 0,
+    };
+  }
+
+  const productNames = new Map(
+    productRows.map((row) => [row.id, row.title || "Product"]),
+  );
+
+  const { data: imageRows, error: imageError } = await supabase
+    .from("store_product_images")
+    .select("id,product_id,url,thumbnail_url,is_primary")
+    .in("product_id", productIds)
+    .eq("is_primary", true)
+    .order("sort_order", { ascending: true });
+  throwIfError(imageError, "Loading primary product images for thumbnail backfill failed");
+
+  const pending = (imageRows ?? []).filter((row) => !row.thumbnail_url && Boolean(row.url));
+  const total = pending.length;
+  let processed = 0;
+  let skipped = (imageRows ?? []).length - pending.length;
+  let sourceBytes = 0;
+  let thumbnailBytes = 0;
+  const failed: Array<{ imageId: string; error: string }> = [];
+
+  for (let index = 0; index < pending.length; index += 1) {
+    const row = pending[index];
+    const label = productNames.get(row.product_id) ?? "Product";
+    onProgress?.({
+      completed: index,
+      total,
+      sourceBytes,
+      thumbnailBytes,
+      currentLabel: label,
+    });
+
+    let objectPath: string | null = null;
+    try {
+      const response = await fetch(row.url, {
+        cache: "no-store",
+        mode: "cors",
+        credentials: "omit",
+      });
+      if (!response.ok) {
+        throw new Error(`Source download failed (HTTP ${response.status}).`);
+      }
+
+      const blob = await response.blob();
+      const mimeType = blob.type || mimeFromUrl(row.url);
+      if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(mimeType)) {
+        throw new Error(`Unsupported source format: ${mimeType || "unknown"}.`);
+      }
+
+      const source = new File([blob], `product-${row.id}`, {
+        type: mimeType,
+        lastModified: Date.now(),
+      });
+      const conversion = await convertProductThumbnailToWebp(source);
+      if (!conversion.file.size) throw new Error("Generated thumbnail is empty.");
+
+      objectPath = `products/${row.product_id}/thumbnails/${row.id}.webp`;
+      const { error: uploadError } = await supabase.storage
+        .from(OUTPUT_BUCKET)
+        .upload(objectPath, conversion.file, {
+          cacheControl: "31536000",
+          upsert: true,
+          contentType: "image/webp",
+        });
+      throwIfError(uploadError, "Uploading product card thumbnail failed");
+
+      const { data: publicUrl } = supabase.storage.from(OUTPUT_BUCKET).getPublicUrl(objectPath);
+      const { error: updateError } = await supabase
+        .from("store_product_images")
+        .update({ thumbnail_url: publicUrl.publicUrl })
+        .eq("id", row.id)
+        .eq("product_id", row.product_id)
+        .is("thumbnail_url", null);
+      throwIfError(updateError, "Saving product card thumbnail failed");
+
+      sourceBytes += source.size;
+      thumbnailBytes += conversion.file.size;
+      processed += 1;
+    } catch (cause) {
+      if (objectPath) {
+        await supabase.storage.from(OUTPUT_BUCKET).remove([objectPath]).catch(() => undefined);
+      }
+      failed.push({
+        imageId: row.id,
+        error: cause instanceof Error ? cause.message : "Thumbnail generation failed.",
+      });
+    }
+
+    onProgress?.({
+      completed: index + 1,
+      total,
+      sourceBytes,
+      thumbnailBytes,
+      currentLabel: label,
+    });
+  }
+
+  if (processed) invalidateNativeStoreCache();
+
+  return {
+    processed,
+    skipped,
+    failed,
+    sourceBytes,
+    thumbnailBytes,
+  };
 }
 
 export async function downloadGlobalLegacyImage(assetRow: GlobalLegacyImageAsset): Promise<File> {
