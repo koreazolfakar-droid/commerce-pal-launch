@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
+  backfillStorefrontProductThumbnails,
   deleteSafeOldOriginals,
   downloadGlobalLegacyImage,
   loadGlobalLegacyImageAssets,
@@ -22,6 +23,8 @@ import {
   scanSafeOldOriginals,
   type GlobalImageSource,
   type GlobalLegacyImageAsset,
+  type ProductThumbnailBackfillProgress,
+  type ProductThumbnailBackfillResult,
   type SafeCleanupScan,
 } from "@/dashboard/data/globalImageOptimizer";
 import {
@@ -74,6 +77,11 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
   const [cleanupScan, setCleanupScan] = useState<SafeCleanupScan | null>(null);
   const [scanningCleanup, setScanningCleanup] = useState(false);
   const [cleaning, setCleaning] = useState(false);
+  const [thumbnailBackfilling, setThumbnailBackfilling] = useState(false);
+  const [thumbnailProgress, setThumbnailProgress] =
+    useState<ProductThumbnailBackfillProgress | null>(null);
+  const [thumbnailResult, setThumbnailResult] =
+    useState<ProductThumbnailBackfillResult | null>(null);
   const sourceFileCache = useRef(new Map<string, File>());
   const previewRunId = useRef(0);
 
@@ -224,6 +232,52 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
     }
   };
 
+  const backfillProductThumbnails = async () => {
+    if (
+      thumbnailBackfilling ||
+      loading ||
+      analyzing ||
+      optimizing ||
+      cleaning ||
+      scanningCleanup
+    ) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Generate lightweight 480px WebP thumbnails for the primary images of the first 24 active products? Original product images stay unchanged.",
+    );
+    if (!confirmed) return;
+
+    setThumbnailBackfilling(true);
+    setThumbnailProgress(null);
+    setThumbnailResult(null);
+
+    try {
+      const result = await backfillStorefrontProductThumbnails(24, setThumbnailProgress);
+      setThumbnailResult(result);
+
+      if (result.processed) {
+        const saved = Math.max(0, result.sourceBytes - result.thumbnailBytes);
+        toast.success(
+          `Generated ${result.processed} product card thumbnail${result.processed === 1 ? "" : "s"} · about ${formatImageBytes(saved)} lighter for card requests.`,
+        );
+      } else if (!result.failed.length) {
+        toast.success("The first 24 active products already have card thumbnails.");
+      }
+
+      if (result.failed.length) {
+        toast.error(
+          `${result.failed.length} thumbnail${result.failed.length === 1 ? "" : "s"} could not be generated and the original images remain untouched.`,
+        );
+      }
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Product thumbnail backfill failed.");
+    } finally {
+      setThumbnailBackfilling(false);
+    }
+  };
+
   const optimize = async () => {
     const ready = rows.filter((row) => row.status === "ready" && row.conversion);
     if (!ready.length || optimizing) return;
@@ -298,6 +352,90 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
 
       {open ? (
         <div className="border-t border-slate-100 p-4">
+          <section className="mb-4 rounded-xl border border-sky-200 bg-sky-50/70 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-black text-slate-800">
+                  Mobile product-card thumbnails
+                </div>
+                <div className="mt-1 max-w-2xl text-[9px] leading-4 text-slate-500">
+                  Creates dedicated 480px WebP files for primary product cards. Product-page
+                  originals remain unchanged. Runs one image at a time to stay phone-friendly.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void backfillProductThumbnails()}
+                disabled={
+                  thumbnailBackfilling ||
+                  loading ||
+                  analyzing ||
+                  optimizing ||
+                  cleaning ||
+                  scanningCleanup
+                }
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-[10px] font-black text-white disabled:opacity-50"
+              >
+                {thumbnailBackfilling ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <WandSparkles className="size-3.5" />
+                )}
+                {thumbnailBackfilling ? "Generating…" : "Generate first 24 thumbnails"}
+              </button>
+            </div>
+
+            {thumbnailProgress ? (
+              <div className="mt-3">
+                <div className="flex items-center justify-between gap-3 text-[9px] font-bold text-slate-600">
+                  <span className="truncate">
+                    {thumbnailBackfilling
+                      ? `Processing: ${thumbnailProgress.currentLabel}`
+                      : "Thumbnail pass complete"}
+                  </span>
+                  <span className="shrink-0">
+                    {thumbnailProgress.completed}/{thumbnailProgress.total}
+                  </span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sky-100">
+                  <div
+                    className="h-full rounded-full bg-sky-600 transition-[width] duration-300"
+                    style={{
+                      width: `${
+                        thumbnailProgress.total
+                          ? Math.round(
+                              (thumbnailProgress.completed / thumbnailProgress.total) * 100,
+                            )
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {thumbnailResult ? (
+              <div className="mt-3 grid gap-2 sm:grid-cols-4">
+                {[
+                  ["Generated", String(thumbnailResult.processed)],
+                  ["Already ready", String(thumbnailResult.skipped)],
+                  ["Source bytes", formatImageBytes(thumbnailResult.sourceBytes)],
+                  [
+                    "Card thumbnails",
+                    formatImageBytes(thumbnailResult.thumbnailBytes),
+                  ],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-lg bg-white px-3 py-2">
+                    <div className="text-[8px] font-black uppercase tracking-[.1em] text-slate-400">
+                      {label}
+                    </div>
+                    <div className="mt-1 text-[10px] font-black text-slate-700">{value}</div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </section>
+
           <div className="mb-3 flex flex-wrap gap-2">
             {(Object.keys(SOURCE_LABELS) as Array<GlobalImageSource | "all">).map((source) => (
               <button
@@ -356,7 +494,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
               <button
                 type="button"
                 onClick={() => void analyze()}
-                disabled={!selectedAssets.length || analyzing || optimizing || loading}
+                disabled={!selectedAssets.length || analyzing || optimizing || loading || thumbnailBackfilling}
                 className="flex min-h-14 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 text-[10px] font-black text-indigo-700 disabled:opacity-50"
               >
                 {analyzing ? <Loader2 className="size-4 animate-spin" /> : <WandSparkles className="size-4" />}
@@ -365,7 +503,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
               <button
                 type="button"
                 onClick={() => void optimize()}
-                disabled={optimizing || !rows.some((row) => row.status === "ready")}
+                disabled={optimizing || thumbnailBackfilling || !rows.some((row) => row.status === "ready")}
                 className="flex min-h-14 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-black text-white disabled:opacity-40"
               >
                 {optimizing ? <Loader2 className="size-4 animate-spin" /> : <Images className="size-4" />}
@@ -595,7 +733,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                       <button
                         type="button"
                         onClick={() => void cleanOldOriginals()}
-                        disabled={cleaning || scanningCleanup || optimizing}
+                        disabled={cleaning || scanningCleanup || optimizing || thumbnailBackfilling}
                         className="inline-flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[10px] font-black text-white disabled:opacity-50"
                       >
                         {cleaning ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
@@ -619,7 +757,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
             <button
               type="button"
               onClick={() => void load()}
-              disabled={loading || analyzing || optimizing}
+              disabled={loading || analyzing || optimizing || thumbnailBackfilling}
               className="inline-flex items-center gap-1.5 font-bold text-slate-500"
             >
               {loading ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
