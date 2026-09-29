@@ -3,7 +3,6 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 
