@@ -33,6 +33,7 @@ async fn main() -> Result<(), StartupError> {
         .route("/health", get(routes::health::liveness))
         .route("/ready", get(routes::health::readiness))
         .route("/api/me", get(routes::auth::me))
+        .route("/api/catalog/products", get(routes::catalog::list_products))
         .with_state(state)
         .layer(CatchPanicLayer::new())
         .layer(TraceLayer::new_for_http());
