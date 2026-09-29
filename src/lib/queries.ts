@@ -25,6 +25,7 @@ import {
 import type { StoreProduct } from "@/lib/storeTypes";
 import { buildCatalogIndex } from "@/lib/taxonomy";
 
+export const CATALOG_INITIAL_PAGE_SIZE = 24;
 const CATALOG_STALE_TIME = 60 * 1000;
 const BRAND_COLLECTION_STALE_TIME = 60 * 1000;
 const MERCHANDISING_STALE_TIME = 60 * 1000;
@@ -91,30 +92,45 @@ async function fetchHomepageCatalogIndex() {
   return buildCatalogIndex(products);
 }
 
-async function fetchCatalogIndexSafely() {
+async function fetchCatalogIndexSafely(first = 500, useSessionFallback = true) {
   try {
     const [products, vendors] = await Promise.all([
-      fetchCatalogProducts(500),
+      fetchCatalogProducts(first),
       fetchBrandVendors(),
     ]);
-    writeCatalogRefreshFallback(products, vendors);
+    if (useSessionFallback) writeCatalogRefreshFallback(products, vendors);
     return buildCatalogFromSource(products, vendors);
   } catch (error) {
-    const fallback = readCatalogRefreshFallback();
-    if (fallback) {
-      console.warn("Supabase catalog refresh failed; keeping the last successful tab snapshot.", error);
-      return buildCatalogFromSource(fallback.products, fallback.vendors);
+    if (useSessionFallback) {
+      const fallback = readCatalogRefreshFallback();
+      if (fallback) {
+        console.warn(
+          "Supabase catalog refresh failed; keeping the last successful tab snapshot.",
+          error,
+        );
+        return buildCatalogFromSource(fallback.products, fallback.vendors);
+      }
     }
     console.error("Supabase catalog fetch failed.", error);
     throw error;
   }
 }
 
-/** Complete active Space Call catalogue sourced from Supabase. */
+/** Small SSR-safe catalogue slice for the first /shop document. */
+export const catalogPreviewQueryOptions = () =>
+  queryOptions({
+    queryKey: ["supabase", "catalog-preview", CATALOG_INITIAL_PAGE_SIZE],
+    queryFn: () => fetchCatalogIndexSafely(CATALOG_INITIAL_PAGE_SIZE, false),
+    staleTime: CATALOG_STALE_TIME,
+    retry: QUERY_RETRY_COUNT,
+    retryDelay,
+  });
+
+/** Complete active Space Call catalogue, loaded outside the initial /shop SSR path. */
 export const catalogQueryOptions = () =>
   queryOptions({
     queryKey: ["supabase", "catalog"],
-    queryFn: fetchCatalogIndexSafely,
+    queryFn: () => fetchCatalogIndexSafely(500, true),
     staleTime: CATALOG_STALE_TIME,
     retry: QUERY_RETRY_COUNT,
     retryDelay,
