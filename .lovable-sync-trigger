@@ -74,3 +74,14 @@ Includes:
 - first /shop SSR maps card-ready products without Supabase hydration round trips
 - existing hydrated catalog remains the fallback and post-paint full-catalog path
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Homepage LCP discovery republish request: 2026-09-29T09:04:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after fixing initial hero discovery.
+Required runtime snapshot: f6b7de5294459d50aee11fb9395cfa2643a906e4 or newer.
+Includes:
+- Rust /api/cms proxy for SSR-only CMS resolution
+- homepage SSR resolves hero CMS through Rust first with safe public-cms fallback
+- existing dynamic hero preload now receives the real image URL in initial HTML
+Goal: eliminate Lighthouse hero resource-load discovery delay caused by SSR placeholder rendering.
+Do not deploy the separate "Deploy. Done." Lovable project.
