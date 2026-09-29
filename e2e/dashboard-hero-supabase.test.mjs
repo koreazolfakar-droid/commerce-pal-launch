@@ -15,6 +15,8 @@ const cms = await readFile(new URL("../src/lib/cms.ts", import.meta.url), "utf8"
 const cmsQuery = await readFile(new URL("../src/lib/cmsQuery.ts", import.meta.url), "utf8");
 const hero = await readFile(new URL("../src/components/HomeHero.tsx", import.meta.url), "utf8");
 const home = await readFile(new URL("../src/routes/index.tsx", import.meta.url), "utf8");
+const criticalHero = await readFile(new URL("../src/lib/criticalHero.ts", import.meta.url), "utf8");
+const syncHeroEdge = await readFile(new URL("../supabase/functions/sync-current-hero/index.ts", import.meta.url), "utf8");
 const migration = await readFile(
   new URL("../supabase/migrations/20260918230000_harden_cms_hero_targets.sql", import.meta.url),
   "utf8",
@@ -52,6 +54,7 @@ test("hero dashboard supports real Supabase CRUD, storage upload and media libra
   assert.match(data, /rpc\("update_cms_hero_slide_v3"/);
   assert.match(data, /rpc\("delete_cms_hero_slide"/);
   assert.match(data, /rpc\("reorder_cms_hero_slides"/);
+  assert.match(data, /supabase\.functions\.invoke\("sync-current-hero"/);
   assert.match(data, /storage\.from\(HERO_BUCKET\)\.upload/);
   assert.match(data, /rpc\("register_cms_media_asset"/);
   assert.match(data, /from\("cms_media_assets"\)/);
@@ -112,17 +115,32 @@ test("public CMS uses an edge gateway with resilient empty fallback", () => {
   assert.match(cmsQuery, /queryFn: fetchCmsSnapshot/);
 });
 
-test("homepage hydrates CMS once and keeps the hero Supabase-native", async () => {
-  assert.match(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
+test("homepage keeps CMS content dynamic while first hero pixels use stable aliases", async () => {
+  assert.match(home, /useQuery\(cmsQueryOptions\(\)\)/);
+  assert.doesNotMatch(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
   assert.doesNotMatch(home, /heroCollection=\{heroCollection\}/);
+
+  assert.match(criticalHero, /hero\/current-desktop/);
+  assert.match(criticalHero, /hero\/current-mobile/);
+  assert.match(home, /CRITICAL_HERO_DESKTOP_URL/);
+  assert.match(home, /CRITICAL_HERO_MOBILE_URL/);
+
   assert.match(hero, /localizeHeroSlide/);
   assert.match(hero, /"supabase-cms"/);
   assert.match(hero, /"placeholder"/);
+  assert.match(hero, /CRITICAL_HERO_DESKTOP_URL/);
+  assert.match(hero, /CRITICAL_HERO_MOBILE_URL/);
   assert.doesNotMatch(
     hero,
     /shopify-collection|hero-product-fallback|homepageHeroCollections|SHOPIFY_CDN/i,
   );
+
+  assert.match(syncHeroEdge, /Authorization/);
+  assert.match(syncHeroEdge, /from\("cms_hero_slides"\)/);
+  assert.match(syncHeroEdge, /storage\.upload|storage\.from|\.upload\(/);
+  assert.match(syncHeroEdge, /upsert: true/);
+
   assert.match(hero, /<HeroScene/);
   const scene = await readFile(new URL("../src/components/HeroScene.tsx", import.meta.url), "utf8");
   assert.match(scene, /slide.mobile_image_url/);
@@ -132,6 +150,7 @@ test("homepage hydrates CMS once and keeps the hero Supabase-native", async () =
   assert.match(scene, /normalizeHeroVisualConfig/);
   assert.match(page, /<HeroVisualEditor/);
 });
+
 
 test("hero changes are auditable", async () => {
   assert.match(page, /Save changes/);
