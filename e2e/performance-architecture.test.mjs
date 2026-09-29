@@ -286,3 +286,23 @@ test("critical hero remains independent from the full CMS snapshot", async () =>
   assert.match(home, /const criticalHero = await fetchCriticalHeroSlide\(\)/);
   assert.doesNotMatch(home, /ensureQueryData\(cmsQueryOptions\(\)\)/);
 });
+
+
+test("server injects the critical hero on the guaranteed document path", async () => {
+  const server = await read("src/server.ts");
+
+  assert.match(server, /function isHomeDocumentRequest/);
+  assert.match(server, /pathname === "\/" \|\| pathname === "\/ar"/);
+  assert.match(server, /\/rest\/v1\/cms_hero_slides/);
+  assert.match(server, /endpoint\.searchParams\.set\("limit", "1"\)/);
+  assert.match(server, /apikey: publishableKey/);
+  assert.match(server, /CRITICAL_HERO_CACHE_MS\s*=\s*10_000/);
+  assert.match(server, /data-space-call-critical-hero/);
+  assert.match(server, /rel="preload" as="image"/);
+  assert.match(server, /fetchpriority="high"/);
+  assert.match(server, /data-hero-source="placeholder"/);
+  assert.match(server, /data-testid="home-hero-media"/);
+  assert.match(server, /new Promise<null>\(\(resolve\) => globalThis\.setTimeout\(\(\) => resolve\(null\), 50\)\)/);
+  assert.match(server, /headers\.delete\("content-length"\)/);
+  assert.match(server, /headers\.delete\("etag"\)/);
+});
