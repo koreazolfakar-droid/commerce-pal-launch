@@ -8,14 +8,19 @@ use crate::config::AppConfig;
 
 const READINESS_TIMEOUT: Duration = Duration::from_secs(3);
 
-pub async fn connect(config: &AppConfig) -> Result<PgPool, sqlx::Error> {
+pub async fn connect(config: &AppConfig) -> Result<Option<PgPool>, sqlx::Error> {
+    let Some(database_url) = config.database_url.as_deref() else {
+        return Ok(None);
+    };
+
     PgPoolOptions::new()
         .max_connections(config.database_max_connections)
         .acquire_timeout(Duration::from_secs(
             config.database_acquire_timeout_seconds,
         ))
-        .connect(&config.database_url)
+        .connect(database_url)
         .await
+        .map(Some)
 }
 
 pub async fn ping(pool: &PgPool) -> Result<(), PingError> {
