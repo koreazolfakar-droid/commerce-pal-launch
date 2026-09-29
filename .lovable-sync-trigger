@@ -202,3 +202,15 @@ Fixes:
 - React/CMS still replaces the temporary background with the normal full hero slider after hydration
 Keep all prior category, mobile performance, and Rust catalog improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Server hero runtime-config recovery republish request: 2026-09-29T13:03:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 9360e80537c78b74bf5eb6f3497950bf368473fd or newer.
+Fixes:
+- guaranteed server hero injection now uses getPublicSupabaseConfig(), so it does not depend on missing Lovable runtime SUPABASE_URL/SUPABASE_PUBLISHABLE_KEY bindings
+- server still reads only the active published hero through the existing RLS/column grants
+- global /logo.svg image preload removed so the mobile hero owns high network priority
+- hero fetch remains parallel with SSR, cached 10s, and capped to 50ms post-SSR wait
+Keep all previous category, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
