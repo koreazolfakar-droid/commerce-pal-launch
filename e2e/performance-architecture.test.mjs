@@ -207,3 +207,29 @@ test("homepage hero preload remains non-blocking and route-driven", async () => 
   assert.match(home, /rel:\s*"preload"/);
   assert.match(home, /as:\s*"image"/);
 });
+
+
+test("homepage discovers the LCP hero before React hydration without blocking SSR", async () => {
+  const [root, hero, publicCms] = await Promise.all([
+    read("src/routes/__root.tsx"),
+    read("src/components/HomeHero.tsx"),
+    read("supabase/functions/public-cms/index.ts"),
+  ]);
+
+  assert.match(root, /HOME_HERO_DISCOVERY_SCRIPT/);
+  assert.match(root, /public-cms\?scope=hero/);
+  assert.match(root, /data-space-call-hero-preload/);
+  assert.match(root, /fetchPriority = "high"/);
+  assert.match(root, /spacecall:hero-discovered/);
+  assert.match(root, /<ScriptOnce>\{HOME_HERO_DISCOVERY_SCRIPT\}<\/ScriptOnce>/);
+
+  assert.match(hero, /__SPACE_CALL_EARLY_HERO__/);
+  assert.match(hero, /early-cms/);
+  assert.match(hero, /spacecall:hero-discovered/);
+  assert.match(hero, /earlyHeroSlide/);
+
+  assert.match(publicCms, /scope === "hero"/);
+  assert.match(publicCms, /\.limit\(1\)/);
+  assert.match(publicCms, /Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300"/);
+  assert.doesNotMatch(publicCms, /Cache-Control": "no-store/);
+});
