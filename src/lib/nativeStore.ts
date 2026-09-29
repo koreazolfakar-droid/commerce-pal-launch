@@ -13,7 +13,7 @@ type CollectionLinkRow = Tables<"store_collection_products">;
 type BrandRow = Tables<"cms_brands">;
 type CategoryRow = Tables<"store_categories">;
 
-type StorefrontProductRow = Pick<
+export type StorefrontProductRow = Pick<
   ProductRow,
   | "id"
   | "title"
@@ -312,7 +312,7 @@ function buildProduct(
   };
 }
 
-async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<StoreProduct[]> {
+export async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<StoreProduct[]> {
   if (!productRows.length) return [];
 
   const now = Date.now();
