@@ -247,7 +247,7 @@ export async function inspectProductImageSource(source: File): Promise<ProductIm
 
 async function performProductImageConversion(
   source: File,
-  resolution: ProductImageResolution,
+  resolution: ProductImageResolution | number,
   compression: ImageCompressionPreset,
   backgroundRemoval?: ImageBackgroundRemovalOptions,
 ): Promise<ProductImageConversionResult> {
@@ -304,6 +304,35 @@ async function performProductImageConversion(
       bytes: file.size,
     },
   };
+}
+
+export const STOREFRONT_PRODUCT_THUMBNAIL_EDGE = 480;
+
+export async function convertProductThumbnailToWebp(
+  source: File,
+): Promise<ProductImageConversionResult> {
+  let fileCache = conversionCache.get(source);
+  if (!fileCache) {
+    fileCache = new Map();
+    conversionCache.set(source, fileCache);
+  }
+
+  const key = `thumbnail:${STOREFRONT_PRODUCT_THUMBNAIL_EDGE}:strong`;
+  const cached = fileCache.get(key);
+  if (cached) return cached;
+
+  const conversion = performProductImageConversion(
+    source,
+    STOREFRONT_PRODUCT_THUMBNAIL_EDGE,
+    "strong",
+  );
+  fileCache.set(key, conversion);
+  try {
+    return await conversion;
+  } catch (error) {
+    fileCache.delete(key);
+    throw error;
+  }
 }
 
 export async function convertProductImageToWebp(
