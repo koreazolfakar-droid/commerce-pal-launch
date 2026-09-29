@@ -124,6 +124,9 @@ export const EMPTY_CMS: CmsSnapshot = {
 const ARABIC_SCRIPT = /[\u0600-\u06ff]/;
 
 const CMS_PUBLIC_READ_TIMEOUT_MS = 4_000;
+const CMS_SSR_RUST_TIMEOUT_MS = 1_800;
+const RUST_PUBLIC_CMS_URL =
+  "https://space-call-rust-backend-production.up.railway.app/api/cms";
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -155,6 +158,36 @@ function normalizeCmsSnapshot(value: unknown): CmsSnapshot {
 export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
   const { url, key } = getPublicSupabaseConfig();
   if (!url || !key) return EMPTY_CMS;
+
+  if (typeof window === "undefined") {
+    const rustController = new AbortController();
+    const rustTimeout = globalThis.setTimeout(
+      () => rustController.abort(),
+      CMS_SSR_RUST_TIMEOUT_MS,
+    );
+
+    try {
+      const rustResponse = await fetch(RUST_PUBLIC_CMS_URL, {
+        method: "GET",
+        cache: "default",
+        headers: { Accept: "application/json" },
+        signal: rustController.signal,
+      });
+
+      if (rustResponse.ok) {
+        const snapshot = normalizeCmsSnapshot(await rustResponse.json());
+        if (snapshot.heroSlides.length || snapshot.sections.length || snapshot.navigation.length) {
+          return snapshot;
+        }
+      } else {
+        console.warn(`[CMS] Rust SSR gateway returned HTTP ${rustResponse.status}`);
+      }
+    } catch (error) {
+      console.warn("[CMS] Rust SSR gateway unavailable; falling back to public-cms.", error);
+    } finally {
+      globalThis.clearTimeout(rustTimeout);
+    }
+  }
 
   const controller = new AbortController();
   const timeout = globalThis.setTimeout(() => controller.abort(), CMS_PUBLIC_READ_TIMEOUT_MS);
