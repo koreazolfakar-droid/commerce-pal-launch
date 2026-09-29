@@ -24,6 +24,8 @@ export type DashboardNavigationSection = {
 };
 
 type LazyPage = {
+  // Route pages have different required props; the registry pairs each page with its renderer.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Component: LazyExoticComponent<ComponentType<any>>;
   preload: () => Promise<unknown>;
 };
@@ -93,6 +95,7 @@ async function recoverRouteChunk(error: unknown): Promise<never> {
   return await new Promise<never>(() => undefined);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lazyPage<T extends ComponentType<any>>(
   loader: () => Promise<{ default: T }>,
 ): LazyPage {
@@ -773,14 +776,14 @@ export const dashboardNavigationSections: DashboardNavigationSection[] =
       })),
   })).filter((section) => section.items.length > 0);
 
-export const dashboardPageMeta: Record<string, DashboardPageMeta> = Object.fromEntries(
-  routes.flatMap((route) => {
-    if (!route.meta || !route.path) return [];
-    return [
-      [route.path, route.meta],
-      ...(route.aliases ?? []).map((alias) => [alias, route.meta] as const),
-    ];
-  }),
+export const dashboardPageMeta: Record<string, DashboardPageMeta> = routes.reduce(
+  (meta, route) => {
+    if (!route.meta || !route.path) return meta;
+    meta[route.path] = route.meta;
+    for (const alias of route.aliases ?? []) meta[alias] = route.meta;
+    return meta;
+  },
+  {} as Record<string, DashboardPageMeta>,
 );
 
 export const DashboardLoginPage = loginPage.Component;

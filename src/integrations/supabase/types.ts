@@ -685,6 +685,7 @@ export type Database = {
           seo_title: string | null
           slug: string
           sort_order: number
+          spec_template: Json
           updated_at: string
         }
         Insert: {
@@ -718,6 +719,7 @@ export type Database = {
           seo_title?: string | null
           slug?: string
           sort_order?: number
+          spec_template?: Json
           updated_at?: string
         }
         Relationships: []

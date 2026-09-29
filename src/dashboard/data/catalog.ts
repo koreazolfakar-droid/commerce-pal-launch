@@ -5,6 +5,7 @@ import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassw
 import type { User } from "@supabase/supabase-js";
 import type { Tables } from "@/integrations/supabase/types";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { slugify } from "@/lib/taxonomy";
 import {
   convertProductImageToWebp,
   convertProductThumbnailToWebp,
@@ -1506,6 +1507,7 @@ async function uploadProductImageFile(
 }
 
 async function removeOwnedProductImageFile(url?: string) {
+  if (!url) return;
   const objectPath = productStoragePathFromUrl(url);
   if (!objectPath) return;
   const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([objectPath]);
