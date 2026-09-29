@@ -4,7 +4,7 @@ import { LayoutGrid } from "lucide-react";
 
 import { useHydrated } from "@/hooks/useHydrated";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
-import { catalogQueryOptions } from "@/lib/queries";
+import { navigationCatalogQueryOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 /**
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export function MobileCategoryRail({ activeSlug }: { activeSlug?: string | undefined }) {
   const { t, language } = useLanguage();
   const hydrated = useHydrated();
-  const { data: catalog, isLoading } = useQuery(catalogQueryOptions());
+  const { data: catalog, isLoading } = useQuery(navigationCatalogQueryOptions());
   const list = hydrated ? (catalog?.categories ?? []) : [];
 
   if (!list.length && !isLoading) return null;
