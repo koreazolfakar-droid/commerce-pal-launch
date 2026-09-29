@@ -75,6 +75,56 @@ type NavigationProductRow = Pick<
   "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
 >;
 
+
+type RustCatalogCardBrand = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type RustCatalogCardVariant = {
+  id: string;
+  title: string;
+  price: Json;
+  compare_at_price: Json | null;
+  is_active: boolean;
+  track_inventory: boolean;
+  allow_backorder: boolean;
+  stock_quantity: number;
+  sku: string | null;
+  barcode: string | null;
+  image_url: string | null;
+  options: Json;
+  sort_order: number;
+};
+
+type RustCatalogCardImage = {
+  url: string;
+  alt_text: string | null;
+  is_primary: boolean;
+  sort_order: number;
+};
+
+type RustCatalogCardRow = {
+  id: string;
+  title: string;
+  handle: string;
+  brand_id: string | null;
+  product_type: string | null;
+  currency: string;
+  base_price: Json;
+  compare_at_price: Json | null;
+  stock_quantity: number;
+  track_inventory: boolean;
+  allow_backorder: boolean;
+  created_at: string;
+  updated_at: string;
+  tags: string[];
+  brand: RustCatalogCardBrand | null;
+  variants: RustCatalogCardVariant[];
+  images: RustCatalogCardImage[];
+};
+
 const STOREFRONT_PRODUCT_SELECT =
   "id,title,description,description_html,handle,brand_id,category_id,product_type,specifications,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
@@ -635,6 +685,157 @@ async function fetchRustCatalogRows(first: number): Promise<StorefrontProductRow
     return payload;
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+
+function isRustCatalogCardRow(value: unknown): value is RustCatalogCardRow {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.title === "string" &&
+    typeof row.handle === "string" &&
+    typeof row.currency === "string" &&
+    typeof row.stock_quantity === "number" &&
+    typeof row.track_inventory === "boolean" &&
+    typeof row.allow_backorder === "boolean" &&
+    typeof row.created_at === "string" &&
+    typeof row.updated_at === "string" &&
+    Array.isArray(row.tags) &&
+    Array.isArray(row.variants) &&
+    Array.isArray(row.images)
+  );
+}
+
+function moneyValue(value: Json | null | undefined) {
+  return typeof value === "number" || typeof value === "string" ? String(value) : "0";
+}
+
+function buildPreviewProduct(row: RustCatalogCardRow): StoreProduct {
+  const variants = [...row.variants]
+    .filter((variant) => variant.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order);
+  const canonicalNames = canonicalOptionNames(variants.map((variant) => variant.options));
+  const mappedVariants = variants.map((variant) => {
+    const availableForSale =
+      !variant.track_inventory || variant.allow_backorder || variant.stock_quantity > 0;
+    return {
+      node: {
+        id: variant.id,
+        title: variant.title,
+        price: money(moneyValue(variant.price), row.currency),
+        compareAtPrice:
+          variant.compare_at_price == null
+            ? null
+            : money(moneyValue(variant.compare_at_price), row.currency),
+        availableForSale,
+        trackInventory: variant.track_inventory,
+        allowBackorder: variant.allow_backorder,
+        stockQuantity: variant.stock_quantity,
+        sku: variant.sku,
+        barcode: variant.barcode,
+        image: variant.image_url ? { url: variant.image_url, altText: null } : null,
+        selectedOptions: optionEntries(variant.options, canonicalNames),
+      },
+    };
+  });
+
+  const optionValues = new Map<string, string[]>();
+  for (const variant of variants) {
+    for (const option of optionEntries(variant.options, canonicalNames)) {
+      const values = optionValues.get(option.name) ?? [];
+      if (!values.includes(option.value)) values.push(option.value);
+      optionValues.set(option.name, values);
+    }
+  }
+
+  const prices = variants
+    .map((variant) => Number(moneyValue(variant.price)))
+    .filter(Number.isFinite);
+  const comparePrices = variants
+    .map((variant) => Number(moneyValue(variant.compare_at_price)))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  const minPrice = prices.length ? Math.min(...prices) : Number(moneyValue(row.base_price));
+  const minCompare = comparePrices.length
+    ? Math.min(...comparePrices)
+    : row.compare_at_price == null
+      ? null
+      : Number(moneyValue(row.compare_at_price));
+  const availableForSale = mappedVariants.length
+    ? mappedVariants.some((variant) => variant.node.availableForSale)
+    : !row.track_inventory || row.allow_backorder || row.stock_quantity > 0;
+  const images = [...row.images].sort(
+    (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
+  );
+
+  return {
+    node: {
+      id: row.id,
+      title: row.title,
+      description: "",
+      handle: row.handle,
+      vendor: row.brand?.name,
+      vendorSlug: row.brand?.slug,
+      vendorHidden: Boolean(row.brand_id && !row.brand),
+      productType: row.product_type ?? undefined,
+      availableForSale,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      tags: row.tags,
+      priceRange: { minVariantPrice: money(minPrice, row.currency) },
+      compareAtPriceRange:
+        minCompare == null || !Number.isFinite(minCompare)
+          ? undefined
+          : { minVariantPrice: money(minCompare, row.currency) },
+      images: {
+        edges: images.map((image) => ({
+          node: { url: image.url, altText: image.alt_text },
+        })),
+      },
+      collections: { edges: [] },
+      variants: { edges: mappedVariants },
+      options: [...optionValues].map(([name, values]) => ({ name, values })),
+    },
+  };
+}
+
+async function fetchRustCatalogCards(first: number): Promise<RustCatalogCardRow[]> {
+  const limit = Math.min(24, Math.max(1, Math.trunc(first)));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), RUST_CATALOG_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${RUST_CATALOG_BASE_URL}/api/catalog/cards?limit=${limit}`, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Rust catalog cards returned HTTP ${response.status}`);
+    }
+
+    const payload: unknown = await response.json();
+    if (!Array.isArray(payload) || !payload.every(isRustCatalogCardRow)) {
+      throw new Error("Rust catalog cards returned an incompatible contract");
+    }
+
+    return payload;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function fetchCatalogPreviewProducts(first = 24): Promise<StoreProduct[]> {
+  if (first <= 0) return [];
+
+  try {
+    const rows = await fetchRustCatalogCards(first);
+    return rows.map(buildPreviewProduct);
+  } catch (error) {
+    console.warn("Rust catalog card read failed; using hydrated catalog fallback.", error);
+    return fetchCatalogProducts(first);
   }
 }
 
