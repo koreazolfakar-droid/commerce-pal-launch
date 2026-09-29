@@ -174,3 +174,17 @@ Fixes:
 Supabase migration: public_active_hero_read_path
 Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
 Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Final direct hero critical-path republish request: 2026-09-29T12:34:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 07e3524f12852819d2b570f270393669a6b99068 or newer.
+Final hero path:
+- first hero is read directly from Supabase PostgREST with active-row RLS
+- full CMS no longer blocks first hero SSR
+- first HTML must contain the real hero image and preload
+- full hero slider restores after CMS hydration
+- no large logo placeholder
+- no client-side hero discovery script
+Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
