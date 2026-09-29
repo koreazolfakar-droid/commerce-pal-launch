@@ -72,7 +72,7 @@ test("existing product thumbnails are backfilled safely from the dashboard", asy
   assert.match(data, /\.limit\(500\)/);
   assert.match(data, /\.in\("id", productIds\)/);
   assert.match(data, /\.eq\("status", "active"\)/);
-  assert.match(data, /const pending = eligibleRows\.slice\(0, safeLimit\)/);
+  assert.match(data, /Math\.min\(250, Math\.max\(1, Math\.trunc\(limit\)\)\)/);\n  assert.match(data, /const pending = eligibleRows\.slice\(0, safeLimit\)/);
   assert.match(data, /remaining: Math\.max\(0, eligibleRows\.length - processed\)/);
   assert.match(data, /convertProductThumbnailToWebp\(source\)/);
   assert.match(data, /products\/\$\{row\.product_id\}\/thumbnails\/\$\{row\.id\}\.webp/);
@@ -87,9 +87,9 @@ test("existing product thumbnails are backfilled safely from the dashboard", asy
   assert.match(data, /for \(let index = 0; index < pending\.length; index \+= 1\)/);
 
   assert.match(ui, /Mobile product-card thumbnails/);
-  assert.match(ui, /Generate next 24 thumbnails/);
-  assert.match(ui, /backfillStorefrontProductThumbnails\(24, setThumbnailProgress\)/);
-  assert.match(ui, /next 24 active product images still missing them/);
+  assert.match(ui, /Generate all missing thumbnails/);
+  assert.match(ui, /backfillStorefrontProductThumbnails\(250, setThumbnailProgress\)/);
+  assert.match(ui, /all active primary product images still missing them/);
   assert.match(ui, /Still pending/);
   assert.match(ui, /Original product images stay unchanged/);
   assert.match(ui, /Runs one image at a time to stay phone-friendly/);
