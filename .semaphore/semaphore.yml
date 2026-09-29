@@ -1,0 +1,35 @@
+version: v1.0
+name: Space Call Bun CI
+
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2404
+
+execution_time_limit:
+  minutes: 30
+
+auto_cancel:
+  running:
+    when: "branch != 'main'"
+
+blocks:
+  - name: Bun validation
+    task:
+      jobs:
+        - name: Install → TypeScript → ESLint → Security → Tests → Build → SSR
+          commands:
+            - checkout
+            - curl -fsSL https://bun.sh/install | bash
+            - export BUN_INSTALL="$HOME/.bun"
+            - export PATH="$BUN_INSTALL/bin:$PATH"
+            - bun --version
+            - bun install --frozen-lockfile
+            - bun run typecheck
+            - bun run lint
+            - node scripts/security-gate.mjs
+            - node scripts/android-security-gate.mjs
+            - bun audit --audit-level=high
+            - bun run test:unit
+            - bun run build
+            - bun run test:ssr
