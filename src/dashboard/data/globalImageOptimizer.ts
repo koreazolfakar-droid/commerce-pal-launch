@@ -191,7 +191,7 @@ export async function backfillStorefrontProductThumbnails(
 ): Promise<ProductThumbnailBackfillResult> {
   await requireDashboardAdmin();
 
-  const safeLimit = Math.min(48, Math.max(1, Math.trunc(limit)));
+  const safeLimit = Math.min(250, Math.max(1, Math.trunc(limit)));
   const { data: imageRows, error: imageError } = await supabase
     .from("store_product_images")
     .select("id,product_id,url,thumbnail_url,is_primary,sort_order,created_at")
